@@ -1,7 +1,7 @@
 /*
  * Metric.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,12 +41,10 @@ protected:
    MetricBase() {}
 
    MetricBase(const std::string& scope,
-              int intervalSeconds,
               const std::string& type,
               const std::string& unit,
               boost::posix_time::ptime timestamp)
       : scope_(scope),
-        intervalSeconds_(intervalSeconds),
         type_(type),
         unit_(unit),
         timestamp_(timestamp)
@@ -59,14 +57,12 @@ public:
 
    // property accessors
    const std::string& scope() const { return scope_; }
-   int intervalSeconds() const { return intervalSeconds_; }
    const std::string& type() const { return type_; }
    const std::string& unit() const { return unit_; }
    const boost::posix_time::ptime& timestamp() const { return timestamp_; }
 
 private:
    std::string scope_;
-   int intervalSeconds_;
    std::string type_;
    std::string unit_;
    boost::posix_time::ptime timestamp_;
@@ -101,13 +97,12 @@ public:
    Metric() : MetricBase() {}
 
    Metric(const std::string& scope,
-          int intervalSeconds,
           const MetricData& data,
           const std::string& type = "gauge",
           const std::string& unit = std::string(),
           boost::posix_time::ptime timestamp =
                      boost::posix_time::microsec_clock::universal_time())
-      : MetricBase(scope, intervalSeconds, type, unit, timestamp),
+      : MetricBase(scope, type, unit, timestamp),
         data_(data)
    {
    }
@@ -126,13 +121,12 @@ public:
    MultiMetric() : MetricBase() {}
 
    MultiMetric(const std::string& scope,
-               int intervalSeconds,
                const std::vector<MetricData>& data,
                const std::string& type = "gauge",
                const std::string& unit = std::string(),
                boost::posix_time::ptime timestamp =
                            boost::posix_time::microsec_clock::universal_time())
-      : MetricBase(scope, intervalSeconds, type, unit, timestamp),
+      : MetricBase(scope, type, unit, timestamp),
         data_(data)
    {
    }

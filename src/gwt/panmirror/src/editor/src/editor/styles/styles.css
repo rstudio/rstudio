@@ -1,7 +1,7 @@
 /*
  * styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 
 .pm-content {
   position: relative;
+  padding-bottom: 100px;
 }
 
 .pm-content p {
@@ -198,7 +199,7 @@ h4.pm-heading {
   margin-block-end: 1em;
 }
 .pm-popup {
-  border-radius: 8px;
+  border-radius: 4px;
   border-style: solid;
   border-width: 1px;
   padding: 10px;
@@ -206,4 +207,10 @@ h4.pm-heading {
 
 p.ProseMirror-selectednode {
   outline: none;
+}
+
+.pm-input-text {
+  border: 1px;
+  border-style: solid;
+  border-radius: 3px;
 }

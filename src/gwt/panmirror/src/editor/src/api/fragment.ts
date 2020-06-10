@@ -1,7 +1,7 @@
 /*
  * fragment.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,10 +13,10 @@
  *
  */
 
-import { Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Fragment } from 'prosemirror-model';
 
 export function fragmentText(fragment: Fragment) {
   let text = '';
-  fragment.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
+  fragment.forEach(node => (text = text + node.textContent));
   return text;
 }

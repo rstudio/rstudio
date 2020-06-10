@@ -1,7 +1,7 @@
 /*
  * ChooseFile.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,11 +26,10 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
-import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileHandler;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 
 @Singleton
-public class ChooseFile implements ChooseFileHandler
+public class ChooseFile implements ChooseFileEvent.Handler
 {
    @Inject
    public ChooseFile(EventBus events,
@@ -45,13 +44,12 @@ public class ChooseFile implements ChooseFileHandler
       fileDialogs_ = fileDialogs;
 
       events.addHandler(ChooseFileEvent.TYPE, this);
-      
+
    }
-   
+
    public void onChooseFile(ChooseFileEvent event)
    {
-      ProgressOperationWithInput<FileSystemItem> operation =
-            new ProgressOperationWithInput<FileSystemItem>()
+      ProgressOperationWithInput<FileSystemItem> operation = new ProgressOperationWithInput<FileSystemItem>()
       {
          public void execute(FileSystemItem input,
                              ProgressIndicator progress)
@@ -75,7 +73,7 @@ public class ChooseFile implements ChooseFileHandler
                         progress));
          }
       };
-      
+
       if (event.getNewFile())
       {
          fileDialogs_.saveFile(
@@ -95,7 +93,7 @@ public class ChooseFile implements ChooseFileHandler
                operation);
       }
    }
-   
+
    private final ChooseFileServerOperations server_;
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;

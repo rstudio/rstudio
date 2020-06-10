@@ -1,7 +1,7 @@
 /*
  * BrowseCap.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,6 +148,18 @@ public class BrowseCap
    {
       return isUserAgent("chromeframe");
    }
+   
+   public static boolean isQtWebEngine()
+   {
+      return isUserAgent("qtwebengine");
+   }
+   
+   public static final native String qtWebEngineVersion()
+   /*-{
+      var pattern = new RegExp("QtWebEngine/([^\\s]+)", "i");
+      var match = navigator.userAgent.match(pattern)
+      return match[1] || "";
+   }-*/;
    
    public static double devicePixelRatio() 
    {

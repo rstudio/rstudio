@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -31,11 +31,12 @@ include_directories(
 )
 
 # define executable
-add_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
+add_stripped_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 
 # set link dependencies
 target_link_libraries(rpostback
    rstudio-core
+   ${CRASHPAD_LIBRARIES}
 )
 
 if (RSTUDIO_SERVER)

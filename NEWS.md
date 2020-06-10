@@ -1,5 +1,10 @@
 ## v1.4 - Release Notes
 
+### Python
+
+* Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
+* Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
+
 ### Plots
 
 * The default renderer used for the RStudio graphics device can now be customized. (#2142)
@@ -23,6 +28,8 @@
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
 * Colorize parentheses, braces, and brackets in assorted colors (#7027)
+* Option to display Console error and message output in same color as regular output (#7029)
+* Moved console options to a new pane in Global Options (#7047)
 
 ### RStudio Server Pro
 
@@ -33,11 +40,15 @@
 * New `load-balancer` option `timeout` limits how long to wait for a response from a node, defaults to 10 seconds. (Pro #1642)
 * New `load-balancer` option `verify-ssl-certs` for testing nodes with self-signed certificates when using SSL. (Pro #1504)
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
+* R sessions can now be renamed from within the session or the home page. (Pro #1572)
+* Project Sharing now works on Launcher sessions.
 
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
+* Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
 * Git integration now works properly for project names containing the '!' character. (#6160)
+* Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
 * Fixed header resizing in Data Viewer (#1665)
 * Fixed resizing last column in Data Viewer (#2642)
 * Fixed inconsistencies in the resizing between a column and its header (#4361)

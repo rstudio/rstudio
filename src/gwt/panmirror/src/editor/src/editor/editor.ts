@@ -1,7 +1,7 @@
 /*
  * editor.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,11 +27,11 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { ExtensionManager, initExtensions } from './editor-extensions';
 import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
-import { EditorEvent } from '../api/events';
+import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
+import { ScrollEvent, UpdateEvent, OutlineChangeEvent, StateChangeEvent, ResizeEvent, LayoutEvent, FocusEvent, DispatchEvent } from '../api/event-types';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -80,9 +80,12 @@ import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
 import { editorSchema } from './editor-schema';
 
-// import styles
+// import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { ExtensionManager, initExtensions } from './editor-extensions';
+import { EditorEvents } from '../api/events';
+
 
 export interface EditorCode {
   code: string;
@@ -90,13 +93,11 @@ export interface EditorCode {
 }
 
 export interface EditorSetMarkdownResult {
-  
   // editor view of markdown (as it will be persisted)
   canonical: string;
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
-
 }
 
 export interface EditorContext {
@@ -148,7 +149,7 @@ export interface UIToolsImage {
 }
 
 export interface UIToolsFormat {
-  parseFormatConfig(markdown: string): PandocFormatConfig;
+  parseFormatConfig(markdown: string, isRmd: boolean): PandocFormatConfig;
 }
 
 export interface UIToolsSource {
@@ -191,6 +192,7 @@ export class Editor {
   // core context passed from client
   private readonly parent: HTMLElement;
   private readonly context: EditorContext;
+  private readonly events: EditorEvents;
 
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
@@ -222,9 +224,6 @@ export class Editor {
   // (indicates that we should use a cursorSentinel when going to source mode)
   private lastTrSelectionOnly = false;
 
-  // event sinks
-  private readonly events: ReadonlyMap<string, Event>;
-
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
   // initialize the various editor features
@@ -252,6 +251,7 @@ export class Editor {
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
+        bookdownXRefUI: false,
         bookdownPart: false,
         blogdownMathInCode: false,
         ...format.rmdExtensions,
@@ -299,15 +299,13 @@ export class Editor {
   ) {
     // initialize references
     this.parent = parent;
+    this.events = new DOMEditorEvents(parent);
     this.context = context;
     this.options = options;
     this.format = format;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
-
-    // initialize custom events
-    this.events = this.initEvents();
 
     // create extensions
     this.extensions = this.initExtensions();
@@ -366,21 +364,37 @@ export class Editor {
     if (!this.options.spellCheck) {
       this.parent.setAttribute('spellcheck', 'false');
     }
+
+    {
+      // scroll event optimization, as recommended by
+      // https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event
+      let ticking = false;
+      this.parent.addEventListener(
+        'scroll',
+        () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              this.emitEvent(ScrollEvent);
+              ticking = false;
+            });
+            ticking = true;
+          }
+        },
+        { capture: true },
+      );
+    }
   }
 
   public destroy() {
     this.view.destroy();
   }
 
-  public subscribe(event: EditorEvent, handler: VoidFunction): VoidFunction {
-    if (!this.events.has(event)) {
-      const valid = Array.from(this.events.keys()).join(', ');
-      throw new Error(`Unknown event ${event}. Valid events are ${valid}`);
+  public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
+    if (typeof event === "string") {
+      return this.events.subscribe({eventName: event}, handler);
+    } else {
+      return this.events.subscribe(event, handler);
     }
-    this.parent.addEventListener(event, handler);
-    return () => {
-      this.parent.removeEventListener(event, handler);
-    };
   }
 
   public setTitle(title: string) {
@@ -390,13 +404,15 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean)
-    : Promise<EditorSetMarkdownResult> {
-    
+  public async setMarkdown(
+    markdown: string,
+    options: PandocWriterOptions,
+    emitUpdate: boolean,
+  ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
     const { doc, unrecognized } = result;
-    
+
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
     if (this.isInitialDoc()) {
@@ -429,19 +445,19 @@ export class Editor {
 
     // notify listeners if requested
     if (emitUpdate) {
-      this.emitEvent(EditorEvent.Update);
-      this.emitEvent(EditorEvent.OutlineChange);
-      this.emitEvent(EditorEvent.SelectionChange);
+      this.emitEvent(UpdateEvent);
+      this.emitEvent(OutlineChangeEvent);
+      this.emitEvent(StateChangeEvent);
     }
 
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
     const canonical = await this.getMarkdownCode(this.state.doc, options);
 
-    // return 
+    // return
     return {
-      canonical, 
-      unrecognized
+      canonical,
+      unrecognized,
     };
   }
 
@@ -476,11 +492,11 @@ export class Editor {
 
   public getSelection(): EditorSelection {
     const { from, to } = this.state.selection;
-    return { 
-      from, 
+    return {
+      from,
       to,
-      navigation_id: navigationIdForSelection(this.state)
-     };
+      navigation_id: navigationIdForSelection(this.state),
+    };
   }
 
   public getEditingLocation(): EditingLocation {
@@ -512,8 +528,7 @@ export class Editor {
   // get a canonical version of the passed markdown. this method doesn't mutate the
   // visual editor's state/view (it's provided as a performance optimiation for when
   // source mode is configured to save a canonical version of markdown)
-  public async getCanonical(markdown: string, options: PandocWriterOptions) : Promise<string> {
-    
+  public async getCanonical(markdown: string, options: PandocWriterOptions): Promise<string> {
     // convert to prosemirror doc
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
@@ -521,17 +536,16 @@ export class Editor {
     const state = EditorState.create({
       schema: this.schema,
       doc: result.doc,
-      plugins: this.state.plugins
+      plugins: this.state.plugins,
     });
 
     // apply load fixups (eumlating what a full round trip will do)
     const tr = state.tr;
     this.extensionFixups(tr, FixupContext.Load);
-  
+
     // return markdown (will apply save fixups)
     return this.getMarkdownCode(tr.doc, options);
   }
-
 
   public focus() {
     this.view.focus();
@@ -548,7 +562,7 @@ export class Editor {
   public resize() {
     this.syncContentWidth();
     this.applyFixupsOnResize();
-    this.emitEvent(EditorEvent.Resize);
+    this.emitEvent(ResizeEvent);
   }
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
@@ -607,8 +621,8 @@ export class Editor {
     return this.pandocFormat;
   }
 
-  public getPandocFormatConfig() : PandocFormatConfig {
-    return pandocFormatConfigFromDoc(this.state.doc);
+  public getPandocFormatConfig(isRmd: boolean): PandocFormatConfig {
+    return pandocFormatConfigFromDoc(this.state.doc, isRmd);
   }
 
   private dispatchTransaction(tr: Transaction) {
@@ -622,38 +636,29 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // notify listeners of selection change
-    this.emitEvent(EditorEvent.SelectionChange);
+    // notify listeners of state change
+    this.emitEvent(StateChangeEvent);
 
     // notify listeners of updates
     if (tr.docChanged || tr.storedMarksSet) {
-
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
-        this.emitEvent(EditorEvent.Update);
+        this.emitEvent(UpdateEvent);
       }
 
       // fire outline changed if necessary
       if (getOutline(this.state) !== previousOutline) {
-        this.emitEvent(EditorEvent.OutlineChange);
+        this.emitEvent(OutlineChangeEvent);
       }
     }
+
+    this.emitEvent(DispatchEvent, tr);
+
+    this.emitEvent(LayoutEvent);
   }
 
-  private emitEvent(name: string) {
-    const event = this.events.get(name);
-    if (event) {
-      this.parent.dispatchEvent(event);
-    }
-  }
-
-  private initEvents(): ReadonlyMap<string, Event> {
-    const events = new Map<string, Event>();
-    events.set(EditorEvent.Update, new Event(EditorEvent.Update));
-    events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
-    events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
-    events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
-    return events;
+  private emitEvent<TDetail>(eventType: EventType<TDetail>, detail?: TDetail) {
+    this.events.emit(eventType, detail);
   }
 
   private initExtensions() {
@@ -661,8 +666,7 @@ export class Editor {
       this.format,
       this.options,
       this.context.ui,
-      { subscribe: this.subscribe.bind(this),
-        emit: this.emitEvent.bind(this) },
+      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
       this.pandocCapabilities,
@@ -678,6 +682,7 @@ export class Editor {
       ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
+      this.domEventsPlugin(),
     ];
   }
 
@@ -692,7 +697,6 @@ export class Editor {
   }
 
   private inputRulesPlugin() {
-
     // filter for disabling input rules for selected marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
 
@@ -709,6 +713,20 @@ export class Editor {
       return handleTextInput(view, from, to, text);
     };
     return plugin;
+  }
+
+  private domEventsPlugin(): Plugin {
+    return new Plugin({
+      key: new PluginKey('domevents'),
+      props: {
+        handleDOMEvents: {
+          focus: (view: EditorView, event: Event) => {
+            this.emitEvent(FocusEvent);
+            return false;
+          },
+        },
+      },
+    });
   }
 
   private keybindingsPlugin(): Plugin {
@@ -765,7 +783,12 @@ export class Editor {
   }
 
   private applyFixupsOnResize() {
-    this.applyFixups(FixupContext.Resize);
+    const docChanged = this.applyFixups(FixupContext.Resize);
+    if (!docChanged) {
+      // If applyFixupsOnResize returns true, then layout has already
+      // been fired; if it hasn't, we must do so now
+      this.emitEvent(LayoutEvent);
+    }
   }
 
   private applyFixups(context: FixupContext) {
@@ -775,7 +798,9 @@ export class Editor {
       tr.setMeta(kAddToHistoryTransaction, false);
       tr.setMeta(kFixupTransaction, true);
       this.view.dispatch(tr);
+      return true;
     }
+    return false;
   }
 
   private extensionFixups(tr: Transaction, context: FixupContext) {
@@ -799,7 +824,6 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
 
@@ -808,7 +832,7 @@ export class Editor {
   }
 }
 
-function navigationIdForSelection(state: EditorState) : string | null {
+function navigationIdForSelection(state: EditorState): string | null {
   const outline = outlineNodes(state.doc);
   const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
   if (outlineNode) {

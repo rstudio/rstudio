@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -253,6 +253,16 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTutorialCommand;
       else if (name == "tutorial_launch")
          type = session::client_events::kTutorialLaunch;
+      else if (name == "reticulate_event")
+         type = session::client_events::kReticulateEvent;
+      else if (name == "environment_assigned")
+         type = session::client_events::kEnvironmentAssigned;
+      else if (name == "environment_refresh")
+         type = session::client_events::kEnvironmentRefresh;
+      else if (name == "environment_removed")
+         type = session::client_events::kEnvironmentRemoved;
+      else if (name == "environment_changed")
+         type = session::client_events::kEnvironmentChanged;
 
       if (type != -1)
       {
@@ -264,7 +274,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          LOG_ERROR_MESSAGE("Unexpected event name from R: " + name);
       }
    }
-   catch(r::exec::RErrorException& e)
+   catch (r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }

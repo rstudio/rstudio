@@ -1,7 +1,7 @@
 /*
  * ErrorManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,19 +98,7 @@ public class ErrorManager
    public void onSessionInit(SessionInitEvent sie)
    {
       errorManagerState_ = session_.getSessionInfo().getErrorState();
-      if (session_.getSessionInfo().getHaveSrcrefAttribute())
-      {
-         syncHandlerCommandsCheckedState();
-      }
-      else
-      {
-         // If we don't have source references, disable the commands that 
-         // set error handlers (these generally work on user code only, and
-         // we can't reliably distinguish user code without source refs)
-         commands_.errorsMessage().setEnabled(false);
-         commands_.errorsTraceback().setEnabled(false);
-         commands_.errorsBreak().setEnabled(false);
-      }
+      syncHandlerCommandsCheckedState();
    }
 
    @Handler

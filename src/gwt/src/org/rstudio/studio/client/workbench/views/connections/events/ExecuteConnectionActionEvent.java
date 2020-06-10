@@ -1,7 +1,7 @@
 /*
  * ExecuteConnectionActionEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ExecuteConnectionActionEvent 
+public class ExecuteConnectionActionEvent
              extends GwtEvent<ExecuteConnectionActionEvent.Handler>
 {
    public interface Handler extends EventHandler
@@ -32,19 +32,19 @@ public class ExecuteConnectionActionEvent
    {
       return TYPE;
    }
-   
+
    public ExecuteConnectionActionEvent(ConnectionId id, String action)
    {
       connectionId_ = id;
       action_ = action;
    }
-   
-   public String getAction() 
+
+   public String getAction()
    {
       return action_;
    }
-   
-   public ConnectionId getConnectionId() 
+
+   public ConnectionId getConnectionId()
    {
       return connectionId_;
    }
@@ -58,5 +58,5 @@ public class ExecuteConnectionActionEvent
    private final ConnectionId connectionId_;
    private final String action_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

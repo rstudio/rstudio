@@ -1,7 +1,7 @@
 /*
  * SessionBlogdown.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -182,6 +182,12 @@ core::json::Object blogdownConfig()
             it++;
          }
 
+         // see if there is an enableEmoji variable
+         const std::string enableEmoji = variables["enableemoji"];
+         if (enableEmoji == "true") {
+            markdownExtensions += "+emoji";
+         }
+
          // see if there is a markup variable
          const std::string markup = variables["markup"];
          if (markup.size() > 0)
@@ -195,17 +201,16 @@ core::json::Object blogdownConfig()
                std::string matchedEngine = handlerMatch[1];
                if (matchedEngine == kMarkdownEngineBlackfriday || matchedEngine == kMarkdownEngineGoldmark)
                   markdownEngine = matchedEngine;
+            }
 
-               // if we are goldmark check to see if unsafe is enabled. in that case
-               // add the raw_html extension
-               if (markdownEngine == kMarkdownEngineGoldmark)
-               {
-                  boost::regex unsafeRegex("unsafe\\:true");
-                  boost::smatch unsafeMatch;
-                  if (regex_utils::search(markup, unsafeMatch, unsafeRegex))
-                     markdownExtensions += "+raw_html";
-               }
-
+            // if we are goldmark check to see if unsafe is enabled. in that case
+            // add the raw_html extension
+            if (markdownEngine == kMarkdownEngineGoldmark)
+            {
+               boost::regex unsafeRegex("unsafe\\:true");
+               boost::smatch unsafeMatch;
+               if (regex_utils::search(markup, unsafeMatch, unsafeRegex))
+                  markdownExtensions += "+raw_html";
             }
          }
 

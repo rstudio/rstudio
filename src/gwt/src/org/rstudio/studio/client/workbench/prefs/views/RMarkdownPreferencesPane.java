@@ -1,7 +1,7 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,12 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -40,6 +42,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
       
@@ -149,27 +152,44 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       basic.add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
       
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
-      
-     
-      advanced.add(headerLabel("R Markdown"));
-
+      advanced.add(headerLabel("Display"));
       advanced.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       advanced.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       final CheckBox showRmdRenderCommand = checkboxPref( "Display render command in R Markdown tab",
             prefs_.showRmdRenderCommand());
       advanced.add(showRmdRenderCommand);
       
-      advanced.add(spacedBefore(headerLabel("Visual Markdown Editing")));
-          
       
+      VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);   
       CheckBox enableVisualMarkdownEditor = checkboxPref(
             "Enable visual markdown editing",
             prefs_.enableVisualMarkdownEditingMode());
-      mediumSpaced(enableVisualMarkdownEditor);
-      advanced.add(enableVisualMarkdownEditor);
+      spaced(enableVisualMarkdownEditor);
+      visualMode.add(enableVisualMarkdownEditor);
+      
+      Label visualMarkdownLabel = new Label(
+            "Visual markdown editing is an experimental feature of " +
+            "RStudio v1.4. Please click the link below for more details " +
+            "before enabling this feature.");
+           
+      visualMarkdownLabel.addStyleName(baseRes.styles().infoLabel());
+      nudgeRight(visualMarkdownLabel);
+      spaced(visualMarkdownLabel);
+      visualMode.add(visualMarkdownLabel);
+      
+      HelpLink visualModeHelpLink = new HelpLink(
+            "Learn more about visual markdown editing",
+            "visual_markdown_editing",
+            false // no version info
+      );
+      nudgeRight(visualModeHelpLink); 
+      mediumSpaced(visualModeHelpLink);
+      visualMode.add(visualModeHelpLink);
       
       VerticalPanel visualModeOptions = new VerticalPanel();
       mediumSpaced(visualModeOptions);
+      
+      visualModeOptions.add(headerLabel("Display"));
       
       // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
@@ -194,7 +214,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // font size
       final String kDefault = "(Default)";
-      String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+      String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++) 
       {
@@ -208,6 +228,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          visualModeFontSize_.getListBox().setSelectedIndex(0);
       visualModeOptions.add(visualModeFontSize_);
       
+      
+      visualModeOptions.add(headerLabel("Markdown"));
       
       // auto wrap
       CheckBox checkBoxAutoWrap = checkboxPref(
@@ -236,10 +258,21 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
+      mediumSpaced(visualModeReferences_);
       visualModeOptions.add(visualModeReferences_);
       
+      // help on per-file markdown options
+      HelpLink markdownPerFileOptions = new HelpLink(
+            "Setting markdown options on a per-file basis",
+            "visual_markdown_editing-file-options",
+            false // no version info
+      );
+      nudgeRight(markdownPerFileOptions); 
+      mediumSpaced(markdownPerFileOptions);
+      visualModeOptions.add(markdownPerFileOptions);
       
-      advanced.add(visualModeOptions);
+      
+      visualMode.add(visualModeOptions);
       Runnable manageVisualModeUI = () -> {
          visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
       };
@@ -247,21 +280,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       enableVisualMarkdownEditor.addValueChangeHandler((value) -> {
          manageVisualModeUI.run();
       });
-      
-      HelpLink visualModeHelpLink = new HelpLink(
-            "Learn more about visual markdown editing",
-            "visual_markdown_editing",
-            false // no version info
-      );
-      nudgeRight(visualModeHelpLink); 
-      mediumSpaced(visualModeHelpLink);
-      advanced.add(visualModeHelpLink);
-      
+       
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
+      tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }

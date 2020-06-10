@@ -1,7 +1,7 @@
 /*
  * yaml_metadata.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,9 +55,8 @@ const extension: Extension = {
       },
 
       pandoc: {
-       
         blockCapsuleFilter: yamlMetadataBlockCapsuleFilter(),
-        
+
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           output.writeToken(PandocTokenType.Para, () => {
             output.writeRawMarkdown(node.content);
@@ -94,13 +93,12 @@ class YamlMetadataCommand extends ProsemirrorCommand {
         // create yaml metadata text
         if (dispatch) {
           const tr = state.tr;
-
           const kYamlLeading = '---\n';
           const kYamlTrailing = '\n---';
           const yamlText = schema.text(kYamlLeading + kYamlTrailing);
           const yamlNode = schema.nodes.yaml_metadata.create({}, yamlText);
           tr.replaceSelectionWith(yamlNode);
-          setTextSelection(tr.selection.from - kYamlTrailing.length - 2)(tr);
+          setTextSelection(tr.mapping.map(state.selection.from) - kYamlTrailing.length - 1)(tr);
           dispatch(tr);
         }
 

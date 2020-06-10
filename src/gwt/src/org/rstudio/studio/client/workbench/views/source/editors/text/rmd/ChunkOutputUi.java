@@ -1,7 +1,7 @@
 /*
  * ChunkOutputUi.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
@@ -117,12 +116,9 @@ public class ChunkOutputUi
 
    public void setChunkLabel(String label)
    {
-      if (!StringUtil.equals(label_, label))
-      {
-         label_ = label;
-         if (outputWidget_ != null)
-            outputWidget_.setLabelClass(label);
-      }
+      label_ = label;
+      if (outputWidget_ != null)
+         outputWidget_.setClassId(label);
    }
 
    public Scope getScope()

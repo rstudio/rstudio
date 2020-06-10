@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -143,6 +143,7 @@ namespace prefs {
 #define kFoldStyleBeginAndEnd "begin-and-end"
 #define kSaveBeforeSourcing "save_before_sourcing"
 #define kSyntaxColorConsole "syntax_color_console"
+#define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -308,7 +309,6 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
-#define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -361,7 +361,7 @@ public:
    core::Error setRunRprofileOnResume(bool val);
 
    /**
-    * Whether to save the workspace after the R session ends.
+    * Whether to save the workspace to an .Rdata file after the R session ends.
     */
    std::string saveWorkspace();
    core::Error setSaveWorkspace(std::string val);
@@ -709,7 +709,7 @@ public:
    core::Error setStripTrailingWhitespace(bool val);
 
    /**
-    * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+    * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
     */
    bool restoreSourceDocumentCursorPosition();
    core::Error setRestoreSourceDocumentCursorPosition(bool val);
@@ -761,6 +761,12 @@ public:
     */
    bool syntaxColorConsole();
    core::Error setSyntaxColorConsole(bool val);
+
+   /**
+    * Whether to display error, warning, and message output in a different color.
+    */
+   bool highlightConsoleErrors();
+   core::Error setHighlightConsoleErrors(bool val);
 
    /**
     * Whether to allow scrolling past the end of a file.
@@ -1409,12 +1415,6 @@ public:
     */
    int typingStatusDelayMs();
    core::Error setTypingStatusDelayMs(int val);
-
-   /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   bool ariaApplicationRole();
-   core::Error setAriaApplicationRole(bool val);
 
    /**
     * Reduce use of animations in the user interface.

@@ -1,7 +1,7 @@
 /*
  * BreakpointManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,6 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugSourceCompletedEvent;
@@ -88,7 +87,7 @@ public class BreakpointManager
                           ContextDepthChangedEvent.Handler,
                           PackageLoadedEvent.Handler,
                           PackageUnloadedEvent.Handler,
-                          ConsoleWriteInputHandler,
+                          ConsoleWriteInputEvent.Handler,
                           RestartStatusEvent.Handler,
                           DebugSourceCompletedEvent.Handler
 {

@@ -1,7 +1,7 @@
 /*
  * css.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,4 +72,18 @@ export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined
   setValue(kStyleAttrib, style);
 
   return newKeyvalues;
+}
+
+
+export function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
+  if (classes) {
+    if (classes) {
+      classes.forEach(clz => el.classList.add(clz));
+    }
+  }
+  if (style) {
+    Object.keys(style).forEach(name => {
+      el.style.setProperty(name, style[name]);
+    });
+  }
 }

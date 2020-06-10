@@ -1,7 +1,7 @@
 /*
  * MathJaxPopupPanel.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.mathjax.display;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 
@@ -41,8 +40,6 @@ public class MathJaxPopupPanel extends MiniPopupPanel
       setWidget(container_);
       
       addStyleName(RES.styles().popupPanel());
-      if (BrowseCap.isWindowsDesktop())
-         addStyleName(RES.styles().popupPanelWindows());
    }
    
    public Element getContentElement()
@@ -55,7 +52,6 @@ public class MathJaxPopupPanel extends MiniPopupPanel
    public interface Styles extends CssResource
    {
       String popupPanel();
-      String popupPanelWindows();
    }
    
    public interface Resources extends ClientBundle

@@ -1,7 +1,7 @@
 /*
  * RStudioUnitTestSuite.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,9 +58,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
-      
-      // Pro-only tests
-      
+
       return suite;
    }
 }

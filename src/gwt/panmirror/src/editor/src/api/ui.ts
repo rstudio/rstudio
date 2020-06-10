@@ -1,7 +1,7 @@
 /*
  * ui.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,9 @@ export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   execute: EditorUIExecute;
+  math: EditorUIMath;
   context: EditorUIContext;
+  prefs: EditorUIPrefs;
   images: EditorUIImages;
 }
 
@@ -35,7 +37,7 @@ export interface EditorDialogs {
   editLink: LinkEditorFn;
   editImage: ImageEditorFn;
   editCodeBlock: CodeBlockEditorFn;
-  editOrderedList: OrderedListEditorFn;
+  editList: ListEditorFn;
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
   editDiv: DivAttrEditorFn;
@@ -72,9 +74,17 @@ export interface EditorUIExecute {
   executeRmdChunk?: (chunk: EditorRmdChunk) => void;
 }
 
+export interface EditorUIMath {
+  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
+}
+
+export interface EditorUIPrefs {
+  equationPreview: () => boolean;
 }
 
 export enum AlertType {
@@ -107,10 +117,10 @@ export type CodeBlockEditorFn = (
   languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
-export type OrderedListEditorFn = (
-  list: OrderedListProps,
+export type ListEditorFn = (
+  list: ListProps,
   capabilities: ListCapabilities,
-) => Promise<OrderedListEditResult | null>;
+) => Promise<ListEditResult | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
@@ -166,14 +176,20 @@ export interface CodeBlockProps extends AttrProps {
 
 export type CodeBlockEditResult = CodeBlockProps;
 
-export interface OrderedListProps {
+export enum ListType {
+  Ordered = 'OrderedList',
+  Bullet = 'BulletList'
+}
+
+export interface ListProps {
+  type: ListType;
   tight: boolean;
   order: number;
   number_style: string;
   number_delim: string;
 }
 
-export type OrderedListEditResult = OrderedListProps;
+export type ListEditResult = ListProps;
 
 export interface InsertTableResult {
   rows: number;

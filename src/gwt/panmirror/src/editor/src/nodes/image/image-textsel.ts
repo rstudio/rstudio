@@ -1,7 +1,7 @@
 /*
  * image-textsel.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,32 +13,40 @@
  *
  */
 
-import { EditorState, Transaction, NodeSelection } from 'prosemirror-state';
+import { EditorState, Transaction, NodeSelection, Plugin, PluginKey } from 'prosemirror-state';
 import { DecorationSet, Decoration } from 'prosemirror-view';
 import { nodeDecoration } from '../../api/decoration';
 
-export function imageTextSelectionInit(instance: EditorState) {
-  return DecorationSet.empty;
-}
+const pluginKey = new PluginKey('image-text-selection');
 
-export function imageTextSelectionApply(
-  tr: Transaction,
-  set: DecorationSet,
-  oldState: EditorState,
-  newState: EditorState,
-) {
-  // no decorations for empty or node selection
-  if (tr.selection.empty || tr.selection instanceof NodeSelection) {
-    return DecorationSet.empty;
-  }
+export function imageTextSelectionPlugin() {
+  return new Plugin<DecorationSet>({
+    key: pluginKey,
+    state: {
+      init(_config: { [key: string]: any }, instance: EditorState) {
+        return DecorationSet.empty;
+      },
+      apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
+        // no decorations for empty or node selection
+        if (tr.selection.empty || tr.selection instanceof NodeSelection) {
+          return DecorationSet.empty;
+        }
 
-  const schema = newState.schema;
-  const decorations: Decoration[] = [];
-  tr.doc.nodesBetween(tr.selection.from, tr.selection.to, (node, pos) => {
-    if ([schema.nodes.image, schema.nodes.figure].includes(node.type)) {
-      decorations.push(nodeDecoration({ node, pos }, { class: 'pm-image-text-selection' }));
-    }
+        const schema = newState.schema;
+        const decorations: Decoration[] = [];
+        tr.doc.nodesBetween(tr.selection.from, tr.selection.to, (node, pos) => {
+          if ([schema.nodes.image, schema.nodes.figure].includes(node.type)) {
+            decorations.push(nodeDecoration({ node, pos }, { class: 'pm-image-text-selection' }));
+          }
+        });
+
+        return DecorationSet.create(tr.doc, decorations);
+      },
+    },
+    props: {
+      decorations(state: EditorState) {
+        return pluginKey.getState(state);
+      },
+    },
   });
-
-  return DecorationSet.create(tr.doc, decorations);
 }

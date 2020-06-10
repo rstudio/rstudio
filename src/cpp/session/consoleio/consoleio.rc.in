@@ -13,7 +13,7 @@ BEGIN
             VALUE "FileDescription",  "RStudio ConsoleIO\0"
             VALUE "FileVersion",      "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
             VALUE "InternalName",     "consoleio\0"
-            VALUE "LegalCopyright",   "Copyright (C) 2009-19 by RStudio, PBC\0"
+            VALUE "LegalCopyright",   "Copyright (C) 2020 by RStudio, PBC\0"
             VALUE "LegalTrademarks",  "RStudio (TM) is a trademark of RStudio, PBC\0"
             VALUE "OriginalFilename", "consoleio.exe\0"
             VALUE "ProductName",      "RStudio\0"

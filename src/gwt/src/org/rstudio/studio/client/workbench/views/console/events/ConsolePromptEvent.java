@@ -1,7 +1,7 @@
 /*
  * ConsolePromptEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
 
-public class ConsolePromptEvent extends GwtEvent<ConsolePromptHandler>
+public class ConsolePromptEvent extends GwtEvent<ConsolePromptEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsolePromptHandler> TYPE =
-      new GwtEvent.Type<ConsolePromptHandler>();
-    
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onConsolePrompt(ConsolePromptEvent event);
+   }
+
    public ConsolePromptEvent(ConsolePrompt prompt)
    {
       prompt_ = prompt;
@@ -33,13 +38,13 @@ public class ConsolePromptEvent extends GwtEvent<ConsolePromptHandler>
    }
    
    @Override
-   protected void dispatch(ConsolePromptHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsolePrompt(this);
    }
 
    @Override
-   public GwtEvent.Type<ConsolePromptHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

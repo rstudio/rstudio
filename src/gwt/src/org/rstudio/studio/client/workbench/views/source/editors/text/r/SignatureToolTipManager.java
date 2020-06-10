@@ -1,7 +1,7 @@
 /*
  * SignatureToolTipManager.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -194,7 +193,7 @@ public class SignatureToolTipManager
          }
       }));
       
-      handlers_.add(events_.addHandler(ConsoleWriteInputEvent.TYPE, new ConsoleWriteInputHandler()
+      handlers_.add(events_.addHandler(ConsoleWriteInputEvent.TYPE, new ConsoleWriteInputEvent.Handler()
       {
          @Override
          public void onConsoleWriteInput(ConsoleWriteInputEvent event)

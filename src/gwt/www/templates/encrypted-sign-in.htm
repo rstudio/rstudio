@@ -4,7 +4,7 @@
 #
 # encrypted-sign-in.htm
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -40,13 +40,15 @@ function verifyMe()
       showError('You must enter a password');
       return false;
    }
-   document.getElementById('username').disabled = true;
-   document.getElementById('password').disabled = true;
    document.getElementById('staySignedIn').disabled = true;
    document.getElementById('signinbutton').disabled = true;
    document.getElementById('signinbutton').classList.add('disabled');
    document.getElementById('spinner').classList.remove('signin-hidden');
    document.getElementById('progress-message').innerText = "Signing in";
+   setTimeout(function () {
+      document.getElementById('username').disabled = true;
+      document.getElementById('password').disabled = true;
+   }, 0);
    return true;
 }
 </script>
@@ -173,6 +175,7 @@ function prepare() {
       showError("Error: " + exception);
    }
 }
+
 function submitRealForm() {
    if (prepare())
       document.realform.submit();
@@ -184,7 +187,7 @@ function submitRealForm() {
 <div id="skipnav"><a href="#username">Skip navigation</a></div>
 <header role="banner" id="banner">
   <div id="logo">
-    <a href="https://www.rstudio.com/"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a>
+    #!logoHtml#
   </div>
 </header>
 <main role="main">

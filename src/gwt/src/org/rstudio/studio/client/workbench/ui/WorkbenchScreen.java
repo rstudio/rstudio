@@ -1,7 +1,7 @@
 /*
  * WorkbenchScreen.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 
-public class WorkbenchScreen extends Composite 
+public class WorkbenchScreen extends Composite
                              implements WorkbenchMainView,
                                         SelectionHandler<Integer>,
                                         ActivatePaneHandler,
@@ -91,7 +91,7 @@ public class WorkbenchScreen extends Composite
       session_ = session;
       edit_ = edit;
       optionsLoader_ = optionsLoader;
-      
+
       if (!BrowseCap.isMacintoshDesktop())
       {
          commands.macPreferences().remove();
@@ -225,14 +225,14 @@ public class WorkbenchScreen extends Composite
       tabsPanel_.onResize();
       onPaneSizesChanged();
    }
-         
+
    @Override
    protected void onLoad()
    {
       super.onLoad();
       eventBus_.fireEvent(new WorkbenchLoadedEvent());
    }
-   
+
 
    private void onPaneSizesChanged()
    {
@@ -262,7 +262,7 @@ public class WorkbenchScreen extends Composite
       // will be 0, which the server will know to ignore
       if (buildConsoleWidth <= 0)
          buildConsoleWidth = lastMetrics_.getBuildConsoleWidth();
-      
+
       // plots size (don't allow negative metrics)
       WorkbenchTabPanel plotPanel = paneManager_.getOwnerTabPanel(Tab.Plots);
       Size deckPanelSize = plotPanel == null ? new Size(0, 0) :
@@ -273,7 +273,7 @@ public class WorkbenchScreen extends Composite
       Size plotsSize = new Size(
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
-      
+
       double devicePixelRatio = 1.0;
       if (BrowseCap.isMacintoshDesktop())
          devicePixelRatio = BrowseCap.devicePixelRatio();
@@ -298,13 +298,13 @@ public class WorkbenchScreen extends Composite
    {
       eventBus_.fireEvent(new PushClientStateEvent());
    }
-   
+
    @Override
    public void onActivatePane(ActivatePaneEvent event)
    {
       paneManager_.activateTab(event.getPane());
    }
-   
+
    private void fireEventDelayed(final GwtEvent<?> event, int delayMs)
    {
       new Timer()
@@ -328,9 +328,9 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivatePackages() { paneManager_.activateTab(Tab.Packages); }
    @Handler
-   void onActivateHelp() 
-   { 
-      paneManager_.activateTab(Tab.Help); 
+   void onActivateHelp()
+   {
+      paneManager_.activateTab(Tab.Help);
       fireEventDelayed(new ActivateHelpEvent(), 200);
    }
    @Handler
@@ -345,8 +345,8 @@ public class WorkbenchScreen extends Composite
    void onActivateConnections() { paneManager_.activateTab(Tab.Connections); }
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
-   
-   
+
+
    @Handler
    void onLayoutZoomEnvironment() { paneManager_.zoomTab(Tab.Environment); }
    @Handler
@@ -358,8 +358,8 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onLayoutZoomPackages() { paneManager_.zoomTab(Tab.Packages); }
    @Handler
-   void onLayoutZoomHelp() 
-   { 
+   void onLayoutZoomHelp()
+   {
       paneManager_.zoomTab(Tab.Help);
       fireEventDelayed(new ActivateHelpEvent(), 200);
    }
@@ -385,23 +385,23 @@ public class WorkbenchScreen extends Composite
    {
       onShowOptions();
    }
-   
+
    @Handler
    void onShowOptions()
    {
       optionsLoader_.showOptions();
    }
-   
+
    @Handler
    void onShowAccessibilityOptions()
    {
-      optionsLoader_.showOptions(AccessibilityPreferencesPane.class);
+      optionsLoader_.showOptions(AccessibilityPreferencesPane.class, false);
    }
 
    @Handler
    void onShowTerminalOptions()
    {
-      optionsLoader_.showOptions(TerminalPreferencesPane.class);
+      optionsLoader_.showOptions(TerminalPreferencesPane.class, true);
    }
 
    @Handler
@@ -409,7 +409,7 @@ public class WorkbenchScreen extends Composite
    {
       globalDisplay_.openRStudioLink("using_version_control");
    }
-   
+
    public Widget asWidget()
    {
       return this;
@@ -418,7 +418,7 @@ public class WorkbenchScreen extends Composite
    private TimeBufferedCommand paneSizesChangedCommand_;
 
    private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,0,1.0);
-   
+
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;

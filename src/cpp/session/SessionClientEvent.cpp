@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -201,6 +201,8 @@ const int kReplaceResult = 183;
 const int kReplaceUpdated = 184;
 const int kTutorialCommand = 185;
 const int kTutorialLaunch = 186;
+const int kReticulateEvent = 187;
+const int kEnvironmentChanged = 188;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -558,6 +560,10 @@ std::string ClientEvent::typeName() const
          return "tutorial_command";
       case client_events::kTutorialLaunch:
          return "tutorial_launch";
+      case client_events::kReticulateEvent:
+         return "reticulate_event";
+      case client_events::kEnvironmentChanged:
+         return "environment_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

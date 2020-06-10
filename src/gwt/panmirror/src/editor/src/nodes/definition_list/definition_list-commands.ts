@@ -1,7 +1,7 @@
 /*
  * definition_list-commands.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,12 +47,10 @@ export class InsertDefinitionList extends ProsemirrorCommand {
           const term = schema.text(termText);
           insertDefinitionList(tr, [
             schema.nodes.definition_list_term.createAndFill({}, term),
-            createDefinitionDescription(schema)
+            createDefinitionDescription(schema),
           ]);
           const start = state.selection.from;
-          tr.setSelection(
-            TextSelection.create(tr.doc, start, start + termText.length + 1)
-          ).scrollIntoView();
+          tr.setSelection(TextSelection.create(tr.doc, start, start + termText.length + 1)).scrollIntoView();
           dispatch(tr);
         }
         return true;
@@ -78,14 +76,12 @@ class InsertDefinitionListItemCommand extends ProsemirrorCommand {
         const insertNode = createFn();
         tr.insert(insertPos, insertNode);
         if (insertNode.textContent.length > 1) {
-          tr.setSelection(
-            TextSelection.create(tr.doc, insertPos, insertPos + insertNode.textContent.length + 1)
-          );
+          tr.setSelection(TextSelection.create(tr.doc, insertPos, insertPos + insertNode.textContent.length + 1));
         } else {
           setTextSelection(insertPos, 1)(tr);
         }
         tr.scrollIntoView();
-       
+
         dispatch(tr);
       }
 

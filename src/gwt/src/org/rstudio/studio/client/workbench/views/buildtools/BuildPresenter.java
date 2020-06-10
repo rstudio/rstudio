@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,7 +61,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
@@ -210,7 +209,7 @@ public class BuildPresenter extends BasePresenter
          }
       });
       eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
-                          new WorkingDirChangedHandler() {
+                          new WorkingDirChangedEvent.Handler() {
          @Override
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {

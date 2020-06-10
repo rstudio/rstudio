@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@
 
 using namespace rstudio;
 using namespace rstudio::core;
-using namespace server;
+using namespace rstudio::server;
 
 // forward-declare overlay methods
 namespace rstudio {
@@ -179,7 +179,7 @@ Error httpServerInit()
                                     boost::posix_time::milliseconds(500));
 
    // initialize
-   return server::httpServerInit(s_pHttpServer.get());
+   return rstudio::server::httpServerInit(s_pHttpServer.get());
 }
 
 void pageNotFoundHandler(const http::Request& request,

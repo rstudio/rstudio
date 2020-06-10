@@ -1,7 +1,7 @@
 /*
  * editor-extensions.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,12 +36,14 @@ import {
   PandocBlockReaderFn,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
 import { markInputRuleFilter } from '../api/input_rule';
+import { CompletionHandler } from '../api/completion';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from '../nodes/text';
@@ -72,6 +74,9 @@ import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
+import behaviorPasteText from '../behaviors/paste_text';
+import behaviorBottomPadding from '../behaviors/bottom_padding';
+import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -88,6 +93,7 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
+import markEmoji from '../marks/emoji/emoji';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -98,10 +104,12 @@ import nodeDiv from '../nodes/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
+import nodeShortcodeBlock from '../nodes/shortcode_block';
 
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
+import { completionExtension } from '../behaviors/completion/completion';
 
 export function initExtensions(
   format: EditorFormat,
@@ -148,6 +156,9 @@ export function initExtensions(
     behaviorEmptyMark,
     behaviorOutline,
     beahviorCodeBlockInput,
+    behaviorPasteText,
+    behaviorBottomPadding,
+    behaviorInsertSymbol,
 
     // nodes
     nodeDiv,
@@ -158,6 +169,7 @@ export function initExtensions(
     nodeDefinitionList,
     nodeLineBlock,
     nodeRawBlock,
+    nodeShortcodeBlock,
 
     // marks
     markStrikeout,
@@ -165,6 +177,7 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markHTMLComment,
     markRawTex,
     markRawHTML,
     markRawInline,
@@ -172,8 +185,8 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    markHTMLComment,
     markShortcode,
+    markEmoji,
   ]);
 
   // register external extensions
@@ -185,7 +198,8 @@ export function initExtensions(
   // (e.g. extensions that have registered attr editors)
   manager.register([
     attrEditExtension(pandocExtensions, manager.attrEditors()),
-    reverseSmartQuotesExtension(manager.pandocMarks())
+    reverseSmartQuotesExtension(manager.pandocMarks()),
+    completionExtension(manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
@@ -261,62 +275,62 @@ export class ExtensionManager {
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
     return this.collectFrom({
-      node: node => [node.pandoc.preprocessor]
+      node: node => [node.pandoc.preprocessor],
     });
   }
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
-    return this.pandocReaders().flatMap(
-      reader => reader.postprocessor ? [reader.postprocessor] : []
-    );
+    return this.pandocReaders().flatMap(reader => (reader.postprocessor ? [reader.postprocessor] : []));
+  }
+
+  public pandocTokensFilters(): readonly PandocTokensFilterFn[] {
+    return this.collectFrom({
+      node: node => [node.pandoc.tokensFilter],
+    });
   }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {
     return this.collectFrom({
-      node: node => [node.pandoc.blockReader]
+      node: node => [node.pandoc.blockReader],
     });
   }
 
   public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
     return this.collectFrom({
       mark: mark => [mark.pandoc.inlineHTMLReader],
-      node: node => [node.pandoc.inlineHTMLReader]
+      node: node => [node.pandoc.inlineHTMLReader],
     });
   }
 
   public pandocBlockCapsuleFilters(): readonly PandocBlockCapsuleFilter[] {
     return this.collectFrom({
-      node: node => [node.pandoc.blockCapsuleFilter]
+      node: node => [node.pandoc.blockCapsuleFilter],
     });
   }
 
   public pandocReaders(): readonly PandocTokenReader[] {
     return this.collectFrom({
       mark: mark => mark.pandoc.readers,
-      node: node => node.pandoc.readers ?? []
+      node: node => node.pandoc.readers ?? [],
     });
   }
 
   public pandocMarkWriters(): readonly PandocMarkWriter[] {
     return this.collectFrom({
-      mark: mark => [{name: mark.name, ...mark.pandoc.writer}]
+      mark: mark => [{ name: mark.name, ...mark.pandoc.writer }],
     });
   }
 
   public pandocNodeWriters(): readonly PandocNodeWriter[] {
     return this.collectFrom({
       node: node => {
-        return node.pandoc.writer
-          ? [{name: node.name, write: node.pandoc.writer!}]
-          : [];
-      }
+        return node.pandoc.writer ? [{ name: node.name, write: node.pandoc.writer! }] : [];
+      },
     });
   }
 
   public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
-    return this.collect<ProsemirrorCommand>(
-      extension => extension.commands?.(schema, ui)
-    );
+    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
   public codeViews() {
@@ -331,7 +345,7 @@ export class ExtensionManager {
 
   public attrEditors() {
     return this.collectFrom({
-      node: node => [node.attr_edit?.()]
+      node: node => [node.attr_edit?.()],
     });
   }
 
@@ -355,6 +369,10 @@ export class ExtensionManager {
     return this.collect(extension => extension.fixups?.(schema, view));
   }
 
+  public completionHandlers() : readonly CompletionHandler[] {
+    return this.collect(extension => extension.completionHandlers?.());
+  }
+
   // NOTE: return value not readonly b/c it will be fed directly to a
   // Prosemirror interface that doesn't take readonly
   public inputRules(schema: Schema): InputRule[] {
@@ -364,7 +382,7 @@ export class ExtensionManager {
 
   private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {
     return this.collectFrom({
-      extension: extension => collector(extension) ?? []
+      extension: extension => collector(extension) ?? [],
     });
   }
 
@@ -378,11 +396,10 @@ export class ExtensionManager {
    * extension parts.
    */
   private collectFrom<T>(visitor: {
-    extension?: (extension: Extension) => ReadonlyArray<T | undefined | null>,
-    mark?: (mark: PandocMark) => ReadonlyArray<T | undefined | null>,
-    node?: (node: PandocNode) => ReadonlyArray<T | undefined | null>
-  }) : T[] {
-
+    extension?: (extension: Extension) => ReadonlyArray<T | undefined | null>;
+    mark?: (mark: PandocMark) => ReadonlyArray<T | undefined | null>;
+    node?: (node: PandocNode) => ReadonlyArray<T | undefined | null>;
+  }): T[] {
     const results: Array<T | undefined | null> = [];
 
     this.extensions.forEach(extension => {
@@ -397,8 +414,6 @@ export class ExtensionManager {
       }
     });
 
-    return results.filter(
-      value => typeof(value) !== "undefined" && value !== null
-    ) as T[];
+    return results.filter(value => typeof value !== 'undefined' && value !== null) as T[];
   }
 }

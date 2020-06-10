@@ -1,7 +1,7 @@
 /*
  * ConsoleHistoryAddedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,14 +18,11 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class ConsoleHistoryAddedEvent 
-   extends CrossWindowEvent<ConsoleHistoryAddedEvent.Handler>
+public class ConsoleHistoryAddedEvent extends CrossWindowEvent<ConsoleHistoryAddedEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleHistoryAddedEvent.Handler> TYPE =
-      new GwtEvent.Type<ConsoleHistoryAddedEvent.Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
   
    public interface Handler extends EventHandler
    {
@@ -47,7 +44,7 @@ public class ConsoleHistoryAddedEvent
    }
          
    @Override
-   public Type<ConsoleHistoryAddedEvent.Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

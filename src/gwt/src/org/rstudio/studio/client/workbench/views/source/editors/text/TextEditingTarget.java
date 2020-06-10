@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,6 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -92,6 +91,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
@@ -269,6 +269,8 @@ public class TextEditingTarget implements
       TextEditorContainer editorContainer();
  
       void manageCommandUI();
+      
+      void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1580,14 +1582,6 @@ public class TextEditingTarget implements
                      return;
                   }
                   
-                  // don't try to set breakpoints if the R version is too old
-                  if (!session_.getSessionInfo().getHaveSrcrefAttribute())
-                  {
-                     view_.showWarningBar("Editor breakpoints require R 2.14 " +
-                                          "or newer.");
-                     return;
-                  }
-                  
                   Position breakpointPosition = 
                         Position.create(event.getLineNumber() - 1, 1);
                   
@@ -1772,6 +1766,9 @@ public class TextEditingTarget implements
          events_,
          releaseOnDismiss_
       );
+      
+      // provide find replace button to view
+      view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
       
       // update status bar when visual mode status changes
       releaseOnDismiss_.add(
@@ -2258,14 +2255,16 @@ public class TextEditingTarget implements
    }
    
    @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       if (visualMode_.isActivated())
-         return visualMode_.getCommandPaletteEntries();
+      {
+         return visualMode_.getCommandPaletteItems();
+      }
       else
          return null;
    }
-   
+
    @Override
    public boolean canCompilePdf()
    {
@@ -7355,6 +7354,22 @@ public class TextEditingTarget implements
       return StringUtil.isNullOrEmpty(property)
             ? (getTextFileType().isRmd() && defaultValue)
             : Integer.parseInt(property) > 0;
+   }
+   
+   // similar to get but will write the default value if it's used
+   public boolean establishPreferredOutlineWidgetVisibility(boolean defaultValue)
+   {
+      String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
+      if (!StringUtil.isNullOrEmpty(property)) 
+      {
+         return Integer.parseInt(property) > 0;
+      }
+      else
+      {
+         boolean visible = getTextFileType().isRmd() && defaultValue;
+         setPreferredOutlineWidgetVisibility(visible);
+         return visible;
+      }
    }
    
    public boolean isActiveDocument()

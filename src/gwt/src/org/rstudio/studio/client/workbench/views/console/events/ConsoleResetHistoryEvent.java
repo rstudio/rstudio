@@ -1,7 +1,7 @@
 /*
  * ConsoleResetHistoryEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,16 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleResetHistoryEvent extends GwtEvent<ConsoleResetHistoryHandler>
+public class ConsoleResetHistoryEvent extends GwtEvent<ConsoleResetHistoryEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleResetHistoryHandler> TYPE =
-      new GwtEvent.Type<ConsoleResetHistoryHandler>();
-    
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onConsoleResetHistory(ConsoleResetHistoryEvent event);
+   }
+
    public ConsoleResetHistoryEvent(ConsoleResetHistory reset)
    {
       reset_ = reset;
@@ -40,13 +45,13 @@ public class ConsoleResetHistoryEvent extends GwtEvent<ConsoleResetHistoryHandle
    }
    
    @Override
-   protected void dispatch(ConsoleResetHistoryHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsoleResetHistory(this);
    }
 
    @Override
-   public GwtEvent.Type<ConsoleResetHistoryHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

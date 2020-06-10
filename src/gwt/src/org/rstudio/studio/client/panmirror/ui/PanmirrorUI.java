@@ -1,7 +1,7 @@
 /*
  * PanmirrorUI.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,12 +31,16 @@ public class PanmirrorUI
       this.context = context;
       this.display = display;
       this.execute = execute;
+      this.math = new PanmirrorUIMath();
+      this.prefs = new PanmirrorUIPrefs();
       this.dialogs = new PanmirrorDialogs(this.context);
    }
    
    public PanmirrorDialogs dialogs;
    public PanmirrorUIDisplay display;
    public PanmirrorUIExecute execute;
+   public PanmirrorUIMath math;
+   public PanmirrorUIPrefs prefs;
    public PanmirrorUIContext context;
    public JsObject images;
 }

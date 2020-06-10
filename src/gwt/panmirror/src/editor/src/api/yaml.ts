@@ -1,7 +1,7 @@
 /*
  * yaml.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import { findTopLevelBodyNodes } from './node';
 
 import yaml from 'js-yaml';
 
-
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
 }
@@ -28,36 +27,33 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
 }
 
-
 export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
 
-export function firstYamlBlock(code: string) : { [key: string]: any} | null {
-  kYamlBlocksRegex.lastIndex = 0;
-  const match = kYamlBlocksRegex.exec(code);
-  kYamlBlocksRegex.lastIndex = 0;
-  if (match) {
-    // strip trailing marker (--- or ...)
-    const yamlCode = match[2].replace(/[\t >]*(?:---|\.\.\.)$/, '');
+const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
+
+export function firstYamlBlock(code: string): { [key: string]: any } | null {
+  const match = code.match(kFirstYamlBlockRegex);
+  if (match && match.index === 0) {
+    const yamlCode = match[1];
     try {
       const yamlParsed = yaml.safeLoad(yamlCode, {
-        onWarning: logException
+        onWarning: logException,
       });
       if (typeof yamlParsed === 'object') {
         return yamlParsed;
       } else {
         return null;
       }
-    } catch(e) {
+    } catch (e) {
       logException(e);
       return null;
     }
-  
   } else {
     return null;
   }
 }
 
 function logException(e: Error) {
-  // TODO: log exceptions (we don't want to use console.log in production code, so this would 
+  // TODO: log exceptions (we don't want to use console.log in production code, so this would
   // utilize some sort of external logging facility)
 }

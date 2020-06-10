@@ -1,7 +1,7 @@
 /*
  * SatelliteApplication.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -149,12 +149,9 @@ public class SatelliteApplication
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
-      if (pUserPrefs_.get().ariaApplicationRole().getValue())
-      {
-         // "application" role prioritizes application keyboard handling
-         // over screen-reader shortcuts
-         view_.getWidget().getElement().setAttribute("role", "application");
-      }
+      // "application" role prioritizes application keyboard handling
+      // over screen-reader shortcuts
+      view_.getWidget().getElement().setAttribute("role", "application");
 
       // show the view
       view_.show(satellite_.getParams());
@@ -173,6 +170,7 @@ public class SatelliteApplication
    private SatelliteApplicationView view_;
    private Satellite satellite_;
    private Provider<AceThemes> pAceThemes_;
+   @SuppressWarnings("unused")
    private Provider<UserPrefs> pUserPrefs_;
    private ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 }
