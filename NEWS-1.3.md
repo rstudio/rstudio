@@ -37,6 +37,7 @@
 - Fix error when some HTML comments are included in R Markdown documents (#6997)
 - Fix issue where toolbar buttons were missing on initialization (#7076)
 - Fix error in Viewer pane when previewing Distill blogs (#6945)
+- Fix problem entering tilde on German keyboard (#7092)
 
 ### RStudio Server Pro
 
