@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Mark } from 'prosemirror-model';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 

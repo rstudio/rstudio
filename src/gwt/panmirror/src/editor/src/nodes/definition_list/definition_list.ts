@@ -40,7 +40,7 @@ import {
 } from './definition_list-pandoc';
 
 import './definition_list-styles.css';
-import { emptyNodeplaceholderPlugin } from '../../api/placeholder';
+import { emptyNodePlaceholderPlugin } from '../../api/placeholder';
 
 const extension: Extension = {
   nodes: [
@@ -121,7 +121,7 @@ const extension: Extension = {
   },
 
   plugins: (schema: Schema, ui: EditorUI) => {
-    return [emptyNodeplaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
+    return [emptyNodePlaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
   },
 };
 

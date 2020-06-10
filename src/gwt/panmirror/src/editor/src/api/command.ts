@@ -24,8 +24,7 @@ import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
-import { OmniInsert, omniInsertPriorityCompare } from './omni_insert';
-import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
+import { OmniInsert } from './omni_insert';
 
 export enum EditorCommandId {
   // text editing

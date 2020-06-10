@@ -66,6 +66,7 @@ import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
+import { insertRmdChunk } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -83,10 +84,12 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
+import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
+import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
@@ -95,10 +98,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { ExtensionManager, initExtensions } from './editor-extensions';
-import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
-import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
-import { insertRmdChunk } from '../api/rmd';
+
 
 export interface EditorCode {
   code: string;

@@ -1,10 +1,9 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
+import { NodeWithPos, findChildrenByType } from 'prosemirror-utils';
 import { EditorState } from 'prosemirror-state';
 
 import { bodyElement } from './dom';
-import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 import {
   EditorOutlineItemType,
   kYamlMetadataOutlineItenItem,
@@ -12,7 +11,6 @@ import {
   kRmdchunkOutlineItemType,
 } from './outline';
 import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition } from './navigation';
 import { restoreSelection } from './selection';
 import { scrollToPos } from './scroll';
 

@@ -31,8 +31,7 @@ import {
   emojiFromChar,
   emojiForAllSkinTones,
   Emoji,
-  emojiWithSkinTonePreference,
-  emojiFromString,
+  emojiWithSkinTonePreference
 } from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';

@@ -27,10 +27,7 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
-import {
-  emptyNodeplaceholderPlugin as emptyNodePlaceholderPlugin,
-  emptyNodeplaceholderPlugin,
-} from '../api/placeholder';
+import { emptyNodePlaceholderPlugin } from '../api/placeholder';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;

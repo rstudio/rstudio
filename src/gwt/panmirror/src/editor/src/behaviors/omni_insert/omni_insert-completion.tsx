@@ -146,7 +146,7 @@ const OmniInserterView: React.FC<OmniInserter> = inserter => {
       <tbody>
         <tr>
           <td className={'pm-omni-insert-icon'}>
-            <img src={inserter.image()} />
+            <img src={inserter.image()} alt="" />
           </td>
           <td>
             <div className={'pm-omni-insert-name pm-completion-item-text'}>{inserter.name}</div>

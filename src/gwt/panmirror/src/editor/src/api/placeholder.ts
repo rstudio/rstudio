@@ -19,7 +19,7 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { findParentNode } from 'prosemirror-utils';
 
-export function emptyNodeplaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
+export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
   const pluginKey = new PluginKey(nodeType.name + '-empty-placeholder');
 
   return new Plugin<DecorationSet>({
