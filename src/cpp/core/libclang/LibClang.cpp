@@ -20,22 +20,27 @@
 
 #include <boost/regex.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/RegexUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <core/Log.hpp>
+#include <core/RegexUtils.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
 
-#define LOAD_CLANG_SYMBOL(name) \
-   error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
-   if (error) \
-   { \
-      Error unloadError = unload(); \
-      if (unloadError) \
-         LOG_ERROR(unloadError); \
-      return error; \
-   }
+#define LOAD_CLANG_SYMBOL(name)                                                \
+   do                                                                          \
+   {                                                                           \
+      Error error =                                                            \
+         core::system::loadSymbol(pLib_, "clang_" #name, (void**) &name);      \
+      if (error)                                                               \
+      {                                                                        \
+         Error unloadError = unload();                                         \
+         if (unloadError)                                                      \
+            LOG_ERROR(unloadError);                                            \
+         return error;                                                         \
+      }                                                                        \
+   } while (0);
 
 namespace rstudio {
 namespace core {
