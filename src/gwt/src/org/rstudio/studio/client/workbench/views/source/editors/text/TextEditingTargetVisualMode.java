@@ -1286,16 +1286,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             format.rmdExtensions.bookdownXRefUI = 
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
-            // enable blogdown math in code (e.g. `$math$`) however don't enable
-            // it if the user has expressely added +tex_math_dollars to the format (as this
-            // means that they've arranged for an alternate means of rendering math e.g. a 
-            // goldmark extension)
-            boolean texMathDollarsEnabled = format.pandocExtensions.contains("+tex_math_dollars");
-            if (!texMathDollarsEnabled)
-            {
-               format.rmdExtensions.blogdownMathInCode = 
-                  hasBlogdownMathInCode() || rmdExtensions.blogdownMathInCode;
-            }
+            // enable blogdown math in code (e.g. `$math$`) only when explicitly requested
+            format.rmdExtensions.blogdownMathInCode = rmdExtensions.blogdownMathInCode;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
