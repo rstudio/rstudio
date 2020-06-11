@@ -3,6 +3,7 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       .orderedOptions {
          margin-top: 10px;
@@ -11,22 +12,28 @@
    
    <g:VerticalPanel styleName="{res.styles.dialog}">
    
-      <g:Label text="List type:"/>
-      <rw:SelectWidget styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="listType_"></rw:SelectWidget>
+      <rw:FormLabel for="{ElementIds.getVisualMdListType}" text="List type:"/>
+      <rw:SelectWidget elementId="{ElementIds.getVisualMdListType}" styleName="{res.styles.fullWidth} {res.styles.spaced}"
+                       ui:field="listType_"/>
   
-      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Tight layout (less vertical space between list items)" ui:field="tight_"></g:CheckBox>
+      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Tight layout (less vertical space between list items)"
+                  ui:field="tight_"/>
   
        <g:VerticalPanel styleName="{style.orderedOptions}" ui:field="orderedOptionsPanel_">
        
-         <g:Label text="Starting number:"/>
-         <rw:NumericTextBox value="1" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="startingNumber_"></rw:NumericTextBox>
+         <rw:FormLabel for="{ElementIds.getVisualMdListOrder}" text="Starting number:"/>
+         <rw:NumericTextBox elementId="{ElementIds.getVisualMdListOrder}" value="1" styleName="{res.styles.fullWidth} {res.styles.spaced}"
+                            ui:field="startingNumber_"/>
       
-         <g:Label text="Number style:"/>
-         <rw:SelectWidget styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="numberStyle_"></rw:SelectWidget>
+         <rw:FormLabel for="{ElementIds.getVisualMdListNumberStyle}" text="Number style:"/>
+         <rw:SelectWidget elementId="{ElementIds.getVisualMdListNumberStyle}" styleName="{res.styles.fullWidth} {res.styles.spaced}"
+                          ui:field="numberStyle_"/>
          
-         <g:Label text="Number delimiter:"/>
-         <rw:SelectWidget styleName="{res.styles.fullWidth}" ui:field="numberDelimiter_"></rw:SelectWidget>
-         <g:Label styleName="{res.styles.infoLabel} {res.styles.spaced}" text="Pandoc HTML output does not support custom number delimiters, so the editor will always display the Period style" />
+         <rw:FormLabel for="{ElementIds.getVisualMdListNumberDelim}" text="Number delimiter:"/>
+         <rw:SelectWidget elementId="{ElementIds.getVisualMdListNumberDelim}"  styleName="{res.styles.fullWidth}"
+                          ui:field="numberDelimiter_"/>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdListNumberDelimNote}" styleName="{res.styles.infoLabel} {res.styles.spaced}"
+                       text="Pandoc HTML output does not support custom number delimiters, so the editor will always display the Period style" />
        
        </g:VerticalPanel>  	
       	

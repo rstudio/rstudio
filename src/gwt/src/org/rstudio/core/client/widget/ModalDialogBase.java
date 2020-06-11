@@ -692,7 +692,13 @@ public abstract class ModalDialogBase extends DialogBox
 
    /**
     * Set focus on first keyboard focusable element in dialog, as set by
-    * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
+    * refreshFocusableElements or setFirstFocusableElement.
+    *
+    * Invoked when Tabbing off the last control in the modal dialog to set focus back to
+    * the first control, and by default to set initial focus when the dialog is shown.
+    *
+    * To set focus on a different control when the dialog is displayed, override
+    * focusInitialControl, instead.
     */
    protected void focusFirstControl()
    {

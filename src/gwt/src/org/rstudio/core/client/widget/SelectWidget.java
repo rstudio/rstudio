@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -28,6 +30,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class SelectWidget extends Composite
+                          implements CanSetControlId
 {
    public static String ExternalLabel = null;
 
@@ -260,6 +263,18 @@ public class SelectWidget extends Composite
       listBox_.insertItem(label, value, index);
    }
    
+   @Override
+   public void setElementId(String id)
+   {
+      listBox_.getElement().setId(id);
+      label_.setFor(id);
+   }
+
+   public void setDescribedBy(String id)
+   {
+      Roles.getListboxRole().setAriaDescribedbyProperty(listBox_.getElement(), Id.of(id));
+   }
+
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private FormLabel label_ = null;
