@@ -21,6 +21,12 @@
    list(ready = .rs.scalar(ready), packages = packages)
 })
 
+.rs.addFunction("stopf", function(fmt, ..., call. = FALSE)
+{
+   msg <- sprintf(fmt, ...)
+   stop(msg, call. = call.)
+})
+
 .rs.addFunction("error", function(...)
 {
    list(

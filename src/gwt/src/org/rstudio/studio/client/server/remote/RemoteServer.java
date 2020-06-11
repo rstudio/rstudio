@@ -147,6 +147,7 @@ import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -1046,6 +1047,11 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, MARKDOWN_GET_COMPLETIONS, params, requestCallback);
+   }
+   
+   public void pythonFindInterpreters(ServerRequestCallback<JsArray<PythonInterpreter>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PYTHON_FIND_INTERPRETERS, requestCallback);
    }
    
    public void pythonGetCompletions(String line,
@@ -6585,6 +6591,7 @@ public class RemoteServer implements Server
    
    private static final String MARKDOWN_GET_COMPLETIONS = "markdown_get_completions";
    
+   private static final String PYTHON_FIND_INTERPRETERS = "python_find_interpreters";
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    private static final String PYTHON_GO_TO_HELP = "python_go_to_help";
