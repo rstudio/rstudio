@@ -25,7 +25,7 @@ import { EditorUI } from './ui';
 import { BaseKeyBinding } from './basekeys';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from './transaction';
 import { EditorOptions } from './options';
-import { PandocExtensions } from './pandoc';
+import { PandocExtensions, PandocEngine } from './pandoc';
 import { FixupFn } from './fixup';
 import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
@@ -50,6 +50,7 @@ export interface Extension {
 export interface ExtensionContext {
   pandocExtensions: PandocExtensions;
   pandocCapabilities: PandocCapabilities;
+  pandocEngine: PandocEngine;
   ui: EditorUI;
   format: EditorFormat;
   options: EditorOptions;
