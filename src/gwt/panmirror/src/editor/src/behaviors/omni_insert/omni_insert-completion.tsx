@@ -26,7 +26,7 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 
 import './omni_insert-completion.css';
 import { EditorUI } from '../../api/ui';
-import { placeholderDecoration } from '../../api/placeholder';
+import { placeholderDecoration, emptyNodePlaceholderPlugin } from '../../api/placeholder';
 import { kAddToHistoryTransaction } from '../../api/transaction';
 import { setTextSelection } from 'prosemirror-utils';
 
@@ -35,7 +35,32 @@ export function omniInsertCompletionHandler(
   ui: EditorUI,
 ): CompletionHandler<OmniInserter> {
   return {
+
+    id: 'E305158D-20D6-474D-84E6-06607CA58578',
+
     completions: omniInsertCompletions(omniInserters, ui),
+
+    filter: (completions: OmniInserter[], state: EditorState, token: string) => {
+      
+      // match contents of name or keywords (and verify the command is enabled)
+      return completions
+        .filter(inserter => {
+          return (
+            token.length === 0 ||
+            inserter.name.toLowerCase().indexOf(token) !== -1 ||
+            inserter.keywords?.some(keyword => keyword.indexOf(token) !== -1)
+          );
+        })
+        .filter(inserter => {
+          return inserter.command(state);
+        })
+        .sort(
+          firstBy(omniInsertGroupCompare)
+            .thenBy(omniInsertPriorityCompare, { direction: 'desc' })
+            .thenBy('name'),
+        );
+
+    },
 
     replace(view: EditorView, pos: number, completion: OmniInserter | null) {
       // helper to remove command text
@@ -102,33 +127,17 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
             ])
           : undefined;
 
-      // return the completion handler
+      // return the completion result
       return {
         // match at the /
         pos: selection.head - match[0].length,
 
-        // look through registered onmi inserters for completions
-        completions: (state: EditorState) => {
-          // match contents of name or keywords (and verify the command is enabled)
-          const inserters = omniInserters
-            .filter(inserter => {
-              return (
-                query.length === 0 ||
-                inserter.name.toLowerCase().indexOf(query) !== -1 ||
-                inserter.keywords?.some(keyword => keyword.indexOf(query) !== -1)
-              );
-            })
-            .filter(inserter => {
-              return inserter.command(state);
-            })
-            .sort(
-              firstBy(omniInsertGroupCompare)
-                .thenBy(omniInsertPriorityCompare, { direction: 'desc' })
-                .thenBy('name'),
-            );
+        // unique identifier for this request
+        token: query,
 
-          // resolve prosmie
-          return Promise.resolve(inserters);
+        // return all omniInserters (will refine via filter)
+        completions: (state: EditorState) => {
+          return Promise.resolve(omniInserters);
         },
 
         // search placehodler decorator if there is no query

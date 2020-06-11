@@ -26,6 +26,7 @@ export const kCompletionDefaultWidth = 180;
 
 export interface CompletionResult<T = any> {
   pos: number;
+  token: string;
   completions: (state: EditorState) => Promise<T[]>;
   decorations?: DecorationSet;
 }
@@ -35,9 +36,16 @@ export interface CompletionHeaderProps {
 }
 
 export interface CompletionHandler<T = any> {
+
+  // unique id
+  id: string;
+
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
   completions(text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult | null;
+
+  // filter a previously returned set of completions 
+  filter?: (completions: T[], state: EditorState, token: string, prevToken?: string) => T[] | null;
 
   // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
   replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;

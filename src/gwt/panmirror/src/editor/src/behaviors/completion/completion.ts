@@ -40,6 +40,7 @@ export function completionExtension(handlers: readonly CompletionHandler[], ui: 
 interface CompletionState {
   handler?: CompletionHandler;
   result?: CompletionResult;
+  prevToken?: string;
 }
 
 const key = new PluginKey<CompletionState>('completion');
@@ -61,6 +62,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
   private version = 0;
+  private allCompletions: any[] = [];
   private completions: any[] = [];
   private horizontal = false;
   private selectedIndex = 0;
@@ -73,7 +75,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       key,
       state: {
         init: () => ({}),
-        apply: (tr: Transaction) => {
+        apply: (tr: Transaction, prevState: CompletionState) => {
           // if we don't have a view then bail
           if (!this.view) {
             return {};
@@ -101,7 +103,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
           for (const handler of handlers) {
             const result = handler.completions(textBefore, tr.doc, tr.selection);
             if (result) {
-              return { handler, result };
+
+              // if we have a previous result and it shares an id and pos with this one, then 
+              // include the prevToken in the state (so filtering can be done on existing results)
+              let prevToken: string | undefined ;
+              if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
+                prevToken = prevState.result.token;
+              }
+          
+              // return state
+              return { handler, result, prevToken };
             }
           }
 
@@ -207,28 +218,60 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private updateCompletions(view: EditorView) {
+    
     const state = key.getState(view.state);
 
-    if (state?.handler) {
-      // track the request version to invalidate the result if an
-      // update happens after it goes into flight
-      const requestVersion = this.version;
+    if (state?.handler && state?.result) {
+      
+      // first see if we can do this exclusively via filter
+      const filteredCompletions = state.prevToken && state.handler.filter 
+        ? state.handler.filter(this.allCompletions, view.state, state.result.token, state.prevToken) 
+        : null;
+      
+      // if we got it via filter then set from that and render
+      if (filteredCompletions) {
 
-      // request completions
-      return state.result!.completions(view.state).then(completions => {
-        // if the version has incremented since the request then return false
-        if (this.version !== requestVersion) {
-          return false;
-        }
-
-        // save completions
-        this.setCompletions(completions, state.handler?.view.horizontal);
-
-        // render them
+        this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
         this.renderCompletions(view);
-      });
+
+      // otherwise make an async request for the completions, update allCompletions,
+      // and then apply any filter we have (allows the completer to just return
+      // everything from the aysnc query and fall back to the filter for refinement)
+      } else {
+
+        // track the request version to invalidate the result if an
+        // update happens after it goes into flight
+        const requestVersion = this.version;
+
+        // request completions
+        state.result.completions(view.state).then(completions => {
+
+          // if we don't have a handler or result then return false
+          if (!state.handler || !state.result) {
+            return false;
+          }
+
+          // if the version has incremented since the request then return false
+          if (this.version !== requestVersion) {
+            return false;
+          }
+
+          // save completions
+          this.setAllCompletions(completions, state.handler.view.horizontal);
+
+          // if there is a filter then call it and update displayed completions
+          const displayedCompletions = state.handler.filter ? state.handler.filter(completions, view.state, state.result.token) : null;
+          if (displayedCompletions) {
+            this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+          }
+
+          // render them
+          this.renderCompletions(view);
+
+        });
+      }
     } else {
-      this.setCompletions([]);
+      this.setAllCompletions([]);
       this.hideCompletionPopup();
     }
   }
@@ -335,7 +378,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private hideCompletionPopup() {
-    this.setCompletions([]);
+    this.setAllCompletions([]);
     if (this.completionPopup) {
       destroyCompletionPopup(this.completionPopup);
       this.completionPopup = null;
@@ -346,7 +389,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setCompletions(completions: any[], horizontal = false) {
+  private setAllCompletions(completions: any[], horizontal = false) {
+    this.allCompletions = completions;
+    this.setDisplayedCompletions(completions, horizontal);
+  }
+
+  private setDisplayedCompletions(completions: any[], horizontal = false) {
     this.completions = completions;
     this.horizontal = !!horizontal;
     this.selectedIndex = 0;
