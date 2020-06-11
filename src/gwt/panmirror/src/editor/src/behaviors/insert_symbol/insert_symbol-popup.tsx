@@ -61,12 +61,13 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const symbols = React.useMemo(() => props.symbolDataProvider.getSymbols(selectedSymbolGroup), [
     selectedSymbolGroup,
-    props.symbolDataProvider
+    preferenceChanged,
+    props.symbolDataProvider,
   ]);
   const filteredSymbols = React.useMemo(() => props.symbolDataProvider.filterSymbols(filterText, symbols), [
     filterText,
     symbols,
-    props.symbolDataProvider
+    props.symbolDataProvider,
   ]);
 
   // If the symbol list gets shorter than the selected index, move

@@ -21,8 +21,8 @@ import { InputRule, inputRules } from 'prosemirror-inputrules';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
-import { Extension } from '../../api/extension';
+import { PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { kTexFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
@@ -36,7 +36,10 @@ import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './r
 
 const kTexPlaceholder = 'tex';
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions } = context;
+
   if (!pandocExtensions.raw_tex) {
     return null;
   }

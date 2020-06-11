@@ -691,15 +691,15 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(
-      this.format,
-      this.options,
-      this.context.ui,
-      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
-      this.context.extensions,
-      this.pandocFormat.extensions,
-      this.pandocCapabilities,
-    );
+    return initExtensions({
+      format: this.format,
+      options: this.options,
+      ui: this.context.ui,
+      events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+      pandocExtensions: this.pandocFormat.extensions,
+      pandocCapabilities: this.pandocCapabilities,
+      pandocEngine: this.context.pandoc
+    }, this.context.extensions);
   }
 
   private registerCompletionExtension() {

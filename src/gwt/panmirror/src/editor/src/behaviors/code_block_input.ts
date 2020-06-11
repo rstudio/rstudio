@@ -19,22 +19,18 @@ import { InputRule } from 'prosemirror-inputrules';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions } from '../api/pandoc';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 import { pandocAttrFrom } from '../api/pandoc_attr';
 import { BaseKey } from '../api/basekeys';
 import { fancyQuotesToSimple } from '../api/quote';
 import { markIsActive } from '../api/mark';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions, format } = context;
+
   const fencedAttributes = pandocExtensions.fenced_code_attributes || !!format.rmdExtensions.codeChunks;
 
   return {

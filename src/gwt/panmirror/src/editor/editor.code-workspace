@@ -8,6 +8,10 @@
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
-    "typescript.tsserver.log": "terse"
+    "typescript.tsserver.log": "terse",
+    "editor.formatOnSave": true,
+    "prettier.configPath": ".prettierrc",
+    "prettier.packageManager": "yarn",
+    "prettier.singleQuote": true
 	}
 }

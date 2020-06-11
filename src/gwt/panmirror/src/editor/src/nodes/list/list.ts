@@ -19,12 +19,12 @@ import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-li
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
 import { EditorUI } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocTokenType } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
@@ -64,7 +64,10 @@ export enum ListNumberDelim {
 
 const plugin = new PluginKey('list');
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext) : Extension => {
+
+  const { pandocExtensions } = context;
+ 
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,

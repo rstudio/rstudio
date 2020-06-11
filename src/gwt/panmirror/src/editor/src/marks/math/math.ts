@@ -18,16 +18,12 @@ import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { Extension } from '../../api/extension';
-import { PandocTokenType, PandocToken, PandocOutput, PandocExtensions } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat } from '../../api/format';
-import { EditorUI } from '../../api/ui';
 import { kCodeText } from '../../api/code';
 import { MarkInputRuleFilter } from '../../api/input_rule';
-import { EditorEvents } from '../../api/events';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
@@ -35,7 +31,6 @@ import { mathHighlightPlugin } from './math-highlight';
 import { MathPreviewPlugin } from './math-preview';
 
 import './math-styles.css';
-import { EditorOptions } from '../../api/options';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -51,14 +46,10 @@ export enum MathType {
 const MATH_TYPE = 0;
 const MATH_CONTENT = 1;
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  ui: EditorUI,
-  format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions, ui, format, events } = context;
+
   if (!pandocExtensions.tex_math_dollars) {
     return null;
   }
@@ -120,24 +111,24 @@ const extension = (
             // extract math from backtick code for blogdown
             ...(blogdownMathInCode
               ? [
-                  {
-                    token: PandocTokenType.Code,
-                    mark: 'math',
-                    match: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
-                    },
-                    getAttrs: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return {
-                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
-                      };
-                    },
-                    getText: (tok: PandocToken) => {
-                      return tok.c[kCodeText];
-                    },
+                {
+                  token: PandocTokenType.Code,
+                  mark: 'math',
+                  match: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
                   },
-                ]
+                  getAttrs: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return {
+                      type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                    };
+                  },
+                  getText: (tok: PandocToken) => {
+                    return tok.c[kCodeText];
+                  },
+                },
+              ]
               : []),
           ],
           writer: {

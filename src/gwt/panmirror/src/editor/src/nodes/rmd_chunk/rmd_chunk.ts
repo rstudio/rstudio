@@ -15,16 +15,14 @@
 
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
-import { Extension } from '../../api/extension';
-import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocOutput, PandocTokenType } from '../../api/pandoc';
 
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import { EditorUI } from '../../api/ui';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat, kBookdownDocType } from '../../api/format';
+import { kBookdownDocType } from '../../api/format';
 import { rmdChunk, EditorRmdChunk, insertRmdChunk } from '../../api/rmd';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
@@ -34,13 +32,10 @@ import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
 
-const extension = (
-  _pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  format: EditorFormat,
-  options: EditorOptions,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { ui, options, format } = context;
+
   if (!format.rmdExtensions.codeChunks) {
     return null;
   }
