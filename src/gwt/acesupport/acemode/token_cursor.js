@@ -1119,7 +1119,7 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidForStartOfStatement = function()
    {
       var type = this.currentType();
-     if (type.search("paren") !== -1)
+     if (type === "paren.keyword.operator" || type.search("paren.paren_color") !== -1)
          return isLeftBracket(this.currentValue());
 
       var value = this.currentValue();

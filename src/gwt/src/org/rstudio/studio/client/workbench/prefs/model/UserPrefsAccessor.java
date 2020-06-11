@@ -1066,7 +1066,12 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> rainbowParentheses()
    {
-      return bool("rainbow_parentheses", false);
+      return bool(
+         "rainbow_parentheses",
+         "Rainbow parentheses",
+         "Whether to color parentheses in a variety in colors.",
+         false
+         );
    }
 
    /**
