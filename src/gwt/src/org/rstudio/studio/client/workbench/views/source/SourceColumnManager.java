@@ -57,8 +57,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -90,8 +88,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class SourceColumnManager implements SessionInitHandler,
-                                            CommandPaletteEntrySource,
+public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
@@ -164,7 +161,6 @@ public class SourceColumnManager implements SessionInitHandler,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
-      events_.addHandler(SessionInitEvent.TYPE,this);
 
       events_.addHandler(EditingTargetSelectedEvent.TYPE, new EditingTargetSelectedEvent.Handler()
       {
@@ -201,6 +197,37 @@ public class SourceColumnManager implements SessionInitHandler,
                column.manageSourceNavigationCommands());
          }
       });
+
+      new JSObjectStateValue("source-column-manager",
+                             "column-info",
+                              ClientState.PERSISTENT,
+                              session_.getSessionInfo().getClientState(),
+                              false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value == null)
+            {
+               columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+               return;
+            }
+            columnState_ = value.cast();
+            for (int i = 0; i < columnState_.getNames().length; i++)
+            {
+               String name = columnState_.getNames()[i];
+               if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
+                  add(name, false);
+            }
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            JsObject object = columnState_.<JsObject>cast().clone();
+            return columnState_.cast();
+         }
+      };
    }
 
    public String add()
@@ -823,51 +850,6 @@ public class SourceColumnManager implements SessionInitHandler,
       {
          activeColumn_.getActiveEditor().endDebugHighlighting();
       }
-   }
-
-   @Override
-   public void onSessionInit(SessionInitEvent event)
-   {
-      new JSObjectStateValue(
-         "source-column-manager",
-         "column-info",
-         ClientState.PROJECT_PERSISTENT,
-         session_.getSessionInfo().getClientState(),
-         false)
-      {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value == null)
-            {
-               columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
-               return;
-            }
-            columnState_ = value.cast();
-            ArrayList<String> names = getNames(false);
-            for (int i = 0;
-                 i < columnState_.getNames().length && getSize()< columnState_.getNames().length;
-                 i++)
-            {
-               String name = columnState_.getNames()[i];
-               if (getByName(name) == null)
-                  add(name, false);
-               else
-                  names.remove(name);
-            }
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            if (columnState_ != null)
-               return columnState_.cast();
-
-            columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
-            JsObject object = columnState_.<JsObject>cast().clone();
-            return object;
-         }
-      };
    }
 
    @Override
