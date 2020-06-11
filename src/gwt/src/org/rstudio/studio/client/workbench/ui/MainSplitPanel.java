@@ -43,7 +43,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       protected State() {}
 
       public native final boolean hasSplitterPos() /*-{
-         return this.splitterpos == 0;
+         return this.splitterpos && this.splitterpos.length;
       }-*/;
 
       public native final int[] getSplitterPos() /*-{

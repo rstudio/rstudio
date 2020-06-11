@@ -1540,7 +1540,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute()
             {
-               columnManager_.closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+               columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeActive);
             }
          });
       }
@@ -1548,7 +1548,7 @@ public class Source implements InsertSourceHandler,
       {
          // this is a satellite (or we don't need to query satellites)--just
          // close our own tabs
-         columnManager_.closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+         columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeActive);
       }
    }
 

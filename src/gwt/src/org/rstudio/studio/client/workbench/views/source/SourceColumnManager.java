@@ -1198,27 +1198,31 @@ public class SourceColumnManager implements SessionInitHandler,
 
    public void closeAllTabs(boolean excludeActive, boolean excludeMain)
    {
-      columnList_.forEach((column) -> {
-         if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
-         {
-            cpsExecuteForEachEditor(column.getEditors(),
-               new CPSEditingTargetCommand()
+      columnList_.forEach((column) -> closeAllTabs(column, excludeActive, excludeMain));
+   }
+
+   public void closeAllTabs(SourceColumn column, boolean excludeActive, boolean excludeMain)
+   {
+      if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+      {
+         cpsExecuteForEachEditor(column.getEditors(),
+            new CPSEditingTargetCommand()
+            {
+               @Override
+               public void execute(EditingTarget target, Command continuation)
                {
-                  @Override
-                  public void execute(EditingTarget target, Command continuation)
+                  if (excludeActive && target == activeColumn_.getActiveEditor())
                   {
-                     if (excludeActive && target == activeColumn_.getActiveEditor())
-                     {
-                        continuation.execute();
-                        return;
-                     } else
-                     {
-                        column.closeTab(target.asWidget(), false, continuation);
-                     }
+                     continuation.execute();
+                     return;
                   }
-               });
-         }
-      });
+                  else
+                  {
+                     column.closeTab(target.asWidget(), false, continuation);
+                  }
+               }
+            });
+      }
    }
 
    void closeSourceDoc(boolean interactive)
@@ -1275,6 +1279,7 @@ public class SourceColumnManager implements SessionInitHandler,
    }
 
    public void closeAllLocalSourceDocs(String caption,
+                                       SourceColumn sourceColumn,
                                        Command onCompleted,
                                        final boolean excludeActive)
    {
@@ -1284,16 +1289,22 @@ public class SourceColumnManager implements SessionInitHandler,
 
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<>();
-      columnList_.forEach((column) ->
-          dirtyTargets.addAll(column.getDirtyEditors(excludeEditor)));
+      // if sourceColumn is not provided, assume we are closing editors for every column
+      if (sourceColumn == null)
+         columnList_.forEach((column) ->
+           dirtyTargets.addAll(column.getDirtyEditors(excludeEditor)));
+      else
+         dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
 
       // create a command used to close all tabs
-      final Command closeAllTabsCommand = () -> closeAllTabs(excludeActive, false);
+      final Command closeAllTabsCommand = sourceColumn == null ?
+                                          () -> closeAllTabs(excludeActive, false) :
+                                          () -> closeAllTabs(sourceColumn, excludeActive, false);
 
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
          CommandUtil.join(closeAllTabsCommand,
-            onCompleted),
+                          onCompleted),
          null);
    }
 
@@ -1325,8 +1336,7 @@ public class SourceColumnManager implements SessionInitHandler,
          if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
          {
             moveEditors.addAll(column.getEditors());
-            column.closeAllLocalSourceDocs();
-            closeColumn(column.getName());
+            closeAllLocalSourceDocs("Close All", column, null, false);
             if (columnList_.size() >= num || num == 1)
                break;
          }

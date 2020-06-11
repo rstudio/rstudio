@@ -199,11 +199,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
 	   display_.closeTab(index, interactive, onClosed);
    }
 
-   public void closeAllLocalSourceDocs()
-   {
-      // TODO
-   }
-
    public int getTabCount()
    {
       return display_.getTabCount();
@@ -511,14 +506,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
          manageCommands(false);
       });
 
-      target.addEnsureVisibleHandler(new EnsureVisibleHandler()
-      {
-         @Override
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            display_.selectTab(widget);
-         }
-      });
+      target.addEnsureVisibleHandler(event -> display_.selectTab(widget));
 
       target.addCloseHandler(voidCloseEvent -> closeTab(widget, false));
 
