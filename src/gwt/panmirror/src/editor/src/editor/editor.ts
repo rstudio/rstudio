@@ -703,14 +703,16 @@ export class Editor {
   }
 
   private registerCompletionExtension() {
-    // register omni insert extension
+    // mark filter used to screen completions from noInputRules marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
     this.extensions.register([
       omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
     ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {
