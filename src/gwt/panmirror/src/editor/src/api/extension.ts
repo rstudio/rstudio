@@ -46,20 +46,22 @@ export interface Extension {
   completionHandlers?: () => readonly CompletionHandler[];
 }
 
-// return an extension conditional on the active EditorOptions
-export type ExtensionFn = (
-  pandocExtensions: PandocExtensions,
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  format: EditorFormat,
-  options: EditorOptions,
-  events: EditorEvents,
-) => Extension | null;
+
+export interface ExtensionContext {
+  pandocExtensions: PandocExtensions;
+  pandocCapabilities: PandocCapabilities;
+  ui: EditorUI;
+  format: EditorFormat;
+  options: EditorOptions;
+  events: EditorEvents;
+}
+
+export type ExtensionFn = (context: ExtensionContext) => Extension | null;
 
 // create an ExtensionFn for a given extension and format option that must be enabled
 export function extensionIfEnabled(extension: Extension, name: string | string[]) {
-  return (pandocExtensions: PandocExtensions) => {
-    if (extensionEnabled(pandocExtensions, name)) {
+  return (context: ExtensionContext) => {
+    if (extensionEnabled(context.pandocExtensions, name)) {
       return extension;
     } else {
       return null;

@@ -15,9 +15,9 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 
-const extension = (pandocExtensions: PandocExtensions) => {
+const extension = () => {
   return {
     nodes: [
       {
