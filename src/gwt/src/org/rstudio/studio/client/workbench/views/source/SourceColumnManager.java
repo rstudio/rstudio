@@ -18,8 +18,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -161,15 +159,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
-
-      events_.addHandler(EditingTargetSelectedEvent.TYPE, new EditingTargetSelectedEvent.Handler()
-      {
-         @Override
-         public void onEditingTargetSelected(EditingTargetSelectedEvent event)
-         {
-            setActive(event.getTarget());
-         }
-      });
+      events_.addHandler(EditingTargetSelectedEvent.TYPE, event -> setActive(event.getTarget()));
 
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
@@ -187,16 +177,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
-      {
-
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            columnList_.forEach((column) ->
-               column.manageSourceNavigationCommands());
-         }
-      });
+      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((column1) ->
+         column1.manageSourceNavigationCommands()));
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -224,7 +206,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          @Override
          protected JsObject getValue()
          {
-            JsObject object = columnState_.<JsObject>cast().clone();
             return columnState_.cast();
          }
       };
@@ -426,7 +407,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public ArrayList<Widget> getWidgets(boolean excludeMain)
    {
-      ArrayList<Widget> result = new ArrayList<Widget>();
+      ArrayList<Widget> result = new ArrayList<>();
       for (SourceColumn column : columnList_)
       {
          if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
