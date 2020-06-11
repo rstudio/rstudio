@@ -774,7 +774,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
 
    private void manageVcsCommands()
    {
-      // manage availablity of vcs commands
+      // manage availability of vcs commands
       boolean vcsCommandsEnabled =
               manager_.getSession().getSessionInfo().isVcsEnabled() &&
                       (activeEditor_ != null) &&

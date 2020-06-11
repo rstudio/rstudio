@@ -367,7 +367,7 @@ public class SourceColumnManager implements SessionInitHandler,
       return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
    }
 
-   // see if there are additional command pallette items made available
+   // see if there are additional command palette items made available
    // by the active editor
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
@@ -2083,8 +2083,7 @@ public class SourceColumnManager implements SessionInitHandler,
       {
          // convert to UnsavedChangesTarget collection
          ArrayList<UnsavedChangesTarget> unsavedTargets =
-            new ArrayList<UnsavedChangesTarget>();
-         unsavedTargets.addAll(editingTargets);
+            new ArrayList<>(editingTargets);
 
          // show dialog
          showUnsavedChangesDialog(

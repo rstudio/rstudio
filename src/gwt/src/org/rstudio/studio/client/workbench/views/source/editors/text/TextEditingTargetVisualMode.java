@@ -47,7 +47,6 @@ import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;

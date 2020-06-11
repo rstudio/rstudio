@@ -15,7 +15,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Point;
@@ -1010,7 +1009,6 @@ public class DocTabLayoutPanel
                      events_.fireEvent(new PopoutDocInitiatedEvent(
                            initDragParams_.getDocId(), Point.create(
                                  evt.getScreenX(), evt.getScreenY())));
-                     Debug.logToConsole("initiating event from DocTabLayoutPanel for: " + initDragParams_.getDocId());
                   }
                }
             }
