@@ -379,7 +379,6 @@ function goldmarkExtensions(format: EditorFormat) {
     '+yaml_metadata_block',
   ];
 
-  // hugo users often sort out some way to include math so we enable it for hugo
   if (includeTexMathDollars(format)) {
     extensions.push('+tex_math_dollars');
   }
@@ -400,9 +399,11 @@ function blackfridayExtensions(format: EditorFormat) {
     '+smart',
     '+yaml_metadata_block',
   ];
+
   if (includeTexMathDollars(format)) {
     extensions.push('+tex_math_dollars');
   }
+
   return extensions;
 }
 
