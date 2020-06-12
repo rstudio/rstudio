@@ -51,8 +51,14 @@ import commentImage from './images/omni_insert/comment.png';
 import commentDarkImage from './images/omni_insert/comment_dark.png';
 import divImage from './images/omni_insert/div.png';
 import divDarkImage from './images/omni_insert/div_dark.png';
+import codeBlockImage from './images/omni_insert/code_block.png';
+import codeBlockDarkImage from './images/omni_insert/code_block_dark.png';
 import footnoteImage from './images/omni_insert/footnote.png';
 import footnoteDarkImage from './images/omni_insert/footnote_dark.png';
+import citationImage from './images/omni_insert/citation.png';
+import citationDarkImage from './images/omni_insert/citation_dark.png';
+import crossReferenceImage from './images/omni_insert/cross_reference.png';
+import crossReferenceDarkImage from './images/omni_insert/cross_reference_dark.png';
 import symbolImage from './images/omni_insert/symbol.png';
 import symbolDarkImage from './images/omni_insert/symbol_dark.png';
 import tableImage from './images/omni_insert/table.png';
@@ -75,6 +81,16 @@ import texBlockImage from './images/omni_insert/tex_block.png';
 import texBlockDarkImage from './images/omni_insert/tex_block_dark.png';
 import yamlBlockImage from './images/omni_insert/yaml_block.png';
 import yamlBlockDarkImage from './images/omni_insert/yaml_block_dark.png';
+import pythonChunkImage from './images/omni_insert/python_chunk.png';
+import sqlChunkImage from './images/omni_insert/sql_chunk.png';
+import d3ChunkImage from './images/omni_insert/d3_chunk.png';
+import stanChunkImage from './images/omni_insert/stan_chunk.png';
+import bashChunkImage from './images/omni_insert/bash_chunk.png';
+import bashChunkDarkImage from './images/omni_insert/bash_chunk_dark.png';
+import rChunkImage from './images/omni_insert/r_chunk.png';
+import rChunkDarkImage from './images/omni_insert/r_chunk_dark.png';
+import rcppChunkImage from './images/omni_insert/rcpp_chunk.png';
+import rcppChunkDarkImage from './images/omni_insert/rcpp_chunk_dark.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -114,8 +130,14 @@ export function defaultEditorUIImages(): EditorUIImages {
       comment_dark: commentDarkImage,
       div: divImage,
       div_dark: divDarkImage,
+      code_block: codeBlockImage,
+      code_block_dark: codeBlockDarkImage,
       footnote: footnoteImage,
       footnote_dark: footnoteDarkImage,
+      citation: citationImage,
+      citation_dark: citationDarkImage,
+      cross_reference: crossReferenceImage,
+      cross_reference_dark: crossReferenceDarkImage,
       symbol: symbolImage,
       symbol_dark: symbolDarkImage,
       table: tableImage,
@@ -138,6 +160,16 @@ export function defaultEditorUIImages(): EditorUIImages {
       tex_block_dark: texBlockDarkImage,
       yaml_block: yamlBlockImage,
       yaml_block_dark: yamlBlockDarkImage,
+      python_chunk: pythonChunkImage,
+      sql_chunk: sqlChunkImage,
+      d3_chunk: d3ChunkImage,
+      stan_chunk: stanChunkImage,
+      bash_chunk: bashChunkImage,
+      bash_chunk_dark: bashChunkDarkImage,
+      r_chunk: rChunkImage,
+      r_chunk_dark: rChunkDarkImage,
+      rcpp_chunk: rcppChunkImage,
+      rcpp_chunk_dark: rcppChunkDarkImage
     },
   };
 }
