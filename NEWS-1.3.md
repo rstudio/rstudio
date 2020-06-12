@@ -12,6 +12,7 @@
 - Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 - Add additional keyboard shortcut (Ctrl+`) for Focus Console Output accessibility command (#6850)
 - Always set application role for screen readers and removed related accessibility preference checkbox (#6863)
+- Update `NOTICE` for Ace editor license (#7102)
 
 ### Bugfixes
 
