@@ -17,12 +17,7 @@ import { Schema } from 'prosemirror-model';
 import { PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { EditorEvents } from '../../api/events';
-import { Extension } from '../../api/extension';
-import { EditorFormat } from '../../api/format';
-import { EditorOptions } from '../../api/options';
-import { PandocExtensions } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { parseCodepoint } from '../../api/unicode';
 import { OmniInsertGroup } from '../../api/omni_insert';
@@ -34,14 +29,8 @@ import untypedSymbolData from './symbols.json';
 
 const key = new PluginKey<boolean>('insert-symbol');
 
-const extension = (
-  _pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { ui, events } = context;
   return {
     commands: () => {
       return [new ProsemirrorCommand(EditorCommandId.Symbol, [], performInsertSymbol(key), symbolOmniInsert(ui))];

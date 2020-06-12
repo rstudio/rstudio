@@ -21,15 +21,12 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 import { canInsertNode } from '../../api/node';
-import { ProsemirrorWriter, PandocOutput, PandocExtensions } from '../../api/pandoc';
-import { Extension } from '../../api/extension';
+import { ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { MarkTransaction } from '../../api/transaction';
 import { removeInvalidatedMarks, detectAndApplyMarks } from '../../api/mark';
 import { matchPandocFormatComment } from '../../api/pandoc_format';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat } from '../../api/format';
-import { EditorOptions } from '../../api/options';
 import { kHTMLCommentRegEx, isHTMLComment } from '../../api/html';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
@@ -37,13 +34,9 @@ import './raw_html_comment-styles.css';
 
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
-const extension = (
-  _exts: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  _format: EditorFormat,
-  options: EditorOptions,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { options } = context;
   return {
     marks: [
       {

@@ -691,26 +691,28 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(
-      this.format,
-      this.options,
-      this.context.ui,
-      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
-      this.context.extensions,
-      this.pandocFormat.extensions,
-      this.pandocCapabilities,
-    );
+    return initExtensions({
+      format: this.format,
+      options: this.options,
+      ui: this.context.ui,
+      events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+      pandocExtensions: this.pandocFormat.extensions,
+      pandocCapabilities: this.pandocCapabilities,
+      pandocEngine: this.context.pandoc
+    }, this.context.extensions);
   }
 
   private registerCompletionExtension() {
-    // register omni insert extension
+    // mark filter used to screen completions from noInputRules marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
     this.extensions.register([
       omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
     ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {

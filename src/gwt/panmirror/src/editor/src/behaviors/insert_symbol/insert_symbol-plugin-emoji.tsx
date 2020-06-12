@@ -19,16 +19,11 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import React from 'react';
 
-import { EditorEvents } from '../../api/events';
-import { EditorFormat } from '../../api/format';
-import { EditorOptions } from '../../api/options';
 import { EditorUI } from '../../api/ui';
 import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { nodeForEmoji } from '../../marks/emoji/emoji';
 import { OmniInsertGroup } from '../../api/omni_insert';
-import { PandocExtensions } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
@@ -36,14 +31,8 @@ import { SymbolEmojiPreferencesPanel } from './insert_symbol-emoji-skintone';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
-const extension = (
-  _pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { ui, events } = context;
   return {
     commands: () => {
       return [new ProsemirrorCommand(EditorCommandId.Emoji, [], performInsertSymbol(key), emojiOmniInsert(ui))];

@@ -48,22 +48,13 @@ const extension: Extension = {
     },
   ],
 
-  commands: (schema: Schema, ui: EditorUI) => {
+  commands: (schema: Schema) => {
     return [
       new BlockCommand(
         EditorCommandId.Paragraph,
         ['Mod-Alt-0'],
         schema.nodes.paragraph,
-        schema.nodes.paragraph,
-        {},
-        {
-          name: ui.context.translateText('Paragraph'),
-          description: ui.context.translateText('Plain paragraph of text'),
-          group: OmniInsertGroup.Blocks,
-          priority: 10,
-          image: () =>
-            ui.prefs.darkMode() ? ui.images.omni_insert?.paragraph_dark! : ui.images.omni_insert?.paragraph!,
-        },
+        schema.nodes.paragraph
       ),
       new InsertParagraphCommand(),
     ];

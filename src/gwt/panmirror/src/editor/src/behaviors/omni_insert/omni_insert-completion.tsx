@@ -13,22 +13,22 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState, Selection } from 'prosemirror-state';
+import { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { EditorView, DecorationSet } from 'prosemirror-view';
 
-import React from 'react';
+import { setTextSelection } from 'prosemirror-utils';
 
+import React from 'react';
 import { firstBy } from 'thenby';
 
 import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from '../../api/omni_insert';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 
-import './omni_insert-completion.css';
 import { EditorUI } from '../../api/ui';
 import { placeholderDecoration } from '../../api/placeholder';
 import { kAddToHistoryTransaction } from '../../api/transaction';
-import { setTextSelection } from 'prosemirror-utils';
+
+import './omni_insert-completion.css';
 
 export function omniInsertCompletionHandler(
   omniInserters: OmniInserter[],
@@ -82,12 +82,12 @@ export function omniInsertCompletionHandler(
 const kOmniInsertRegex = /\/([\w]*)$/;
 
 function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
-  return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<OmniInserter> | null => {
+  return (text: string, context: EditorState | Transaction): CompletionResult<OmniInserter> | null => {
     const match = text.match(kOmniInsertRegex);
     if (match) {
       // we need to either be at the beginning of our parent, OR the omni_insert mark needs
       // to be active (that indicates that we entered omni insert mode via a user command)
-      if (match.index !== 0 && !isOmniInsertCommandActive(selection)) {
+      if (match.index !== 0 && !isOmniInsertCommandActive(context.selection)) {
         return null;
       }
 
@@ -97,15 +97,15 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
       // include a decoration if the query is empty
       const decorations =
         query.length === 0
-          ? DecorationSet.create(doc, [
-              placeholderDecoration(selection.head, ui.context.translateText(' Type to search...')),
-            ])
+          ? DecorationSet.create(context.doc, [
+            placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
+          ])
           : undefined;
 
       // return the completion handler
       return {
         // match at the /
-        pos: selection.head - match[0].length,
+        pos: context.selection.head - match[0].length,
 
         // look through registered onmi inserters for completions
         completions: (state: EditorState) => {
@@ -146,7 +146,7 @@ const OmniInserterView: React.FC<OmniInserter> = inserter => {
       <tbody>
         <tr>
           <td className={'pm-omni-insert-icon'}>
-            <img src={inserter.image()} alt="" />
+            <img className={'pm-block-border-color'} src={inserter.image()} alt="" />
           </td>
           <td>
             <div className={'pm-omni-insert-name pm-completion-item-text'}>{inserter.name}</div>

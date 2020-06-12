@@ -17,16 +17,14 @@ import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';
 
-import { EditorUI } from '../../api/ui';
-import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 
 import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 
 const CITE_CITATIONS = 0;
 
@@ -57,11 +55,10 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions, ui } = context;
+
   if (!pandocExtensions.citations) {
     return null;
   }

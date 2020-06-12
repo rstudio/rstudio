@@ -21,13 +21,12 @@ import { setBlockType } from 'prosemirror-commands';
 
 import { findParentNode } from 'prosemirror-utils';
 
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 
 import {
   PandocOutput,
   PandocToken,
   PandocTokenType,
-  PandocExtensions,
   ProsemirrorWriter,
   kRawBlockContent,
   kRawBlockFormat,
@@ -38,14 +37,12 @@ import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '../api/raw';
 import { isSingleLineTex } from '../api/tex';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions, pandocCapabilities, ui } = context;
+
   const rawAttribute = pandocExtensions.raw_attribute;
 
   return {

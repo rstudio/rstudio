@@ -30,10 +30,15 @@ import { ScrollEvent } from '../../api/event-types';
 
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { EditorUI } from '../../api/ui';
+import { MarkInputRuleFilter, markInputRuleFilter } from '../../api/input_rule';
 
-export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
+export function completionExtension(
+  handlers: readonly CompletionHandler[],
+  inputRuleFilter: MarkInputRuleFilter,
+  ui: EditorUI,
+  events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, ui, events)],
+    plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
 }
 
@@ -68,7 +73,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
-  constructor(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
+  constructor(handlers: readonly CompletionHandler[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI, events: EditorEvents) {
     super({
       key,
       state: {
@@ -99,9 +104,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(textBefore, tr.doc, tr.selection);
-            if (result) {
-              return { handler, result };
+
+            // first check filter (null means apply no filter)
+            if (handler.filter === null || (handler.filter ? handler.filter(tr) : inputRuleFilter(tr))) {
+
+              // passted filter, check for completions
+              const result = handler.completions(textBefore, tr);
+              if (result) {
+                return { handler, result };
+              }
+
             }
           }
 

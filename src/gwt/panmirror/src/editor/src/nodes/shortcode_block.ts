@@ -19,18 +19,16 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 
 import {
-  PandocExtensions,
   PandocOutput,
   PandocTokenType,
   PandocToken,
   tokensCollectText,
   ProsemirrorWriter,
 } from '../api/pandoc';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorFormat, kHugoDocType } from '../api/format';
 
-import { EditorUI } from '../api/ui';
-import { Extension } from '../api/extension';
+import { kHugoDocType } from '../api/format';
+
+import { Extension, ExtensionContext } from '../api/extension';
 import { codeNodeSpec } from '../api/code';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
@@ -44,12 +42,10 @@ import {
   blockCapsuleSourceWithoutPrefix,
 } from '../api/pandoc_capsule';
 
-const extension = (
-  _exts: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { format } = context;
+
   // return null if no shortcodes
   if (!format.hugoExtensions.shortcodes) {
     return null;

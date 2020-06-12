@@ -18,14 +18,12 @@ import { Node as ProsemirrorNode, Schema, NodeType, Fragment } from 'prosemirror
 import { EditorState } from 'prosemirror-state';
 import { findParentNode } from 'prosemirror-utils';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 import { EditorCommandId, toggleBlockType, ProsemirrorCommand } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
-import { EditorFormat } from '../api/format';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 import { emptyNodePlaceholderPlugin } from '../api/placeholder';
 
@@ -35,12 +33,10 @@ const HEADING_CHILDREN = 2;
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension => {
+const extension = (context: ExtensionContext) : Extension => {
+
+  const { pandocExtensions, format } = context;
+
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
   return {
