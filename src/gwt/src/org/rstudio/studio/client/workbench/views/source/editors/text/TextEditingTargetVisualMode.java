@@ -1287,7 +1287,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
             // enable blogdown math in code (e.g. `$math$`) only when explicitly requested
-            format.rmdExtensions.blogdownMathInCode = rmdExtensions.blogdownMathInCode;
+            format.rmdExtensions.blogdownMathInCode = 
+              hasBlogdownMathInCode() || rmdExtensions.blogdownMathInCode;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -1365,8 +1366,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean hasBlogdownMathInCode()
    {
-      boolean blogdownWithNonPandocMarkdown = isBlogdownProjectDocument() && (alternateMarkdownEngine() != null);
-      return blogdownWithNonPandocMarkdown || isHugodownDocument();
+      if (alternateMarkdownEngine() != null)
+         return getBlogdownConfig().rmd_extensions.contains("+tex_math_dollars_in_code");
+      else
+         return false;
    }
    
    
