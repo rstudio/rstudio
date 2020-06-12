@@ -39,6 +39,7 @@
 - Fix error in Viewer pane when previewing Distill blogs (#6945)
 - Fix misalignment of some number cells in the data viewer (#6975)
 - Fix C++ autocompletion results missing on macOS in some contexts (#7097)
+- Fix misleading errors report for `verify-installation` without Launcher (Pro #1718)
 
 ### RStudio Server Pro
 
