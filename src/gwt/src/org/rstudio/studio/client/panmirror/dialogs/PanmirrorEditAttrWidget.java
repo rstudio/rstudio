@@ -17,7 +17,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 
-
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.FormTextArea;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
@@ -41,9 +41,20 @@ public class PanmirrorEditAttrWidget extends SimplePanel
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       setWidget(mainWidget_);
       id_.getElement().setId(ElementIds.VISUAL_MD_ATTR_ID);
-      classes_.getElement().setId(ElementIds.VISUAL_MD_ATTR_CLASSES);
-      style_.getElement().setId(ElementIds.VISUAL_MD_ATTR_STYLE);
-      attributes_.getElement().setId(ElementIds.VISUAL_MD_ATTR_KEYVALUE);
+
+      // form controls each have two labels; markup for screen reader
+      Roles.getTextboxRole().setAriaLabelledbyProperty(id_.getElement(),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_ID_LABEL1),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_ID_LABEL2));
+      Roles.getTextboxRole().setAriaLabelledbyProperty(classes_.getElement(),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_CLASSES_LABEL1),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_CLASSES_LABEL2));
+      Roles.getTextboxRole().setAriaLabelledbyProperty(style_.getElement(),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_STYLE_LABEL1),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_STYLE_LABEL2));
+      Roles.getTextboxRole().setAriaLabelledbyProperty(attributes_.getElement(),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_KEYVALUE_LABEL1),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_ATTR_KEYVALUE_LABEL2));
    }
    
    
