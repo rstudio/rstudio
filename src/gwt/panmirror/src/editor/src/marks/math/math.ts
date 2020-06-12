@@ -167,9 +167,9 @@ const extension = (context: ExtensionContext): Extension | null => {
                     });
                   }
 
+                } else {
                   // user removed the delimiter so write the content literally. when it round trips 
                   // back into editor it will no longer be parsed by pandoc as math
-                } else {
                   output.writeRawMarkdown(math);
                 }
               }
