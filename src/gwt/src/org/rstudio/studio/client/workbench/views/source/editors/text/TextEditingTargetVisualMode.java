@@ -1286,16 +1286,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             format.rmdExtensions.bookdownXRefUI = 
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
-            // enable blogdown math in code (e.g. `$math$`) however don't enable
-            // it if the user has expressely added +tex_math_dollars to the format (as this
-            // means that they've arranged for an alternate means of rendering math e.g. a 
-            // goldmark extension)
-            boolean texMathDollarsEnabled = format.pandocExtensions.contains("+tex_math_dollars");
-            if (!texMathDollarsEnabled)
-            {
-               format.rmdExtensions.blogdownMathInCode = 
-                  hasBlogdownMathInCode() || rmdExtensions.blogdownMathInCode;
-            }
+            // check for blogdown math in code (e.g. `$math$`)
+            format.rmdExtensions.blogdownMathInCode = 
+              hasBlogdownMathInCode(formatComment) || rmdExtensions.blogdownMathInCode;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -1371,10 +1364,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       return isBookdownProjectDocument() || isBlogdownProjectDocument() || isDistillDocument();
    }
    
-   private boolean hasBlogdownMathInCode()
+   private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config)
    {
-      boolean blogdownWithNonPandocMarkdown = isBlogdownProjectDocument() && (alternateMarkdownEngine() != null);
-      return blogdownWithNonPandocMarkdown || isHugodownDocument();
+      if (alternateMarkdownEngine() != null)
+         return getBlogdownConfig().rmd_extensions.contains("+tex_math_dollars_in_code") &&
+                !this.disableBlogdownMathInCode(config);
+      else
+         return false;
    }
    
    
@@ -1437,6 +1433,12 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          rmdExtensions.blogdownMathInCode = config.rmdExtensions.contains("+tex_math_dollars_in_code");
       }
       return rmdExtensions;
+   }
+   
+   private boolean disableBlogdownMathInCode(PanmirrorPandocFormatConfig config)
+   {
+      return config.rmdExtensions != null && 
+             config.rmdExtensions.contains("-tex_math_dollars_in_code");
    }
    
    // see if there's an alternate markdown engine in play
