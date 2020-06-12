@@ -30,6 +30,7 @@ import { ScrollEvent } from '../../api/event-types';
 
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { EditorUI } from '../../api/ui';
+import { PromiseQueue } from '../../api/promise';
 
 export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
   return {
@@ -67,6 +68,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private horizontal = false;
   private selectedIndex = 0;
 
+  // serialize async completion requests
+  private completionQueue = new PromiseQueue();
+
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
@@ -103,14 +107,13 @@ class CompletionPlugin extends Plugin<CompletionState> {
           for (const handler of handlers) {
             const result = handler.completions(textBefore, tr.doc, tr.selection);
             if (result) {
-
-              // if we have a previous result and it shares an id and pos with this one, then 
+              // if we have a previous result and it shares an id and pos with this one, then
               // include the prevToken in the state (so filtering can be done on existing results)
-              let prevToken: string | undefined ;
+              let prevToken: string | undefined;
               if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
                 prevToken = prevState.result.token;
               }
-          
+
               // return state
               return { handler, result, prevToken };
             }
@@ -136,10 +139,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
         destroy: () => {
           // unsubscribe from events
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.hideCompletionPopup);
+          window.document.removeEventListener('focusin', this.clearCompletions);
 
           // tear down the popup
-          this.hideCompletionPopup();
+          this.clearCompletions();
         },
       }),
 
@@ -212,67 +215,83 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.ui = ui;
 
     // hide completions when we scroll or the focus changes
-    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
-    window.document.addEventListener('focusin', this.hideCompletionPopup);
+    this.clearCompletions = this.clearCompletions.bind(this);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.clearCompletions);
+    window.document.addEventListener('focusin', this.clearCompletions);
   }
 
   private updateCompletions(view: EditorView) {
-    
     const state = key.getState(view.state);
 
     if (state?.handler && state?.result) {
-      
-      // first see if we can do this exclusively via filter
-      const filteredCompletions = state.prevToken && state.handler.filter 
-        ? state.handler.filter(this.allCompletions, view.state, state.result.token, state.prevToken) 
-        : null;
-      
-      // if we got it via filter then set from that and render
-      if (filteredCompletions) {
+      // track the request version to invalidate the result if an
+      // update happens after it goes into flight
+      const requestVersion = this.version;
 
-        this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
-        this.renderCompletions(view);
-
-      // otherwise make an async request for the completions, update allCompletions,
+      // make an async request for the completions, update allCompletions,
       // and then apply any filter we have (allows the completer to just return
       // everything from the aysnc query and fall back to the filter for refinement)
-      } else {
-
-        // track the request version to invalidate the result if an
-        // update happens after it goes into flight
-        const requestVersion = this.version;
-
-        // request completions
-        state.result.completions(view.state).then(completions => {
-
-          // if we don't have a handler or result then return false
+      const requestAllCompletions = async () => {
+        return state.result!.completions(view.state).then(completions => {
+          // if we don't have a handler or result then return
           if (!state.handler || !state.result) {
-            return false;
-          }
-
-          // if the version has incremented since the request then return false
-          if (this.version !== requestVersion) {
-            return false;
+            return;
           }
 
           // save completions
           this.setAllCompletions(completions, state.handler.view.horizontal);
 
-          // if there is a filter then call it and update displayed completions
-          const displayedCompletions = state.handler.filter ? state.handler.filter(completions, view.state, state.result.token) : null;
-          if (displayedCompletions) {
-            this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+          // display if the request still maps to the current state
+          if (this.version === requestVersion) {
+            // if there is a filter then call it and update displayed completions
+            const displayedCompletions = state.handler.filter
+              ? state.handler.filter(completions, view.state, state.result.token)
+              : null;
+            if (displayedCompletions) {
+              this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+            }
+
+            this.renderCompletions(view);
           }
-
-          // render them
-          this.renderCompletions(view);
-
         });
+      };
+
+      // first see if we can do this exclusively via filter
+
+      if (state.prevToken && state.handler.filter) {
+        this.completionQueue.enqueue(
+          () =>
+            new Promise(resolve => {
+              // display if the request still maps to the current state
+              if (state.handler && state.result && this.version === requestVersion) {
+                const filteredCompletions = state.handler.filter!(
+                  this.allCompletions,
+                  view.state,
+                  state.result.token,
+                  state.prevToken,
+                );
+
+                // got a hit from the filter!
+                if (filteredCompletions) {
+                  this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+                  this.renderCompletions(view);
+
+                  // couldn't use the filter, do a full request for all completions
+                } else {
+                  return this.completionQueue.enqueue(requestAllCompletions);
+                }
+              }
+
+              resolve();
+            }),
+        );
+      } else {
+        // no prevToken or no filter for this handler, request everything
+        this.completionQueue.enqueue(requestAllCompletions);
       }
     } else {
-      this.setAllCompletions([]);
-      this.hideCompletionPopup();
+      // no handler/result for this document state
+      this.clearCompletions();
     }
   }
 
@@ -355,7 +374,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // set focus
       view.focus();
     }
-    this.hideCompletionPopup();
+    this.clearCompletions();
   }
 
   // explicit user dismiss of completion (e.g. Esc key)
@@ -374,11 +393,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     }
 
+    this.clearCompletions();
+  }
+
+  private clearCompletions() {
+    this.setAllCompletions([]);
     this.hideCompletionPopup();
   }
 
   private hideCompletionPopup() {
-    this.setAllCompletions([]);
     if (this.completionPopup) {
       destroyCompletionPopup(this.completionPopup);
       this.completionPopup = null;
