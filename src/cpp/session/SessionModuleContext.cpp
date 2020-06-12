@@ -2413,12 +2413,11 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
       if (*useRHelpServer)
       {
          // There is a known issue serving content from the session temporary folder
-         // on R 4.0+ for Windows, so if we were planning to use it, only do so if
-         // we are on an older version of R.
+         // on R 4.0.0 for Windows
          //
          // https://github.com/rstudio/rstudio/issues/6737
          //
-         useRHelpServer = !r::util::hasRequiredVersion("4.0");
+         useRHelpServer = !r::util::hasExactVersion("4.0.0");
       }
 #endif
    }
