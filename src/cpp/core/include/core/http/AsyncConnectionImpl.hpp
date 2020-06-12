@@ -515,8 +515,11 @@ private:
          {
             // log the error if it wasn't connection terminated
             Error error(e, ERROR_LOCATION);
-            if (!http::isConnectionTerminatedError(error))
+            if (!http::isConnectionTerminatedError(error) &&
+                !http::isWrongProtocolTypeError((error)))
+            {
                LOG_ERROR(error);
+            }
          }
          
          // close the socket
