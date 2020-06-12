@@ -54,9 +54,6 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
       captionLabel_.setVisible(capabilities.captions);
       caption_.setVisible(capabilities.captions);
       
-      rows_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_ROWS);
-      columns_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_COLUMNS);
-      caption_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_CAPTION);
       header_.getElement().setId(ElementIds.VISUAL_MD_INSERT_TABLE_HEADER);
    }
    

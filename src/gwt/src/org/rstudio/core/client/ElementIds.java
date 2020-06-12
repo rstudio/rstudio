@@ -461,8 +461,11 @@ public class ElementIds
    public final static String VISUAL_MD_RAW_FORMAT_CONTENT = "visual_md_raw_format_content";
    public final static String VISUAL_MD_RAW_FORMAT_REMOVE_BUTTON = "visual_md_raw_format_remove_button";
    public final static String VISUAL_MD_INSERT_TABLE_ROWS = "visual_md_insert_table_rows";
+   public static String getVisualMdInsertTableRows() { return getElementId(VISUAL_MD_INSERT_TABLE_ROWS); }
    public final static String VISUAL_MD_INSERT_TABLE_COLUMNS = "visual_md_insert_table_columns";
+   public static String getVisualMdInsertTableColumns() { return getElementId(VISUAL_MD_INSERT_TABLE_COLUMNS); }
    public final static String VISUAL_MD_INSERT_TABLE_CAPTION = "visual_md_insert_table_caption";
+   public static String getVisualMdInsertTableCaption() { return getElementId(VISUAL_MD_INSERT_TABLE_CAPTION); }
    public final static String VISUAL_MD_INSERT_TABLE_HEADER = "visual_md_insert_table_heaeder";
    public final static String VISUAL_MD_ATTR_REMOVE_BUTTON = "visual_md_attr_remove_button";
    public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
@@ -470,7 +473,9 @@ public class ElementIds
    public final static String VISUAL_MD_ATTR_STYLE = "visual_md_attr_style";
    public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
+   public static String getVisualMdCitationId() { return getElementId(VISUAL_MD_CITATION_ID); }
    public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";
+   public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";

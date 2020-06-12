@@ -827,7 +827,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
          <shortcut refid="previousPlot" value="Cmd+Alt+F11" />
          <shortcut refid="nextPlot" value="Cmd+Alt+F12" />
-         <shortcut refid="showRequestLog" value="Ctrl+Alt+`" />
          <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
          <shortcut refid="setWorkingDir" value="Ctrl+Shift+H" />
          <shortcut refid="synctexSearch" value="Cmd+F8" />
@@ -3126,7 +3125,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showRequestLog"
         menuLabel="_Request Log"
         context="diagnostics"
-        rebindable="false"/>
+        desc="Show internal request log"/>
         
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
