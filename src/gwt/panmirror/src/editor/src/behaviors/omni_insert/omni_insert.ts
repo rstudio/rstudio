@@ -25,6 +25,7 @@ import { EditorUI } from '../../api/ui';
 
 import { omniInsertCompletionHandler } from './omni_insert-completion';
 import { Extension } from '../../api/extension';
+import { markIsActive } from '../../api/mark';
 
 export function markOmniInsert() {
   return {
@@ -72,6 +73,11 @@ class OmniInsertCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         // check whether selection allows completions
         if (!selectionAllowsCompletions(state.selection)) {
+          return false;
+        }
+
+        // if the marks is already active then bail
+        if (markIsActive(state, state.schema.marks.omni_insert)) {
           return false;
         }
 
