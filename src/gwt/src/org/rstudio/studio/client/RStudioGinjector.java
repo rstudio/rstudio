@@ -70,7 +70,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -294,7 +294,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CheckForUpdatesDialog dialog);
    void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
-   void injectMembers(PanmirrorPandocEngine panmirrorPandocEngine);
+   void injectMembers(PanmirrorPandocServer panmirrorPandocServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);

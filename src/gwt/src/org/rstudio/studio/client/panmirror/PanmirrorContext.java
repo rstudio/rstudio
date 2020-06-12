@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
@@ -35,7 +35,7 @@ public class PanmirrorContext
    }
    
    public PanmirrorUI ui;
-   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
+   public PanmirrorPandocServer pandoc = new PanmirrorPandocServer();
    public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions = null;
 }

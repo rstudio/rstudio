@@ -15,7 +15,7 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { PandocEngine, PandocExtensions } from './pandoc';
+import { PandocServer, PandocExtensions } from './pandoc';
 import { EditorFormat, kHugoDocType } from './format';
 import { firstYamlBlock, yamlMetadataNodes } from './yaml';
 import { findValue } from './object';
@@ -200,7 +200,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   return formatConfig;
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
+export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
