@@ -25,7 +25,9 @@ import com.google.inject.Inject;
 import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
+import jsinterop.annotations.JsType;
 
+@JsType
 public class PanmirrorCrossrefServer
 {
    public PanmirrorCrossrefServer() {
