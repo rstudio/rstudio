@@ -1286,7 +1286,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             format.rmdExtensions.bookdownXRefUI = 
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
-            // enable blogdown math in code (e.g. `$math$`) only when explicitly requested
+            // check for blogdown math in code (e.g. `$math$`)
             format.rmdExtensions.blogdownMathInCode = 
               hasBlogdownMathInCode(formatComment) || rmdExtensions.blogdownMathInCode;
             
