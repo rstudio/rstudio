@@ -1339,7 +1339,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean isHugodownDocument()
    {
-      return getOutputFormats().contains("hugodown::hugo_document");
+      return getOutputFormats().contains("hugodown::md_document");
    }
    
    private boolean isDistillDocument()
@@ -1366,7 +1366,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config)
    {
-      if (alternateMarkdownEngine() != null)
+      if (alternateMarkdownEngine() != null && getBlogdownConfig().rmd_extensions != null)
          return getBlogdownConfig().rmd_extensions.contains("+tex_math_dollars_in_code") &&
                 !this.disableBlogdownMathInCode(config);
       else
