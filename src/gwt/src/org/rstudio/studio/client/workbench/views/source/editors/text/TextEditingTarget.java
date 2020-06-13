@@ -165,6 +165,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
@@ -1754,7 +1755,7 @@ public class TextEditingTarget implements
       
       
       // initialize visual mode
-      visualMode_ = new TextEditingTargetVisualMode(
+      visualMode_ = new VisualMode(
          TextEditingTarget.this,
          view_,
          rmarkdownHelper_,
@@ -7757,7 +7758,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private final TextEditingTargetRHelper rHelper_;
-   private TextEditingTargetVisualMode visualMode_;
+   private VisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;

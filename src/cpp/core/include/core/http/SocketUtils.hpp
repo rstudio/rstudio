@@ -63,6 +63,11 @@ Error closeSocket(SocketService& socket)
    return Success() ; 
 }
 
+inline bool isWrongProtocolTypeError(const core::Error& error)
+{
+   return error == systemError(boost::system::errc::wrong_protocol_type, ErrorLocation());
+}
+
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection

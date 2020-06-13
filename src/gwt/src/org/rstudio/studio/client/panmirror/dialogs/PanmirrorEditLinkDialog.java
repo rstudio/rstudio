@@ -109,7 +109,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       
       if (capabilities.attributes)
       {
-         VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);
+         VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_LINK_TAB_ATTRIBUTES);
          attributesTab.addStyleName(RES.styles().dialog());
          attributesTab.add(editAttr_);
          
@@ -118,7 +118,10 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
          tabPanel.add(linkTab, "Link", linkTab.getBasePanelId());
          tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
-         
+
+         // the tab panel is the first focusable control in dialog, but the actual focusable
+         // element changes depending which tab is selected
+         tabPanel.addSelectionHandler(selectionEvent -> refreshFocusableElements());
          mainWidget_ = tabPanel;
       }
       else
@@ -134,7 +137,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    }
    
    @Override
-   public void focusFirstControl()
+   public void focusInitialControl()
    {
       href_.focus();
    }

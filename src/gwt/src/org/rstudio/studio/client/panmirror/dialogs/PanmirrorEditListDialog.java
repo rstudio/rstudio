@@ -53,7 +53,6 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
       
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
-      listType_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_TYPE);
       listType_.setChoices(new String[] {
          PanmirrorListType.Ordered,
          PanmirrorListType.Bullet
@@ -63,19 +62,14 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
          orderedOptionsPanel_.setVisible(listType_.getValue().equals(PanmirrorListType.Ordered));
       });
       
-      
       tight_.getElement().setId(ElementIds.VISUAL_MD_LIST_TIGHT);
-   
-      
       
       startingNumber_.setMin(1);
-      startingNumber_.getElement().setId(ElementIds.VISUAL_MD_LIST_ORDER);
       
       startingNumber_.setVisible(capabilities.order);
       numberStyle_.setVisible(capabilities.fancy);
       numberDelimiter_.setVisible(capabilities.fancy);
       
-      numberStyle_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_NUMBER_STYLE);
       List<String> numberStyleChoices = new ArrayList<String>();
       numberStyleChoices.add("DefaultStyle");
       numberStyleChoices.add("Decimal");
@@ -92,9 +86,8 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
          "DefaultDelim",
          "Period",
          "OneParen",
-         "TwoParens",   
+         "TwoParens",
       });
-      numberDelimiter_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_NUMBER_DELIM);
 
       
       listType_.setValue(props.type);
@@ -102,7 +95,8 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
       startingNumber_.setValue(props.order + "");
       numberStyle_.setValue(props.number_style);
       numberDelimiter_.setValue(props.number_delim);
-     
+      numberDelimiter_.setDescribedBy(
+         ElementIds.getElementId(ElementIds.VISUAL_MD_LIST_NUMBER_DELIM_NOTE));
       
    }
    

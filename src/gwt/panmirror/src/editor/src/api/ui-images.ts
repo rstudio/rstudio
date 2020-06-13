@@ -50,8 +50,14 @@ export interface EditorUIImages {
     comment_dark?: string;
     div?: string;
     div_dark?: string;
+    code_block?: string;
+    code_block_dark?: string;
     footnote?: string;
     footnote_dark?: string;
+    citation?: string;
+    citation_dark?: string;
+    cross_reference?: string;
+    cross_reference_dark?: string;
     symbol?: string;
     symbol_dark?: string;
     table?: string;
@@ -74,5 +80,15 @@ export interface EditorUIImages {
     tex_block_dark?: string;
     yaml_block?: string;
     yaml_block_dark?: string;
+    python_chunk?: string;
+    sql_chunk?: string;
+    d3_chunk?: string;
+    stan_chunk?: string;
+    bash_chunk?: string;
+    bash_chunk_dark?: string;
+    r_chunk?: string;
+    r_chunk_dark?: string;
+    rcpp_chunk?: string;
+    rcpp_chunk_dark?: string;
   };
 }

@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class NumericTextBox extends TextBox
+                                    implements CanSetControlId
 {
    public NumericTextBox()
    {
@@ -32,5 +33,11 @@ public class NumericTextBox extends TextBox
    public void setMin(int min)
    {
       getElement().setAttribute("min", String.valueOf(min));
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 }
