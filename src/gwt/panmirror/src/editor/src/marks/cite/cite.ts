@@ -188,7 +188,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [citeInputRule(schema, citePlaceholder), citeIdInputRule(schema, citePlaceholder)];
     },
 
-    completionHandlers: () => [citationCompletionHandler(context.ui, context.pandocEngine)],
+    completionHandlers: () => [citationCompletionHandler(context.ui, context.pandocServer)],
 
     plugins: (schema: Schema) => {
       return [citeHighlightPlugin(schema)];

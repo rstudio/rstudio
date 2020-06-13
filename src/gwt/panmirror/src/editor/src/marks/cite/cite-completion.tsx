@@ -18,9 +18,9 @@
 // TODO: completions are not being called for special marks like [@] - I think we should call this
 // which would render the initial set of options
 
-import { Selection, EditorState } from 'prosemirror-state';
+import { Selection, EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { PandocEngine } from '../../api/pandoc';
+import { PandocServer } from '../../api/pandoc';
 
 import React from 'react';
 
@@ -36,8 +36,8 @@ import {
 
 import './cite-completion.css';
 
-export function citationCompletionHandler(ui: EditorUI, engine: PandocEngine): CompletionHandler<BibliographyEntry> {
-  const bibliographyManager = new BibliographyManager(engine);
+export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
+  const bibliographyManager = new BibliographyManager(server);
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
@@ -77,17 +77,17 @@ function filterCitations(bibliographyEntries: BibliographyEntry[], token: string
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
-  return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<BibliographyEntry> | null => {
+  return (text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
     // look for requisite text sequence
     const match = text.match(kCitationCompletionRegex);
     if (match) {
       // determine insert position and prefix to search for
       const prefix = match[1];
       const query = match[2];
-      const pos = selection.head - (query.length + prefix.length);
+      const pos = context.selection.head - (query.length + prefix.length);
 
       // scan for completions that match the prefix (truncate as necessary)
-      const bibliographyFiles: BibliographyFiles | null = bibliographyFilesFromDoc(doc, ui.context);
+      const bibliographyFiles: BibliographyFiles | null = bibliographyFilesFromDoc(context.doc, ui.context);
       if (bibliographyFiles) {
         manager.ensureLoaded(bibliographyFiles);
         return {

@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
 import { EditorUIContext } from './ui';
-import { PandocEngine } from './pandoc';
+import { PandocServer } from './pandoc';
 import Fuse from 'fuse.js';
 
 export interface BibliographyFiles {
@@ -49,8 +49,8 @@ export interface BibliographyAuthor {
 }
 
 export class BibliographyManager {
-  public constructor(engine: PandocEngine) {
-    this.engine = engine;
+  public constructor(server: PandocServer) {
+    this.server = server;
   }
 
   public ensureLoaded(files: BibliographyFiles) {
@@ -71,7 +71,7 @@ export class BibliographyManager {
   }
 
   private files: BibliographyFiles | undefined;
-  private engine: PandocEngine;
+  private server: PandocServer;
   private bibEntries: BibliographyEntry[] | undefined;
   private fuse: Fuse<BibliographyEntry, Fuse.IFuseOptions<any>> | undefined;
 
@@ -81,7 +81,7 @@ export class BibliographyManager {
     }
 
     if (!this.bibEntries) {
-      const bibliography = await this.engine.getBibliography(this.files.bibliography, this.files.csl);
+      const bibliography = await this.server.getBibliography(this.files.bibliography, this.files.csl);
       const entries = generateBibliographyEntries(bibliography);
       this.setEntries(entries);
       return entries;
