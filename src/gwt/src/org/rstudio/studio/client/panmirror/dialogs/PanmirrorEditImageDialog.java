@@ -199,6 +199,10 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          tabPanel.add(imageTab, "Image", imageTab.getBasePanelId());
          tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
+
+         // the tab panel is the first focusable control in dialog, but the actual focusable
+         // element changes depending which tab is selected
+         tabPanel.addSelectionHandler(selectionEvent -> refreshFocusableElements());
          mainWidget_ = tabPanel;
       }
       else
@@ -214,7 +218,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    }
    
    @Override
-   public void focusFirstControl()
+   public void focusInitialControl()
    {
       url_.getTextBox().setFocus(true);
       url_.getTextBox().setSelectionRange(0, 0);
@@ -375,6 +379,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       for (int i = 0; i < options.length; i++)
          units.addItem(options[i], options[i]);
       units.getElement().setId(ElementIds.VISUAL_MD_IMAGE_UNITS);
+      Roles.getListboxRole().setAriaLabelProperty(units.getElement(), "Units");
       panel.add(units);
       return units;
    }
