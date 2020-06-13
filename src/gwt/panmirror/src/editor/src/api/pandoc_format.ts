@@ -15,8 +15,8 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { PandocEngine, PandocExtensions } from './pandoc';
-import { EditorFormat } from './format';
+import { PandocServer, PandocExtensions } from './pandoc';
+import { EditorFormat, kHugoDocType } from './format';
 import { firstYamlBlock, yamlMetadataNodes } from './yaml';
 import { findValue } from './object';
 
@@ -200,7 +200,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   return formatConfig;
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
+export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
@@ -378,9 +378,11 @@ function goldmarkExtensions(format: EditorFormat) {
     // hugo preprocessor supports yaml metadata
     '+yaml_metadata_block',
   ];
-  if (format.rmdExtensions.blogdownMathInCode) {
+
+  if (includeTexMathDollars(format)) {
     extensions.push('+tex_math_dollars');
   }
+
   return extensions;
 }
 
@@ -397,8 +399,15 @@ function blackfridayExtensions(format: EditorFormat) {
     '+smart',
     '+yaml_metadata_block',
   ];
-  if (format.rmdExtensions.blogdownMathInCode) {
+
+  if (includeTexMathDollars(format)) {
     extensions.push('+tex_math_dollars');
   }
+
   return extensions;
+}
+
+function includeTexMathDollars(format: EditorFormat) {
+  // hugo users often sort out some way to include math so we enable it for hugo
+  return format.docTypes.includes(kHugoDocType) || format.rmdExtensions.blogdownMathInCode;
 }

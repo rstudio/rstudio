@@ -27,7 +27,7 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
+import { PandocServer, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
@@ -114,10 +114,15 @@ export interface EditorSetMarkdownResult {
 }
 
 export interface EditorContext {
-  readonly pandoc: PandocEngine;
+  readonly pandoc: PandocServer;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
+}
+
+export interface EditorServer {
+
+  readonly pandoc: PandocServer;
 }
 
 export interface EditorHooks {
@@ -698,19 +703,21 @@ export class Editor {
       events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       pandocExtensions: this.pandocFormat.extensions,
       pandocCapabilities: this.pandocCapabilities,
-      pandocEngine: this.context.pandoc
+      pandocServer: this.context.pandoc
     }, this.context.extensions);
   }
 
   private registerCompletionExtension() {
-    // register omni insert extension
+    // mark filter used to screen completions from noInputRules marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
     this.extensions.register([
       omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
     ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {

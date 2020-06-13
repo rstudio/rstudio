@@ -13,7 +13,7 @@
  *
  */
 
-import { Selection, EditorState } from 'prosemirror-state';
+import { Selection, EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorView, DecorationSet } from 'prosemirror-view';
 
@@ -40,9 +40,14 @@ export interface CompletionHandler<T = any> {
   // unique id
   id: string;
 
+  // filter for determing whether we can call this handler from a given context (default is to
+  // never offer completions if a mark with noInputRules is active). set to null to 
+  // allow completion anywhere
+  enabled?: ((context: EditorState | Transaction) => boolean) | null;
+
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
-  completions(text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult | null;
+  completions(text: string, context: EditorState | Transaction): CompletionResult | null;
 
   // filter a previously returned set of completions 
   filter?: (completions: T[], state: EditorState, token: string, prevToken?: string) => T[] | null;

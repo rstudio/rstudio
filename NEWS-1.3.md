@@ -12,6 +12,7 @@
 - Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 - Add additional keyboard shortcut (Ctrl+`) for Focus Console Output accessibility command (#6850)
 - Always set application role for screen readers and removed related accessibility preference checkbox (#6863)
+- Update `NOTICE` for Ace editor license (#7102)
 
 ### Bugfixes
 
@@ -35,7 +36,11 @@
 - Fix issue with first esc keypress being ignored (#7045)
 - Fix issue with spellcheck not working with realtime turned off (#7068)
 - Fix error when some HTML comments are included in R Markdown documents (#6997)
-- Fix issue where toolbar buttons were missing on initialization. (#7076)
+- Fix issue where toolbar buttons were missing on initialization (#7076)
+- Fix error in Viewer pane when previewing Distill blogs (#6945)
+- Fix misalignment of some number cells in the data viewer (#6975)
+- Fix C++ autocompletion results missing on macOS in some contexts (#7097)
+- Fix misleading errors report for `verify-installation` without Launcher (Pro #1718)
 
 ### RStudio Server Pro
 

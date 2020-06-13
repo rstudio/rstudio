@@ -31,10 +31,15 @@ import { ScrollEvent } from '../../api/event-types';
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
-export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
+export function completionExtension(
+  handlers: readonly CompletionHandler[],
+  inputRuleFilter: MarkInputRuleFilter,
+  ui: EditorUI,
+  events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, ui, events)],
+    plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
 }
 
@@ -74,7 +79,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
-  constructor(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
+  constructor(handlers: readonly CompletionHandler[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI, events: EditorEvents) {
     super({
       key,
       state: {
@@ -105,17 +110,21 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(textBefore, tr.doc, tr.selection);
-            if (result) {
-              // if we have a previous result and it shares an id and pos with this one, then
-              // include the prevToken in the state (so filtering can be done on existing results)
-              let prevToken: string | undefined;
-              if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
-                prevToken = prevState.result.token;
-              }
 
-              // return state
-              return { handler, result, prevToken };
+            // first check if the handler is enabled (null means use inputRuleFilter)
+            if (handler.enabled === null || (handler.enabled ? handler.enabled(tr) : inputRuleFilter(tr))) {
+              const result = handler.completions(textBefore, tr);
+              if (result) {
+                // if we have a previous result and it shares an id and pos with this one, then
+                // include the prevToken in the state (so filtering can be done on existing results)
+                let prevToken: string | undefined;
+                if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
+                  prevToken = prevState.result.token;
+                }
+
+                // return state
+                return { handler, result, prevToken };
+              }
             }
           }
 

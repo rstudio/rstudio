@@ -1,5 +1,5 @@
 /*
- * PanmirrorPandocEngine.java
+ * PanmirrorPandocServer.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -31,10 +31,10 @@ import jsinterop.annotations.JsType;
 
 
 @JsType
-public class PanmirrorPandocEngine {
+public class PanmirrorPandocServer {
    
   
-   public PanmirrorPandocEngine() {
+   public PanmirrorPandocServer() {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    

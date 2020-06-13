@@ -29,12 +29,13 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
 import { PandocOutput } from '../api/pandoc';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
 
-  const { pandocExtensions, format } = context;
+  const { pandocExtensions, format, ui } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
@@ -169,6 +170,13 @@ const extension = (context: ExtensionContext): Extension | null => {
                 dispatch(tr);
               }
               return true;
+            },
+            {
+              name: ui.context.translateText('Cross Reference'),
+              description: ui.context.translateText('Reference to related content'),
+              group: OmniInsertGroup.References,
+              priority: 0,
+              image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.cross_reference_dark! : ui.images.omni_insert!.cross_reference!,
             },
           ),
         ];
