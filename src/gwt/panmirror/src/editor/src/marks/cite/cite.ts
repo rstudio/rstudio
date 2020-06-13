@@ -25,18 +25,19 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { Extension, ExtensionContext } from '../../api/extension';
+import { citationCompletionHandler } from './cite-completion';
 
 const CITE_CITATIONS = 0;
 
 const kCiteIdPrefixPattern = '-?@';
 const kCiteIdCharsPattern = '\\w[\\w:\\.#\\$%&\\-\\+\\?<>~/]*';
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
-const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
+export const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteIdLengthRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
-const kFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
+export const kFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -56,7 +57,6 @@ interface Citation {
 }
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.citations) {
@@ -187,6 +187,8 @@ const extension = (context: ExtensionContext): Extension | null => {
     inputRules: (schema: Schema) => {
       return [citeInputRule(schema, citePlaceholder), citeIdInputRule(schema, citePlaceholder)];
     },
+
+    completionHandlers: () => [citationCompletionHandler(context.ui, context.pandocEngine)],
 
     plugins: (schema: Schema) => {
       return [citeHighlightPlugin(schema)];
