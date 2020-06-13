@@ -36,17 +36,19 @@ export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
         const mathRange = getMarkRange(tr.doc.resolve(from), schema.marks.math);
         if (mathRange) {
           const mathAttr = getMarkAttrs(tr.doc, mathRange, schema.marks.math);
-          const mathDelim = delimiterForType(mathAttr.type);
-          const mathText = tr.doc.textBetween(mathRange.from, mathRange.to);
-          const charAfter = tr.doc.textBetween(mathRange.to, mathRange.to + 1);
-          const noDelims = !mathText.startsWith(mathDelim) || !mathText.endsWith(mathDelim);
-          const spaceAtEdge =
-            mathAttr.type === MathType.Inline &&
-            (mathText.startsWith(mathDelim + ' ') || mathText.endsWith(' ' + mathDelim));
-          const numberAfter = mathAttr.type === MathType.Inline && /\d/.test(charAfter);
-          if (noDelims || spaceAtEdge || numberAfter) {
-            tr.removeMark(mathRange.from, mathRange.to, schema.marks.math);
-            tr.removeStoredMark(schema.marks.math);
+          if (mathAttr.type === MathType.Inline) {
+            const mathDelim = delimiterForType(mathAttr.type);
+            const mathText = tr.doc.textBetween(mathRange.from, mathRange.to);
+            const charAfter = tr.doc.textBetween(mathRange.to, mathRange.to + 1);
+            const noDelims = !mathText.startsWith(mathDelim) || !mathText.endsWith(mathDelim);
+            const spaceAtEdge =
+              mathAttr.type === MathType.Inline &&
+              (mathText.startsWith(mathDelim + ' ') || mathText.endsWith(' ' + mathDelim));
+            const numberAfter = mathAttr.type === MathType.Inline && /\d/.test(charAfter);
+            if (noDelims || spaceAtEdge || numberAfter) {
+              tr.removeMark(mathRange.from, mathRange.to, schema.marks.math);
+              tr.removeStoredMark(schema.marks.math);
+            }
           }
         }
       }
