@@ -39,6 +39,17 @@ public class PanmirrorCrossrefServer
    {
       server_ = server;
    }
+   
+   public Promise<JavaScriptObject> works(String query)
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.crossrefWorks(
+            query,
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         );
+      });
+   }
+
 
    PanmirrorCrossrefServerOperations server_;
 }

@@ -87,6 +87,27 @@ void crossrefRequest(const std::string& resource,
    asyncJsonRpcRequest(url, crossrefRequestHandler, cont);
 }
 
+void crossrefWorks(const json::JsonRpcRequest& request,
+                   const json::JsonRpcFunctionContinuation& cont)
+{
+   // extract query
+   std::string query;
+   Error error = json::readParams(request.params, &query);
+   if (error)
+   {
+     json::JsonRpcResponse response;
+     setErrorResponse(error, &response);
+     cont(Success(), &response);
+     return;
+   }
+
+   // build params
+   core::http::Fields params ;
+   params.push_back(std::make_pair("query", query));
+
+   // make the request
+   crossrefRequest(kCrossrefWorks, params, cont);
+}
 
 
 } // end anonymous namespace
@@ -95,7 +116,7 @@ Error initialize()
 {
    ExecBlock initBlock;
    initBlock.addFunctions()
-
+      (boost::bind(module_context::registerAsyncRpcMethod, "crossref_works", crossrefWorks))
    ;
    return initBlock.execute();
 }
