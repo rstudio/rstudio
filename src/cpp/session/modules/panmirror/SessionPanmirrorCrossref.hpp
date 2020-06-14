@@ -1,5 +1,5 @@
 /*
- * SessionPanmirror.cpp
+ * SessionPanmirrorCrossref.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,36 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#ifndef SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
+#define SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
 
-#include "SessionPanmirror.hpp"
-
-#include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
-#include <core/Log.hpp>
-#include <core/system/Process.hpp>
-#include <core/json/JsonRpc.hpp>
-
-#include "SessionPanmirrorPandoc.hpp"
-#include "SessionPanmirrorCrossref.hpp"
-
-using namespace rstudio::core;
+namespace rstudio {
+namespace core {
+   class Error;
+   class FilePath;
+}
+}
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace panmirror {
+namespace crossref {
 
-Error initialize()
-{
-   core::ExecBlock initBlock;
-   initBlock.addFunctions()
-      (pandoc::initialize)
-      (crossref::initialize)
-    ;
-   return initBlock.execute();
-}
+core::Error initialize();
 
-} // end namespace panmirror
-} // end namespace modules
-} // end namespace session
-} // end namespace rstudio
+} // namespace crossref
+} // namespace panmirror
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif /* SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP */

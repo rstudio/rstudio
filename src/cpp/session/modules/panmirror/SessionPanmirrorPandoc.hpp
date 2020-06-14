@@ -1,5 +1,5 @@
 /*
- * SessionPanmirror.cpp
+ * SessionPanmirrorPandoc.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,35 +13,28 @@
  *
  */
 
-#include "SessionPanmirror.hpp"
-
-#include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
-#include <core/Log.hpp>
-#include <core/system/Process.hpp>
-#include <core/json/JsonRpc.hpp>
-
-#include "SessionPanmirrorPandoc.hpp"
-#include "SessionPanmirrorCrossref.hpp"
-
-using namespace rstudio::core;
+#ifndef SESSION_MODULES_PANMIRROR_PANDOC_HPP
+#define SESSION_MODULES_PANMIRROR_PANDOC_HPP
 
 namespace rstudio {
-namespace session {
-namespace modules {
-namespace panmirror {
-
-Error initialize()
-{
-   core::ExecBlock initBlock;
-   initBlock.addFunctions()
-      (pandoc::initialize)
-      (crossref::initialize)
-    ;
-   return initBlock.execute();
+namespace core {
+   class Error;
+   class FilePath;
 }
+}
+ 
+namespace rstudio {
+namespace session {
+namespace modules { 
+namespace panmirror {
+namespace pandoc {
 
-} // end namespace panmirror
-} // end namespace modules
-} // end namespace session
-} // end namespace rstudio
+core::Error initialize();
+
+} // namespace pandoc
+} // namespace panmirror
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif /* SESSION_MODULES_PANMIRROR_PANDOC_HPP */
