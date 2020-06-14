@@ -32,34 +32,6 @@ namespace session {
 namespace modules {
 namespace panmirror {
 
-std::string errorMessage(const core::Error& error)
-{
-   std::string msg = error.getMessage();
-   if (msg.length() == 0)
-   {
-      msg = error.getProperty("category");
-   }
-   if (msg.length() == 0)
-   {
-      msg = error.getName();
-   }
-   return msg;
-}
-
-void setErrorResponse(const core::Error& error, core::json::JsonRpcResponse* pResponse)
-{
-   LOG_ERROR(error);
-   pResponse->setError(error, errorMessage(error));
-}
-
-void setProcessErrorResponse(const core::system::ProcessResult& result,
-                             core::json::JsonRpcResponse* pResponse)
-{
-   Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
-   LOG_ERROR(error);
-   pResponse->setError(error, result.stdErr);
-}
-
 
 Error initialize()
 {

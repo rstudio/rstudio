@@ -16,7 +16,22 @@
 
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
-  crossrefWorks: (query: string) => Promise<CrossrefWork[]>;
+  crossrefWorks: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
+}
+
+export const kCrossrefItemsPerPage = 'items-per-page';
+export const kCrossrefStartIndex = 'start-index';
+export const kCrossrefSearchTerms = 'search-terms';
+export const kCrossrefTotalResults = 'total-results';
+
+export interface CrossrefMessage<T> {
+  items: T[];
+  [kCrossrefItemsPerPage]: number;
+  query: {
+    [kCrossrefStartIndex]: number;
+    [kCrossrefSearchTerms]: string;
+  };
+  [kCrossrefTotalResults]: number;
 }
 
 // https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#work
@@ -27,4 +42,5 @@ export interface CrossrefWork {
   url: string;
   type: string;
 }
+
 

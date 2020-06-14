@@ -18,13 +18,12 @@
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/system/Process.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
-#include "SessionPanmirror.hpp"
 
 using namespace rstudio::core;
 
@@ -110,7 +109,7 @@ void endAstToMarkdown(const json::JsonRpcFunctionContinuation& cont,
    }
    else
    {
-      setProcessErrorResponse(result, &response);
+      setProcessErrorResponse(result, ERROR_LOCATION, &response);
    }
    cont(Success(), &response);
 }
@@ -199,7 +198,7 @@ void endMarkdownToAst(const json::JsonRpcFunctionContinuation& cont,
    }
    else
    {
-      setProcessErrorResponse(result, &response);
+      setProcessErrorResponse(result, ERROR_LOCATION, &response);
    }
    cont(Success(), &response);
 }
@@ -264,7 +263,7 @@ bool pandocCaptureOutput(const std::vector<std::string>& args,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      setProcessErrorResponse(result, pResponse);
+      setProcessErrorResponse(result, ERROR_LOCATION, pResponse);
       return false;
    }
    else

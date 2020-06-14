@@ -58,6 +58,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 # source files
 set (SESSION_SOURCE_FILES
    SessionAsyncRProcess.cpp
+   SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp

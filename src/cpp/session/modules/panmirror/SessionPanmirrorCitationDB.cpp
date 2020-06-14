@@ -19,9 +19,11 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
-
+#include <core/json/JsonRpc.hpp>
+#include <core/http/Util.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionAsyncDownloadFile.hpp>
 
 #include "SessionPanmirror.hpp"
 
@@ -35,35 +37,78 @@ namespace citation_db {
 
 namespace {
 
+const char * const kCrossrefApiHost = "https://api.crossref.org";
+const char * const kCrossrefWorks = "works";
+
+
+void crossrefRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
+{
+   if (json::isType<json::Object>(value))
+   {
+      json::Object responseJson = value.getObject();
+      std::string status;
+      json::Object message;
+      Error error = json::readObject(responseJson, "status", status,
+                                                   "message", message);
+      if (error)
+      {
+         json::setErrorResponse(error, pResponse);
+      }
+      else if (status != "ok")
+      {
+         Error error = systemError(boost::system::errc::state_not_recoverable,
+                                   "Unexpected status from crossref api: " + status,
+                                   ERROR_LOCATION);
+         json::setErrorResponse(error, pResponse);
+      }
+      else
+      {
+         pResponse->setResult(message);
+      }
+   }
+   else
+   {
+      Error error = systemError(boost::system::errc::state_not_recoverable,
+                                "Unexpected response from crossref api",
+                                ERROR_LOCATION);
+      json::setErrorResponse(error, pResponse);
+   }
+}
+
+void crossrefRequest(const std::string& resource,
+                     const http::Fields& params,
+                     const json::JsonRpcFunctionContinuation& cont)
+{
+   // build query string
+   std::string queryString ;
+   core::http::util::buildQueryString(params, &queryString);
+
+   // build the url and make the request
+   boost::format fmt("%s/%s?%s");
+   const std::string url = boost::str(fmt % kCrossrefApiHost % resource % queryString);
+   asyncJsonRpcRequest(url, crossrefRequestHandler, cont);
+}
+
 void crossrefWorks(const json::JsonRpcRequest& request,
                    const json::JsonRpcFunctionContinuation& cont)
 {
-   // response object
-   json::JsonRpcResponse response;
-
    // extract query
    std::string query;
    Error error = json::readParams(request.params, &query);
    if (error)
    {
+     json::JsonRpcResponse response;
      setErrorResponse(error, &response);
      cont(Success(), &response);
      return;
    }
 
-   json::Array worksJson;
+   // build params
+   core::http::Fields params ;
+   params.push_back(std::make_pair("query", query));
 
-   json::Object workJson;
-   workJson["publisher"] = "RStudio";
-   workJson["url"] = "https://www.rstudio.com";
-
-   worksJson.push_back(workJson);
-
-   response.setResult(worksJson);
-
-   cont(Success(), &response);
-
-
+   // make the request
+   crossrefRequest(kCrossrefWorks, params, cont);
 }
 
 
