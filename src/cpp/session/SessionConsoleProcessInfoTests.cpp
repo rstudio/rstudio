@@ -111,7 +111,11 @@ TEST_CASE("ConsoleProcessInfo")
 
       CHECK_FALSE(cpi.getShowOnOutput());
       CHECK_FALSE(cpi.getExitCode());
+#ifdef _WIN32
+      CHECK_FALSE(cpi.getHasChildProcs());
+#else
       CHECK(cpi.getHasChildProcs());
+#endif
       CHECK((cpi.getShellType() == shellType));
       CHECK((cpi.getChannelMode() == Rpc));
       CHECK(cpi.getChannelId().empty());
