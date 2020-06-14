@@ -28,14 +28,14 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorCitationDBServer
+public class PanmirrorCrossrefServer
 {
-   public PanmirrorCitationDBServer() {
+   public PanmirrorCrossrefServer() {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    @Inject
-   void initialize(PanmirrorCitationDBServerOperations server)
+   void initialize(PanmirrorCrossrefServerOperations server)
    {
       server_ = server;
    }
@@ -51,5 +51,5 @@ public class PanmirrorCitationDBServer
    }
 
 
-   PanmirrorCitationDBServerOperations server_;
+   PanmirrorCrossrefServerOperations server_;
 }

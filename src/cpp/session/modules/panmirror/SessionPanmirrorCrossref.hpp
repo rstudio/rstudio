@@ -1,5 +1,5 @@
 /*
- * SessionPanmirrorCitationDB.hpp
+ * SessionPanmirrorCrossref.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,8 +12,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef SESSION_MODULES_PANMIRROR_CITATION_DB_HPP
-#define SESSION_MODULES_PANMIRROR_CITATION_DB_HPP
+#ifndef SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
+#define SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
 
 namespace rstudio {
 namespace core {
@@ -26,14 +26,14 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace panmirror {
-namespace citation_db {
+namespace crossref {
 
 core::Error initialize();
 
-} // namespace citation_db
+} // namespace crossref
 } // namespace panmirror
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif /* SESSION_MODULES_PANMIRROR_CITATION_DB_HPP */
+#endif /* SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP */

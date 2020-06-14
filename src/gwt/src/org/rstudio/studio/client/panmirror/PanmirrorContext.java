@@ -16,7 +16,7 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
-import org.rstudio.studio.client.panmirror.server.PanmirrorCitationDBServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
@@ -37,7 +37,7 @@ public class PanmirrorContext
       
       server = new PanmirrorServer();
       server.pandoc = new PanmirrorPandocServer();
-      server.citation_db = new PanmirrorCitationDBServer();
+      server.crossref = new PanmirrorCrossrefServer();
    }
    
    public PanmirrorUI ui;

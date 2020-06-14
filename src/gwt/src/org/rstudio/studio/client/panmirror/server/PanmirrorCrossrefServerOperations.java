@@ -19,7 +19,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public interface PanmirrorCitationDBServerOperations 
+public interface PanmirrorCrossrefServerOperations 
 {
    void crossrefWorks(String query, ServerRequestCallback<JavaScriptObject> callback);
 }

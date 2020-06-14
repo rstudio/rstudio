@@ -21,9 +21,8 @@
 #include <core/system/Process.hpp>
 #include <core/json/JsonRpc.hpp>
 
-
 #include "SessionPanmirrorPandoc.hpp"
-#include "SessionPanmirrorCitationDB.hpp"
+#include "SessionPanmirrorCrossref.hpp"
 
 using namespace rstudio::core;
 
@@ -32,13 +31,12 @@ namespace session {
 namespace modules {
 namespace panmirror {
 
-
 Error initialize()
 {
    core::ExecBlock initBlock;
    initBlock.addFunctions()
       (pandoc::initialize)
-      (citation_db::initialize)
+      (crossref::initialize)
     ;
    return initBlock.execute();
 }

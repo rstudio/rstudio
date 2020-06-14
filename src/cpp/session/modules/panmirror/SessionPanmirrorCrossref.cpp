@@ -1,5 +1,5 @@
 /*
- * SessionPanmirrorCitationDB.cpp
+ * SessionPanmirrorCrossref.cpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionPanmirrorCitationDB.hpp"
+#include "SessionPanmirrorCrossref.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -25,15 +25,13 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
-#include "SessionPanmirror.hpp"
-
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace panmirror {
-namespace citation_db {
+namespace crossref {
 
 namespace {
 
@@ -123,7 +121,7 @@ Error initialize()
    return initBlock.execute();
 }
 
-} // end namespace citation_db
+} // end namespace crossref
 } // end namespace panmirror
 } // end namespace modules
 } // end namespace session
