@@ -23,7 +23,7 @@
 
 
 #include "SessionPanmirrorPandoc.hpp"
-#include "SessionPanmirrorCrossref.hpp"
+#include "SessionPanmirrorCitationDB.hpp"
 
 using namespace rstudio::core;
 
@@ -66,7 +66,7 @@ Error initialize()
    core::ExecBlock initBlock;
    initBlock.addFunctions()
       (pandoc::initialize)
-      (crossref::initialize)
+      (citation_db::initialize)
     ;
    return initBlock.execute();
 }

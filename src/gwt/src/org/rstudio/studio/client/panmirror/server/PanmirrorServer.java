@@ -24,5 +24,5 @@ import jsinterop.annotations.JsType;
 public class PanmirrorServer
 {    
    public PanmirrorPandocServer pandoc;
-   public PanmirrorCrossrefServer crossref;
+   public PanmirrorCitationDBServer citation_db;
 }

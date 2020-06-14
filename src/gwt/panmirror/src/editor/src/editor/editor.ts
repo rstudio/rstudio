@@ -123,7 +123,7 @@ export interface EditorContext {
 
 export interface EditorServer {
   readonly pandoc: PandocServer;
-  readonly crossref: CrossrefServer;
+  readonly citation_db: CrossrefServer;
 }
 
 export interface EditorHooks {
