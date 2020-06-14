@@ -98,6 +98,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { CrossrefServer } from '../api/crossref';
 
 
 export interface EditorCode {
@@ -114,15 +115,15 @@ export interface EditorSetMarkdownResult {
 }
 
 export interface EditorContext {
-  readonly pandoc: PandocServer;
+  readonly server: EditorServer;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
 }
 
 export interface EditorServer {
-
   readonly pandoc: PandocServer;
+  readonly crossref: CrossrefServer;
 }
 
 export interface EditorHooks {
@@ -300,10 +301,10 @@ export class Editor {
     };
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(context.server.pandoc, format);
 
     // get pandoc capabilities
-    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
+    const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
@@ -379,7 +380,7 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.server.pandoc, this.pandocCapabilities);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -703,7 +704,7 @@ export class Editor {
       events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       pandocExtensions: this.pandocFormat.extensions,
       pandocCapabilities: this.pandocCapabilities,
-      pandocServer: this.context.pandoc
+      pandocServer: this.context.server.pandoc
     }, this.context.extensions);
   }
 

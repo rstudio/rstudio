@@ -1,7 +1,7 @@
 /*
- * SessionPanmirror.hpp
+ * PanmirrorCrossrefServerOperations.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,25 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef SESSION_MODULES_PANMIRROR_HPP
-#define SESSION_MODULES_PANMIRROR_HPP
 
-namespace rstudio {
-namespace core {
-   class Error;
+package org.rstudio.studio.client.panmirror.server;
+
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import com.google.gwt.core.client.JavaScriptObject;
+
+public interface PanmirrorCrossrefServerOperations 
+{
+   void crossrefWorks(String query, ServerRequestCallback<JavaScriptObject> callback);
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace panmirror {
-
-core::Error initialize();
-
-} // namespace panmirror
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif /* SESSION_MODULES_PANMIRROR_HPP */

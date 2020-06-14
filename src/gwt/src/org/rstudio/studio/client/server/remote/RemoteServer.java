@@ -6164,6 +6164,12 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(StringUtil.notNull(csl)));
       sendRequest(RPC_SCOPE, PANDOC_GET_BIBLIOGRAPHY, params, callback);
    }
+    
+   @Override
+   public void crossrefWorks(String query, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6663,5 +6669,6 @@ public class RemoteServer implements Server
    private static final String PANDOC_LIST_EXTENSIONS = "pandoc_list_extensions";
    private static final String PANDOC_GET_BIBLIOGRAPHY = "pandoc_get_bibliography";
    
+   private static final String CROSSREF_WORKS = "crossref_works";
    
 }

@@ -145,22 +145,32 @@ const extension = (context: ExtensionContext): Extension | null => {
                   output.write(math);
                 });
               } else {
-                // strip delimiter
-                const delimiter = delimiterForType(mark.attrs.type);
-                math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
 
-                // if it's just whitespace then it's not actually math (we allow this state
-                // in the editor because it's the natural starting place for new equations)
-                if (math.trim().length === 0) {
-                  output.writeText(delimiter + math + delimiter);
+                // check for delimeter (if it's gone then write this w/o them math mark)
+                const delimiter = delimiterForType(mark.attrs.type);
+                if (math.startsWith(delimiter) && math.endsWith(delimiter)) {
+
+                  // remove delimiter
+                  math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
+
+                  // if it's just whitespace then it's not actually math (we allow this state
+                  // in the editor because it's the natural starting place for new equations)
+                  if (math.trim().length === 0) {
+                    output.writeText(delimiter + math + delimiter);
+                  } else {
+                    output.writeToken(PandocTokenType.Math, () => {
+                      // write type
+                      output.writeToken(
+                        mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
+                      );
+                      output.write(math);
+                    });
+                  }
+
                 } else {
-                  output.writeToken(PandocTokenType.Math, () => {
-                    // write type
-                    output.writeToken(
-                      mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
-                    );
-                    output.write(math);
-                  });
+                  // user removed the delimiter so write the content literally. when it round trips 
+                  // back into editor it will no longer be parsed by pandoc as math
+                  output.writeRawMarkdown(math);
                 }
               }
             },

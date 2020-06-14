@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include <core/Log.hpp>
+#include <core/system/Process.hpp>
 #include <core/http/Response.hpp>
 
 namespace rstudio {
@@ -113,6 +114,19 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
       error.addProperty("exception", e.what()) ;
       return error ;
    }
+}
+
+void setErrorResponse(const core::Error& error, core::json::JsonRpcResponse* pResponse)
+{
+   pResponse->setError(error, core::errorMessage(error));
+}
+
+void setProcessErrorResponse(const core::system::ProcessResult& result,
+                             const core::ErrorLocation& location,
+                             core::json::JsonRpcResponse* pResponse)
+{
+   Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, location);
+   pResponse->setError(error, result.stdErr);
 }
 
 bool parseJsonRpcRequestForMethod(const std::string& input, 
