@@ -50,6 +50,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          return this.splitterpos;
       }-*/;
 
+      public native final int getSplitterCount() /*-{
+         return this.splitterpos.length;
+      }-*/;
+
       public native final void setSplitterPos(int[] pos) /*-{
          this.splitterpos = pos;
       }-*/;
@@ -132,9 +136,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          @Override
          protected void onInit(JsObject value)
          {
-            // If we already have a set state, use that
+            // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
-            if (state != null && state.hasSplitterPos())
+            if (state != null && state.hasSplitterPos() &&
+                state.getSplitterCount() == leftList_.size() + 1)
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
