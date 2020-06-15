@@ -112,7 +112,7 @@ public class SourcePane extends Composite implements Display,
    {
       tabPanel_.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
-         tabPanel_.selectTab(widget);
+         tabPanel_.selectTab(widget, true /* focus newly added tab */);
    }
 
    public void closeTab(Widget child, boolean interactive)
