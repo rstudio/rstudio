@@ -432,10 +432,51 @@ std::string readCitationId(const json::Value& jsonValue)
    return "";
 }
 
-void pandocBiblioCompleted(const json::Array& jsonCitations,
+
+// cache the last bibliography we returned along w/ the timestamps of the bibliography and csl file
+class BiblioCache
+{
+public:
+   void update(const json::Object& biblioJson, const std::string& biblio, const std::string& csl)
+   {
+      biblioJson_ = biblioJson;
+      biblioFile_ = fileInfo(biblio);
+      if (!csl.empty())
+         cslFile_ = fileInfo(csl);
+      else
+         cslFile_ = core::FileInfo();
+   }
+
+   bool isValidFor(const std::string& biblio, const std::string& csl)
+   {
+      return fileInfo(biblio) == biblioFile_ && fileInfo(csl) == cslFile_;
+   }
+
+   const json::Object& get()
+   {
+      return biblioJson_;
+   }
+
+private:
+   core::FileInfo fileInfo(const std::string& file)
+   {
+      return core::FileInfo(module_context::resolveAliasedPath(file));
+   }
+
+private:
+   json::Object biblioJson_;
+   core::FileInfo biblioFile_;
+   core::FileInfo cslFile_;
+};
+BiblioCache s_biblioCache;
+
+
+void pandocBiblioCompleted(const std::string& file,
+                           const std::string& csl,
+                           const json::Array& jsonCitations,
                            const json::JsonRpcFunctionContinuation& cont,
                            const core::system::ProcessResult& result)
-{
+{   
    json::JsonRpcResponse response;
 
    // read the html
@@ -444,6 +485,11 @@ void pandocBiblioCompleted(const json::Array& jsonCitations,
       json::Object biblio;
       biblio["sources"] = jsonCitations;
       biblio["html"] = result.stdOut;
+
+      // cache last successful result
+      s_biblioCache.update(biblio, file, csl);
+
+      // set result
       response.setResult(biblio);
    }
    else
@@ -501,7 +547,7 @@ void citeprocCompleted(const std::string& file,
          args.push_back("html");
          args.push_back("--filter");
          args.push_back(pandocCiteprocPath());
-         Error error = runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, jsonCitations, cont, _1));
+         Error error = runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, file, csl, jsonCitations, cont, _1));
          if (error)
          {
             json::setErrorResponse(error, &response);
@@ -532,6 +578,14 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    if (error)
    {
       json::setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   // fulfill from the cache if we can
+   if (s_biblioCache.isValidFor(file, csl))
+   {
+      response.setResult(s_biblioCache.get());
       cont(Success(), &response);
       return;
    }
