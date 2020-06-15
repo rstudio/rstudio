@@ -410,7 +410,7 @@ public class VisualMode implements VisualModeEditorSync,
                      view_.showWarningBar(
                        "Bookdown package update required for compatibility with visual mode.",
                        "Learn more", () -> {
-                          globalDisplay_.openWindow("https://rstudio.github.io/visual-markdown-editing/#/markdown?id=footnotes");                   
+                          globalDisplay_.openRStudioLink("visual_markdown_editing-bookdown-upgrade", false);                   
                        });
                      bookdownVersionWarningShown = true;
                   }
