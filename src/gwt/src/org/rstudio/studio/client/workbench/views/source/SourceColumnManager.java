@@ -1339,7 +1339,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void closeAllColumns()
    {
       columnList_.forEach((column) -> closeColumn(column.getName()));
-      Debug.logToConsole("closed all columns, new size: " + getSize());
       assert getSize() == 0;
    }
 
