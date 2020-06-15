@@ -188,6 +188,12 @@ public class VisualModePanmirrorFormat
    }
    
    
+   public boolean isBookdownProjectDocument() 
+   {
+      return sessionInfo_.getBuildToolsBookdownWebsite() && isDocInProject();
+   }
+    
+  
    private List<String> getOutputFormats()
    {
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
@@ -215,12 +221,7 @@ public class VisualModePanmirrorFormat
       return rmdExtensions;
    }
    
- 
-   private boolean isBookdownProjectDocument() 
-   {
-      return sessionInfo_.getBuildToolsBookdownWebsite() && isDocInProject();
-   }
-   
+
    private boolean isBlogdownProjectDocument() 
    {
       return getBlogdownConfig().is_blogdown_project && isDocInProject() && !isHugodownDocument();

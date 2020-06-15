@@ -200,7 +200,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       article: articleImage,
       article_dark: articleDarkImage,
       book: bookImage,
-      book_Dark: bookDarkImage,
+      book_dark: bookDarkImage,
       broadcast: broadcastImage,
       broadcast_dark: broadcastDarkImage,
       data: dataImage,

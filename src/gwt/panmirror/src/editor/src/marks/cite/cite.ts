@@ -13,6 +13,24 @@
  *
  */
 
+/* Citation mark handling
+
+-   You can create a citation by having one in source mode, by typing `[@`, or by using a comand.
+
+-   Once created, the citation will preserve itself as a mark in the editor, and will only dissapear fully when it is round-tripped back to source.
+
+-   The completer will show whenever it is in front of valid citation begin sequence (`-?@`, etc.) inside a citation mark.
+
+-   Input rule for @ character inside cite marks --- this transforms the @ into a cite\_id (but then reverses this on backspace)
+
+-   Inside a citation mark, @ is considered a valid id (so that users can replace the identifier) however when round-tripping a standaone @ will not be treated as an ID.
+
+-   We won't show \@cite anymore, rather it will be placeholder text for the completer.
+
+-   Deal with allowing inclusive editing of the mark, while at the same time breaking it when it's done (similar to LaTeX)
+
+*/
+
 import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';

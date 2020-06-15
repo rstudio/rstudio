@@ -107,6 +107,12 @@ public class InfoBar extends Composite
       return 19;
    }
    
+   public void setTextWithAction(String text, String actionLabel, Command command)
+   {
+      setText(text);
+      labelRight_.add(label(actionLabel, command));
+   }
+   
    public void showRequiredPackagesMissingWarning(List<String> packages,
                                                   Command onInstall,
                                                   Command onDismiss)
