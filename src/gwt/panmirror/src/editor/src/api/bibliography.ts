@@ -142,16 +142,29 @@ export function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: Editor
   // TODO: references can actually be defined an inline yaml as per pandoc docs
   // TODO: some reassurance that paths are handled correctly
   // TODO: What about global references
-
   const yamlNodes = yamlMetadataNodes(doc);
   if (yamlNodes.length > 0) {
-    const yamlText = yamlNodes[0].node.textContent;
-    const yamlCode = stripYamlDelimeters(yamlText);
-    const yaml = parseYaml(yamlCode);
-    if (yaml && typeof yaml === 'object' && yaml.bibliography) {
+    // Nodes that contain a bibliography entry
+    let biblioYaml: any = null;
+
+    // Find the first node that contains a bibliography, then stop
+    // looking at further nodes.
+    yamlNodes.some(node => {
+      const yamlText = node.node.textContent;
+      const yamlCode = stripYamlDelimeters(yamlText);
+      const yaml = parseYaml(yamlCode);
+      if (yaml && typeof yaml === 'object' && yaml.bibliography) {
+        biblioYaml = yaml;
+        return true;
+      }
+      return false;
+    });
+
+    // If we found at least one node with a bibliography, read that
+    if (biblioYaml) {
       return {
-        bibliography: uiContext.getDefaultResourceDir() + '/' + yaml.bibliography,
-        csl: yaml.csl ? uiContext.getDefaultResourceDir() + '/' + yaml.csl : null,
+        bibliography: uiContext.getDefaultResourceDir() + '/' + biblioYaml.bibliography,
+        csl: biblioYaml.csl ? uiContext.getDefaultResourceDir() + '/' + biblioYaml.csl : null,
       };
     } else {
       return null;
