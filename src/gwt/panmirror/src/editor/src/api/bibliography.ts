@@ -86,14 +86,17 @@ export class BibliographyManager {
     this.bibEntries = [];
   }
 
-  public async entries(files?: BibliographyFiles): Promise<BibliographyEntry[]> {
+  public async entries(doc: ProsemirrorNode, uiContext: EditorUIContext): Promise<BibliographyEntry[]> {
     // no files means no entries
-    if (files === undefined) {
+    const files = bibliographyFilesFromDoc(doc, uiContext);
+    if (files === null) {
       return Promise.resolve([]);
     }
 
     // get the bibliography
     const result = await this.server.getBibliography(files.bibliography, files.csl, this.etag);
+
+    // TODO: Parse any inline references and merge them into entries
 
     // update bibliography if necessary
     if (!this.bibEntries || result.etag !== this.etag) {
@@ -137,8 +140,7 @@ export class BibliographyManager {
 }
 const kMaxCitationCompletions = 20;
 
-export function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographyFiles | null {
-  // TODO: I guess you could technically have a bibliography entry in another yaml node
+function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographyFiles | null {
   // TODO: references can actually be defined an inline yaml as per pandoc docs
   // TODO: some reassurance that paths are handled correctly
   // TODO: What about global references

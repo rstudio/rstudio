@@ -22,11 +22,6 @@
 // TODO: insert complete mark correctly (currently losing cite marks)
 // TODO: frequent mark mangling - see if this is still happening and why
 
-// SEARCH
-// TODO: Define correct metadata for searching
-// TODO: Configure fuzzy search weights properly
-// id (heavy), author (heavy), title (light)
-
 // BIBLIOGRAPHY
 // TODO: Shared bibliography (set site level for books) -- distill, bookdown, etc...
 // Sniff project provide shared bibliography as ui context
@@ -34,10 +29,8 @@
 // TODO: Read bibliography files out of ANY yaml node
 
 // UI
-// TODO: Big question - use format or standard format for completion UI
-// [type - icon] [id] [authors]             (2 lines / w ellipses)
-//                  [title]
 // TODO: Show preview for citation when mouseover (like inline math)
+//        - would be nice if you could follow DOI to article when previewing
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 
 // FUTURE
@@ -53,15 +46,7 @@ import React from 'react';
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 
-import {
-  bibliographyFilesFromDoc,
-  BibliographyFiles,
-  BibliographyEntry,
-  BibliographyManager,
-  BibliographyAuthor,
-  BibliographySource,
-  BibliographyDate,
-} from '../../api/bibliography';
+import { BibliographyEntry, BibliographyManager, BibliographyAuthor, BibliographyDate } from '../../api/bibliography';
 
 import omniInsertCitationImage from './../../editor/images/omni_insert/citation.png';
 import './cite-completion.css';
@@ -116,15 +101,11 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
       const query = match[2];
       const pos = context.selection.head - (query.length + prefix.length);
 
-      // scan for completions that match the prefix (truncate as necessary)
-      const bibliographyFiles: BibliographyFiles | null = bibliographyFilesFromDoc(context.doc, ui.context);
-      if (bibliographyFiles) {
-        return {
-          token: query,
-          pos,
-          completions: (state: EditorState) => manager.entries(bibliographyFiles),
-        };
-      }
+      return {
+        token: query,
+        pos,
+        completions: (state: EditorState) => manager.entries(context.doc, ui.context),
+      };
     }
     return null;
   };
