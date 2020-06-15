@@ -213,6 +213,7 @@
         "enable_additional_columns": {
            "type": "boolean",
            "default": false,
+           "title": "Enable Additional Columns",
            "description": "Temporary flag to enable additional source columns."
         },
         "use_spaces_for_tab": {

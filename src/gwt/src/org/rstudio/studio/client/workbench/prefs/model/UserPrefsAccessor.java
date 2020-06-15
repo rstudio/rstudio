@@ -413,7 +413,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_additional_columns",
-         "", 
+         "Enable Additional Columns", 
          "Temporary flag to enable additional source columns.", 
          false);
    }
