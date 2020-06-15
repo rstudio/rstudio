@@ -230,7 +230,7 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), null, 0));
+            DocTabDragParams.create(getId(), currentPosition(), null), null, 0, -1));
    }
    
    public void focus()

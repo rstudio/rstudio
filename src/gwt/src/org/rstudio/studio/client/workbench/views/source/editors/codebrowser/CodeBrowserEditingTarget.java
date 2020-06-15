@@ -325,7 +325,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler
    void onPopoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition(), null));
    }
 
    @Handler
@@ -333,7 +333,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()), null, 0));
+            DocTabDragParams.create(getId(), currentPosition(), null), null, 0, -1));
    }
    
    @Override

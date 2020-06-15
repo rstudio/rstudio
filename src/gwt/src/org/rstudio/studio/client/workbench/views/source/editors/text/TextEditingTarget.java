@@ -493,6 +493,7 @@ public class TextEditingTarget implements
                                          events_, 
                                          this);
 
+      EditingTarget target = this;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -595,10 +596,19 @@ public class TextEditingTarget implements
                String indent = docDisplay_.getNextLineIndent();
                docDisplay_.insertCode("\n" + indent);
             }
+            events_.fireEvent(new EditingTargetSelectedEvent(target));
          }
-
       });
-      
+
+      docDisplay_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            events_.fireEvent(new EditingTargetSelectedEvent(target));
+         }
+      });
+
       docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
       {
          @Override
@@ -2514,7 +2524,7 @@ public class TextEditingTarget implements
 
       return false;
    }
-   
+
    public void save()
    {
       save(new Command() {
@@ -3664,7 +3674,7 @@ public class TextEditingTarget implements
                // fire popout event (this triggers a close in the current window
                // and the creation of a new window with the doc)
                events_.fireEvent(new PopoutDocEvent(getId(), 
-                     currentPosition()));
+                     currentPosition(), null));
             }
          });
       }
@@ -3684,9 +3694,9 @@ public class TextEditingTarget implements
             public void execute()
             {
                events_.fireEventToMainWindow(new DocWindowChangedEvent(
-                     getId(), SourceWindowManager.getSourceWindowId(), "",
-                     DocTabDragParams.create(getId(), currentPosition()),
-                     docUpdateSentinel_.getDoc().getCollabParams(), 0));
+                  getId(), SourceWindowManager.getSourceWindowId(), "",
+                  DocTabDragParams.create(getId(), currentPosition()),
+                  docUpdateSentinel_.getDoc().getCollabParams(), 0, -1));
             }
          });
       }

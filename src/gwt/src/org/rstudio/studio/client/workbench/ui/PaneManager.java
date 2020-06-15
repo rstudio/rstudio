@@ -60,12 +60,16 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -210,6 +214,7 @@ public class PaneManager
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
                       Source source,
+                      SourceColumnManager sourceColumnManager,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -241,6 +246,7 @@ public class PaneManager
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
+      sourceColumnManager_ = sourceColumnManager;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -267,7 +273,9 @@ public class PaneManager
       tutorialTab_ = tutorialTab;
 
       binder.bind(commands, this);
+
       source_.load();
+      loadAdditionalSourceColumns();
 
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -277,9 +285,15 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-
       panel_ = pSplitPanel.get();
-      panel_.initialize(left_, right_);
+
+      // get the widgets for the extra source columns to be displayed
+      ArrayList<Widget> sourceColumns;
+      if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
+         sourceColumns = new ArrayList<Widget>(sourceColumnManager_.getWidgets(true));
+      else
+         sourceColumns =  new ArrayList<Widget>();
+      panel_.initialize(sourceColumns, left_, right_);
 
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs =
@@ -295,18 +309,21 @@ public class PaneManager
          }
       }
 
-      if (numDocs == 0 && sourceLogicalWindow_.getState() != WindowState.HIDE)
+      for (LogicalWindow window : sourceLogicalWindows_)
       {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.HIDE));
-      }
-      else if (numDocs > 0
-               && sourceLogicalWindow_.getState() == WindowState.HIDE)
-      {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.NORMAL));
+         if (numDocs == 0 && window.getState() != WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.HIDE));
+         }
+         else if (numDocs > 0 && window.getState() == WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL));
+         }
       }
 
+      source_.loadDisplay();
       userPrefs.panes().addValueChangeHandler(evt ->
       {
          ArrayList<LogicalWindow> newPanes = createPanes(
@@ -384,6 +401,18 @@ public class PaneManager
          manageLayoutCommands();
 
          activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
+      });
+
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
+      {
+         @Override
+         public void onUserPrefsChanged(UserPrefsChangedEvent e)
+         {
+            if (additionalSourceCount_ != userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns())
+            {
+               syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
+            }
+         }
       });
 
       manageLayoutCommands();
@@ -550,7 +579,8 @@ public class PaneManager
             paneConfig.getTabSet2(),
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
-            paneConfig.getConsoleRightOnTop()).cast());
+            paneConfig.getConsoleRightOnTop(),
+            sourceColumnManager_.getSize() - 1).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -779,18 +809,33 @@ public class PaneManager
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < panes.length(); i++)
       {
          results.add(panesByName_.get(panes.get(i)));
       }
       return results;
    }
 
+   private void loadAdditionalSourceColumns()
+   {
+      additionalSourceCount_ = userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns();
+
+      // determine the desired number of source columns (add one for the main source)
+      // and add any missing
+      while (sourceColumnManager_.getSize() <= additionalSourceCount_)
+         sourceColumnManager_.add();
+   }
+
    private void initPanes(PaneConfig config)
    {
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
-      panesByName_.put("Source", createSource());
+
+      ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
+      for (SourceColumn column : columns)
+      {
+         panesByName_.put(column.getName(), createSource(column.getName(), column.asWidget()));
+      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -984,7 +1029,8 @@ public class PaneManager
          paneConfig.getTabSet2(),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnManager_.getSize() - 1).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1000,7 +1046,8 @@ public class PaneManager
          tabListToJsArrayString(tabs),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnManager_.getSize() - 1).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1087,12 +1134,113 @@ public class PaneManager
 
    public LogicalWindow getSourceLogicalWindow()
    {
-      return sourceLogicalWindow_;
+      return sourceLogicalWindows_.get(0);
    }
 
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get("Console");
+   }
+
+   public void syncAdditionalColumnCount(int count)
+   {
+      // make sure additionalSourceCount_ is up to date
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+
+      if (count == additionalSourceCount_)
+    	  return;
+
+      if (count > additionalSourceCount_)
+      {
+         int difference = count - additionalSourceCount_;
+         for (int i = 0; i < difference; i++)
+         {
+            addSourceWindow();
+         }
+      }
+      else
+      {
+         int difference = additionalSourceCount_ - count;
+         sourceColumnManager_.consolidateColumns(difference);
+         additionalSourceCount_ = sourceColumnManager_.getSize();
+      }
+   }
+
+   public int addSourceWindow()
+   {
+      int id = sourceColumnManager_.getSize();
+      PaneConfig.addSourcePane();
+      String columnName = sourceColumnManager_.add();
+      panesByName_.put(columnName,
+                       createSource(columnName,
+                                    sourceColumnManager_.getWidget(columnName)));
+      panel_.addLeftWidget(sourceColumnManager_.getWidget(columnName));
+      additionalSourceCount_ = id;
+      sourceColumnManager_.beforeShow(columnName);
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         id).cast());
+      userPrefs_.writeUserPrefs();
+      return id;
+   }
+
+   public int closeAllAdditionalColumns()
+   {
+      sourceColumnManager_.closeAllColumns();
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+      if (additionalSourceCount_ > 0)
+         Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         additionalSourceCount_).cast());
+      userPrefs_.writeUserPrefs();
+
+      return additionalSourceCount_;
+   }
+
+   public void closeSourceWindow(String name)
+   {
+      // hide the original source window
+      if (StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
+         getSourceLogicalWindow().onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.HIDE));
+      else
+      {
+         SourceColumn column = sourceColumnManager_.findByName(name);
+
+         if (column.getTabCount() == 0)
+         {
+            panel_.removeLeftWidget(column.asWidget());
+            sourceColumnManager_.closeColumn(name);
+            panesByName_.remove(name);
+
+            additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+            PaneConfig paneConfig = getCurrentConfig();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               additionalSourceCount_).cast());
+            userPrefs_.writeUserPrefs();
+         }
+      }
    }
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
@@ -1148,15 +1296,15 @@ public class PaneManager
       return logicalWindow;
    }
 
-   private LogicalWindow createSource()
+   private LogicalWindow createSource(String frameName, Widget display)
    {
-      String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(source_.asWidget());
-      source_.forceLoad();
-      return sourceLogicalWindow_ = new LogicalWindow(
+      sourceFrame.setFillWidget(display);
+      LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
+      sourceLogicalWindows_.add(sourceWindow);
+      return sourceWindow;
    }
 
    private
@@ -1395,6 +1543,7 @@ public class PaneManager
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
    private final Source source_;
+   private final SourceColumnManager sourceColumnManager_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;
@@ -1417,7 +1566,7 @@ public class PaneManager
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final MainSplitPanel panel_;
-   private LogicalWindow sourceLogicalWindow_;
+   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
@@ -1443,4 +1592,6 @@ public class PaneManager
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
    private ArrayList<Tab> hiddenTabs_;
+
+   private int additionalSourceCount_; // this does not include the main source
 }

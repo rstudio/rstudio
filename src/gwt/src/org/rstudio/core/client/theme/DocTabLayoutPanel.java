@@ -600,11 +600,13 @@ public class DocTabLayoutPanel
          events_.fireEvent(new DocTabDragStateChangedEvent(
                DocTabDragStateChangedEvent.STATE_DRAGGING));
 
-         // the relative position of the last node determines how far we
-         // can drag
-         dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, 
-               getLastChildElement(dragTabsHost_)) + 
-               getLastChildElement(dragTabsHost_).getClientWidth();
+         // the relative position of the last node (if one exists)
+         // determines how far we can drag
+         if (getLastChildElement(dragTabsHost_) != null)
+            dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, 
+                  getLastChildElement(dragTabsHost_)) + 
+                  getLastChildElement(dragTabsHost_).getClientWidth();
+
          lastCursorX_= evt.getClientX();
          
          // account for cursor starting out of bounds (e.g. dragging into 
@@ -650,16 +652,20 @@ public class DocTabLayoutPanel
          }
          
          // compute the start location for the drag
-         if (candidatePos_ >= dragTabsHost_.getChildCount())
+
+         if (dragTabsHost_.getChildCount() > 0)
          {
-            Element lastTab = getLastChildElement(dragTabsHost_);
-            lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, lastTab) +
-                  lastTab.getOffsetWidth();
-         }
-         else
-         {
-            lastElementX_ = DomUtils.leftRelativeTo(
-                  dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
+            if (candidatePos_ >= dragTabsHost_.getChildCount())
+            {
+               Element lastTab = getLastChildElement(dragTabsHost_);
+               lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, lastTab) +
+                     lastTab.getOffsetWidth();
+            }
+            else
+            {
+               lastElementX_ = DomUtils.leftRelativeTo(
+                     dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
+            }
          }
          
          // if we're dragging one of our own tabs, snap it out of the 
@@ -953,7 +959,7 @@ public class DocTabLayoutPanel
             
             events_.fireEvent(new DocWindowChangedEvent(pieces[0],
                   pieces.length > 1 ? pieces[1] : "", 
-                  initDragParams_, null, destPos_));
+                  initDragParams_, null, destPos_, evt.getClientX()));
          }
          
          if (Desktop.hasDesktopFrame())
@@ -1310,6 +1316,9 @@ public class DocTabLayoutPanel
    private Element getLastChildElement(Element parent)
    {
       Node lastTab = parent.getLastChild();
+      if (lastTab == null)
+         return null;
+
       while (lastTab.getNodeType() != Node.ELEMENT_NODE)
       {
          lastTab = lastTab.getPreviousSibling();

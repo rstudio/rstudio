@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDoc;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
@@ -149,11 +150,28 @@ public class SourceDocument extends JavaScriptObject
       return "";
    }
    
+   public final String getSourceDisplayName()
+   {
+      if (getProperties().hasKey(SourceColumnManager.COLUMN_PREFIX))
+      {
+         String displayName = getProperties().getAsString(SourceColumnManager.COLUMN_PREFIX);
+         if (displayName == null)
+            return "";
+         return displayName;
+      }
+      return "";
+   }
+
    public final void assignSourceWindowId(String windowId)
    {
       getProperties().setString(SourceWindowManager.SOURCE_WINDOW_ID, windowId);
    }
    
+   public final void assignSourceDisplayName(String name)
+   {
+      getProperties().setString(SourceColumnManager.COLUMN_PREFIX, name);
+   }
+
    // get the collaborative editing session associated with this document 
    // (local-only property; not persisted)
    public native final CollabEditStartParams getCollabParams() /*-{
