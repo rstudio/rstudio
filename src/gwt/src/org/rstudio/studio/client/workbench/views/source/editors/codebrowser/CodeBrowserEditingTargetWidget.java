@@ -345,6 +345,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void showWarningBar(String warning, String actionLabel, Command command)
+   {
+      showWarningImpl(() -> warningBar_.setTextWithAction(warning, actionLabel, command));
+   }
+   
+   @Override
    public void hideWarningBar()
    {
       if (warningBar_ != null)

@@ -1053,6 +1053,12 @@ public class TextEditingTargetWidget
    {
       showWarningImpl(() -> warningBar_.setText(warning));
    }
+   
+   @Override
+   public void showWarningBar(String warning, String actionLabel, Command command)
+   {
+      showWarningImpl(() -> warningBar_.setTextWithAction(warning, actionLabel, command));
+   }
 
    public void hideWarningBar()
    {
