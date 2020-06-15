@@ -135,7 +135,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(MAIN_SOURCE_NAME, display, this);
       columnList_.add(column);
-      setActive(column.getName());
 
       server_ = server;
       commands_ = commands;
@@ -217,6 +216,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
+      setActive(column.getName());
    }
 
    public String add()
@@ -280,21 +280,24 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (StringUtil.isNullOrEmpty(name))
       {
+         Debug.logWarning("Active column should be set to the main source window instead of null.");
          if (activeColumn_ != null)
+         {
             activeColumn_.setActiveEditor("");
-         activeColumn_ = null;
+            activeColumn_ = null;
+         }
          return;
       }
       setActive(findByName(name));
    }
 
-   public void setActive(EditingTarget target)
+   private void setActive(EditingTarget target)
    {
       setActive(findByDocument(target.getId()));
       activeColumn_.setActiveEditor(target);
    }
 
-   public void setActive(SourceColumn column)
+   private void setActive(SourceColumn column)
    {
       SourceColumn prevColumn = activeColumn_;
       activeColumn_ = column;
@@ -305,13 +308,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          prevColumn.setActiveEditor("");
          if (!hasActiveEditor())
             activeColumn_.setActiveEditor();
-      }
-
-      if (prevColumn == null || prevColumn != activeColumn_)
          manageCommands(true);
+      }
    }
 
-   public void setActiveDocId(String docId)
+   private void setActiveDocId(String docId)
    {
       for (SourceColumn column : columnList_)
       {
@@ -1298,7 +1299,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          if (!column.hasDoc())
          {
             if (column == activeColumn_)
-               setActive("");
+               setActive(MAIN_SOURCE_NAME);
             result.add(column.asWidget());
             columnList_.remove(column);
             if (num >= columnList_.size() || num == 1)
@@ -1348,7 +1349,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
-         setActive("");
+         setActive(MAIN_SOURCE_NAME);
 
       columnList_.remove(getByName(name));
    }
