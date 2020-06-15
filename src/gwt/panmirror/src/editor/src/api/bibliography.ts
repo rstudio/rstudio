@@ -24,6 +24,11 @@ export interface BibliographyFiles {
   csl: string | null;
 }
 
+export interface BibliographyResult {
+  etag: string;
+  bibliography: Bibliography;
+}
+
 export interface Bibliography {
   sources: BibliographySource[];
   html: string;
@@ -49,52 +54,43 @@ export interface BibliographyAuthor {
 }
 
 export class BibliographyManager {
-  public constructor(server: PandocServer) {
-    this.server = server;
-  }
 
-  public ensureLoaded(files: BibliographyFiles) {
-    // no files have been initialized yet
-    if (this.files === undefined) {
-      this.files = files;
-      this.clear();
-      return;
-    }
-
-    // The bibliography file or csl has changed
-    if (this.files.bibliography !== files.bibliography || this.files.csl !== files.csl) {
-      this.files = files;
-      this.clear();
-    }
-
-    // TODO: Check file timestamps to decide whether we should throw this away
-  }
-
-  private files: BibliographyFiles | undefined;
   private server: PandocServer;
-  private bibEntries: BibliographyEntry[] | undefined;
+  private etag: string;
+  private bibEntries: BibliographyEntry[];
   private fuse: Fuse<BibliographyEntry, Fuse.IFuseOptions<any>> | undefined;
 
-  public async entries(): Promise<BibliographyEntry[]> {
-    if (this.files === undefined) {
+  public constructor(server: PandocServer) {
+    this.server = server;
+    this.etag = '';
+    this.bibEntries = [];
+  }
+
+  public async entries(files?: BibliographyFiles): Promise<BibliographyEntry[]> {
+
+    // no files means no entries
+    if (files === undefined) {
       return Promise.resolve([]);
     }
 
-    if (!this.bibEntries) {
-      const bibliography = await this.server.getBibliography(this.files.bibliography, this.files.csl);
-      const entries = generateBibliographyEntries(bibliography);
-      this.setEntries(entries);
-      return entries;
-    } else {
-      return Promise.resolve(this.bibEntries);
+    // get the bibliography
+    const result = await this.server.getBibliography(files.bibliography, files.csl, this.etag);
+
+    // update bibliography if necessary
+    if (!this.bibEntries || (result.etag !== this.etag)) {
+      this.update(result.bibliography);
     }
+
+    // record the etag for future queries
+    this.etag = result.etag;
+
+    // return entries
+    return this.bibEntries;
+
   }
 
   // TODO: Configure search properly
   public search(query: string): BibliographyEntry[] {
-    if (!this.fuse && this.bibEntries) {
-      this.refreshIndex(this.bibEntries);
-    }
 
     if (this.fuse) {
       const options = {
@@ -108,31 +104,26 @@ export class BibliographyManager {
           { name: 'source.author.given', weight: 1 },
         ],
       };
-      console.log(query);
       const results = this.fuse.search(query, options);
-      console.log(results);
       return results.map((result: { item: any }) => result.item);
+    } else {
+      return [];
     }
-    return [];
   }
 
-  private clear() {
-    this.bibEntries = undefined;
-    this.fuse = undefined;
-  }
+  private update(bibliography: Bibliography) {
 
-  private setEntries(entries: BibliographyEntry[]) {
-    this.bibEntries = entries;
-    this.refreshIndex(this.bibEntries);
-  }
+    // generate entries
+    this.bibEntries = generateBibliographyEntries(bibliography);
 
-  private refreshIndex(entries: BibliographyEntry[]) {
+    // build search index
     const options = {
       keys: ['source.title', 'source.author.family', 'source.author.given'],
     };
-    const index = Fuse.createIndex(options.keys, entries);
-    this.fuse = new Fuse(entries, options, index);
+    const index = Fuse.createIndex(options.keys, this.bibEntries);
+    this.fuse = new Fuse(this.bibEntries, options, index);
   }
+
 }
 const kMaxCitationCompletions = 20;
 

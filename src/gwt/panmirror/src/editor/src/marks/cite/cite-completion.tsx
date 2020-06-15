@@ -89,11 +89,10 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
       // scan for completions that match the prefix (truncate as necessary)
       const bibliographyFiles: BibliographyFiles | null = bibliographyFilesFromDoc(context.doc, ui.context);
       if (bibliographyFiles) {
-        manager.ensureLoaded(bibliographyFiles);
         return {
           token: query,
           pos,
-          completions: (state: EditorState) => manager.entries(),
+          completions: (state: EditorState) => manager.entries(bibliographyFiles),
         };
       }
     }

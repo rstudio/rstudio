@@ -437,6 +437,12 @@ std::string readCitationId(const json::Value& jsonValue)
 class BiblioCache
 {
 public:
+   static std::string etag(const std::string& biblio, const std::string& csl)
+   {
+      return etag(fileInfo(biblio), fileInfo(csl));
+   }
+
+public:
    void update(const json::Object& biblioJson, const std::string& biblio, const std::string& csl)
    {
       biblioJson_ = biblioJson;
@@ -447,20 +453,35 @@ public:
          cslFile_ = core::FileInfo();
    }
 
-   bool isValidFor(const std::string& biblio, const std::string& csl)
+   std::string etag()
    {
-      return fileInfo(biblio) == biblioFile_ && fileInfo(csl) == cslFile_;
+      std::ostringstream ostr;
+      ostr << biblioFile_.absolutePath() << ":" << biblioFile_.lastWriteTime();
+      ostr << cslFile_.absolutePath() << ":" << cslFile_.lastWriteTime();
+      return ostr.str();
    }
 
-   const json::Object& get()
+   void setResponse(json::JsonRpcResponse* pResponse)
    {
-      return biblioJson_;
+      json::Object result;
+      result["etag"] = etag();
+      result["bibliography"] = biblioJson_;
+      pResponse->setResult(result);
    }
 
 private:
-   core::FileInfo fileInfo(const std::string& file)
+
+   static std::string etag(const FileInfo& biblio, const FileInfo& csl)
    {
-      return core::FileInfo(module_context::resolveAliasedPath(file));
+      std::ostringstream ostr;
+      ostr << biblio.absolutePath() << ":" << biblio.lastWriteTime();
+      ostr << csl.absolutePath() << ":" << csl.lastWriteTime();
+      return ostr.str();
+   }
+
+   static core::FileInfo fileInfo(const std::string& file)
+   {
+      return file.empty() ? FileInfo() : FileInfo(module_context::resolveAliasedPath(file));
    }
 
 private:
@@ -482,15 +503,16 @@ void pandocBiblioCompleted(const std::string& file,
    // read the html
    if (result.exitStatus == EXIT_SUCCESS)
    {
+      // create bibliography
       json::Object biblio;
       biblio["sources"] = jsonCitations;
       biblio["html"] = result.stdOut;
 
-      // cache last successful result
+      // cache last successful bibliograpy
       s_biblioCache.update(biblio, file, csl);
 
-      // set result
-      response.setResult(biblio);
+      // set response
+      s_biblioCache.setResponse(&response);
    }
    else
    {
@@ -573,8 +595,8 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    json::JsonRpcResponse response;
 
    // extract params
-   std::string file, csl;
-   Error error = json::readParams(request.params, &file, &csl);
+   std::string file, csl, etag;
+   Error error = json::readParams(request.params, &file, &csl, &etag);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -582,10 +604,10 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
-   // fulfill from the cache if we can
-   if (s_biblioCache.isValidFor(file, csl))
+   // if the client, the filesystem, and the cache all agree on the etag then serve from cache
+   if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(file, csl))
    {
-      response.setResult(s_biblioCache.get());
+      s_biblioCache.setResponse(&response);
       cont(Success(), &response);
       return;
    }
