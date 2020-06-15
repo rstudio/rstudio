@@ -230,6 +230,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       deferredSaveWidthPercent();
    }
 
+   public void resetLeftWidgets(ArrayList<Widget> list)
+   {
+      clearForRefresh();
+      leftList_ = new ArrayList<>(list);
+      initialize(leftList_, center_, right_);
+   }
+
    public void addLeftWidget(Widget widget)
    {
       clearForRefresh();
