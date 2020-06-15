@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -50,6 +51,8 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -75,13 +78,13 @@ public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource
 {
    public VisualMode(TextEditingTarget target,
-                                      TextEditingTarget.Display view,
-                                      TextEditingTargetRMarkdownHelper rmarkdownHelper,
-                                      DocDisplay docDisplay,
-                                      DirtyState dirtyState,
-                                      DocUpdateSentinel docUpdateSentinel,
-                                      EventBus eventBus,
-                                      final ArrayList<HandlerRegistration> releaseOnDismiss)
+                     TextEditingTarget.Display view,
+                     TextEditingTargetRMarkdownHelper rmarkdownHelper,
+                     DocDisplay docDisplay,
+                     DirtyState dirtyState,
+                     DocUpdateSentinel docUpdateSentinel,
+                     EventBus eventBus,
+                     final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -123,13 +126,17 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    @Inject
-   public void initialize(Commands commands, 
+   public void initialize(GlobalDisplay globalDisplay,
+                          Commands commands, 
                           UserPrefs prefs, 
-                          SourceServerOperations source)
+                          SourceServerOperations source,
+                          Session session)
    {
+      globalDisplay_ = globalDisplay;
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
+      sessionInfo_ = session.getSessionInfo();
    }
    
    private void initWidgets()
@@ -395,6 +402,17 @@ public class VisualMode implements VisualModeEditorSync,
                   else if (format.warnings.invalidOptions.length > 0)
                   {
                      view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                  }
+                  else if (visualModeFormat_.isBookdownProjectDocument() && 
+                           !sessionInfo_.getBookdownHasRenumberFootnotes() &&
+                           !bookdownVersionWarningShown)
+                  {
+                     view_.showWarningBar(
+                       "Bookdown package update required for compatibility with visual mode.",
+                       "Learn more", () -> {
+                          globalDisplay_.openWindow("https://rstudio.github.io/visual-markdown-editing/#/markdown?id=footnotes");                   
+                       });
+                     bookdownVersionWarningShown = true;
                   }
                   
                });          
@@ -958,6 +976,8 @@ public class VisualMode implements VisualModeEditorSync,
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
+   private SessionInfo sessionInfo_;
+   private GlobalDisplay globalDisplay_;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
@@ -991,6 +1011,8 @@ public class VisualMode implements VisualModeEditorSync,
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;
+   
+   private static boolean bookdownVersionWarningShown = false;
   
 }
 
