@@ -75,12 +75,13 @@ const extension = (context: ExtensionContext): Extension | null => {
           ],
 
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
-            // always write single line html as inline
-            if (writer) {
+            // only write standalone tags
+            const match = html.match(/^<\/?(\w+)>$/);
+            const isTag = !!match && isHTMLTag(match[1]);
+            if (isTag && writer) {
               writeInlneHTML(schema, html, writer);
             }
-
-            return true;
+            return isTag;
           },
           writer: {
             priority: 20,
