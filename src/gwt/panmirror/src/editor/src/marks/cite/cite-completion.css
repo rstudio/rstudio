@@ -14,23 +14,50 @@
  */
 
 .pm-completion-citation-item {
-  line-height: 20px;
-  font-size: 14px;
   display: flex;
   align-items: flex-start;
-  height: 72px;
+
+  line-height: 20px;
+  height: 52px;
+
+  font-size: 14px;
 }
 
-.pm-completion-citation-item p {
-  margin-block-start: 4px;
-  margin-block-end: 8px;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
-  height: 60px;
+.pm-completion-citation-summary {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  padding-top: 6px;
+  padding-right: 4px;
+  padding-bottom: 4px;
+  padding-left: 0px;
+}
+
+.pm-completion-citation-source {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  font-weight: bold;
+  opacity: 80%;
+}
+
+.pm-completion-citation-title {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 0.9em;
+  opacity: 80%;
+  width: 390px;
 }
 
+.pm-completion-citation-type {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Style to be used by previews */
+/* TODO: Should I inline these with the preview itself? */
 .smallcaps {
   font-variant: small-caps;
 }

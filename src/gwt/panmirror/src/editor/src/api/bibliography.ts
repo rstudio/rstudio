@@ -34,11 +34,14 @@ export interface Bibliography {
   html: string;
 }
 
+// An entry which includes the source as well as a
+// rendered html preview of the citation
 export interface BibliographyEntry {
   source: BibliographySource;
   html: string;
 }
 
+// The individual bibliographic source
 export interface BibliographySource {
   id: string;
   type: string;
@@ -46,15 +49,32 @@ export interface BibliographySource {
   URL: string;
   title: string;
   author: BibliographyAuthor[];
+  issued: BibliographyDate;
 }
 
+// Author
 export interface BibliographyAuthor {
   family: string;
   given: string;
 }
 
-export class BibliographyManager {
+// Used for issue dates
+export interface BibliographyDate {
+  'date-parts': number[][];
+  raw?: string;
+}
 
+// The fields and weights that will indexed and searched
+// when searching bibliographic entries
+const kFields: Fuse.FuseOptionKeyObject[] = [
+  { name: 'source.id', weight: 10 },
+  { name: 'source.author.family', weight: 10 },
+  { name: 'source.author.given', weight: 1 },
+  { name: 'source.title', weight: 1 },
+  { name: 'source.issued', weight: 1 },
+];
+
+export class BibliographyManager {
   private server: PandocServer;
   private etag: string;
   private bibEntries: BibliographyEntry[];
@@ -67,7 +87,6 @@ export class BibliographyManager {
   }
 
   public async entries(files?: BibliographyFiles): Promise<BibliographyEntry[]> {
-
     // no files means no entries
     if (files === undefined) {
       return Promise.resolve([]);
@@ -77,7 +96,7 @@ export class BibliographyManager {
     const result = await this.server.getBibliography(files.bibliography, files.csl, this.etag);
 
     // update bibliography if necessary
-    if (!this.bibEntries || (result.etag !== this.etag)) {
+    if (!this.bibEntries || result.etag !== this.etag) {
       this.update(result.bibliography);
     }
 
@@ -86,23 +105,16 @@ export class BibliographyManager {
 
     // return entries
     return this.bibEntries;
-
   }
 
-  // TODO: Configure search properly
   public search(query: string): BibliographyEntry[] {
-
     if (this.fuse) {
       const options = {
         isCaseSensitive: false,
         shouldSort: true,
         includeMatches: false,
         limit: kMaxCitationCompletions,
-        keys: [
-          { name: 'source.title', weight: 1 },
-          { name: 'source.author.family', weight: 2 },
-          { name: 'source.author.given', weight: 1 },
-        ],
+        keys: kFields,
       };
       const results = this.fuse.search(query, options);
       return results.map((result: { item: any }) => result.item);
@@ -112,18 +124,16 @@ export class BibliographyManager {
   }
 
   private update(bibliography: Bibliography) {
-
     // generate entries
     this.bibEntries = generateBibliographyEntries(bibliography);
 
     // build search index
     const options = {
-      keys: ['source.title', 'source.author.family', 'source.author.given'],
+      keys: kFields.map(field => field.name),
     };
     const index = Fuse.createIndex(options.keys, this.bibEntries);
     this.fuse = new Fuse(this.bibEntries, options, index);
   }
-
 }
 const kMaxCitationCompletions = 20;
 
@@ -131,6 +141,7 @@ export function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: Editor
   // TODO: I guess you could technically have a bibliography entry in another yaml node
   // TODO: references can actually be defined an inline yaml as per pandoc docs
   // TODO: some reassurance that paths are handled correctly
+  // TODO: What about global references
 
   const yamlNodes = yamlMetadataNodes(doc);
   if (yamlNodes.length > 0) {
