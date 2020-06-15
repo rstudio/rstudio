@@ -27,6 +27,7 @@
 // Sniff project provide shared bibliography as ui context
 // TODO: Read references out of inline reference blocks and merge with bibliography references
 // TODO: Read bibliography files out of ANY yaml node
+// TODD: Need to filter entries to not include any duplicates
 
 // UI
 // TODO: Show preview for citation when mouseover (like inline math)
@@ -48,7 +49,6 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 
 import { BibliographyEntry, BibliographyManager, BibliographyAuthor, BibliographyDate } from '../../api/bibliography';
 
-import omniInsertCitationImage from './../../editor/images/omni_insert/citation.png';
 import './cite-completion.css';
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
@@ -63,8 +63,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
 
     replacement(schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
       if (entry) {
-        // TODO: Probably need to replace the whole citation (currently leaving selection inside the citation)
-        // TODO: Frequenly mangles the cite marks outside cite_id
+        // TODO: need to deal with @/-@ (preserve what user typed)
         const mark = schema.marks.cite_id.create({});
         return schema.text(`@${entry.source.id}`, [mark]);
       } else {
@@ -77,6 +76,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
       key: entry => entry.source.id,
       width: 480,
       height: 52,
+      maxVisible: 5,
       hideNoResults: true,
     },
   };
@@ -104,7 +104,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
       return {
         token: query,
         pos,
-        completions: (state: EditorState) => manager.entries(context.doc, ui.context),
+        completions: (state: EditorState) => manager.entries(ui, context.doc),
       };
     }
     return null;
@@ -174,7 +174,7 @@ const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
   return (
     <div className={'pm-completion-citation-item'}>
       <div className={'pm-completion-citation-type'}>
-        <img src={omniInsertCitationImage} />
+        <img className={'pm-block-border-color'} src={entry.image[0]} />
       </div>
       <div className={'pm-completion-citation-summary'}>
         <div className={'pm-completion-citation-source'}>

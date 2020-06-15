@@ -15,7 +15,7 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
-import { EditorUIContext } from './ui';
+import { EditorUIContext, EditorUI } from './ui';
 import { PandocServer } from './pandoc';
 import Fuse from 'fuse.js';
 
@@ -38,6 +38,7 @@ export interface Bibliography {
 // rendered html preview of the citation
 export interface BibliographyEntry {
   source: BibliographySource;
+  image: [string?, string?];
   html: string;
 }
 
@@ -86,9 +87,9 @@ export class BibliographyManager {
     this.bibEntries = [];
   }
 
-  public async entries(doc: ProsemirrorNode, uiContext: EditorUIContext): Promise<BibliographyEntry[]> {
+  public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyEntry[]> {
     // no files means no entries
-    const files = bibliographyFilesFromDoc(doc, uiContext);
+    const files = bibliographyFilesFromDoc(doc, ui.context);
     if (files === null) {
       return Promise.resolve([]);
     }
@@ -97,10 +98,11 @@ export class BibliographyManager {
     const result = await this.server.getBibliography(files.bibliography, files.csl, this.etag);
 
     // TODO: Parse any inline references and merge them into entries
+    // referencesFromDoc(doc, ui.context);
 
     // update bibliography if necessary
     if (!this.bibEntries || result.etag !== this.etag) {
-      this.update(result.bibliography);
+      this.update(ui, result.bibliography);
     }
 
     // record the etag for future queries
@@ -126,9 +128,9 @@ export class BibliographyManager {
     }
   }
 
-  private update(bibliography: Bibliography) {
+  private update(ui: EditorUI, bibliography: Bibliography) {
     // generate entries
-    this.bibEntries = generateBibliographyEntries(bibliography);
+    this.bibEntries = generateBibliographyEntries(ui, bibliography);
 
     // build search index
     const options = {
@@ -139,6 +141,9 @@ export class BibliographyManager {
   }
 }
 const kMaxCitationCompletions = 20;
+
+// TODO: Figure out what Pandoc does for multiple nodes, nodes + inline, etc...
+// TODO: Figure out what Pandoc does for duplicate keys (which does it u)
 
 function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographyFiles | null {
   // TODO: references can actually be defined an inline yaml as per pandoc docs
@@ -176,9 +181,75 @@ function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIConte
   }
 }
 
+function referencesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographySource[] {
+  const yamlNodes = yamlMetadataNodes(doc);
+  yamlNodes.map(node => {
+    const yamlText = node.node.textContent;
+    const yamlCode = stripYamlDelimeters(yamlText);
+    const yaml = parseYaml(yamlCode);
+    if (yaml && typeof yaml === 'object' && yaml.references) {
+      // TODO: What does pandoc do?
+    }
+  });
+  return [];
+}
+
 const kHangingIndentIdentifier = 'hanging-indent';
 
-export function generateBibliographyEntries(bibliography: Bibliography): BibliographyEntry[] {
+function imageForType(ui: EditorUI, type: string): [string?, string?] {
+  switch (type) {
+    case 'article':
+    case 'article-journal':
+    case 'article-magazine':
+    case 'article-newspaper':
+    case 'paper-conference':
+    case 'review':
+    case 'review-book':
+      return [ui.images.citations?.article, ui.images.citations?.article_dark];
+    case 'bill':
+    case 'legislation':
+    case 'legal_case':
+    case 'patent':
+    case 'treaty':
+      return [ui.images.citations?.legal, ui.images.citations?.legal_dark];
+    case 'book':
+    case 'chapter':
+    case 'manuscript':
+    case 'thesis':
+      return [ui.images.citations?.book, ui.images.citations?.book_dark];
+    case 'broadcast':
+      return [ui.images.citations?.broadcast, ui.images.citations?.broadcast_dark];
+    case 'data':
+      return [ui.images.citations?.data, ui.images.citations?.data_dark];
+    case 'entry':
+    case 'entry-dictionary':
+    case 'entry-encyclopedia':
+      return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
+    case 'figure':
+    case 'graphic':
+      return [ui.images.citations?.image, ui.images.citations?.image_dark];
+    case 'map':
+      return [ui.images.citations?.map, ui.images.citations?.map_dark];
+    case 'motion_picture':
+      return [ui.images.citations?.movie, ui.images.citations?.movie_dark];
+    case 'musical_score':
+    case 'song':
+      return [ui.images.citations?.song, ui.images.citations?.song_dark];
+    case 'post':
+    case 'post-weblog':
+    case 'webpage':
+      return [ui.images.citations?.web, ui.images.citations?.web_dark];
+    case 'interview':
+    case 'pamphlet':
+    case 'personal_communication':
+    case 'report':
+    case 'speech':
+    default:
+      return [ui.images.citations?.other, ui.images.citations?.other_dark];
+  }
+}
+
+export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliography): BibliographyEntry[] {
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(bibliography.html, 'text/html');
 
@@ -202,6 +273,7 @@ export function generateBibliographyEntries(bibliography: Bibliography): Bibliog
       }
       return {
         source,
+        image: imageForType(ui, source.type),
         html: element.innerHTML,
       };
     }
@@ -211,6 +283,7 @@ export function generateBibliographyEntries(bibliography: Bibliography): Bibliog
     // For example, if user directs us to a malformed csl file file that results in no preview
     return {
       source,
+      image: [ui.images.citations?.other, ui.images.citations?.other_dark],
       html: `<p>${source.author} ${source.title}</p>`,
     };
   });
