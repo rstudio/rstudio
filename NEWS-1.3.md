@@ -41,6 +41,8 @@
 - Fix misalignment of some number cells in the data viewer (#6975)
 - Fix C++ autocompletion results missing on macOS in some contexts (#7097)
 - Fix misleading errors report for `verify-installation` without Launcher (Pro #1718)
+- Fix Global Options failure to launch when missing secondary repositories (#7116)
+- Send keyboard focus to the Source pane when creating new files (#7103)
 
 ### RStudio Server Pro
 
