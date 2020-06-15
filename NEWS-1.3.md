@@ -43,6 +43,8 @@
 - Fix misleading errors report for `verify-installation` without Launcher (Pro #1718)
 - Fix Global Options failure to launch when missing secondary repositories (#7116)
 - Send keyboard focus to the Source pane when creating new files (#7103)
+- Fix failure to open HTML widgets from the Viewer in an external web browser on Windows with R >= 4.0.0 (#6893)
+- Fix "cannot access the file" error with rstan when Viewer is open (#7046)
 
 ### RStudio Server Pro
 
