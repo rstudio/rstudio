@@ -342,9 +342,9 @@ function citeIdInputRule(schema: Schema) {
         const beginCite = findCiteBeginBracket(tr.selection);
         const endCite = findCiteEndBracket(tr.selection);
         if (beginCite >= 0 && endCite >= 0) {
-          const citeText = tr.doc.textBetween(beginCite, endCite);
+          const citeText = tr.doc.textBetween(beginCite, endCite + 1);
           if (editingCiteLength(citeText) > 0) {
-            encloseInCiteMark(tr, beginCite, endCite);
+            encloseInCiteMark(tr, beginCite, endCite + 1);
           }
         }
         return tr;
