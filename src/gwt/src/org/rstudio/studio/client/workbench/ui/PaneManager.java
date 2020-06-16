@@ -1220,7 +1220,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.HIDE));
       else
       {
-         SourceColumn column = sourceColumnManager_.findByName(name);
+         SourceColumn column = sourceColumnManager_.getByName(name);
 
          if (column.getTabCount() == 0)
          {

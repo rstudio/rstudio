@@ -288,7 +288,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
          return;
       }
-      setActive(findByName(name));
+
+      // If we can't find the column, use the main column. This may happen on start up.
+      SourceColumn column = getByName(name);
+      if (column == null)
+         column = getByName(MAIN_SOURCE_NAME);
+      setActive(column);
    }
 
    private void setActive(EditingTarget target)
@@ -553,11 +558,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return column;
       }
       return null;
-   }
-
-   public SourceColumn findByName(String name)
-   {
-      return getByName(name);
    }
 
    public SourceColumn findByPosition(int x)
@@ -2289,7 +2289,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
-   private SourceColumn getByName(String name)
+   public SourceColumn getByName(String name)
    {
       for (SourceColumn column : columnList_)
       {
