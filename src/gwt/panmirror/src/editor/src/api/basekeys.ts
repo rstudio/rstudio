@@ -67,6 +67,10 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Delete, command: joinForward },
     { key: BaseKey.Delete, command: deleteSelection },
 
+    // base tab key behavior (ignore)
+    { key: BaseKey.Tab, command: ignoreKey },
+    { key: BaseKey.ShiftTab, command: ignoreKey },
+
     // merge keys provided by extensions
     ...keys,
 
