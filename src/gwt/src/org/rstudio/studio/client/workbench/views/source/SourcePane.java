@@ -44,6 +44,8 @@ import org.rstudio.studio.client.workbench.views.source.Source.Display;
 import java.util.ArrayList;
 
 public class SourcePane extends LazyPanel implements Display,
+                                                     HasEnsureVisibleHandlers,
+                                                     HasEnsureHeightHandlers,
                                                      ProvidesResize,
                                                      RequiresResize,
                                                      BeforeShowCallback,
@@ -228,6 +230,7 @@ public class SourcePane extends LazyPanel implements Display,
       fireEvent(new EnsureVisibleEvent(true));
    }
 
+   @Override
    public Widget asWidget()
    {
       return this;
@@ -276,6 +279,11 @@ public class SourcePane extends LazyPanel implements Display,
    public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
+
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   {
+      return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)

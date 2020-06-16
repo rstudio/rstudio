@@ -1355,7 +1355,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void ensureVisible(boolean newTabPending)
    {
-      activeColumn_.ensureVisible(newTabPending);
+      if (getActive() == null)
+         return;
+      getActive().ensureVisible(newTabPending);
    }
 
    public void openFile(FileSystemItem file)

@@ -111,8 +111,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
       display_.addTabClosedHandler(this);
       display_.addTabReorderHandler(this);
 
-      ensureVisible(false);
-
       // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
       boolean isActive = this == manager_.getActive();
@@ -306,6 +304,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    void setActiveEditor()
    {
        if (activeEditor_ == null &&
+           display_.getActiveTabIndex() > 0 &&
            editors_.size() > display_.getActiveTabIndex())
           onActivate(editors_.get(display_.getActiveTabIndex()));
    }
@@ -938,9 +937,9 @@ public class SourceColumn implements SelectionHandler<Integer>,
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
-      ensureVisible(true);
       if (fileType instanceof TextFileType)
       {
+         ensureVisible(true);
          // This is a text file, so see if the user has defined a template for it.
          TextFileType textType = (TextFileType)fileType;
          server_.getSourceTemplate("",
@@ -972,7 +971,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
                       final String contents,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      ensureVisible(true);
       boolean isActive = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
