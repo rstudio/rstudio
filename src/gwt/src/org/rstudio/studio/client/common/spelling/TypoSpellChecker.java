@@ -279,7 +279,8 @@ public class TypoSpellChecker
       // dictionary on the frontend. Ideally we DO load the frontend dictionary but currently
       // Typo.js isn't compatible with some of our dictionaries (see: TypoSpellChecker.realtimeBlacklist)
       // so we need to keep the legacy call for now.
-      if (!userPrefs_.realTimeSpellchecking().getValue()) {
+      if (!userPrefs_.realTimeSpellchecking().getValue())
+      {
          spellingService_.checkSpelling(words, callback);
          return;
       }
@@ -382,7 +383,8 @@ public class TypoSpellChecker
    {
       final String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
-      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
+      if (!userPrefs_.realTimeSpellchecking().getValue() ||
+           typoLoaded_ && loadedDict_.equals(language))
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap
