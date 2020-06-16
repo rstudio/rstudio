@@ -65,7 +65,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SourceColumn implements SelectionHandler<Integer>,
+public class SourceColumn implements BeforeShowHandler,
+                                     SelectionHandler<Integer>,
                                      TabClosingHandler,
                                      TabCloseHandler,
                                      TabClosedHandler,
@@ -105,6 +106,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
       display_ = display;
       manager_ = manager;
 
+      display_.addBeforeShowHandler(this);
       display_.addSelectionHandler(this);
       display_.addTabClosingHandler(this);
       display_.addTabCloseHandler(this);
@@ -1004,6 +1006,11 @@ public class SourceColumn implements SelectionHandler<Integer>,
             });
    }
    // event handlers
+
+   public void onBeforeShow(BeforeShowEvent event)
+   {
+      onBeforeShow();
+   }
 
    public void onBeforeShow()
    {
