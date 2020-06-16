@@ -46,6 +46,7 @@
 - Fix failure to open HTML widgets from the Viewer in an external web browser on Windows with R >= 4.0.0 (#6893)
 - Fix "cannot access the file" error with rstan when Viewer is open (#7046)
 - Fix launching jobs from working directories with spaces on their names (Pro #1708)
+- Update editor toolbar when R Markdown documents are switched to/from Notebook mode in YAML header (#7051)
 
 ### RStudio Server Pro
 
