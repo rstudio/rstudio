@@ -14,25 +14,31 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BeforeShowEvent extends GwtEvent<BeforeShowHandler>
+public class BeforeShowEvent extends GwtEvent<BeforeShowEvent.Handler>
 {
    public BeforeShowEvent()
    {
    }
 
    @Override
-   public Type<BeforeShowHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(BeforeShowHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onBeforeShow(this);
    }
 
-   public static final Type<BeforeShowHandler> TYPE = new Type<BeforeShowHandler>();
+   public interface Handler extends EventHandler
+   {
+      void onBeforeShow(BeforeShowEvent event);
+   }
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

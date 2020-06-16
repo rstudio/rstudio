@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasTabReorderHandlers
 {
-   HandlerRegistration addTabReorderHandler(TabReorderHandler handler);
+   HandlerRegistration addTabReorderHandler(TabReorderEvent.Handler handler);
 }

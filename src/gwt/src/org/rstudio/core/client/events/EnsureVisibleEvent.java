@@ -14,12 +14,12 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EnsureVisibleEvent extends GwtEvent<EnsureVisibleHandler>
+public class EnsureVisibleEvent extends GwtEvent<EnsureVisibleEvent.Handler>
 {
-   public static final Type<EnsureVisibleHandler> TYPE
-         = new Type<EnsureVisibleHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public EnsureVisibleEvent()
    {
@@ -37,15 +37,20 @@ public class EnsureVisibleEvent extends GwtEvent<EnsureVisibleHandler>
    }
 
    @Override
-   public Type<EnsureVisibleHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EnsureVisibleHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onEnsureVisible(this);
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onEnsureVisible(EnsureVisibleEvent event);
    }
 
    private final boolean activate_;

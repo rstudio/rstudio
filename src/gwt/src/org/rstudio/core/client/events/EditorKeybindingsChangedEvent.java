@@ -1,7 +1,7 @@
 /*
  * EditorKeybindingsChangedEvent.java
  *
- * Copyright (C) 2009-12 by Editor, Inc.
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from Editor pursuant
  * to the terms of a commercial license agreement with Editor, then
@@ -29,21 +29,21 @@ public class EditorKeybindingsChangedEvent extends CrossWindowEvent<EditorKeybin
    {
       bindings_ = JavaScriptObject.createObject();
    }
-   
+
    public EditorKeybindingsChangedEvent(EditorKeyBindings bindings)
    {
       bindings_ = bindings.cast();
    }
-   
+
    public EditorKeyBindings getBindings()
    {
       return bindings_.cast();
    }
-   
+
    private final JavaScriptObject bindings_;
-   
+
    // Boilerplate ----
-   
+
    @Override
    public boolean forward() { return false; }
    
@@ -51,7 +51,7 @@ public class EditorKeybindingsChangedEvent extends CrossWindowEvent<EditorKeybin
    {
       void onEditorKeybindingsChanged(EditorKeybindingsChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -64,5 +64,5 @@ public class EditorKeybindingsChangedEvent extends CrossWindowEvent<EditorKeybin
       handler.onEditorKeybindingsChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

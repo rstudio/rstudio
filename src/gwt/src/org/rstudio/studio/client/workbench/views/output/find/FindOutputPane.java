@@ -32,7 +32,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -402,7 +401,8 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
+   public HandlerRegistration addSelectionCommitHandler(
+      SelectionCommitEvent.Handler<CodeNavigationTarget> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }

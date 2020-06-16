@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.events.WindowStateChangeHandler;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -73,7 +72,7 @@ public class MinimizedWindowFrame
       {
          Label titleLabel = new Label(title);
          titleLabel.setStylePrimaryName(themeStyles.title());
-         
+
          SimplePanel headerPanel = new SimplePanel();
          headerPanel.setStylePrimaryName(themeStyles.primaryWindowFrameHeader());
          headerPanel.setWidget(titleLabel);
@@ -138,7 +137,7 @@ public class MinimizedWindowFrame
    }
 
    public HandlerRegistration addWindowStateChangeHandler(
-         WindowStateChangeHandler handler)
+         WindowStateChangeEvent.Handler handler)
    {
       return addHandler(handler, WindowStateChangeEvent.TYPE);
    }

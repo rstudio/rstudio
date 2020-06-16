@@ -20,12 +20,12 @@ import com.google.gwt.event.shared.GwtEvent;
 public class ManageLayoutCommandsEvent extends GwtEvent<ManageLayoutCommandsEvent.Handler>
 {
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onManageLayoutCommands(ManageLayoutCommandsEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -38,5 +38,5 @@ public class ManageLayoutCommandsEvent extends GwtEvent<ManageLayoutCommandsEven
       handler.onManageLayoutCommands(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
