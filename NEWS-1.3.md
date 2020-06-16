@@ -17,6 +17,7 @@
 ### Bugfixes
 
 - Announce text of warnings bar via screen reader (#6963)
+- Fix display issue with keyboard shortcut in Modify Keyboard Shortcuts dialog (#7142)
 - Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix Compare Results and other incompatibility with newer versions of the `shinytest` package (#6960)
 - Fix Terminal to work with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696, #6809)
