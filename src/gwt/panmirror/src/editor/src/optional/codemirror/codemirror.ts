@@ -135,6 +135,7 @@ class CodeBlockNodeView implements NodeView {
       indentUnit: 2,
       tabSize: 2,
       indentWithTabs: false,
+      tabindex: -1,
       lineNumbers: this.options.lineNumbers,
       styleSelectedText: true,
     };
@@ -424,6 +425,7 @@ class CodeBlockNodeView implements NodeView {
         ['pm-run-previous-chunks-button'],
         `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
       );
+      runPreviousChunksButton.tabIndex = -1;
       runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
       toolbar.append(runPreviousChunksButton);
 
@@ -434,6 +436,7 @@ class CodeBlockNodeView implements NodeView {
         ['pm-run-chunk-button'],
         `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
       );
+      runChunkButton.tabIndex = -1;
       runChunkButton.onclick = this.executeChunk.bind(this);
       toolbar.append(runChunkButton);
     }
