@@ -29,6 +29,8 @@ import { keymap } from 'prosemirror-keymap';
 import { EditorState, Transaction, Plugin } from 'prosemirror-state';
 
 import { CommandFn } from './command';
+import { EditorUI } from './ui';
+import { tabKeyCommand } from './tab';
 
 export enum BaseKey {
   Enter = 'Enter',
@@ -49,7 +51,7 @@ export interface BaseKeyBinding {
   command: CommandFn;
 }
 
-export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
+export function baseKeysPlugin(ui: EditorUI, keys: readonly BaseKeyBinding[]): Plugin {
   // collect all keys
   const pluginKeys = [
     // base enter key behaviors
@@ -68,8 +70,8 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Delete, command: deleteSelection },
 
     // base tab key behavior (ignore)
-    { key: BaseKey.Tab, command: ignoreKey },
-    { key: BaseKey.ShiftTab, command: ignoreKey },
+    { key: BaseKey.Tab, command: tabKeyCommand(ui.prefs, ignoreKey) },
+    { key: BaseKey.ShiftTab, command: tabKeyCommand(ui.prefs, ignoreKey) },
 
     // merge keys provided by extensions
     ...keys,

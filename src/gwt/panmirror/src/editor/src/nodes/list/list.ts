@@ -27,6 +27,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { tabKeyCommand } from '../../api/tab';
 
 import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
@@ -64,10 +65,10 @@ export enum ListNumberDelim {
 
 const plugin = new PluginKey('list');
 
-const extension = (context: ExtensionContext) : Extension => {
+const extension = (context: ExtensionContext): Extension => {
 
-  const { pandocExtensions } = context;
- 
+  const { pandocExtensions, ui } = context;
+
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,
@@ -262,7 +263,7 @@ const extension = (context: ExtensionContext) : Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
@@ -298,8 +299,8 @@ const extension = (context: ExtensionContext) : Extension => {
     baseKeys: (schema: Schema) => {
       return [
         { key: BaseKey.Enter, command: splitListItem(schema.nodes.list_item) },
-        { key: BaseKey.Tab, command: sinkListItem(schema.nodes.list_item) },
-        { key: BaseKey.ShiftTab, command: liftListItem(schema.nodes.list_item) },
+        { key: BaseKey.Tab, command: tabKeyCommand(ui.prefs, sinkListItem(schema.nodes.list_item)) },
+        { key: BaseKey.ShiftTab, command: tabKeyCommand(ui.prefs, liftListItem(schema.nodes.list_item)) },
       ];
     },
 
