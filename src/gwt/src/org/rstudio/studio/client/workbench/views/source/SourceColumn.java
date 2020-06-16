@@ -95,13 +95,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
-
-
-      events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
-      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands());
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands());
-
-      initialized_ = true;
    }
 
    public void loadDisplay(String name,
@@ -119,6 +112,18 @@ public class SourceColumn implements SelectionHandler<Integer>,
       display_.addTabReorderHandler(this);
 
       ensureVisible(false);
+
+      // these handlers cannot be added earlier because they rely on manager_
+      events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
+      boolean isActive = this == manager_.getActive();
+      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive));
+      initialized_ = true;
+   }
+
+   public boolean isInitialized()
+   {
+      return initialized_;
    }
 
    public String getName()
@@ -296,7 +301,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
        activeEditor_ = target;
        if (activeEditor_ != null)
           activeEditor_.onActivate();
-       manageCommands();
    }
 
    void setActiveEditor()
@@ -521,7 +525,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
       // adding a tab may enable commands that are only available when
       // multiple documents are open; if this is the second document, go check
       if (editors_.size() == 2)
-         manageMultiTabCommands();
+         manageMultiTabCommands(true);
 
       // if the target had an editing session active, attempt to resume it
       if (doc.getCollabParams() != null)
@@ -648,7 +652,11 @@ public class SourceColumn implements SelectionHandler<Integer>,
 
    public void manageCommands(boolean forceSync)
    {
-      boolean hasDocs = hasDoc();
+      if (manager_ == null)
+         return;
+
+      boolean isActive = this == manager_.getActive();
+      boolean hasDocs = isActive && hasDoc();
 
       commands_.newSourceDoc().setEnabled(true);
       commands_.closeSourceDoc().setEnabled(hasDocs);
@@ -680,17 +688,20 @@ public class SourceColumn implements SelectionHandler<Integer>,
       }
       else
       {
-         HashSet<AppCommand> commandsToEnable = new HashSet<>(newCommands);
-         commandsToEnable.removeAll(activeCommands_);
+         if (isActive)
+         {
+            HashSet<AppCommand> commandsToEnable = new HashSet<>(newCommands);
+            commandsToEnable.removeAll(activeCommands_);
+
+            for (AppCommand command : commandsToEnable)
+            {
+               command.setEnabled(true);
+               command.setVisible(true);
+            }
+         }
 
          HashSet<AppCommand> commandsToDisable = new HashSet<>(activeCommands_);
          commandsToDisable.removeAll(newCommands);
-
-         for (AppCommand command : commandsToEnable)
-         {
-            command.setEnabled(true);
-            command.setVisible(true);
-         }
 
          for (AppCommand command : commandsToDisable)
          {
@@ -707,27 +718,27 @@ public class SourceColumn implements SelectionHandler<Integer>,
       commands_.debugBreakpoint().setVisible(true);
 
       // manage synctex commands
-      manageSynctexCommands();
+      manageSynctexCommands(isActive);
 
       // manage vcs commands
-      manageVcsCommands();
+      manageVcsCommands(isActive);
 
       // manage save and save all
-      manageSaveCommands();
+      manageSaveCommands(isActive);
 
       // manage source navigation
       manageSourceNavigationCommands();
 
       // manage RSConnect commands
-      manageRSConnectCommands();
+      manageRSConnectCommands(isActive);
 
       // manage R Markdown commands
-      manageRMarkdownCommands();
+      manageRMarkdownCommands(isActive);
 
       // manage multi-tab commands
-      manageMultiTabCommands();
+      manageMultiTabCommands(isActive);
 
-      manageTerminalCommands();
+      manageTerminalCommands(isActive);
 
       activeCommands_ = newCommands;
 
@@ -739,10 +750,10 @@ public class SourceColumn implements SelectionHandler<Integer>,
               : "Unsupported commands detected (please add to SourceColumnManager.getDynamicCommands())";
    }
 
-   private void manageSynctexCommands()
+   private void manageSynctexCommands(boolean isActive)
    {
       // synctex commands are enabled if we have synctex for the active editor
-      boolean synctexAvailable = manager_.getSynctex().isSynctexAvailable();
+      boolean synctexAvailable = isActive && manager_.getSynctex().isSynctexAvailable();
       if (synctexAvailable)
       {
          if ((activeEditor_ != null) &&
@@ -760,10 +771,10 @@ public class SourceColumn implements SelectionHandler<Integer>,
       manager_.getSynctex().enableCommands(synctexAvailable);
    }
 
-   private void manageVcsCommands()
+   private void manageVcsCommands(boolean isActive)
    {
       // manage availability of vcs commands
-      boolean vcsCommandsEnabled =
+      boolean vcsCommandsEnabled = isActive &&
               manager_.getSession().getSessionInfo().isVcsEnabled() &&
                       (activeEditor_ != null) &&
                       (activeEditor_.getPath() != null) &&
@@ -810,15 +821,16 @@ public class SourceColumn implements SelectionHandler<Integer>,
       }
    }
 
-   public void manageSaveCommands()
+   public void manageSaveCommands(boolean isActive)
    {
-      boolean saveEnabled = (activeEditor_ != null) &&
-              activeEditor_.isSaveCommandActive();
+      boolean saveEnabled = isActive &&
+                            activeEditor_ != null &&
+                            activeEditor_.isSaveCommandActive();
       commands_.saveSourceDoc().setEnabled(saveEnabled);
-      manageSaveAllCommand();
+      manageSaveAllCommand(isActive);
    }
 
-   private void manageSaveAllCommand()
+   private void manageSaveAllCommand(boolean isActive)
    {
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
@@ -841,9 +853,10 @@ public class SourceColumn implements SelectionHandler<Integer>,
               manager_.getSourceNavigationHistory().isForwardEnabled());
    }
 
-   private void manageRSConnectCommands()
+   private void manageRSConnectCommands(boolean isActive)
    {
       boolean rsCommandsAvailable =
+              isActive &&
               SessionUtils.showPublishUi(manager_.getSession(), manager_.getUserState()) &&
                       (activeEditor_ != null) &&
                       (activeEditor_.getPath() != null) &&
@@ -874,9 +887,10 @@ public class SourceColumn implements SelectionHandler<Integer>,
       commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
 
-   private void manageRMarkdownCommands()
+   private void manageRMarkdownCommands(boolean isActive)
    {
       boolean rmdCommandsAvailable =
+              isActive &&
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       (activeEditor_ != null) &&
                       activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
@@ -884,9 +898,9 @@ public class SourceColumn implements SelectionHandler<Integer>,
       commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }
 
-   public void manageMultiTabCommands()
+   public void manageMultiTabCommands(boolean isActive)
    {
-      boolean hasMultipleDocs = hasDoc();
+      boolean hasMultipleDocs = isActive && hasDoc();
 
       // special case--these editing targets always support popout, but it's
       // nonsensical to show it if it's the only tab in a satellite; hide it in
@@ -903,9 +917,9 @@ public class SourceColumn implements SelectionHandler<Integer>,
       commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs);
    }
 
-   private void manageTerminalCommands()
+   private void manageTerminalCommands(boolean isActive)
    {
-      if (!manager_.getSession().getSessionInfo().getAllowShell())
+      if (isActive && !manager_.getSession().getSessionInfo().getAllowShell())
          commands_.sendToTerminal().setVisible(false);
    }
 
@@ -959,6 +973,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
+      boolean isActive = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
             contents,
@@ -975,7 +990,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
                   if (contents != null)
                   {
                      target.forceSaveCommandActive();
-                     manageSaveCommands();
+                     manageSaveCommands(isActive);
                   }
 
                   if (resultCallback != null)
@@ -1050,7 +1065,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
          }
       }
 
-      manageCommands();
+      manageCommands(true);
    }
 
    @Override
@@ -1179,7 +1194,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
 
    private Commands commands_;
 
-   private boolean initialized_;
+   private boolean initialized_ = false;
    private boolean suspendDocumentClose_ = false;
 
    // If positive, a new tab is about to be created
