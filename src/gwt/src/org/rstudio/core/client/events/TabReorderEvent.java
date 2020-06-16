@@ -14,11 +14,12 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class TabReorderEvent extends GwtEvent<TabReorderHandler>
+public class TabReorderEvent extends GwtEvent<TabReorderEvent.Handler>
 {
-   public static final Type<TabReorderHandler> TYPE = new Type<TabReorderHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public TabReorderEvent(int oldPos, int newPos)
    {
@@ -37,15 +38,20 @@ public class TabReorderEvent extends GwtEvent<TabReorderHandler>
    }
 
    @Override
-   public Type<TabReorderHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(TabReorderHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onTabReorder(this);
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onTabReorder(TabReorderEvent event);
    }
 
    private int oldPos_;

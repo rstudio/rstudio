@@ -14,11 +14,12 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class TabClosedEvent extends GwtEvent<TabClosedHandler>
+public class TabClosedEvent extends GwtEvent<TabClosedEvent.Handler>
 {
-   public static final Type<TabClosedHandler> TYPE = new Type<TabClosedHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public TabClosedEvent(int tabIndex)
    {
@@ -31,15 +32,20 @@ public class TabClosedEvent extends GwtEvent<TabClosedHandler>
    }
 
    @Override
-   public Type<TabClosedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(TabClosedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onTabClosed(this);
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onTabClosed(TabClosedEvent event);
    }
 
    private int tabIndex_;

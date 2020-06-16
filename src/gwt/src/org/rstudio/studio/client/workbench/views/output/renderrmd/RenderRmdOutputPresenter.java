@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -58,7 +57,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
                                    Commands commands,
                                    EventBus events)
    {
-      super(outputFactory.create("R Markdown", 
+      super(outputFactory.create("R Markdown",
                                  "View the R Markdown render log"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
@@ -74,33 +73,28 @@ public class RenderRmdOutputPresenter extends BusyPresenter
             terminateRenderRmd();
          }
       });
-      
-      view_.errorList().addSelectionCommitHandler(
-                              new SelectionCommitHandler<CodeNavigationTarget>() {
 
-         @Override
-         public void onSelectionCommit(
-                              SelectionCommitEvent<CodeNavigationTarget> event)
+      view_.errorList().addSelectionCommitHandler(
+         (SelectionCommitEvent<CodeNavigationTarget> event) ->
          {
             CodeNavigationTarget target = event.getSelectedItem();
             FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
             RStudioGinjector.INSTANCE.getFileTypeRegistry()
                .editFile(fsi, target.getPosition());
-         }
-      });
+         });
       globalDisplay_ = globalDisplay;
    }
-   
+
    public void confirmClose(final Command onConfirmed)
    {
       // if we're in the middle of rendering, presume that the user might be
       // trying to end the render by closing the tab.
       if (isBusy())
       {
-        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-              "Stop R Markdown Rendering", 
+        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+              "Stop R Markdown Rendering",
               "The rendering of '" + targetFile_ + "' is in progress. Do you "+
-              "want to terminate and close the tab?", false, 
+              "want to terminate and close the tab?", false,
               new Operation()
               {
                  @Override
@@ -135,7 +129,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    {
       view_.showOutput(event.getOutput(), true);
    }
-   
+
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
@@ -157,7 +151,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       {
          view_.ensureVisible(true);
       }
-      if (!event.getResult().getSucceeded() && 
+      if (!event.getResult().getSucceeded() &&
           SourceMarker.showErrorList(event.getResult().getKnitrErrors()))
       {
          view_.showErrors(event.getResult().getKnitrErrors());
@@ -184,11 +178,11 @@ public class RenderRmdOutputPresenter extends BusyPresenter
          }
          else
          {
-            events_.fireEvent(new ConsoleActivateEvent(false)); 
+            events_.fireEvent(new ConsoleActivateEvent(false));
          }
       }
    }
-   
+
    private void terminateRenderRmd()
    {
       server_.terminateRenderRmd(false, new ServerRequestCallback<Void>()
@@ -202,19 +196,19 @@ public class RenderRmdOutputPresenter extends BusyPresenter
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Knit Terminate Failed", 
+            globalDisplay_.showErrorMessage("Knit Terminate Failed",
                   error.getMessage());
          }
       });
    }
-   
+
    private final RMarkdownServerOperations server_;
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
    private final PaneManager paneManager_;
    private final Commands commands_;
    private final EventBus events_;
-   
+
    private boolean isSourceZoomed_ = false;
    private boolean switchToConsoleAfterRender_ = false;
    private String targetFile_;

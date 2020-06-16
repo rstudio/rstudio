@@ -14,25 +14,31 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EnsureHiddenEvent extends GwtEvent<EnsureHiddenHandler>
+public class EnsureHiddenEvent extends GwtEvent<EnsureHiddenEvent.Handler>
 {
    public EnsureHiddenEvent()
    {
    }
 
    @Override
-   public Type<EnsureHiddenHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EnsureHiddenHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onEnsureHidden(this);
    }
 
-   public static final Type<EnsureHiddenHandler> TYPE = new Type<EnsureHiddenHandler>();
+   public interface Handler extends EventHandler
+   {
+      void onEnsureHidden(EnsureHiddenEvent event);
+   }
+
+   public static final Type<Handler> TYPE = new Type<>();
 }
