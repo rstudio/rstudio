@@ -612,7 +612,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.context.ui).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -714,7 +714,7 @@ export class Editor {
 
     // register omni insert extension
     this.extensions.register([
-      omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
+      omniInsertExtension(this.extensions.omniInserters(this.schema), markFilter, this.context.ui),
     ]);
 
     // register completion extension
@@ -727,7 +727,7 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.context.ui),
+      ...this.extensions.plugins(this.schema),
       this.inputRulesPlugin(),
       this.editablePlugin(),
       this.domEventsPlugin(),
@@ -791,7 +791,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -812,7 +812,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;
