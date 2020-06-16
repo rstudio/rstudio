@@ -280,7 +280,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (StringUtil.isNullOrEmpty(name))
       {
-         Debug.logWarning("Active column should be set to the main source window instead of null.");
          if (activeColumn_ != null)
          {
             activeColumn_.setActiveEditor("");
