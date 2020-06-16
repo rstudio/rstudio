@@ -860,10 +860,10 @@ public class SourceColumn implements SelectionHandler<Integer>,
               SessionUtils.showPublishUi(manager_.getSession(), manager_.getUserState()) &&
                       (activeEditor_ != null) &&
                       (activeEditor_.getPath() != null) &&
-                      ((activeEditor_.getExtendedFileType() != null &&
-                              activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
+                      (activeEditor_.getExtendedFileType() != null &&
+                             (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                               activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API);
+                              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
       {
@@ -892,7 +892,8 @@ public class SourceColumn implements SelectionHandler<Integer>,
       boolean rmdCommandsAvailable =
               isActive &&
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
-                      (activeEditor_ != null) &&
+                      activeEditor_ != null &&
+                      activeEditor_.getExtendedFileType() != null &&
                       activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
       commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
       commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
