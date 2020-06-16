@@ -1,8 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rw='urn:import:org.rstudio.core.client.widget'>
 	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
-		@external editor_dark, gwt-Label;
+		@external editor_dark;
 		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		
 		div.entry {
@@ -17,10 +18,9 @@
 			display: flex;
 			flex-direction: row;
 			box-sizing: border-box;
-			cursor: pointer;
 		}
 		
-		table.entry, table.entry .gwt-Label {
+		div.entry.clickable {
 			cursor: pointer;
 		}
 		
@@ -56,13 +56,15 @@
 		}
 		
 		.context {
-			background-color: #e0e0e0;
+			background-color: #f0f0f0;
 			font-size: 8pt;
 			margin-right: 5px;
 			padding: 3px;
 			border-radius: 4px;
 			padding-right: 5px;
 			padding-left: 5px;
+			display: flex;
+			flex-direction: row;
 		}
 		
 		.editor_dark .context {
@@ -80,9 +82,20 @@
 		.invoker {
 			text-align: right;
 		}
+		
+		.plugin {
+			width: 9px;
+			height: 9px;
+			margin-top: 1px;
+			margin-right: 4px;
+		}
 	</ui:style>
+    <ui:image src="plugin.png" width="9" height="9" field="plugin"></ui:image>
 	<g:HTMLPanel styleName="{styles_.entry}">
-		<g:Label visible="false" styleName="{styles_.context}" ui:field="context_"></g:Label>
+		<g:HTMLPanel ui:field="contextPanel_" styleName="{styles_.context}">
+        	<rw:DecorativeImage resource="{plugin}" ui:field="plugin_" styleName="{styles_.plugin}"/>
+			<g:Label ui:field="context_"></g:Label>
+		</g:HTMLPanel>
 		<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
 		<g:HTMLPanel styleName="{styles_.invoker}" ui:field="invoker_">
 		</g:HTMLPanel>

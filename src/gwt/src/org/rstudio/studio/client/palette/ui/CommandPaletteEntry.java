@@ -17,6 +17,7 @@ package org.rstudio.studio.client.palette.ui;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.aria.client.Roles;
@@ -48,6 +49,8 @@ public abstract class CommandPaletteEntry extends Composite
       String selected();
       String name();
       String disabled();
+      String clickable();
+      String plugin();
    }
 
    public CommandPaletteEntry(CommandPaletteItem item)
@@ -87,16 +90,27 @@ public abstract class CommandPaletteEntry extends Composite
       String context = getContext();
       if (StringUtil.isNullOrEmpty(context))
       {
-         context_.setVisible(false);
+         contextPanel_.removeFromParent();
       }
       else
       {
          context_.getElement().setInnerHTML(context);
-         context_.setVisible(true);
+         
+         // Remove plugin image from non-plugin entries
+         if (!(this instanceof RAddinCommandPaletteEntry))
+         {
+        	 plugin_.removeFromParent();
+         }
       }
       
       // Insert invoker
       invoker_.add(getInvoker());
+      
+      // Apply clickable class on command-style entries
+      if (dismissOnInvoke())
+      {
+    	  addStyleName(styles_.clickable());
+      }
    }
    
    /*
@@ -130,6 +144,7 @@ public abstract class CommandPaletteEntry extends Composite
       if (keywords.length == 0)
       {
          name_.setText(getLabel());
+         context_.setText(getContext());
       }
       else
       {
@@ -137,6 +152,11 @@ public abstract class CommandPaletteEntry extends Composite
          SafeHtmlUtil.highlightSearchMatch(sb, getLabel(), keywords, 
                styles_.searchMatch());
          name_.getElement().setInnerSafeHtml(sb.toSafeHtml());
+
+         sb = new SafeHtmlBuilder();
+         SafeHtmlUtil.highlightSearchMatch(sb, getContext(), keywords, 
+               styles_.searchMatch());
+         context_.getElement().setInnerSafeHtml(sb.toSafeHtml());
       }
    }
    
@@ -198,5 +218,7 @@ public abstract class CommandPaletteEntry extends Composite
    @UiField public Label context_;
    @UiField public Label name_;
    @UiField public HTMLPanel invoker_;
+   @UiField public HTMLPanel contextPanel_;
+   @UiField public DecorativeImage plugin_;
    @UiField public Styles styles_;
 }
