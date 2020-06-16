@@ -940,9 +940,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
+      ensureVisible(true);
       if (fileType instanceof TextFileType)
       {
-         ensureVisible(true);
          // This is a text file, so see if the user has defined a template for it.
          TextFileType textType = (TextFileType)fileType;
          server_.getSourceTemplate("",
