@@ -48,6 +48,7 @@
 - Fix "cannot access the file" error with rstan when Viewer is open (#7046)
 - Fix launching jobs from working directories with spaces on their names (Pro #1708)
 - Update editor toolbar when R Markdown documents are switched to/from Notebook mode in YAML header (#7051)
+- Fix error when invoking spell check manually on some languages (#7018)
 
 ### RStudio Server Pro
 
