@@ -22,11 +22,17 @@
 
 .pm-omni-insert-icon {
   width: 42px;
+  height: 42px;
 }
 
 .pm-omni-insert-icon > img {
-  width: 38px;
-  height: 38px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid;
+  border-radius: 2px;
+  padding: 4px;
+  margin-top: 1px;
+  margin-right: 5px;
   filter: opacity(80%);
 }
 
@@ -45,6 +51,7 @@
 
 .pm-omni-insert-description {
   font-size: 0.9em;
+  opacity: 50%;
 }
 
 

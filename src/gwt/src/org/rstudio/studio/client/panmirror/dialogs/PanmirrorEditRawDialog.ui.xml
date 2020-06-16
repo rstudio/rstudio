@@ -4,6 +4,7 @@
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
      
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
@@ -24,13 +25,14 @@
    
    <g:HTMLPanel styleName="{res.styles.dialog} {style.rawDialog}">
    
-      <dialogs:PanmirrorRawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
+      <dialogs:PanmirrorRawFormatSelect elementId="{ElementIds.getVisualMdRawFormatSelect}" 
+                                        styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:PanmirrorRawFormatSelect>
    		
-      <g:Label text="Content:" ui:field="rawContentLabel_"/>
-      <g:TextBox  styleName="{style.rawContent} {res.styles.spaced}"
+      <rw:FormLabel for="{ElementIds.getVisualMdRawContent}" text="Content:" ui:field="rawContentLabel_"/>
+      <rw:FormTextBox elementId="{ElementIds.getVisualMdRawContent}" styleName="{style.rawContent} {res.styles.spaced}"
                  	ui:field="rawContent_">
-      </g:TextBox>
+      </rw:FormTextBox>
       	
    </g:HTMLPanel>
 

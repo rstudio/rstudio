@@ -1,5 +1,5 @@
 /*
- * BeforeShowHandler.java
+ * SessionBookdown.cpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.events;
 
-import com.google.gwt.event.shared.EventHandler;
+#include "SessionBookdown.hpp"
 
-public interface BeforeShowHandler extends EventHandler
+#include <session/SessionModuleContext.hpp>
+
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace rmarkdown {
+namespace bookdown {
+
+bool hasRenumberFootnotes()
 {
-   void onBeforeShow(BeforeShowEvent event);
+   return module_context::isPackageVersionInstalled("bookdown", "0.19.3");
 }
+
+} // namespace bookdown
+} // namespace rmarkdown
+} // namespace modules
+} // namespace session
+} // namespace rstudio

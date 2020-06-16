@@ -574,5 +574,22 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
       in_location);
 }
 
+// return a printable error message from an error (depending on the error this
+// might require consulting the message, category, or name)
+std::string errorMessage(const core::Error& error)
+{
+   std::string msg = error.getMessage();
+   if (msg.length() == 0)
+   {
+      msg = error.getProperty("category");
+   }
+   if (msg.length() == 0)
+   {
+      msg = error.getName();
+   }
+   return msg;
+}
+
+
 } // namespace core 
 } // namespace rstudio

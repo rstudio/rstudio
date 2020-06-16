@@ -26,5 +26,7 @@ public interface WarningBarDisplay extends IsWidget
    void showTexInstallationMissingWarning(String message);
    void showPanmirrorFormatChanged(Command onReload);
    void showWarningBar(String message);
+   void showWarningBar(String message, String actionLabel, Command command);
+   
    void hideWarningBar();
 }

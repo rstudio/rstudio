@@ -14,7 +14,7 @@
  */
 
 import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState, Selection } from 'prosemirror-state';
+import { EditorState, Selection, Transaction } from 'prosemirror-state';
 
 import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn } from './pandoc';
 import { mergedTextNodes } from './text';
@@ -35,14 +35,14 @@ export interface PandocMark {
   };
 }
 
-export function markIsActive(state: EditorState, type: MarkType) {
-  const { from, $from, to, empty } = state.selection;
+export function markIsActive(context: EditorState | Transaction, type: MarkType) {
+  const { from, $from, to, empty } = context.selection;
 
   if (empty) {
-    return !!type.isInSet(state.storedMarks || $from.marks());
+    return !!type.isInSet(context.storedMarks || $from.marks());
   }
 
-  return !!state.doc.rangeHasMark(from, to, type);
+  return !!context.doc.rangeHasMark(from, to, type);
 }
 
 export function getMarkAttrs(doc: ProsemirrorNode, range: { from: number; to: number }, type: MarkType) {

@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.workbench.views.output.markers;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,7 +26,6 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
@@ -47,13 +44,13 @@ public class MarkersOutputPresenter extends BasePresenter
                                     HasEnsureHiddenHandlers
    {
       void ensureVisible(boolean activate);
-        
+
       void update(MarkersState markerState, int autoSelect);
-      
+
       HasValueChangeHandlers<String> getMarkerSetList();
-      
+
       HasSelectionCommitHandlers<CodeNavigationTarget> getMarkerList();
-      
+
       HasClickHandlers getClearButton();
    }
 
@@ -76,25 +73,19 @@ public class MarkersOutputPresenter extends BasePresenter
             server_.updateActiveMarkerSet(event.getValue(),
                                           new VoidServerRequestCallback());
          }
-         
+
       });
-      
+
       // clear button
-      view_.getClearButton().addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            server_.clearActiveMarkerSet(new VoidServerRequestCallback());
-         }
+      view_.getClearButton().addClickHandler(event ->
+      {
+         server_.clearActiveMarkerSet(new VoidServerRequestCallback());
       });
-      
+
       // source navigation
       view_.getMarkerList().addSelectionCommitHandler(
-                          new SelectionCommitHandler<CodeNavigationTarget>()
+            (SelectionCommitEvent<CodeNavigationTarget> event) ->
       {
-         @Override
-         public void onSelectionCommit(SelectionCommitEvent<CodeNavigationTarget> event)
-         {
             CodeNavigationTarget target = event.getSelectedItem();
             if (target == null)
                return;
@@ -102,7 +93,6 @@ public class MarkersOutputPresenter extends BasePresenter
             fileTypeRegistry_.editFile(
                   FileSystemItem.createFile(target.getFile()),
                   target.getPosition());
-         }
       });
    }
 
@@ -111,17 +101,17 @@ public class MarkersOutputPresenter extends BasePresenter
       view_.ensureVisible(false);
       view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
    }
-   
+
    public void onMarkersChanged(MarkersChangedEvent event)
    {
       // get the state
       MarkersState state = event.getMarkersState();
-      
+
       if (state.hasMarkers())
       {
          view_.ensureVisible(true);
          view_.update(event.getMarkersState(), event.getAutoSelect());
-         
+
          // navigate to auto-selection if requested
          MarkersSet markersSet = state.getMarkersSet();
          if (markersSet != null)
@@ -135,7 +125,7 @@ public class MarkersOutputPresenter extends BasePresenter
                   selectMarker = markers.get(0);
                else if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST_ERROR)
                   selectMarker = SourceMarker.getFirstError(markers);
-               
+
                if (selectMarker != null)
                {
                   fileTypeRegistry_.editFile(
@@ -151,13 +141,13 @@ public class MarkersOutputPresenter extends BasePresenter
          view_.ensureHidden();
       }
    }
-   
-   
+
+
    public void onClosing()
    {
       server_.markersTabClosed(new VoidServerRequestCallback());
    }
-  
+
    private final Display view_;
    private final MarkersServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;

@@ -13,7 +13,7 @@
  *
  */
 
-import { Selection } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import React from 'react';
@@ -52,13 +52,13 @@ const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
 function emojiCompletions(ui: EditorUI) {
-  return (text: string, _doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
+  return (text: string, context: EditorState | Transaction): CompletionResult<Emoji> | null => {
     // look for requisite text sequence
     const match = text.match(kEmojiCompletionRegEx);
     if (match) {
       // determine insert position and prefix to search for
       const prefix = match[2].toLowerCase();
-      const pos = selection.head - prefix.length - 1; // -1 for the leading :
+      const pos = context.selection.head - prefix.length - 1; // -1 for the leading :
 
       // scan for completions that match the prefix (truncate as necessary)
       const completions: Emoji[] = [];
@@ -136,22 +136,22 @@ const kCellWidth = 40;
 const kHeaderHeight = 20;
 
 function emojiSkintonePreferenceCompletions(ui: EditorUI) {
-  return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
+  return (text: string, context: EditorState | Transaction): CompletionResult<Emoji> | null => {
     // The user has set a preference for skin tone
     if (ui.prefs.emojiSkinTone() !== SkinTone.None) {
       return null;
     }
 
-    const range = getMarkRange(doc.resolve(selection.head - 1), doc.type.schema.marks.emoji);
+    const range = getMarkRange(context.doc.resolve(context.selection.head - 1), context.doc.type.schema.marks.emoji);
     if (!range) {
       return null;
     }
 
-    const emojiText = doc.textBetween(range.from, range.to);
+    const emojiText = context.doc.textBetween(range.from, range.to);
 
     // If an attribute to suppress the prompt was explicitly set, don't prompt
     // the user for a skin tone
-    const emojiAttrs = getMarkAttrs(doc, range, doc.type.schema.marks.emoji);
+    const emojiAttrs = getMarkAttrs(context.doc, range, context.doc.type.schema.marks.emoji);
     if (!emojiAttrs.prompt) {
       return null;
     }

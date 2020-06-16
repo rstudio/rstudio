@@ -17,7 +17,7 @@ import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
 import { pandocAttrReadAST } from '../../api/pandoc_attr';
 import { fragmentText } from '../../api/fragment';
@@ -35,13 +35,14 @@ import {
 } from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorUI } from '../../api/ui';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
-const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { ui } = context;
+
   return {
     marks: [
       {
@@ -148,9 +149,9 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
 
     fixups: (schema: Schema) => {
       return [
-        (tr: Transaction, context: FixupContext) => {
+        (tr: Transaction, fixupContext: FixupContext) => {
           // only apply on save and load
-          if (![FixupContext.Save, FixupContext.Load].includes(context)) {
+          if (![FixupContext.Save, FixupContext.Load].includes(fixupContext)) {
             return tr;
           }
 
@@ -200,10 +201,10 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
               });
 
               // on load we want to cover the entire span
-              if (context === FixupContext.Load) {
+              if (fixupContext === FixupContext.Load) {
                 markTr.addMark(markFrom, to, mark);
                 // on save we just want the raw emjoi character(s)
-              } else if (context === FixupContext.Save) {
+              } else if (fixupContext === FixupContext.Save) {
                 markTr.addMark(markFrom, markFrom + emoji.emoji.length, mark);
               }
             });

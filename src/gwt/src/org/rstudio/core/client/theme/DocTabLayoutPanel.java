@@ -1,5 +1,5 @@
 /*
- * 
+ *
  * DocTabLayoutPanel.java
  *
  * Copyright (C) 2020 by RStudio, PBC
@@ -27,13 +27,9 @@ import org.rstudio.core.client.events.HasTabClosedHandlers;
 import org.rstudio.core.client.events.HasTabClosingHandlers;
 import org.rstudio.core.client.events.HasTabReorderHandlers;
 import org.rstudio.core.client.events.TabCloseEvent;
-import org.rstudio.core.client.events.TabCloseHandler;
 import org.rstudio.core.client.events.TabClosedEvent;
-import org.rstudio.core.client.events.TabClosedHandler;
 import org.rstudio.core.client.events.TabClosingEvent;
-import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
-import org.rstudio.core.client.events.TabReorderHandler;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -96,12 +92,12 @@ public class DocTabLayoutPanel
    {
       public void onTabClose();
    }
-   
+
    public interface TabMoveObserver
    {
       public void onTabMove(Widget tab, int oldPos, int newPos);
    }
-   
+
    public DocTabLayoutPanel(boolean closeableTabs,
                             int padding,
                             int rightMargin)
@@ -115,7 +111,7 @@ public class DocTabLayoutPanel
       addStyleName(styles_.moduleTabPanel());
       ClassIds.assignClassId(this, ClassIds.SOURCE_PANEL);
       dragManager_ = new DragManager();
-      
+
       // listen for global drag events (these are broadcast from other windows
       // to notify us of incoming drags)
       events_ = RStudioGinjector.INSTANCE.getEventBus();
@@ -128,7 +124,7 @@ public class DocTabLayoutPanel
    public void onLoad()
    {
       // sink drag-related events on the tab bar element; unfortunately
-      // GWT does not provide bits for the drag-related events, and 
+      // GWT does not provide bits for the drag-related events, and
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -157,7 +153,7 @@ public class DocTabLayoutPanel
    {
       add(child, null, docId, text, null, null);
    }
-   
+
    public void add(final Widget child,
                    FileIcon icon,
                    String docId,
@@ -167,7 +163,7 @@ public class DocTabLayoutPanel
    {
       if (closeableTabs_)
       {
-         DocTab tab = new DocTab(icon, docId, text, tooltip, 
+         DocTab tab = new DocTab(icon, docId, text, tooltip,
          new TabCloseObserver()
          {
             public void onTabClose()
@@ -212,7 +208,7 @@ public class DocTabLayoutPanel
             onClosed.execute();
       }
    }
-   
+
    public void moveTab(int index, int delta)
    {
       // do no work if we haven't been asked to move anywhere
@@ -220,14 +216,14 @@ public class DocTabLayoutPanel
          return;
 
       Element tabHost = getTabBarElement();
-      
+
       // ignore moving left if the tab is already the leftmost tab (same for
       // right)
       int dest = index + delta;
       if (dest < 0 || dest >= tabHost.getChildCount())
          return;
-      
-      // rearrange the DOM 
+
+      // rearrange the DOM
       Element tab = Element.as(tabHost.getChild(index));
       Element prev = Element.as(tabHost.getChild(dest));
       tabHost.removeChild(tab);
@@ -241,20 +237,36 @@ public class DocTabLayoutPanel
       fireEvent(event);
    }
 
-   @Override
-   public void selectTab(int index)
+   /**
+    * Selects the given tab.
+    *
+    * @param index       The tab to select.
+    * @param alwaysFocus Whether to focus the tab regardless of whether we
+    *                    previously had input focus.
+    */
+   public void selectTab(int index, boolean alwaysFocus)
    {
       // select the tab, but don't fire events (we need to fire our own)
       super.selectTab(index, false);
-      
-      // determine whether focus is currently inside the container
-      boolean focused = DomUtils.contains(getElement(), DomUtils.getActiveElement());
-     
+
+      boolean focused = alwaysFocus;
+      if (!focused)
+      {
+         // determine whether focus is currently inside the container
+         focused = DomUtils.contains(getElement(), DomUtils.getActiveElement());
+      }
+
       // fire our own selection event
       fireEvent(new DocTabSelectionEvent(index, focused));
-      
+
       // ensure the newly selected tab is visible
       ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
+   }
+
+   @Override
+   public void selectTab(int index)
+   {
+      selectTab(index, false);
    }
 
    public void ensureSelectedTabIsVisible(boolean animate)
@@ -305,7 +317,7 @@ public class DocTabLayoutPanel
       Node lastTab = getLastChildElement(tabBar);
       if (lastTab == null || lastTab.getNodeType() != Node.ELEMENT_NODE)
          return;
-      int edge = DomUtils.getRelativePosition(tabBarParent, Element.as(lastTab)).x 
+      int edge = DomUtils.getRelativePosition(tabBarParent, Element.as(lastTab)).x
             + Element.as(lastTab).getOffsetWidth();
       end = Math.min(end,
                      Math.max(0,
@@ -355,7 +367,7 @@ public class DocTabLayoutPanel
       ensureSelectedTabIsVisible(false);
    }
 
-  
+
    @Override
    public boolean remove(int index)
    {
@@ -403,7 +415,7 @@ public class DocTabLayoutPanel
       dragManager_.endDrag(null, DragManager.ACTION_CANCEL);
    }
 
-   private class DragManager implements EventListener, 
+   private class DragManager implements EventListener,
                                         DocTabDragStartedEvent.Handler
    {
       @Override
@@ -417,7 +429,7 @@ public class DocTabLayoutPanel
                // Very occasionally (~5%?), dropping a tab will generate a
                // superfluous "dragenter" event immediately after the drop event
                // at exactly the same coordinates. We want to ignore this since
-               // it will send us into dragging state; to do so, we cache the 
+               // it will send us into dragging state; to do so, we cache the
                // coordinates when a tab is dropped and suppress entering drag
                // mode from those coordinates very briefly (note that this won't
                // keep the user from immediately dragging the tab around since
@@ -437,7 +449,7 @@ public class DocTabLayoutPanel
             }
             if (curState_ == STATE_NONE)
             {
-               // if we know what we're dragging, initiate it; otherwise, let 
+               // if we know what we're dragging, initiate it; otherwise, let
                // the event continue unimpeded (so we won't appear as a drag
                // target)
                if (initDragParams_ == null)
@@ -483,7 +495,7 @@ public class DocTabLayoutPanel
          {
             if (curState_ == STATE_NONE)
                return;
-            
+
             // when a drag leaves the window entirely, we get a dragleave event
             // at 0, 0 (which we always want to treat as a cancel)
             if (!(event.getClientX() == 0 && event.getClientY() == 0))
@@ -491,7 +503,7 @@ public class DocTabLayoutPanel
                // look at where the cursor is now--if it's inside the tab panel,
                // do nothing, but if it's outside the tab panel, treat that as
                // a cancel
-               Element ele = DomUtils.elementFromPoint(event.getClientX(), 
+               Element ele = DomUtils.elementFromPoint(event.getClientX(),
                      event.getClientY());
                while (ele != null && ele != Document.get().getBody())
                {
@@ -500,9 +512,9 @@ public class DocTabLayoutPanel
                      return;
                   }
                   ele = ele.getParentElement();
-               } 
+               }
             }
-            
+
             if (dragElement_ != null)
             {
                // dim the element being drag to hint that it'll be moved
@@ -537,25 +549,25 @@ public class DocTabLayoutPanel
          initDragParams_ = event.getDragParams();
          initDragWidth_ = initDragParams_.getTabWidth();
       }
-      
+
       private void beginDrag(Event evt)
       {
-         // skip if we don't know what we're dragging -- these parameters 
+         // skip if we don't know what we're dragging -- these parameters
          // should get injected by the editor but might not if a failure occurs
          // during its processing of the DocTabDragInitiatedEvent.
          if (initDragParams_ == null)
             return;
-         
+
          String docId = initDragParams_.getDocId();
          int dragTabWidth = initDragWidth_;
-         
+
          // set drag element state
          dragTabsHost_ = getTabBarElement();
          dragScrollHost_ = dragTabsHost_.getParentElement();
          outOfBounds_ = 0;
          candidatePos_ = null;
          startPos_ = null;
-         
+
          // attempt to determine which tab the cursor is over
          Point hostPos = DomUtils.getRelativePosition(
                Document.get().getBody(), dragTabsHost_);
@@ -565,18 +577,18 @@ public class DocTabLayoutPanel
             Node node = dragTabsHost_.getChild(i);
             if (node.getNodeType() == Node.ELEMENT_NODE)
             {
-               int left = DomUtils.leftRelativeTo(dragTabsHost_, 
+               int left = DomUtils.leftRelativeTo(dragTabsHost_,
                                                   Element.as(node)) -
-                          dragScrollHost_.getScrollLeft(); 
+                          dragScrollHost_.getScrollLeft();
                int right = left + Element.as(node).getOffsetWidth();
-               if (left <= dragX && dragX <= right) 
+               if (left <= dragX && dragX <= right)
                {
                   candidatePos_ = i;
                   break;
                }
             }
          }
-         
+
          // let the rest of the IDE know we're dragging (this will enable us to
          // disable drag targets that might otherwise be happy to accept the
          // data)
@@ -587,18 +599,18 @@ public class DocTabLayoutPanel
          // the relative position of the last node (if one exists)
          // determines how far we can drag
          if (getLastChildElement(dragTabsHost_) != null)
-            dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, 
-                  getLastChildElement(dragTabsHost_)) + 
+            dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_,
+                  getLastChildElement(dragTabsHost_)) +
                   getLastChildElement(dragTabsHost_).getClientWidth();
 
          lastCursorX_= evt.getClientX();
-         
-         // account for cursor starting out of bounds (e.g. dragging into 
+
+         // account for cursor starting out of bounds (e.g. dragging into
          // empty space on the right of the panel)
          if (lastCursorX_ > dragMax_ + (initDragParams_.getCursorOffset()))
-            outOfBounds_ = (lastCursorX_ - dragMax_) - 
+            outOfBounds_ = (lastCursorX_ - dragMax_) -
                initDragParams_.getCursorOffset();
-         
+
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
          for (int i = 0; i < getWidgetCount(); i++)
@@ -606,26 +618,26 @@ public class DocTabLayoutPanel
             DocTab tab = (DocTab)getTabWidget(i);
             if (tab.getDocId() == docId)
             {
-               dragElement_ = 
+               dragElement_ =
                      tab.getElement().getParentElement().getParentElement();
                break;
             }
          }
-         
+
          // if we couldn't find the horizontal drag position in any tab, append
          // to the end
          if (candidatePos_ == null)
          {
             candidatePos_ = dragTabsHost_.getChildCount();
          }
-         
+
          destPos_ = candidatePos_;
 
          // if we're dragging one of our own documents, figure out its physical
-         // position 
+         // position
          if (dragElement_ != null)
          {
-            for (int i = 0; i < dragTabsHost_.getChildCount(); i++) 
+            for (int i = 0; i < dragTabsHost_.getChildCount(); i++)
             {
                if (dragTabsHost_.getChild(i) == dragElement_)
                {
@@ -634,7 +646,7 @@ public class DocTabLayoutPanel
                }
             }
          }
-         
+
          // compute the start location for the drag
 
          if (dragTabsHost_.getChildCount() > 0)
@@ -651,8 +663,8 @@ public class DocTabLayoutPanel
                      dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
             }
          }
-         
-         // if we're dragging one of our own tabs, snap it out of the 
+
+         // if we're dragging one of our own tabs, snap it out of the
          // tabset
          if (dragElement_ != null)
          {
@@ -692,7 +704,7 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
          if (candidatePos_ < dragTabsHost_.getChildCount())
          {
-            dragTabsHost_.insertBefore(dragPlaceholder_, 
+            dragTabsHost_.insertBefore(dragPlaceholder_,
                   dragTabsHost_.getChild(candidatePos_));
          }
          else
@@ -700,8 +712,8 @@ public class DocTabLayoutPanel
             dragTabsHost_.appendChild(dragPlaceholder_);
          }
       }
-      
-      private void drag(Event evt) 
+
+      private void drag(Event evt)
       {
          int offset = evt.getClientX() - lastCursorX_;
          lastCursorX_ = evt.getClientX();
@@ -709,13 +721,13 @@ public class DocTabLayoutPanel
          // cursor is outside the tab area
          if (outOfBounds_ != 0)
          {
-            // did the cursor move back in bounds? 
+            // did the cursor move back in bounds?
             if (outOfBounds_ + offset > 0 != outOfBounds_ > 0)
             {
                outOfBounds_ = 0;
                offset = outOfBounds_ + offset;
             }
-            else 
+            else
             {
                // cursor is still out of bounds
                outOfBounds_ += offset;
@@ -742,7 +754,7 @@ public class DocTabLayoutPanel
          if (targetLeft - scrollLeft < SCROLL_THRESHOLD &&
                scrollLeft > 0)
          {
-            // dragged past scroll threshold, to the left--autoscroll 
+            // dragged past scroll threshold, to the left--autoscroll
             outOfBounds_ = (targetLeft - scrollLeft) - SCROLL_THRESHOLD;
             targetLeft = scrollLeft + SCROLL_THRESHOLD;
             Scheduler.get().scheduleFixedPeriod(new RepeatingCommand()
@@ -753,16 +765,16 @@ public class DocTabLayoutPanel
                   return autoScroll(-1);
                }
             }, 5);
-         } 
-         else if (targetRight + SCROLL_THRESHOLD > scrollLeft + 
+         }
+         else if (targetRight + SCROLL_THRESHOLD > scrollLeft +
                      dragScrollHost_.getClientWidth() &&
-                  scrollLeft < dragScrollHost_.getScrollWidth() - 
+                  scrollLeft < dragScrollHost_.getScrollWidth() -
                      dragScrollHost_.getClientWidth())
          {
-            // dragged past scroll threshold, to the right--autoscroll 
-            outOfBounds_ = (targetRight + SCROLL_THRESHOLD) - 
+            // dragged past scroll threshold, to the right--autoscroll
+            outOfBounds_ = (targetRight + SCROLL_THRESHOLD) -
                   (scrollLeft + dragScrollHost_.getClientWidth());
-            targetLeft = scrollLeft + dragScrollHost_.getClientWidth() - 
+            targetLeft = scrollLeft + dragScrollHost_.getClientWidth() -
                   (initDragWidth_ + SCROLL_THRESHOLD);
             Scheduler.get().scheduleFixedPeriod(new RepeatingCommand()
             {
@@ -772,15 +784,15 @@ public class DocTabLayoutPanel
                   return autoScroll(1);
                }
             }, 5);
-         } 
+         }
          commitPosition(targetLeft);
       }
-      
+
       private void commitPosition(int pos)
       {
          lastElementX_ = pos;
 
-         // check to see if we're overlapping with another tab 
+         // check to see if we're overlapping with another tab
          for (int i = 0; i < dragTabsHost_.getChildCount(); i++)
          {
             // skip non-element DOM nodes
@@ -802,16 +814,16 @@ public class DocTabLayoutPanel
             {
                continue;
             }
-            
+
             int left = DomUtils.leftRelativeTo(dragTabsHost_, ele);
             int right = left + ele.getClientWidth();
-            int minOverlap = Math.min(initDragWidth_ / 2, 
+            int minOverlap = Math.min(initDragWidth_ / 2,
                   ele.getClientWidth() / 2);
-            
+
             // a little complicated: compute the number of overlapping pixels
             // with this element; if the overlap is more than half of our width
             // (or the width of the candidate), it's swapping time
-            if (Math.min(lastElementX_ + initDragWidth_, right) - 
+            if (Math.min(lastElementX_ + initDragWidth_, right) -
                 Math.max(lastElementX_, left) >= minOverlap)
             {
                dragTabsHost_.removeChild(dragPlaceholder_);
@@ -829,7 +841,7 @@ public class DocTabLayoutPanel
                // original location
                if (dragElement_ != null && startPos_ != null)
                {
-                  destPos_ = startPos_ <= candidatePos_ ? 
+                  destPos_ = startPos_ <= candidatePos_ ?
                         candidatePos_ - 1 : candidatePos_;
                }
                else
@@ -842,7 +854,7 @@ public class DocTabLayoutPanel
 
       private boolean autoScroll(int dir)
       {
-         // move while the mouse is still out of bounds 
+         // move while the mouse is still out of bounds
          if (curState_ == STATE_DRAGGING && outOfBounds_ != 0)
          {
             // if mouse is far out of bounds, use it to accelerate movement
@@ -858,8 +870,8 @@ public class DocTabLayoutPanel
 
                // scroll if there's scrolling to be done
                int left = dragScrollHost_.getScrollLeft();
-               if ((dir < 0 && left > 0) || 
-                   (dir > 0 && left < dragScrollHost_.getScrollWidth() - 
+               if ((dir < 0 && left > 0) ||
+                   (dir > 0 && left < dragScrollHost_.getScrollWidth() -
                         dragScrollHost_.getClientWidth()))
                {
                   dragScrollHost_.setScrollLeft(left + dir);
@@ -869,12 +881,12 @@ public class DocTabLayoutPanel
          }
          return false;
       }
-      
+
       public void endDrag(final Event evt, int action)
       {
          if (curState_ == STATE_NONE)
             return;
-         
+
          // remove the properties used to position for dragging
          if (dragElement_ != null)
          {
@@ -883,7 +895,7 @@ public class DocTabLayoutPanel
             dragElement_.getStyle().clearZIndex();
             dragElement_.getStyle().clearDisplay();
             dragElement_.getStyle().clearOpacity();
-            
+
             // insert this tab where the placeholder landed if we're not
             // cancelling
             if (action == ACTION_COMMIT)
@@ -892,14 +904,14 @@ public class DocTabLayoutPanel
                dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
             }
          }
-         
+
          // remove the placeholder
          if (dragPlaceholder_ != null)
          {
             dragTabsHost_.removeChild(dragPlaceholder_);
             dragPlaceholder_ = null;
          }
-         
+
          if (dragElement_ != null && action == ACTION_EXTERNAL)
          {
             // if we own the dragged tab, change to external drag state
@@ -925,7 +937,7 @@ public class DocTabLayoutPanel
                fireEvent(event);
             }
          }
-         
+
          // this is the case when we adopt someone else's doc
          if (dragElement_ == null && evt != null && action == ACTION_COMMIT)
          {
@@ -934,18 +946,18 @@ public class DocTabLayoutPanel
                   getDataTransferFormat());
             if (StringUtil.isNullOrEmpty(data))
                return;
-            
+
             // the data format is docID|windowID; windowID can be omitted if
             // the main window is the origin
             String pieces[] = data.split("\\|");
             if (pieces.length < 1)
                return;
-            
+
             events_.fireEvent(new DocWindowChangedEvent(pieces[0],
-                  pieces.length > 1 ? pieces[1] : "", 
+                  pieces.length > 1 ? pieces[1] : "",
                   initDragParams_, null, destPos_, evt.getClientX()));
          }
-         
+
          if (Desktop.hasDesktopFrame())
          {
             // on desktop, we call back to discover whether the cursor is
@@ -979,12 +991,12 @@ public class DocTabLayoutPanel
             {
                // if this is the last tab in satellite, we don't want to tear
                // it out
-               boolean isLastSatelliteTab = getWidgetCount() == 1 && 
+               boolean isLastSatelliteTab = getWidgetCount() == 1 &&
                      Satellite.isCurrentWindowSatellite();
 
                // did the user drag the tab outside this doc?
                if (!isLastSatelliteTab &&
-                     DomUtils.elementFromPoint(evt.getClientX(), 
+                     DomUtils.elementFromPoint(evt.getClientX(),
                            evt.getClientY()) == null)
                {
                   // did it end in any RStudio satellite window?
@@ -992,14 +1004,14 @@ public class DocTabLayoutPanel
                   Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
                   if (Satellite.isCurrentWindowSatellite())
                   {
-                     // this is a satellite, ask the main window 
+                     // this is a satellite, ask the main window
                      targetWindowName = satellite.getWindowAtPoint(
                            evt.getScreenX(), evt.getScreenY());
                   }
                   else
                   {
                      // this is the main window, query our own satellites
-                     targetWindowName = 
+                     targetWindowName =
                            RStudioGinjector.INSTANCE.getSatelliteManager()
                            .getWindowAtPoint(evt.getScreenX(), evt.getScreenY());
                   }
@@ -1013,7 +1025,7 @@ public class DocTabLayoutPanel
                }
             }
          }
-         
+
          if (curState_ != STATE_EXTERNAL)
          {
             // if we're in an end state, clear the drag element
@@ -1038,22 +1050,22 @@ public class DocTabLayoutPanel
       private Point dropPoint_;
 
       private final static int SCROLL_THRESHOLD = 25;
-      
-      // No drag operation is taking place 
+
+      // No drag operation is taking place
       private final static int STATE_NONE = 0;
-      
+
       // A tab is being dragged inside this tab panel
       private final static int STATE_DRAGGING = 1;
-      
+
       // A tab from this panel is being dragged elsewhere
       private final static int STATE_EXTERNAL = 2;
-      
+
       // the drag operation should be cancelled
       private final static int ACTION_CANCEL = 0;
-      
+
       // the drag operation should be continued outside this window
       private final static int ACTION_EXTERNAL = 1;
-      
+
       // the drag operation should be committed in this window
       private final static int ACTION_COMMIT = 2;
    }
@@ -1067,7 +1079,7 @@ public class DocTabLayoutPanel
                      TabCloseObserver closeHandler)
       {
          docId_ = docId;
-         
+
          final HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
          layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
@@ -1078,7 +1090,7 @@ public class DocTabLayoutPanel
             public void onDragStart(DragStartEvent evt)
             {
                evt.getDataTransfer().setData(
-                     getDataTransferFormat(), docId_ + "|" + 
+                     getDataTransferFormat(), docId_ + "|" +
                   SourceWindowManager.getSourceWindowId());
                JsObject dt = evt.getDataTransfer().cast();
                dt.setString("effectAllowed", "move");
@@ -1089,14 +1101,14 @@ public class DocTabLayoutPanel
                // location of the dragged image
                int evtX = evt.getNativeEvent().getClientX();
                ElementEx ele = getElement().cast();
-               
+
                // if the drag leaves the window, the destination is going to
                // need to know information we don't have here (such as the
                // cursor position in the editor); this event gets handled by
                // the editor, which adds the needed information and broadcasts
                // it to all the windows.
-               events_.fireEvent(new DocTabDragInitiatedEvent(docId_, 
-                           getElement().getClientWidth(), 
+               events_.fireEvent(new DocTabDragInitiatedEvent(docId_,
+                           getElement().getClientWidth(),
                            evtX - ele.getBoundingClientRect().getLeft()));
             }
          }, DragStartEvent.getType());
@@ -1143,7 +1155,7 @@ public class DocTabLayoutPanel
          closeHandler_ = closeHandler;
          closeElement_ = img.getElement();
       }
-      
+
       private void appendDirtyMarker()
       {
          Label marker = new Label("*");
@@ -1167,12 +1179,12 @@ public class DocTabLayoutPanel
             contentPanel_.remove(0);
          contentPanel_.insert(imageForIcon(icon), 0);
       }
-      
+
       public String getDocId()
       {
          return docId_;
       }
-      
+
       private Image imageForIcon(FileIcon icon)
       {
          Image image = new Image(icon.getImageResource());
@@ -1182,11 +1194,11 @@ public class DocTabLayoutPanel
       }
 
       @Override
-      public void onBrowserEvent(Event event) 
-      {  
+      public void onBrowserEvent(Event event)
+      {
          switch (DOM.eventGetType(event))
          {
-         
+
          case Event.ONMOUSEDOWN:
             clickTarget_ = Element.as(event.getEventTarget());
             break;
@@ -1194,7 +1206,7 @@ public class DocTabLayoutPanel
          case Event.ONMOUSEUP:
             if (Element.as(event.getEventTarget()) != clickTarget_)
                break;
-            
+
             boolean isCloseRequest =
                   event.getButton() == Event.BUTTON_MIDDLE ||
                   (event.getButton() == Event.BUTTON_LEFT && clickTarget_ == closeElement_);
@@ -1206,12 +1218,12 @@ public class DocTabLayoutPanel
                closeHandler_.onTabClose();
             }
             break;
-            
+
          }
-         
+
          super.onBrowserEvent(event);
       }
-      
+
       private final TabCloseObserver closeHandler_;
       private final Element closeElement_;
       private Element clickTarget_;
@@ -1232,25 +1244,24 @@ public class DocTabLayoutPanel
       tab.replaceTooltip(tooltip);
    }
 
-   public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
+   public HandlerRegistration addTabClosingHandler(TabClosingEvent.Handler handler)
    {
       return addHandler(handler, TabClosingEvent.TYPE);
    }
-   
+
    @Override
-   public HandlerRegistration addTabCloseHandler(
-         TabCloseHandler handler)
+   public HandlerRegistration addTabCloseHandler(TabCloseEvent.Handler handler)
    {
       return addHandler(handler, TabCloseEvent.TYPE);
    }
 
-   public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
+   public HandlerRegistration addTabClosedHandler(TabClosedEvent.Handler handler)
    {
       return addHandler(handler, TabClosedEvent.TYPE);
    }
 
    @Override
-   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
+   public HandlerRegistration addTabReorderHandler(TabReorderEvent.Handler handler)
    {
       return addHandler(handler, TabReorderEvent.TYPE);
    }
@@ -1272,13 +1283,13 @@ public class DocTabLayoutPanel
       }
       return lastChild.getOffsetLeft() + lastChild.getOffsetWidth();
    }
-   
+
    @Override
-   public void onBrowserEvent(Event event) 
-   {  
+   public void onBrowserEvent(Event event)
+   {
       super.onBrowserEvent(event);
    }
-   
+
    private Element getTabBarElement()
    {
       return (Element) DomUtils.findNode(
@@ -1296,7 +1307,7 @@ public class DocTabLayoutPanel
                }
             });
    }
-   
+
    private Element getLastChildElement(Element parent)
    {
       Node lastTab = parent.getLastChild();
@@ -1309,12 +1320,12 @@ public class DocTabLayoutPanel
       }
       return Element.as(lastTab);
    }
-   
+
    private String getDataTransferFormat()
    {
       // IE only supports textual data; for other browsers, though, use our own
       // format so it doesn't activate text drag targets in other apps
-      if (BrowseCap.isInternetExplorer()) 
+      if (BrowseCap.isInternetExplorer())
          return "text";
       else
          return "application/rstudio-tab";
@@ -1325,7 +1336,7 @@ public class DocTabLayoutPanel
    private final boolean closeableTabs_;
    private final EventBus events_;
    private final Commands commands_;
-   
+
    private final int padding_;
    private final int rightMargin_;
    private final ThemeStyles styles_;

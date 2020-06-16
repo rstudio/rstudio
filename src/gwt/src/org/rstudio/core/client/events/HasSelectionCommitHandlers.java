@@ -19,5 +19,5 @@ import com.google.gwt.event.shared.HasHandlers;
 
 public interface HasSelectionCommitHandlers<I> extends HasHandlers
 {
-   HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<I> handler);
+   HandlerRegistration addSelectionCommitHandler(SelectionCommitEvent.Handler<I> handler);
 }

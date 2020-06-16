@@ -19,10 +19,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.events.WindowStateChangeHandler;
 import org.rstudio.core.client.theme.MinimizedWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 
@@ -33,8 +31,8 @@ import static org.rstudio.core.client.layout.WindowState.*;
  * logical window in the DualWindowLayoutPanel.
  */
 public class LogicalWindow implements HasWindowStateChangeHandlers,
-                                      WindowStateChangeHandler,
-                                      EnsureHeightHandler
+                                      WindowStateChangeEvent.Handler,
+                                      EnsureHeightEvent.Handler
 {
    public LogicalWindow(WindowFrame normal,
                         MinimizedWindowFrame minimized)
@@ -44,7 +42,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
 
       normal_.addWindowStateChangeHandler(this);
       normal_.addEnsureHeightHandler(this);
-      minimized_.addWindowStateChangeHandler(this);   
+      minimized_.addWindowStateChangeHandler(this);
    }
 
    public WindowFrame getNormal()
@@ -92,18 +90,16 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       throw new IllegalStateException("Unknown state " + state_);
    }
 
-   public HandlerRegistration addWindowStateChangeHandler(
-         WindowStateChangeHandler handler)
+   public HandlerRegistration addWindowStateChangeHandler(WindowStateChangeEvent.Handler handler)
    {
       return events_.addHandler(WindowStateChangeEvent.TYPE, handler);
    }
-   
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return events_.addHandler(EnsureHeightEvent.TYPE, handler);
    }
-   
+
    public void onWindowStateChange(WindowStateChangeEvent event)
    {
       WindowState newState = event.getNewState();
@@ -128,7 +124,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    {
       return state_;
    }
-   
+
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {

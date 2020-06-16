@@ -1,5 +1,5 @@
 /*
- * TabCloseHandler.java
+ * PanmirrorServer.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.events;
 
-import com.google.gwt.event.shared.EventHandler;
+package org.rstudio.studio.client.panmirror.server;
 
-public interface TabCloseHandler extends EventHandler
-{
-   void onTabClose(TabCloseEvent event);
+
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorServer
+{    
+   public PanmirrorPandocServer pandoc;
+   public PanmirrorCrossrefServer crossref;
 }

@@ -19,10 +19,7 @@ import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
-import { Extension } from '../../api/extension';
-import { EditorUI } from '../../api/ui';
-import { EditorOptions } from '../../api/options';
-import { EditorEvents } from '../../api/events';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { FixupContext } from '../../api/fixup';
 import { isSingleLineHTML } from '../../api/html';
 import { getMarkAttrs } from '../../api/mark';
@@ -30,14 +27,11 @@ import {
   PandocToken,
   PandocTokenType,
   ProsemirrorWriter,
-  PandocExtensions,
   kRawBlockContent,
   kRawBlockFormat,
   imageAttributesAvailable,
 } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { trTransform } from '../../api/transaction';
-import { EditorFormat } from '../../api/format';
 
 import {
   imageAttrsFromDOM,
@@ -52,14 +46,10 @@ import { inlineHTMLIsImage } from './image-util';
 import { imageNodeViewPlugins } from './image-view';
 import { figureKeys } from './figure-keys';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions, ui, events } = context;
+
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -134,8 +124,8 @@ const extension = (
 
     fixups: (_schema: Schema) => {
       return [
-        (tr: Transaction, context: FixupContext) => {
-          if (context === FixupContext.Load) {
+        (tr: Transaction, fixupContext: FixupContext) => {
+          if (fixupContext === FixupContext.Load) {
             return convertImagesToFigure(tr);
           } else {
             return tr;

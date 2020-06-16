@@ -1,5 +1,5 @@
 /*
- * EnsureHiddenHandler.java
+ * VisualModeSync.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.events;
 
-import com.google.gwt.event.shared.EventHandler;
 
-public interface EnsureHiddenHandler extends EventHandler
+package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
+
+import org.rstudio.core.client.CommandWithArg;
+
+import com.google.gwt.user.client.Command;
+
+public interface VisualModeEditorSync
 {
-   void onEnsureHidden(EnsureHiddenEvent event);
+   void syncToEditor(boolean activatingEditor);
+   void syncToEditor(boolean activatingEditor, Command ready);
+   
+   void syncFromEditorIfActivated();
+   void syncFromEditor(CommandWithArg<Boolean> done, boolean focus);
 }

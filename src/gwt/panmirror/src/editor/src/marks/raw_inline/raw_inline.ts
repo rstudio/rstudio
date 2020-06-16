@@ -18,20 +18,22 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { toggleMark } from 'prosemirror-commands';
 
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType } from '../../api/pandoc';
 import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
 export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions, pandocCapabilities } = context;
+
   // always enabled so that extensions can make use of preprocessors + raw_attribute
   // to hoist content out of pandoc for further processing by our token handlers.
   // that means that users can always use the raw attribute in their markdown even

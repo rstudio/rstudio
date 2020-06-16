@@ -58,6 +58,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 # source files
 set (SESSION_SOURCE_FILES
    SessionAsyncRProcess.cpp
+   SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
@@ -192,6 +193,8 @@ set (SESSION_SOURCE_FILES
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/panmirror/SessionPanmirror.cpp
+   modules/panmirror/SessionPanmirrorCrossref.cpp
+   modules/panmirror/SessionPanmirrorPandoc.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
@@ -205,6 +208,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRequestHandler.cpp
    modules/preview/SessionPreview.cpp
    modules/rmarkdown/SessionBlogdown.cpp
+   modules/rmarkdown/SessionBookdown.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp

@@ -21,26 +21,22 @@ import { Transform } from 'prosemirror-transform';
 
 import { setTextSelection, findChildren, findChildrenByMark } from 'prosemirror-utils';
 
-import { Extension } from '../api/extension';
-import { PandocExtensions, PandocOutput } from '../api/pandoc';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI } from '../api/ui';
+import { Extension, ExtensionContext } from '../api/extension';
 import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
 import { MarkTransaction, trTransform } from '../api/transaction';
 import { FixupContext } from '../api/fixup';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
-import { EditorFormat } from '../api/format';
+import { PandocOutput } from '../api/pandoc';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+
+  const { pandocExtensions, format, ui } = context;
+
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
   }
@@ -94,8 +90,8 @@ const extension = (
 
     fixups: (schema: Schema) => {
       return [
-        (tr: Transaction, context: FixupContext) => {
-          if (context === FixupContext.Load) {
+        (tr: Transaction, fixupContext: FixupContext) => {
+          if (fixupContext === FixupContext.Load) {
             // apply marks
             const markType = schema.marks.xref;
             const predicate = (node: ProsemirrorNode) => {
@@ -174,6 +170,13 @@ const extension = (
                 dispatch(tr);
               }
               return true;
+            },
+            {
+              name: ui.context.translateText('Cross Reference'),
+              description: ui.context.translateText('Reference to related content'),
+              group: OmniInsertGroup.References,
+              priority: 0,
+              image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.cross_reference_dark! : ui.images.omni_insert!.cross_reference!,
             },
           ),
         ];

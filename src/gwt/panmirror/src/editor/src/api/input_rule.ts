@@ -13,7 +13,7 @@
  *
  */
 
-import { EditorState } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { Schema, MarkType } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 
@@ -112,22 +112,22 @@ export function delimiterMarkInputRule(
   }
 }
 
-export type MarkInputRuleFilter = (state: EditorState, from?: number, to?: number) => boolean;
+export type MarkInputRuleFilter = (context: EditorState | Transaction, from?: number, to?: number) => boolean;
 
 export function markInputRuleFilter(schema: Schema, marks: readonly PandocMark[]): MarkInputRuleFilter {
   const maskedMarkTypes = marksWithNoInputRules(schema, marks);
 
-  return (state: EditorState, from?: number, to?: number) => {
+  return (context: EditorState | Transaction, from?: number, to?: number) => {
     if (from !== undefined && to !== undefined && from !== to) {
       const marksInRange: MarkType[] = [];
-      state.doc.nodesBetween(from, to, node => {
+      context.doc.nodesBetween(from, to, node => {
         node.marks.forEach(mark => marksInRange.push(mark.type));
       });
       return !marksInRange.some(markType => maskedMarkTypes.includes(markType));
     }
     if (from === undefined) {
       for (const markType of maskedMarkTypes) {
-        if (markIsActive(state, markType)) {
+        if (markIsActive(context, markType)) {
           return false;
         }
       }

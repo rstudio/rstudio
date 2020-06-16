@@ -52,10 +52,9 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.events.BeforeShowHandler;
+import org.rstudio.core.client.events.BeforeShowEvent;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.events.HasTabCloseHandlers;
@@ -267,8 +266,8 @@ public class Source implements InsertSourceHandler,
       void cancelTabDrag();
 
       void ensureVisible();
-      HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
-      HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler);
+      HandlerRegistration addBeforeShowHandler(BeforeShowEvent.Handler handler);
+      HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler);
    }
 
    @Inject

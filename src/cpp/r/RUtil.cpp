@@ -52,6 +52,25 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace r {
 namespace util {
+namespace {
+
+bool versionTest(const std::string& comparator, const std::string& version)
+{
+   std::string versionTest("getRversion() " + comparator + " \"" + version + "\"");
+   bool hasVersion = false;
+   Error error = r::exec::evaluateString(versionTest, &hasVersion);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   else
+   {
+      return hasVersion;
+   }
+}
+
+} // anonymous namespace
 
 std::string expandFileName(const std::string& name)
 {
@@ -68,18 +87,12 @@ std::string fixPath(const std::string& path)
 
 bool hasRequiredVersion(const std::string& version)
 {
-   std::string versionTest("getRversion() >= \"" + version + "\"");
-   bool hasRequired = false;
-   Error error = r::exec::evaluateString(versionTest, &hasRequired);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   else
-   {
-      return hasRequired;
-   }
+   return versionTest(">=", version);
+}
+
+bool hasExactVersion(const std::string& version)
+{
+   return versionTest("==", version);
 }
 
 bool hasCapability(const std::string& capability)

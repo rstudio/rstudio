@@ -3,6 +3,7 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
    
       
@@ -10,11 +11,11 @@
    
    <g:VerticalPanel styleName="{res.styles.dialog}">
    
-      <g:Label text="Citation ID (e.g. @Knuth):"></g:Label>
-      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="citationId_"></g:TextBox>
+      <rw:FormLabel for="{ElementIds.getVisualMdCitationId}" text="Citation ID (e.g. @Knuth):"/>
+      <rw:FormTextBox elementId="{ElementIds.getVisualMdCitationId}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="citationId_"/>
     
-      <g:Label text="Locator (e.g. pp. 33-35):"></g:Label>
-      <rw:TextBoxWithCue cueText="(Optional)" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="locator_"></rw:TextBoxWithCue>
+      <rw:FormLabel for="{ElementIds.getVisualMdCitationLocator}" text="Locator (e.g. pp. 33-35):"/>
+      <rw:TextBoxWithCue elementId="{ElementIds.getVisualMdCitationLocator}" cueText="(Optional)" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="locator_"/>
       	
    </g:VerticalPanel>
 

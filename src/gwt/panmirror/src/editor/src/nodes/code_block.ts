@@ -21,7 +21,7 @@ import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { BlockCommand, EditorCommandId, ProsemirrorCommand, toggleBlockType } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
@@ -30,17 +30,13 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps } from '../api/ui';
 import { hasFencedCodeBlocks } from '../api/pandoc_format';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
-import { EditorFormat } from '../api/format';
 import { EditorOptions } from '../api/options';
 import { OmniInsertGroup } from '../api/omni_insert';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  options: EditorOptions,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions, pandocCapabilities, ui, options } = context;
+
   const hasAttr = hasFencedCodeBlocks(pandocExtensions);
 
   return {
@@ -69,12 +65,12 @@ const extension = (
             const fontClass = 'pm-fixedwidth-font';
             const attrs = hasAttr
               ? pandocAttrToDomAttr({
-                  ...node.attrs,
-                  classes: [...node.attrs.classes, fontClass],
-                })
+                ...node.attrs,
+                classes: [...node.attrs.classes, fontClass],
+              })
               : {
-                  class: fontClass,
-                };
+                class: fontClass,
+              };
             return ['pre', attrs, ['code', 0]];
           },
         },
@@ -142,7 +138,7 @@ class CodeBlockFormatCommand extends ProsemirrorCommand {
         description: ui.context.translateText('Source code display'),
         group: OmniInsertGroup.Blocks,
         priority: 7,
-        image: () => ui.images.omni_insert?.generic!,
+        image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.code_block_dark! : ui.images.omni_insert?.code_block!,
       },
     );
   }

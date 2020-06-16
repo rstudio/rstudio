@@ -27,7 +27,7 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
+import { PandocServer, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
@@ -98,6 +98,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { CrossrefServer } from '../api/crossref';
 
 
 export interface EditorCode {
@@ -114,10 +115,15 @@ export interface EditorSetMarkdownResult {
 }
 
 export interface EditorContext {
-  readonly pandoc: PandocEngine;
+  readonly server: EditorServer;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
+}
+
+export interface EditorServer {
+  readonly pandoc: PandocServer;
+  readonly crossref: CrossrefServer;
 }
 
 export interface EditorHooks {
@@ -295,10 +301,10 @@ export class Editor {
     };
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(context.server.pandoc, format);
 
     // get pandoc capabilities
-    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
+    const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
@@ -374,7 +380,7 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.server.pandoc, this.pandocCapabilities);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -691,26 +697,28 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(
-      this.format,
-      this.options,
-      this.context.ui,
-      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
-      this.context.extensions,
-      this.pandocFormat.extensions,
-      this.pandocCapabilities,
-    );
+    return initExtensions({
+      format: this.format,
+      options: this.options,
+      ui: this.context.ui,
+      events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+      pandocExtensions: this.pandocFormat.extensions,
+      pandocCapabilities: this.pandocCapabilities,
+      pandocServer: this.context.server.pandoc
+    }, this.context.extensions);
   }
 
   private registerCompletionExtension() {
-    // register omni insert extension
+    // mark filter used to screen completions from noInputRules marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
     this.extensions.register([
       omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
     ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {
@@ -764,6 +772,14 @@ export class Editor {
             this.emitEvent(FocusEvent);
             return false;
           },
+          keydown: (view: EditorView, event: Event) => {
+            const kbEvent = event as KeyboardEvent;
+            if (kbEvent.key === 'Tab' && this.context.ui.prefs.tabKeyMoveFocus()) {
+              return true;
+            } else {
+              return false;
+            }
+          }
         },
       },
     });

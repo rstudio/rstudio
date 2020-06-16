@@ -90,7 +90,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
                                                     procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
+#ifdef _WIN32
+   options.reportHasSubprocs = false; // child process detection not supported on Windows
+#else
    options.reportHasSubprocs = true;
+#endif
    options.trackCwd = true;
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();

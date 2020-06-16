@@ -1,5 +1,5 @@
 /*
- * EnsureHeightHandler.java
+ * SessionBookdown.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.events;
+#ifndef SESSION_SESSION_BOOKDOWN_HPP
+#define SESSION_SESSION_BOOKDOWN_HPP
 
-import com.google.gwt.event.shared.EventHandler;
-
-public interface EnsureHeightHandler extends EventHandler
-{
-   void onEnsureHeight(EnsureHeightEvent event);
+namespace rstudio {
+   namespace core {
+      namespace json {
+         class Object;
+      }
+   }
 }
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace rmarkdown {
+namespace bookdown {
+
+bool hasRenumberFootnotes();
+
+} // namespace bookdown
+} // namespace rmarkdown
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif // SESSION_SESSION_BOOKDOWN_HPP

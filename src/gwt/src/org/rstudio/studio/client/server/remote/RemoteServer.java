@@ -6155,6 +6155,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, PANDOC_LIST_EXTENSIONS, format, callback);
    }
+   
+   @Override
+   public void crossrefWorks(String query, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6652,4 +6658,7 @@ public class RemoteServer implements Server
    private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
    private static final String PANDOC_MARKDOWN_TO_AST = "pandoc_markdown_to_ast";
    private static final String PANDOC_LIST_EXTENSIONS = "pandoc_list_extensions";
+   
+   private static final String CROSSREF_WORKS = "crossref_works";
+   
 }

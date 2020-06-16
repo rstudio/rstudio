@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.AsyncShim;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 
 public abstract class DelayLoadTabShim<T extends IsWidget,
       TParentTab extends DelayLoadWorkbenchTab<T>> extends AsyncShim<T>
@@ -39,41 +41,28 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
    {
       super.onDelayLoadSuccess(obj);
       final Widget child = obj.asWidget();
-      
+
       if (child instanceof HasEnsureVisibleHandlers)
       {
-         ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(
-               new EnsureVisibleHandler()
+         ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(event ->
          {
-            public void onEnsureVisible(EnsureVisibleEvent event)
-            {
-               parentTab_.ensureVisible(event.getActivate());
-            }
+            parentTab_.ensureVisible(event.getActivate());
          });
       }
-      
+
       if (child instanceof HasEnsureHeightHandlers)
       {
-         ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(
-               new EnsureHeightHandler()
+         ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(heightEvent ->
          {
-            @Override
-            public void onEnsureHeight(EnsureHeightEvent event)
-            {
-               parentTab_.ensureHeight(event.getHeight());     
-            }
+            parentTab_.ensureHeight(heightEvent.getHeight());
          });
       }
 
       if (child instanceof HasEnsureHiddenHandlers)
       {
-         ((HasEnsureHiddenHandlers)child).addEnsureHiddenHandler(
-               new EnsureHiddenHandler()
+         ((HasEnsureHiddenHandlers)child).addEnsureHiddenHandler(event ->
          {
-            public void onEnsureHidden(EnsureHiddenEvent event)
-            {
-               parentTab_.ensureHidden();
-            }
+            parentTab_.ensureHidden();
          });
       }
 

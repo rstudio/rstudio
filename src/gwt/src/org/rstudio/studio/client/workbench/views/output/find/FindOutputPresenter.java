@@ -30,7 +30,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
@@ -85,7 +84,7 @@ public class FindOutputPresenter extends BasePresenter
       HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
 
       void showOverflow();
-      
+
       void showSearchCompleted();
 
       void updateSearchLabel(String query, String path);
@@ -145,18 +144,14 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      view_.addSelectionCommitHandler(new SelectionCommitHandler<CodeNavigationTarget>()
+      view_.addSelectionCommitHandler((SelectionCommitEvent<CodeNavigationTarget> event) ->
       {
-         @Override
-         public void onSelectionCommit(SelectionCommitEvent<CodeNavigationTarget> event)
-         {
-            CodeNavigationTarget target = event.getSelectedItem();
-            if (target == null)
-               return;
+         CodeNavigationTarget target = event.getSelectedItem();
+         if (target == null)
+            return;
 
-            ftr.editFile(FileSystemItem.createFile(target.getFile()),
-                         target.getPosition());
-         }
+         ftr.editFile(FileSystemItem.createFile(target.getFile()),
+                      target.getPosition());
       });
 
       view_.getStopSearchButton().addClickHandler(new ClickHandler()
@@ -376,7 +371,7 @@ public class FindOutputPresenter extends BasePresenter
             view_.setReplaceMode(false);
             view_.addMatches(results);
             view_.setReplaceMode(true);
-            
+
             view_.ensureVisible(true);
             view_.disableReplace();
          }
@@ -413,12 +408,12 @@ public class FindOutputPresenter extends BasePresenter
                dialogState_ = null;
                return;
             }
-            
+
             // convert project-relative path if needed
             boolean relative = false;
             if (value.hasKey("projectRelative"))
                relative = value.getBoolean("projectRelative");
-            
+
             if (relative)
             {
                FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
@@ -428,7 +423,7 @@ public class FindOutputPresenter extends BasePresenter
                   value.setString("path", projPath + value.getString("path"));
                }
             }
-            
+
             dialogState_ = value.cast();
          }
 
@@ -437,9 +432,9 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (dialogState_ != null)
                return dialogState_.cast();
-            
+
             JsObject object = dialogState_.<JsObject>cast().clone();
-            
+
             // convert path to relative if path is project-relative
             FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
             if (projDir != null)
@@ -452,7 +447,7 @@ public class FindOutputPresenter extends BasePresenter
                   object.setBoolean("projectRelative", true);
                }
             }
-            
+
             return object;
          }
       };
@@ -572,7 +567,7 @@ public class FindOutputPresenter extends BasePresenter
 
       if (!StringUtil.isNullOrEmpty(event.getSearchPattern()))
          dialog.setSearchPattern(event.getSearchPattern());
-      
+
       if (dialogState_ == null)
       {
          dialog.setDirectory(
@@ -663,7 +658,7 @@ public class FindOutputPresenter extends BasePresenter
       }
       view_.setStopSearchButtonVisible(false);
    }
-   
+
    private void stopReplace()
    {
       if (currentFindHandle_ != null)

@@ -16,7 +16,7 @@
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
 import {
-  PandocEngine,
+  PandocServer,
   PandocTokenReader,
   PandocNodeWriter,
   PandocMarkWriter,
@@ -55,13 +55,13 @@ export class PandocConverter {
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
-  private readonly pandoc: PandocEngine;
+  private readonly pandoc: PandocServer;
   private readonly pandocCapabilities: PandocCapabilities;
 
   constructor(
     schema: Schema,
     extensions: ExtensionManager,
-    pandoc: PandocEngine,
+    pandoc: PandocServer,
     pandocCapabilities: PandocCapabilities,
   ) {
     this.schema = schema;
