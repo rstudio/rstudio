@@ -21,12 +21,14 @@ import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } f
 
 import { findChildrenByType } from 'prosemirror-utils';
 
+import { EditorUI } from '../../api/ui';
 import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
 import { TableCapabilities } from '../../api/table';
 import { trTransform } from '../../api/transaction';
-import { tabKeyCommand } from '../../api/tab';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import {
   insertTable,
@@ -58,7 +60,6 @@ import { tablePaste } from './table-paste';
 
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
-
 
 
 const extension = (context: ExtensionContext): Extension | null => {
@@ -139,12 +140,8 @@ const extension = (context: ExtensionContext): Extension | null => {
       const keys = [
         { key: BaseKey.Backspace, command: deleteTableCaption() },
         { key: BaseKey.Enter, command: exitNode(schema.nodes.table_caption, -2, false) },
-
-        // NOTE: unfortunately it looks like the tableEditing plugin already 
-        // implements these keys (and can't be customized. still we'll leave the
-        // tabKeyCommand wrapper here as documentation of our intent)
-        { key: BaseKey.Tab, command: tabKeyCommand(ui.prefs, goToNextCell(1)) },
-        { key: BaseKey.ShiftTab, command: tabKeyCommand(ui.prefs, goToNextCell(-1)) },
+        { key: BaseKey.Tab, command: goToNextCell(1) },
+        { key: BaseKey.ShiftTab, command: goToNextCell(-1) },
       ];
 
       // turn enter key variations into tab if we don't support multi-line

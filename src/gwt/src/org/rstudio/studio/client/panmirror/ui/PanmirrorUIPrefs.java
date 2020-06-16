@@ -54,11 +54,6 @@ public class PanmirrorUIPrefs {
                .equals(UserPrefsAccessor.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER);
    }
    
-   public Boolean tabKeyMoveFocus()
-   {
-      return pUIPrefs_.get().tabKeyMoveFocus().getValue();
-   }
-   
    public double emojiSkinTone() 
    {
 	   String emojiSkinTone = pUIPrefs_.get().emojiSkintone().getValue();

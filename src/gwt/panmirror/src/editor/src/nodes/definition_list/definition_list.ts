@@ -13,13 +13,12 @@
  *
  */
 
-import { Schema, Node as ProsemirrorNode, DOMOutputSpec } from 'prosemirror-model';
+import { Schema } from 'prosemirror-model';
 
 import { PandocTokenType } from '../../api/pandoc';
-import { ExtensionContext } from '../../api/extension';
+import { Extension, extensionIfEnabled } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
-import { emptyNodePlaceholderPlugin } from '../../api/placeholder';
-import { tabKeyCommand } from '../../api/tab';
+import { EditorUI } from '../../api/ui';
 
 import { InsertDefinitionList, InsertDefinitionDescription, InsertDefinitionTerm } from './definition_list-commands';
 
@@ -41,99 +40,89 @@ import {
 } from './definition_list-pandoc';
 
 import './definition_list-styles.css';
+import { emptyNodePlaceholderPlugin } from '../../api/placeholder';
 
-
-const extension = (context: ExtensionContext) => {
-
-  const { pandocExtensions, ui } = context;
-
-  if (!pandocExtensions.definition_lists) {
-    return null;
-  }
-
-  return {
-    nodes: [
-      {
-        name: 'definition_list_term',
-        spec: {
-          content: 'inline*',
-          isolating: true,
-          parseDOM: [{ tag: 'dt' }],
-          toDOM(_node: ProsemirrorNode): DOMOutputSpec {
-            return ['dt', { class: 'pm-definition-term' }, 0];
-          },
-        },
-        pandoc: {
-          writer: writePandocDefinitionListTerm,
+const extension: Extension = {
+  nodes: [
+    {
+      name: 'definition_list_term',
+      spec: {
+        content: 'inline*',
+        isolating: true,
+        parseDOM: [{ tag: 'dt' }],
+        toDOM(node) {
+          return ['dt', { class: 'pm-definition-term' }, 0];
         },
       },
-      {
-        name: 'definition_list_description',
-        spec: {
-          content: 'block+',
-          parseDOM: [{ tag: 'dd' }],
-          toDOM(_node: ProsemirrorNode): DOMOutputSpec {
-            return ['dd', { class: 'pm-definition-description pm-block-border-color pm-margin-bordered' }, 0];
-          },
-        },
-        pandoc: {
-          writer: writePandocDefinitionListDescription,
+      pandoc: {
+        writer: writePandocDefinitionListTerm,
+      },
+    },
+    {
+      name: 'definition_list_description',
+      spec: {
+        content: 'block+',
+        parseDOM: [{ tag: 'dd' }],
+        toDOM(node) {
+          return ['dd', { class: 'pm-definition-description pm-block-border-color pm-margin-bordered' }, 0];
         },
       },
-      {
-        name: 'definition_list',
-        spec: {
-          content: '(definition_list_term definition_list_description*)+',
-          group: 'block',
-          defining: true,
-          parseDOM: [{ tag: 'dl' }],
-          toDOM(_node: ProsemirrorNode): DOMOutputSpec {
-            return ['dl', { class: 'pm-definition-list' }, 0];
-          },
-        },
-        pandoc: {
-          readers: [
-            {
-              token: PandocTokenType.DefinitionList,
-              handler: readPandocDefinitionList,
-            },
-          ],
-
-          writer: writePandocDefinitionList,
+      pandoc: {
+        writer: writePandocDefinitionListDescription,
+      },
+    },
+    {
+      name: 'definition_list',
+      spec: {
+        content: '(definition_list_term definition_list_description*)+',
+        group: 'block',
+        defining: true,
+        parseDOM: [{ tag: 'dl' }],
+        toDOM(node) {
+          return ['dl', { class: 'pm-definition-list' }, 0];
         },
       },
-    ],
+      pandoc: {
+        readers: [
+          {
+            token: PandocTokenType.DefinitionList,
+            handler: readPandocDefinitionList,
+          },
+        ],
 
-    commands: (schema: Schema) => {
-      return [
-        new InsertDefinitionList(ui),
-        new InsertDefinitionTerm(schema, ui),
-        new InsertDefinitionDescription(schema),
-      ];
+        writer: writePandocDefinitionList,
+      },
     },
+  ],
 
-    baseKeys: (_schema: Schema) => {
-      return [
-        { key: BaseKey.Enter, command: definitionListEnter() },
-        { key: BaseKey.Backspace, command: definitionListBackspace() },
-        { key: BaseKey.Tab, command: tabKeyCommand(ui.prefs, definitionListTab()) },
-        { key: BaseKey.ShiftTab, command: tabKeyCommand(ui.prefs, definitionListShiftTab()) },
-      ];
-    },
+  commands: (schema: Schema, ui: EditorUI) => {
+    return [
+      new InsertDefinitionList(ui),
+      new InsertDefinitionTerm(schema, ui),
+      new InsertDefinitionDescription(schema),
+    ];
+  },
 
-    inputRules: (_schema: Schema) => {
-      return [definitionInputRule()];
-    },
+  baseKeys: (_schema: Schema) => {
+    return [
+      { key: BaseKey.Enter, command: definitionListEnter() },
+      { key: BaseKey.Backspace, command: definitionListBackspace() },
+      { key: BaseKey.Tab, command: definitionListTab() },
+      { key: BaseKey.ShiftTab, command: definitionListShiftTab() },
+    ];
+  },
 
-    appendTransaction: (_schema: Schema) => {
-      return [insertDefinitionListAppendTransaction()];
-    },
+  inputRules: (_schema: Schema) => {
+    return [definitionInputRule()];
+  },
 
-    plugins: (schema: Schema) => {
-      return [emptyNodePlaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
-    },
-  };
+  appendTransaction: (_schema: Schema) => {
+    return [insertDefinitionListAppendTransaction()];
+  },
+
+  plugins: (schema: Schema, ui: EditorUI) => {
+    return [emptyNodePlaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
+  },
 };
 
-export default extension;
-
+export default extensionIfEnabled(extension, 'definition_lists');

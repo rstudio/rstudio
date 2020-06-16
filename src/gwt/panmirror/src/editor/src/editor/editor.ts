@@ -723,7 +723,7 @@ export class Editor {
 
   private createPlugins(): Plugin[] {
     return [
-      baseKeysPlugin(this.context.ui, this.extensions.baseKeys(this.schema)),
+      baseKeysPlugin(this.extensions.baseKeys(this.schema)),
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
@@ -772,14 +772,6 @@ export class Editor {
             this.emitEvent(FocusEvent);
             return false;
           },
-          keydown: (view: EditorView, event: Event) => {
-            const kbEvent = event as KeyboardEvent;
-            if (kbEvent.key === 'Tab' && this.context.ui.prefs.tabKeyMoveFocus()) {
-              return true;
-            } else {
-              return false;
-            }
-          }
         },
       },
     });
