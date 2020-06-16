@@ -35,6 +35,7 @@
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
+#include <core/YamlUtil.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -929,7 +930,17 @@ std::string onDetectRmdSourceType(
                                        "<!-- rmarkdown v1 -->") &&
           rmarkdownPackageAvailable())
       {
-         return "rmarkdown";
+         // if we find html_notebook in the YAML header, presume that this is an R Markdown notebook
+         // (this isn't 100% foolproof but this check runs frequently so needs to be fast; more
+         // thorough type introspection is done on the client)
+         std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
+         if (boost::algorithm::contains(yamlHeader, "html_notebook"))
+         {
+            return "rmarkdown-notebook";
+         }
+
+         // otherwise, it's a regular R Markdown document
+         return "rmarkdown-document";
       }
    }
    return std::string();
