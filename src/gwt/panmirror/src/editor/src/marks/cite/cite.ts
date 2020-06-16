@@ -13,29 +13,9 @@
  *
  */
 
-/* Citation mark handling
-
--   You can create a citation by having one in source mode, by typing `[@`, or by using a comand.
-
--   Once created, the citation will preserve itself as a mark in the editor, and will only dissapear fully when it is round-tripped back to source.
-
--   The completer will show whenever it is in front of valid citation begin sequence (`-?@`, etc.) inside a citation mark.
-
--   @ rule is wrong
-
--   Input rule for @ character inside cite marks --- this transforms the @ into a cite\_id (but then reverses this on backspace)
-
--   Inside a citation mark, @ is considered a valid id (so that users can replace the identifier) however when round-tripping a standaone @ will not be treated as an ID.
-
--   We won't show \@cite anymore, rather it will be placeholder text for the completer.
-
--   Deal with allowing inclusive editing of the mark, while at the same time breaking it when it's done (similar to LaTeX)
-
-*/
-
 import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { EditorState, TextSelection, Transaction, Selection } from 'prosemirror-state';
+import { EditorState, Transaction, Selection } from 'prosemirror-state';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
@@ -46,6 +26,7 @@ import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { Extension, ExtensionContext } from '../../api/extension';
 import { citationCompletionHandler } from './cite-completion';
+import { setTextSelection } from 'prosemirror-utils';
 
 const CITE_CITATIONS = 0;
 
@@ -245,14 +226,17 @@ function insertCiteInputRule(schema: Schema) {
         // insert the @
         tr.insertText('@');
 
-        // determine beginning and end
         const startCite = tr.selection.from - match[0].length;
+
+        // determine beginning and end
+
         let endCite = findCiteEndBracket(tr.selection);
 
         // insert end bracket if we need to
         if (endCite === -1) {
           tr.insertText(']');
           endCite = tr.selection.from;
+          setTextSelection(endCite - 1)(tr);
         }
 
         encloseInCiteMark(tr, startCite, endCite + 1);
@@ -427,7 +411,12 @@ function findCiteBeginBracket(selection: Selection) {
       }
     }
   }
-  return $head.start($head.depth) + beginCite;
+  if (beginCite !== -1) {
+    return $head.start($head.depth) + beginCite;
+  } else {
+    return -1;
+  }
+
 }
 
 
@@ -451,7 +440,12 @@ function findCiteEndBracket(selection: Selection) {
       }
     }
   }
-  return $head.start($head.depth) + endCite;
+  if (endCite !== -1) {
+    return $head.start($head.depth) + endCite;
+  } else {
+    return -1;
+  }
+
 }
 
 
