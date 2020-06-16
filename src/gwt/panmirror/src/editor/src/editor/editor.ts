@@ -772,6 +772,14 @@ export class Editor {
             this.emitEvent(FocusEvent);
             return false;
           },
+          keydown: (view: EditorView, event: Event) => {
+            const kbEvent = event as KeyboardEvent;
+            if (kbEvent.key === 'Tab' && this.context.ui.prefs.tabKeyMoveFocus()) {
+              return true;
+            } else {
+              return false;
+            }
+          }
         },
       },
     });
