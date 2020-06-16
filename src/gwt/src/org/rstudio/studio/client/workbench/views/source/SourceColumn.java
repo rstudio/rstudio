@@ -66,10 +66,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SourceColumn implements SelectionHandler<Integer>,
-                                     TabClosingHandler,
-                                     TabCloseHandler,
-                                     TabClosedHandler,
-                                     TabReorderHandler
+                                     TabClosingEvent.Handler,
+                                     TabCloseEvent.Handler,
+                                     TabClosedEvent.Handler,
+                                     TabReorderEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, SourceColumn>
    {
@@ -178,7 +178,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       display_.cancelTabDrag();
    }
-   
+
    public void closeTab(Widget child, boolean interactive)
    {
       display_.closeTab(child, interactive);
@@ -188,7 +188,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       display_.closeTab(child, interactive, onClosed);
    }
-   
+
    public void closeTab(int index, boolean interactive)
    {
       display_.closeTab(index, interactive);
@@ -203,27 +203,27 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       return display_.getTabCount();
    }
-   
+
    public void manageChevronVisibility()
    {
 	   display_.manageChevronVisibility();
    }
-   
+
    public void moveTab(int index, int delta)
    {
 	   display_.moveTab(index, delta);
    }
-   
+
    public void selectTab(Widget widget)
    {
 	   display_.selectTab(widget);
    }
-   
+
    public void showOverflowPopout()
    {
 	   display_.showOverflowPopup();
    }
-   
+
    public void showUnsavedChangesDialog(
          String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
@@ -232,7 +232,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       display_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
-   
+
    public void initialSelect(int index)
    {
       if (index >= 0 && display_.getTabCount() > index)
@@ -442,12 +442,12 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       return target.asWidget();
    }
-   
+
    public EditingTarget addTab(SourceDocument doc, int mode)
    {
       return addTab(doc, false, mode);
    }
-   
+
    public EditingTarget addTab(SourceDocument doc, boolean atEnd,
          int mode)
    {
@@ -920,7 +920,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    {
       manageCommands(false);
    }
-   
+
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
@@ -1060,7 +1060,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
       if (!target.onBeforeDismiss())
          event.cancel();
    }
- 
+
    @Override
    public void onTabClose(TabCloseEvent event)
    {
@@ -1153,7 +1153,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
 
       target.onDismiss(closeDocument ? EditingTarget.DISMISS_TYPE_CLOSE :
          EditingTarget.DISMISS_TYPE_MOVE);
-      
+
       if (activeEditor_ == target)
       {
          activeEditor_.onDeactivate();
@@ -1197,7 +1197,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
    private EditingTargetSource editingTargetSource_;
-   
+
    private SourceColumnManager manager_;
 
 }

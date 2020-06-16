@@ -35,8 +35,8 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.events.EnsureHeightHandler;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -80,7 +80,7 @@ import java.util.List;
 public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
-   
+
    public interface Display extends TextDisplay,
                                     WarningBarDisplay
    {
@@ -112,19 +112,19 @@ public class CodeBrowserEditingTarget implements EditingTarget
       fontSizeManager_ = fontSizeManager;
       globalDisplay_ = globalDisplay;
       docDisplay_ = docDisplay;
-      
+
       TextEditingTarget.addRecordNavigationPositionHandler(releaseOnDismiss_,
-                                                           docDisplay_, 
-                                                           events_, 
+                                                           docDisplay_,
+                                                           events_,
                                                            this);
-      
+
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
          {
             NativeEvent ne = event.getNativeEvent();
             int mod = KeyboardShortcut.getModifierValue(ne);
-            if ((mod == KeyboardShortcut.META || 
+            if ((mod == KeyboardShortcut.META ||
                 (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
                 && ne.getKeyCode() == 'F')
             {
@@ -132,7 +132,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                event.stopPropagation();
                commands_.findReplace().execute();
             }
-            else if (BrowseCap.hasMetaKey() && 
+            else if (BrowseCap.hasMetaKey() &&
                      (mod == KeyboardShortcut.META) &&
                      (ne.getKeyCode() == 'E'))
             {
@@ -142,9 +142,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
             }
          }
       });
-      
+
       docDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {
-         
+
          @Override
          public void onFindRequested(FindRequestedEvent event)
          {
@@ -152,7 +152,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          }
       });
    }
-   
+
    @Override
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,
@@ -164,18 +164,18 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_ = new CodeBrowserEditingTargetWidget(commands_,
                                                  globalDisplay_,
                                                  events_,
-                                                 server_, 
+                                                 server_,
                                                  docDisplay_);
-      
-      TextEditingTarget.registerPrefs(releaseOnDismiss_, 
-                                      prefs_, 
+
+      TextEditingTarget.registerPrefs(releaseOnDismiss_,
+                                      prefs_,
                                       document.getProjectConfig(),
                                       docDisplay_,
                                       document);
-      
-      TextEditingTarget.syncFontSize(releaseOnDismiss_, 
-                                     events_, 
-                                     view_, 
+
+      TextEditingTarget.syncFontSize(releaseOnDismiss_,
+                                     events_,
+                                     view_,
                                      fontSizeManager_);
 
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
@@ -187,8 +187,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
                }
             }
       ));
-    
-      
+
+
       // if we have contents then set them
       CodeBrowserContents contents = getContents();
       if (contents.getContext().length() > 0)
@@ -208,7 +208,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       name_.addValueChangeHandler(event -> view_.setAccessibleName(name_.getValue()));
       name_.fireChangeEvent();
    }
-   
+
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       // set the current function
@@ -217,12 +217,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.scrollToLeft();
       name_.setValue(functionDef.getName(), true);
 
-      // we only show the warning bar (for debug line matching) once per 
+      // we only show the warning bar (for debug line matching) once per
       // function; don't keep showing it if the user dismisses
       shownWarningBar_ = false;
-      
+
       // update document properties if necessary
-      final CodeBrowserContents contents = 
+      final CodeBrowserContents contents =
                         CodeBrowserContents.create(getContext());
       if (!contents.equalTo(getContents()))
       {
@@ -236,29 +236,29 @@ public class CodeBrowserEditingTarget implements EditingTarget
                   @Override
                   public void onResponseReceived(Void response)
                   {
-                     contents.fillProperties(doc_.getProperties()); 
+                     contents.fillProperties(doc_.getProperties());
                   }
                });
       }
    }
-   
+
    @Handler
    void onExecuteCode()
    {
       codeExecution_.executeSelection(true);
    }
-   
+
    @Handler
    void onExecuteCodeWithoutFocus()
    {
       codeExecution_.executeSelection(false);
    }
-   
+
    @Handler
    void onExecuteLastCode()
    {
       docDisplay_.focus();
-      
+
       codeExecution_.executeLastCode();
    }
 
@@ -276,27 +276,27 @@ public class CodeBrowserEditingTarget implements EditingTarget
 
    @Handler
    void onSendToTerminal()
-   { 
+   {
       codeExecution_.sendSelectionToTerminal(false);
-   } 
+   }
 
    @Handler
    void onPrintSourceDoc()
    {
       TextEditingTarget.onPrintSourceDoc(docDisplay_);
    }
-   
+
    @Handler
    void onGoToHelp()
    {
       docDisplay_.goToHelp();
-   } 
-   
+   }
+
    @Handler
    void onGoToDefinition()
    {
       docDisplay_.goToDefinition();
-   } 
+   }
 
    @Handler
    void onFindReplace()
@@ -309,19 +309,19 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       view_.findNext();
    }
-   
+
    @Handler
    void onFindPrevious()
    {
       view_.findPrevious();
    }
-   
+
    @Handler
    void onFindFromSelection()
    {
       view_.findFromSelection();
    }
-   
+
    @Handler
    void onPopoutDoc()
    {
@@ -335,31 +335,31 @@ public class CodeBrowserEditingTarget implements EditingTarget
             getId(), SourceWindowManager.getSourceWindowId(), "",
             DocTabDragParams.create(getId(), currentPosition(), null), null, 0, -1));
    }
-   
+
    @Override
    public Position search(String regex)
    {
       return search(Position.create(0, 0), regex);
    }
-   
+
    @Override
    public Position search(Position startPos, String regex)
    {
-      InputEditorSelection sel = docDisplay_.search(regex, 
-                                                    false, 
-                                                    false, 
+      InputEditorSelection sel = docDisplay_.search(regex,
+                                                    false,
+                                                    false,
                                                     false,
                                                     false,
                                                     startPos,
-                                                    null, 
+                                                    null,
                                                     true);
       if (sel != null)
          return docDisplay_.selectionToPosition(sel.getStart());
       else
          return null;
    }
-   
-   
+
+
    @Override
    public String getId()
    {
@@ -375,14 +375,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public String getExtendedFileType()
    {
       return null;
-   }  
+   }
 
    @Override
    public HasValue<String> getName()
    {
       return name_;
    }
-   
+
    @Override
    public String getTitle()
    {
@@ -394,13 +394,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return getCodeBrowserPath(currentFunction_);
    }
-   
+
    @Override
    public String getContext()
    {
       if (currentFunction_ != null)
       {
-         return currentFunction_.getNamespace() + ":::" + 
+         return currentFunction_.getNamespace() + ":::" +
                 currentFunction_.getName();
       }
       else
@@ -408,7 +408,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          return "";
       }
    }
-   
+
    public static String getCodeBrowserPath(SearchPathFunctionDefinition func)
    {
       String path = PATH;
@@ -418,7 +418,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       }
       return path;
    }
-   
+
 
    @Override
    public FileIcon getIcon()
@@ -431,13 +431,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return "R Source Viewer";
    }
-   
+
    @Override
    public FileType getFileType()
    {
       return null;
    }
-   
+
    @Override
    public TextFileType getTextFileType()
    {
@@ -468,7 +468,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          commands.add(commands_.returnDocToMain());
       return commands;
    }
-   
+
    @Override
    public void manageCommands()
    {
@@ -479,17 +479,17 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return false;
    }
-   
+
    @Override
    public void verifyCppPrerequisites()
    {
    }
-   
+
    @Override
    public void verifyPythonPrerequisites()
    {
    }
-   
+
    @Override
    public void verifyD3Prerequisites()
    {
@@ -499,21 +499,21 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void verifyNewSqlPrerequisites()
    {
    }
-   
+
    @Override
    public void focus()
    {
       docDisplay_.focus();
    }
 
-   
+
    @Override
    public void onActivate()
    {
-      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // IMPORTANT NOTE: most of this logic is duplicated in
       // TextEditingTarget (no straightforward way to create a
       // re-usable implementation) so changes here need to be synced
-      
+
       if (commandReg_ != null)
       {
          Debug.log("Warning: onActivate called twice without intervening onDeactivate");
@@ -521,20 +521,20 @@ public class CodeBrowserEditingTarget implements EditingTarget
          commandReg_ = null;
       }
       commandReg_ = binder_.bind(commands_, this);
-      
+
       view_.onActivate();
    }
 
    @Override
    public void onDeactivate()
    {
-      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // IMPORTANT NOTE: most of this logic is duplicated in
       // TextEditingTarget (no straightforward way to create a
       // re-usable implementation) so changes here need to be synced
-      
+
       commandReg_.removeHandler();
       commandReg_ = null;
-      
+
       // switching tabs is a navigation action
       try
       {
@@ -550,22 +550,22 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void onInitiallyLoaded()
    {
    }
-   
+
    @Override
    public void recordCurrentNavigationPosition()
    {
       docDisplay_.recordCurrentNavigationPosition();
    }
-   
+
    @Override
-   public void navigateToPosition(final SourcePosition position, 
+   public void navigateToPosition(final SourcePosition position,
                                   final boolean recordCurrent)
    {
       navigateToPosition(position, recordCurrent, false);
    }
-   
+
    @Override
-   public void navigateToPosition(final SourcePosition position, 
+   public void navigateToPosition(final SourcePosition position,
                                   final boolean recordCurrent,
                                   final boolean highlightLine)
    {
@@ -580,7 +580,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          }
       });
    }
-   
+
    @Override
    public void restorePosition(final SourcePosition position)
    {
@@ -591,16 +591,16 @@ public class CodeBrowserEditingTarget implements EditingTarget
             docDisplay_.restorePosition(position);
             view_.scrollToLeft();
          }
-      }); 
+      });
    }
-   
+
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
       return getContext() == position.getContext() &&
              docDisplay_.isAtSourceRow(position);
    }
-   
+
    @Override
    public void setCursorPosition(Position position)
    {
@@ -611,27 +611,27 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public SourcePosition currentPosition()
    {
       Position cursor = docDisplay_.getCursorPosition();
-      return SourcePosition.create(getContext(), cursor.getRow(), 
+      return SourcePosition.create(getContext(), cursor.getRow(),
             cursor.getColumn(), docDisplay_.getScrollTop());
    }
-   
+
    @Override
    public void ensureCursorVisible()
    {
       docDisplay_.ensureCursorVisible();
    }
-   
+
    @Override
    public void forceLineHighlighting()
    {
       docDisplay_.setHighlightSelectedLine(true);
    }
-   
+
    @Override
    public void setSourceOnSave(boolean sourceOnSave)
-   {  
+   {
    }
-   
+
    @Override
    public boolean onBeforeDismiss()
    {
@@ -650,36 +650,36 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return dirtyState_;
    }
-   
+
    @Override
    public boolean isSaveCommandActive()
    {
       return dirtyState().getValue();
    }
-   
+
    @Override
    public void forceSaveCommandActive()
    {
    }
-   
+
    @Override
    public void save(Command onCompleted)
    {
       onCompleted.execute();
    }
-   
+
    @Override
    public void saveWithPrompt(Command onCompleted, Command onCancelled)
    {
       onCompleted.execute();
    }
-   
+
    @Override
    public void revertChanges(Command onCompleted)
    {
       onCompleted.execute();
    }
-   
+
    @Override
    public long getFileSizeLimit()
    {
@@ -699,7 +699,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return new HandlerRegistration()
       {
@@ -708,8 +708,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
          }
       };
    }
-   
-   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return new HandlerRegistration()
       {
@@ -735,17 +735,17 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       assert false : "Not implemented";
    }
-   
+
    @Override
    public void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,
          boolean executing)
    {
-      docDisplay_.highlightDebugLocation(startPos, endPos, executing); 
+      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
       if (!shownWarningBar_)
       {
-         view_.showWarningBar("Debug location is approximate because the " + 
+         view_.showWarningBar("Debug location is approximate because the " +
                               "source is not available.");
          shownWarningBar_ = true;
       }
@@ -755,14 +755,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void endDebugHighlighting()
    {
       docDisplay_.endDebugHighlighting();
-   } 
-   
-   @Override 
+   }
+
+   @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
       // collaborative editing isn't supported in the code browser
    }
-   
+
    @Override
    public void endCollabSession()
    {
@@ -779,7 +779,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return "Code Browser displayed";
    }
-   
+
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
@@ -787,7 +787,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    // Private methods --------------------------------------------------------
-   
+
    private CodeBrowserContents getContents()
    {
       if (doc_.getProperties().keys().length() > 0)
@@ -795,7 +795,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       else
          return CodeBrowserContents.create("");
    }
-   
+
    private void ensureContext(String context, final Command onRestored)
    {
       if (context != getContext())
@@ -806,10 +806,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
             return;
          String namespace = contextElements[0];
          String name = contextElements[1];
-         
+
          server_.getSearchPathFunctionDefinition(
-               name, 
-               namespace, 
+               name,
+               namespace,
                new SimpleRequestCallback<SearchPathFunctionDefinition>(
                         "Error Reading Function Definition") {
                   @Override
@@ -828,7 +828,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    private SourceDocument doc_;
- 
+
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    private final SourceServerOperations server_;
@@ -843,7 +843,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final Value<String> name_ = new Value<>("Source Viewer");
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
-   
+
    private SearchPathFunctionDefinition currentFunction_ = null;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);

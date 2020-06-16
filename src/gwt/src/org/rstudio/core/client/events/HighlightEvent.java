@@ -28,13 +28,13 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
       {
       }
    }
-   
+
    public static class HighlightQuery extends JavaScriptObject
    {
       protected HighlightQuery()
       {
       }
-      
+
       public static final native HighlightQuery create(String query, int parent, String callback)
       /*-{
          return {
@@ -43,12 +43,12 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
             callback: callback || ""
          }
       }-*/;
-      
+
       public final native String getQuery()
       /*-{
          return this.query || "";
       }-*/;
-      
+
       public final native int getParent()
       /*-{
          return this.parent || 0;
@@ -59,17 +59,17 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
          return this.callback || "";
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onHighlight(HighlightEvent event);
    }
-   
+
    public HighlightEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
@@ -88,6 +88,6 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
    }
 
    private final Data data_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

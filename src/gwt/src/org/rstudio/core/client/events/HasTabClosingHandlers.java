@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasTabClosingHandlers
 {
-   HandlerRegistration addTabClosingHandler(TabClosingHandler handler);
+   HandlerRegistration addTabClosingHandler(TabClosingEvent.Handler handler);
 }

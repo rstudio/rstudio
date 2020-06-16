@@ -20,7 +20,9 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
@@ -54,33 +56,28 @@ public class SourceCppOutputPresenter extends BasePresenter
       view_ = view;
       fileTypeRegistry_ = fileTypeRegistry;
       uiPrefs_ = uiPrefs;
-    
-      view_.errorList().addSelectionCommitHandler(
-                         new SelectionCommitHandler<CodeNavigationTarget>() {
 
-         @Override
-         public void onSelectionCommit(
-                              SelectionCommitEvent<CodeNavigationTarget> event)
+      view_.errorList().addSelectionCommitHandler(
+         (SelectionCommitEvent<CodeNavigationTarget> event) ->
          {
             CodeNavigationTarget target = event.getSelectedItem();
             FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
             fileTypeRegistry_.editFile(fsi, target.getPosition());
-         }
-      });
+         });
    }
- 
-   @Override 
+
+   @Override
    public void onSourceCppStarted(SourceCppStartedEvent event)
    {
       view_.clearAll();
    }
-   
-   @Override 
+
+   @Override
    public void onSourceCppCompleted(SourceCppCompletedEvent event)
    {
       updateView(event.getState(), true);
    }
-   
+
    @Override
    public void onSelected()
    {
@@ -99,10 +96,10 @@ public class SourceCppOutputPresenter extends BasePresenter
    {
       if (state.getErrors().length() > 0)
          view_.ensureVisible(activate);
-      
-      // show results   
+
+      // show results
       view_.showResults(state);
-      
+
       // navigate to the first error
       if (uiPrefs_.navigateToBuildError().getValue())
       {
@@ -115,9 +112,9 @@ public class SourceCppOutputPresenter extends BasePresenter
               true);
          }
       }
-      
+
    }
-   
+
    private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final UserPrefs uiPrefs_;
