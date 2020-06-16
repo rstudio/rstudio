@@ -44,6 +44,8 @@ const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOption
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern})`);
+
 enum CitationMode {
   NormalCitation = 'NormalCitation',
   AuthorInText = 'AuthorInText',
@@ -483,10 +485,8 @@ function editingCiteLength(text: string) {
 
 // up to how many characters of the passed text constitute a valid cite_id in the editor
 // (note that the editor tolerates citations ids with just an '@')
-const kEditingCiteIdLengthRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern}`);
-
 function editingCiteIdLength(text: string) {
-  const match = text.match(kEditingCiteIdLengthRegEx);
+  const match = text.match(kEditingCiteIdRegEx);
   if (match) {
     return match[0].length;
   } else {

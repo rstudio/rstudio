@@ -32,6 +32,7 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
+import { kInsertCompletionTransaction } from '../../api/transaction';
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -90,8 +91,13 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
+          // if this was a completion insertion then ignore it
+          if (tr.getMeta(kInsertCompletionTransaction)) {
+            return {};
+          }
+
           // selection only changes dismiss any active completion
-          if (!tr.docChanged && tr.selectionSet) {
+          if (!tr.docChanged && !tr.storedMarksSet && tr.selectionSet) {
             return {};
           }
 
@@ -360,21 +366,29 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // create transaction
           const tr = view.state.tr;
 
-          // ensure we have a node
-          const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
-
-          // combine it's marks w/ whatever is active at the selection
-          const marks = view.state.selection.$head.marks();
-
-          // set selection and replace it
+          // set selection to area we will be replacing
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, false);
 
-          // propapate marks
-          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+          // ensure we have a node
+          if (replacement instanceof ProsemirrorNode) {
 
-          // place cursor after the completion
-          setTextSelection(tr.selection.to)(tr);
+            // combine it's marks w/ whatever is active at the selection
+            const marks = view.state.selection.$head.marks();
+
+            // set selection and replace it
+            tr.replaceSelectionWith(replacement, false);
+
+            // propapate marks
+            marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+
+          } else {
+
+            tr.insertText(replacement);
+
+          }
+
+          // mark the transaction as an completion insertin
+          tr.setMeta(kInsertCompletionTransaction, true);
 
           // dispatch
           view.dispatch(tr);
