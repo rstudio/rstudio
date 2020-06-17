@@ -8,8 +8,12 @@ function Str(s)
   return s
 end
 
+function Space()
+  return ' '
+end
+
 function Header(lev, s, attr)
-  return attr.id .. '\n'
+  return attr.id .. ' ' .. s .. '\n'
 end
 
 function CodeBlock(s, attr)
@@ -33,9 +37,6 @@ function Blocksep()
 end
 
 
-function Space()
-  return ''
-end
 
 function SoftBreak()
   return ''
