@@ -861,6 +861,14 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+core::Error runPandoc(const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessResult* pResult);
+
+core::Error runPandocAsync(const std::vector<std::string>& args,
+                           const std::string& input,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

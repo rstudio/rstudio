@@ -82,6 +82,7 @@ set (SESSION_SOURCE_FILES
    SessionModuleContext.cpp
    SessionOptions.cpp
    SessionOptionsOverlay.cpp
+   SessionPandoc.cpp
    SessionPasswordManager.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
@@ -209,6 +210,7 @@ set (SESSION_SOURCE_FILES
    modules/preview/SessionPreview.cpp
    modules/rmarkdown/SessionBlogdown.cpp
    modules/rmarkdown/SessionBookdown.cpp
+   modules/rmarkdown/SessionBookdownXRefs.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp

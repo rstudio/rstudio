@@ -1,5 +1,5 @@
 /*
- * SessionBookdown.cpp
+ * SessionBookdownXRefs.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,44 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#ifndef SESSION_SESSION_BOOKDOWN_XREFS_HPP
+#define SESSION_SESSION_BOOKDOWN_XREFS_HPP
 
-#include "SessionBookdown.hpp"
-
-#include <core/Exec.hpp>
-
-#include <session/SessionModuleContext.hpp>
-
-#include "SessionBookdownXRefs.hpp"
+namespace rstudio {
+   namespace core {
+      class Error;
+   }
+}
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace bookdown {
+namespace xrefs {
 
-using namespace rstudio::core;
+core::Error initialize();
 
-namespace {
-
-
-} // anonymous namespace
-
-bool hasRenumberFootnotes()
-{
-   return module_context::isPackageVersionInstalled("bookdown", "0.19.3");
-}
-
-Error initialize()
-{
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bookdown::xrefs::initialize)
-   ;
-   return initBlock.execute();
-}
-
+} // namespace xrefs
 } // namespace bookdown
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif // SESSION_SESSION_BOOKDOWN_XREFS_HPP

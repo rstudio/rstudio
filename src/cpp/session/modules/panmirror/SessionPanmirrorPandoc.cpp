@@ -35,54 +35,6 @@ namespace pandoc {
 
 namespace {
 
-std::string pandocPath()
-{
-#ifndef WIN32
-   std::string pandoc = "pandoc";
-#else
-   std::string pandoc = "pandoc.exe";
-#endif
-  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(pandoc);
-  return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
-}
-
-core::system::ProcessOptions pandocOptions()
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   return options;
-}
-
-Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-
-   return core::system::runProgram(
-      pandocPath(),
-      args,
-      input,
-      pandocOptions(),
-      pResult
-   );
-}
-
-Error runPandocAsync(const std::vector<std::string>& args,
-                     const std::string&input,
-                     const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-
-   return module_context::processSupervisor().runProgram(
-      pandocPath(),
-      args,
-      input,
-      pandocOptions(),
-      onCompleted
-   );
-}
-
 Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOptions)
 {
    for(json::Array::Iterator
@@ -150,7 +102,7 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    std::copy(options.begin(), options.end(), std::back_inserter(args));
 
    // run pandoc (async)
-   error = runPandocAsync(args, jsonAst.write(), boost::bind(endAstToMarkdown, cont, _1));
+   error = module_context::runPandocAsync(args, jsonAst.write(), boost::bind(endAstToMarkdown, cont, _1));
    if (error)
    {
       setErrorResponse(error, &response);
@@ -238,7 +190,7 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
 
    // run pandoc
    core::system::ProcessResult result;
-   error = runPandocAsync(args, markdown, boost::bind(endMarkdownToAst, cont, _1));
+   error = module_context::runPandocAsync(args, markdown, boost::bind(endMarkdownToAst, cont, _1));
    if (error)
    {
       setErrorResponse(error, &response);
@@ -255,7 +207,7 @@ bool pandocCaptureOutput(const std::vector<std::string>& args,
 {
    // run pandoc
    core::system::ProcessResult result;
-   Error error = runPandoc(args, input, &result);
+   Error error = module_context::runPandoc(args, input, &result);
    if (error)
    {
       setErrorResponse(error, pResponse);
