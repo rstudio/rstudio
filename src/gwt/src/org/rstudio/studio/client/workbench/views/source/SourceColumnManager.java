@@ -340,6 +340,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       Debug.logWarning("Attempted to set unknown doc to active " + docId);
    }
 
+   public void setDocsRestored()
+   {
+      docsRestored_ = true;
+   }
+
    public void setOpeningForSourceNavigation(boolean value)
    {
       openingForSourceNavigation_ = value;
@@ -399,6 +404,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public boolean isActiveEditor(EditingTarget editingTarget)
    {
       return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
+   }
+
+   public boolean getDocsRestored()
+   {
+      return docsRestored_;
    }
 
    // see if there are additional command palette items made available
@@ -2344,6 +2354,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private SourceColumn activeColumn_;
 
    private boolean openingForSourceNavigation_ = false;
+   private boolean docsRestored_ = false;
 
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();

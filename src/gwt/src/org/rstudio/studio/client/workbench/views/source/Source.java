@@ -471,7 +471,6 @@ public class Source implements InsertSourceHandler,
    public void loadDisplay()
    {
       restoreDocuments(session_);
-      columnManager_.beforeShow();
 
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -711,6 +710,7 @@ public class Source implements InsertSourceHandler,
                continue;
          }
       }
+      columnManager_.setDocsRestored();
    }
    
    private void openEditPublishedDocs()
