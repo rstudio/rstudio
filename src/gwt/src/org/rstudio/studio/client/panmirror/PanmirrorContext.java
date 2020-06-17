@@ -15,10 +15,7 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
-import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
-import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
@@ -34,12 +31,8 @@ public class PanmirrorContext
                            PanmirrorUIDisplay uiDisplay,
                            PanmirrorUIExecute uiExecute)
    {
-      ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute);  
-      
-      server = new PanmirrorServer();
-      server.pandoc = new PanmirrorPandocServer();
-      server.crossref = new PanmirrorCrossrefServer();
-      server.xref = new PanmirrorXRefServer();
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute); 
+      this.server = new PanmirrorServer();
    }
    
    public PanmirrorUI ui;

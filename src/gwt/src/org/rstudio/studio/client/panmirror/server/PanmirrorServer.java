@@ -23,6 +23,13 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorServer
 {    
+   public PanmirrorServer()
+   {
+      this.pandoc = new PanmirrorPandocServer();
+      this.crossref = new PanmirrorCrossrefServer();
+      this.xref = new PanmirrorXRefServer();
+   }
+   
    public PanmirrorPandocServer pandoc;
    public PanmirrorCrossrefServer crossref;
    public PanmirrorXRefServer xref;
