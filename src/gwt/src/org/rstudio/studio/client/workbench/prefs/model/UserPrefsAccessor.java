@@ -1078,16 +1078,15 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to highlight parentheses in different colors
+    * Whether to highlight parentheses in a variety of colors.
     */
    public PrefValue<Boolean> rainbowParentheses()
    {
       return bool(
          "rainbow_parentheses",
-         "Rainbow parentheses",
-         "Whether to color parentheses in a variety in colors.",
-         false
-         );
+         "Rainbow parentheses", 
+         "Whether to highlight parentheses in a variety of colors.", 
+         false);
    }
 
    /**
@@ -3007,6 +3006,8 @@ public class UserPrefsAccessor extends Prefs
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
+      if (source.hasKey("rainbow_parentheses"))
+         rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -3337,6 +3338,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
       prefs.add(highlightRFunctionCalls());
+      prefs.add(rainbowParentheses());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());

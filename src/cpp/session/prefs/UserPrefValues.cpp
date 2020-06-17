@@ -960,16 +960,16 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
- * Whether to highlight parantheses (and other bracketed characters) in various colors
+ * Whether to highlight parentheses in a variety of colors.
  */
 bool UserPrefValues::rainbowParentheses()
 {
-    return readPref<bool>("rainbow_parentheses");
+   return readPref<bool>("rainbow_parentheses");
 }
 
 core::Error UserPrefValues::setRainbowParentheses(bool val)
 {
-    return writePref("rainbow_parentheses", val);
+   return writePref("rainbow_parentheses", val);
 }
 
 /**
@@ -2698,6 +2698,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,

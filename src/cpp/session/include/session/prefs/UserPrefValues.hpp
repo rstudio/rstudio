@@ -797,7 +797,7 @@ public:
    core::Error setHighlightRFunctionCalls(bool val);
 
    /**
-    * Whether to highlight parantheses (and other bracketed characters) in various colors
+    * Whether to highlight parentheses in a variety of colors.
     */
    bool rainbowParentheses();
    core::Error setRainbowParentheses(bool val);

@@ -1210,34 +1210,6 @@
       )
    }
    
-   # add the rainbow parentheses colors
-   if (isDark) {
-      content <- c(
-         content,
-         ".ace_paren_color_0 {color: rgb(255, 124, 124);}",
-         ".ace_paren_color_1 {color: rgb(255, 187, 0);}",
-         ".ace_paren_color_2 {color: yellow;}",
-         ".ace_paren_color_3 {color: #2bcf2b;}",
-         ".ace_paren_color_4 {color: lightskyblue;}",
-         ".ace_paren_color_5 {color: rgb(150, 94, 255);}",
-         ".ace_paren_color_6 {color: violet;}",
-         sep = "\n"
-      )
-   }
-   else
-   {
-      content <- c(
-         content,
-         ".ace_paren_color_0 {color: rgb(255, 124, 124);}",
-         ".ace_paren_color_1 {color: rgb(255, 187, 0);}",
-         ".ace_paren_color_2 {color: #00ff1f;}",
-         ".ace_paren_color_3 {color: #2bcf2b;}",
-         ".ace_paren_color_4 {color: lightskyblue;}",
-         ".ace_paren_color_5 {color: rgb(150, 94, 255);}",
-         ".ace_paren_color_6 {color: violet;}",
-         sep = "\n"
-      )
-   }
    content
 })
 
