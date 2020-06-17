@@ -18,6 +18,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/Exec.hpp>
 
 #include <core/system/Process.hpp>
 
@@ -327,6 +328,14 @@ void onDeferredInit(bool)
 
 }
 
+
+Error xrefIndexForFile(const json::JsonRpcRequest&,
+                       json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(s_projectIndex.toJson());
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -340,7 +349,14 @@ Error initialize()
    // deferred init (build xref file index)
    module_context::events().onDeferredInit.connect(onDeferredInit);
 
-   return Success();
+   // register rpc functions
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+     (bind(module_context::registerRpcMethod, "xref_index_for_file", xrefIndexForFile))
+   ;
+   return initBlock.execute();
+
+
 }
 
 } // namespace xrefs

@@ -1,5 +1,5 @@
 /*
- * PanmirrorServer.java
+ * PanmirroServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -16,14 +16,13 @@
 package org.rstudio.studio.client.panmirror.server;
 
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 
-import jsinterop.annotations.JsType;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 
-@JsType
-public class PanmirrorServer
-{    
-   public PanmirrorPandocServer pandoc;
-   public PanmirrorCrossrefServer crossref;
-   public PanmirrorXRefServer xref;
+
+public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
+                                                   PanmirrorCrossrefServerOperations,
+                                                   PanmirrorXRefServerOperations
+{
+ 
 }

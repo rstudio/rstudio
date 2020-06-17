@@ -1,5 +1,5 @@
 /*
- * PanmirrorServer.java
+ * xref.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,21 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.server;
 
+export interface XRefServer {
+  indexForFile: (file: string) => Promise<XRefIndex>;
+}
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
+export interface XRef {
+  key: string;
+  title: string;
+}
 
-import jsinterop.annotations.JsType;
+export interface XRefFileIndex {
+  file: string;
+  entries: XRef[];
+}
 
-@JsType
-public class PanmirrorServer
-{    
-   public PanmirrorPandocServer pandoc;
-   public PanmirrorCrossrefServer crossref;
-   public PanmirrorXRefServer xref;
+export interface XRefIndex {
+  files: XRefFileIndex[];
 }
