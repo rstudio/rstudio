@@ -27,11 +27,20 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
+import { PandocServer, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
-import { ScrollEvent, UpdateEvent, OutlineChangeEvent, StateChangeEvent, ResizeEvent, LayoutEvent, FocusEvent, DispatchEvent } from '../api/event-types';
+import {
+  ScrollEvent,
+  UpdateEvent,
+  OutlineChangeEvent,
+  StateChangeEvent,
+  ResizeEvent,
+  LayoutEvent,
+  FocusEvent,
+  DispatchEvent,
+} from '../api/event-types';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -56,6 +65,8 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { EditorEvents } from '../api/events';
+import { insertRmdChunk } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -73,8 +84,12 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
+import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
+import { completionExtension } from '../behaviors/completion/completion';
+
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
+import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
@@ -83,8 +98,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { ExtensionManager, initExtensions } from './editor-extensions';
-import { EditorEvents } from '../api/events';
+import { CrossrefServer } from '../api/crossref';
 
 
 export interface EditorCode {
@@ -101,10 +115,15 @@ export interface EditorSetMarkdownResult {
 }
 
 export interface EditorContext {
-  readonly pandoc: PandocEngine;
+  readonly server: EditorServer;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
+}
+
+export interface EditorServer {
+  readonly pandoc: PandocServer;
+  readonly crossref: CrossrefServer;
 }
 
 export interface EditorHooks {
@@ -265,22 +284,27 @@ export class Editor {
     };
 
     // provide context defaults
+    const defaultImages = defaultEditorUIImages();
     context = {
       ...context,
       ui: {
         ...context.ui,
         images: {
-          ...defaultEditorUIImages(),
+          ...defaultImages,
           ...context.ui.images,
+          omni_insert: {
+            ...defaultImages.omni_insert,
+            ...context.ui.images,
+          },
         },
       },
     };
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(context.server.pandoc, format);
 
     // get pandoc capabilities
-    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
+    const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
@@ -307,11 +331,16 @@ export class Editor {
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
 
-    // create extensions
+    // create core extensions
     this.extensions = this.initExtensions();
 
     // create schema
     this.schema = editorSchema(this.extensions);
+
+    // register completion handlers (done in a separate step b/c omni insert
+    // completion handlers require access to the initializezd commands that
+    // carry omni insert info)
+    this.registerCompletionExtension();
 
     // create state
     this.state = EditorState.create({
@@ -351,7 +380,7 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.server.pandoc, this.pandocCapabilities);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -390,8 +419,8 @@ export class Editor {
   }
 
   public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
-    if (typeof event === "string") {
-      return this.events.subscribe({eventName: event}, handler);
+    if (typeof event === 'string') {
+      return this.events.subscribe({ eventName: event }, handler);
     } else {
       return this.events.subscribe(event, handler);
     }
@@ -555,6 +584,12 @@ export class Editor {
     (this.view.dom as HTMLElement).blur();
   }
 
+  public insertChunk(chunkPlaceholder: string, rowOffset: number, colOffset: number) {
+    const insertCmd = insertRmdChunk(chunkPlaceholder, rowOffset, colOffset);
+    insertCmd(this.view.state, this.view.dispatch, this.view);
+    this.focus();
+  }
+
   public navigate(id: string) {
     navigateTo(this.view, node => id === node.attrs.navigation_id, false);
   }
@@ -577,7 +612,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.context.ui).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -662,15 +697,28 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(
-      this.format,
-      this.options,
-      this.context.ui,
-      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
-      this.context.extensions,
-      this.pandocFormat.extensions,
-      this.pandocCapabilities,
-    );
+    return initExtensions({
+      format: this.format,
+      options: this.options,
+      ui: this.context.ui,
+      events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+      pandocExtensions: this.pandocFormat.extensions,
+      pandocCapabilities: this.pandocCapabilities,
+      pandocServer: this.context.server.pandoc
+    }, this.context.extensions);
+  }
+
+  private registerCompletionExtension() {
+    // mark filter used to screen completions from noInputRules marks
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
+    this.extensions.register([
+      omniInsertExtension(this.extensions.omniInserters(this.schema), markFilter, this.context.ui),
+    ]);
+
+    // register completion extension
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {
@@ -679,7 +727,7 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.context.ui),
+      ...this.extensions.plugins(this.schema),
       this.inputRulesPlugin(),
       this.editablePlugin(),
       this.domEventsPlugin(),
@@ -724,6 +772,14 @@ export class Editor {
             this.emitEvent(FocusEvent);
             return false;
           },
+          keydown: (view: EditorView, event: Event) => {
+            const kbEvent = event as KeyboardEvent;
+            if (kbEvent.key === 'Tab' && this.context.ui.prefs.tabKeyMoveFocus()) {
+              return true;
+            } else {
+              return false;
+            }
+          }
         },
       },
     });
@@ -735,7 +791,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -756,7 +812,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;
@@ -824,11 +880,13 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
+    // apply save fixups to a new transaction that we won't commit (b/c we don't
+    // want the fixups to affect the loaded editor state)
+    const tr = this.state.tr;
+    this.extensionFixups(tr, FixupContext.Save);
 
     // get code
-    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+    return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);
   }
 }
 

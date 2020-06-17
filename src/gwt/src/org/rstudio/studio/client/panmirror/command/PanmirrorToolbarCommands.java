@@ -73,7 +73,13 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.RCodeChunk, "R Code Chunk");
+      add(PanmirrorCommands.BashCodeChunk, "Bash Code Chunk");
+      add(PanmirrorCommands.D3CodeChunk, "D3 Code Chunk");
+      add(PanmirrorCommands.PythonCodeChunk, "Python Code Chunk");
+      add(PanmirrorCommands.RcppCodeChunk, "Rcpp Code Chunk");
+      add(PanmirrorCommands.SQLCodeChunk, "SQL Code Chunk");
+      add(PanmirrorCommands.StanCodeChunk, "Stan Code Chunk");
       add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
       add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 
@@ -106,6 +112,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
      
       // insert
+      add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
@@ -123,7 +130,8 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.DefinitionDescription, "Description");
       add(PanmirrorCommands.Citation, "Citation...");   
       add(PanmirrorCommands.CrossReference, "Cross Reference");
-      add(PanmirrorCommands.Symbol, "Insert:::Symbol...");
+      add(PanmirrorCommands.InsertSymbol, "Insert:::Symbol...");
+      add(PanmirrorCommands.InsertEmoji, "Insert:::Emoji...");
    }
    
    public PanmirrorCommandUI get(String id)

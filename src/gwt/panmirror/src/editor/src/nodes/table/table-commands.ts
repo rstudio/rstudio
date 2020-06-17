@@ -13,6 +13,7 @@
  *
  */
 
+import { EditorView } from 'prosemirror-view';
 import { Node as ProsemirrorNode, Fragment } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNodeOfType, setTextSelection, findChildrenByType } from 'prosemirror-utils';
@@ -29,9 +30,9 @@ import {
 
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { EditorView } from 'prosemirror-view';
 import { canInsertNode } from '../../api/node';
 import { TableCapabilities } from '../../api/table';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -96,6 +97,16 @@ export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
     asyncInsertTable();
 
     return true;
+  };
+}
+
+export function insertTableOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Table'),
+    description: ui.context.translateText('Content in rows and columns'),
+    group: OmniInsertGroup.Lists,
+    priority: 1,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark! : ui.images.omni_insert?.table!),
   };
 }
 

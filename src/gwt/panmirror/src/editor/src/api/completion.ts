@@ -13,40 +13,100 @@
  *
  */
 
-import { Selection } from "prosemirror-state";
-import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
+import { Selection, EditorState, Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { EditorView, DecorationSet } from 'prosemirror-view';
+
+import { canInsertNode } from './node';
+import { EditorUI } from './ui';
+
+export const kCompletionDefaultItemHeight = 22;
+export const kCompletionDefaultMaxVisible = 10;
+export const kCompletionDefaultWidth = 180;
 
 export interface CompletionResult<T = any> {
   pos: number;
-  completions: Promise<T[]>;
+  completions: (state: EditorState) => Promise<T[]>;
+  decorations?: DecorationSet;
+}
+
+export interface CompletionHeaderProps {
+  ui: EditorUI;
 }
 
 export interface CompletionHandler<T = any> {
 
+  // filter for determing whether we can call this handler from a given context (default is to
+  // never offer completions if a mark with noInputRules is active). set to null to 
+  // allow completion anywhere
+  filter?: ((context: EditorState | Transaction) => boolean) | null;
+
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
-  completions(text: string, selection: Selection): CompletionResult | null;
-  
-  // provide a completion replacement as a string or node
-  replacement(schema: Schema, completion: T) : string | ProsemirrorNode;
+  completions(text: string, context: EditorState | Transaction): CompletionResult | null;
+
+  // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
+  replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;
+
+  // lower level replacement handler (can be passed null if the popup was dismissed)
+  replace?(view: EditorView, pos: number, completion: T | null): void;
 
   // completion view
   view: {
+    // optional header component (will go inside a <th>)
+    header?: {
+      component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>;
+      height: number;
+    };
+
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 
     key: (completion: T) => any;
 
-    // width of completion popup (defaults to 180)
+    // width of completion item (defaults to 180).
     width?: number;
 
-    // height for completion items (defaults to 22px)
-    itemHeight?: number;
- 
-    // maximum number of visible items (defaults to 10)
+    // height of completion item (defaults to 22px)
+    height?: number;
+
+    // use horizontal orientation (defaults to false)
+    // (optionally provide a set of item widths)
+    horizontal?: boolean;
+    horizontalItemWidths?: number[];
+
+    // maximum number of visible items (defaults to 10). note that
+    // this only applies to completion poupups w/ vertical orientation
+    // (scrolling is not supported for horizontal orientation)
     maxVisible?: number;
+
+    // hide 'no results' (default false)
+    hideNoResults?: boolean;
   };
 }
 
+export function selectionAllowsCompletions(selection: Selection) {
+  const schema = selection.$head.parent.type.schema;
 
+  // non empty selections don't have completions
+  if (!selection.empty) {
+    return false;
+  }
 
+  // must be able to insert text
+  if (!canInsertNode(selection, schema.nodes.text)) {
+    return false;
+  }
+
+  // must not be in a code mark
+  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+    return false;
+  }
+
+  // must not be in a code node
+  if (selection.$head.parent.type.spec.code) {
+    return false;
+  }
+
+  return true;
+}

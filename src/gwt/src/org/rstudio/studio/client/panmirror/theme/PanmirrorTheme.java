@@ -38,6 +38,7 @@ public class PanmirrorTheme
    public String surfaceWidgetTextColor;
    public String lightTextColor;
    public String linkTextColor;
+   public String placeholderTextColor;
    public String markupTextColor;
    public String findTextBackgroundColor;
    public String findTextBorderColor;

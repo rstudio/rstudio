@@ -70,7 +70,8 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -132,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.NewPlumberAPI;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -148,7 +150,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetVisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
@@ -172,6 +173,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEdi
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunkExec;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -294,16 +300,22 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CheckForUpdatesDialog dialog);
    void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
-   void injectMembers(PanmirrorPandocEngine panmirrorPandocEngine);
+   void injectMembers(PanmirrorPandocServer panmirrorPandocServer);
+   void injectMembers(PanmirrorCrossrefServer panmirrorCrossrefServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(PanmirrorUIPrefs panmirrorUIPrefs);
-   void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
+   void injectMembers(VisualMode visualMode);
+   void injectMembers(VisualModeChunkExec visualModeChunkExec);
+   void injectMembers(VisualModePanmirrorContext visualModePanmirrorContext);
+   void injectMembers(VisualModePanmirrorFormat visualModePanmirrorFormat);
+   void injectMembers(VisualModeMarkdownWriter visualModeMarkdownWriter);
    void injectMembers(OpenProjectDialog dialog);
-   
+   void injectMembers(SourceColumn column);
+
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication();

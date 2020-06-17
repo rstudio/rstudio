@@ -15,13 +15,13 @@
 package org.rstudio.core.client.events;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class NativeKeyDownEvent extends GwtEvent<NativeKeyDownHandler>
+public class NativeKeyDownEvent extends GwtEvent<NativeKeyDownEvent.Handler>
 {
-   public static final GwtEvent.Type<NativeKeyDownHandler> TYPE =
-      new GwtEvent.Type<NativeKeyDownHandler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
    public NativeKeyDownEvent(NativeEvent event)
    {
@@ -56,15 +56,20 @@ public class NativeKeyDownEvent extends GwtEvent<NativeKeyDownHandler>
    }
 
    @Override
-   public Type<NativeKeyDownHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(NativeKeyDownHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onKeyDown(this);
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onKeyDown(NativeKeyDownEvent event);
    }
 
    private final NativeEvent event_;

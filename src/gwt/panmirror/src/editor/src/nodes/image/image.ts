@@ -17,9 +17,8 @@ import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-mode
 import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
 import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
 import {
@@ -35,15 +34,12 @@ import {
   ProsemirrorWriter,
   PandocToken,
   tokensCollectText,
-  PandocExtensions,
   imageAttributesAvailable,
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
 import { asHTMLTag } from '../../api/html';
-import { EditorOptions } from '../../api/options';
-import { EditorEvents } from '../../api/events';
-import { EditorFormat } from '../../api/format';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { imageDialog } from './image-dialog';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
@@ -59,14 +55,10 @@ const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension => {
+const extension = (context: ExtensionContext) : Extension => {
+
+  const { pandocExtensions, ui, events } = context;
+
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -110,7 +102,14 @@ const extension = (
     ],
 
     commands: (_schema: Schema) => {
-      return [new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr))];
+      return [
+        new ProsemirrorCommand(
+          EditorCommandId.Image,
+          ['Shift-Mod-i'],
+          imageCommand(ui, imageAttr),
+          imageOmniInsert(ui),
+        ),
+      ];
     },
 
     plugins: (schema: Schema) => {
@@ -320,6 +319,16 @@ export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
     }
 
     return true;
+  };
+}
+
+function imageOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Image...'),
+    description: ui.context.translateText('Figure or inline image'),
+    group: OmniInsertGroup.Content,
+    priority: 10,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!),
   };
 }
 

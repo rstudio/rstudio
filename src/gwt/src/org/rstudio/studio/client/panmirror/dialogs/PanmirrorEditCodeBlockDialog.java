@@ -29,7 +29,6 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -51,13 +50,20 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
       HorizontalPanel labelPanel = new HorizontalPanel();
-      labelPanel.add(new FormLabel("Language"));
-      Label langInfo = new Label("(optional)");
+      FormLabel labelLanguage = new FormLabel("Language");
+      labelLanguage.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL1));
+      labelPanel.add(labelLanguage);
+      FormLabel langInfo = new FormLabel("(optional)");
+      langInfo.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL2));
       langInfo.addStyleName(RES.styles().inlineInfoLabel());
+      
       labelPanel.add(langInfo);
       langTab.add(labelPanel);
       lang_ = new PanmirrorLangSuggestBox(languages);
-      lang_.getElement().setId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG);
+      lang_.getElement().setId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG));
+      Roles.getTextboxRole().setAriaLabelledbyProperty(lang_.getElement(),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL1),
+         ElementIds.getAriaElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL2));
       lang_.setText(codeBlock.lang);
       PanmirrorDialogsUtil.setFullWidthStyles(lang_);
       langTab.add(lang_);
@@ -76,7 +82,10 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          tabPanel.add(langTab, "Language", langTab.getBasePanelId());
          tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
-      
+
+         // the tab panel is the first focusable control in dialog, but the actual focusable
+         // element changes depending which tab is selected
+         tabPanel.addSelectionHandler(selectionEvent -> refreshFocusableElements()); 
          mainWidget_ = tabPanel;
       }
       else
@@ -92,7 +101,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
    }
    
    @Override
-   public void focusFirstControl()
+   public void focusInitialControl()
    {
       lang_.setFocus(true);
    }

@@ -25,14 +25,13 @@ const kHexCodepointPrefix = 'U+';
 const kHexNumberPrefex = '0x';
 
 export function parseCodepoint(codepointText: string): number | undefined {
-
   // Try parsing it as a base 10 int
   // Use non primitive Number so we get strict parsing
   const base10Value = Number(codepointText).valueOf();
   if (!Number.isNaN(base10Value)) {
     if (isValidCodepoint(base10Value)) {
       return base10Value;
-    } 
+    }
   }
 
   // It might have a user prefix for unicode character, remove
@@ -51,7 +50,7 @@ export function parseCodepoint(codepointText: string): number | undefined {
     return hexValue;
   }
 
-  return undefined;  
+  return undefined;
 }
 
 function isValidCodepoint(codepoint: number) {

@@ -85,7 +85,7 @@ public class TerminalSession extends XTermWidget
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
       createdByApi_ = createdByApi;
-      hasChildProcs_ = new Value<>(info.getHasChildProcs());
+      hasChildProcs_ = new Value<>(!BrowseCap.isWindowsDesktop() && info.getHasChildProcs());
 
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(

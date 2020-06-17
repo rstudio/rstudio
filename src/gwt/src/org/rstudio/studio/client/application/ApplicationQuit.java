@@ -21,8 +21,6 @@ import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.BarrierReleasedEvent;
-import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -649,81 +647,78 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          // Use a barrier and LastChanceSaveEvent to allow source documents
          // and client state to be synchronized before quitting.
          Barrier barrier = new Barrier();
-         barrier.addBarrierReleasedHandler(new BarrierReleasedHandler()
+         barrier.addBarrierReleasedHandler(releasedEvent ->
          {
-            public void onBarrierReleased(BarrierReleasedEvent event)
+            // All last chance save operations have completed (or possibly
+            // failed). Now do the real quit.
+
+            // notify the desktop frame that we are about to quit
+            String switchToProject = StringUtil.create(switchToProject_);
+            if (Desktop.hasDesktopFrame())
             {
-               // All last chance save operations have completed (or possibly
-               // failed). Now do the real quit.
-
-               // notify the desktop frame that we are about to quit
-               String switchToProject = StringUtil.create(switchToProject_);
-               if (Desktop.hasDesktopFrame())
+               Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
+                     DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
+                     DesktopFrame.PENDING_QUIT_AND_EXIT);
+            }
+            
+            server_.quitSession(
+               saveChanges_,
+               switchToProject,
+               switchToRVersion_,
+               GWT.getHostPageBaseURL(),
+               new ServerRequestCallback<Boolean>()
                {
-                  Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                        DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                        DesktopFrame.PENDING_QUIT_AND_EXIT);
-               }
-               
-               server_.quitSession(
-                  saveChanges_,
-                  switchToProject,
-                  switchToRVersion_,
-                  GWT.getHostPageBaseURL(),
-                  new ServerRequestCallback<Boolean>()
+                  @Override
+                  public void onResponseReceived(Boolean response)
                   {
-                     @Override
-                     public void onResponseReceived(Boolean response)
+                     if (response)
                      {
-                        if (response)
-                        {
-                           // clear progress only if we aren't switching projects
-                           // (otherwise we want to leave progress up until
-                           // the app reloads)
-                           if (switchToProject_ == null)
-                              progress.dismiss();
-                           
-                           if (callContext_ != null)
-                           {
-                              eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                    ApplicationTutorialEvent.API_SUCCESS, callContext_));
-                           }
-                           
-                           // fire onQuitAcknowledged
-                           if (onQuitAcknowledged_ != null)
-                              onQuitAcknowledged_.execute();
-                        }
-                        else
-                        {
-                           onFailedToQuit("server quitSession responded false");
-                        }
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        onFailedToQuit(error.getMessage());
-                     }
-                     
-                     private void onFailedToQuit(String message)
-                     {
-                        progress.dismiss();
+                        // clear progress only if we aren't switching projects
+                        // (otherwise we want to leave progress up until
+                        // the app reloads)
+                        if (switchToProject_ == null)
+                           progress.dismiss();
                         
                         if (callContext_ != null)
                         {
                            eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                 ApplicationTutorialEvent.API_ERROR,
-                                 message,
-                                 callContext_));
+                                 ApplicationTutorialEvent.API_SUCCESS, callContext_));
                         }
-                        if (Desktop.hasDesktopFrame())
-                        {
-                           Desktop.getFrame().setPendingQuit(
-                                         DesktopFrame.PENDING_QUIT_NONE);
-                        }
+                        
+                        // fire onQuitAcknowledged
+                        if (onQuitAcknowledged_ != null)
+                           onQuitAcknowledged_.execute();
                      }
-                  });
-            }
+                     else
+                     {
+                        onFailedToQuit("server quitSession responded false");
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     onFailedToQuit(error.getMessage());
+                  }
+                  
+                  private void onFailedToQuit(String message)
+                  {
+                     progress.dismiss();
+                     
+                     if (callContext_ != null)
+                     {
+                        eventBus_.fireEvent(new ApplicationTutorialEvent(
+                              ApplicationTutorialEvent.API_ERROR,
+                              message,
+                              callContext_));
+                     }
+                     if (Desktop.hasDesktopFrame())
+                     {
+                        Desktop.getFrame().setPendingQuit(
+                                      DesktopFrame.PENDING_QUIT_NONE);
+                     }
+                  }
+               });
          });
 
          // We acquire a token to make sure that the barrier doesn't fire before

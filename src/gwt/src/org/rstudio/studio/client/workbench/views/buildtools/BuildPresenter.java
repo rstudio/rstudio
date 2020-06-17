@@ -29,7 +29,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
@@ -66,34 +65,34 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
-public class BuildPresenter extends BasePresenter 
+public class BuildPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView
    {
       void buildStarted();
-      
+
       void showOutput(CompileOutput output, boolean tail);
       void scrollToBottom();
-      
+
       void showErrors(String basePath,
-                      JsArray<SourceMarker> errors, 
+                      JsArray<SourceMarker> errors,
                       boolean ensureVisible,
                       int autoSelect,
                       boolean openErrors,
                       String buildType);
       void buildCompleted();
-      
+
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
-      
+
       HasSelectionCommitHandlers<String> buildSubType();
-          
+
       HasClickHandlers stopButton();
-      
+
       String errorsBuildType();
    }
-   
+
    @Inject
-   public BuildPresenter(Display display, 
+   public BuildPresenter(Display display,
                          GlobalDisplay globalDisplay,
                          UserPrefs uiPrefs,
                          WorkbenchContext workbenchContext,
@@ -123,22 +122,22 @@ public class BuildPresenter extends BasePresenter
       session_ = session;
       dependencyManager_ = dependencyManager;
       fileServer_ = fileServer;
-        
-      eventBus.addHandler(BuildStartedEvent.TYPE, 
+
+      eventBus.addHandler(BuildStartedEvent.TYPE,
                           new BuildStartedEvent.Handler()
-      {  
+      {
          @Override
          public void onBuildStarted(BuildStartedEvent event)
          {
             commands.stopBuild().setEnabled(true);
-            
+
             view_.bringToFront();
             view_.buildStarted();
-         
+
          }
       });
-      
-      eventBus.addHandler(BuildOutputEvent.TYPE, 
+
+      eventBus.addHandler(BuildOutputEvent.TYPE,
                           new BuildOutputEvent.Handler()
       {
          @Override
@@ -147,22 +146,22 @@ public class BuildPresenter extends BasePresenter
             view_.showOutput(event.getOutput(), true);
          }
       });
-      
-      eventBus.addHandler(BuildErrorsEvent.TYPE, 
+
+      eventBus.addHandler(BuildErrorsEvent.TYPE,
                           new BuildErrorsEvent.Handler()
-      {         
+      {
          @Override
          public void onBuildErrors(BuildErrorsEvent event)
-         {        
+         {
             view_.showErrors(event.getBaseDirectory(),
-                             event.getErrors(), 
+                             event.getErrors(),
                              true,
                              userPrefs_.navigateToBuildError().getValue() ?
                                  SourceMarkerList.AUTO_SELECT_FIRST_ERROR :
                                  SourceMarkerList.AUTO_SELECT_NONE,
                              event.openErrorList(),
                              event.type());
-            
+
             if (userPrefs_.navigateToBuildError().getValue() && event.openErrorList())
             {
                SourceMarker error = SourceMarker.getFirstError(event.getErrors());
@@ -176,30 +175,30 @@ public class BuildPresenter extends BasePresenter
             }
          }
       });
-      
-      eventBus.addHandler(BuildCompletedEvent.TYPE, 
+
+      eventBus.addHandler(BuildCompletedEvent.TYPE,
             new BuildCompletedEvent.Handler()
-      {  
+      {
          @Override
          public void onBuildCompleted(BuildCompletedEvent event)
          {
             workbenchContext_.setBuildInProgress(false);
-            
+
             commands.stopBuild().setEnabled(false);
-            
+
             view_.bringToFront();
             view_.buildCompleted();
             if (event.getRestartR())
             {
                eventBus_.fireEvent(
                   new SuspendAndRestartEvent(event.getAfterRestartCommand()));
-            }  
+            }
          }
       });
-      
+
       // invalidate devtools load all path whenever the project ui prefs
       // or working directory changes
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
       {
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
@@ -208,58 +207,49 @@ public class BuildPresenter extends BasePresenter
                devtoolsLoadAllPath_ = null;
          }
       });
-      eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
+      eventBus.addHandler(WorkingDirChangedEvent.TYPE,
                           new WorkingDirChangedEvent.Handler() {
          @Override
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {
             devtoolsLoadAllPath_ = null;
-         }      
-      }); 
-      
-      view_.errorList().addSelectionCommitHandler(
-            new SelectionCommitHandler<CodeNavigationTarget>() {
-         @Override
-         public void onSelectionCommit(
-                     SelectionCommitEvent<CodeNavigationTarget> event)
-         {
-            CodeNavigationTarget target = event.getSelectedItem();
-            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
-            
-            if (view_.errorsBuildType() == "test-file" ||
-                view_.errorsBuildType() == "test-shiny-file")
-            {
-               // for test files, we want to avoid throwing errors when the file is missing
-               fileServer_.stat(target.getFile(), new ServerRequestCallback<FileSystemItem>()
-               {
-                  @Override
-                  public void onResponseReceived(final FileSystemItem fsi)
-                  {
-                     if (fsi.exists())
-                        fileTypeRegistry_.editFile(fsi, target.getPosition());
-                  }
-                  
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
-            }
-            else
-            {
-               fileTypeRegistry_.editFile(fsi, target.getPosition());
-            }
          }
       });
-      
-      view_.buildSubType().addSelectionCommitHandler(
-         new SelectionCommitHandler<String>() {
-            @Override
-            public void onSelectionCommit(SelectionCommitEvent<String> event)
+
+      view_.errorList().addSelectionCommitHandler((SelectionCommitEvent<CodeNavigationTarget> event) ->
+      {
+         CodeNavigationTarget target = event.getSelectedItem();
+         FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
+
+         if (view_.errorsBuildType() == "test-file" ||
+             view_.errorsBuildType() == "test-shiny-file")
+         {
+            // for test files, we want to avoid throwing errors when the file is missing
+            fileServer_.stat(target.getFile(), new ServerRequestCallback<FileSystemItem>()
             {
-               startBuild("build-all", event.getSelectedItem());
-            }
+               @Override
+               public void onResponseReceived(final FileSystemItem fsi)
+               {
+                  if (fsi.exists())
+                     fileTypeRegistry_.editFile(fsi, target.getPosition());
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
+         else
+         {
+            fileTypeRegistry_.editFile(fsi, target.getPosition());
+         }
+      });
+
+      view_.buildSubType().addSelectionCommitHandler((SelectionCommitEvent<String> event) ->
+      {
+         startBuild("build-all", event.getSelectedItem());
       });
 
       view_.stopButton().addClickHandler(new ClickHandler() {
@@ -270,42 +260,42 @@ public class BuildPresenter extends BasePresenter
          }
       });
    }
-   
+
    public void initialize(BuildState buildState)
    {
       view_.buildStarted();
-      
+
       JsArray<CompileOutput> outputs = buildState.getOutputs();
       for (int i = 0; i<outputs.length(); i++)
          view_.showOutput(outputs.get(i), false);
-      
+
       if (buildState.getErrors().length() > 0)
          view_.showErrors(buildState.getErrorsBaseDir(),
-                          buildState.getErrors(), 
+                          buildState.getErrors(),
                           false,
                           SourceMarkerList.AUTO_SELECT_NONE,
                           true,
                           buildState.type());
-      
+
       if (!buildState.isRunning())
          view_.buildCompleted();
       else
          commands_.stopBuild().setEnabled(true);
-      
+
       view_.scrollToBottom();
    }
-   
+
    private void sendLoadCommandToConsole(String loadCommand)
    {
       eventBus_.fireEvent(new SendToConsoleEvent(loadCommand, true, true));
    }
-   
-  
+
+
    void onBuildAll()
    {
       startBuild("build-all");
    }
-   
+
    void onDevtoolsLoadAll()
    {
       source_.withSaveFilesBeforeCommand(() ->
@@ -316,17 +306,17 @@ public class BuildPresenter extends BasePresenter
          });
       }, () -> {}, "Build");
    }
-     
+
    void onBuildSourcePackage()
    {
       startBuild("build-source-package");
    }
-   
+
    void onBuildBinaryPackage()
    {
       startBuild("build-binary-package");
    }
-   
+
    void onRoxygenizePackage()
    {
       dependencyManager_.withRoxygen(
@@ -334,12 +324,12 @@ public class BuildPresenter extends BasePresenter
             "Building package documentation",
             () -> startBuild("roxygenize-package"));
    }
-   
+
    void onCheckPackage()
    {
       startBuild("check-package");
    }
-   
+
    void onTestPackage()
    {
       startBuild("test-package");
@@ -352,22 +342,22 @@ public class BuildPresenter extends BasePresenter
    void onTestShinytestFile()
    {
    }
-   
+
    void onRebuildAll()
    {
       startBuild("rebuild-all");
    }
-   
+
    void onCleanAll()
    {
       startBuild("clean-all");
    }
-   
+
    private void startBuild(final String type)
    {
       startBuild(type, "");
    }
-   
+
    private void startBuild(final String type, final String subType)
    {
       if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_WEBSITE)
@@ -385,7 +375,7 @@ public class BuildPresenter extends BasePresenter
          executeBuild(type, subType);
       }
    }
-   
+
    private void executeBuild(final String type, final String subType)
    {
       if (type != "build-all" && type != "rebuild-all")
@@ -393,7 +383,7 @@ public class BuildPresenter extends BasePresenter
          executeBuildNoBusyCheck(type, subType);
          return;
       }
-      
+
       // check for running jobs
       pJobManager_.get().promptForTermination((confirmed) ->
       {
@@ -446,9 +436,9 @@ public class BuildPresenter extends BasePresenter
                      "Unable to terminate build. Please try again.");
             }
          }
-       });  
+       });
    }
-   
+
    @Override
    public void onSelected()
    {
@@ -462,7 +452,7 @@ public class BuildPresenter extends BasePresenter
          }
       });
    }
-   
+
    private void withDevtoolsLoadAllPath(
                                  final CommandWithArg<String> onAvailable)
    {
@@ -481,11 +471,11 @@ public class BuildPresenter extends BasePresenter
             }
          });
       }
-      
+
    }
-   
+
    private String devtoolsLoadAllPath_ = null;
-   
+
    private final GlobalDisplay globalDisplay_;
    private final UserPrefs userPrefs_;
    private final BuildServerOperations server_;

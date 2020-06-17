@@ -117,6 +117,245 @@ const excludedChars = [
   119259,119260,119261, // musical symbols
 ];
 
+const excludedEmoji = [
+  'frowning_face',
+  'smiling_face_with_tear',
+  'relaxed',
+  'disguised_face',
+  'pinched_fingers',
+  'anatomical_heart',
+  'lungs',
+  'ninja',
+  'people_hugging',
+  'bison',
+  'mammoth',
+  'beaver',
+  'dodo',
+  'feather',
+  'seal',
+  'beetle',
+  'cockroach',
+  'worm',
+  'fly',
+  'potted_plant',
+  'blueberries',
+  'olive',
+  'bell_pepper',
+  'flatbread',
+  'tamale',
+  'fondue',
+  'teapot',
+  'bubble_tea',
+  'rock',
+  'wood',
+  'hut',
+  'roller_skate',
+  'pickup_truck',
+  'magic_wand',
+  'nesting_dolls',
+  'pi_ata',
+  'sewing_needle',
+  'knot',
+  'thong_sandal',
+  'military_helmet',
+  'accordion',
+  'coin',
+  'boomerang',
+  'hook',
+  'screwdriver',
+  'ladder',
+  'carpentry_saw',
+  'elevator',
+  'mirror',
+  'window',
+  'plunger',
+  'toothbrush',
+  'bucket',
+  'mouse_trap',
+  'headstone',
+  'placard',
+];
+
+// These emoji do support skintone, but the default font we use doesn't render
+// them properly.
+const skinToneUnsupportedEmoji = [
+  'raised_hand_with_fingers_splayed',
+  'v',
+  'point_up',
+  'writing_hand',
+  'red_haired_man',
+  'curly_haired_man',
+  'white_haired_man',
+  'bald_man',
+  'red_haired_woman',
+  'person_red_hair',
+  'curly_haired_woman',
+  'person_curly_hair',
+  'white_haired_woman',
+  'person_white_hair',
+  'bald_woman',
+  'person_bald',
+  'blond_haired_woman',
+  'blond_haired_man',
+  'frowning_man',
+  'frowning_woman',
+  'pouting_man',
+  'pouting_woman',
+  'no_good_man',
+  'no_good_woman',
+  'ok_man',
+  'ok_woman',
+  'tipping_hand_man',
+  'tipping_hand_woman',
+  'raising_hand_man',
+  'raising_hand_woman',
+  'deaf_man',
+  'deaf_woman',
+  'bowing_man',
+  'bowing_woman',
+  'man_facepalming',
+  'woman_facepalming',
+  'man_shrugging',
+  'woman_shrugging',
+  'health_worker',
+  'man_health_worker',
+  'woman_health_worker',
+  'student',
+  'man_student',
+  'woman_student',
+  'teacher',
+  'man_teacher',
+  'woman_teacher',
+  'judge',
+  'man_judge',
+  'woman_judge',
+  'farmer',
+  'man_farmer',
+  'cook',
+  'man_cook',
+  'woman_cook',
+  'mechanic',
+  'man_mechanic',
+  'woman_mechanic',
+  'factory_worker',
+  'man_factory_worker',
+  'woman_factory_worker',
+  'office_worker',
+  'man_office_worker',
+  'woman_office_worker',
+  'scientist',
+  'man_scientist',
+  'woman_scientist',
+  'technologist',
+  'man_technologist',
+  'woman_technologist',
+  'singer',
+  'man_singer',
+  'woman_singer',
+  'artist',
+  'man_artist',
+  'woman_artist',
+  'pilot',
+  'man_pilot',
+  'woman_pilot',
+  'astronaut',
+  'man_astronaut',
+  'woman_astronaut',
+  'firefighter',
+  'man_firefighter',
+  'woman_firefighter',
+  'policeman',
+  'policewoman',
+  'detective',
+  'male_detective',
+  'female_detective',
+  'guardsman',
+  'guardswoman',
+  'construction_worker_man',
+  'construction_worker_woman',
+  'man_with_turban',
+  'woman_with_turban',
+  'superhero_man',
+  'superhero_woman',
+  'supervillain_man',
+  'supervillain_woman',
+  'mage_man',
+  'mage_woman',
+  'fairy_man',
+  'fairy_woman',
+  'vampire_man',
+  'vampire_woman',
+  'merman',
+  'mermaid',
+  'elf_man',
+  'elf_woman',
+  'massage_man',
+  'massage_woman',
+  'haircut_man',
+  'haircut_woman',
+  'walking_man',
+  'walking_woman',
+  'standing_man',
+  'standing_woman',
+  'kneeling_man',
+  'kneeling_woman',
+  'person_with_probing_cane',
+  'man_with_probing_cane',
+  'woman_with_probing_cane',
+  'person_in_motorized_wheelchair',
+  'man_in_motorized_wheelchair',
+  'woman_in_motorized_wheelchair',
+  'person_in_manual_wheelchair',
+  'man_in_manual_wheelchair',
+  'woman_in_manual_wheelchair',
+  'running_man',
+  'running_woman',
+  'business_suit_levitating',
+  'sauna_man',
+  'sauna_woman',
+  'climbing_man',
+  'climbing_woman',
+  'golfing',
+  'golfing_man',
+  'golfing_woman',
+  'surfing_man',
+  'surfing_woman',
+  'rowing_man',
+  'rowing_woman',
+  'swimming_man',
+  'swimming_woman',
+  'bouncing_ball_person',
+  'bouncing_ball_man',
+  'bouncing_ball_woman',
+  'weight_lifting',
+  'weight_lifting_man',
+  'weight_lifting_woman',
+  'biking_man',
+  'biking_woman',
+  'mountain_biking_man',
+  'mountain_biking_woman',
+  'man_cartwheeling',
+  'woman_cartwheeling',
+  'man_playing_water_polo',
+  'woman_playing_water_polo',
+  'man_playing_handball',
+  'woman_playing_handball',
+  'man_juggling',
+  'woman_juggling',
+  'lotus_position_man',
+  'lotus_position_woman',
+  'people_holding_hands',
+  'woman_farmer',
+  'man_feeding_baby',
+  'woman_feeding_baby',
+  'person_feeding_baby',
+  'man_in_tuxedo',
+  'woman_in_tuxedo',
+  'man_with_veil',
+  'woman_with_veil',
+  'mx_claus',
+];
+
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
 // upon completion.
 const workingDirectory = os.tmpdir();
@@ -131,21 +370,37 @@ const targetXmlFile = `${workingDirectory}/${targetXmlFileName}`;
 // version
 const unicodeDownloadUrl = `https://www.unicode.org/Public/UCD/latest/ucdxml/${targetFileName}.zip`;
 
+// The set of emoji + metadata used by Github
+const emojiDownloadUrl = 'https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json';
+const emojiPath = './src/api/emojis-all.json';
+
+// The set of emoji that has markdown rendering in pandoc.
+import kPandocEmojis from './emojis-pandoc.json';
+
+
 // Remove any orphaned intermediary files
 cleanupFiles([targetXmlFile, targetZipFile], true);
 
+
 // The core sequence of steps for generating the symbols file
+heading("GENERATING SYMBOLS");
 downloadFile(unicodeDownloadUrl, targetZipFile)
   .then((zipFile: string) => unzipSingleZipFile(zipFile, targetXmlFileName, workingDirectory))
   .then((unzippedfile: string) => xmlToJson(unzippedfile))
   .then(jsonResult => jsonToSymbolGroups(jsonResult))
   .then(symbolGroups => symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0))
   .then(symbolGroups => writeSymbolsFile(symbolGroups))
+  .then(()=>heading("GENERATING EMOJI"))
+  .then(() => downloadFile(emojiDownloadUrl, emojiPath))
+  .then((targetFile) => filterEmoji(targetFile)) 
   .catch((message: any) => {
     error(message);
     process.exit(1);
   })
   .finally(() => cleanupFiles([targetZipFile, targetXmlFile]));
+
+
+
 
 function parseBlocks(blockJson: any[]): Block[] {
   return blockJson
@@ -227,7 +482,7 @@ function cleanupFiles(files: string[], warn?: boolean) {
 }
 
 function downloadFile(url: string, targetFile: string): Promise<string> {
-  info('', 'Downloading file', unicodeDownloadUrl);
+  info('', 'Downloading file', url);
   const targetStream = fs.createWriteStream(targetFile);
   return new Promise((resolve, reject) => {
     https
@@ -332,6 +587,41 @@ function writeSymbolsFile(symbolGroups: Group[]) {
     info('done', '');
 }
 
+function filterEmoji(filePath: string) {
+  info('Writing emoji', filePath);
+  const allEmoji = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  // Remove any emoji that don't render properly
+  const filteredEmoji: Array<{
+    emoji: string;
+    description: string;
+    category: string;
+    aliases: string[];
+    tags?: string[];
+    unicode_version?: string;
+    ios_version?: string;
+    skin_tones?: boolean;
+  }> = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
+
+  // Remove emoji metadata that we don't need
+  const thinnedEmoji = filteredEmoji.map(emoji => {
+    const supportsSkinTone = emoji.skin_tones && !skinToneUnsupportedEmoji.includes(emoji.aliases[0]);
+    return {
+      emojiRaw: emoji.emoji,
+      description: emoji.description,
+      category: emoji.category,
+      aliases: emoji.aliases,
+      supportsSkinTone,
+      hasMarkdownRepresentation: kPandocEmojis.find(pandocEmoji => pandocEmoji.emoji === emoji.emoji) !== undefined,
+    };
+  });
+
+  info(thinnedEmoji.length + ' emoji generated');
+  const finalJson = JSON.stringify(thinnedEmoji, null, 2);
+  fs.writeFileSync(filePath, finalJson);
+  info('done');
+}
+
 interface Group {
   name: string;
   symbols: Character[];
@@ -347,6 +637,10 @@ interface Character {
   name: string;
   value: string;
   codepoint: number;
+}
+
+function heading(message: string) {
+  info('','','****************************************************************',message,'****************************************************************');
 }
 
 function info(...message: any[]) {

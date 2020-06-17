@@ -25,6 +25,9 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
+   struct ProcessResult;
+}
 namespace json {
 namespace errc {
 
@@ -484,6 +487,12 @@ void setJsonRpcRedirectError(const T& error,
    jsonRpcResponse.setRedirectError(error, redirectUrl);
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }
+
+// helpers for populating an existing response object with errors
+void setErrorResponse(const core::Error& error, core::json::JsonRpcResponse* pResponse);
+void setProcessErrorResponse(const core::system::ProcessResult& result,
+                             const core::ErrorLocation& location,
+                             core::json::JsonRpcResponse* pResponse);
 
 
 // convenience typedefs for managing a map of json rpc functions

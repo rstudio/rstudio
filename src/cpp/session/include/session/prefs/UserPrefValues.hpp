@@ -79,6 +79,8 @@ namespace prefs {
 #define kPanesHiddenTabSet "hiddenTabSet"
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
+#define kPanesAdditionalSourceColumns "additional_source_columns"
+#define kEnableAdditionalColumns "enable_additional_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -332,6 +334,14 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kEmojiSkintone "emoji_skintone"
+#define kEmojiSkintoneNone_ "(None)"
+#define kEmojiSkintoneDefault_ "(Default)"
+#define kEmojiSkintoneLight "Light"
+#define kEmojiSkintoneMediumLight "Medium-Light"
+#define kEmojiSkintoneMedium "Medium"
+#define kEmojiSkintoneMediumDark "Medium-Dark"
+#define kEmojiSkintoneDark "Dark"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
@@ -473,6 +483,12 @@ public:
     */
    core::json::Object panes();
    core::Error setPanes(core::json::Object val);
+
+   /**
+    * Temporary flag to enable additional source columns.
+    */
+   bool enableAdditionalColumns();
+   core::Error setEnableAdditionalColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
@@ -1499,6 +1515,12 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * Preferred emoji skintone
+    */
+   std::string emojiSkintone();
+   core::Error setEmojiSkintone(std::string val);
 
    /**
     * List of aria-live announcements to disable.

@@ -17,7 +17,6 @@ package org.rstudio.core.client.prefs;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -55,19 +54,16 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
 
    public abstract RestartRequirement onApply(T prefs);
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
    public void registerEnsureVisibleHandler(HasEnsureVisibleHandlers widget)
    {
-      widget.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      widget.addEnsureVisibleHandler(event ->
       {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            fireEvent(new EnsureVisibleEvent());
-         }
+         fireEvent(new EnsureVisibleEvent());
       });
    }
 
@@ -80,7 +76,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    {
       return progressIndicator_;
    }
-   
+
 
    protected Widget indent(Widget widget)
    {
@@ -93,7 +89,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().tight());
       return widget;
    }
-   
+
    protected Widget lessSpaced(Widget widget)
    {
       if (!BrowseCap.isLinuxDesktop())
@@ -106,7 +102,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
          return widget;
       }
    }
-   
+
    protected Widget spacedBefore(Widget widget)
    {
       widget.addStyleName(res_.styles().spacedBefore());
@@ -118,25 +114,25 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().spaced());
       return widget;
    }
-   
+
    protected Widget mediumSpaced(Widget widget)
    {
       widget.addStyleName(res_.styles().mediumSpaced());
       return widget;
    }
-   
+
    protected Widget extraSpaced(Widget widget)
    {
       widget.addStyleName(res_.styles().extraSpaced());
       return widget;
    }
-   
+
    protected Widget nudgeRight(Widget widget)
    {
       widget.addStyleName(res_.styles().nudgeRight());
       return widget;
    }
-   
+
    protected Widget nudgeRightPlus(Widget widget)
    {
       widget.addStyleName(res_.styles().nudgeRightPlus());
@@ -148,7 +144,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().textBoxWithChooser());
       return widget;
    }
-   
+
    protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)
    {
       HorizontalPanel panel = new HorizontalPanel();
@@ -160,27 +156,27 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       panel.add(helpButton);
       return panel;
    }
-   
+
    protected void forceClosed(Command onClosed)
    {
       dialog_.forceClosed(onClosed);
    }
-   
+
    protected void setEnterDisabled(boolean enterDisabled)
    {
       dialog_.setEnterDisabled(enterDisabled);
    }
-   
-   protected PreferencesDialogBaseResources res() 
+
+   protected PreferencesDialogBaseResources res()
    {
       return res_;
    }
-   
+
    void setDialog(PreferencesDialogBase<T> dialog)
    {
       dialog_ = dialog;
    }
-   
+
    void setPaneVisible(boolean visible)
    {
       getElement().getStyle().setDisplay(visible
@@ -188,10 +184,10 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
                                               : Display.NONE);
 
    }
-   
+
    private ProgressIndicator progressIndicator_;
    private final PreferencesDialogBaseResources res_ =
                                  PreferencesDialogBaseResources.INSTANCE;
-   
+
    private PreferencesDialogBase<T> dialog_;
 }

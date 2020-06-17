@@ -146,7 +146,7 @@ export function canInsertTextNode(context: EditorState | Selection) {
   const selection = asSelection(context);
   return canInsertNode(selection, selection.$head.parent.type.schema.nodes.text);
 }
-  
+
 export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   // create new transaction
   const tr = view.state.tr;

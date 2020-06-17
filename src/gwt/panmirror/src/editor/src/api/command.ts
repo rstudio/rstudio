@@ -24,6 +24,7 @@ import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
+import { OmniInsert } from './omni_insert';
 
 export enum EditorCommandId {
   // text editing
@@ -86,6 +87,7 @@ export enum EditorCommandId {
   TableAlignColumnDefault = '7860A9C1-60AF-40AD-9EB8-A10F6ADF25C5',
 
   // insert
+  OmniInsert = '12F96C13-38C1-4266-A0A1-E871D8C709FB',
   Link = '842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9',
   RemoveLink = '072D2084-218D-4A34-AF1F-7E196AF684B2',
   Image = '808220A3-2B83-4CB6-BCC1-46565D54FA47',
@@ -102,6 +104,7 @@ export enum EditorCommandId {
   DefinitionTerm = '204D1A8F-8EE6-424A-8E69-99768C85B39E',
   DefinitionDescription = 'F0738D83-8E11-4CB5-B958-390190A2D7DD',
   Symbol = '1419765F-6E4A-4A4C-8670-D9E8578EA996',
+  Emoji = 'F73896A2-02CC-4E5D-A596-78444A1D2A37',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -113,7 +116,13 @@ export enum EditorCommandId {
   RawBlock = 'F5757992-4D33-45E6-86DC-F7D7B174B1EC',
 
   // chunk
-  RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
+  RCodeChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
+  BashCodeChunk = '5FBB7283-E8AB-450C-9359-A4658CBCD136',
+  D3CodeChunk = 'C73CA46C-B56F-40B6-AEFA-DDBB30CA8C08',
+  PythonCodeChunk = '42A7A138-421A-4DCF-8A88-FE2F8EC5B8F6',
+  RcppCodeChunk = '6BD2810B-6B20-4358-8AA4-74BBFFC92AC3',
+  SQLCodeChunk = '41D61FD2-B56B-48A7-99BC-2F60BC0D9F78',
+  StanCodeChunk = '65D33344-CBE9-438C-B337-A538F8D7FCE5',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
 }
@@ -130,14 +139,22 @@ export interface EditorCommand {
 export class ProsemirrorCommand {
   public readonly id: EditorCommandId;
   public readonly keymap: readonly string[];
-  public readonly keepFocus: boolean;
   public readonly execute: CommandFn;
+  public readonly omniInsert?: OmniInsert;
+  public readonly keepFocus: boolean;
 
-  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, keepFocus = true) {
+  constructor(
+    id: EditorCommandId,
+    keymap: readonly string[],
+    execute: CommandFn,
+    omniInsert?: OmniInsert,
+    keepFocus?: boolean,
+  ) {
     this.id = id;
     this.keymap = keymap;
-    this.keepFocus = keepFocus;
     this.execute = execute;
+    this.omniInsert = omniInsert;
+    this.keepFocus = !(keepFocus === false);
   }
 
   public isEnabled(state: EditorState): boolean {
@@ -172,8 +189,15 @@ export class NodeCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly attrs: object;
 
-  constructor(id: EditorCommandId, keymap: string[], nodeType: NodeType, attrs: object, execute: CommandFn) {
-    super(id, keymap, execute);
+  constructor(
+    id: EditorCommandId,
+    keymap: string[],
+    nodeType: NodeType,
+    attrs: object,
+    execute: CommandFn,
+    omniInsert?: OmniInsert,
+  ) {
+    super(id, keymap, execute, omniInsert);
     this.nodeType = nodeType;
     this.attrs = attrs;
   }
@@ -183,28 +207,28 @@ export class NodeCommand extends ProsemirrorCommand {
   }
 }
 
-export class ListCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType) {
-    super(id, keymap, listType, {}, toggleList(listType, listItemType));
-  }
-}
-
 export class BlockCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], blockType: NodeType, toggleType: NodeType, attrs = {}) {
-    super(id, keymap, blockType, attrs, toggleBlockType(blockType, toggleType, attrs));
+  constructor(
+    id: EditorCommandId,
+    keymap: string[],
+    blockType: NodeType,
+    toggleType: NodeType,
+    attrs = {},
+    omniInsert?: OmniInsert,
+  ) {
+    super(id, keymap, blockType, attrs, toggleBlockType(blockType, toggleType, attrs), omniInsert);
   }
 }
 
 export class WrapCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}) {
-    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs));
+  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}, omniInsert?: OmniInsert) {
+    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs), omniInsert);
   }
 }
 
-export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => boolean;
+export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
-  
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const { selection } = state;
     const { $from, $to } = selection;

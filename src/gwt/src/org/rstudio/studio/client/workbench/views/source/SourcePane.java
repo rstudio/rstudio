@@ -34,31 +34,38 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
+
 import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
+
 import java.util.ArrayList;
 
-public class SourcePane extends Composite implements Display,
-                                                     HasEnsureVisibleHandlers,
-                                                     HasEnsureHeightHandlers,
-                                                     RequiresResize,
+public class SourcePane extends LazyPanel implements Display,
                                                      ProvidesResize,
+                                                     RequiresResize,
                                                      BeforeShowCallback,
                                                      RequiresVisibilityChanged
 {
    @Inject
    public SourcePane()
    {
-      final int UTILITY_AREA_SIZE = 74;
+      setVisible(true);
+      ensureWidget();
+   }
 
+   @Override
+   protected Widget createWidget()
+   {
+	  final int UTILITY_AREA_SIZE = 74;
       panel_ = new LayoutPanel();
 
       new AutoGlassAttacher(panel_);
 
-      tabPanel_ = new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
+      tabPanel_ =  new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
+      panel_.setSize("100%", "100%");
       panel_.add(tabPanel_);
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
@@ -67,8 +74,8 @@ public class SourcePane extends Composite implements Display,
       utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
       panel_.add(utilPanel_);
       panel_.setWidgetRightWidth(utilPanel_,
-                                 0, Unit.PX,
-                                 UTILITY_AREA_SIZE, Unit.PX);
+                                    0, Unit.PX,
+                                    UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
       tabOverflowPopup_ = new TabOverflowPopupPanel();
@@ -86,13 +93,13 @@ public class SourcePane extends Composite implements Display,
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
-                               8, Unit.PX,
-                               chevron_.getHeight(), Unit.PX);
+                                8, Unit.PX,
+                                chevron_.getHeight(), Unit.PX);
       panel_.setWidgetRightWidth(chevron_,
-                                52, Unit.PX,
-                                chevron_.getWidth(), Unit.PX);
-      
-      initWidget(panel_);
+                                 52, Unit.PX,
+                                 chevron_.getWidth(), Unit.PX);
+
+      return panel_;
    }
 
    @Override
@@ -112,55 +119,12 @@ public class SourcePane extends Composite implements Display,
    {
       tabPanel_.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
-         tabPanel_.selectTab(widget);
+         tabPanel_.selectTab(widget, true /* focus newly added tab */);
    }
 
-   public void closeTab(Widget child, boolean interactive)
+   public int getTabCount()
    {
-      closeTab(child, interactive, null);
-   }
-
-   public void closeTab(Widget child, boolean interactive, Command onClosed)
-   {
-      closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
-   }
-   
-   public void closeTab(int index, boolean interactive)
-   {
-      closeTab(index, interactive, null);
-   }
-
-   public void closeTab(int index, boolean interactive, Command onClosed)
-   {
-      if (interactive)
-         tabPanel_.tryCloseTab(index, onClosed);
-      else
-         tabPanel_.closeTab(index, onClosed);
-   }
-   
-   public void setDirty(Widget widget, boolean dirty)
-   {
-      Widget tab = tabPanel_.getTabWidget(widget);
-      if (dirty)
-         tab.addStyleName(ThemeStyles.INSTANCE.dirtyTab());
-      else
-         tab.removeStyleName(ThemeStyles.INSTANCE.dirtyTab());
-   }
-
-   public void ensureVisible()
-   {
-      fireEvent(new EnsureVisibleEvent());
-   }
-
-   public void renameTab(Widget child,
-                         FileIcon icon,
-                         String value,
-                         String tooltip)
-   {
-      tabPanel_.replaceDocName(tabPanel_.getWidgetIndex(child),
-                               icon,
-                               value,
-                               tooltip);
+      return tabPanel_.getWidgetCount();
    }
 
    public int getActiveTabIndex()
@@ -178,70 +142,73 @@ public class SourcePane extends Composite implements Display,
       tabPanel_.selectTab(child);
    }
 
-   public int getTabCount()
-   {
-      return tabPanel_.getWidgetCount();
-   }
-
    @Override
    public void moveTab(int index, int delta)
    {
       tabPanel_.moveTab(index, delta);
    }
 
-   public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
+   @Override
+   public void renameTab(Widget child,
+                         FileIcon icon,
+                         String value,
+                         String tooltip)
    {
-      return tabPanel_.addTabClosingHandler(handler);
-   }
-
-   public HandlerRegistration addTabCloseHandler(
-         TabCloseHandler handler)
-   {
-      return tabPanel_.addTabCloseHandler(handler);
-   }
-   
-   public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
-   {
-      return tabPanel_.addTabClosedHandler(handler);
+      tabPanel_.replaceDocName(tabPanel_.getWidgetIndex(child),
+                               icon,
+                               value,
+                               tooltip);
    }
 
    @Override
-   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
+   public void setDirty(Widget widget, boolean dirty)
    {
-      return tabPanel_.addTabReorderHandler(handler);
-   }
- 
-   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
-   {
-      return tabPanel_.addSelectionHandler(handler);
-   }
-
-   public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler)
-   {
-      return tabPanel_.addBeforeSelectionHandler(handler);
+      Widget tab = tabPanel_.getTabWidget(widget);
+      if (dirty)
+         tab.addStyleName(ThemeStyles.INSTANCE.dirtyTab());
+      else
+         tab.removeStyleName(ThemeStyles.INSTANCE.dirtyTab());
    }
 
-   public Widget asWidget()
+   public void closeTab(boolean interactive)
    {
-      return this;
+      closeTab(getActiveTabIndex(), interactive, null);
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public void closeTab(Widget child, boolean interactive)
    {
-      return addHandler(handler, EnsureVisibleEvent.TYPE);
+      closeTab(child, interactive, null);
    }
-   
+
+   public void closeTab(Widget child, boolean interactive, Command onClosed)
+   {
+      closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
+   }
+
+   public void closeTab(int index, boolean interactive)
+   {
+      closeTab(index, interactive, null);
+   }
+
+   public void closeTab(int index, boolean interactive, Command onClosed)
+   {
+      if (interactive)
+         tabPanel_.tryCloseTab(index, onClosed);
+      else
+         tabPanel_.closeTab(index, onClosed);
+   }
+
    @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+   public void showUnsavedChangesDialog(
+         String title,
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
+         Command onCancelled)
    {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
-   }
-
-   public void onResize()
-   {
-      panel_.onResize();
-      manageChevronVisibility();
+      new UnsavedChangesDialog(title,
+                               dirtyTargets,
+                               saveOperation,
+                               onCancelled).showModal();
    }
 
    public void manageChevronVisibility()
@@ -255,34 +222,30 @@ public class SourcePane extends Composite implements Display,
       setOverflowVisible(true);
       tabOverflowPopup_.showRelativeTo(chevron_);
    }
-   
-   @Override
-   public void showUnsavedChangesDialog(
-         String title,
-         ArrayList<UnsavedChangesTarget> dirtyTargets,
-         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
-         Command onCancelled)
+
+   public void ensureVisible()
    {
-      new UnsavedChangesDialog(title, 
-                               dirtyTargets,
-                               saveOperation,
-                               onCancelled).showModal();
+      fireEvent(new EnsureVisibleEvent(true));
    }
 
-   private void setOverflowVisible(boolean visible)
+   public Widget asWidget()
    {
-      utilPanel_.setVisible(visible);
-      chevron_.setVisible(visible);
+      return this;
+   }
+
+   public void onResize()
+   {
+      panel_.onResize();
+      manageChevronVisibility();
    }
 
    public void onBeforeShow()
    {
-      fireEvent(new BeforeShowEvent());
-   }
+      for (Widget w : panel_)
+         if (w instanceof BeforeShowCallback)
+            ((BeforeShowCallback)w).onBeforeShow();
 
-   public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)
-   {
-      return addHandler(handler, BeforeShowEvent.TYPE);
+      fireEvent(new BeforeShowEvent());
    }
 
    public void onVisibilityChanged(boolean visible)
@@ -294,10 +257,56 @@ public class SourcePane extends Composite implements Display,
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
       }
    }
-   
+
    public void cancelTabDrag()
    {
       tabPanel_.cancelTabDrag();
+   }
+
+   public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler)
+   {
+      return tabPanel_.addBeforeSelectionHandler(handler);
+   }
+
+   public HandlerRegistration addBeforeShowHandler(BeforeShowEvent.Handler handler)
+   {
+      return addHandler(handler, BeforeShowEvent.TYPE);
+   }
+
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
+
+   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
+   {
+      return tabPanel_.addSelectionHandler(handler);
+   }
+
+   public HandlerRegistration addTabClosingHandler(TabClosingEvent.Handler handler)
+   {
+      return tabPanel_.addTabClosingHandler(handler);
+   }
+
+   public HandlerRegistration addTabCloseHandler(TabCloseEvent.Handler handler)
+   {
+      return tabPanel_.addTabCloseHandler(handler);
+   }
+
+   public HandlerRegistration addTabClosedHandler(TabClosedEvent.Handler handler)
+   {
+      return tabPanel_.addTabClosedHandler(handler);
+   }
+
+   public HandlerRegistration addTabReorderHandler(TabReorderEvent.Handler handler)
+   {
+      return tabPanel_.addTabReorderHandler(handler);
+   }
+
+   private void setOverflowVisible(boolean visible)
+   {
+      utilPanel_.setVisible(visible);
+      chevron_.setVisible(visible);
    }
 
    private DocTabLayoutPanel tabPanel_;
@@ -305,4 +314,5 @@ public class SourcePane extends Composite implements Display,
    private Image chevron_;
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
+
 }

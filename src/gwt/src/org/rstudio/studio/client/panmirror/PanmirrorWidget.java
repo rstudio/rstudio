@@ -35,8 +35,6 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -449,6 +447,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void showToolbar(boolean show)
    {
       setWidgetHidden(toolbar_, !show);
+   }
+   
+   public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
+   {
+      editor_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
    }
   
    public boolean execCommand(String id)

@@ -24,7 +24,7 @@ export interface TextInputProps extends WidgetProps {
   tabIndex?: number;
   className?: string;
   placeholder?: string;
-  iconAdornment? : string;
+  iconAdornment?: string;
   onChange?: ChangeEventHandler;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
@@ -38,7 +38,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
 
   return (
     <div className="pm-textinput-container">
-      <img src={props.iconAdornment} className="pm-textinput-icon" />
+      <img src={props.iconAdornment} className="pm-textinput-icon" alt="" />
       <input
         type="text"
         placeholder={props.placeholder}

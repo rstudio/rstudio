@@ -59,6 +59,9 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("italic_dm_2x.png")
    ImageResource italic_dm();
    
+   @Source("omni_2x.png")
+   ImageResource omni();
+   
    @Source("link_2x.png")
    ImageResource link();
    
@@ -76,9 +79,6 @@ public interface PanmirrorToolbarResources extends ClientBundle
    
    @Source("bullet_list_dm_2x.png")
    ImageResource bullet_list_dm();
-   
-   @Source("rmd_chunk_2x.png")
-   ImageResource rmd_chunk();
    
    @Source("table_2x.png")
    ImageResource table();

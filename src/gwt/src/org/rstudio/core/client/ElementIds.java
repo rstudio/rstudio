@@ -458,26 +458,58 @@ public class ElementIds
    
    // Visual Markdown Editing dialogs
    public final static String VISUAL_MD_RAW_FORMAT_SELECT = "visual_md_raw_format_select";
+   public static String getVisualMdRawFormatSelect() { return getElementId(VISUAL_MD_RAW_FORMAT_SELECT); }
    public final static String VISUAL_MD_RAW_FORMAT_CONTENT = "visual_md_raw_format_content";
+   public static String getVisualMdRawContent() { return getElementId(VISUAL_MD_RAW_FORMAT_CONTENT); }
    public final static String VISUAL_MD_RAW_FORMAT_REMOVE_BUTTON = "visual_md_raw_format_remove_button";
    public final static String VISUAL_MD_INSERT_TABLE_ROWS = "visual_md_insert_table_rows";
+   public static String getVisualMdInsertTableRows() { return getElementId(VISUAL_MD_INSERT_TABLE_ROWS); }
    public final static String VISUAL_MD_INSERT_TABLE_COLUMNS = "visual_md_insert_table_columns";
+   public static String getVisualMdInsertTableColumns() { return getElementId(VISUAL_MD_INSERT_TABLE_COLUMNS); }
    public final static String VISUAL_MD_INSERT_TABLE_CAPTION = "visual_md_insert_table_caption";
+   public static String getVisualMdInsertTableCaption() { return getElementId(VISUAL_MD_INSERT_TABLE_CAPTION); }
    public final static String VISUAL_MD_INSERT_TABLE_HEADER = "visual_md_insert_table_heaeder";
    public final static String VISUAL_MD_ATTR_REMOVE_BUTTON = "visual_md_attr_remove_button";
+   public final static String VISUAL_MD_ATTR_ID_LABEL1 = "visual_md_attr_id_label1";
+   public static String getVisualMdAttrIdLabel1() { return getElementId(VISUAL_MD_ATTR_ID_LABEL1); }
+   public final static String VISUAL_MD_ATTR_ID_LABEL2 = "visual_md_attr_id_label2";
+   public static String getVisualMdAttrIdLabel2() { return getElementId(VISUAL_MD_ATTR_ID_LABEL2); }
    public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
+   public static String getVisualMdAttrId() { return getElementId(VISUAL_MD_ATTR_ID); }
+   public final static String VISUAL_MD_ATTR_CLASSES_LABEL1 = "visual_md_attr_classes_label1";
+   public static String getVisualMdAttrClassesLabel1() { return getElementId(VISUAL_MD_ATTR_CLASSES_LABEL1); }
+   public final static String VISUAL_MD_ATTR_CLASSES_LABEL2 = "visual_md_attr_classes_label2";
+   public static String getVisualMdAttrClassesLabel2() { return getElementId(VISUAL_MD_ATTR_CLASSES_LABEL2); }
    public final static String VISUAL_MD_ATTR_CLASSES = "visual_md_attr_classes";
+   public static String getVisualMdAttrClasses() { return getElementId(VISUAL_MD_ATTR_CLASSES); }
+   public final static String VISUAL_MD_ATTR_STYLE_LABEL1 = "visual_md_attr_style_label1";
+   public static String getVisualMdAttrStyleLabel1() { return getElementId(VISUAL_MD_ATTR_STYLE_LABEL1); }
+   public final static String VISUAL_MD_ATTR_STYLE_LABEL2 = "visual_md_attr_style_label2";
+   public static String getVisualMdAttrStyleLabel2() { return getElementId(VISUAL_MD_ATTR_STYLE_LABEL2); }
    public final static String VISUAL_MD_ATTR_STYLE = "visual_md_attr_style";
+   public static String getVisualMdAttrStyle() { return getElementId(VISUAL_MD_ATTR_STYLE); }
+   public final static String VISUAL_MD_ATTR_KEYVALUE_LABEL1 = "visual_md_attr_keyvalue_label1";
+   public static String getVisualMdAttrKeyValueLabel1() { return getElementId(VISUAL_MD_ATTR_KEYVALUE_LABEL1); }
+   public final static String VISUAL_MD_ATTR_KEYVALUE_LABEL2 = "visual_md_attr_keyvalue_label2";
+   public static String getVisualMdAttrKeyValueLabel2() { return getElementId(VISUAL_MD_ATTR_KEYVALUE_LABEL2); } 
    public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
+   public static String getVisualMdAttrKeyValue() { return getElementId(VISUAL_MD_ATTR_KEYVALUE); }
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
+   public static String getVisualMdCitationId() { return getElementId(VISUAL_MD_CITATION_ID); }
    public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";
+   public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
+   public static String getVisualMdListType() { return getElementId(VISUAL_MD_LIST_TYPE); }
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
+   public static String getVisualMdListOrder() { return getElementId(VISUAL_MD_LIST_ORDER); }
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
+   public static String getVisualMdListNumberStyle() { return getElementId(VISUAL_MD_LIST_NUMBER_STYLE); }
    public final static String VISUAL_MD_LIST_NUMBER_DELIM = "visual_md_list_number_delim";
+   public static String getVisualMdListNumberDelim() { return getElementId(VISUAL_MD_LIST_NUMBER_DELIM); }
+   public final static String VISUAL_MD_LIST_NUMBER_DELIM_NOTE = "visual_md_list_number_delim_note";
+   public static String getVisualMdListNumberDelimNote() { return getElementId(VISUAL_MD_LIST_NUMBER_DELIM_NOTE); }
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
-   public final static String VISUAL_MD_IMAGE_SRC = "visual_md_image_src";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
    public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
    public final static String VISUAL_MD_IMAGE_UNITS = "visual_md_image_units";
@@ -497,6 +529,8 @@ public class ElementIds
    public final static String VISUAL_MD_LINK_TAB_ATTRIBUTES = "visual_md_link_tab_attributes";
    public final static String VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE = "visual_md_code_block_tab_language";
    public final static String VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES = "visual_md_code_block_tab_attributes";
+   public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL1 = "visual_md_code_block_lang_label1";
+   public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
 
    

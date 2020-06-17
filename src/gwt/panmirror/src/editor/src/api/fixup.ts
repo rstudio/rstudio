@@ -21,4 +21,4 @@ export enum FixupContext {
   Resize,
 }
 
-export type FixupFn = (tr: Transaction, context: FixupContext) => Transaction;
+export type FixupFn = (tr: Transaction, fixupContext: FixupContext) => Transaction;

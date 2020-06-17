@@ -16,14 +16,17 @@
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions } = context;
+
   const codeAttrs = pandocExtensions.inline_code_attributes;
 
   return {
@@ -49,12 +52,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
-                  ...mark.attrs,
-                  classes: [...mark.attrs.classes, fontClass],
-                })
+                ...mark.attrs,
+                classes: [...mark.attrs.classes, fontClass],
+              })
               : {
-                  class: fontClass,
-                };
+                class: fontClass,
+              };
             return ['code', attrs];
           },
         },

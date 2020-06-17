@@ -27,7 +27,6 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
@@ -48,7 +47,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
-public class BuildPane extends WorkbenchPane 
+public class BuildPane extends WorkbenchPane
       implements BuildPresenter.Display
 {
    @Inject
@@ -64,12 +63,12 @@ public class BuildPane extends WorkbenchPane
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
    }
-   
+
    @Override
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar("Build Tab");
-      
+
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
       boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
@@ -90,7 +89,7 @@ public class BuildPane extends WorkbenchPane
          }
       }
       toolbar.addLeftWidget(buildAllButton);
-      
+
       // book build menu
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
@@ -100,16 +99,16 @@ public class BuildPane extends WorkbenchPane
          ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
          toolbar.addLeftWidget(buildMenuButton);
       }
-      
+
       toolbar.addLeftSeparator();
-      
+
       // packages get check package
       if (pkg)
       {
          toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
          toolbar.addLeftSeparator();
       }
-      
+
       // create more menu
       if (makefile || website || pkg)
       {
@@ -121,8 +120,8 @@ public class BuildPane extends WorkbenchPane
             moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
             moreMenu.addSeparator();
          }
-         
-         // packages get additional commands 
+
+         // packages get additional commands
          else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
@@ -135,11 +134,11 @@ public class BuildPane extends WorkbenchPane
             moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
             moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
             moreMenu.addSeparator();
-            moreMenu.addItem(commands_.roxygenizePackage().createMenuItem(false));   
+            moreMenu.addItem(commands_.roxygenizePackage().createMenuItem(false));
             moreMenu.addSeparator();
          }
          moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
-         
+
          // add more menu
          ToolbarMenuButton moreButton = new ToolbarMenuButton(
                "More",
@@ -149,28 +148,28 @@ public class BuildPane extends WorkbenchPane
          ElementIds.assignElementId(moreButton, ElementIds.BUILD_MORE_MENUBUTTON);
          toolbar.addLeftWidget(moreButton);
       }
-      
+
       // connect compile panel
       compilePanel_.connectToolbar(toolbar);
-     
-      
+
+
       return toolbar;
    }
-   
+
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
       public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          clearItems();
-         
+
          server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
          {
             @Override
             public void onResponseReceived(BookdownFormats formats)
             {
                String defaultFormat = formats.getOutputFormat();
-               JsArrayString allFormats = formats.getAllOututFormats(); 
+               JsArrayString allFormats = formats.getAllOututFormats();
                MenuItem allMenu = new FormatMenuItem(
                   "all", "All Formats", defaultFormat == "all");
                addItem(allMenu);
@@ -184,7 +183,7 @@ public class BuildPane extends WorkbenchPane
             }
          });
       }
-      
+
       class FormatMenuItem extends CheckableMenuItem
       {
          public FormatMenuItem(String format, boolean isChecked)
@@ -200,7 +199,7 @@ public class BuildPane extends WorkbenchPane
             isChecked_ = isChecked;
             onStateChanged();
          }
-         
+
          @Override
          public String getLabel()
          {
@@ -218,23 +217,23 @@ public class BuildPane extends WorkbenchPane
          {
             SelectionCommitEvent.fire(buildSubType(), format_);
          }
-         
+
          private final String format_;
          private final String label_;
          private final boolean isChecked_;
       }
    }
-   
-   @Override 
+
+   @Override
    protected Widget createMainWidget()
-   {      
+   {
       return compilePanel_;
    }
-   
+
    @Override
    public void buildStarted()
    {
-      compilePanel_.compileStarted(null);  
+      compilePanel_.compileStarted(null);
    }
 
    @Override
@@ -242,10 +241,10 @@ public class BuildPane extends WorkbenchPane
    {
       compilePanel_.showOutput(output, scrollToBottom);
    }
-   
+
    @Override
    public void showErrors(String basePath,
-                          JsArray<SourceMarker> errors, 
+                          JsArray<SourceMarker> errors,
                           boolean ensureVisible,
                           int autoSelect,
                           boolean openErrors,
@@ -253,29 +252,29 @@ public class BuildPane extends WorkbenchPane
    {
       errorsBuildType_ = buildType;
       compilePanel_.showErrors(basePath, errors, autoSelect, openErrors);
-      
+
       if (ensureVisible && SourceMarker.showErrorList(errors))
          ensureVisible();
    }
-   
+
    @Override
    public void buildCompleted()
    {
       compilePanel_.compileCompleted();
    }
-   
+
    @Override
    public HasClickHandlers stopButton()
    {
       return compilePanel_.stopButton();
    }
-   
+
    @Override
    public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
    {
       return compilePanel_.errorList();
    }
-   
+
    @Override
    public HasSelectionCommitHandlers<String> buildSubType()
    {
@@ -289,12 +288,12 @@ public class BuildPane extends WorkbenchPane
 
          @Override
          public HandlerRegistration addSelectionCommitHandler(
-               SelectionCommitHandler<String> handler)
+               SelectionCommitEvent.Handler<String> handler)
          {
-            return BuildPane.this.addHandler(handler, 
+            return BuildPane.this.addHandler(handler,
                                              SelectionCommitEvent.getType());
          }
-         
+
       };
    }
 
@@ -303,13 +302,13 @@ public class BuildPane extends WorkbenchPane
    {
       return errorsBuildType_;
    }
-   
+
    @Override
    public void scrollToBottom()
    {
       compilePanel_.scrollToBottom();
    }
- 
+
    private final Commands commands_;
    private final Session session_;
    private final BuildServerOperations server_;

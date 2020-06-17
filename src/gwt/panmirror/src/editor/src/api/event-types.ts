@@ -13,14 +13,14 @@
  *
  */
 
-import { makeEventType } from "./events";
-import { Transaction } from "prosemirror-state";
+import { makeEventType } from './events';
+import { Transaction } from 'prosemirror-state';
 
-export const UpdateEvent = makeEventType("Update");
-export const OutlineChangeEvent = makeEventType("OutlineChange");
-export const StateChangeEvent = makeEventType("StateChange");
-export const ResizeEvent = makeEventType("Resize");
-export const LayoutEvent = makeEventType("Layout");
-export const ScrollEvent = makeEventType("Scroll");
-export const FocusEvent = makeEventType("Focus");
-export const DispatchEvent = makeEventType<Transaction>("Dispatch");
+export const UpdateEvent = makeEventType('Update');
+export const OutlineChangeEvent = makeEventType('OutlineChange');
+export const StateChangeEvent = makeEventType('StateChange');
+export const ResizeEvent = makeEventType('Resize');
+export const LayoutEvent = makeEventType('Layout');
+export const ScrollEvent = makeEventType('Scroll');
+export const FocusEvent = makeEventType('Focus');
+export const DispatchEvent = makeEventType<Transaction>('Dispatch');

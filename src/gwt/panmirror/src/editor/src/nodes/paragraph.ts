@@ -19,6 +19,8 @@ import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/comman
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
+import { EditorUI } from '../api/ui';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension: Extension = {
   nodes: [
@@ -48,7 +50,12 @@ const extension: Extension = {
 
   commands: (schema: Schema) => {
     return [
-      new BlockCommand(EditorCommandId.Paragraph, ['Mod-Alt-0'], schema.nodes.paragraph, schema.nodes.paragraph),
+      new BlockCommand(
+        EditorCommandId.Paragraph,
+        ['Mod-Alt-0'],
+        schema.nodes.paragraph,
+        schema.nodes.paragraph
+      ),
       new InsertParagraphCommand(),
     ];
   },

@@ -13,27 +13,26 @@
  *
  */
 
-import { SymbolCharacter } from "./insert_symbol-data";
-
 import React from 'react';
-import { GridChildComponentProps } from "react-window";
+import { GridChildComponentProps } from 'react-window';
+
+import { SymbolCharacter } from './insert_symbol-dataprovider';
 
 export interface CharacterGridCellItemData {
   symbolCharacters: SymbolCharacter[];
   numberOfColumns: number;
   selectedIndex: number;
   selectedItemClassName: string;
-  onSelectionChanged : (selectedIndex: number) => void;
+  onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
 }
 
 export const SymbolCharacterCell = (props: GridChildComponentProps) => {
-
   const characterGridCellItemData = props.data as CharacterGridCellItemData;
   const symbolCharacters = characterGridCellItemData.symbolCharacters;
   const itemIndex = props.rowIndex * characterGridCellItemData.numberOfColumns + props.columnIndex;
 
-  const handleSelectionChanged = (event: React.MouseEvent) => {
+  const handleMouseEnter = (event: React.MouseEvent) => {
     characterGridCellItemData.onSelectionChanged(itemIndex);
   };
 
@@ -51,25 +50,26 @@ export const SymbolCharacterCell = (props: GridChildComponentProps) => {
   };
 
   if (itemIndex < symbolCharacters.length) {
-      const ch = symbolCharacters[itemIndex];
-      return (
+    const ch = symbolCharacters[itemIndex];
+    return (
+      <div
+        tabIndex={-1}
+        style={props.style}
+        className="pm-symbol-grid-container"
+        onClick={handleMouseClick}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+      >
         <div
-          tabIndex={-1}
-          style={props.style}
-          className="pm-symbol-grid-container"
-          onClick={handleMouseClick}
-          onMouseDown={handleMouseDown}
-          onMouseOver={handleSelectionChanged}
+          className={`pm-symbol-grid-cell pm-grid-item ${
+            characterGridCellItemData.selectedIndex === itemIndex ? characterGridCellItemData.selectedItemClassName : ''
+          }`}
         >
-          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex === itemIndex ? characterGridCellItemData.selectedItemClassName : ''}`}>
-          {ch.value || ''} 
-          </div>
+          {ch.value || ''}
         </div>
-      );
-    
+      </div>
+    );
   } else {
     return null;
   }
-  
-
 };

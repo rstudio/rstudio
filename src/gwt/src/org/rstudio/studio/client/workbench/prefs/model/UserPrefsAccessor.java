@@ -400,6 +400,22 @@ public class UserPrefsAccessor extends Prefs
          return this.console_right_on_top;
       }-*/;
 
+      public final native int getAdditionalSourceColumns() /*-{
+         return this.additional_source_columns;
+      }-*/;
+
+   }
+
+   /**
+    * Temporary flag to enable additional source columns.
+    */
+   public PrefValue<Boolean> enableAdditionalColumns()
+   {
+      return bool(
+         "enable_additional_columns",
+         "Enable Additional Columns", 
+         "Temporary flag to enable additional source columns.", 
+         false);
    }
 
    /**
@@ -2707,6 +2723,35 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Preferred emoji skintone
+    */
+   public PrefValue<String> emojiSkintone()
+   {
+      return enumeration(
+         "emoji_skintone",
+         "", 
+         "Preferred emoji skintone", 
+         new String[] {
+            EMOJI_SKINTONE__NONE_,
+            EMOJI_SKINTONE__DEFAULT_,
+            EMOJI_SKINTONE_LIGHT,
+            EMOJI_SKINTONE_MEDIUM_LIGHT,
+            EMOJI_SKINTONE_MEDIUM,
+            EMOJI_SKINTONE_MEDIUM_DARK,
+            EMOJI_SKINTONE_DARK
+         },
+         "(None)");
+   }
+
+   public final static String EMOJI_SKINTONE__NONE_ = "(None)";
+   public final static String EMOJI_SKINTONE__DEFAULT_ = "(Default)";
+   public final static String EMOJI_SKINTONE_LIGHT = "Light";
+   public final static String EMOJI_SKINTONE_MEDIUM_LIGHT = "Medium-Light";
+   public final static String EMOJI_SKINTONE_MEDIUM = "Medium";
+   public final static String EMOJI_SKINTONE_MEDIUM_DARK = "Medium-Dark";
+   public final static String EMOJI_SKINTONE_DARK = "Dark";
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -2858,6 +2903,8 @@ public class UserPrefsAccessor extends Prefs
          highlightSelectedLine().setValue(layer, source.getBool("highlight_selected_line"));
       if (source.hasKey("panes"))
          panes().setValue(layer, source.getObject("panes"));
+      if (source.hasKey("enable_additional_columns"))
+         enableAdditionalColumns().setValue(layer, source.getBool("enable_additional_columns"));
       if (source.hasKey("use_spaces_for_tab"))
          useSpacesForTab().setValue(layer, source.getBool("use_spaces_for_tab"));
       if (source.hasKey("num_spaces_for_tab"))
@@ -3198,6 +3245,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
+      if (source.hasKey("emoji_skintone"))
+         emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))
@@ -3236,6 +3285,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
+      prefs.add(enableAdditionalColumns());
       prefs.add(useSpacesForTab());
       prefs.add(numSpacesForTab());
       prefs.add(autoDetectIndentation());
@@ -3406,6 +3456,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingFontSizePoints());
+      prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());
       prefs.add(fileMonitorIgnoredComponents());

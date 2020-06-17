@@ -18,6 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasWindowStateChangeHandlers
 {
-   HandlerRegistration addWindowStateChangeHandler(
-         WindowStateChangeHandler handler);
+   HandlerRegistration addWindowStateChangeHandler(WindowStateChangeEvent.Handler handler);
 }

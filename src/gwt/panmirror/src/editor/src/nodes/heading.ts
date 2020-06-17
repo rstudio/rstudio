@@ -18,14 +18,14 @@ import { Node as ProsemirrorNode, Schema, NodeType, Fragment } from 'prosemirror
 import { EditorState } from 'prosemirror-state';
 import { findParentNode } from 'prosemirror-utils';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { BlockCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
+import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
+import { EditorCommandId, toggleBlockType, ProsemirrorCommand } from '../api/command';
+import { Extension, ExtensionContext } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
-import { EditorFormat } from '../api/format';
+import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
+import { emptyNodePlaceholderPlugin } from '../api/placeholder';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -33,12 +33,10 @@ const HEADING_CHILDREN = 2;
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions, format, ui } = context;
+
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
   return {
@@ -56,12 +54,12 @@ const extension = (
           group: 'block',
           defining: true,
           parseDOM: [
-            { tag: 'h1', getAttrs: getHeadingAttrs(1, headingAttr) },
-            { tag: 'h2', getAttrs: getHeadingAttrs(2, headingAttr) },
-            { tag: 'h3', getAttrs: getHeadingAttrs(3, headingAttr) },
-            { tag: 'h4', getAttrs: getHeadingAttrs(4, headingAttr) },
-            { tag: 'h5', getAttrs: getHeadingAttrs(5, headingAttr) },
-            { tag: 'h6', getAttrs: getHeadingAttrs(6, headingAttr) },
+            { tag: 'h1', getAttrs: headingAttrs(1, headingAttr) },
+            { tag: 'h2', getAttrs: headingAttrs(2, headingAttr) },
+            { tag: 'h3', getAttrs: headingAttrs(3, headingAttr) },
+            { tag: 'h4', getAttrs: headingAttrs(4, headingAttr) },
+            { tag: 'h5', getAttrs: headingAttrs(5, headingAttr) },
+            { tag: 'h6', getAttrs: headingAttrs(6, headingAttr) },
           ],
           toDOM(node) {
             const attr = headingAttr ? pandocAttrToDomAttr(node.attrs) : {};
@@ -128,10 +126,10 @@ const extension = (
 
     commands: (schema: Schema) => {
       return [
-        new HeadingCommand(schema, EditorCommandId.Heading1, 1),
-        new HeadingCommand(schema, EditorCommandId.Heading2, 2),
-        new HeadingCommand(schema, EditorCommandId.Heading3, 3),
-        new HeadingCommand(schema, EditorCommandId.Heading4, 4),
+        new HeadingCommand(schema, EditorCommandId.Heading1, 1, heading1OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading2, 2, heading2OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading3, 3, heading3OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading4, 4, heading4OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading5, 5),
         new HeadingCommand(schema, EditorCommandId.Heading6, 6),
       ];
@@ -149,15 +147,19 @@ const extension = (
         ),
       ];
     },
+
+    plugins: (schema: Schema) => {
+      return [emptyHeadingPlaceholderPlugin(schema.nodes.heading, ui)];
+    },
   };
 };
 
-class HeadingCommand extends BlockCommand {
+class HeadingCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly level: number;
 
-  constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Mod-Alt-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
+  constructor(schema: Schema, id: EditorCommandId, level: number, omniInsert?: OmniInsert) {
+    super(id, ['Mod-Alt-' + level], headingCommandFn(schema, level), omniInsert);
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }
@@ -169,8 +171,54 @@ class HeadingCommand extends BlockCommand {
   }
 }
 
+function heading1OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 1, ui.context.translateText('Top level heading'), [
+    ui.images.omni_insert?.heading1!,
+    ui.images.omni_insert?.heading1_dark!,
+  ]);
+}
+
+function heading2OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 2, ui.context.translateText('Section heading'), [
+    ui.images.omni_insert?.heading2!,
+    ui.images.omni_insert?.heading2_dark!,
+  ]);
+}
+
+function heading3OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 3, ui.context.translateText('Sub-section heading'), [
+    ui.images.omni_insert?.heading3!,
+    ui.images.omni_insert?.heading3_dark!,
+  ]);
+}
+
+function heading4OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 4, ui.context.translateText('Smaller heading'), [
+    ui.images.omni_insert?.heading4!,
+    ui.images.omni_insert?.heading4_dark!,
+  ]);
+}
+
+function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string]): OmniInsert {
+  return {
+    name: headingName(ui, level),
+    description,
+    group: OmniInsertGroup.Headings,
+    image: () => (ui.prefs.darkMode() ? images[1] : images[0]),
+  };
+}
+
+function headingName(ui: EditorUI, level: number) {
+  const kHeadingPrefix = ui.context.translateText('Heading');
+  return `${kHeadingPrefix} ${level}`;
+}
+
+function headingCommandFn(schema: Schema, level: number) {
+  return toggleBlockType(schema.nodes.heading, schema.nodes.paragraph, { level });
+}
+
 // function for getting attrs
-function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
+function headingAttrs(level: number, pandocAttrSupported: boolean) {
   return (dom: Node | string) => {
     const el = dom as Element;
     return {
@@ -179,6 +227,10 @@ function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
       ...(pandocAttrSupported ? pandocAttrParseDom(el, {}) : {}),
     };
   };
+}
+
+function emptyHeadingPlaceholderPlugin(nodeType: NodeType, ui: EditorUI) {
+  return emptyNodePlaceholderPlugin(nodeType, node => headingName(ui, node.attrs.level));
 }
 
 // write a bookdown (PART) H1 w/o spurious \

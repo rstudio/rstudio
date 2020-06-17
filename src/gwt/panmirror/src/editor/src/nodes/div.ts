@@ -13,13 +13,13 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
 import { wrapIn, lift } from 'prosemirror-commands';
 
-import { Extension, extensionIfEnabled } from '../api/extension';
+import { ExtensionContext } from '../api/extension';
 import {
   pandocAttrSpec,
   pandocAttrToDomAttr,
@@ -31,78 +31,100 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
+import { OmniInsertGroup, OmniInsert } from '../api/omni_insert';
 
 import './div-styles.css';
 
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'div',
-      spec: {
-        attrs: {
-          ...pandocAttrSpec,
-        },
-        defining: true,
-        content: 'block+',
-        group: 'block list_item_block',
-        parseDOM: [
-          {
-            tag: 'div[data-div="1"]',
-            getAttrs(dom: Node | string) {
-              const attrs: {} = { 'data-div': 1 };
-              return {
-                ...attrs,
-                ...pandocAttrParseDom(dom as Element, attrs),
-              };
+const extension = (context: ExtensionContext) => {
+
+  const { pandocExtensions, ui } = context;
+
+  if (!pandocExtensions.fenced_divs && !pandocExtensions.native_divs) {
+    return null;
+  }
+
+  return {
+    nodes: [
+      {
+        name: 'div',
+        spec: {
+          attrs: {
+            ...pandocAttrSpec,
+          },
+          defining: true,
+          content: 'block+',
+          group: 'block list_item_block',
+          parseDOM: [
+            {
+              tag: 'div[data-div="1"]',
+              getAttrs(dom: Node | string) {
+                const attrs: {} = { 'data-div': 1 };
+                return {
+                  ...attrs,
+                  ...pandocAttrParseDom(dom as Element, attrs),
+                };
+              },
             },
+          ],
+          toDOM(node: ProsemirrorNode): DOMOutputSpec {
+            const attr = {
+              'data-div': '1',
+              ...pandocAttrToDomAttr({
+                ...node.attrs,
+                classes: [...node.attrs.classes, 'pm-div', 'pm-div-background-color'],
+              }),
+            };
+            return ['div', attr, 0];
           },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          const attr = {
-            'data-div': '1',
-            ...pandocAttrToDomAttr({
-              ...node.attrs,
-              classes: [...node.attrs.classes, 'pm-div', 'pm-div-background-color'],
-            }),
-          };
-          return ['div', attr, 0];
         },
-      },
 
-      attr_edit: () => ({
-        type: (schema: Schema) => schema.nodes.div,
-        editFn: (ui: EditorUI) => divCommand(ui, true),
-      }),
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.div,
+          editFn: () => divCommand(ui, true),
+        }),
 
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.Div,
-            block: 'div',
-            getAttrs: (tok: PandocToken) => ({
-              ...pandocAttrReadAST(tok, DIV_ATTR),
-            }),
-            getChildren: (tok: PandocToken) => tok.c[DIV_CHILDREN],
-          },
-        ],
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeToken(PandocTokenType.Div, () => {
-            output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
-            output.writeArray(() => {
-              output.writeNodes(node);
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.Div,
+              block: 'div',
+              getAttrs: (tok: PandocToken) => ({
+                ...pandocAttrReadAST(tok, DIV_ATTR),
+              }),
+              getChildren: (tok: PandocToken) => tok.c[DIV_CHILDREN],
+            },
+          ],
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeToken(PandocTokenType.Div, () => {
+              output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
+              output.writeArray(() => {
+                output.writeNodes(node);
+              });
             });
-          });
+          },
         },
       },
-    },
-  ],
+    ],
 
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new DivCommand(EditorCommandId.Div, ui, true), new DivCommand(EditorCommandId.InsertDiv, ui, false)];
-  },
+    commands: () => {
+      return [
+        // turn current block into a div
+        new DivCommand(EditorCommandId.Div, ui, true),
+
+        // insert a div
+        new DivCommand(EditorCommandId.InsertDiv, ui, false, {
+          name: ui.context.translateText('Div...'),
+          description: ui.context.translateText('Block containing other content'),
+          group: OmniInsertGroup.Blocks,
+          priority: 1,
+          image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
+        }),
+      ];
+    },
+  };
 };
 
 function divCommand(ui: EditorUI, allowEdit: boolean) {
@@ -138,8 +160,8 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
 }
 
 class DivCommand extends ProsemirrorCommand {
-  constructor(id: EditorCommandId, ui: EditorUI, allowEdit: boolean) {
-    super(id, [], divCommand(ui, allowEdit));
+  constructor(id: EditorCommandId, ui: EditorUI, allowEdit: boolean, omniInsert?: OmniInsert) {
+    super(id, [], divCommand(ui, allowEdit), omniInsert);
   }
 }
 
@@ -174,4 +196,4 @@ function isFullDivSelection(div: ContentNodeWithPos, state: EditorState) {
   return state.selection.from - 2 === divStart && state.selection.to + 2 === divEnd;
 }
 
-export default extensionIfEnabled(extension, ['fenced_divs', 'native_divs']);
+export default extension;

@@ -26,10 +26,10 @@ import {
   PandocAttr,
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-import { linkCommand, removeLinkCommand } from './link-command';
+import { linkCommand, removeLinkCommand, linkOmniInsert } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
 import { linkHeadingsPostprocessor, syncHeadingLinksAppendTransaction } from './link-headings';
 import { LinkPopupPlugin } from './link-popup';
@@ -43,7 +43,10 @@ const LINK_ATTR = 0;
 const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
-const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
+const extension = (context: ExtensionContext): Extension => {
+
+  const { pandocExtensions, ui } = context;
+
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,
@@ -154,6 +157,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
           EditorCommandId.Link,
           ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
+          linkOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.RemoveLink, [], removeLinkCommand(schema.marks.link)),
       ];

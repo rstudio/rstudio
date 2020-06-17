@@ -21,6 +21,7 @@ import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
+import { SkinTone } from './emoji';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -84,7 +85,11 @@ export interface EditorDisplay {
 }
 
 export interface EditorUIPrefs {
+  darkMode: () => boolean;
   equationPreview: () => boolean;
+  tabKeyMoveFocus: () => boolean;
+  emojiSkinTone: () => SkinTone;
+  setEmojiSkinTone: (skinTone: SkinTone) => void;
 }
 
 export enum AlertType {
@@ -117,10 +122,7 @@ export type CodeBlockEditorFn = (
   languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
-export type ListEditorFn = (
-  list: ListProps,
-  capabilities: ListCapabilities,
-) => Promise<ListEditResult | null>;
+export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
@@ -178,7 +180,7 @@ export type CodeBlockEditResult = CodeBlockProps;
 
 export enum ListType {
   Ordered = 'OrderedList',
-  Bullet = 'BulletList'
+  Bullet = 'BulletList',
 }
 
 export interface ListProps {

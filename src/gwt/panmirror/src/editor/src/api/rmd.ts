@@ -13,12 +13,22 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
+import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfType, findChildrenByType, findChildren, findChildrenByMark } from 'prosemirror-utils';
+import {
+  findParentNodeOfType,
+  findChildrenByType,
+  findChildren,
+  findChildrenByMark,
+  setTextSelection,
+} from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
+import { precedingListItemInsertPos, precedingListItemInsert } from './list';
+import { toggleBlockType } from './command';
+import { selectionIsBodyTopLevel } from './selection';
 
 export interface EditorRmdChunk {
   lang: string;
@@ -27,6 +37,57 @@ export interface EditorRmdChunk {
 }
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
+
+export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+    const schema = state.schema;
+
+    if (
+      !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
+      !precedingListItemInsertPos(state.doc, state.selection)
+    ) {
+      return false;
+    }
+
+    // must either be at the body top level, within a list item, or within a
+    // blockquote (and never within a table)
+    const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
+    if (within(schema.nodes.table)) {
+      return false;
+    }
+    if (
+      !selectionIsBodyTopLevel(state.selection) &&
+      !within(schema.nodes.list_item) &&
+      !within(schema.nodes.blockquote)
+    ) {
+      return false;
+    }
+
+    if (dispatch) {
+      // compute offset
+      const lines = chunkPlaceholder.split(/\r?\n/);
+      const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
+      const offsetChars = lineChars + colOffset;
+
+      // perform insert
+      const tr = state.tr;
+      const rmdText = schema.text(chunkPlaceholder);
+      const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
+      const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
+      if (prevListItemPos) {
+        precedingListItemInsert(tr, prevListItemPos, rmdNode);
+      } else {
+        tr.replaceSelectionWith(rmdNode);
+        const selPos = tr.mapping.map(state.selection.from) - rmdNode.nodeSize + offsetChars;
+        setTextSelection(selPos)(tr);
+      }
+
+      dispatch(tr);
+    }
+
+    return true;
+  };
+}
 
 export function activeRmdChunk(state: EditorState): EditorRmdChunk | null {
   if (state.schema.nodes.rmd_chunk) {
