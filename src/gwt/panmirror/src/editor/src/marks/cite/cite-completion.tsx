@@ -55,9 +55,7 @@ import { BibliographyEntry, BibliographyManager, BibliographyAuthor, Bibliograph
 
 import { kEditingCiteIdRegEx } from './cite';
 
-
 import './cite-completion.css';
-
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -97,7 +95,6 @@ function filterCitations(bibliographyEntries: BibliographyEntry[], token: string
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
-
     // return completions if we are inside a cite id mark
     const markType = context.doc.type.schema.marks.cite_id;
     if (!markIsActive(context, markType)) {
@@ -111,10 +108,15 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         const token = match[2];
         const pos = range.from + match[1].length;
         return {
-          token: match[2],
+          token,
           pos,
           completions: (state: EditorState) => manager.entries(ui, context.doc),
-          decorations: DecorationSet.create(context.doc, [placeholderDecoration(pos, ui.context.translateText(' search...'))])
+          decorations:
+            token.length === 0
+              ? DecorationSet.create(context.doc, [
+                  placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
+                ])
+              : undefined,
         };
       }
     }
@@ -166,7 +168,6 @@ function formatIssuedDate(date: BibliographyDate): string {
     return '';
   }
 
-  // TODO: Finalize formats
   switch (date['date-parts'].length) {
     // There is a date range
     case 2:
