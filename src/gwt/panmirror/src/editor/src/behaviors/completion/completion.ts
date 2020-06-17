@@ -32,6 +32,7 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
+import { kInsertCompletionTransaction } from '../../api/transaction';
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -91,7 +92,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           }
 
           // selection only changes dismiss any active completion
-          if (!tr.docChanged && tr.selectionSet) {
+          if (!tr.docChanged && !tr.storedMarksSet && tr.selectionSet) {
             return {};
           }
 
@@ -115,11 +116,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
             if (handler.enabled === null || (handler.enabled ? handler.enabled(tr) : inputRuleFilter(tr))) {
               const result = handler.completions(textBefore, tr);
               if (result) {
-                // if we have a previous result and it shares an id and pos with this one, then
-                // include the prevToken in the state (so filtering can be done on existing results)
+
+                // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
-                if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
-                  prevToken = prevState.result.token;
+                if (handler.id === prevState.handler?.id) {
+
+                  // suppress this handler if the last transaction was a completion result 
+                  if (tr.getMeta(kInsertCompletionTransaction)) {
+                    continue;
+                  }
+
+                  // pass the prevToken on if the completion was for the same position
+                  if (result.pos === prevState.result?.pos) {
+                    prevToken = prevState.result.token;
+                  }
                 }
 
                 // return state
@@ -360,21 +370,29 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // create transaction
           const tr = view.state.tr;
 
-          // ensure we have a node
-          const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
-
-          // combine it's marks w/ whatever is active at the selection
-          const marks = view.state.selection.$head.marks();
-
-          // set selection and replace it
+          // set selection to area we will be replacing
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, false);
 
-          // propapate marks
-          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+          // ensure we have a node
+          if (replacement instanceof ProsemirrorNode) {
 
-          // place cursor after the completion
-          setTextSelection(tr.selection.to)(tr);
+            // combine it's marks w/ whatever is active at the selection
+            const marks = view.state.selection.$head.marks();
+
+            // set selection and replace it
+            tr.replaceSelectionWith(replacement, false);
+
+            // propapate marks
+            marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+
+          } else {
+
+            tr.insertText(replacement);
+
+          }
+
+          // mark the transaction as an completion insertin
+          tr.setMeta(kInsertCompletionTransaction, true);
 
           // dispatch
           view.dispatch(tr);

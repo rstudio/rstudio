@@ -29,13 +29,16 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.ImageButton;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 
 import java.util.ArrayList;
 
@@ -167,12 +170,34 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
-                                    UserPrefs userPrefs)
+                                    UserPrefs userPrefs,
+                                    Provider<PaneManager> pPaneManager)
    {
       res_ = res;
       userPrefs_ = userPrefs;
+      paneManager_ = pPaneManager.get();
 
       add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
+
+      // temporary check for enabling additional columns feature
+      if (userPrefs.enableAdditionalColumns().getGlobalValue())
+      {
+         additionalColumnCount_ = userPrefs.panes().getGlobalValue().getAdditionalSourceColumns();
+         paneManager_.syncAdditionalColumnCount(additionalColumnCount_);
+         addSource_ = new ImageButton("Add source", res_.iconAddSourcePane2x());
+         addSource_.setVisible(true);
+         add(addSource_);
+         addSource_.addClickHandler(event ->
+         {
+            additionalColumnCount_ = paneManager_.addSourceWindow();
+         });
+      }
+      else
+      {
+         if (additionalColumnCount_ > 0)
+            additionalColumnCount_ = paneManager_.closeAllAdditionalColumns();
+         addSource_ = null;
+      }
 
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
@@ -370,7 +395,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             consoleRightOnTop = false;
          
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
-               panes, tabSet1, tabSet2, hiddenTabSet, consoleLeftOnTop, consoleRightOnTop));
+               panes, tabSet1, tabSet2, hiddenTabSet,
+               consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_));
 
          dirty_ = false;
       }
@@ -424,6 +450,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    private final UserPrefs userPrefs_;
+   private final ImageButton addSource_;
    private final ListBox leftTop_;
    private final ListBox leftBottom_;
    private final ListBox rightTop_;
@@ -438,5 +465,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
    private boolean dirty_ = false;
-  
+
+   private PaneManager paneManager_;
+   private int additionalColumnCount_;
 }

@@ -15,14 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.output.tests;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -56,37 +53,29 @@ public class TestsOutputPresenter extends BusyPresenter
                                Commands commands,
                                EventBus events)
    {
-      super(outputFactory.create("Tests", 
+      super(outputFactory.create("Tests",
                                  "View test results"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
       paneManager_ = paneManager;
 
-      view_.stopButton().addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            terminateTests();
-         }
+      view_.stopButton().addClickHandler(event ->
+      {
+         terminateTests();
       });
-      
-      view_.errorList().addSelectionCommitHandler(
-                              new SelectionCommitHandler<CodeNavigationTarget>() {
 
-         @Override
-         public void onSelectionCommit(
-                              SelectionCommitEvent<CodeNavigationTarget> event)
-         {
-            CodeNavigationTarget target = event.getSelectedItem();
-            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
-            RStudioGinjector.INSTANCE.getFileTypeRegistry()
-               .editFile(fsi, target.getPosition());
-         }
+      view_.errorList().addSelectionCommitHandler((
+            SelectionCommitEvent<CodeNavigationTarget> event) ->
+      {
+         CodeNavigationTarget target = event.getSelectedItem();
+         FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
+         RStudioGinjector.INSTANCE.getFileTypeRegistry()
+            .editFile(fsi, target.getPosition());
       });
       globalDisplay_ = globalDisplay;
    }
-   
+
    public void initialize()
    {
    }
@@ -100,7 +89,7 @@ public class TestsOutputPresenter extends BusyPresenter
 
       onConfirmed.execute();
    }
-   
+
    private boolean isEnabled()
    {
       return paneManager_.getTab(Tab.Build).isSuppressed();
@@ -108,9 +97,9 @@ public class TestsOutputPresenter extends BusyPresenter
 
    @Override
    public void onBuildStarted(BuildStartedEvent event)
-   {  
+   {
       if (!isEnabled()) return;
-      
+
       view_.ensureVisible(true);
       view_.compileStarted(event.getSubType());
       setIsBusy(true);
@@ -120,25 +109,25 @@ public class TestsOutputPresenter extends BusyPresenter
    public void onBuildOutput(BuildOutputEvent event)
    {
       if (!isEnabled()) return;
-      
+
       view_.showOutput(event.getOutput(), true);
    }
-   
+
    @Override
    public void onBuildCompleted(BuildCompletedEvent event)
    {
       if (!isEnabled()) return;
-      
+
       view_.compileCompleted();
       setIsBusy(false);
       view_.ensureVisible(true);
    }
-   
+
    @Override
    public void onBuildErrors(BuildErrorsEvent event)
    {
       if (!isEnabled()) return;
-      
+
       view_.showErrors(event.getErrors());
    }
 
@@ -146,7 +135,7 @@ public class TestsOutputPresenter extends BusyPresenter
    public void onRestartStatus(RestartStatusEvent event)
    {
    }
-   
+
    private void terminateTests()
    {
       server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
@@ -161,9 +150,9 @@ public class TestsOutputPresenter extends BusyPresenter
                   "Unable to terminate tests. Please try again.");
             }
          }
-      });  
+      });
    }
-   
+
    private final BuildServerOperations server_;
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;

@@ -1,5 +1,5 @@
 /*
- * TabReorderEvent.java
+ * EditingTargetSelectedEvent.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,29 +12,31 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.events;
+
+package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent.Handler;
 
-public class TabReorderEvent extends GwtEvent<TabReorderEvent.Handler>
+public class EditingTargetSelectedEvent extends GwtEvent<Handler>
 {
    public static final Type<Handler> TYPE = new Type<>();
 
-   public TabReorderEvent(int oldPos, int newPos)
+   public interface Handler extends EventHandler
    {
-      oldPos_ = oldPos;
-      newPos_ = newPos;
+      void onEditingTargetSelected(EditingTargetSelectedEvent event);
    }
 
-   public int getNewPos()
+   public EditingTargetSelectedEvent(EditingTarget target)
    {
-      return newPos_;
+      target_ = target;
    }
 
-   public int getOldPos()
+   public EditingTarget getTarget()
    {
-      return oldPos_;
+      return target_;
    }
 
    @Override
@@ -46,14 +48,8 @@ public class TabReorderEvent extends GwtEvent<TabReorderEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTabReorder(this);
+      handler.onEditingTargetSelected(this);
    }
 
-   public interface Handler extends EventHandler
-   {
-      void onTabReorder(TabReorderEvent event);
-   }
-
-   private int oldPos_;
-   private int newPos_;
+   private final EditingTarget target_;
 }

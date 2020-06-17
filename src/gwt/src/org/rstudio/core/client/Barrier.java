@@ -16,7 +16,6 @@ package org.rstudio.core.client;
 
 import com.google.gwt.event.shared.HandlerManager;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
-import org.rstudio.core.client.events.BarrierReleasedHandler;
 
 /**
  * Use this class to track when multiple independent operations are all
@@ -62,7 +61,7 @@ public class Barrier
       return new Token();
    }
 
-   public void addBarrierReleasedHandler(BarrierReleasedHandler handler)
+   public void addBarrierReleasedHandler(BarrierReleasedEvent.Handler handler)
    {
       handlers_.addHandler(BarrierReleasedEvent.TYPE, handler);
    }

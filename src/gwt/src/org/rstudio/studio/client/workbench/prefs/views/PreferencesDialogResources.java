@@ -55,6 +55,8 @@ public interface PreferencesDialogResources extends ClientBundle
    @Source("iconAccessibility_2x.png")
    ImageResource iconAccessibility2x();
 
+   @Source("iconAddSourcePane_2x.png")
+   ImageResource iconAddSourcePane2x();
    @Source("iconConsole_2x.png")
    ImageResource iconConsole2x();
 }

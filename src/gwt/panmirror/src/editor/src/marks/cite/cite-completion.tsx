@@ -40,16 +40,24 @@
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { DecorationSet } from 'prosemirror-view';
+
 import { PandocServer } from '../../api/pandoc';
 
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { getMarkRange, markIsActive } from '../../api/mark';
+import { placeholderDecoration } from '../../api/placeholder';
 
 import { BibliographyEntry, BibliographyManager, BibliographyAuthor, BibliographyDate } from '../../api/bibliography';
 
+import { kEditingCiteIdRegEx } from './cite';
+
+
 import './cite-completion.css';
+
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -63,9 +71,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
 
     replacement(schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
       if (entry) {
-        // TODO: need to deal with @/-@ (preserve what user typed)
-        const mark = schema.marks.cite_id.create({});
-        return schema.text(`@${entry.source.id}`, [mark]);
+        return entry.source.id;
       } else {
         return null;
       }
@@ -82,8 +88,6 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
   };
 }
 
-const kCitationCompletionRegex = `\\[(.* -?@|-?@)(\\w[\\w:\\.#\\$%&\\-\\+\\?<>~/]*)`;
-
 function filterCitations(bibliographyEntries: BibliographyEntry[], token: string, manager: BibliographyManager) {
   if (token.trim().length === 0) {
     return bibliographyEntries;
@@ -93,20 +97,28 @@ function filterCitations(bibliographyEntries: BibliographyEntry[], token: string
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
-    // look for requisite text sequence
-    const match = text.match(kCitationCompletionRegex);
-    if (match) {
-      // determine insert position and prefix to search for
-      const prefix = match[1];
-      const query = match[2];
-      const pos = context.selection.head - (query.length + prefix.length);
 
-      return {
-        token: query,
-        pos,
-        completions: (state: EditorState) => manager.entries(ui, context.doc),
-      };
+    // return completions if we are inside a cite id mark
+    const markType = context.doc.type.schema.marks.cite_id;
+    if (!markIsActive(context, markType)) {
+      return null;
     }
+    const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
+    if (range) {
+      const citeText = context.doc.textBetween(range.from, range.to);
+      const match = citeText.match(kEditingCiteIdRegEx);
+      if (match) {
+        const token = match[2];
+        const pos = range.from + match[1].length;
+        return {
+          token: match[2],
+          pos,
+          completions: (state: EditorState) => manager.entries(ui, context.doc),
+          decorations: DecorationSet.create(context.doc, [placeholderDecoration(pos, ui.context.translateText(' search...'))])
+        };
+      }
+    }
+
     return null;
   };
 }

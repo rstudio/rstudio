@@ -13,27 +13,9 @@
  *
  */
 
-/* Citation mark handling
-
--   You can create a citation by having one in source mode, by typing `[@`, or by using a comand.
-
--   Once created, the citation will preserve itself as a mark in the editor, and will only dissapear fully when it is round-tripped back to source.
-
--   The completer will show whenever it is in front of valid citation begin sequence (`-?@`, etc.) inside a citation mark.
-
--   Input rule for @ character inside cite marks --- this transforms the @ into a cite\_id (but then reverses this on backspace)
-
--   Inside a citation mark, @ is considered a valid id (so that users can replace the identifier) however when round-tripping a standaone @ will not be treated as an ID.
-
--   We won't show \@cite anymore, rather it will be placeholder text for the completer.
-
--   Deal with allowing inclusive editing of the mark, while at the same time breaking it when it's done (similar to LaTeX)
-
-*/
-
 import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, Transaction, Selection } from 'prosemirror-state';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
@@ -44,18 +26,25 @@ import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { Extension, ExtensionContext } from '../../api/extension';
 import { citationCompletionHandler } from './cite-completion';
+import { setTextSelection } from 'prosemirror-utils';
 
 const CITE_CITATIONS = 0;
 
 const kCiteIdPrefixPattern = '-?@';
-const kCiteIdCharsPattern = '\\w[\\w:\\.#\\$%&\\-\\+\\?<>~/]*';
+
+const kCiteIdFirstCharPattern = '\\w';
+const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/]*';
+
+const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
-export const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
+const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
+
+const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
-const kCiteIdLengthRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
-export const kFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
+
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern})`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -80,8 +69,6 @@ const extension = (context: ExtensionContext): Extension | null => {
   if (!pandocExtensions.citations) {
     return null;
   }
-
-  const citePlaceholder = ui.context.translateText('cite');
 
   return {
     marks: [
@@ -181,6 +168,18 @@ const extension = (context: ExtensionContext): Extension | null => {
     appendMarkTransaction: (schema: Schema) => {
       return [
         {
+          // 'break' cite marks if they are no longer valid. note that this will still preserve
+          // the mark up to the length that it is valid 
+          name: 'remove-cite-marks',
+          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
+          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
+            splitInvalidatedMarks(tr, node, pos, editingCiteLength, schema.marks.cite, (from: number, to: number) => {
+              tr.removeMark(from, to, schema.marks.cite);
+              tr.removeMark(from, to, schema.marks.cite_id);
+            });
+          },
+        },
+        {
           // 'break' cite_id marks if they are no longer valid. note that this will still preserve
           // the mark up to the length that it is valid (so e.g. if a space is inserted within a
           // cite_id this will keep the mark on the part before the space and remove it from the
@@ -188,22 +187,19 @@ const extension = (context: ExtensionContext): Extension | null => {
           name: 'remove-cite-id-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite_id),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
-          },
-        },
-        {
-          // 'break' cite marks if they are no longer valid.
-          name: 'remove-cite-marks',
-          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
-          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            splitInvalidatedMarks(tr, node, pos, citeLength, schema.marks.cite);
+            splitInvalidatedMarks(tr, node, pos, editingCiteIdLength, schema.marks.cite_id);
           },
         },
       ];
     },
 
     inputRules: (schema: Schema) => {
-      return [citeInputRule(schema, citePlaceholder), citeIdInputRule(schema, citePlaceholder)];
+      return [
+        insertCiteInputRule(schema),
+        citeBeginBracketInputRule(schema),
+        citeEndBracketInputRule(schema),
+        citeIdInputRule(schema)
+      ];
     },
 
     completionHandlers: () => [citationCompletionHandler(context.ui, context.pandocServer)],
@@ -214,37 +210,38 @@ const extension = (context: ExtensionContext): Extension | null => {
   };
 };
 
+
 // automatically create a citation given certain input
-function citeInputRule(schema: Schema, citePlaceholder: string) {
+function insertCiteInputRule(schema: Schema) {
   return new InputRule(
     new RegExp(`\\[${kBeginCitePattern}$`),
     (state: EditorState, match: string[], start: number, end: number) => {
       // only apply if we aren't already in a cite and the preceding text doesn't include an end cite (']')
       if (!markIsActive(state, schema.marks.cite) && !match[0].includes(']')) {
+
+        // determine if we already have an end bracket
+        const suffix = findCiteEndBracket(state.selection) === -1 ? ']' : '';
+
         // create transaction
         const tr = state.tr;
 
-        // check to see whether we need to insert an end bracket
-        const nextChar = state.doc.textBetween(end, end + 1);
-        const suffix = nextChar !== ']' ? ']' : '';
+        // insert the @
+        tr.insertText('@');
 
-        // remove whatever cite prefix caused this match to occur
-        const idPrefixMatch = match[0].endsWith('-@') ? '-@' : '@';
-        tr.delete(end - (idPrefixMatch.length - 1), end);
+        const startCite = tr.selection.from - match[0].length;
 
-        // insert a cite_id with placeholder text
-        const citeIdText = idPrefixMatch + citePlaceholder + suffix;
-        const citeIdMark = schema.marks.cite_id.create();
-        const citeId = schema.text(citeIdText, [citeIdMark]);
-        tr.replaceSelectionWith(citeId, false);
+        // determine beginning and end
 
-        // select the cite_id placeholder
-        const begin = end + 1;
-        tr.setSelection(new TextSelection(tr.doc.resolve(begin), tr.doc.resolve(begin + citePlaceholder.length)));
+        let endCite = findCiteEndBracket(tr.selection);
 
-        // mark the entire region as a citation
-        const mark = schema.marks.cite.create();
-        tr.addMark(start, end + citeIdText.length + 2, mark);
+        // insert end bracket if we need to
+        if (endCite === -1) {
+          tr.insertText(']');
+          endCite = tr.selection.from;
+          setTextSelection(endCite - 1)(tr);
+        }
+
+        encloseInCiteMark(tr, startCite, endCite + 1);
 
         return tr;
       } else {
@@ -254,51 +251,102 @@ function citeInputRule(schema: Schema, citePlaceholder: string) {
   );
 }
 
-// create a cite_id within a citation when the @ sign is typed
-function citeIdInputRule(schema: Schema, citePlaceholder: string) {
+function citeBeginBracketInputRule(schema: Schema) {
+
   return new InputRule(
-    new RegExp(`${kCiteIdPrefixPattern}$`),
-    (state: EditorState, match: string[], start: number, end: number) => {
-      // only operate within a cite mark
-      if (markIsActive(state, schema.marks.cite)) {
-        // screen out if the previous character isn't the beginning of the cite or a space
-        const prevChar = state.doc.textBetween(start - 1, end);
-        if (prevChar !== '[' && prevChar !== ' ') {
-          return null;
-        }
+    new RegExp(`\\[$`),
+    (state: EditorState, _match: string[], start: number, end: number) => {
 
-        // create transaction
-        const tr = state.tr;
+      // only apply if we aren't already in a cite 
+      if (!markIsActive(state, schema.marks.cite)) {
 
-        // mark the the cite_id
-        const citeIdMark = schema.marks.cite_id.create();
-        tr.addMark(start, end, citeIdMark);
-        tr.addStoredMark(citeIdMark);
-        tr.insertText(match[0]);
+        // find an end ciation bracket in the current text block
+        const endCite = findCiteEndBracket(state.selection);
+        if (endCite !== -1) {
 
-        // figure out if the prefix is right before valid id text, in that
-        // case extend the mark to encompass that text
-        let extended = false;
-        const { parent, parentOffset } = tr.selection.$head;
-        const text = parent.textContent.slice(parentOffset - 1);
-        if (text.length > 0) {
-          const length = citeIdLength(text);
-          if (length > 1) {
-            const startTex = tr.selection.from - 1;
-            tr.addMark(startTex, startTex + length, citeIdMark);
-            extended = true;
+          const citeText = '[' + state.doc.textBetween(state.selection.head, endCite + 1);
+
+          // validate that the text range is actually a citation
+          if (editingCiteLength(citeText) > 0) {
+
+            // insert the begin bracket then calculate the cite start and end
+            const tr = state.tr;
+            tr.insertText('[');
+            const citeStart = tr.selection.head - 1;
+            const citeEnd = citeStart + citeText.length;
+
+            // enclose in cite mark
+            encloseInCiteMark(tr, citeStart, citeEnd + 1);
+
+            return tr;
           }
         }
 
-        // if we didn't extend the mark to existing id text then instaed
-        // insert placeholder text and select it
-        if (!extended) {
-          tr.insertText(citePlaceholder);
-          const begin = start + match[0].length;
-          tr.setSelection(new TextSelection(tr.doc.resolve(begin), tr.doc.resolve(start + citePlaceholder.length + 1)));
-        }
+        return null;
 
-        // return transaction
+      } else {
+        return null;
+      }
+    },
+  );
+
+}
+
+function citeEndBracketInputRule(schema: Schema) {
+
+  return new InputRule(
+    new RegExp(`\\]$`),
+    (state: EditorState, _match: string[], start: number, end: number) => {
+
+      // only apply if we aren't already in a cite 
+      if (!markIsActive(state, schema.marks.cite)) {
+
+        // look backwards for balanced begin bracket
+        const beginCite = findCiteBeginBracket(state.selection);
+        if (beginCite !== -1) {
+          // check whether // it's actually valid citation text
+          const citeText = state.doc.textBetween(beginCite, state.selection.head) + ']';
+          if (editingCiteLength(citeText) > 0) {
+            // create the transaction
+            const tr = state.tr;
+
+            // insert the end bracket then calculate the cite start and end
+            tr.insertText(']');
+            const citeStart = tr.selection.head - citeText.length;
+            const citeEnd = tr.selection.head;
+
+            // enclose in cite mark
+            encloseInCiteMark(tr, citeStart, citeEnd);
+
+            // return the transaction
+            return tr;
+          }
+        }
+        return null;
+      } else {
+        return null;
+      }
+    },
+  );
+}
+
+// create a cite_id within a citation when the @ sign is typed
+function citeIdInputRule(schema: Schema) {
+  return new InputRule(
+    new RegExp(`(-|@)$`),
+    (state: EditorState, match: string[], start: number, end: number) => {
+      // only operate within a cite mark
+      if (markIsActive(state, schema.marks.cite)) {
+        const tr = state.tr;
+        tr.insertText(match[1]);
+        const beginCite = findCiteBeginBracket(tr.selection);
+        const endCite = findCiteEndBracket(tr.selection);
+        if (beginCite >= 0 && endCite >= 0) {
+          const citeText = tr.doc.textBetween(beginCite, endCite + 1);
+          if (editingCiteLength(citeText) > 0) {
+            encloseInCiteMark(tr, beginCite, endCite + 1);
+          }
+        }
         return tr;
       } else {
         return null;
@@ -345,14 +393,100 @@ function readPandocCite(schema: Schema) {
   };
 }
 
-// validate that the cite is still valid (just return 0 or the whole length of the string)
-function citeLength(text: string) {
-  return text.match(kFullCiteRegEx) ? text.length : 0;
+// look backwards for balanced begin bracket
+function findCiteBeginBracket(selection: Selection) {
+  const { $head } = selection;
+  let beginCite = -1;
+  let bracketLevel = 0;
+  const { parent, parentOffset } = $head;
+  const text = parent.textContent;
+  for (let i = (parentOffset - 1); i >= 0; i--) {
+    const char = text.charAt(i);
+    if (char === ']') {
+      bracketLevel++;
+    } else if (char === '[') {
+      if (bracketLevel > 0) {
+        bracketLevel--;
+      } else {
+        beginCite = i;
+        break;
+      }
+    }
+  }
+  if (beginCite !== -1) {
+    return $head.start($head.depth) + beginCite;
+  } else {
+    return -1;
+  }
+
 }
 
-// up to how many characters of the passed text constitute a valid cite_id
-function citeIdLength(text: string) {
-  const match = text.match(kCiteIdLengthRegEx);
+
+// look forwards for balanced end bracket
+function findCiteEndBracket(selection: Selection) {
+  const { $head } = selection;
+  let endCite = -1;
+  let bracketLevel = 0;
+  const { parent, parentOffset } = $head;
+  const text = parent.textContent;
+  for (let i = parentOffset; i < text.length; i++) {
+    const char = text.charAt(i);
+    if (char === '[') {
+      bracketLevel++;
+    } else if (char === ']') {
+      if (bracketLevel > 0) {
+        bracketLevel--;
+      } else {
+        endCite = i;
+        break;
+      }
+    }
+  }
+  if (endCite !== -1) {
+    return $head.start($head.depth) + endCite;
+  } else {
+    return -1;
+  }
+
+}
+
+
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
+
+function encloseInCiteMark(tr: Transaction, start: number, end: number) {
+
+  const schema = tr.doc.type.schema;
+  const mark = schema.marks.cite.create();
+
+  tr.addMark(start, end, mark);
+
+  // look for valid citation ids inside and mark them
+  const citeText = tr.doc.textBetween(start, end);
+
+  kCitationIdRegex.lastIndex = 0;
+  let match = kCitationIdRegex.exec(citeText);
+  while (match !== null) {
+
+    const pos = start + match.index + match[1].length;
+    const idMark = schema.marks.cite_id.create();
+
+    tr.addMark(pos, pos + match[2].length, idMark);
+    match = kCitationIdRegex.exec(citeText);
+  }
+  kCitationIdRegex.lastIndex = 0;
+  return tr;
+}
+
+
+// validate that the cite is still valid (just return 0 or the whole length of the string)
+function editingCiteLength(text: string) {
+  return text.match(kEditingFullCiteRegEx) ? text.length : 0;
+}
+
+// up to how many characters of the passed text constitute a valid cite_id in the editor
+// (note that the editor tolerates citations ids with just an '@')
+function editingCiteIdLength(text: string) {
+  const match = text.match(kEditingCiteIdRegEx);
   if (match) {
     return match[0].length;
   } else {

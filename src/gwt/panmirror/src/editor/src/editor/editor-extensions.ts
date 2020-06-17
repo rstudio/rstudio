@@ -190,7 +190,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   // in the chain registers something the later extensions are able to see it
   manager.register([
     // bindings to 'Edit Attribute' command and UI adornment
-    attrEditExtension(context.pandocExtensions, manager.attrEditors()),
+    attrEditExtension(context.pandocExtensions, context.ui, manager.attrEditors()),
 
     // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
@@ -300,13 +300,13 @@ export class ExtensionManager {
     });
   }
 
-  public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
-    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
+  public commands(schema: Schema): readonly ProsemirrorCommand[] {
+    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema));
   }
 
-  public omniInserters(schema: Schema, ui: EditorUI): OmniInserter[] {
+  public omniInserters(schema: Schema): OmniInserter[] {
     const omniInserters: OmniInserter[] = [];
-    const commands = this.commands(schema, ui);
+    const commands = this.commands(schema);
     commands.forEach(command => {
       if (command.omniInsert) {
         omniInserters.push({
@@ -347,8 +347,8 @@ export class ExtensionManager {
     return this.collect(extension => extension.appendMarkTransaction?.(schema));
   }
 
-  public plugins(schema: Schema, ui: EditorUI): readonly Plugin[] {
-    return this.collect(extension => extension.plugins?.(schema, ui));
+  public plugins(schema: Schema): readonly Plugin[] {
+    return this.collect(extension => extension.plugins?.(schema));
   }
 
   public fixups(schema: Schema, view: EditorView): readonly FixupFn[] {

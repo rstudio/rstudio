@@ -75,12 +75,12 @@ const extension = (context: ExtensionContext): Extension | null => {
           ],
 
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
-            // always write single line html as inline
-            if (writer) {
+            // read single tags as inline html
+            const isSingleTag = tagStartLoc(html, html.length - 2) === 0;
+            if (isSingleTag && writer) {
               writeInlneHTML(schema, html, writer);
             }
-
-            return true;
+            return isSingleTag;
           },
           writer: {
             priority: 20,
