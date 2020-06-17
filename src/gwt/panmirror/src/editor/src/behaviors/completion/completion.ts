@@ -91,11 +91,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
-          // if this was a completion insertion then ignore it
-          if (tr.getMeta(kInsertCompletionTransaction)) {
-            return {};
-          }
-
           // selection only changes dismiss any active completion
           if (!tr.docChanged && !tr.storedMarksSet && tr.selectionSet) {
             return {};
@@ -121,11 +116,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
             if (handler.enabled === null || (handler.enabled ? handler.enabled(tr) : inputRuleFilter(tr))) {
               const result = handler.completions(textBefore, tr);
               if (result) {
-                // if we have a previous result and it shares an id and pos with this one, then
-                // include the prevToken in the state (so filtering can be done on existing results)
+
+                // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
-                if (handler.id === prevState.handler?.id && result.pos === prevState.result?.pos) {
-                  prevToken = prevState.result.token;
+                if (handler.id === prevState.handler?.id) {
+
+                  // suppress this handler if the last transaction was a completion result 
+                  if (tr.getMeta(kInsertCompletionTransaction)) {
+                    continue;
+                  }
+
+                  // pass the prevToken on if the completion was for the same position
+                  if (result.pos === prevState.result?.pos) {
+                    prevToken = prevState.result.token;
+                  }
                 }
 
                 // return state
