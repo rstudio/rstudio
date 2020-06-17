@@ -16,11 +16,7 @@
 .pm-completion-citation-item {
   display: flex;
   align-items: center;
-
-  line-height: 20px;
   height: 52px;
-
-  font-size: 14px;
 }
 
 .pm-completion-citation-summary {
@@ -32,6 +28,9 @@
   padding-right: 4px;
   padding-bottom: 4px;
   padding-left: 0px;
+
+  line-height: 20px;
+  font-size: 14px;
 }
 
 .pm-completion-citation-source {
@@ -49,11 +48,16 @@
   font-size: 0.9em;
   opacity: 80%;
   width: 390px;
+
+  line-height: 14px;
 }
 
 .pm-completion-citation-type {
   margin-left: 10px;
   margin-right: 10px;
+
+  display: flex;
+  align-items: center;
 }
 
 .pm-completion-citation-type img {
@@ -65,6 +69,10 @@
   margin-top: 1px;
   margin-right: 5px;
   filter: opacity(80%);
+}
+
+.pm-completion-citation-issuedate {
+  font-weight: normal;
 }
 
 /* Style to be used by previews */
