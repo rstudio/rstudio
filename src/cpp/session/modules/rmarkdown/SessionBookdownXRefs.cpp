@@ -73,14 +73,19 @@ FilePath xrefIndexDirectory()
 }
 
 
-FilePath xrefIndexFilePath(const FilePath& rmdFile)
+FilePath xrefIndexFilePath(const std::string& rmdRelativePath)
 {
-   std::string rmdRelativePath = bookRelativePath(rmdFile);
    FilePath indexFilePath = xrefIndexDirectory().completeChildPath(rmdRelativePath + ".xref");
    Error error = indexFilePath.getParent().ensureDirectory();
    if (error)
       LOG_ERROR(error);
    return indexFilePath;
+}
+
+FilePath xrefIndexFilePath(const FilePath& rmdFile)
+{
+   std::string rmdRelativePath = bookRelativePath(rmdFile);
+   return xrefIndexFilePath(rmdRelativePath);
 }
 
 
@@ -145,17 +150,74 @@ class XRefProjectIndex
 {
 public:
 
-   json::Object projectIndex()
+   json::Array toJson()
    {
-      return json::Object();
+      json::Array indexJson;
 
       // find out what the docs in the book are
       std::vector<std::string> sourceFiles = bookdownSourceFiles();
 
-      // TODO: return as absolute paths? or have concept of project relative paths?
-      // for each doc, serve back the unsaved version and then if not unsaved the on disk version
+      for (std::vector<std::string>::size_type i = 0; i < sourceFiles.size(); i++) {
+
+         // alias source files
+         const std::string& sourceFile = sourceFiles[i];
+
+         // create a file entry
+         json::Object fileJson;
+         fileJson["file"] = sourceFile;
+
+         // prefer unsaved files
+         std::vector<std::string> entries;
+         std::map<std::string, XRefFileIndex>::const_iterator it = unsavedFiles_.find(sourceFile);
+         if (it != unsavedFiles_.end())
+         {
+            entries = it->second.entries;
+         }
+         // then check the disk based index
+         else
+         {
+            FilePath filePath = xrefIndexFilePath(sourceFile);
+            if (filePath.exists())
+            {
+               Error error = readStringVectorFromFile(filePath, &entries);
+               if (error)
+                  LOG_ERROR(error);
+            }
+         }
+
+         if (entries.size() > 0)
+         {
+            // entries
+            json::Array entriesJson;
+            for (std::vector<std::string>::size_type e = 0; e < entries.size(); e++)
+            {
+               json::Object entryJson;
+               const std::string& entry = entries[e];
+               if (entry.size() > 0)
+               {
+                  std::size_t spacePos = entry.find_first_of(' ');
+                  if (spacePos != std::string::npos)
+                  {
+                     entryJson["key"] = entry.substr(0, spacePos);
+                     entryJson["title"] = entry.substr(spacePos + 1);
+                  }
+                  else
+                  {
+                     entryJson["key"] = entry;
+                  }
+                  entriesJson.push_back(entryJson);
+               }
+            }
+            fileJson["entries"] = entriesJson;
+
+            // add to main index
+            indexJson.push_back(fileJson);
+         }
+      }
 
 
+
+      return indexJson;
    }
 
 
@@ -238,7 +300,7 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
    // remove from unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(path));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.removeUnsaved(fileInfo);
+      s_projectIndex.removeUnsaved(fileInfo);  
 }
 
 void onAllSourceDocsRemoved()
@@ -250,12 +312,6 @@ void onDeferredInit(bool)
 {
    if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
    {
-      std::vector<std::string> sourceFiles = bookdownSourceFiles();
-      for (int i = 0; i<sourceFiles.size(); i++)
-      {
-         std::cerr << sourceFiles[i] << std::endl;
-      }
-
       // create an incremental file change handler (on the heap so that it
       // survives the call to this function and is never deleted)
       IncrementalFileChangeHandler* pFileChangeHandler =
@@ -276,9 +332,6 @@ void onDeferredInit(bool)
 
 Error initialize()
 {
-   // requires bookdown website
-
-
    // subscribe to source docs events for maintaining the unsaved files list
    source_database::events().onDocUpdated.connect(onSourceDocUpdated);
    source_database::events().onDocRemoved.connect(onSourceDocRemoved);
@@ -286,7 +339,6 @@ Error initialize()
 
    // deferred init (build xref file index)
    module_context::events().onDeferredInit.connect(onDeferredInit);
-
 
    return Success();
 }
