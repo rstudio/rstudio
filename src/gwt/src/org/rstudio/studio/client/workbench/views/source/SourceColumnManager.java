@@ -1371,6 +1371,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setActive(MAIN_SOURCE_NAME);
 
       columnList_.remove(getByName(name));
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
    public void ensureVisible(boolean newTabPending)
