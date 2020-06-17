@@ -78,11 +78,13 @@ public class PanmirrorPandocServer {
       });
    }
    
-   public Promise<JavaScriptObject> getBibliography(String file, String csl, String etag)
+   public Promise<JavaScriptObject> getBibliography(String commandLine, String file, JsArrayString refBlocks, String csl, String etag)
    {
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.pandocGetBibliography(
-            file,
+            commandLine,
+        	file,
+            refBlocks,
             csl,
             etag,
             new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)

@@ -523,7 +523,9 @@ void pandocBiblioCompleted(const std::string& file,
 }
 
 
-void citeprocCompleted(const std::string& file,
+void citeprocCompleted(const std::string& commandLine,
+                       const std::string& file,
+                       json::Array& refBlocks,
                        const std::string& csl,
                        const json::JsonRpcFunctionContinuation& cont,
                        const core::system::ProcessResult& result)
@@ -561,10 +563,20 @@ void citeprocCompleted(const std::string& file,
             lines.push_back(nocite);
          }
          lines.push_back("---");
+          
+         // TODO: include any refBlocks (also nocite)
          std::string doc = boost::algorithm::join(lines, "\n");
 
          // run pandoc
          std::vector<std::string> args;
+     
+         // If we've received a command line bibliography file, include it
+         // in the args
+         if (commandLine.size() > 0) {
+             args.push_back("--bibliography");
+             args.push_back(commandLine);
+         }
+                   
          args.push_back("--to");
          args.push_back("html");
          args.push_back("--filter");
@@ -595,8 +607,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    json::JsonRpcResponse response;
 
    // extract params
-   std::string file, csl, etag;
-   Error error = json::readParams(request.params, &file, &csl, &etag);
+   std::string commandLine, file, csl, etag;
+   json::Array refBlocks;
+   Error error = json::readParams(request.params, &commandLine, &file, &refBlocks, &csl, &etag);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -612,6 +625,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
+   // TODO: We could now call this without a bibliography file (either with a command line only)
+   // or refBlocks only. Need to deal with that.
+    
    // build args
    std::vector<std::string> args;
    const FilePath filePath = module_context::resolveAliasedPath(file);
@@ -620,7 +636,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // run pandoc-citeproc
    core::system::ProcessResult result;
-   error = runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, file, csl, cont, _1));
+   error = runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, commandLine, file, refBlocks, csl, cont, _1));
    if (error)
    {
       json::setErrorResponse(error, &response);

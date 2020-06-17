@@ -18,13 +18,19 @@ import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prose
 import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
-import { Bibliography, BibliographyResult } from './bibliography';
+import { Bibliography, BibliographyResult, BibliographySource } from './bibliography';
 
 export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
-  getBibliography(file: string, csl: string | null, etag: string | null): Promise<BibliographyResult>;
+  getBibliography(
+    commandLine: string | null,
+    file: string,
+    refBlocks: string[],
+    csl: string | null,
+    etag: string | null,
+  ): Promise<BibliographyResult>;
   listExtensions(format: string): Promise<string>;
 }
 

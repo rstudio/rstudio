@@ -18,6 +18,7 @@ import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
 import { EditorUIContext, EditorUI } from './ui';
 import { PandocServer } from './pandoc';
 import Fuse from 'fuse.js';
+import { Editor } from '../editor/editor';
 
 export interface BibliographyFiles {
   bibliography: string;
@@ -65,6 +66,11 @@ export interface BibliographyDate {
   raw?: string;
 }
 
+interface YamlWithText {
+  text: string;
+  yaml: any;
+}
+
 // The fields and weights that will indexed and searched
 // when searching bibliographic entries
 const kFields: Fuse.FuseOptionKeyObject[] = [
@@ -88,25 +94,42 @@ export class BibliographyManager {
   }
 
   public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyEntry[]> {
-    // no files means no entries
-    const files = bibliographyFilesFromDoc(doc, ui.context);
-    if (files === null) {
-      return Promise.resolve([]);
+    const yamlNodes = yamlMetadataNodes(doc);
+
+    const parsedYamlNodes = yamlNodes.map(node => {
+      const yamlText = node.node.textContent;
+      const yamlCode = stripYamlDelimeters(yamlText);
+      return { text: yamlCode, yaml: parseYaml(yamlCode) };
+    });
+
+    // Gather any global bibliography
+    const commandLine = '';
+
+    // Gather the files from the document
+    const files = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
+
+    // Gather the reference block
+    const refBlocks = referenceBlocksFromYaml(parsedYamlNodes, ui.context);
+
+    if (files || refBlocks.length > 0 || commandLine) {
+      // get the bibliography
+      const result = await this.server.getBibliography(
+        commandLine,
+        files ? files.bibliography : '',
+        refBlocks,
+        files ? files.csl : '',
+        this.etag,
+      );
+
+      // Read bibliography data from files (via server)
+      if (!this.bibEntries || result.etag !== this.etag) {
+        this.bibEntries = generateBibliographyEntries(ui, result.bibliography);
+        this.reindexEntries();
+      }
+
+      // record the etag for future queries
+      this.etag = result.etag;
     }
-
-    // get the bibliography
-    const result = await this.server.getBibliography(files.bibliography, files.csl, this.etag);
-
-    // TODO: Parse any inline references and merge them into entries
-    // referencesFromDoc(doc, ui.context);
-
-    // update bibliography if necessary
-    if (!this.bibEntries || result.etag !== this.etag) {
-      this.update(ui, result.bibliography);
-    }
-
-    // record the etag for future queries
-    this.etag = result.etag;
 
     // return entries
     return this.bibEntries;
@@ -128,10 +151,7 @@ export class BibliographyManager {
     }
   }
 
-  private update(ui: EditorUI, bibliography: Bibliography) {
-    // generate entries
-    this.bibEntries = generateBibliographyEntries(ui, bibliography);
-
+  private reindexEntries() {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
@@ -142,56 +162,32 @@ export class BibliographyManager {
 }
 const kMaxCitationCompletions = 20;
 
-// TODO: Figure out what Pandoc does for multiple nodes, nodes + inline, etc...
-// TODO: Figure out what Pandoc does for duplicate keys (which does it u)
-
-function bibliographyFilesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographyFiles | null {
-  // TODO: references can actually be defined an inline yaml as per pandoc docs
-  // TODO: some reassurance that paths are handled correctly
-  // TODO: What about global references
-  const yamlNodes = yamlMetadataNodes(doc);
-  if (yamlNodes.length > 0) {
-    // Nodes that contain a bibliography entry
-    let biblioYaml: any = null;
-
-    // Find the first node that contains a bibliography, then stop
-    // looking at further nodes.
-    yamlNodes.some(node => {
-      const yamlText = node.node.textContent;
-      const yamlCode = stripYamlDelimeters(yamlText);
-      const yaml = parseYaml(yamlCode);
-      if (yaml && typeof yaml === 'object' && yaml.bibliography) {
-        biblioYaml = yaml;
-        return true;
-      }
-      return false;
-    });
-
-    // If we found at least one node with a bibliography, read that
-    if (biblioYaml) {
-      return {
-        bibliography: uiContext.getDefaultResourceDir() + '/' + biblioYaml.bibliography,
-        csl: biblioYaml.csl ? uiContext.getDefaultResourceDir() + '/' + biblioYaml.csl : null,
-      };
-    } else {
-      return null;
-    }
-  } else {
-    return null;
-  }
+function referenceBlocksFromYaml(parsedYamls: YamlWithText[], uiContext: EditorUIContext): string[] {
+  const refBlockYamls = parsedYamls.filter(
+    yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.references,
+  );
+  const refBlocks: string[] = refBlockYamls.map(refYamlWithText => {
+    return refYamlWithText.text;
+  });
+  return refBlocks;
 }
 
-function referencesFromDoc(doc: ProsemirrorNode, uiContext: EditorUIContext): BibliographySource[] {
-  const yamlNodes = yamlMetadataNodes(doc);
-  yamlNodes.map(node => {
-    const yamlText = node.node.textContent;
-    const yamlCode = stripYamlDelimeters(yamlText);
-    const yaml = parseYaml(yamlCode);
-    if (yaml && typeof yaml === 'object' && yaml.references) {
-      // TODO: What does pandoc do?
-    }
-  });
-  return [];
+function bibliographyFilesFromDoc(parsedYamls: YamlWithText[], uiContext: EditorUIContext): BibliographyFiles | null {
+  // TODO: some reassurance that paths are handled correctly
+  const bibliographyYamls = parsedYamls.filter(
+    yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.bibliography,
+  );
+
+  // Look through any yaml nodes to see whether any contain bibliography information
+  if (bibliographyYamls.length > 0) {
+    // If we found more than one bibliography node, use the last node amnd ignore the others
+    const bibYamlWithText = bibliographyYamls[bibliographyYamls.length - 1];
+    return {
+      bibliography: uiContext.getDefaultResourceDir() + '/' + bibYamlWithText.yaml.bibliography,
+      csl: bibYamlWithText.yaml.csl ? uiContext.getDefaultResourceDir() + '/' + bibYamlWithText.yaml.csl : null,
+    };
+  }
+  return null;
 }
 
 const kHangingIndentIdentifier = 'hanging-indent';
