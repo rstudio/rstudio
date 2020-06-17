@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror.server;
 
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -30,8 +31,9 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorXRefServer
 {
-   public PanmirrorXRefServer() {
+   public PanmirrorXRefServer(TextEditingTarget target) {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      target_ = target;
    }
    
    @Inject
@@ -43,12 +45,16 @@ public class PanmirrorXRefServer
    public Promise<JavaScriptObject> indexForFile(String file)
    {
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.xrefIndexForFile(
-            file,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
-         );
+         target_.withSavedDoc(() -> {
+            server_.xrefIndexForFile(
+               file,
+               new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            );
+         });
+         
       });
    }
 
-   PanmirrorXRefServerOperations server_;
+   private final TextEditingTarget target_;
+   private PanmirrorXRefServerOperations server_;
 }
