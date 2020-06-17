@@ -687,7 +687,7 @@ public class Source implements InsertSourceHandler,
                {
                   String name = doc.getSourceDisplayName();
                   sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY,
-                                                       columnManager_.findByName(name));
+                                                       columnManager_.getByName(name));
                }
                else
                   sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY, null);

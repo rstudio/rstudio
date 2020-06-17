@@ -135,7 +135,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(MAIN_SOURCE_NAME, display, this);
       columnList_.add(column);
-      setActive(column.getName());
 
       server_ = server;
       commands_ = commands;
@@ -159,7 +158,15 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
-      events_.addHandler(EditingTargetSelectedEvent.TYPE, event -> setActive(event.getTarget()));
+      events_.addHandler(EditingTargetSelectedEvent.TYPE,
+         new EditingTargetSelectedEvent.Handler()
+         {
+            @Override
+            public void onEditingTargetSelected(EditingTargetSelectedEvent event)
+            {
+               setActive(event.getTarget());
+            }
+         });
 
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
@@ -177,8 +184,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((column1) ->
-         column1.manageSourceNavigationCommands()));
+      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((col) ->
+         col.manageSourceNavigationCommands()));
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -209,6 +216,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
+      setActive(column.getName());
    }
 
    public String add()
@@ -256,7 +264,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       columnList_.add(column);
 
       if (activate || activeColumn_ == null)
-         activeColumn_ = column;
+         setActive(column);
 
       if (updateState)
          columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
@@ -272,35 +280,43 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (StringUtil.isNullOrEmpty(name))
       {
-         activeColumn_.setActiveEditor("");
-         activeColumn_ = null;
+         if (activeColumn_ != null)
+         {
+            activeColumn_.setActiveEditor("");
+            activeColumn_ = null;
+         }
          return;
       }
 
-      String prevColumn = activeColumn_ == null ? "" : activeColumn_.getName();
-      activeColumn_ = getByName(name);
-
-      // If the active column changed, we need to update the active editor
-      if (!StringUtil.isNullOrEmpty(prevColumn) && !StringUtil.equals(name, prevColumn))
-      {
-         SourceColumn column = getByName(prevColumn);
-         if (column == null)
-            return;
-         if (!hasActiveEditor())
-         {
-            Debug.logWarning("Setting to random editor.");
-            column.setActiveEditor();
-         }
-      }
+      // If we can't find the column, use the main column. This may happen on start up.
+      SourceColumn column = getByName(name);
+      if (column == null)
+         column = getByName(MAIN_SOURCE_NAME);
+      setActive(column);
    }
 
-   public void setActive(EditingTarget target)
+   private void setActive(EditingTarget target)
    {
-      activeColumn_ = findByDocument(target.getId());
+      setActive(findByDocument(target.getId()));
       activeColumn_.setActiveEditor(target);
    }
 
-   public void setActiveDocId(String docId)
+   private void setActive(SourceColumn column)
+   {
+      SourceColumn prevColumn = activeColumn_;
+      activeColumn_ = column;
+
+      // If the active column changed, we need to update the active editor
+      if (prevColumn != null && prevColumn != activeColumn_)
+      {
+         prevColumn.setActiveEditor("");
+         if (!hasActiveEditor())
+            activeColumn_.setActiveEditor();
+         manageCommands(true);
+      }
+   }
+
+   private void setActiveDocId(String docId)
    {
       for (SourceColumn column : columnList_)
       {
@@ -487,7 +503,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void manageCommands(boolean forceSync)
    {
-      columnList_.forEach((column) -> column.manageCommands(forceSync));
+      columnList_.forEach((column) -> {
+         if (column.isInitialized())
+            column.manageCommands(forceSync);
+      });
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
@@ -538,11 +557,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return column;
       }
       return null;
-   }
-
-   public SourceColumn findByName(String name)
-   {
-      return getByName(name);
    }
 
    public SourceColumn findByPosition(int x)
@@ -1284,7 +1298,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          if (!column.hasDoc())
          {
             if (column == activeColumn_)
-               setActive("");
+               setActive(MAIN_SOURCE_NAME);
             result.add(column.asWidget());
             columnList_.remove(column);
             if (num >= columnList_.size() || num == 1)
@@ -1325,7 +1339,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void closeAllColumns()
    {
       columnList_.forEach((column) -> closeColumn(column.getName()));
-      Debug.logToConsole("closed all columns, new size: " + getSize());
       assert getSize() == 0;
    }
 
@@ -1335,7 +1348,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
-         setActive("");
+         setActive(MAIN_SOURCE_NAME);
 
       columnList_.remove(getByName(name));
    }
@@ -2275,7 +2288,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
-   private SourceColumn getByName(String name)
+   public SourceColumn getByName(String name)
    {
       for (SourceColumn column : columnList_)
       {
