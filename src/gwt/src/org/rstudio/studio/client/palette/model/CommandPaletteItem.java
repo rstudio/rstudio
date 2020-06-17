@@ -59,7 +59,7 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
     * 
     * @param keywords The keywords to match on
     * 
-    * @return True if the palete item matches; false otherwise
+    * @return True if the palette item matches; false otherwise
     */
    boolean matchesSearch(String[] keywords);
 
