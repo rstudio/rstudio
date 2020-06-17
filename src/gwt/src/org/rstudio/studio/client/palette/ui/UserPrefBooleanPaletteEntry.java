@@ -34,9 +34,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    {
       super(val, item);
       prefItem_ = item;
-      boolean initial = false;
-
-      initial = val.getGlobalValue();
+      boolean initial = val.getGlobalValue();
       
       // Create the checkbox with the initial value
       checkbox_ = new CheckBox();

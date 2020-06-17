@@ -61,8 +61,7 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      return super.labelMatchesSearch(val_.getTitle(), keywords) ||
-             super.labelMatchesSearch("setting", keywords);
+      return super.labelMatchesSearch("setting " + val_.getTitle(), keywords);
    }
 
    @Override

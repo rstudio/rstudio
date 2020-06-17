@@ -96,20 +96,16 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      // Matches if the label matches
-      if (super.labelMatchesSearch(label_, keywords))
-      {
-         return true;
-      }
-      
-      // Non-workbench commands can match on command text
+      String prefix = "";
+
+      // Non-workbench commands can match on context
       if (command_.getContext() != Context.Workbench)
       {
-         return super.labelMatchesSearch(command_.getContext().toString(), keywords);
+         prefix = command_.getContext().toString() + " ";
       }
-      
-      // Otherwise, no match
-      return false;
+
+      // Matches if the label matches
+      return super.labelMatchesSearch(prefix + label_, keywords);
    }
 
    @Override

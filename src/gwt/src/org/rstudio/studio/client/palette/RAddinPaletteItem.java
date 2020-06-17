@@ -54,8 +54,7 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      return super.labelMatchesSearch(label_, keywords) || 
-    		 super.labelMatchesSearch(addin_.getPackage(), keywords);
+      return super.labelMatchesSearch(addin_.getPackage() + " " + label_, keywords);
    }
 
    @Override
