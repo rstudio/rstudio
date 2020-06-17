@@ -205,6 +205,7 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
     case 'paper-conference':
     case 'review':
     case 'review-book':
+    case 'techreport':
       return [ui.images.citations?.article, ui.images.citations?.article_dark];
     case 'bill':
     case 'legislation':
@@ -213,13 +214,20 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
     case 'treaty':
       return [ui.images.citations?.legal, ui.images.citations?.legal_dark];
     case 'book':
+    case 'booklet':
     case 'chapter':
+    case 'inbook':
+    case 'incollection':
     case 'manuscript':
+    case 'manual':
     case 'thesis':
+    case 'masterthesis':
+    case 'phdthesis':
       return [ui.images.citations?.book, ui.images.citations?.book_dark];
     case 'broadcast':
       return [ui.images.citations?.broadcast, ui.images.citations?.broadcast_dark];
     case 'data':
+    case 'data-set':
       return [ui.images.citations?.data, ui.images.citations?.data_dark];
     case 'entry':
     case 'entry-dictionary':
@@ -239,11 +247,16 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
     case 'post-weblog':
     case 'webpage':
       return [ui.images.citations?.web, ui.images.citations?.web_dark];
+    case 'conference':
+    case 'inproceedings':
+    case 'proceedings':
     case 'interview':
     case 'pamphlet':
     case 'personal_communication':
     case 'report':
     case 'speech':
+    case 'misc':
+    case 'unpublished':
     default:
       return [ui.images.citations?.other, ui.images.citations?.other_dark];
   }
