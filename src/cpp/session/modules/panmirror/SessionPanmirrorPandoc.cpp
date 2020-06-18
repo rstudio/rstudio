@@ -436,8 +436,8 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
-   // resolve the file path
-   FilePath filePath = module_context::resolveAliasedPath(file);
+
+
 
    // determine biblio files
    std::vector<FileInfo> biblioFiles;
@@ -455,13 +455,18 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       }
    }
    // is this file part of the current project? if so then use the project bibliographies as the default
-   else if (projects::projectContext().hasProject() &&
-            filePath.isWithin(projects::projectContext().buildTargetPath()))
+   else if (!file.empty() && projects::projectContext().hasProject())
    {
-      std::vector<FilePath> projectBibs = module_context::bookdownBibliographies();
-      std::transform(projectBibs.begin(), projectBibs.end(), std::back_inserter(biblioFiles), toFileInfo);
+      FilePath filePath = module_context::resolveAliasedPath(file);
+      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
+      {
+         std::vector<FilePath> projectBibs = module_context::bookdownBibliographies();
+         std::transform(projectBibs.begin(),
+                        projectBibs.end(),
+                        std::back_inserter(biblioFiles),
+                        toFileInfo);
+      }
    }
-
 
    // if the client, the filesystem, and the cache all agree on the etag then serve from cache
    if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(biblioFiles, refBlock))
