@@ -751,7 +751,8 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isRMarkdown2 = extendedType_ == "rmarkdown";
+      boolean isRMarkdown2 = extendedType_ != null && 
+                             extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
 
