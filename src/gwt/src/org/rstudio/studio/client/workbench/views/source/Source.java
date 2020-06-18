@@ -3970,8 +3970,8 @@ public class Source implements InsertSourceHandler,
             SessionUtils.showPublishUi(session_, userState_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
-            ((activeEditor_.getExtendedFileType() != null &&
-              (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
+            (activeEditor_.getExtendedFileType() != null &&
+              (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
                activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
