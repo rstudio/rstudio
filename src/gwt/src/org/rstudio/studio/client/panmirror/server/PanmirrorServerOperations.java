@@ -1,5 +1,5 @@
 /*
- * SessionBookdown.hpp
+ * PanmirroServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,32 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef SESSION_SESSION_BOOKDOWN_HPP
-#define SESSION_SESSION_BOOKDOWN_HPP
 
-namespace rstudio {
-   namespace core {
-         class Error;
-      namespace json {
-         class Object;
-      }
-   }
+package org.rstudio.studio.client.panmirror.server;
+
+
+
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
+
+
+public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
+                                                   PanmirrorCrossrefServerOperations,
+                                                   PanmirrorXRefServerOperations
+{
+ 
 }
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace rmarkdown {
-namespace bookdown {
-
-bool hasRenumberFootnotes();
-
-core::Error initialize();
-
-} // namespace bookdown
-} // namespace rmarkdown
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_SESSION_BOOKDOWN_HPP

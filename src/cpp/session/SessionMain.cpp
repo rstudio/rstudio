@@ -178,6 +178,7 @@
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
+#include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -541,6 +542,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)
+      (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)

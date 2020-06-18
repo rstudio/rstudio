@@ -861,6 +861,24 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+
+// paths to pandoc and pandoc-citeproc suitable for passing to the shell
+// (string_utils::utf8ToSystem has been called on them)
+std::string pandocPath();
+std::string pandocCiteprocPath();
+
+core::Error runPandoc(const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessResult* pResult);
+
+core::Error runPandocAsync(const std::vector<std::string>& args,
+                           const std::string& input,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
+core::Error runPandocCiteprocAsync(const std::vector<std::string>& args,
+                                   const std::string&input,
+                                   const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

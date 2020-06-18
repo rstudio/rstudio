@@ -462,6 +462,13 @@
       FALSE
 })
 
+.rs.addFunction("bookdown.SourceFiles", function(input_dir) {
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(input_dir)
+   bookdown:::source_files()
+})
+
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
    
    index <- .rs.inputDirToIndexFile(input_dir)

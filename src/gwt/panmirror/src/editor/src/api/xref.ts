@@ -1,5 +1,5 @@
 /*
- * SessionBookdown.hpp
+ * xref.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,32 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef SESSION_SESSION_BOOKDOWN_HPP
-#define SESSION_SESSION_BOOKDOWN_HPP
 
-namespace rstudio {
-   namespace core {
-         class Error;
-      namespace json {
-         class Object;
-      }
-   }
+
+export interface XRefServer {
+  indexForFile: (file: string) => Promise<XRefIndex>;
 }
 
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace rmarkdown {
-namespace bookdown {
+export interface XRef {
+  key: string;
+  title: string;
+}
 
-bool hasRenumberFootnotes();
+export interface XRefFileIndex {
+  file: string;
+  entries: XRef[];
+}
 
-core::Error initialize();
-
-} // namespace bookdown
-} // namespace rmarkdown
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_SESSION_BOOKDOWN_HPP
+export interface XRefIndex {
+  files: XRefFileIndex[];
+}

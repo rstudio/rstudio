@@ -6172,6 +6172,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
    }
+   
+   @Override
+   public void xrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, XREF_INDEX_FOR_FILE, file, callback);
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6672,5 +6678,7 @@ public class RemoteServer implements Server
    private static final String PANDOC_GET_BIBLIOGRAPHY = "pandoc_get_bibliography";
    
    private static final String CROSSREF_WORKS = "crossref_works";
+   
+   private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    
 }
