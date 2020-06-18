@@ -311,7 +311,7 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
    // remove from unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(path));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.removeUnsaved(fileInfo);  
+      s_projectIndex.removeUnsaved(fileInfo);
 }
 
 void onAllSourceDocsRemoved()
@@ -319,9 +319,14 @@ void onAllSourceDocsRemoved()
    s_projectIndex.removeAllUnsaved();
 }
 
+bool isBookdownContext()
+{
+   return module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown");
+}
+
 void onDeferredInit(bool)
 {
-   if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
+   if (isBookdownContext())
    {
       // create an incremental file change handler (on the heap so that it
       // survives the call to this function and is never deleted)
@@ -339,10 +344,31 @@ void onDeferredInit(bool)
 }
 
 
-Error xrefIndexForFile(const json::JsonRpcRequest&,
+Error xrefIndexForFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(s_projectIndex.toJson());
+   // read params
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   // if this is a bookdown context then send the whole project index
+   if (isBookdownContext() && filePath.isWithin(projects::projectContext().buildTargetPath()))
+   {
+      pResponse->setResult(s_projectIndex.toJson());
+   }
+
+   // otherwise just send an index for this file (e.g could be blogdown or distill)
+   else
+   {
+
+   }
+
+
    return Success();
 }
 
