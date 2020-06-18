@@ -1,6 +1,6 @@
 
-
--- output paragraph if it contains an xref
+-- output paragraph if it contains an xref (some of the functions below
+-- (e.g. Code and DisplayMath) set this flag if the discover an xref)
 local xref_pending = false
 function Para(s)
   if xref_pending then
@@ -9,6 +9,11 @@ function Para(s)
   else
     return ''
   end
+end
+
+-- headers just output id and header text
+function Header(lev, s, attr)
+  return attr.id .. ' ' .. s .. '\n'
 end
 
 -- rmd code chunks w/ labels get turned into inline code within a paragraph
@@ -34,12 +39,6 @@ function Code(s, attr)
   end
 end
 
--- headers just output id and header text
-function Header(lev, s, attr)
-  return attr.id .. ' ' .. s .. '\n'
-end
-
-
 -- tables with specially formatted caption
 function Table(caption, aligns, widths, headers, rows)
   local tab_pattern = "^%s*%(#(tab:[a-zA-Z0-9/%-]+)%)%s*(.*)$"
@@ -63,17 +62,17 @@ function DisplayMath(s)
   end
 end
 
--- reflect body
+-- echo body
 function Doc(body, metadata, variables)
   return body
 end
 
--- reflect text
+-- echo text
 function Str(s)
   return s
 end
 
--- reflect spaces
+-- echo space
 function Space()
   return ' '
 end
@@ -84,7 +83,6 @@ end
 function Blocksep()
   return ''
 end
-
 
 function SoftBreak()
   return ''
