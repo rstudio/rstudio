@@ -67,6 +67,8 @@ import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
+import { CrossrefServer } from '../api/crossref';
+import { XRefServer } from '../api/xref';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -98,7 +100,6 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { CrossrefServer } from '../api/crossref';
 
 
 export interface EditorCode {
@@ -124,6 +125,7 @@ export interface EditorContext {
 export interface EditorServer {
   readonly pandoc: PandocServer;
   readonly crossref: CrossrefServer;
+  readonly xref: XRefServer;
 }
 
 export interface EditorHooks {

@@ -35,83 +35,10 @@ namespace pandoc {
 
 namespace {
 
-std::string pandocBinary(const std::string& binary)
-{
-#ifndef WIN32
-   std::string target = binary;
-#else
-   std::string target = binary + ".exe";
-#endif
-  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(target);
-  return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
-}
-
-std::string pandocPath()
-{
-   return pandocBinary("pandoc");
-}
-
-std::string pandocCiteprocPath()
-{
-   return pandocBinary("pandoc-citeproc");
-}
-
 std::string resolvePandocInputFile(const std::string &file)
 {
   const FilePath filePath = module_context::resolveAliasedPath(file);
   return string_utils::utf8ToSystem(filePath.getAbsolutePath());
-}
-
-core::system::ProcessOptions pandocOptions()
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   return options;
-}
-
-Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-
-   return core::system::runProgram(
-      pandocPath(),
-      args,
-      input,
-      pandocOptions(),
-      pResult
-   );
-}
-
-Error runAsync(const std::string& executablePath,
-                     const std::vector<std::string>& args,
-                     const std::string&input,
-                     const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-
-   return module_context::processSupervisor().runProgram(
-      executablePath,
-      args,
-      input,
-      pandocOptions(),
-      onCompleted
-   );
-}
-
-Error runPandocAsync(const std::vector<std::string>& args,
-                     const std::string&input,
-                     const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   return runAsync(pandocPath(), args, input, onCompleted);
-}
-
-Error runPandocCiteprocAsync(const std::vector<std::string>& args,
-                             const std::string&input,
-                             const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   return runAsync(pandocCiteprocPath(), args, input, onCompleted);
 }
 
 Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOptions)
@@ -181,7 +108,7 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    std::copy(options.begin(), options.end(), std::back_inserter(args));
 
    // run pandoc (async)
-   error = runPandocAsync(args, jsonAst.write(), boost::bind(endAstToMarkdown, cont, _1));
+   error = module_context::runPandocAsync(args, jsonAst.write(), boost::bind(endAstToMarkdown, cont, _1));
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -271,7 +198,7 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
 
    // run pandoc
    core::system::ProcessResult result;
-   error = runPandocAsync(args, markdown, boost::bind(endJsonObjectRequest, cont, _1));
+   error = module_context::runPandocAsync(args, markdown, boost::bind(endJsonObjectRequest, cont, _1));
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -288,7 +215,7 @@ bool pandocCaptureOutput(const std::vector<std::string>& args,
 {
    // run pandoc
    core::system::ProcessResult result;
-   Error error = runPandoc(args, input, &result);
+   Error error = module_context::runPandoc(args, input, &result);
    if (error)
    {
       json::setErrorResponse(error, pResponse);
@@ -580,8 +507,8 @@ void citeprocCompleted(const std::string& commandLine,
          args.push_back("--to");
          args.push_back("html");
          args.push_back("--filter");
-         args.push_back(pandocCiteprocPath());
-         Error error = runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, file, csl, jsonCitations, cont, _1));
+         args.push_back(module_context::pandocCiteprocPath());
+         Error error = module_context::runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, file, csl, jsonCitations, cont, _1));
          if (error)
          {
             json::setErrorResponse(error, &response);
@@ -617,6 +544,18 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
+   // TODO: only applies if the currently edited file is in the project
+
+   // get project bibliographies
+   std::vector<FilePath> projectBibs = module_context::projectBiblographies();
+   /*
+   for (auto bibFile : projectBibs)
+   {
+
+   }
+   */
+
+
    // if the client, the filesystem, and the cache all agree on the etag then serve from cache
    if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(file, csl))
    {
@@ -636,7 +575,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // run pandoc-citeproc
    core::system::ProcessResult result;
-   error = runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, commandLine, file, refBlocks, csl, cont, _1));
+   error = module_context::runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, commandLine, file, refBlocks, csl, cont, _1));
    if (error)
    {
       json::setErrorResponse(error, &response);

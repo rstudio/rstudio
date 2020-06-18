@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
@@ -38,11 +39,13 @@ public class VisualModePanmirrorContext
 {
    
    public VisualModePanmirrorContext(DocUpdateSentinel docUpdateSentinel,
+                                     TextEditingTarget target,
                                      VisualModeChunkExec exec,
                                      VisualModePanmirrorFormat format)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
+      target_ = target;
       exec_ = exec;
       format_ = format;
    }
@@ -56,7 +59,12 @@ public class VisualModePanmirrorContext
    
    public PanmirrorContext createContext(PanmirrorUIDisplay.ShowContextMenu showContextMenu)
    {  
-      return new PanmirrorContext(uiContext(), uiDisplay(showContextMenu), exec_.uiExecute());
+      return new PanmirrorContext(
+         uiContext(), 
+         uiDisplay(showContextMenu), 
+         exec_.uiExecute(),
+         target_
+      );
    }
    
    private PanmirrorUIContext uiContext()
@@ -161,6 +169,7 @@ public class VisualModePanmirrorContext
   
 
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final TextEditingTarget target_;
    
    private final VisualModeChunkExec exec_;
    private final VisualModePanmirrorFormat format_;

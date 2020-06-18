@@ -14,14 +14,18 @@
  */
 package org.rstudio.studio.client.palette.ui;
 
-import org.rstudio.core.client.widget.Toggle;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.TextAlign;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
@@ -30,21 +34,30 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    {
       super(val, item);
       prefItem_ = item;
-      boolean initial = false;
-
-      initial = val.getGlobalValue();
-
-      toggle_ = new Toggle("", false);
-      toggle_.setState(initial ? 
-         Toggle.State.ON : Toggle.State.OFF, false);
+      boolean initial = val.getGlobalValue();
+      
+      // Create the checkbox with the initial value
+      checkbox_ = new CheckBox();
+      checkbox_.setValue(initial);
+      Style style = checkbox_.getElement().getStyle();
+      syncLabel();
+      
+      // Set a constant width for the checkbox so that toggling on/off doesn't
+      // change its width
+      style.setWidth(45, Unit.PX);
+      style.setDisplay(Display.INLINE_BLOCK);
+      style.setTextAlign(TextAlign.LEFT);
+      style.setCursor(Cursor.POINTER);
 
       // Add handler to the toggle control to sync pref with toggle state
-      toggle_.addValueChangeHandler((state) ->
+      checkbox_.addValueChangeHandler((newVal) ->
       {
          // Compute new value
-         boolean newValue = state.getValue() == Toggle.State.ON;
          BooleanValue pref = (BooleanValue)pref_;
-         pref.setGlobalValue(newValue);
+         pref.setGlobalValue(newVal.getValue());
+
+         // Sync the label text to "on" or "off"
+         syncLabel();
 
          // Save new value
          prefItem_.nudgeWriter();
@@ -53,7 +66,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 
       // Establish link between the toggle switch and the name element for
       // accessibility purposes (must be done post-init so that name_ has an ID)
-      Roles.getCheckboxRole().setAriaLabelledbyProperty(toggle_.getElement(), 
+      Roles.getCheckboxRole().setAriaLabelledbyProperty(checkbox_.getElement(), 
             Id.of(name_.getElement()));
    }
 
@@ -69,17 +82,20 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 
       // Set new value (will trigger an event that causes the underlying pref to
       // set)
-      boolean newValue = toggle_.getState() != Toggle.State.ON;
-      toggle_.setState(newValue ? Toggle.State.ON : Toggle.State.OFF,
-         !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
+      checkbox_.setValue(!checkbox_.getValue(), true /* fire events */);
    }
 
    @Override
    public Widget getInvoker()
    {
-      return toggle_;
+      return checkbox_;
    }
    
-   private final Toggle toggle_;
+   private void syncLabel()
+   {
+	   checkbox_.setText(checkbox_.getValue() ? "On" : "Off");
+   }
+   
+   private final CheckBox checkbox_;
    private final UserPrefPaletteItem prefItem_;
 }

@@ -17,6 +17,8 @@
 ### Bugfixes
 
 - Announce text of warnings bar via screen reader (#6963)
+- Fix issue where projects using renv sometimes failed to load (#7077)
+- Fix display issue with keyboard shortcut in Modify Keyboard Shortcuts dialog (#7142)
 - Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix Compare Results and other incompatibility with newer versions of the `shinytest` package (#6960)
 - Fix Terminal to work with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696, #6809)
@@ -41,6 +43,13 @@
 - Fix misalignment of some number cells in the data viewer (#6975)
 - Fix C++ autocompletion results missing on macOS in some contexts (#7097)
 - Fix misleading errors report for `verify-installation` without Launcher (Pro #1718)
+- Fix Global Options failure to launch when missing secondary repositories (#7116)
+- Send keyboard focus to the Source pane when creating new files (#7103)
+- Fix failure to open HTML widgets from the Viewer in an external web browser on Windows with R >= 4.0.0 (#6893)
+- Fix "cannot access the file" error with rstan when Viewer is open (#7046)
+- Fix launching jobs from working directories with spaces on their names (Pro #1708)
+- Update editor toolbar when R Markdown documents are switched to/from Notebook mode in YAML header (#7051)
+- Fix error when invoking spell check manually on some languages (#7018)
 
 ### RStudio Server Pro
 

@@ -20,6 +20,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
@@ -95,7 +96,16 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      return super.labelMatchesSearch(label_, keywords);
+      String prefix = "";
+
+      // Non-workbench commands can match on context
+      if (command_.getContext() != Context.Workbench)
+      {
+         prefix = command_.getContext().toString() + " ";
+      }
+
+      // Matches if the label matches
+      return super.labelMatchesSearch(prefix + label_, keywords);
    }
 
    @Override
