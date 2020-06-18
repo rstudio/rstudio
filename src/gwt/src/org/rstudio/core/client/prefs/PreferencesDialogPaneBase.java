@@ -174,8 +174,8 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    {
       dialog_ = dialog;
    }
-   
-   void setPaneVisible(boolean visible)
+
+   protected void setPaneVisible(boolean visible)
    {
       getElement().getStyle().setDisplay(visible
                                               ? Display.BLOCK
