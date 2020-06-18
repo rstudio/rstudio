@@ -330,6 +330,13 @@ public class TypoSpellChecker
       context_.invalidateWord(word);
    }
 
+   /* Support old style async suggestion calls for blacklisted dictionaries */
+   public void legacySuggestionList(String word,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      spellingService_.suggestionList(word, callback);
+   }
+
    public String[] suggestionList(String word)
    {
       if (typoNative_ == null)
