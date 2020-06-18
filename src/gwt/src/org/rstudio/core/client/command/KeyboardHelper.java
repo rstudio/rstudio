@@ -157,6 +157,7 @@ public class KeyboardHelper
       
       map[144] = "NumLock";
       map[145] = "ScrollLock";
+      map[173] = "-";
       map[186] = ";";
       map[187] = "=";
       map[188] = ",";
