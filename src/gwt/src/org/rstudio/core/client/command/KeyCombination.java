@@ -187,14 +187,16 @@ public class KeyCombination
    
    private static int normalizeKeyCode(int keyCode)
    {
-      if (keyCode == 173)
+      switch (keyCode)
       {
-         // convert Firefox hyphens to Chrome hyphens
+      
+      case 109: // NumPad minus
+      case 173: // Firefox hyphen
          return 189;
-      }
-      else
-      {
+         
+      default:
          return keyCode;
+         
       }
    }
    
