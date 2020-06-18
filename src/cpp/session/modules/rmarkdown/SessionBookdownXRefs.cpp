@@ -270,10 +270,13 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    if (event.type() == core::system::FileChangeEvent::FileAdded ||
        event.type() == core::system::FileChangeEvent::FileModified)
    {
-      XRefFileIndex idx = indexForDoc(rmdFile);
-      Error error = writeStringVectorToFile(idxFile, idx.entries);
-      if (error)
-         LOG_ERROR(error);
+      if (rmdFile.exists())
+      {
+         XRefFileIndex idx = indexForDoc(rmdFile);
+         Error error = writeStringVectorToFile(idxFile, idx.entries);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    // if this is a delete then remove the index
    else if (event.type() == core::system::FileChangeEvent::FileRemoved)
