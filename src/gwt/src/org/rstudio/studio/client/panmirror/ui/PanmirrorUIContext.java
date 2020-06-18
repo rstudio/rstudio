@@ -22,6 +22,7 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIContext
 {
+   public Getter getDocumentPath;
    public Getter getDefaultResourceDir;
    public Mapper mapPathToResource;
    public Mapper mapResourceToURL;

@@ -17,12 +17,15 @@
 
 
 #include <shared_core/Error.hpp>
+#include <core/Hash.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/system/Process.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -34,12 +37,6 @@ namespace panmirror {
 namespace pandoc {
 
 namespace {
-
-std::string resolvePandocInputFile(const std::string &file)
-{
-  const FilePath filePath = module_context::resolveAliasedPath(file);
-  return string_utils::utf8ToSystem(filePath.getAbsolutePath());
-}
 
 Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOptions)
 {
@@ -346,46 +343,33 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
 
 }
 
-std::string readCitationId(const json::Value& jsonValue)
-{
-   if (jsonValue.isObject())
-   {
-      std::string id;
-      Error error = json::readObject(jsonValue.getObject(), "id", id);
-      if (error)
-         LOG_ERROR(error);
-      return id;
-   }
-   return "";
-}
-
-
-// cache the last bibliography we returned along w/ the timestamps of the bibliography and csl file
+// cache the last bibliography we returned (along w/ enough info to construct an etag for the cache)
 class BiblioCache
 {
 public:
-   static std::string etag(const std::string& biblio, const std::string& csl)
+   static std::string etag(const std::vector<core::FileInfo>& biblioFiles,
+                           const std::string& refBlock)
    {
-      return etag(fileInfo(biblio), fileInfo(csl));
+      std::ostringstream ostr;
+      for (auto file : biblioFiles)
+          ostr << file.absolutePath() << ":" << file.lastWriteTime();
+      ostr << hash::crc32HexHash(refBlock);
+      return ostr.str();
    }
 
 public:
-   void update(const json::Object& biblioJson, const std::string& biblio, const std::string& csl)
+   void update(const json::Object& biblioJson,
+               const std::vector<core::FileInfo>& biblioFiles,
+               const std::string& refBlock)
    {
       biblioJson_ = biblioJson;
-      biblioFile_ = fileInfo(biblio);
-      if (!csl.empty())
-         cslFile_ = fileInfo(csl);
-      else
-         cslFile_ = core::FileInfo();
+      biblioFiles_ = biblioFiles;
+      refBlock_ = refBlock;
    }
 
    std::string etag()
    {
-      std::ostringstream ostr;
-      ostr << biblioFile_.absolutePath() << ":" << biblioFile_.lastWriteTime();
-      ostr << cslFile_.absolutePath() << ":" << cslFile_.lastWriteTime();
-      return ostr.str();
+      return etag(biblioFiles_, refBlock_);
    }
 
    void setResponse(json::JsonRpcResponse* pResponse)
@@ -397,63 +381,15 @@ public:
    }
 
 private:
-
-   static std::string etag(const FileInfo& biblio, const FileInfo& csl)
-   {
-      std::ostringstream ostr;
-      ostr << biblio.absolutePath() << ":" << biblio.lastWriteTime();
-      ostr << csl.absolutePath() << ":" << csl.lastWriteTime();
-      return ostr.str();
-   }
-
-   static core::FileInfo fileInfo(const std::string& file)
-   {
-      return file.empty() ? FileInfo() : FileInfo(module_context::resolveAliasedPath(file));
-   }
-
-private:
    json::Object biblioJson_;
-   core::FileInfo biblioFile_;
-   core::FileInfo cslFile_;
+   std::vector<core::FileInfo> biblioFiles_;
+   std::string refBlock_;
 };
 BiblioCache s_biblioCache;
 
 
-void pandocBiblioCompleted(const std::string& file,
-                           const std::string& csl,
-                           const json::Array& jsonCitations,
-                           const json::JsonRpcFunctionContinuation& cont,
-                           const core::system::ProcessResult& result)
-{   
-   json::JsonRpcResponse response;
-
-   // read the html
-   if (result.exitStatus == EXIT_SUCCESS)
-   {
-      // create bibliography
-      json::Object biblio;
-      biblio["sources"] = jsonCitations;
-      biblio["html"] = result.stdOut;
-
-      // cache last successful bibliograpy
-      s_biblioCache.update(biblio, file, csl);
-
-      // set response
-      s_biblioCache.setResponse(&response);
-   }
-   else
-   {
-      json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
-   }
-
-   cont(Success(), &response);
-}
-
-
-void citeprocCompleted(const std::string& commandLine,
-                       const std::string& file,
-                       json::Array& refBlocks,
-                       const std::string& csl,
+void citeprocCompleted(const std::vector<core::FileInfo>& biblioFiles,
+                       const std::string& refBlock,
                        const json::JsonRpcFunctionContinuation& cont,
                        const core::system::ProcessResult& result)
 {
@@ -463,68 +399,24 @@ void citeprocCompleted(const std::string& commandLine,
       json::Array jsonCitations;
       if (readJsonValue(result.stdOut, &jsonCitations, &response))
       {
-         // get the ids
-         std::vector<std::string> ids;
-         std::transform(jsonCitations.begin(), jsonCitations.end(), std::back_inserter(ids), readCitationId);
+         // create bibliography
+         json::Object biblio;
+         biblio["sources"] = jsonCitations;
 
-         // build a document to send to pandoc
-         std::vector<std::string> lines;
-         lines.push_back("---");
-         lines.push_back("bibliography: " + resolvePandocInputFile(file));
-         if (!csl.empty())
-            lines.push_back("csl: " + resolvePandocInputFile(csl));
-         if (ids.size() > 0)
-         {
-            lines.push_back("nocite: |");
-            std::string nocite = "  ";
-            for (std::vector<std::string>::size_type i = 0; i<ids.size(); i++)
-            {
-               const std::string& id = ids[i];
-               if (!id.empty())
-               {
-                  if (i>0)
-                    nocite += ", ";
-                  nocite += ("@" + id);
-               }
-            }
-            lines.push_back(nocite);
-         }
-         lines.push_back("---");
-          
-         // TODO: include any refBlocks (also nocite)
-         std::string doc = boost::algorithm::join(lines, "\n");
+         // cache last successful bibliograpy
+         s_biblioCache.update(biblio, biblioFiles, refBlock);
 
-         // run pandoc
-         std::vector<std::string> args;
-     
-         // If we've received a command line bibliography file, include it
-         // in the args
-         if (commandLine.size() > 0) {
-             args.push_back("--bibliography");
-             args.push_back(commandLine);
-         }
-                   
-         args.push_back("--to");
-         args.push_back("html");
-         args.push_back("--filter");
-         args.push_back(module_context::pandocCiteprocPath());
-         Error error = module_context::runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, file, csl, jsonCitations, cont, _1));
-         if (error)
-         {
-            json::setErrorResponse(error, &response);
-            cont(Success(), &response);
-         }
-      }
-      else
-      {
-         cont(Success(), &response);
+         // set response
+         s_biblioCache.setResponse(&response);
       }
    }
    else
    {
       json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
-      cont(Success(), &response);
    }
+
+   // call continuation
+   cont(Success(), &response);
 }
 
 void pandocGetBibliography(const json::JsonRpcRequest& request,
@@ -534,9 +426,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    json::JsonRpcResponse response;
 
    // extract params
-   std::string commandLine, file, csl, etag;
-   json::Array refBlocks;
-   Error error = json::readParams(request.params, &commandLine, &file, &refBlocks, &csl, &etag);
+   std::string file, refBlock, etag;
+   json::Array bibliographiesJson;
+   Error error = json::readParams(request.params, &file, &bibliographiesJson, &refBlock, &etag);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -544,38 +436,64 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
-   // TODO: only applies if the currently edited file is in the project
+   // resolve the file path
+   FilePath filePath = module_context::resolveAliasedPath(file);
 
-   // get project bibliographies
-   std::vector<FilePath> projectBibs = module_context::projectBiblographies();
-   /*
-   for (auto bibFile : projectBibs)
+   // determine biblio files
+   std::vector<FileInfo> biblioFiles;
+
+   // if there are bibliographies passed form the client then use those in preference to the
+   // project bibliographies (b/c they will appear after the project bibliographies)
+   if (bibliographiesJson.getSize() > 0)
    {
-
+      std::vector<std::string> biblios;
+      bibliographiesJson.toVectorString(biblios);
+      for (auto biblio : biblios)
+      {
+         FilePath biblioPath = module_context::resolveAliasedPath(biblio);
+         biblioFiles.push_back(FileInfo(biblioPath));
+      }
    }
-   */
+   // is this file part of the current project? if so then use the project bibliographies as the default
+   else if (projects::projectContext().hasProject() &&
+            filePath.isWithin(projects::projectContext().buildTargetPath()))
+   {
+      std::vector<FilePath> projectBibs = module_context::bookdownBibliographies();
+      std::transform(projectBibs.begin(), projectBibs.end(), std::back_inserter(biblioFiles), toFileInfo);
+   }
 
 
    // if the client, the filesystem, and the cache all agree on the etag then serve from cache
-   if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(file, csl))
+   if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(biblioFiles, refBlock))
    {
       s_biblioCache.setResponse(&response);
       cont(Success(), &response);
       return;
    }
 
-   // TODO: We could now call this without a bibliography file (either with a command line only)
-   // or refBlocks only. Need to deal with that.
-    
    // build args
    std::vector<std::string> args;
-   const FilePath filePath = module_context::resolveAliasedPath(file);
-   args.push_back(string_utils::utf8ToSystem(filePath.getAbsolutePath()));
+
+   // always pass the biblio files
+   for (auto biblioFile : biblioFiles)
+      args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+
+   // if a ref block is provided then write it to a temporary file and pass it as well
+   if (!refBlock.empty())
+   {
+      FilePath tempYaml = module_context::tempFile("biblio", "yaml");
+      Error error = writeStringToFile(tempYaml, refBlock);
+      if (error)
+         LOG_ERROR(error);
+      args.push_back(string_utils::utf8ToSystem(tempYaml.getAbsolutePath()));
+   }
+
+   // convert to json
    args.push_back("--bib2json");
 
    // run pandoc-citeproc
    core::system::ProcessResult result;
-   error = module_context::runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, commandLine, file, refBlocks, csl, cont, _1));
+   error = module_context::runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, biblioFiles, refBlock, cont, _1));
    if (error)
    {
       json::setErrorResponse(error, &response);

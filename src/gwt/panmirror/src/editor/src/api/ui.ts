@@ -49,6 +49,10 @@ export interface EditorDialogs {
 }
 
 export interface EditorUIContext {
+
+  // get the path to the current document
+  getDocumentPath: () => string | null;
+
   // get the default directory for resources (e.g. where relative links point to)
   getDefaultResourceDir: () => string;
 

@@ -34,7 +34,7 @@ namespace module_context {
 
 // currently we implement this function in SessionBookdown.cpp b/c it's the
 // only known source of project level bibliographies
-std::vector<FilePath> projectBiblographies()
+std::vector<FilePath> bookdownBibliographies()
 {
    std::vector<FilePath> bibliographies;
    if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
