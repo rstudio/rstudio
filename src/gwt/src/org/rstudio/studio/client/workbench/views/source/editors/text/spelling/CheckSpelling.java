@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -23,11 +24,14 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
@@ -303,12 +307,42 @@ public class CheckSpelling
 
             view_.focusReplacement();
 
-            String[] suggestions = typoSpellChecker_.suggestionList(word);
-            view_.setSuggestions(suggestions);
-            if (suggestions.length > 0)
+            // If Typo isn't loaded or isn't able to load (blacklisted dictionary)
+            // just defer to the async backend dictionary. Once we can load all dictionaries
+            // the legacy code can be removed.
+            if (TypoSpellChecker.isLoaded())
             {
-               view_.getReplacement().setText(suggestions[0]);
-               view_.focusReplacement();
+               String[] suggestions = typoSpellChecker_.suggestionList(word);
+               view_.setSuggestions(suggestions);
+               if (suggestions.length > 0)
+               {
+                  view_.getReplacement().setText(suggestions[0]);
+                  view_.focusReplacement();
+               }
+            }
+            else
+            {
+               typoSpellChecker_.legacySuggestionList(word, new ServerRequestCallback<JsArrayString>()
+               {
+                  @Override
+                  public void onResponseReceived(
+                     JsArrayString response)
+                  {
+                     String[] suggestions = JsUtil.toStringArray(response);
+                     view_.setSuggestions(suggestions);
+                     if (suggestions.length > 0)
+                     {
+                        view_.getReplacement().setText(suggestions[0]);
+                        view_.focusReplacement();
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
 
             return false;
