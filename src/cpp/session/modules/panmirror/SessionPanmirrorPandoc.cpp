@@ -544,6 +544,18 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
+   // TODO: only applies if the currently edited file is in the project
+
+   // get project bibliographies
+   std::vector<FilePath> projectBibs = module_context::projectBiblographies();
+   /*
+   for (auto bibFile : projectBibs)
+   {
+
+   }
+   */
+
+
    // if the client, the filesystem, and the cache all agree on the etag then serve from cache
    if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(file, csl))
    {

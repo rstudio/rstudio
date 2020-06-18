@@ -16,13 +16,45 @@
 #include "SessionBookdown.hpp"
 
 #include <core/Exec.hpp>
+#include <shared_core/FilePath.hpp>
 
+#include <r/RExec.hpp>
+
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionBookdownXRefs.hpp"
 
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace session {
+
+namespace module_context {
+
+// currently we implement this function in SessionBookdown.cpp b/c it's the
+// only known source of project level bibliographies
+std::vector<FilePath> projectBiblographies()
+{
+   std::vector<FilePath> bibliographies;
+   if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
+   {
+      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
+      std::vector<std::string> files;
+      Error error = r::exec::RFunction(".rs.bookdown.bibliographies", inputDir).call(&files);
+      if (error)
+         LOG_ERROR(error);
+      std::transform(files.begin(),
+                     files.end(),
+                     std::back_inserter(bibliographies),
+                     boost::bind(&FilePath::completeChildPath, &buildTargetPath, _1));
+   }
+   return bibliographies;
+}
+
+} // namespace module_context
+
 namespace modules {
 namespace rmarkdown {
 namespace bookdown {

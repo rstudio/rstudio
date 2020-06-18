@@ -849,6 +849,7 @@ bool isBookdownWebsite();
 bool isBlogdownProject();
 bool isDistillProject();
 std::string websiteOutputDir();
+std::vector<core::FilePath> projectBiblographies();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
