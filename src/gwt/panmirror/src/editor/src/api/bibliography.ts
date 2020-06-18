@@ -18,7 +18,7 @@ import { PandocServer } from './pandoc';
 import Fuse from 'fuse.js';
 
 import { EditorUIContext, EditorUI } from './ui';
-import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
+import { yamlMetadataNodes, parseYaml, stripYamlDelimeters, toYamlCode } from './yaml';
 import { replaceClassWithStyle } from './css';
 
 export interface BibliographyFiles {
@@ -66,11 +66,6 @@ export interface BibliographyDate {
   raw?: string;
 }
 
-interface YamlWithText {
-  text: string;
-  yaml: any;
-}
-
 // The fields and weights that will indexed and searched
 // when searching bibliographic entries
 const kFields: Fuse.FuseOptionKeyObject[] = [
@@ -106,7 +101,7 @@ export class BibliographyManager {
     const files = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
 
     // Gather the reference block
-    const refBlock = referenceBlockFromYaml(parsedYamlNodes, ui.context);
+    const refBlock = referenceBlockFromYaml(parsedYamlNodes);
 
     if (files || refBlock) {
       // get the bibliography
@@ -158,47 +153,46 @@ export class BibliographyManager {
 }
 const kMaxCitationCompletions = 20;
 
-function referenceBlockFromYaml(parsedYamls: YamlWithText[], uiContext: EditorUIContext): string {
-  const refBlockYamls = parsedYamls.filter(
-    yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.references,
-  );
+function referenceBlockFromYaml(yamls: any[]): string {
+  const refBlockYamls = yamls.filter(yaml => typeof yaml === 'object' && yaml.references);
 
   if (refBlockYamls.length > 0) {
-    const refYamlWithText = refBlockYamls[refBlockYamls.length - 1];
-    return refYamlWithText.text;
+    const lastReferenceYaml = refBlockYamls[refBlockYamls.length - 1];
+    const referenceYaml = toYamlCode(lastReferenceYaml.references);
+    if (referenceYaml) {
+      return referenceYaml;
+    }
   }
 
   return '';
 }
 
-function bibliographyFilesFromDoc(parsedYamls: YamlWithText[], uiContext: EditorUIContext): BibliographyFiles | null {
-  const bibliographyYamls = parsedYamls.filter(
-    yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.bibliography,
-  );
+function bibliographyFilesFromDoc(yamls: any[], uiContext: EditorUIContext): BibliographyFiles | null {
+  const bibliographyYamls = yamls.filter(yaml => typeof yaml === 'object' && yaml.bibliography);
 
   // Look through any yaml nodes to see whether any contain bibliography information
   if (bibliographyYamls.length > 0) {
     // TODO: path handling ok here?
     // If we found more than one bibliography node, use the last node and ignore the others
-    const bibYamlWithText = bibliographyYamls[bibliographyYamls.length - 1];
-    const bibFileHeader = bibYamlWithText.yaml.bibliography;
-    if (Array.isArray(bibFileHeader)) {
+    const lastBibliographyYaml = bibliographyYamls[bibliographyYamls.length - 1];
+    const bibliographyFiles = lastBibliographyYaml.bibliography;
+    if (Array.isArray(bibliographyFiles)) {
       // An array of bibliographies
-      const bibPaths = bibFileHeader.map(bibFile => uiContext.getDefaultResourceDir() + '/' + bibFile);
+      const bibPaths = bibliographyFiles.map(
+        bibliographyFile => uiContext.getDefaultResourceDir() + '/' + bibliographyFile,
+      );
       return {
-        bibliography: bibPaths,
+        bibliography: bibliographyFiles,
       };
     } else {
       // A single bibliography
       return {
-        bibliography: [uiContext.getDefaultResourceDir() + '/' + bibFileHeader],
+        bibliography: [uiContext.getDefaultResourceDir() + '/' + bibliographyFiles],
       };
     }
   }
   return null;
 }
-
-const kHangingIndentIdentifier = 'hanging-indent';
 
 function imageForType(ui: EditorUI, type: string): [string?, string?] {
   switch (type) {

@@ -40,7 +40,7 @@ export function firstYamlBlock(code: string): { [key: string]: any } | null {
       return yamlParsed;
     } else {
       return null;
-    } 
+    }
   } else {
     return null;
   }
@@ -58,12 +58,19 @@ export function parseYaml(yamlCode: string) {
   }
 }
 
-export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode
-    .replace(/^\s*---/, "")
-    .replace(/(?:---|\.\.\.)([ \t]*)$/, "");
+export function toYamlCode(obj: any): string | null {
+  try {
+    const yamlCode = yaml.safeDump(obj);
+    return yamlCode;
+  } catch (e) {
+    logException(e);
+    return null;
+  }
 }
 
+export function stripYamlDelimeters(yamlCode: string) {
+  return yamlCode.replace(/^\s*---/, '').replace(/(?:---|\.\.\.)([ \t]*)$/, '');
+}
 
 function logException(e: Error) {
   // TODO: log exceptions (we don't want to use console.log in production code, so this would
