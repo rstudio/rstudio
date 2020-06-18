@@ -68,7 +68,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
     view: {
       component: BibliographySourceView,
       key: entry => entry.source.id,
-      width: 480,
+      width: 400,
       height: 52,
       maxVisible: 5,
       hideNoResults: true,
@@ -128,7 +128,7 @@ const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
       <div className={'pm-completion-citation-summary'}>
         <div className={'pm-completion-citation-source'}>
           <div className={'pm-completion-citation-authors'}>
-            @{entry.source.id} - {entry.authorsFormatter(entry.source.author, 32)}
+            @{entry.source.id} - {entry.authorsFormatter(entry.source.author, 26 - entry.source.id.length)}
           </div>
           <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
         </div>

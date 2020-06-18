@@ -47,14 +47,14 @@
   text-overflow: ellipsis;
   font-size: 0.9em;
   opacity: 80%;
-  width: 390px;
+  width: 324px;
 
-  line-height: 14px;
+  line-height: 18px;
 }
 
 .pm-completion-citation-type {
-  margin-left: 10px;
-  margin-right: 10px;
+  margin-left: 6px;
+  margin-right: 6px;
 
   display: flex;
   align-items: center;
@@ -69,8 +69,4 @@
   margin-top: 1px;
   margin-right: 5px;
   filter: opacity(80%);
-}
-
-.pm-completion-citation-issuedate {
-  font-weight: normal;
 }
