@@ -112,22 +112,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # extract the contents from each regular file
       contents <- lapply(files, function(file) {
          
-         # ignore '.snapshot' files as they are not used here
+         # ignore files that do not have a registered output handler
          ext <- tools::file_ext(file)
-         if (identical(ext, "snapshot"))
+         if (!ext %in% names(.rs.rnb.outputHandlers))
             return(NULL)
          
-         # read other files
-         .rs.readFile(
-            file,
-            encoding = "UTF-8",
-            binary = .rs.endsWith(file, "png")  ||
-                     .rs.endsWith(file, "jpg")  ||
-                     .rs.endsWith(file, "jpeg") ||
-                     .rs.endsWith(file, "rdf")
-            
+         # read other files (suppress warnings in case we attempt
+         # to read a text file that has NUL bytes and hence is truncated;
+         # if those are an issue they'll cause a louder down-stream error)
+         suppressWarnings(
+            .rs.readFile(
+               file     = file,
+               encoding = "UTF-8",
+               binary   = ext %in% c("png", "jpg", "jpeg", "rdf")
+            )
          )
+         
       })
+      
       names(contents) <- basename(files)
       contents
    })
@@ -353,15 +355,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       chunkData <- .rs.coalesceCsvOutput(rnbData$chunk_data[[chunkId]])
       
       # map file extensions to handlers
-      outputHandlers <- list(
-         "png"  = .rs.rnb.outputSourcePng,
-         "jpg"  = .rs.rnb.outputSourceJpeg,
-         "jpeg" = .rs.rnb.outputSourceJpeg,
-         "csv"  = .rs.rnb.outputSourceConsole,
-         "html" = .rs.rnb.outputSourceHtml,
-         "rdf"  = .rs.rnb.outputSourceRdf
-      )
-
       outputList <- .rs.enumerate(chunkData, function(fileName, fileContents) {
          
          # read metadata sidecar if present
@@ -373,7 +366,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # find and execute handler for extension (return NULL if no handler defined)
          ext <- tools::file_ext(fileName)
-         handler <- outputHandlers[[ext]]
+         handler <- .rs.rnb.outputHandlers[[ext]]
          if (!is.function(handler))
             return(NULL)
          
@@ -1159,3 +1152,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalarListFromList(defaultOptions)
 })
 
+# a list mapping file extensions to its associated output handler
+.rs.setVar("rnb.outputHandlers", list(
+   "png"  = .rs.rnb.outputSourcePng,
+   "jpg"  = .rs.rnb.outputSourceJpeg,
+   "jpeg" = .rs.rnb.outputSourceJpeg,
+   "csv"  = .rs.rnb.outputSourceConsole,
+   "html" = .rs.rnb.outputSourceHtml,
+   "rdf"  = .rs.rnb.outputSourceRdf
+))
