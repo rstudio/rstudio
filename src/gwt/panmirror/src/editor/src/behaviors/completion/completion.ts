@@ -320,7 +320,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
     if (state && state.handler && (this.completions.length > 0 || !state.handler.view.hideNoResults)) {
       const props = {
         handler: state.handler!,
-        pos: state.result!.pos,
+        pos: state.result!.pos + (state.result!.offset || 0),
         completions: this.completions,
         selectedIndex: this.selectedIndex,
         noResults: this.ui.context.translateText('No Results'),

@@ -100,6 +100,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         return {
           token,
           pos,
+          offset: -match[1].length,
           completions: (state: EditorState) => manager.entries(ui, context.doc),
           decorations:
             token.length === 0
@@ -107,7 +108,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
                   iconAndTextPlaceholderDecoration(
                     context.selection.head,
                     ui.images.search!,
-                    ui.context.translateText('search...'),
+                    ui.context.translateText(''),
                   ),
                 ])
               : undefined,
