@@ -43,7 +43,7 @@ public class KeyCombination
       }
       
       key_ = key;
-      keyCode_ = keyCode;
+      keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
       
    }
@@ -53,7 +53,7 @@ public class KeyCombination
                          int modifiers)
    {
       key_ = key;
-      keyCode_ = keyCode;
+      keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
    }
 
@@ -183,6 +183,19 @@ public class KeyCombination
       
       String version = BrowseCap.qtWebEngineVersion();
       return Version.compare(version, "5.15.0") < 0;
+   }
+   
+   private static int normalizeKeyCode(int keyCode)
+   {
+      if (keyCode == 173)
+      {
+         // convert Firefox hyphens to Chrome hyphens
+         return 189;
+      }
+      else
+      {
+         return keyCode;
+      }
    }
    
    private final String key_;
