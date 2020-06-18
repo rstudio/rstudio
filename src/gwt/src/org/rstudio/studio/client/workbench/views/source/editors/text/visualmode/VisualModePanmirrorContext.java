@@ -70,6 +70,11 @@ public class VisualModePanmirrorContext
    private PanmirrorUIContext uiContext()
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
+      
+      uiContext.getDocumentPath = () -> {
+        return docUpdateSentinel_.getPath(); 
+      };
+      
       uiContext.getDefaultResourceDir = () -> {  
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
