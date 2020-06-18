@@ -1,6 +1,9 @@
 
+-- lua pattern (including capture) for an xref label
+local xref_label_pattern = "([a-zA-Z0-9/%-]+)"
+
 -- output paragraph if it contains an xref (some of the functions below
--- (e.g. Code and DisplayMath) set this flag if the discover an xref)
+-- (e.g. Code and DisplayMath) set this flag if the discover an xref
 local xref_pending = false
 function Para(s)
   if xref_pending then
@@ -17,10 +20,10 @@ function Header(lev, s, attr)
 end
 
 -- rmd code chunks w/ labels get turned into inline code within a paragraph
--- look for a code chunk w/ fig.cap or a kable within the 'inline' code
+-- look for a code chunk w/ fig.cap or a kable w/ a caption
 function Code(s, attr)
   
-  local chunk_begin = "^{[a-zA-Z0-9_]+[%s,]+([a-zA-Z0-9/%-]+)"
+  local chunk_begin = "^{[a-zA-Z0-9_]+[%s,]+" .. xref_label_pattern
   local param = "%s*=%s*[\"']([^\"']+)[\"']"
   local fig_pattern = chunk_begin .. "[ ,].*fig%.cap" .. param .. ".*}.*$"
   local tab_pattern = chunk_begin .. ".*}.*kable%s*%(.*caption" .. param .. ".*$"
@@ -41,10 +44,10 @@ end
 
 -- tables with specially formatted caption
 function Table(caption, aligns, widths, headers, rows)
-  local tab_pattern = "^%s*%(#(tab:[a-zA-Z0-9/%-]+)%)%s*(.*)$"
+  local tab_pattern = "^%s*%(#tab:" .. xref_label_pattern .. "%)%s*(.*)$"
   local tab_label, tab_caption = string.match(caption, tab_pattern)
   if tab_label and tab_caption then
-    return tab_label .. ' ' .. tab_caption .. '\n'
+    return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
   else
     return ''
   end
@@ -52,11 +55,11 @@ end
 
 -- equations w/ embedded (\#eq:label) 
 function DisplayMath(s)
-  local eq_pattern = "^.*%(\\#(eq:[a-zA-Z0-9/%-]+)%).*$"
+  local eq_pattern = "^.*%(\\#eq:" .. xref_label_pattern .. "%).*$"
   local eq_xref = string.match(s, eq_pattern)
   if (eq_xref) then
     xref_pending = true
-    return eq_xref .. '\n'
+    return 'eq:' .. eq_xref .. '\n'
   else
     return ''
   end
