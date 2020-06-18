@@ -22,8 +22,7 @@ import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
 import { replaceClassWithStyle } from './css';
 
 export interface BibliographyFiles {
-  bibliography: string;
-  csl: string | null;
+  bibliography: string[];
 }
 
 export interface BibliographyResult {
@@ -33,7 +32,6 @@ export interface BibliographyResult {
 
 export interface Bibliography {
   sources: BibliographySource[];
-  html: string;
 }
 
 // An entry which includes the source as well as a
@@ -43,7 +41,6 @@ export interface BibliographyEntry {
   authorsFormatter: (authors: BibliographyAuthor[], maxLength: number) => string;
   issuedDateFormatter: (issueDate: BibliographyDate) => string;
   image: [string?, string?];
-  html?: string;
 }
 
 // The individual bibliographic source
@@ -105,22 +102,18 @@ export class BibliographyManager {
       return { text: yamlCode, yaml: parseYaml(yamlCode) };
     });
 
-    // Gather any global bibliography
-    const commandLine = '';
-
     // Gather the files from the document
     const files = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
 
     // Gather the reference block
-    const refBlocks = referenceBlocksFromYaml(parsedYamlNodes, ui.context);
+    const refBlock = referenceBlockFromYaml(parsedYamlNodes, ui.context);
 
-    if (files || refBlocks.length > 0 || commandLine) {
+    if (files || refBlock) {
       // get the bibliography
       const result = await this.server.getBibliography(
-        commandLine,
-        files ? files.bibliography : '',
-        refBlocks,
-        files ? files.csl : '',
+        ui.context.getDocumentPath(),
+        files ? files.bibliography : [],
+        refBlock,
         this.etag,
       );
 
@@ -165,30 +158,42 @@ export class BibliographyManager {
 }
 const kMaxCitationCompletions = 20;
 
-function referenceBlocksFromYaml(parsedYamls: YamlWithText[], uiContext: EditorUIContext): string[] {
+function referenceBlockFromYaml(parsedYamls: YamlWithText[], uiContext: EditorUIContext): string {
   const refBlockYamls = parsedYamls.filter(
     yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.references,
   );
-  const refBlocks: string[] = refBlockYamls.map(refYamlWithText => {
+
+  if (refBlockYamls.length > 0) {
+    const refYamlWithText = refBlockYamls[refBlockYamls.length - 1];
     return refYamlWithText.text;
-  });
-  return refBlocks;
+  }
+
+  return '';
 }
 
 function bibliographyFilesFromDoc(parsedYamls: YamlWithText[], uiContext: EditorUIContext): BibliographyFiles | null {
-  // TODO: some reassurance that paths are handled correctly
   const bibliographyYamls = parsedYamls.filter(
     yamlWithText => yamlWithText.yaml && typeof yamlWithText.yaml === 'object' && yamlWithText.yaml.bibliography,
   );
 
   // Look through any yaml nodes to see whether any contain bibliography information
   if (bibliographyYamls.length > 0) {
-    // If we found more than one bibliography node, use the last node amnd ignore the others
+    // TODO: path handling ok here?
+    // If we found more than one bibliography node, use the last node and ignore the others
     const bibYamlWithText = bibliographyYamls[bibliographyYamls.length - 1];
-    return {
-      bibliography: uiContext.getDefaultResourceDir() + '/' + bibYamlWithText.yaml.bibliography,
-      csl: bibYamlWithText.yaml.csl ? uiContext.getDefaultResourceDir() + '/' + bibYamlWithText.yaml.csl : null,
-    };
+    const bibFileHeader = bibYamlWithText.yaml.bibliography;
+    if (Array.isArray(bibFileHeader)) {
+      // An array of bibliographies
+      const bibPaths = bibFileHeader.map(bibFile => uiContext.getDefaultResourceDir() + '/' + bibFile);
+      return {
+        bibliography: bibPaths,
+      };
+    } else {
+      // A single bibliography
+      return {
+        bibliography: [uiContext.getDefaultResourceDir() + '/' + bibFileHeader],
+      };
+    }
   }
   return null;
 }
@@ -262,14 +267,6 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
 }
 
 export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliography): BibliographyEntry[] {
-  const parser = new window.DOMParser();
-  const doc = parser.parseFromString(bibliography.html, 'text/html');
-
-  // The root refs element may contain style information that we should forward to
-  // the individual items
-  const root = doc.getElementById('refs');
-  const hangingIndent = root?.className.includes(kHangingIndentIdentifier);
-
   // Formatter for shortening the author string (formatter will support localization of string
   // template used for shortening the string)
   const authorsFormatter = (authors: BibliographyAuthor[], maxLength: number): string => {
@@ -283,41 +280,13 @@ export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliogr
 
   // Map the generated html preview to each source item
   return bibliography.sources.map(source => {
-    // Find the generated html in the bibliography preview
-    // and use that
-    const element = doc.getElementById(`ref-${source.id}`);
-
-    // We'll actually pass the child element which contains the html for displaying the
-    // reference
-    const firstElementChild = element?.firstElementChild as HTMLElement;
-
-    if (element) {
-      // If the refs element uses hanging indents, forward this on to the
-      // child element
-      if (hangingIndent) {
-        firstElementChild?.classList.add(kHangingIndentIdentifier);
-      }
-    }
-
     return {
       source,
       authorsFormatter,
       issuedDateFormatter,
       image: imageForType(ui, source.type),
-      html: firstElementChild ? styleHtml(firstElementChild).outerHTML : undefined,
     };
   });
-}
-
-// The HTML preview emitted by pandoc-citeproc includes some based style information
-// for formatting the HTML. This implements the styles and attaches them directly to each
-// preview element so they will be shown properly without additional style information
-function styleHtml(el: HTMLElement): HTMLElement {
-  replaceClassWithStyle(el, 'smallcaps', { 'font-variant': 'small-caps' });
-  replaceClassWithStyle(el, 'nocase', { 'text-transform': 'lowercase' });
-  replaceClassWithStyle(el, 'indent', { 'text-indent': '20px', 'padding-left': '-20px' });
-  replaceClassWithStyle(el, 'hanging-indent', { 'text-indent': '-20px', 'padding-left': '20px' });
-  return el;
 }
 
 const kEtAl = 'et al.';
