@@ -25,6 +25,6 @@ public interface PanmirrorPandocServerOperations
    void pandocGetCapabilities(ServerRequestCallback<JavaScriptObject> callback);
    void pandocMarkdownToAst(String markdown, String format, JsArrayString options, ServerRequestCallback<JavaScriptObject> callback);
    void pandocAstToMarkdown(JavaScriptObject ast, String format, JsArrayString options, ServerRequestCallback<String> callback);
-   void pandocGetBibliography(String commandLine, String file, JsArrayString refBlocks, String csl, String etag, ServerRequestCallback<JavaScriptObject> callback);
+   void pandocGetBibliography(String file, JsArrayString bibliographies, String refBlock, String etag, ServerRequestCallback<JavaScriptObject> callback);
    void pandocListExtensions(String format, ServerRequestCallback<String> callback);
 }
