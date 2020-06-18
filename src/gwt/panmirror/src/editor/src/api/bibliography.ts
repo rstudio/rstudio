@@ -110,7 +110,6 @@ export class BibliographyManager {
         refBlock,
         this.etag,
       );
-      console.log(result);
 
       // Read bibliography data from files (via server)
       if (!this.bibEntries || result.etag !== this.etag) {
