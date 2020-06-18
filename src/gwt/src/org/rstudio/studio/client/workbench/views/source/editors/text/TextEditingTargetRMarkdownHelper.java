@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class TextEditingTargetRMarkdownHelper
 {
@@ -135,7 +136,7 @@ public class TextEditingTargetRMarkdownHelper
           fileType.isMarkdown() &&
           useRMarkdownV2(contents))
       {
-         return "rmarkdown";
+         return SourceDocument.XT_RMARKDOWN_DOCUMENT;
       }
       else
       {
