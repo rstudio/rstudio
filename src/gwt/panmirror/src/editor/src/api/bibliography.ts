@@ -12,13 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
-import { EditorUIContext, EditorUI } from './ui';
 import { PandocServer } from './pandoc';
+
 import Fuse from 'fuse.js';
-import { Editor } from '../editor/editor';
+
+import { EditorUIContext, EditorUI } from './ui';
+import { yamlMetadataNodes, parseYaml, stripYamlDelimeters } from './yaml';
+import { replaceClassWithStyle } from './css';
 
 export interface BibliographyFiles {
   bibliography: string;
@@ -39,8 +40,10 @@ export interface Bibliography {
 // rendered html preview of the citation
 export interface BibliographyEntry {
   source: BibliographySource;
+  authorsFormatter: (authors: BibliographyAuthor[], maxLength: number) => string;
+  issuedDateFormatter: (issueDate: BibliographyDate) => string;
   image: [string?, string?];
-  html: string;
+  html?: string;
 }
 
 // The individual bibliographic source
@@ -267,33 +270,110 @@ export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliogr
   const root = doc.getElementById('refs');
   const hangingIndent = root?.className.includes(kHangingIndentIdentifier);
 
+  // Formatter for shortening the author string (formatter will support localization of string
+  // template used for shortening the string)
+  const authorsFormatter = (authors: BibliographyAuthor[], maxLength: number): string => {
+    return formatAuthors(authors, maxLength, ui);
+  };
+
+  // Formatter used for shortening and displaying issue dates.
+  const issuedDateFormatter = (date: BibliographyDate): string => {
+    return formatIssuedDate(date, ui);
+  };
+
   // Map the generated html preview to each source item
   return bibliography.sources.map(source => {
-    const id = source.id;
-
     // Find the generated html in the bibliography preview
     // and use that
-    const element = doc.getElementById(`ref-${id}`);
+    const element = doc.getElementById(`ref-${source.id}`);
+
+    // We'll actually pass the child element which contains the html for displaying the
+    // reference
+    const firstElementChild = element?.firstElementChild as HTMLElement;
+
     if (element) {
       // If the refs element uses hanging indents, forward this on to the
-      // individual child elements
+      // child element
       if (hangingIndent) {
-        element.firstElementChild?.classList.add(kHangingIndentIdentifier);
+        firstElementChild?.classList.add(kHangingIndentIdentifier);
       }
-      return {
-        source,
-        image: imageForType(ui, source.type),
-        html: element.innerHTML,
-      };
     }
 
-    // No preview html was available for this item, return a placeholder rendering instead.
-    // TODO: Select a placeholder or decide to error when the preview is invalid
-    // For example, if user directs us to a malformed csl file file that results in no preview
     return {
       source,
-      image: [ui.images.citations?.other, ui.images.citations?.other_dark],
-      html: `<p>${source.author} ${source.title}</p>`,
+      authorsFormatter,
+      issuedDateFormatter,
+      image: imageForType(ui, source.type),
+      html: firstElementChild ? styleHtml(firstElementChild).outerHTML : undefined,
     };
   });
+}
+
+// The HTML preview emitted by pandoc-citeproc includes some based style information
+// for formatting the HTML. This implements the styles and attaches them directly to each
+// preview element so they will be shown properly without additional style information
+function styleHtml(el: HTMLElement): HTMLElement {
+  replaceClassWithStyle(el, 'smallcaps', { 'font-variant': 'small-caps' });
+  replaceClassWithStyle(el, 'nocase', { 'text-transform': 'lowercase' });
+  replaceClassWithStyle(el, 'indent', { 'text-indent': '20px', 'padding-left': '-20px' });
+  replaceClassWithStyle(el, 'hanging-indent', { 'text-indent': '-20px', 'padding-left': '20px' });
+  return el;
+}
+
+const kEtAl = 'et al.';
+function formatAuthors(authors: BibliographyAuthor[], maxLength: number, ui: EditorUI): string {
+  // TODO: Needs to support localization of the templated strings
+  let formattedAuthorString = '';
+  authors
+    .map(author => {
+      if (author.given.length > 0) {
+        // Family and Given name
+        return `${author.family}, ${author.given.substring(0, 1)}`;
+      } else {
+        // Family name only
+        return `${author.family}`;
+      }
+    })
+    .every((value, index, values) => {
+      // If we'll exceed the maximum length, append 'et al' and stop
+      if (formattedAuthorString.length + value.length > maxLength) {
+        formattedAuthorString = `${formattedAuthorString}, ${kEtAl}`;
+        return false;
+      }
+
+      if (index === 0) {
+        // The first author
+        formattedAuthorString = value;
+      } else if (values.length > 1 && index === values.length - 1) {
+        // The last author
+        formattedAuthorString = `${formattedAuthorString}, and ${value}`;
+      } else {
+        // Middle authors
+        formattedAuthorString = `${formattedAuthorString}, ${value}`;
+      }
+      return true;
+    });
+  return formattedAuthorString;
+}
+
+function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
+  // TODO: Needs to support localization of the templated strings
+  // No issue date for this
+  if (!date) {
+    return '';
+  }
+
+  switch (date['date-parts'].length) {
+    // There is a date range
+    case 2:
+      return `${date['date-parts'][0]}-${date['date-parts'][1]}`;
+    // Only a single date
+    case 1:
+      return `${date['date-parts'][0]}`;
+
+    // Seems like a malformed date :(
+    case 0:
+    default:
+      return '';
+  }
 }
