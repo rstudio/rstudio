@@ -1,24 +1,45 @@
 
+-- TODO: allow for fig.cap or caption that doesn't use a quoted string?
 
-function Doc(body, metadata, variables)
-  return body
+-- output paragraph if it contains an xref
+local xref_pending = false
+function Para(s)
+  if xref_pending then
+    xref_pending = false
+    return s
+  else
+    return ''
+  end
 end
 
-function Str(s)
-  return s
+-- rmd code chunks w/ labels get turned into inline code within a paragraph
+-- look for a code chunk w/ fig.cap or a kable within the 'inline' code
+function Code(s, attr)
+  
+  local chunk_begin = "^{[a-zA-Z0-9_]+[%s,]+([a-zA-Z0-9/%-]+)"
+  local param = "%s*=%s*[\"']([^\"']+)[\"']"
+  local fig_pattern = chunk_begin .. "[ ,].*fig%.cap" .. param .. ".*}.*$"
+  local tab_pattern = chunk_begin .. ".*}.*kable%s*%(.*caption" .. param .. ".*$"
+
+  local fig_label, fig_caption = string.match(s, fig_pattern)
+  local tab_label, tab_caption = string.match(s, tab_pattern)
+  
+  if fig_label and fig_caption then
+    xref_pending = true
+    return 'fig:' .. fig_label .. ' ' .. fig_caption .. '\n'
+  elseif tab_label and tab_caption then
+    xref_pending = true
+    return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
+  else
+    return ''
+  end
 end
 
-function Space()
-  return ' '
-end
-
+-- headers just output id and header text
 function Header(lev, s, attr)
   return attr.id .. ' ' .. s .. '\n'
 end
 
-function CodeBlock(s, attr)
-  return '' 
-end
 
 function CaptionedImage(src, tit, caption, attr)
   return ''   
@@ -32,10 +53,27 @@ function DisplayMath(s)
   return ''  
 end
 
+-- reflect body
+function Doc(body, metadata, variables)
+  return body
+end
+
+-- reflect text
+function Str(s)
+  return s
+end
+
+-- reflect spaces
+function Space()
+  return ' '
+end
+
+
+-- no-op for other things within the ast
+
 function Blocksep()
   return ''
 end
-
 
 
 function SoftBreak()
@@ -78,10 +116,6 @@ function Image(s, src, tit, attr)
   return ''
 end
 
-function Code(s, attr)
-  return ''
-end
-
 function InlineMath(s)
   return ''  
 end
@@ -114,7 +148,7 @@ function Plain(s)
   return '' 
 end
 
-function Para(s)
+function CodeBlock(s, attr)
   return '' 
 end
 
@@ -149,15 +183,4 @@ end
 function Div(s, attr)
   return ''
 end
-
--- The following code will produce runtime warnings when you haven't defined
--- all of the functions you need for the custom writer, so it's useful
--- to include when you're working on a writer.
-local meta = {}
-meta.__index =
-  function(_, key)
-    io.stderr:write(string.format("WARNING: Undefined function '%s'\n",key))
-    return function() return "" end
-  end
-setmetatable(_G, meta)
 
