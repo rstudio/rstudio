@@ -222,11 +222,18 @@ public:
    }
 
 
-   void updateUnsaved(const FileInfo& fileInfo, const std::string& contents)
+   void updateUnsaved(const FileInfo& fileInfo, const std::string& contents, bool dirty)
    {
-      FilePath filePath = toFilePath(fileInfo);
-      XRefFileIndex idx = indexForDoc(filePath, contents);
-      unsavedFiles_[bookRelativePath(filePath)] = idx;
+      // always remove to start with
+      removeUnsaved(fileInfo);
+
+      // add it back if it's dirty
+      if (dirty)
+      {
+         FilePath filePath = toFilePath(fileInfo);
+         XRefFileIndex idx = indexForDoc(filePath, contents);
+         unsavedFiles_[bookRelativePath(filePath)] = idx;
+      }
    }
 
    void removeUnsaved(const FileInfo& fileInfo)
@@ -288,7 +295,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // update unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(pDoc->path()));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.updateUnsaved(fileInfo, pDoc->contents());
+      s_projectIndex.updateUnsaved(fileInfo, pDoc->contents(), pDoc->dirty());
 
 }
 
