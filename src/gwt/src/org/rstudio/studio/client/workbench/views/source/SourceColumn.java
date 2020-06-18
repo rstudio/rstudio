@@ -65,7 +65,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SourceColumn implements SelectionHandler<Integer>,
+public class SourceColumn implements BeforeShowEvent.Handler,
+                                     SelectionHandler<Integer>,
                                      TabClosingEvent.Handler,
                                      TabCloseEvent.Handler,
                                      TabClosedEvent.Handler,
@@ -105,13 +106,12 @@ public class SourceColumn implements SelectionHandler<Integer>,
       display_ = display;
       manager_ = manager;
 
+      display_.addBeforeShowHandler(this);
       display_.addSelectionHandler(this);
       display_.addTabClosingHandler(this);
       display_.addTabCloseHandler(this);
       display_.addTabClosedHandler(this);
       display_.addTabReorderHandler(this);
-
-      ensureVisible(false);
 
       // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
@@ -306,6 +306,7 @@ public class SourceColumn implements SelectionHandler<Integer>,
    void setActiveEditor()
    {
        if (activeEditor_ == null &&
+           display_.getActiveTabIndex() > 0 &&
            editors_.size() > display_.getActiveTabIndex())
           onActivate(editors_.get(display_.getActiveTabIndex()));
    }
@@ -858,12 +859,12 @@ public class SourceColumn implements SelectionHandler<Integer>,
       boolean rsCommandsAvailable =
               isActive &&
               SessionUtils.showPublishUi(manager_.getSession(), manager_.getUserState()) &&
-                      (activeEditor_ != null) &&
-                      (activeEditor_.getPath() != null) &&
-                      (activeEditor_.getExtendedFileType() != null &&
-                             (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
-                              activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
+                 (activeEditor_ != null) &&
+                 (activeEditor_.getPath() != null) &&
+                 (activeEditor_.getExtendedFileType() != null &&
+                    (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
+                     activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+                     activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
       {
@@ -973,7 +974,6 @@ public class SourceColumn implements SelectionHandler<Integer>,
                       final String contents,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      ensureVisible(true);
       boolean isActive = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
@@ -1007,6 +1007,13 @@ public class SourceColumn implements SelectionHandler<Integer>,
             });
    }
    // event handlers
+
+   @Override
+   public void onBeforeShow(BeforeShowEvent event)
+   {
+      if (manager_.getDocsRestored())
+         onBeforeShow();
+   }
 
    public void onBeforeShow()
    {

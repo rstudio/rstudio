@@ -27,6 +27,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -116,8 +117,15 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }-*/;
    }
 
+   interface Binder extends CommandBinder<Commands, SourceColumnManager>
+   {
+   }
+
+   SourceColumnManager() { RStudioGinjector.INSTANCE.injectMembers(this);}
+
    @Inject
-   public SourceColumnManager(Source.Display display,
+   public SourceColumnManager(Binder binder,
+                              Source.Display display,
                               SourceServerOperations server,
                               GlobalDisplay globalDisplay,
                               Commands commands,
@@ -136,8 +144,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       column.loadDisplay(MAIN_SOURCE_NAME, display, this);
       columnList_.add(column);
 
-      server_ = server;
       commands_ = commands;
+      binder.bind(commands_, this);
+
+      server_ = server;
       globalDisplay_ = globalDisplay;
       editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -330,6 +340,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       Debug.logWarning("Attempted to set unknown doc to active " + docId);
    }
 
+   public void setDocsRestored()
+   {
+      docsRestored_ = true;
+   }
+
    public void setOpeningForSourceNavigation(boolean value)
    {
       openingForSourceNavigation_ = value;
@@ -389,6 +404,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public boolean isActiveEditor(EditingTarget editingTarget)
    {
       return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
+   }
+
+   public boolean getDocsRestored()
+   {
+      return docsRestored_;
    }
 
    // see if there are additional command palette items made available
@@ -1351,11 +1371,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setActive(MAIN_SOURCE_NAME);
 
       columnList_.remove(getByName(name));
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
    public void ensureVisible(boolean newTabPending)
    {
-      activeColumn_.ensureVisible(newTabPending);
+      if (getActive() == null)
+         return;
+      getActive().ensureVisible(newTabPending);
    }
 
    public void openFile(FileSystemItem file)
@@ -2332,27 +2355,28 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private SourceColumn activeColumn_;
 
    private boolean openingForSourceNavigation_ = false;
+   private boolean docsRestored_ = false;
 
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
-   private final SourceVimCommands vimCommands_;
+   private SourceVimCommands vimCommands_;
 
-   private final Commands commands_;
-   private final EventBus events_;
-   private final Provider<FileMRUList> pMruList_;
-   private final Provider<SourceWindowManager> pWindowManager_;
+   private Commands commands_;
+   private EventBus events_;
+   private Provider<FileMRUList> pMruList_;
+   private Provider<SourceWindowManager> pWindowManager_;
    private Session session_;
-   private final Synctex synctex_;
-   private final UserPrefs userPrefs_;
-   private final UserState userState_;
-   private final GlobalDisplay globalDisplay_;
-   private final TextEditingTargetRMarkdownHelper rmarkdown_;
-   private final EditingTargetSource editingTargetSource_;
-   private final FileTypeRegistry fileTypeRegistry_;
+   private Synctex synctex_;
+   private UserPrefs userPrefs_;
+   private UserState userState_;
+   private GlobalDisplay globalDisplay_;
+   private TextEditingTargetRMarkdownHelper rmarkdown_;
+   private EditingTargetSource editingTargetSource_;
+   private FileTypeRegistry fileTypeRegistry_;
 
-   private final SourceServerOperations server_;
-   private final DependencyManager dependencyManager_;
+   private SourceServerOperations server_;
+   private DependencyManager dependencyManager_;
 
    private final SourceNavigationHistory sourceNavigationHistory_ =
        new SourceNavigationHistory(30);
