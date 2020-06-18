@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -51,8 +52,11 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.BeforeShowEvent;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.events.HasTabCloseHandlers;
 import org.rstudio.core.client.events.HasTabClosedHandlers;
 import org.rstudio.core.client.events.HasTabClosingHandlers;
@@ -221,7 +225,9 @@ public class Source implements InsertSourceHandler,
                                     HasTabClosedHandlers,
                                     HasTabReorderHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
-                                    HasSelectionHandlers<Integer>
+                                    HasSelectionHandlers<Integer>,
+                                    HasEnsureVisibleHandlers,
+                                    HasEnsureHeightHandlers
    {
       void addTab(Widget widget,
                   FileIcon icon,
@@ -260,6 +266,8 @@ public class Source implements InsertSourceHandler,
       void cancelTabDrag();
 
       void ensureVisible();
+      HandlerRegistration addBeforeShowHandler(BeforeShowEvent.Handler handler);
+      HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler);
    }
 
    @Inject
@@ -463,7 +471,6 @@ public class Source implements InsertSourceHandler,
    public void loadDisplay()
    {
       restoreDocuments(session_);
-      columnManager_.beforeShow();
 
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -687,7 +694,7 @@ public class Source implements InsertSourceHandler,
                {
                   String name = doc.getSourceDisplayName();
                   sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY,
-                                                       columnManager_.findByName(name));
+                                                       columnManager_.getByName(name));
                }
                else
                   sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY, null);
@@ -703,6 +710,7 @@ public class Source implements InsertSourceHandler,
                continue;
          }
       }
+      columnManager_.setDocsRestored();
    }
    
    private void openEditPublishedDocs()

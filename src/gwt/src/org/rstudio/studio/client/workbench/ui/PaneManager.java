@@ -1220,7 +1220,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.HIDE));
       else
       {
-         SourceColumn column = sourceColumnManager_.findByName(name);
+         SourceColumn column = sourceColumnManager_.getByName(name);
 
          if (column.getTabCount() == 0)
          {
@@ -1229,6 +1229,7 @@ public class PaneManager
             panesByName_.remove(name);
 
             additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+            panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
             PaneConfig paneConfig = getCurrentConfig();
             userPrefs_.panes().setGlobalValue(PaneConfig.create(
                JsArrayUtil.copy(paneConfig.getQuadrants()),

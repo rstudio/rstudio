@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.NewPlumberAPI;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -315,6 +316,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(VisualModeMarkdownWriter visualModeMarkdownWriter);
    void injectMembers(OpenProjectDialog dialog);
    void injectMembers(SourceColumn column);
+   void injectMembers(SourceColumnManager columnManager);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

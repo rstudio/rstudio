@@ -1376,7 +1376,7 @@ public class TextEditingTargetWidget
             publishButton_.setContentPath(publishPath, "");
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP_SINGLE);
          }
-         else if (type == SourceDocument.XT_RMARKDOWN)
+         else if (type.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
          {
             // don't publish markdown docs as static
             publishButton_.setRmd(publishPath,
