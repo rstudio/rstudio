@@ -1,5 +1,4 @@
 
--- TODO: allow for fig.cap or caption that doesn't use a quoted string?
 
 -- output paragraph if it contains an xref
 local xref_pending = false
@@ -41,12 +40,15 @@ function Header(lev, s, attr)
 end
 
 
-function CaptionedImage(src, tit, caption, attr)
-  return ''   
-end
-
+-- tables with specially formatted caption
 function Table(caption, aligns, widths, headers, rows)
-  return ''
+  local tab_pattern = "^%s*%(#(tab:[a-zA-Z0-9/%-]+)%)%s*(.*)$"
+  local tab_label, tab_caption = string.match(caption, tab_pattern)
+  if tab_label and tab_caption then
+    return tab_label .. ' ' .. tab_caption .. '\n'
+  else
+    return ''
+  end
 end
 
 function DisplayMath(s)
@@ -114,6 +116,10 @@ end
 
 function Image(s, src, tit, attr)
   return ''
+end
+
+function CaptionedImage(src, tit, caption, attr)
+  return ''   
 end
 
 function InlineMath(s)
