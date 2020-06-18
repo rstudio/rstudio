@@ -169,8 +169,8 @@ public:
 
          // prefer unsaved files
          std::vector<std::string> entries;
-         std::map<std::string, XRefFileIndex>::const_iterator it = openEditors_.find(sourceFile);
-         if (it != openEditors_.end())
+         std::map<std::string, XRefFileIndex>::const_iterator it = unsavedFiles_.find(sourceFile);
+         if (it != unsavedFiles_.end())
          {
             entries = it->second.entries;
          }
@@ -222,27 +222,27 @@ public:
    }
 
 
-   void setEditorContents(const FileInfo& fileInfo, const std::string& contents)
+   void updateUnsaved(const FileInfo& fileInfo, const std::string& contents)
    {
       FilePath filePath = toFilePath(fileInfo);
       XRefFileIndex idx = indexForDoc(filePath, contents);
-      openEditors_[bookRelativePath(filePath)] = idx;
+      unsavedFiles_[bookRelativePath(filePath)] = idx;
    }
 
-   void closeEditor(const FileInfo& fileInfo)
+   void removeUnsaved(const FileInfo& fileInfo)
    {
       FilePath filePath = toFilePath(fileInfo);
-      openEditors_.erase(bookRelativePath(filePath));
+      unsavedFiles_.erase(bookRelativePath(filePath));
 
    }
 
-   void closeAllEditors()
+   void removeAllUnsaved()
    {
-      openEditors_.clear();
+      unsavedFiles_.clear();
    }
 
 private:
-   std::map<std::string, XRefFileIndex> openEditors_;
+   std::map<std::string, XRefFileIndex> unsavedFiles_;
 };
 XRefProjectIndex s_projectIndex;
 
@@ -285,12 +285,11 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (pDoc->path().empty())
       return;
 
-   // alias to fileInfo
+   // update unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(pDoc->path()));
-
-   // update open editors if it's a bookdown rmd
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.setEditorContents(fileInfo, pDoc->contents());
+      s_projectIndex.updateUnsaved(fileInfo, pDoc->contents());
+
 }
 
 void onSourceDocRemoved(const std::string&, const std::string& path)
@@ -299,15 +298,15 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
    if (path.empty())
       return;
 
-   // remove from open editors if it's a bookdown rmd
+   // remove from unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(path));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.closeEditor(fileInfo);
+      s_projectIndex.removeUnsaved(fileInfo);  
 }
 
 void onAllSourceDocsRemoved()
 {
-   s_projectIndex.closeAllEditors();
+   s_projectIndex.removeAllUnsaved();
 }
 
 void onDeferredInit(bool)
