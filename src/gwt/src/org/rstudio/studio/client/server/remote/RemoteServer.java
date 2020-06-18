@@ -6159,7 +6159,7 @@ public class RemoteServer implements Server
    @Override
    public void pandocGetBibliography(String file, JsArrayString bibliographies, String refBlock, String etag, ServerRequestCallback<JavaScriptObject> callback) {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
+      params.set(0, new JSONString(StringUtil.notNull(file)));
       params.set(1, new JSONArray(bibliographies));
       params.set(2, new JSONString(StringUtil.notNull(refBlock)));
       params.set(3, new JSONString(StringUtil.notNull(etag)));

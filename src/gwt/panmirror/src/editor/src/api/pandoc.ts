@@ -24,13 +24,7 @@ export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
-  getBibliography(
-    commandLine: string | null,
-    file: string,
-    refBlocks: string[],
-    csl: string | null,
-    etag: string | null,
-  ): Promise<BibliographyResult>;
+  getBibliography(file: string | null, bibliography: string[], refBlock: string | null, etag: string | null): Promise<BibliographyResult>;
   listExtensions(format: string): Promise<string>;
 }
 
