@@ -157,7 +157,13 @@ oop.inherits(Mode, TextMode);
 
    this.inRLanguageMode = function(state)
    {
-      return state.match(/^r-/);
+     if (!state)
+        return null;
+
+     if (typeof(state) === "object" && state.hasOwnProperty("length") && state.length > 0) {
+        state = state[0];
+     }
+     return state.match(/^r-/);
    };
 
    this.getNextLineIndent = function(state, line, tab, row, dontSubset)

@@ -194,7 +194,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
-   
+   void setRainbowParentheses(boolean rainbow);
+   boolean getRainbowParentheses();
+
    void setScrollLeft(int x);
    void setScrollTop(int y);
    void scrollTo(int x, int y);
