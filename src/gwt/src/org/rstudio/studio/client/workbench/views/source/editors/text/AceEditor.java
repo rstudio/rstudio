@@ -105,6 +105,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBack
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -1608,7 +1609,10 @@ public class AceEditor implements DocDisplay,
    }
 
    public void replaceRange(Range range, String text) {
+      replacePending_ = true;
       getSession().replace(range, text);
+      getSession().getSelection().moveCursorTo(range.getEnd().getRow(),
+         range.getEnd().getColumn(), false);
    }
 
    public String replaceSelection(String value, boolean collapseSelection)
@@ -2322,7 +2326,17 @@ public class AceEditor implements DocDisplay,
 
    public Scope getCurrentScope()
    {
-      return getScopeAtPosition(getCursorPosition());
+      // When a replace is in progress the cursor is set to the line after the replace.
+      // To get the correct scope we need to move the position up one row.
+      Position position;
+      if (!replacePending_)
+         position = getCursorPosition();
+      else
+      {
+         position = Position.create(getCursorPosition().getRow() -1,
+            getCursorPosition().getColumn());
+      }
+      return getScopeAtPosition(position);
    }
    
    @Override
@@ -4045,6 +4059,8 @@ public class AceEditor implements DocDisplay,
                   editor_.fireEvent(new ScopeTreeReadyEvent(
                         editor_.getScopeTree(),
                         editor_.getCurrentScope()));
+                  if (editor_.replacePending_)
+                     editor_.replacePending_ = false;
                   return;
                }
                
@@ -4053,17 +4069,18 @@ public class AceEditor implements DocDisplay,
                timer_.schedule(DELAY_MS);
             }
          };
-         
+
          editor_.addDocumentChangedHandler(event ->
          {
             if (editor_.hasCodeModelScopeTree())
             {
                row_ = event.getEvent().getRange().getStart().getRow();
+               row_ += ROWS_TOKENIZED_PER_ITERATION;
                timer_.schedule(DELAY_MS);
             }
          });
       }
-      
+
       public boolean isReady(int row)
       {
          return row < row_;
@@ -4195,6 +4212,7 @@ public class AceEditor implements DocDisplay,
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
    
    private boolean popupVisible_;
+   private boolean replacePending_ = false;
 
    private final DiagnosticsBackgroundPopup diagnosticsBgPopup_;
 
