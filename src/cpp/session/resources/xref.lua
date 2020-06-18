@@ -51,8 +51,16 @@ function Table(caption, aligns, widths, headers, rows)
   end
 end
 
+-- equations w/ embedded (\#eq:label) 
 function DisplayMath(s)
-  return ''  
+  local eq_pattern = "^.*%(\\#(eq:[a-zA-Z0-9/%-]+)%).*$"
+  local eq_xref = string.match(s, eq_pattern)
+  if (eq_xref) then
+    xref_pending = true
+    return eq_xref .. '\n'
+  else
+    return ''
+  end
 end
 
 -- reflect body
