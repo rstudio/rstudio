@@ -308,13 +308,6 @@ export class Editor {
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
-    /*
-    const file = context.ui.context.getDocumentPath();
-    if (file) {
-      const xrefs = await context.server.xref.indexForFile(file);
-      console.log(xrefs);
-    }
-    */
 
 
     // create editor

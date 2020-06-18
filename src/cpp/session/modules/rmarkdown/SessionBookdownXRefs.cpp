@@ -147,6 +147,32 @@ XRefFileIndex indexForDoc(const FilePath& filePath)
    return indexForDoc(filePath, contents);
 }
 
+json::Array entriesJson(const std::vector<std::string>& entries)
+{
+   // entries
+   json::Array entriesJson;
+   for (std::vector<std::string>::size_type e = 0; e < entries.size(); e++)
+   {
+      json::Object entryJson;
+      const std::string& entry = entries[e];
+      if (entry.size() > 0)
+      {
+         std::size_t spacePos = entry.find_first_of(' ');
+         if (spacePos != std::string::npos)
+         {
+            entryJson["key"] = entry.substr(0, spacePos);
+            entryJson["title"] = entry.substr(spacePos + 1);
+         }
+         else
+         {
+            entryJson["key"] = entry;
+         }
+         entriesJson.push_back(entryJson);
+      }
+   }
+   return entriesJson;
+}
+
 class XRefProjectIndex
 {
 public:
@@ -189,27 +215,7 @@ public:
          if (entries.size() > 0)
          {
             // entries
-            json::Array entriesJson;
-            for (std::vector<std::string>::size_type e = 0; e < entries.size(); e++)
-            {
-               json::Object entryJson;
-               const std::string& entry = entries[e];
-               if (entry.size() > 0)
-               {
-                  std::size_t spacePos = entry.find_first_of(' ');
-                  if (spacePos != std::string::npos)
-                  {
-                     entryJson["key"] = entry.substr(0, spacePos);
-                     entryJson["title"] = entry.substr(spacePos + 1);
-                  }
-                  else
-                  {
-                     entryJson["key"] = entry;
-                  }
-                  entriesJson.push_back(entryJson);
-               }
-            }
-            fileJson["entries"] = entriesJson;
+            fileJson["entries"] = entriesJson(entries);
 
             // add to main index
             indexJson.push_back(fileJson);
@@ -362,10 +368,36 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       pResponse->setResult(s_projectIndex.toJson());
    }
 
-   // otherwise just send an index for this file (e.g could be blogdown or distill)
+   // otherwise just send an index for this file (it will be in the source database)
    else
    {
-
+      std::string id;
+      source_database::getId(filePath, &id);
+      if (!id.empty())
+      {
+         boost::shared_ptr<source_database::SourceDocument> pDoc(
+                  new source_database::SourceDocument());
+         Error error = source_database::get(id, pDoc);
+         if (error)
+         {
+            LOG_ERROR(error);
+            pResponse->setResult(json::Array());
+         }
+         else
+         {
+            XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
+            json::Array indexJson;
+            json::Object fileJson;
+            fileJson["file"] = idx.file;
+            fileJson["entries"] = entriesJson(idx.entries);
+            indexJson.push_back(fileJson);
+            pResponse->setResult(indexJson);
+         }
+      }
+      else
+      {
+         pResponse->setResult(json::Array());
+      }
    }
 
 
