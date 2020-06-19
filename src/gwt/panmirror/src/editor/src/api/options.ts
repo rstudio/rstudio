@@ -20,6 +20,7 @@ export interface EditorOptions {
   readonly rmdImagePreview?: boolean;
   readonly rmdExampleHighlight?: boolean;
   readonly rmdChunkExecution?: string[];
+  readonly rmdInlineOutput?: boolean;
   readonly hideFormatComment?: boolean;
   readonly className?: string;
 }

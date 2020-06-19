@@ -5945,6 +5945,11 @@ public class TextEditingTarget implements
       return outputFormats.size() > 0 &&
              outputFormats.get(0) == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK;
    }
+   
+   public boolean isRmdOutputInline()
+   {
+      return docDisplay_.showChunkOutputInline();
+   }
 
    public boolean hasRmdNotebook()
    {

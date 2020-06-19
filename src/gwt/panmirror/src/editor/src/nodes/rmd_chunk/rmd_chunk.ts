@@ -31,6 +31,7 @@ import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from '
 import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
+import { RmdChunkOutputPlugin } from './rmd_chunk-output';
 
 const extension = (context: ExtensionContext): Extension | null => {
 
@@ -118,11 +119,19 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     plugins: (_schema: Schema) => {
-      if (options.rmdImagePreview) {
-        return [new RmdChunkImagePreviewPlugin(ui.context)];
-      } else {
-        return [];
+      const plugins = [];
+
+      // Enable R Markdown inline output (notebook-style code execution)
+      if (options.rmdInlineOutput) {
+        plugins.push(new RmdChunkOutputPlugin(ui.context));
       }
+
+      // Enable R Markdown image preview
+      if (options.rmdImagePreview) {
+        plugins.push(new RmdChunkImagePreviewPlugin(ui.context));
+      }
+
+      return plugins;
     },
   };
 };

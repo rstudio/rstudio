@@ -941,6 +941,9 @@ public class VisualMode implements VisualModeEditorSync,
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
       
+      // enable inline output mode for notebook-style documents
+      options.rmdInlineOutput = target_.isRmdOutputInline();
+      
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       

@@ -27,6 +27,7 @@ public class PanmirrorOptions
    public boolean rmdImagePreview;
    public boolean rmdExampleHighlight;
    public String[] rmdChunkExecution;
+   public boolean rmdInlineOutput;
    public boolean hideFormatComment;
    public String className;
 }
