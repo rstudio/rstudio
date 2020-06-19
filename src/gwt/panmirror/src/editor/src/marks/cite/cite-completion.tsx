@@ -15,14 +15,12 @@
 
 // TESTING
 // TODO: Bibliographies
-// TODO: Test date formatting
-// TODO: Web Accessibilty?
 
 // TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
-
 // TODO: How should I report errors to user (for example, invalid entry type)
 
 // FUTURE
+// TODO: Improve large bibliography performance by 'warming up' bibliography manager
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview
 // TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user

@@ -118,9 +118,11 @@ export class BibliographyManager {
       // Read bibliography data from files (via server)
       if (!this.bibEntries || result.etag !== this.etag) {
         const parsedEntries = generateBibliographyEntries(ui, result.bibliography);
+        const parsedIds = parsedEntries.map(entry => entry.source.id);
 
-        // The user could have duplicate entries, filter those
-        const dedupedEntries = Array.from(new Set(parsedEntries));
+        const dedupedEntries = parsedEntries.filter((value, index) => {
+          return parsedIds.indexOf(value.source.id) === index;
+        });
 
         this.bibEntries = dedupedEntries;
         this.reindexEntries(dedupedEntries);
@@ -375,13 +377,13 @@ function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
 
   const dateParts = date['date-parts'];
   if (dateParts) {
-    switch (date['date-parts'].length) {
+    switch (dateParts.length) {
       // There is a date range
       case 2:
-        return `${date['date-parts'][0]}-${date['date-parts'][1]}`;
+        return `${dateParts[0][0]}-${dateParts[1][0]}`;
       // Only a single date
       case 1:
-        return `${date['date-parts'][0]}`;
+        return `${dateParts[0][0]}`;
 
       // Seems like a malformed date :(
       case 0:
