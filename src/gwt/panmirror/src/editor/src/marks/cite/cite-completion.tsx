@@ -48,7 +48,6 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
-import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
 import { PandocServer } from '../../api/pandoc';
 
 import { kEditingCiteIdRegEx } from './cite';
