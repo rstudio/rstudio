@@ -14,25 +14,11 @@
  */
 
 // TESTING
-// TODD: Need to filter entries to not include any duplicates
-// TODO: Dark mode
-// TODO: Bibliographies
-// TODO: Test date formatting
-// TODO: Web Accessibilty?
-
 // TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
-
 // TODO: How should I report errors to user (for example, invalid entry type)
 
-// TODO: editor.ts
-/*
-          citations: {
-            ...defaultImages.citations,
-            ...context.ui.images,
-          },
-*/
-
 // FUTURE
+// TODO: Improve large bibliography performance by 'warming up' bibliography manager
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview
 // TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user
@@ -43,7 +29,7 @@ import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
 
-import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
@@ -51,11 +37,13 @@ import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { PandocServer } from '../../api/pandoc';
 import { CompletionItemView } from '../../api/widgets/completion';
 
+import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { kEditingCiteIdRegEx } from './cite';
 
 import './cite-completion.css';
 
-const kAuthorMaxChars = 30;
+const kAuthorMaxChars = 28;
+const kMaxCitationCompletions = 20;
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -65,7 +53,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
     completions: citationCompletions(ui, bibliographyManager),
 
     filter: (completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(completions, token, bibliographyManager);
+      return filterCitations(completions, token, bibliographyManager, ui);
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -80,18 +68,23 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
       component: BibliographySourceView,
       key: entry => entry.source.id,
       width: 400,
-      height: 52,
+      height: 54,
       maxVisible: 5,
       hideNoResults: true,
     },
   };
 }
 
-function filterCitations(bibliographyEntries: BibliographyEntry[], token: string, manager: BibliographyManager) {
+function filterCitations(
+  bibliographyEntries: BibliographyEntry[],
+  token: string,
+  manager: BibliographyManager,
+  ui: EditorUI,
+) {
   if (token.trim().length === 0) {
     return bibliographyEntries;
   }
-  return manager.search(token);
+  return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
@@ -115,7 +108,8 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           token,
           pos,
           offset: -match[1].length,
-          completions: (_state: EditorState) => manager.entries(ui, context.doc),
+          completions: (_state: EditorState) =>
+            manager.entries(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
           decorations:
             token.length === 0
               ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
@@ -141,18 +135,12 @@ function formatIdentifier(entry: BibliographyEntry): string {
 // to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
 
-  const idView = <>
-    <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
-    <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
-  </>;
-
-  return (
-    <CompletionItemView
-      width={400}
-      image={entry.image[0]}
-      idView={idView}
-      title={entry.source.title || ''}
-      htmlTitle={true}
-    />
+  const idView = (
+    <>
+      <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
+      <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
+    </>
   );
+
+  return <CompletionItemView width={400} image={entry.image} idView={idView} title={entry.source.title || ''} htmlTitle={true} />;
 };
