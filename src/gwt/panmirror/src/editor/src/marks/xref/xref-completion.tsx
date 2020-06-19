@@ -21,7 +21,7 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { XRef, XRefServer } from '../../api/xref';
+import { XRef, XRefServer, xrefFormatId } from '../../api/xref';
 import { markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { CompletionItemView } from '../../api/widgets/completion';
@@ -48,7 +48,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 
     replacement(schema: Schema, xref: XRef | null): string | ProsemirrorNode | null {
       if (xref) {
-        return xref.id;
+        return xrefFormatId(xref);
       } else {
         return null;
       }
@@ -96,12 +96,17 @@ function xrefView(ui: EditorUI): React.FC<XRef> {
 
   return (xref: XRef) => {
 
-    const image = xref.id.startsWith('fig:')
-      ? ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!
-      : ui.images.omni_insert?.generic!;
+    let image = ui.images.omni_insert?.generic!;
+    if (xref.type === 'fig') {
+      image = ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!;
+    } else if (xref.type === 'tab') {
+      image = ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark! : ui.images.omni_insert?.table!;
+    } else if (xref.type === 'eq') {
+      image = ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!;
+    }
 
     const idView = <>
-      <div className={'pm-xref-completion-id pm-xref-completion-id-key pm-fixedwidth-font'}>{xref.id}</div>
+      <div className={'pm-xref-completion-id pm-xref-completion-id-key pm-fixedwidth-font'}>{xrefFormatId(xref)}</div>
       <div className={'pm-xref-completion-id pm-xref-completion-id-file'}>{xref.file}</div>
     </>;
 

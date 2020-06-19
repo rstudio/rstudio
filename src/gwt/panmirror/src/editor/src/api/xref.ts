@@ -13,6 +13,8 @@
  *
  */
 
+import { xrefCompletionHandler } from "../marks/xref/xref-completion";
+
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRef[]>;
@@ -20,6 +22,11 @@ export interface XRefServer {
 
 export interface XRef {
   file: string;
+  type: string;
   id: string;
   title: string;
+}
+
+export function xrefFormatId(xref: XRef) {
+  return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
 }
