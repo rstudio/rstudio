@@ -13,15 +13,24 @@
  *
  */
 
-// BIBLIOGRAPHY
-// TODO: Shared bibliography (set site level for books) -- distill, bookdown, etc...
-// Sniff project provide shared bibliography as ui context
-// TODO: Read references out of inline reference blocks and merge with bibliography references
+// TESTING
 // TODD: Need to filter entries to not include any duplicates
+// TODO: Dark mode
+// TODO: Bibliographies
+// TODO: Test date formatting
+// TODO: Web Accessibilty?
 
-// UI
-// TODO: Show preview for citation when mouseover (like inline math)
-//        - would be nice if you could follow DOI to article when previewing
+// TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
+
+// TODO: How should I report errors to user (for example, invalid entry type)
+
+// TODO: editor.ts
+/*
+          citations: {
+            ...defaultImages.citations,
+            ...context.ui.images,
+          },
+*/
 
 // FUTURE
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
@@ -32,20 +41,20 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 
-import { PandocServer } from '../../api/pandoc';
-
 import React from 'react';
 
-import { EditorUI } from '../../api/ui';
+import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
 import { iconAndTextPlaceholderDecoration } from '../../api/placeholder';
-
-import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
+import { PandocServer } from '../../api/pandoc';
 
 import { kEditingCiteIdRegEx } from './cite';
 
 import './cite-completion.css';
+
+const kAuthorMaxChars = 30;
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -54,10 +63,11 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
 
     completions: citationCompletions(ui, bibliographyManager),
 
-    filter: (completions: BibliographyEntry[], _state: EditorState, token: string) =>
-      filterCitations(completions, token, bibliographyManager),
+    filter: (completions: BibliographyEntry[], _state: EditorState, token: string) => {
+      return filterCitations(completions, token, bibliographyManager);
+    },
 
-    replacement(schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
+    replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
       if (entry) {
         return entry.source.id;
       } else {
@@ -84,12 +94,15 @@ function filterCitations(bibliographyEntries: BibliographyEntry[], token: string
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
-  return (text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
-    // return completions if we are inside a cite id mark
+  return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
+    // return completions only if we are inside a cite id mark
     const markType = context.doc.type.schema.marks.cite_id;
     if (!markIsActive(context, markType)) {
       return null;
     }
+
+    // Find the text and position of the user entry and use that for
+    // the completion
     const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
     if (range) {
       const citeText = context.doc.textBetween(range.from, range.to);
@@ -101,7 +114,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           token,
           pos,
           offset: -match[1].length,
-          completions: (state: EditorState) => manager.entries(ui, context.doc),
+          completions: (_state: EditorState) => manager.entries(ui, context.doc),
           decorations:
             token.length === 0
               ? DecorationSet.create(context.doc, [
@@ -120,6 +133,17 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   };
 }
 
+function formatIdentifier(entry: BibliographyEntry): string {
+  const idStr = `@${entry.source.id}`;
+  const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
+  if (authorStr.length > 0) {
+    return `${idStr} - ${authorStr}`;
+  }
+  return idStr;
+}
+
+// The title may contain spans to control case specifically - consequently, we need
+// to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
   return (
     <div className={'pm-completion-citation-item'}>
@@ -128,12 +152,13 @@ const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
       </div>
       <div className={'pm-completion-citation-summary'}>
         <div className={'pm-completion-citation-source'}>
-          <div className={'pm-completion-citation-authors'}>
-            @{entry.source.id} - {entry.authorsFormatter(entry.source.author, 26 - entry.source.id.length)}
-          </div>
+          <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
           <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
         </div>
-        <div className={'pm-completion-citation-title'}>{entry.source.title}</div>
+        <div
+          className={'pm-completion-citation-title'}
+          dangerouslySetInnerHTML={{ __html: entry.source.title || '' }}
+        />
       </div>
     </div>
   );
