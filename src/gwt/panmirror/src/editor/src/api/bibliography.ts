@@ -65,6 +65,11 @@ export interface BibliographyDate {
   raw?: string;
 }
 
+interface ParsedYaml {
+  yamlCode: string;
+  yaml: any;
+}
+
 // The fields and weights that will indexed and searched
 // when searching bibliographic entries
 const kFields: Fuse.FuseOptionKeyObject[] = [
@@ -90,10 +95,10 @@ export class BibliographyManager {
   public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyEntry[]> {
     const yamlNodes = yamlMetadataNodes(doc);
 
-    const parsedYamlNodes = yamlNodes.map(node => {
+    const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
       const yamlText = node.node.textContent;
       const yamlCode = stripYamlDelimeters(yamlText);
-      return parseYaml(yamlCode);
+      return { yamlCode, yaml: parseYaml(yamlCode) };
     });
 
     // Gather the files from the document
@@ -152,16 +157,17 @@ export class BibliographyManager {
 }
 const kMaxCitationCompletions = 20;
 
-function referenceBlockFromYaml(yamls: any[]): string {
-  const refBlockYamls = yamls.filter(yaml => typeof yaml === 'object' && yaml.references);
+function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
+  const refBlockParsedYamls = parsedYamls.filter(
+    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.references,
+  );
 
   // Pandoc will use the last references node when generating a bibliography.
   // So replicate this and use the last biblography node that we find
-  if (refBlockYamls.length > 0) {
-    const lastReferenceYaml = refBlockYamls[refBlockYamls.length - 1];
-    const referenceYaml = toYamlCode(lastReferenceYaml.references);
-    if (referenceYaml) {
-      return referenceYaml;
+  if (refBlockParsedYamls.length > 0) {
+    const lastReferenceParsedYaml = refBlockParsedYamls[refBlockParsedYamls.length - 1];
+    if (lastReferenceParsedYaml) {
+      return lastReferenceParsedYaml.yamlCode;
     }
   }
 
@@ -169,15 +175,17 @@ function referenceBlockFromYaml(yamls: any[]): string {
 }
 
 // TODO: path handling ok here?
-function bibliographyFilesFromDoc(yamls: any[], uiContext: EditorUIContext): BibliographyFiles | null {
-  const bibliographyYamls = yamls.filter(yaml => typeof yaml === 'object' && yaml.bibliography);
+function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUIContext): BibliographyFiles | null {
+  const bibliographyParsedYamls = parsedYamls.filter(
+    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.bibliography,
+  );
 
   // Look through any yaml nodes to see whether any contain bibliography information
-  if (bibliographyYamls.length > 0) {
+  if (bibliographyParsedYamls.length > 0) {
     // Pandoc will use the last biblography node when generating a bibliography.
     // So replicate this and use the last biblography node that we find
-    const lastBibliographyYaml = bibliographyYamls[bibliographyYamls.length - 1];
-    const bibliographyFiles = lastBibliographyYaml.bibliography;
+    const bibliographyParsedYaml = bibliographyParsedYamls[bibliographyParsedYamls.length - 1];
+    const bibliographyFiles = bibliographyParsedYaml.yaml.bibliography;
     if (Array.isArray(bibliographyFiles)) {
       // An array of bibliographies
       const bibPaths = bibliographyFiles.map(
