@@ -1,0 +1,71 @@
+/*
+ * completion.css
+ *
+ * Copyright (C) 2020 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+
+.pm-completion-item {
+  display: flex;
+  align-items: center;
+  height: 52px;
+}
+
+.pm-completion-item-type {
+  margin-left: 6px;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.pm-completion-item-type img {
+  border: solid 1px;
+  border-radius: 2px;
+  padding: 4px;
+  height: 24px;
+  width: 24px;
+  margin-top: 1px;
+  margin-right: 5px;
+  filter: opacity(80%);
+}
+
+.pm-completion-item-summary {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-top: 6px;
+  padding-right: 4px;
+  padding-bottom: 4px;
+  padding-left: 0px;
+  line-height: 20px;
+  font-size: 14px;
+}
+
+.pm-completion-item-id {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  font-weight: bold;
+  opacity: 80%;
+}
+
+.pm-completion-item-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9em;
+  opacity: 60%;
+  width: 324px;
+  line-height: 18px;
+}
+
+
