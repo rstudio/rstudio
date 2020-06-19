@@ -1102,14 +1102,12 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    // NOTE: A lot of the ugliness here stems from the fact that
    // both open and closing brackets have the same type; that is,
    //
-   //    paren.keyword.operator
+   //    paren.***
    //
-   // and so we need to be careful when testing for the 'keyword'
-   // or 'operator' types.
    this.isValidForEndOfStatement = function()
    {
       var type = this.currentType();
-      if (type === "paren.keyword.operator")
+      if (type === "paren.keyword.operator" || type.search("paren.paren_color") !== -1)
          return isRightBracket(this.currentValue());
 
       var value = this.currentValue();
@@ -1121,7 +1119,7 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidForStartOfStatement = function()
    {
       var type = this.currentType();
-      if (type === "paren.keyword.operator")
+     if (type === "paren.keyword.operator" || type.search("paren.paren_color") !== -1)
          return isLeftBracket(this.currentValue());
 
       var value = this.currentValue();

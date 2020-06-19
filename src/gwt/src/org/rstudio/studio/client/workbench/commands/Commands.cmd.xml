@@ -210,6 +210,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="toggleDocumentOutline"/>
          <cmd refid="toggleSoftWrapMode"/>
+         <cmd refid="toggleRainbowParens"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -3374,6 +3375,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleSoftWrapMode"
         label="Toggle Soft Wrap Mode"
         menuLabel="Soft Wrap Long Lines"
+        checkable="true"
+        context="editor"/>
+
+   <cmd id="toggleRainbowParens"
+        label="Toggle Rainbow Parentheses Mode"
+        menuLabel="Rainbow parentheses"
         checkable="true"
         context="editor"/>
 

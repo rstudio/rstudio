@@ -974,6 +974,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       final String contents,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
+      ensureVisible(false);
       boolean isActive = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),

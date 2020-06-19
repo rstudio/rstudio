@@ -25,6 +25,7 @@
 			box-sizing: border-box;
 			padding: 3px;
 			border: 1px solid;
+			font-size: 13px;
 		}
 		
 		.searchBar {

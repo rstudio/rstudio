@@ -50,6 +50,7 @@
 - Fix launching jobs from working directories with spaces on their names (Pro #1708)
 - Update editor toolbar when R Markdown documents are switched to/from Notebook mode in YAML header (#7051)
 - Fix error when invoking spell check manually on some languages (#7018)
+- Fix RStudio Desktop Pro Job Launcher connections and path mappings (Pro #1726 and Pro #1727) 
 
 ### RStudio Server Pro
 
