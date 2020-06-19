@@ -54,7 +54,7 @@ import { kEditingCiteIdRegEx } from './cite';
 
 import './cite-completion.css';
 
-const kAuthorMaxChars = 30;
+const kAuthorMaxChars = 28;
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -79,7 +79,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
       component: BibliographySourceView,
       key: entry => entry.source.id,
       width: 400,
-      height: 52,
+      height: 54,
       maxVisible: 5,
       hideNoResults: true,
     },

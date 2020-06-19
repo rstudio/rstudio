@@ -299,7 +299,7 @@ export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliogr
     };
   });
 }
-
+// TODO: Needs to support localization of the templated strings
 const kEtAl = 'et al.';
 function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
   // No author(s) specified
@@ -307,9 +307,7 @@ function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): stri
     return '';
   }
 
-  // TODO: Needs to support localization of the templated strings
-  let formattedAuthorString = '';
-  authors
+  return authors
     .map(author => {
       if (author.literal?.length) {
         return author.literal;
@@ -321,30 +319,50 @@ function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): stri
         return `${author.family}`;
       }
     })
-    .every((value, index, values) => {
-      // If we'll exceed the maximum length, append 'et al' and stop
-      if (maxLength && formattedAuthorString.length + value.length > maxLength) {
-        formattedAuthorString = `${formattedAuthorString}, ${kEtAl}`;
-        return false;
+    .reduce((previous, current, index, array) => {
+      // Ignore any additional authors if the string
+      // exceeds the maximum length
+      if ((maxLength && previous.length >= maxLength) || previous.endsWith(kEtAl)) {
+        return previous;
       }
 
       if (index === 0) {
+        // Too long, truncate
+        if (maxLength && current.length > maxLength) {
+          return `${current.substring(0, maxLength - 1)}…`;
+        }
         // The first author
-        formattedAuthorString = value;
-      } else if (values.length > 1 && index === values.length - 1) {
-        // The last author
-        formattedAuthorString = `${formattedAuthorString}, and ${value}`;
+        return current;
+      } else if (index > 0 && index === array.length - 1) {
+        return addAuthorOrEtAl(previous, `${previous}, and ${current}`, maxLength);
       } else {
         // Middle authors
-        formattedAuthorString = `${formattedAuthorString}, ${value}`;
+        return addAuthorOrEtAl(previous, `${previous}, ${current}`, maxLength);
       }
-      return true;
     });
-  return formattedAuthorString;
 }
 
+function addAuthorOrEtAl(previousAuthorStr: string, newAuthorStr: string, maxLength?: number) {
+  // if adding the string would make it too long, truncate
+  if (maxLength && newAuthorStr.length > maxLength) {
+    return etAl(previousAuthorStr, maxLength);
+  }
+  return newAuthorStr;
+}
+
+function etAl(authorStr: string, maxLength: number) {
+  // First try just using et al., then shorten existing
+  // author to accomodate
+  const etAlStr = `${authorStr} ${kEtAl}`;
+  if (maxLength && etAlStr.length > maxLength) {
+    const excessLength = etAlStr.length - maxLength - 1;
+    return `${authorStr.substr(0, authorStr.length - excessLength)}… ${kEtAl}`;
+  }
+  return etAlStr;
+}
+
+// TODO: Needs to support localization of the templated strings
 function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
-  // TODO: Needs to support localization of the templated strings
   // No issue date for this
   if (!date) {
     return '';
