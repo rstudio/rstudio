@@ -43,7 +43,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 
     filter: (completions: XRef[], state: EditorState, token: string) => {
       const results = completions.filter(xref => {
-        return xref.id.includes(token);
+        return xrefFormatId(xref).includes(token);
       });
       return uniqby(results, xrefFormatId);
     },
