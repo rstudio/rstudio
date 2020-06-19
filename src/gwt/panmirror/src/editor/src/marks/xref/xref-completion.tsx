@@ -20,41 +20,71 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { XRef } from '../../api/xref';
+import { XRef, XRefServer } from '../../api/xref';
 
 import './xref-completion.css';
+import { markIsActive } from '../../api/mark';
 
-export function xrefCompletionHandler(ui: EditorUI): CompletionHandler<XRef> {
+export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): CompletionHandler<XRef> {
   return {
-    completions: xrefCompletions(ui),
+
+    id: 'BAACC160-56BE-4322-B079-54477A880623',
+
+    enabled: (context: EditorState | Transaction) => {
+      return markIsActive(context, context.doc.type.schema.marks.xref);
+    },
+
+    completions: xrefCompletions(ui, server),
+
+    filter: (completions: XRef[], state: EditorState, token: string) => {
+      return completions.filter(xref => {
+        return xref.id.includes(token);
+      });
+    },
 
     replacement(schema: Schema, xref: XRef | null): string | ProsemirrorNode | null {
-      return null;
+      if (xref) {
+        return xref.id;
+      } else {
+        return null;
+      }
     },
 
     view: {
       component: XRefView,
-      key: xref => xref.key,
+      key: xref => xref.id,
       width: 200,
-      hideNoResults: true,
+      hideNoResults: true
     },
   };
 }
 
-const kMaxXRefCompletions = 20;
 
-function xrefCompletions(ui: EditorUI) {
+
+function xrefCompletions(ui: EditorUI, server: XRefServer) {
+  const kXRefCompletionRegEx = /(@ref\()([A-Za-z0-9:-]*)$/;
   return (text: string, context: EditorState | Transaction): CompletionResult<XRef> | null => {
-
-
-    return null;
+    const match = text.match(kXRefCompletionRegEx);
+    if (match) {
+      return {
+        pos: context.selection.head - match[2].length,
+        offset: -match[1].length,
+        token: match[2],
+        completions: () => {
+          const docPath = ui.context.getDocumentPath();
+          return docPath ? server.indexForFile(docPath) : Promise.resolve([]);
+        },
+      };
+    } else {
+      return null;
+    }
   };
 }
 
 const XRefView: React.FC<XRef> = xref => {
   return (
     <div className={'pm-completion-xref'}>
-      {xref.key}
+      {xref.id}
     </div>
   );
 };

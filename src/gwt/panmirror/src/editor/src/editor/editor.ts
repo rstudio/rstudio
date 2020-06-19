@@ -708,7 +708,7 @@ export class Editor {
       events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       pandocExtensions: this.pandocFormat.extensions,
       pandocCapabilities: this.pandocCapabilities,
-      pandocServer: this.context.server.pandoc
+      server: this.context.server
     }, this.context.extensions);
   }
 

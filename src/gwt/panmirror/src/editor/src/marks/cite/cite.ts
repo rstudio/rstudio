@@ -202,7 +202,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
     },
 
-    completionHandlers: () => [citationCompletionHandler(context.ui, context.pandocServer)],
+    completionHandlers: () => [citationCompletionHandler(context.ui, context.server.pandoc)],
 
     plugins: (schema: Schema) => {
       return [citeHighlightPlugin(schema)];

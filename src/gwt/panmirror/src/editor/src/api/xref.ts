@@ -20,6 +20,6 @@ export interface XRefServer {
 
 export interface XRef {
   file: string;
-  key: string;
+  id: string;
   title: string;
 }

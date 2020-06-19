@@ -163,12 +163,12 @@ json::Array entriesJson(const std::string &file, const std::vector<std::string>&
          std::size_t spacePos = entry.find_first_of(' ');
          if (spacePos != std::string::npos)
          {
-            entryJson["key"] = entry.substr(0, spacePos);
+            entryJson["id"] = entry.substr(0, spacePos);
             entryJson["title"] = entry.substr(spacePos + 1);
          }
          else
          {
-            entryJson["key"] = entry;
+            entryJson["id"] = entry;
          }
          entriesJson.push_back(entryJson);
       }

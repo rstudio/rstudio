@@ -30,12 +30,13 @@ import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
 import { PandocOutput } from '../../api/pandoc';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { xrefCompletionHandler } from './xref-completion';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
 
-  const { pandocExtensions, format, ui } = context;
+  const { pandocExtensions, format, ui, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
@@ -152,6 +153,8 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
       ];
     },
+
+    completionHandlers: () => [xrefCompletionHandler(ui, server.xref)],
 
     commands: (schema: Schema) => {
       if (format.rmdExtensions.bookdownXRefUI) {

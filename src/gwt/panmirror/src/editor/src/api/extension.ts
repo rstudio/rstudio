@@ -25,13 +25,14 @@ import { EditorUI } from './ui';
 import { BaseKeyBinding } from './basekeys';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from './transaction';
 import { EditorOptions } from './options';
-import { PandocExtensions, PandocServer } from './pandoc';
+import { PandocExtensions } from './pandoc';
 import { FixupFn } from './fixup';
 import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
 import { CompletionHandler } from './completion';
+import { EditorServer } from '../editor/editor';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -50,7 +51,7 @@ export interface Extension {
 export interface ExtensionContext {
   pandocExtensions: PandocExtensions;
   pandocCapabilities: PandocCapabilities;
-  pandocServer: PandocServer;
+  server: EditorServer;
   ui: EditorUI;
   format: EditorFormat;
   options: EditorOptions;
