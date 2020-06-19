@@ -31,14 +31,14 @@ namespace module_context {
 
 namespace {
 
-std::string pandocPath()
+std::string pandocBinary(const std::string& binary)
 {
 #ifndef WIN32
-   std::string pandoc = "pandoc";
+   std::string target = binary;
 #else
-   std::string pandoc = "pandoc.exe";
+   std::string target = binary + ".exe";
 #endif
-  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(pandoc);
+  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(target);
   return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
 }
 
@@ -49,13 +49,35 @@ core::system::ProcessOptions pandocOptions()
    return options;
 }
 
+Error runAsync(const std::string& executablePath,
+               const std::vector<std::string>& args,
+               const std::string&input,
+               const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   return module_context::processSupervisor().runProgram(
+      executablePath,
+      args,
+      input,
+      pandocOptions(),
+      onCompleted
+   );
+}
+
 } // anonymous namespace
+
+std::string pandocPath()
+{
+   return pandocBinary("pandoc");
+}
+
+std::string pandocCiteprocPath()
+{
+   return pandocBinary("pandoc-citeproc");
+}
+
 
 Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
 {
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-
    return core::system::runProgram(
       pandocPath(),
       args,
@@ -69,13 +91,14 @@ Error runPandocAsync(const std::vector<std::string>& args,
                      const std::string&input,
                      const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
-   return module_context::processSupervisor().runProgram(
-      pandocPath(),
-      args,
-      input,
-      pandocOptions(),
-      onCompleted
-   );
+   return runAsync(pandocPath(), args, input, onCompleted);
+}
+
+Error runPandocCiteprocAsync(const std::vector<std::string>& args,
+                             const std::string&input,
+                             const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   return runAsync(pandocCiteprocPath(), args, input, onCompleted);
 }
 
 } // end namespace module_context

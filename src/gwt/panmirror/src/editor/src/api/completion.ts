@@ -26,6 +26,8 @@ export const kCompletionDefaultWidth = 180;
 
 export interface CompletionResult<T = any> {
   pos: number;
+  offset?: number;
+  token: string;
   completions: (state: EditorState) => Promise<T[]>;
   decorations?: DecorationSet;
 }
@@ -35,15 +37,20 @@ export interface CompletionHeaderProps {
 }
 
 export interface CompletionHandler<T = any> {
+  // unique id
+  id: string;
 
   // filter for determing whether we can call this handler from a given context (default is to
-  // never offer completions if a mark with noInputRules is active). set to null to 
+  // never offer completions if a mark with noInputRules is active). set to null to
   // allow completion anywhere
-  filter?: ((context: EditorState | Transaction) => boolean) | null;
+  enabled?: ((context: EditorState | Transaction) => boolean) | null;
 
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
   completions(text: string, context: EditorState | Transaction): CompletionResult | null;
+
+  // filter a previously returned set of completions
+  filter?: (completions: T[], state: EditorState, token: string, prevToken?: string) => T[] | null;
 
   // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
   replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;

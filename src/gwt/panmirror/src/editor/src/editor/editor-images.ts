@@ -92,6 +92,31 @@ import rChunkDarkImage from './images/omni_insert/r_chunk_dark.png';
 import rcppChunkImage from './images/omni_insert/rcpp_chunk.png';
 import rcppChunkDarkImage from './images/omni_insert/rcpp_chunk_dark.png';
 
+import articleImage from './images/citations/article.png';
+import articleDarkImage from './images/citations/article_dark.png';
+import bookImage from './images/citations/book.png';
+import bookDarkImage from './images/citations/book_dark.png';
+import broadcastImage from './images/citations/broadcast.png';
+import broadcastDarkImage from './images/citations/broadcast_dark.png';
+import dataImage from './images/citations/data.png';
+import dataDarkImage from './images/citations/data_dark.png';
+import entryImage from './images/citations/entry.png';
+import entryDarkImage from './images/citations/entry_dark.png';
+import imageImage from './images/citations/image.png';
+import imageDarkImage from './images/citations/image_dark.png';
+import legalImage from './images/citations/legal.png';
+import legalDarkImage from './images/citations/legal_dark.png';
+import mapImage from './images/citations/map.png';
+import mapDarkImage from './images/citations/map_dark.png';
+import movieImage from './images/citations/movie.png';
+import movieDarkImage from './images/citations/movie_dark.png';
+import otherImage from './images/citations/other.png';
+import otherDarkImage from './images/citations/other_dark.png';
+import songImage from './images/citations/song.png';
+import songDarkImage from './images/citations/song_dark.png';
+import webImage from './images/citations/web.png';
+import webDarkImage from './images/citations/web_dark.png';
+
 export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
@@ -169,7 +194,33 @@ export function defaultEditorUIImages(): EditorUIImages {
       r_chunk: rChunkImage,
       r_chunk_dark: rChunkDarkImage,
       rcpp_chunk: rcppChunkImage,
-      rcpp_chunk_dark: rcppChunkDarkImage
+      rcpp_chunk_dark: rcppChunkDarkImage,
+    },
+    citations: {
+      article: articleImage,
+      article_dark: articleDarkImage,
+      book: bookImage,
+      book_dark: bookDarkImage,
+      broadcast: broadcastImage,
+      broadcast_dark: broadcastDarkImage,
+      data: dataImage,
+      data_dark: dataDarkImage,
+      entry: entryImage,
+      entry_dark: entryDarkImage,
+      image: imageImage,
+      image_dark: imageDarkImage,
+      legal: legalImage,
+      legal_dark: legalDarkImage,
+      map: mapImage,
+      map_dark: mapDarkImage,
+      movie: movieImage,
+      movie_dark: movieDarkImage,
+      other: otherImage,
+      other_dark: otherDarkImage,
+      song: songImage,
+      song_dark: songDarkImage,
+      web: webImage,
+      web_dark: webDarkImage,
     },
   };
 }
