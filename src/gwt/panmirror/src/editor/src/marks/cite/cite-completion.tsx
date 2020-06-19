@@ -29,7 +29,7 @@ import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
 
-import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
@@ -37,11 +37,13 @@ import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { PandocServer } from '../../api/pandoc';
 import { CompletionItemView } from '../../api/widgets/completion';
 
+import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { kEditingCiteIdRegEx } from './cite';
 
 import './cite-completion.css';
 
 const kAuthorMaxChars = 28;
+const kMaxCitationCompletions = 20;
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
@@ -51,7 +53,7 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
     completions: citationCompletions(ui, bibliographyManager),
 
     filter: (completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(completions, token, bibliographyManager);
+      return filterCitations(completions, token, bibliographyManager, ui);
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -73,11 +75,16 @@ export function citationCompletionHandler(ui: EditorUI, server: PandocServer): C
   };
 }
 
-function filterCitations(bibliographyEntries: BibliographyEntry[], token: string, manager: BibliographyManager) {
+function filterCitations(
+  bibliographyEntries: BibliographyEntry[],
+  token: string,
+  manager: BibliographyManager,
+  ui: EditorUI,
+) {
   if (token.trim().length === 0) {
     return bibliographyEntries;
   }
-  return manager.search(token);
+  return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
@@ -101,7 +108,8 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           token,
           pos,
           offset: -match[1].length,
-          completions: (_state: EditorState) => manager.entries(ui, context.doc),
+          completions: (_state: EditorState) =>
+            manager.entries(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
           decorations:
             token.length === 0
               ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])

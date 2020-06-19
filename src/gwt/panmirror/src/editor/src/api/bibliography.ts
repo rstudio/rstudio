@@ -33,15 +33,6 @@ export interface Bibliography {
   sources: BibliographySource[];
 }
 
-// An entry which includes the source as well as a
-// rendered html preview of the citation
-export interface BibliographyEntry {
-  source: BibliographySource;
-  authorsFormatter: (authors?: BibliographyAuthor[], maxLength?: number) => string;
-  issuedDateFormatter: (issueDate?: BibliographyDate) => string;
-  image?: string;
-}
-
 // The individual bibliographic source
 export interface BibliographySource {
   id: string;
@@ -74,18 +65,19 @@ interface ParsedYaml {
 // The fields and weights that will indexed and searched
 // when searching bibliographic entries
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'source.id', weight: 10 },
-  { name: 'source.author.family', weight: 10 },
-  { name: 'source.author.given', weight: 1 },
-  { name: 'source.title', weight: 1 },
-  { name: 'source.issued', weight: 1 },
+  { name: 'id', weight: 10 },
+  { name: 'author.family', weight: 10 },
+  { name: 'author.literal', weight: 10 },
+  { name: 'author.given', weight: 1 },
+  { name: 'title', weight: 1 },
+  { name: 'issued', weight: 1 },
 ];
 
 export class BibliographyManager {
   private readonly server: PandocServer;
   private etag: string;
-  private bibEntries: BibliographyEntry[];
-  private fuse: Fuse<BibliographyEntry, Fuse.IFuseOptions<any>> | undefined;
+  private bibEntries: BibliographySource[];
+  private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
 
   public constructor(server: PandocServer) {
     this.server = server;
@@ -93,7 +85,7 @@ export class BibliographyManager {
     this.bibEntries = [];
   }
 
-  public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyEntry[]> {
+  public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographySource[]> {
     const yamlNodes = yamlMetadataNodes(doc);
 
     const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
@@ -117,16 +109,16 @@ export class BibliographyManager {
 
       // Read bibliography data from files (via server)
       if (!this.bibEntries || result.etag !== this.etag) {
-        const parsedEntries = generateBibliographyEntries(ui, result.bibliography);
-        const parsedIds = parsedEntries.map(entry => entry.source.id);
+        const sources = result.bibliography.sources;
+        const parsedIds = sources.map(source => source.id);
 
         // Deduplicate entries
-        const dedupedEntries = parsedEntries.filter((value, index) => {
-          return parsedIds.indexOf(value.source.id) === index;
+        const dedupedSources = sources.filter((source, index) => {
+          return parsedIds.indexOf(source.id) === index;
         });
 
         // Sort by id by default
-        const sortedEntries = dedupedEntries.sort((a, b) => a.source.id.localeCompare(b.source.id));
+        const sortedEntries = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
 
         this.bibEntries = sortedEntries;
         this.reindexEntries(sortedEntries);
@@ -140,13 +132,13 @@ export class BibliographyManager {
     return this.bibEntries;
   }
 
-  public search(query: string): BibliographyEntry[] {
+  public search(query: string, limit: number): BibliographySource[] {
     if (this.fuse) {
       const options = {
         isCaseSensitive: false,
         shouldSort: true,
         includeMatches: false,
-        limit: kMaxCitationCompletions,
+        limit,
         keys: kFields,
       };
       const results = this.fuse.search(query, options);
@@ -156,7 +148,7 @@ export class BibliographyManager {
     }
   }
 
-  private reindexEntries(bibEntries: BibliographyEntry[]) {
+  private reindexEntries(bibEntries: BibliographySource[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
@@ -165,7 +157,6 @@ export class BibliographyManager {
     this.fuse = new Fuse(bibEntries, options, index);
   }
 }
-const kMaxCitationCompletions = 20;
 
 function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   const refBlockParsedYamls = parsedYamls.filter(
@@ -216,184 +207,4 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUI
     }
   }
   return null;
-}
-
-function imageForType(ui: EditorUI, type: string): [string?, string?] {
-  switch (type) {
-    case 'article':
-    case 'article-journal':
-    case 'article-magazine':
-    case 'article-newspaper':
-    case 'paper-conference':
-    case 'review':
-    case 'review-book':
-    case 'techreport':
-      return [ui.images.citations?.article, ui.images.citations?.article_dark];
-    case 'bill':
-    case 'legislation':
-    case 'legal_case':
-    case 'patent':
-    case 'treaty':
-      return [ui.images.citations?.legal, ui.images.citations?.legal_dark];
-    case 'book':
-    case 'booklet':
-    case 'chapter':
-    case 'inbook':
-    case 'incollection':
-    case 'manuscript':
-    case 'manual':
-    case 'thesis':
-    case 'masterthesis':
-    case 'phdthesis':
-      return [ui.images.citations?.book, ui.images.citations?.book_dark];
-    case 'broadcast':
-      return [ui.images.citations?.broadcast, ui.images.citations?.broadcast_dark];
-    case 'data':
-    case 'data-set':
-      return [ui.images.citations?.data, ui.images.citations?.data_dark];
-    case 'entry':
-    case 'entry-dictionary':
-    case 'entry-encyclopedia':
-      return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
-    case 'figure':
-    case 'graphic':
-      return [ui.images.citations?.image, ui.images.citations?.image_dark];
-    case 'map':
-      return [ui.images.citations?.map, ui.images.citations?.map_dark];
-    case 'motion_picture':
-      return [ui.images.citations?.movie, ui.images.citations?.movie_dark];
-    case 'musical_score':
-    case 'song':
-      return [ui.images.citations?.song, ui.images.citations?.song_dark];
-    case 'post':
-    case 'post-weblog':
-    case 'webpage':
-      return [ui.images.citations?.web, ui.images.citations?.web_dark];
-    case 'conference':
-    case 'inproceedings':
-    case 'proceedings':
-    case 'interview':
-    case 'pamphlet':
-    case 'personal_communication':
-    case 'report':
-    case 'speech':
-    case 'misc':
-    case 'unpublished':
-    default:
-      return [ui.images.citations?.other, ui.images.citations?.other_dark];
-  }
-}
-
-export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliography): BibliographyEntry[] {
-  // Formatter for shortening the author string (formatter will support localization of string
-  // template used for shortening the string)
-  const authorsFormatter = (authors?: BibliographyAuthor[], maxLength?: number): string => {
-    return formatAuthors(authors, maxLength);
-  };
-
-  // Formatter used for shortening and displaying issue dates.
-  const issuedDateFormatter = (date?: BibliographyDate): string => {
-    if (date) {
-      return formatIssuedDate(date, ui);
-    }
-    return '';
-  };
-
-  // Map the Bibliography Sources to Entries which include additional
-  // metadat and functions for display
-  return bibliography.sources.map(source => {
-    return {
-      source,
-      authorsFormatter,
-      issuedDateFormatter,
-      image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
-    };
-  });
-}
-// TODO: Needs to support localization of the templated strings
-const kEtAl = 'et al.';
-function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
-  // No author(s) specified
-  if (!authors) {
-    return '';
-  }
-
-  return authors
-    .map(author => {
-      if (author.literal?.length) {
-        return author.literal;
-      } else if (author.given?.length) {
-        // Family and Given name
-        return `${author.family}, ${author.given.substring(0, 1)}`;
-      } else {
-        // Family name only
-        return `${author.family}`;
-      }
-    })
-    .reduce((previous, current, index, array) => {
-      // Ignore any additional authors if the string
-      // exceeds the maximum length
-      if ((maxLength && previous.length >= maxLength) || previous.endsWith(kEtAl)) {
-        return previous;
-      }
-
-      if (index === 0) {
-        // Too long, truncate
-        if (maxLength && current.length > maxLength) {
-          return `${current.substring(0, maxLength - 1)}…`;
-        }
-        // The first author
-        return current;
-      } else if (index > 0 && index === array.length - 1) {
-        return addAuthorOrEtAl(previous, `${previous}, and ${current}`, maxLength);
-      } else {
-        // Middle authors
-        return addAuthorOrEtAl(previous, `${previous}, ${current}`, maxLength);
-      }
-    });
-}
-
-function addAuthorOrEtAl(previousAuthorStr: string, newAuthorStr: string, maxLength?: number) {
-  // if adding the string would make it too long, truncate
-  if (maxLength && newAuthorStr.length > maxLength) {
-    return etAl(previousAuthorStr, maxLength);
-  }
-  return newAuthorStr;
-}
-
-function etAl(authorStr: string, maxLength: number) {
-  // First try just using et al., then shorten existing
-  // author to accomodate
-  const etAlStr = `${authorStr} ${kEtAl}`;
-  if (maxLength && etAlStr.length > maxLength) {
-    const excessLength = etAlStr.length - maxLength - 1;
-    return `${authorStr.substr(0, authorStr.length - excessLength)}… ${kEtAl}`;
-  }
-  return etAlStr;
-}
-
-// TODO: Needs to support localization of the templated strings
-function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
-  // No issue date for this
-  if (!date) {
-    return '';
-  }
-
-  const dateParts = date['date-parts'];
-  if (dateParts) {
-    switch (dateParts.length) {
-      // There is a date range
-      case 2:
-        return `${dateParts[0][0]}-${dateParts[1][0]}`;
-      // Only a single date
-      case 1:
-        return `${dateParts[0][0]}`;
-
-      // Seems like a malformed date :(
-      case 0:
-      default:
-        return '';
-    }
-  }
-  return '';
 }
