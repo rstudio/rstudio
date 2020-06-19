@@ -18,7 +18,7 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
-import uniqby from 'lodash.uniqby'
+import uniqby from 'lodash.uniqby';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
