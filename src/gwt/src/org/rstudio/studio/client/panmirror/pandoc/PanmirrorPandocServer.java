@@ -18,6 +18,9 @@ package org.rstudio.studio.client.panmirror.pandoc;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.server.ServerError;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -81,12 +84,29 @@ public class PanmirrorPandocServer {
    public Promise<JavaScriptObject> getBibliography(String file, JsArrayString bibliographies, String refBlock, String etag)
    {
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         
+         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+         GlobalProgressDelayer delayedProgress = new GlobalProgressDelayer(globalDisplay, 1500, "Reading bibliography...");
          server_.pandocGetBibliography(
             file,
             bibliographies,
             refBlock,
             etag,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject) {
+               @Override
+               public void onResponseReceived(JavaScriptObject response)
+               {
+                  delayedProgress.dismiss();
+                  super.onResponseReceived(response);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  delayedProgress.dismiss();
+                  super.onError(error);
+               }
+            }
          );
       });
    }
