@@ -15,7 +15,6 @@
 
 // TESTING
 // TODD: Need to filter entries to not include any duplicates
-// TODO: Dark mode
 // TODO: Bibliographies
 // TODO: Test date formatting
 // TODO: Web Accessibilty?
@@ -140,18 +139,12 @@ function formatIdentifier(entry: BibliographyEntry): string {
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
-
-  const idView = <>
-    <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
-    <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
-  </>;
-
-  return (
-    <CompletionItemView
-      image={entry.image[0]}
-      idView={idView}
-      title={entry.source.title || ''}
-      htmlTitle={true}
-    />
+  const idView = (
+    <>
+      <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
+      <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
+    </>
   );
+
+  return <CompletionItemView image={entry.image} idView={idView} title={entry.source.title || ''} htmlTitle={true} />;
 };

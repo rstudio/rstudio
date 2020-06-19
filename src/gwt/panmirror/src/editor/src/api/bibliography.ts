@@ -39,7 +39,7 @@ export interface BibliographyEntry {
   source: BibliographySource;
   authorsFormatter: (authors?: BibliographyAuthor[], maxLength?: number) => string;
   issuedDateFormatter: (issueDate?: BibliographyDate) => string;
-  image: [string?, string?];
+  image?: string;
 }
 
 // The individual bibliographic source
@@ -295,7 +295,7 @@ export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliogr
       source,
       authorsFormatter,
       issuedDateFormatter,
-      image: imageForType(ui, source.type),
+      image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
     };
   });
 }
