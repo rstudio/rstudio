@@ -24,8 +24,10 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { XRef, XRefServer } from '../../api/xref';
 import { markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
+import { CompletionItemView } from '../../api/widgets/completion';
 
 import './xref-completion.css';
+
 
 export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): CompletionHandler<XRef> {
   return {
@@ -53,9 +55,11 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
     },
 
     view: {
-      component: XRefView,
+      component: xrefView(ui),
       key: xref => xref.id,
-      width: 200,
+      height: 52,
+      width: 350,
+      maxVisible: 5,
       hideNoResults: true
     },
   };
@@ -88,11 +92,29 @@ function xrefCompletions(ui: EditorUI, server: XRefServer) {
   };
 }
 
-const XRefView: React.FC<XRef> = xref => {
-  return (
-    <div className={'pm-completion-xref'}>
-      {xref.id}
-    </div>
-  );
-};
+function xrefView(ui: EditorUI): React.FC<XRef> {
+
+  return (xref: XRef) => {
+
+    const image = xref.id.startsWith('fig:')
+      ? ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!
+      : ui.images.omni_insert?.generic!;
+
+    const idView = <>
+      <div className={'pm-xref-completion-id pm-xref-completion-id-key pm-fixedwidth-font'}>{xref.id}</div>
+      <div className={'pm-xref-completion-id pm-xref-completion-id-file'}>{xref.file}</div>
+    </>;
+
+    return (
+      <CompletionItemView
+        width={350}
+        classes={[]}
+        image={image}
+        idView={idView}
+        title={xref.title}
+      />
+    );
+  };
+
+}
 
