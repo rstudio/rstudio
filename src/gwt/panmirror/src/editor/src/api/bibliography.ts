@@ -117,8 +117,13 @@ export class BibliographyManager {
 
       // Read bibliography data from files (via server)
       if (!this.bibEntries || result.etag !== this.etag) {
-        this.bibEntries = generateBibliographyEntries(ui, result.bibliography);
-        this.reindexEntries();
+        const parsedEntries = generateBibliographyEntries(ui, result.bibliography);
+
+        // The user could have duplicate entries, filter those
+        const dedupedEntries = Array.from(new Set(parsedEntries));
+
+        this.bibEntries = dedupedEntries;
+        this.reindexEntries(dedupedEntries);
       }
 
       // record the etag for future queries
@@ -145,13 +150,13 @@ export class BibliographyManager {
     }
   }
 
-  private reindexEntries() {
+  private reindexEntries(bibEntries: BibliographyEntry[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
     };
-    const index = Fuse.createIndex(options.keys, this.bibEntries);
-    this.fuse = new Fuse(this.bibEntries, options, index);
+    const index = Fuse.createIndex(options.keys, bibEntries);
+    this.fuse = new Fuse(bibEntries, options, index);
   }
 }
 const kMaxCitationCompletions = 20;

@@ -14,7 +14,6 @@
  */
 
 // TESTING
-// TODD: Need to filter entries to not include any duplicates
 // TODO: Bibliographies
 // TODO: Test date formatting
 // TODO: Web Accessibilty?
