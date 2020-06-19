@@ -49,6 +49,7 @@ import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { PandocServer } from '../../api/pandoc';
+import { CompletionItemView } from '../../api/widgets/completion';
 
 import { kEditingCiteIdRegEx } from './cite';
 
@@ -139,21 +140,18 @@ function formatIdentifier(entry: BibliographyEntry): string {
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
+
+  const idView = <>
+    <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
+    <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
+  </>;
+
   return (
-    <div className={'pm-completion-citation-item'}>
-      <div className={'pm-completion-citation-type'}>
-        <img className={'pm-block-border-color'} src={entry.image[0]} />
-      </div>
-      <div className={'pm-completion-citation-summary'}>
-        <div className={'pm-completion-citation-source'}>
-          <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
-          <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
-        </div>
-        <div
-          className={'pm-completion-citation-title'}
-          dangerouslySetInnerHTML={{ __html: entry.source.title || '' }}
-        />
-      </div>
-    </div>
+    <CompletionItemView
+      image={entry.image[0]}
+      idView={idView}
+      title={entry.source.title || ''}
+      htmlTitle={true}
+    />
   );
 };
