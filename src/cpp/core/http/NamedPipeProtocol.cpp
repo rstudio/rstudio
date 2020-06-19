@@ -29,7 +29,7 @@ template<> Error closeSocket(
       boost::system::error_code ec;
       socket.close(ec);
       if (ec)
-        return Error(ec, ERROR_LOCATION) ;
+        return Error(ec, ERROR_LOCATION);
    }
 
    return Success();

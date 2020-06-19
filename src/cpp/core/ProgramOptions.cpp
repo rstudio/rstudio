@@ -22,7 +22,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
 
-using namespace boost::program_options ;
+using namespace boost::program_options;
 
 namespace rstudio {
 namespace core {
@@ -44,7 +44,7 @@ bool validateOptionsProvided(const variables_map& vm,
          if (!configFile.empty())
             msg += " in config file " + configFile;
          reportError(msg, ERROR_LOCATION);
-         return false ;
+         return false;
       }
    }
    
@@ -95,7 +95,7 @@ void parseCommandLine(variables_map& vm,
       parser.allow_unregistered();
    parsed_options parsed = parser.run();
    store(parsed, vm);
-   notify(vm) ;
+   notify(vm);
 
    // collect unrecognized if necessary
    if (pUnrecognized != nullptr)
@@ -126,8 +126,8 @@ bool parseConfigFile(variables_map& vm,
       try
       {
          // parse config file
-         store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm) ;
-         notify(vm) ;
+         store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm);
+         notify(vm);
       }
       catch(const std::exception& e)
       {
@@ -156,7 +156,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    try
    {        
       // general options
-      options_description general("general") ;
+      options_description general("general");
       general.add_options()
          ("help", "print help message")
          ("test-config", "test to ensure the config file is valid")
@@ -170,7 +170,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       options_description commandLineOptions(optionsDescription.commandLine);
       commandLineOptions.add(general);
       
-      variables_map vm ;
+      variables_map vm;
 
       // the order of parsing is determined based on whether or not the config file has precedence
       // if it does, parse it first, otherwise parse the command line first
@@ -204,8 +204,8 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       if (vm.count("help"))
       {
          *pHelp = true;
-         std::cout << commandLineOptions ;
-         return ProgramStatus::exitSuccess() ;
+         std::cout << commandLineOptions;
+         return ProgramStatus::exitSuccess();
       }
       
       // validate all options are provided
@@ -230,7 +230,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       }
       else
       {
-         return ProgramStatus::run() ;
+         return ProgramStatus::run();
       }
    }
    catch(const boost::program_options::error& e)

@@ -89,7 +89,7 @@ void handleFileRequest(const FileRequestOptions& options,
       {
          // if the filter returns false it means we should stop processing
          if (!options.mainPageFilter(request, pResponse))
-            return ;
+            return;
       }
 
       // apply browser compatibility headers

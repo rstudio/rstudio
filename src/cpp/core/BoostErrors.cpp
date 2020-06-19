@@ -27,7 +27,7 @@
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
-using namespace boost::system ;
+using namespace boost::system;
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace interprocess {

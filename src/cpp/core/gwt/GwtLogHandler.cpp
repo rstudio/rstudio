@@ -186,7 +186,7 @@ void handleLogMessageRequest(const std::string& username,
 {
    // read params
    int level = 0;
-   std::string message ;
+   std::string message;
    Error error = json::readParams(jsonRpcRequest.params, &level, &message);
    if (error)
    {
@@ -256,7 +256,7 @@ void handleLogRequest(const std::string& username,
 {
    // parse request
    json::JsonRpcRequest jsonRpcRequest;
-   Error parseError = parseJsonRpcRequest(request.body(), &jsonRpcRequest) ;
+   Error parseError = parseJsonRpcRequest(request.body(), &jsonRpcRequest);
    if (parseError)
    {
       LOG_ERROR(parseError);
