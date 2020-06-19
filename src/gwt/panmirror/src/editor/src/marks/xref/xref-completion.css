@@ -1,5 +1,5 @@
 /*
- * xref.ts
+ * xref-completion.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,12 +14,7 @@
  */
 
 
-export interface XRefServer {
-  indexForFile: (file: string) => Promise<XRef[]>;
+.pm-completion-xref {
+  font-weight: bold;
 }
 
-export interface XRef {
-  file: string;
-  key: string;
-  title: string;
-}

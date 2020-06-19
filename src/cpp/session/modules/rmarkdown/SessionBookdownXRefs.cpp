@@ -149,13 +149,14 @@ XRefFileIndex indexForDoc(const FilePath& filePath)
    return indexForDoc(filePath, contents);
 }
 
-json::Array entriesJson(const std::vector<std::string>& entries)
+json::Array entriesJson(const std::string &file, const std::vector<std::string>& entries)
 {
    // entries
    json::Array entriesJson;
    for (std::vector<std::string>::size_type e = 0; e < entries.size(); e++)
    {
       json::Object entryJson;
+      entryJson["file"] = file;
       const std::string& entry = entries[e];
       if (entry.size() > 0)
       {
@@ -175,6 +176,12 @@ json::Array entriesJson(const std::vector<std::string>& entries)
    return entriesJson;
 }
 
+json::Array entriesJson(const XRefFileIndex& idx)
+{
+   return entriesJson(idx.file, idx.entries);
+}
+
+
 class XRefProjectIndex
 {
 public:
@@ -190,10 +197,6 @@ public:
 
          // alias source files
          const std::string& sourceFile = sourceFiles[i];
-
-         // create a file entry
-         json::Object fileJson;
-         fileJson["file"] = sourceFile;
 
          // prefer unsaved files
          std::vector<std::string> entries;
@@ -214,17 +217,9 @@ public:
             }
          }
 
-         if (entries.size() > 0)
-         {
-            // entries
-            fileJson["entries"] = entriesJson(entries);
-
-            // add to main index
-            indexJson.push_back(fileJson);
-         }
+         json::Array fileIndex = entriesJson(sourceFile, entries);
+         std::copy(fileIndex.begin(), fileIndex.end(), std::back_inserter(indexJson));
       }
-
-
 
       return indexJson;
    }
@@ -388,12 +383,7 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          else
          {
             XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
-            json::Array indexJson;
-            json::Object fileJson;
-            fileJson["file"] = idx.file;
-            fileJson["entries"] = entriesJson(idx.entries);
-            indexJson.push_back(fileJson);
-            pResponse->setResult(indexJson);
+            pResponse->setResult(entriesJson(idx));
          }
       }
       else
