@@ -22,14 +22,6 @@
 
 // TODO: How should I report errors to user (for example, invalid entry type)
 
-// TODO: editor.ts
-/*
-          citations: {
-            ...defaultImages.citations,
-            ...context.ui.images,
-          },
-*/
-
 // FUTURE
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview

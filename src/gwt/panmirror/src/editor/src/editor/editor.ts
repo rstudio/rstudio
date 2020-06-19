@@ -298,6 +298,10 @@ export class Editor {
             ...defaultImages.omni_insert,
             ...context.ui.images,
           },
+          citations: {
+            ...defaultImages.citations,
+            ...context.ui.images,
+          },
         },
       },
     };
