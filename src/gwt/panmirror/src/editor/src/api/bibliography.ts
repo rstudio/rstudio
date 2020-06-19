@@ -120,12 +120,16 @@ export class BibliographyManager {
         const parsedEntries = generateBibliographyEntries(ui, result.bibliography);
         const parsedIds = parsedEntries.map(entry => entry.source.id);
 
+        // Deduplicate entries
         const dedupedEntries = parsedEntries.filter((value, index) => {
           return parsedIds.indexOf(value.source.id) === index;
         });
 
-        this.bibEntries = dedupedEntries;
-        this.reindexEntries(dedupedEntries);
+        // Sort by id by default
+        const sortedEntries = dedupedEntries.sort((a, b) => a.source.id.localeCompare(b.source.id));
+
+        this.bibEntries = sortedEntries;
+        this.reindexEntries(sortedEntries);
       }
 
       // record the etag for future queries

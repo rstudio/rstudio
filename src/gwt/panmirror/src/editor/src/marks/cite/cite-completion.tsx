@@ -14,8 +14,6 @@
  */
 
 // TESTING
-// TODO: Bibliographies
-
 // TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
 // TODO: How should I report errors to user (for example, invalid entry type)
 
