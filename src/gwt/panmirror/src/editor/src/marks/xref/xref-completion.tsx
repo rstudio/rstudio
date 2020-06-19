@@ -15,15 +15,17 @@
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { XRef, XRefServer } from '../../api/xref';
+import { markIsActive } from '../../api/mark';
+import { searchPlaceholderDecoration } from '../../api/placeholder';
 
 import './xref-completion.css';
-import { markIsActive } from '../../api/mark';
 
 export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): CompletionHandler<XRef> {
   return {
@@ -66,14 +68,19 @@ function xrefCompletions(ui: EditorUI, server: XRefServer) {
   return (text: string, context: EditorState | Transaction): CompletionResult<XRef> | null => {
     const match = text.match(kXRefCompletionRegEx);
     if (match) {
+      const pos = context.selection.head - match[2].length;
+      const token = match[2];
       return {
-        pos: context.selection.head - match[2].length,
+        pos,
         offset: -match[1].length,
-        token: match[2],
+        token,
         completions: () => {
           const docPath = ui.context.getDocumentPath();
           return docPath ? server.indexForFile(docPath) : Promise.resolve([]);
         },
+        decorations: token.length === 0
+          ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(pos, ui)])
+          : undefined,
       };
     } else {
       return null;

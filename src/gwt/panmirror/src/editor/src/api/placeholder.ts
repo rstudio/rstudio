@@ -19,6 +19,8 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { findParentNode } from 'prosemirror-utils';
 
+import { EditorUI } from './ui';
+
 export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
   const pluginKey = new PluginKey(nodeType.name + '-empty-placeholder');
 
@@ -72,4 +74,12 @@ export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text
     container.appendChild(message);
     return container;
   });
+}
+
+export function searchPlaceholderDecoration(pos: number, ui: EditorUI) {
+  return iconAndTextPlaceholderDecoration(
+    pos,
+    ui.images.search!,
+    ui.context.translateText(''),
+  );
 }

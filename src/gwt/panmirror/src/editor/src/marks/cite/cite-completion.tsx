@@ -39,7 +39,7 @@ import React from 'react';
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { getMarkRange, markIsActive } from '../../api/mark';
-import { iconAndTextPlaceholderDecoration } from '../../api/placeholder';
+import { searchPlaceholderDecoration } from '../../api/placeholder';
 
 import { BibliographyEntry, BibliographyManager } from '../../api/bibliography';
 
@@ -104,13 +104,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           completions: (state: EditorState) => manager.entries(ui, context.doc),
           decorations:
             token.length === 0
-              ? DecorationSet.create(context.doc, [
-                  iconAndTextPlaceholderDecoration(
-                    context.selection.head,
-                    ui.images.search!,
-                    ui.context.translateText(''),
-                  ),
-                ])
+              ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
               : undefined,
         };
       }
