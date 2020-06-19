@@ -37,8 +37,8 @@ export interface Bibliography {
 // rendered html preview of the citation
 export interface BibliographyEntry {
   source: BibliographySource;
-  authorsFormatter: (authors: BibliographyAuthor[], maxLength: number) => string;
-  issuedDateFormatter: (issueDate: BibliographyDate) => string;
+  authorsFormatter: (authors?: BibliographyAuthor[], maxLength?: number) => string;
+  issuedDateFormatter: (issueDate?: BibliographyDate) => string;
   image: [string?, string?];
 }
 
@@ -46,17 +46,18 @@ export interface BibliographyEntry {
 export interface BibliographySource {
   id: string;
   type: string;
-  DOI: string;
-  URL: string;
-  title: string;
-  author: BibliographyAuthor[];
-  issued: BibliographyDate;
+  DOI?: string;
+  URL?: string;
+  title?: string;
+  author?: BibliographyAuthor[];
+  issued?: BibliographyDate;
 }
 
 // Author
 export interface BibliographyAuthor {
-  family: string;
-  given: string;
+  family?: string;
+  given?: string;
+  literal?: string;
 }
 
 // Used for issue dates
@@ -81,7 +82,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 ];
 
 export class BibliographyManager {
-  private server: PandocServer;
+  private readonly server: PandocServer;
   private etag: string;
   private bibEntries: BibliographyEntry[];
   private fuse: Fuse<BibliographyEntry, Fuse.IFuseOptions<any>> | undefined;
@@ -101,20 +102,18 @@ export class BibliographyManager {
       return { yamlCode, yaml: parseYaml(yamlCode) };
     });
 
+    // Currently edited doc
+    const docPath = ui.context.getDocumentPath();
+
     // Gather the files from the document
     const files = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
 
     // Gather the reference block
     const refBlock = referenceBlockFromYaml(parsedYamlNodes);
 
-    if (files || refBlock) {
+    if (docPath || files || refBlock) {
       // get the bibliography
-      const result = await this.server.getBibliography(
-        ui.context.getDocumentPath(),
-        files ? files.bibliography : [],
-        refBlock,
-        this.etag,
-      );
+      const result = await this.server.getBibliography(docPath, files ? files.bibliography : [], refBlock, this.etag);
 
       // Read bibliography data from files (via server)
       if (!this.bibEntries || result.etag !== this.etag) {
@@ -186,7 +185,11 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUI
     // So replicate this and use the last biblography node that we find
     const bibliographyParsedYaml = bibliographyParsedYamls[bibliographyParsedYamls.length - 1];
     const bibliographyFiles = bibliographyParsedYaml.yaml.bibliography;
-    if (Array.isArray(bibliographyFiles)) {
+
+    if (
+      Array.isArray(bibliographyFiles) &&
+      bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')
+    ) {
       // An array of bibliographies
       const bibPaths = bibliographyFiles.map(
         bibliographyFile => uiContext.getDefaultResourceDir() + '/' + bibliographyFile,
@@ -273,16 +276,20 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
 export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliography): BibliographyEntry[] {
   // Formatter for shortening the author string (formatter will support localization of string
   // template used for shortening the string)
-  const authorsFormatter = (authors: BibliographyAuthor[], maxLength: number): string => {
-    return formatAuthors(authors, maxLength, ui);
+  const authorsFormatter = (authors?: BibliographyAuthor[], maxLength?: number): string => {
+    return formatAuthors(authors, maxLength);
   };
 
   // Formatter used for shortening and displaying issue dates.
-  const issuedDateFormatter = (date: BibliographyDate): string => {
-    return formatIssuedDate(date, ui);
+  const issuedDateFormatter = (date?: BibliographyDate): string => {
+    if (date) {
+      return formatIssuedDate(date, ui);
+    }
+    return '';
   };
 
-  // Map the generated html preview to each source item
+  // Map the Bibliography Sources to Entries which include additional
+  // metadat and functions for display
   return bibliography.sources.map(source => {
     return {
       source,
@@ -294,12 +301,19 @@ export function generateBibliographyEntries(ui: EditorUI, bibliography: Bibliogr
 }
 
 const kEtAl = 'et al.';
-function formatAuthors(authors: BibliographyAuthor[], maxLength: number, ui: EditorUI): string {
+function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
+  // No author(s) specified
+  if (!authors) {
+    return '';
+  }
+
   // TODO: Needs to support localization of the templated strings
   let formattedAuthorString = '';
   authors
     .map(author => {
-      if (author.given.length > 0) {
+      if (author.literal?.length) {
+        return author.literal;
+      } else if (author.given?.length) {
         // Family and Given name
         return `${author.family}, ${author.given.substring(0, 1)}`;
       } else {
@@ -309,7 +323,7 @@ function formatAuthors(authors: BibliographyAuthor[], maxLength: number, ui: Edi
     })
     .every((value, index, values) => {
       // If we'll exceed the maximum length, append 'et al' and stop
-      if (formattedAuthorString.length + value.length > maxLength) {
+      if (maxLength && formattedAuthorString.length + value.length > maxLength) {
         formattedAuthorString = `${formattedAuthorString}, ${kEtAl}`;
         return false;
       }
@@ -336,17 +350,21 @@ function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
     return '';
   }
 
-  switch (date['date-parts'].length) {
-    // There is a date range
-    case 2:
-      return `${date['date-parts'][0]}-${date['date-parts'][1]}`;
-    // Only a single date
-    case 1:
-      return `${date['date-parts'][0]}`;
+  const dateParts = date['date-parts'];
+  if (dateParts) {
+    switch (date['date-parts'].length) {
+      // There is a date range
+      case 2:
+        return `${date['date-parts'][0]}-${date['date-parts'][1]}`;
+      // Only a single date
+      case 1:
+        return `${date['date-parts'][0]}`;
 
-    // Seems like a malformed date :(
-    case 0:
-    default:
-      return '';
+      // Seems like a malformed date :(
+      case 0:
+      default:
+        return '';
+    }
   }
+  return '';
 }
