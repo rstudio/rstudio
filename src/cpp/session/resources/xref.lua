@@ -16,7 +16,11 @@ end
 
 -- headers just output id and header text
 function Header(lev, s, attr)
-  return attr.id .. ' ' .. s .. '\n'
+  if string.len(attr.id) > 0 then
+    return attr.id .. ' ' .. s .. '\n'
+  else
+    return ''
+  end
 end
 
 -- rmd code chunks w/ labels get turned into inline code within a paragraph

@@ -106,6 +106,8 @@ XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
 
    // run pandoc w/ custom lua filter to capture index
    std::vector<std::string> args;
+   args.push_back("--from");
+   args.push_back("markdown-auto_identifiers");
    args.push_back("--to");
    FilePath resPath = session::options().rResourcesPath();
    FilePath xrefLuaPath = resPath.completePath("xref.lua");
