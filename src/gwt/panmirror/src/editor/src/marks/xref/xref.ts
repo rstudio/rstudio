@@ -21,15 +21,15 @@ import { Transform } from 'prosemirror-transform';
 
 import { setTextSelection, findChildren, findChildrenByMark } from 'prosemirror-utils';
 
-import { Extension, ExtensionContext } from '../api/extension';
-import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
-import { MarkTransaction, trTransform } from '../api/transaction';
-import { FixupContext } from '../api/fixup';
-import { ProsemirrorCommand, EditorCommandId } from '../api/command';
-import { canInsertNode } from '../api/node';
-import { fragmentText } from '../api/fragment';
-import { PandocOutput } from '../api/pandoc';
-import { OmniInsertGroup } from '../api/omni_insert';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../../api/mark';
+import { MarkTransaction, trTransform } from '../../api/transaction';
+import { FixupContext } from '../../api/fixup';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { canInsertNode } from '../../api/node';
+import { fragmentText } from '../../api/fragment';
+import { PandocOutput } from '../../api/pandoc';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 

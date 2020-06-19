@@ -86,7 +86,7 @@ import markRawHTML from '../marks/raw_inline/raw_html';
 import markMath from '../marks/math/math';
 import markCite from '../marks/cite/cite';
 import markSpan from '../marks/span';
-import markXRef from '../marks/xref';
+import markXRef from '../marks/xref/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
 import markEmoji from '../marks/emoji/emoji';
