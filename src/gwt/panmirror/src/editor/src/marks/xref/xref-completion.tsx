@@ -18,6 +18,7 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
+import uniqby from 'lodash.uniqby'
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
@@ -41,9 +42,10 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
     completions: xrefCompletions(ui, server),
 
     filter: (completions: XRef[], state: EditorState, token: string) => {
-      return completions.filter(xref => {
+      const results = completions.filter(xref => {
         return xref.id.includes(token);
       });
+      return uniqby(results, xrefFormatId);
     },
 
     replacement(schema: Schema, xref: XRef | null): string | ProsemirrorNode | null {
@@ -56,7 +58,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 
     view: {
       component: xrefView(ui),
-      key: xref => xref.id,
+      key: xref => xrefFormatId(xref),
       height: 52,
       width: 350,
       maxVisible: 5,
