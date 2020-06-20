@@ -379,7 +379,7 @@ RToken RTokenizer::matchStringLiteral()
    
    std::size_t row = row_;
    std::size_t column = column_;
-   updatePosition(start, pos_ - start, &row_, &column_); 
+   updatePosition(start, pos_ - start, &row_, &column_);
 
    // NOTE: the Java version of the tokenizer returns a special RStringToken
    // subclass which includes the wellFormed flag as an attribute. Our
@@ -474,7 +474,7 @@ RToken RTokenizer::matchOperator()
       else if (cNext == L'<')
       {
          if (cNextNext == L'-') // <<-
-            return consumeToken(RToken::OPER, 3); 
+            return consumeToken(RToken::OPER, 3);
       }
       else // plain old <
          return consumeToken(RToken::OPER, 1);

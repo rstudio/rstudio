@@ -324,7 +324,7 @@ void PrefLayer::fileMonitorTermination(const Error& error)
       LOG_ERROR(error);
 
    // Clear file monitoring handle
-   handle_ = boost::none; 
+   handle_ = boost::none;
 }
 
 void PrefLayer::monitorPrefsFile(const core::FilePath& prefsFile)

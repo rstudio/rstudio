@@ -1084,7 +1084,7 @@ void newPage(const pGEcontext gc, pDevDesc dd)
    }
 
    // call it
-   pNewPageFn(gc, dd); 
+   pNewPageFn(gc, dd);
 }
 
 void polygon(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd)
@@ -1154,7 +1154,7 @@ void polyline(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd)
    }
 
    // call it
-   pPolylineFn(n, x, y, gc, dd); 
+   pPolylineFn(n, x, y, gc, dd);
 }
 
 void rect(double x0, double y0, double x1, double y1, const pGEcontext gc, pDevDesc dd)
@@ -1189,7 +1189,7 @@ void rect(double x0, double y0, double x1, double y1, const pGEcontext gc, pDevD
    }
 
    // call it
-   pRectFn(x0, y0, x1, y1, gc, dd); 
+   pRectFn(x0, y0, x1, y1, gc, dd);
 }
 
 void path(double *x,
@@ -1329,7 +1329,7 @@ void size(double *left, double *right, double *bottom, double *top, pDevDesc dd)
    }
 
    // call it
-   pSizeFn(left, right, bottom, top, dd); 
+   pSizeFn(left, right, bottom, top, dd);
 }
 
 double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)

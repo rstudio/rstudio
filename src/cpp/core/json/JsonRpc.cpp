@@ -419,7 +419,7 @@ std::string JsonRpcErrorCategory::message( int ev ) const
          return "Invalid json-rpc request" ;
 
       case errc::MethodNotFound:
-         return "Method not found"  ;
+         return "Method not found";
 
       case errc::ParamMissing:
          return "Parameter missing" ;

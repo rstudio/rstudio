@@ -33,7 +33,7 @@ namespace core {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
-   return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"" ;
+   return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"";
 }
 
 Error writeStringMapToFile(const core::FilePath& filePath,

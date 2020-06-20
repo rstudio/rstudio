@@ -45,7 +45,7 @@ using namespace rstudio::core ;
 namespace rstudio {
 namespace r {
    
-using namespace exec ;  
+using namespace exec;
          
 namespace session {
 namespace state {

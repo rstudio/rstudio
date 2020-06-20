@@ -86,12 +86,12 @@ public:
 
    std::string programIdentity() const 
    { 
-      return std::string(programIdentity_.c_str()); 
+      return std::string(programIdentity_.c_str());
    }
    
    std::string programMode() const 
    { 
-      return std::string(programMode_.c_str()); 
+      return std::string(programMode_.c_str());
    }
 
    bool logStderr() const
@@ -172,7 +172,7 @@ public:
    
    core::FilePath modulesRSourcePath() const 
    { 
-      return core::FilePath(modulesRSourcePath_.c_str()); 
+      return core::FilePath(modulesRSourcePath_.c_str());
    }
 
    core::FilePath sessionLibraryPath() const
@@ -417,7 +417,7 @@ public:
    // user info
    std::string userIdentity() const 
    { 
-      return std::string(userIdentity_.c_str()); 
+      return std::string(userIdentity_.c_str());
    }
    
    bool showUserIdentity() const
@@ -463,7 +463,7 @@ public:
    
    core::FilePath userScratchPath() const 
    { 
-      return core::FilePath(userScratchPath_.c_str()); 
+      return core::FilePath(userScratchPath_.c_str());
    }
 
    core::FilePath userLogPath() const
@@ -560,7 +560,7 @@ public:
    }
    bool packageOutputInPackageFolder() const
    {
-      return packageOutputToPackageFolder_;   
+      return packageOutputToPackageFolder_;
    }
 
    std::string getOverlayOption(const std::string& name)
@@ -783,7 +783,7 @@ private:
    bool multiSession_;
    bool projectSharingEnabled_;
    std::string userHomePath_;
-   std::string userScratchPath_;   
+   std::string userScratchPath_;
    std::string launcherToken_;
 
    // overrides

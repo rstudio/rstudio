@@ -66,18 +66,18 @@ namespace {
 const char * const kRStudioDevice = "RStudioGD";
 
 // GE device description
-pGEDevDesc s_pGEDevDesc = nullptr;   
+pGEDevDesc s_pGEDevDesc = nullptr;
 
 // externally provided locator function
 boost::function<bool(double*,double*)> s_locatorFunction;
    
 // global size attributes (used to initialize new devices)
 int s_width = 0;
-int s_height = 0;   
+int s_height = 0;
 double s_devicePixelRatio = 1.0;
    
 // provide GraphicsDeviceEvents for plot manager
-GraphicsDeviceEvents s_graphicsDeviceEvents;   
+GraphicsDeviceEvents s_graphicsDeviceEvents;
    
 using namespace handler;
 
@@ -550,7 +550,7 @@ SEXP rs_createGD()
       handler::onAfterAddDevice(pDC);
 
       // make us active
-      Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
+      Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
    } 
    END_SUSPEND_INTERRUPTS;
 
@@ -576,7 +576,7 @@ Error makeActive()
    }
    
    // select us
-   Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
+   Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
    
    return Success();
 }
@@ -695,8 +695,8 @@ void playDisplayList()
    GEplayDisplayList(s_pGEDevDesc);
 }
 
-const int kDefaultWidth = 500;   
-const int kDefaultHeight = 500; 
+const int kDefaultWidth = 500;
+const int kDefaultHeight = 500;
 const double kDefaultDevicePixelRatio = 1.0;
    
 Error initialize(

@@ -412,7 +412,7 @@ void handleHttpdResult(SEXP httpdSEXP,
    // if present, second element is content type
    if (LENGTH(httpdSEXP) > 1) 
    {
-      SEXP ctSEXP = VECTOR_ELT(httpdSEXP, 1);     
+      SEXP ctSEXP = VECTOR_ELT(httpdSEXP, 1);
       if (TYPEOF(ctSEXP) == STRSXP && LENGTH(ctSEXP) > 0)
          contentType = CHAR(STRING_ELT(ctSEXP, 0));
    }

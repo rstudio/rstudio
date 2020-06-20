@@ -106,7 +106,7 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
    {
       Error error(errc::ExpressionParsingError, ERROR_LOCATION);
       error.addProperty("code", str);
-      return error;      
+      return error;
    }
    else
    {
@@ -215,7 +215,7 @@ struct SEXPTopLevelExecContext
 {
    boost::function<SEXP()> function;
    SEXP* pReturnSEXP ;
-};  
+};
    
 void SEXPTopLevelExec(void *data)
 {
@@ -366,7 +366,7 @@ void RFunction::commonInit(const std::string& functionName)
    }
    else
    {
-      name = functionName_; 
+      name = functionName_;
    }
    
    // lookup function
@@ -495,7 +495,7 @@ std::string getErrorMessage()
    std::string errMessage ;
    Error callError = RFunction("geterrmessage").call(&errMessage);
    if (callError)
-      LOG_ERROR(callError);   
+      LOG_ERROR(callError);
    return errMessage;
 }
    
@@ -532,7 +532,7 @@ void setInterruptsPending(bool pending)
 
 void checkUserInterrupt()
 {   
-   R_CheckUserInterrupt();  
+   R_CheckUserInterrupt();
 }
    
 IgnoreInterruptsScope::IgnoreInterruptsScope()

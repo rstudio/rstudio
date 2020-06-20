@@ -158,7 +158,7 @@ bool ClientEventQueue::waitForEvent(
    catch(const thread_resource_error& e) 
    { 
       Error waitError(boost::thread_error::ec_from_exception(e), 
-                        ERROR_LOCATION) ; 
+                        ERROR_LOCATION);
       LOG_ERROR(waitError);
       return false ;
    }
@@ -205,7 +205,7 @@ void ClientEventQueue::enqueueClientOutputEvent(
    json::Object output;
    output[kConsoleText] = text;
    output[kConsoleId]   = activeConsole_;
-   pendingEvents_.push_back(ClientEvent(event, output)); 
+   pendingEvents_.push_back(ClientEvent(event, output));
 }
 
 } // namespace session

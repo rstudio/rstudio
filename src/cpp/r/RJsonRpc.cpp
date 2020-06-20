@@ -99,7 +99,7 @@ Error callRHandler(const std::string& functionName,
    }
    
    // call the function
-   return rFunction.call(pResult, pProtect);   
+   return rFunction.call(pResult, pProtect);
 }
 
 Error handleRequest(const std::string& rFunctionName,

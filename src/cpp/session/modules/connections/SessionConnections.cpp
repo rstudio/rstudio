@@ -478,7 +478,7 @@ void connectionPreviewObject(const json::JsonRpcRequest& request,
                                  connectionId.type,
                                  connectionId.host,
                                  1000);
-   addObjectSpecifiers(objectSpecifier, &previewObject); 
+   addObjectSpecifiers(objectSpecifier, &previewObject);
    error = previewObject.call(&sexpResult, &rProtect);
 
    // send the response

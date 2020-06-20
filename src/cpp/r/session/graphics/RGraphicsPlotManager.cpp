@@ -515,7 +515,7 @@ std::string PlotManager::imageFilename() const
 {
    if (hasPlot())
    {
-      return plots_[activePlot_]->imageFilename();   
+      return plots_[activePlot_]->imageFilename();
    }
    else
    {

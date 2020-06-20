@@ -115,7 +115,7 @@ public:
    core::Error executeAction(const std::string& name);
 
    // add and retrieve output
-   void addOutput(const std::string& output, bool error); 
+   void addOutput(const std::string& output, bool error);
    core::json::Array output(int position);
 
    // whether the job pane should should be shown at start

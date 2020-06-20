@@ -48,7 +48,7 @@ Error restoreOptions(const FilePath& filePath)
    return exec::RFunction(".rs.restoreOptions", filePath.getAbsolutePath()).call();
 }
    
-const int kDefaultWidth = 80;   
+const int kDefaultWidth = 80;
    
 void setOptionWidth(int width)
 {

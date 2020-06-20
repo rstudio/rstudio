@@ -41,11 +41,11 @@ namespace graphics {
 
 // singleton
 class PlotManager;
-PlotManager& plotManager();   
+PlotManager& plotManager();
 
 struct GraphicsDeviceEvents
 {
-   RSTUDIO_BOOST_SIGNAL<void (SEXP)> onNewPage; 
+   RSTUDIO_BOOST_SIGNAL<void (SEXP)> onNewPage;
    RSTUDIO_BOOST_SIGNAL<void ()> onDrawing;
    RSTUDIO_BOOST_SIGNAL<void ()> onResized;
    RSTUDIO_BOOST_SIGNAL<void ()> onClosed;
@@ -101,7 +101,7 @@ public:
    virtual bool hasChanges() const;
    virtual bool isActiveDevice() const;
    virtual boost::posix_time::ptime lastChange() const;
-   virtual void render(boost::function<void(DisplayState)> outputFunction); 
+   virtual void render(boost::function<void(DisplayState)> outputFunction);
    virtual std::string imageFilename() const ;
    virtual void refresh() ;
    

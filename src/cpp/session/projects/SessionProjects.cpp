@@ -162,7 +162,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
       }
       else
       {
-         return false; 
+         return false;
       }
    }
 

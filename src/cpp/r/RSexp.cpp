@@ -398,7 +398,7 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    r::sexp::getNames(attrs, &names);
    
    // loop over the attributes and fill in the variable vector
-   SEXP attr = R_NilValue; 
+   SEXP attr = R_NilValue;
    SEXP nextAttr = R_NilValue;
    size_t i = 0;
    for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
@@ -590,7 +590,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    
 std::string typeAsString(SEXP object)
 {
-   return Rf_type2char(TYPEOF(object));  
+   return Rf_type2char(TYPEOF(object));
 }
 
 std::string classOf(SEXP objectSEXP)
@@ -839,7 +839,7 @@ Error extract(SEXP valueSEXP, std::vector<int>* pVector)
    for (int i=0; i<Rf_length(valueSEXP); i++)
       pVector->push_back(INTEGER(valueSEXP)[i]);
    
-   return Success(); 
+   return Success();
 }
 
 Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
@@ -1144,7 +1144,7 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
    
    // now turn this into an R vector and call as.POSIXct
    SEXP secondsSEXP = create(seconds, pProtect);
-   SEXP posixCtSEXP = R_NilValue;           
+   SEXP posixCtSEXP = R_NilValue;
    r::exec::RFunction asPOSIXct("as.POSIXct", secondsSEXP);
    asPOSIXct.addParam("tz", "GMT");
    asPOSIXct.addParam("origin", "1970-01-01");
@@ -1224,7 +1224,7 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    Rf_setAttrib(charSEXP, R_NamesSymbol, namesSEXP);
    
    // return the vector
-   return charSEXP;   
+   return charSEXP;
 }
 
 SEXP create(const std::set<std::string> &value, Protect *pProtect)

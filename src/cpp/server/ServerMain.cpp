@@ -247,7 +247,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/rmd_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_resource", secureAsyncHttpHandler(proxyContentRequest, true));
-   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true)); 
+   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));

@@ -26,7 +26,7 @@ namespace http {
    
 bool HeaderNamePredicate::operator()(const Header& header) const
 { 
-   return boost::iequals(name_, header.name); 
+   return boost::iequals(name_, header.name);
 }
    
 bool containsHeader(const Headers& headers, const std::string& name)

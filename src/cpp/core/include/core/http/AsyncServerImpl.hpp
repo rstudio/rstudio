@@ -224,7 +224,7 @@ public:
                               this));
             
             // add to list of threads
-            threads_.push_back(pThread);            
+            threads_.push_back(pThread);
          }
       }
       catch(const boost::thread_resource_error& e)

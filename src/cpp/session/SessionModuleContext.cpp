@@ -159,7 +159,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
    try
    {
       // extract name
-      std::string name = r::sexp::asString(nameSEXP); 
+      std::string name = r::sexp::asString(nameSEXP);
       
       // extract json value (for primitive types we only support scalars
       // since this is the most common type of event data). to return an
@@ -694,7 +694,7 @@ private:
    // of subscription and call resume handlers in reverse order of
    // subscription.
    
-   int nextGroup_; 
+   int nextGroup_;
    
    RSTUDIO_BOOST_SIGNAL<void(const r::session::RSuspendOptions&,Settings*),
                  RSTUDIO_BOOST_LAST_VALUE<void>,
@@ -1612,7 +1612,7 @@ SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
 
 SEXP rs_base64encodeFile(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asString(pathSEXP); 
+   std::string path = r::sexp::asString(pathSEXP);
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    std::string output;

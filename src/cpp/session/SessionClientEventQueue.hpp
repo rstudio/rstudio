@@ -85,7 +85,7 @@ private:
    // instance data
    std::string pendingConsoleOutput_ ;
    std::string activeConsole_;
-   std::vector<ClientEvent> pendingEvents_ ; 
+   std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
    
 

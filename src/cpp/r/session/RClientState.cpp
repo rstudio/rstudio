@@ -104,7 +104,7 @@ void commitState(const json::Object& stateContainer,
       FilePath stateFile = stateDir.completePath(member.getName() + fileExt);
       Error error = writeStringToFile(stateFile, ostr.str());
       if (error)
-         LOG_ERROR(error);   
+         LOG_ERROR(error);
    }
 }
    

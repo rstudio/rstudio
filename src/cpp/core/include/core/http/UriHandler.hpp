@@ -42,7 +42,7 @@ typedef boost::function<void(const Request&,Response*)> UriHandlerFunction ;
 
 // UriFilterFunction concept - return true if the filter handled the request
 typedef boost::function<bool(const http::Request&, http::Response*)> 
-                                                         UriFilterFunction; 
+                                                         UriFilterFunction;
 
 typedef boost::function<bool(const Request&,
                              const std::string&,

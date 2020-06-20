@@ -123,7 +123,7 @@ Error extractFilePaths(const json::Array& files,
                        std::vector<FilePath>* pFilePaths)
 {   
    for(json::Array::Iterator
-         it = files.begin(); 
+         it = files.begin();
          it != files.end();
          ++it)
    {
@@ -289,7 +289,7 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
    std::string path;
    Error error = json::readParam(request.params, 0, &path);
    if (error)
-      return error ;   
+      return error;
    
    // create the directory
    FilePath folderPath = module_context::resolveAliasedPath(path) ;

@@ -106,7 +106,7 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
       return error;
 
    json::Object result;
-   json::Array chunkDefs; 
+   json::Array chunkDefs;
 
    // use our own context ID if none supplied
    if (nbCtxId.empty())

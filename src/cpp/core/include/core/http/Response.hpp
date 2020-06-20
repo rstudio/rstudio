@@ -87,7 +87,7 @@ public:
    {
       // this class exists only as a "null" tag for the setBody Filter
       // argument -- it should never actually be used as a filter!
-      BOOST_ASSERT(false); 
+      BOOST_ASSERT(false);
       return boost::iostreams::write(dest, s, n);
    }   
 };
@@ -139,7 +139,7 @@ public:
    int statusCode() const { return statusCode_; }
    void setStatusCode(int statusCode) { statusCode_ = statusCode; }
    
-   const std::string& statusMessage() const; 
+   const std::string& statusMessage() const;
    void setStatusMessage(const std::string& statusMessage) ;
       
    std::string contentEncoding() const;

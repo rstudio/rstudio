@@ -59,7 +59,7 @@ private:
       freeArgs();
 
       // allocate args
-      argCount_ = args.size()  ;
+      argCount_ = args.size();
       args_ = new char*[argCount_+1] ;
 
       // copy each arg to a buffer

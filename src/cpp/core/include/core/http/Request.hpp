@@ -27,7 +27,7 @@ namespace http {
 class Request : public Message
 {
 public:
-   Request() ; 
+   Request() ;
    virtual ~Request() ;
    // COPYING: boost::noncopyable
 

@@ -23,7 +23,7 @@ namespace r {
 namespace routines {
  
 namespace { 
-   std::vector<R_CallMethodDef> s_callMethods; 
+   std::vector<R_CallMethodDef> s_callMethods;
 }
    
 void addCallMethod(const R_CallMethodDef method)

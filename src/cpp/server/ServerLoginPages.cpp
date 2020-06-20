@@ -108,7 +108,7 @@ void loadLoginPage(const core::http::Request& request,
                    std::map<std::string,std::string> variables)
 {
    // setup template variables
-   fillLoginFields(request, formAction, variables); 
+   fillLoginFields(request, formAction, variables);
 
    // get the path to the template file
    Options& options = server::options();

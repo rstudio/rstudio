@@ -415,7 +415,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       return;
    }
 
-   std::vector<std::string> vals; 
+   std::vector<std::string> vals;
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
    error = core::writeStringToFile(outputCsv, 

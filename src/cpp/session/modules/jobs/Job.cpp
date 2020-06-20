@@ -140,7 +140,7 @@ int Job::max() const
 
 JobState Job::state() const
 {
-    return state_; 
+    return state_;
 }
 
 JobType Job::type() const

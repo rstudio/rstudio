@@ -122,7 +122,7 @@ Error SourceManager::source(const FilePath& filePath, bool local)
    recordSourcedFile(filePath, local);
 
    // source the file
-   return r::exec::executeString(rCode); 
+   return r::exec::executeString(rCode);
 }
 
 void SourceManager::recordSourcedFile(const FilePath& filePath, bool local)

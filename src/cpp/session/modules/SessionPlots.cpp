@@ -660,7 +660,7 @@ void handleGraphicsRequest(const http::Request& request,
       pResponse->setPrivateCacheForeverHeaders();
 
       // set the file
-      setImageFileResponse(imagePath, request, pResponse);   
+      setImageFileResponse(imagePath, request, pResponse);
    }
    else
    {

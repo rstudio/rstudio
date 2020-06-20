@@ -73,7 +73,7 @@ int main(int argc, char * const argv[])
 
       // read program options 
       Options& options = session::postback::options();
-      ProgramStatus status = options.read(argc, argv); 
+      ProgramStatus status = options.read(argc, argv);
       if ( status.exit() )
          return status.exitCode() ;
       

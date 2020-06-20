@@ -452,7 +452,7 @@ private:
 // convenience functions for sending json-rpc responses
    
 void setJsonRpcResponse(const JsonRpcResponse& jsonRpcResponse,
-                        http::Response* pResponse); 
+                        http::Response* pResponse);
 
 
 inline void setVoidJsonRpcResult(http::Response* pResponse)

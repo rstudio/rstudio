@@ -201,7 +201,7 @@ bool isNamedList(SEXP listSEXP)
                                          fieldNames.end(),
                                          &core::string_utils::stringNotEmpty));
    if (nameCount != listLength)
-      return false;   
+      return false;
    
    // passed all the tests!
    return true;

@@ -32,7 +32,7 @@ namespace postback {
 
 // singleton
 class Options ;
-Options& options();   
+Options& options();
    
 class Options : boost::noncopyable
 {

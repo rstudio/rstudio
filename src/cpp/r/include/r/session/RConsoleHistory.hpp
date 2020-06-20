@@ -97,7 +97,7 @@ private:
 private:   
    bool removeDuplicates_;
    boost::circular_buffer<std::string> historyBuffer_ ;
-   AddSignal onAdd_; 
+   AddSignal onAdd_;
 };
    
 } // namespace session

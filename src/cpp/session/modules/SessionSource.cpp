@@ -806,7 +806,7 @@ Error modifyDocumentProperties(const json::JsonRpcRequest& request,
 Error getDocumentProperties(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   std::string path; 
+   std::string path;
    json::Object properties;
    Error error = json::readParams(request.params, &path);
    if (error)

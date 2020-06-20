@@ -255,8 +255,8 @@ Error save(const FilePath& statePath)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
    std::map<std::string,std::string> packagePaths;
-   for (SEXP envSEXP = ENCLOS(R_GlobalEnv); 
-        envSEXP != R_BaseEnv ; 
+   for (SEXP envSEXP = ENCLOS(R_GlobalEnv);
+        envSEXP != R_BaseEnv ;
         envSEXP = ENCLOS(envSEXP))
    {
       // screen out UserDefinedDatabase elements (attempting to perisist

@@ -230,7 +230,7 @@ public:
       // call the function
       sexp::Protect rProtect;
       SEXP resultSEXP ;
-      core::Error error = call(evalNS, &resultSEXP, &rProtect);  
+      core::Error error = call(evalNS, &resultSEXP, &rProtect);
       if (error)
          return error ;
       
@@ -313,7 +313,7 @@ void errorCall(SEXP call, const std::string& message);
 std::string getErrorMessage();
 
 bool interruptsPending();
-void setInterruptsPending(bool pending); 
+void setInterruptsPending(bool pending);
 void checkUserInterrupt();
 
    

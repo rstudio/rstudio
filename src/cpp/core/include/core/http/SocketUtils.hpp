@@ -60,7 +60,7 @@ Error closeSocket(SocketService& socket)
          return Error(ec, ERROR_LOCATION) ;
    }
    
-   return Success() ; 
+   return Success() ;
 }
 
 inline bool isWrongProtocolTypeError(const core::Error& error)

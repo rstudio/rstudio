@@ -215,7 +215,7 @@ typedef boost::function<void(const std::string&, const PostbackHandlerContinuati
 core::Error registerPostbackHandler(
                               const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
-                              std::string* pShellCommand); 
+                              std::string* pShellCommand);
                         
 // register an async rpc method
 core::Error registerAsyncRpcMethod(
@@ -418,7 +418,7 @@ core::Error convertToUtf8(const std::string& encodedContent,
                           std::string* pDecodedContent);
 
 // source R files
-core::Error sourceModuleRFile(const std::string& rSourceFile);   
+core::Error sourceModuleRFile(const std::string& rSourceFile);
 core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                         const core::FilePath& workingDir,
                                         core::system::ProcessResult* pResult);
@@ -451,7 +451,7 @@ core::Error enqueueConsoleInput(const std::string& input);
 
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
-void consoleWriteOutput(const std::string& output);   
+void consoleWriteOutput(const std::string& output);
    
 // write an error to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)

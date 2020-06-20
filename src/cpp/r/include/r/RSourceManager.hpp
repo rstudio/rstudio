@@ -70,7 +70,7 @@ private:
       }
       time_t lastWriteTime;
       bool local;
-   };   
+   };
    typedef boost::unordered_map<std::string, SourcedFileInfo> SourcedFileMap;
    
    // helper functions

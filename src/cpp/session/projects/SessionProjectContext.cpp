@@ -168,7 +168,7 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
    
    // otherwise see if this file is under a website project
    if (!websitePath().isEmpty() && file.isWithin(websitePath()))
-      return websitePath();            
+      return websitePath();
    
    return FilePath();
 }

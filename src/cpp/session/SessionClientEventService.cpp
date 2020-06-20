@@ -74,14 +74,14 @@ Error ClientEventService::start(const std::string& clientId)
    try
    {
       using boost::bind;
-      boost::thread serviceThread(bind(&ClientEventService::run, this));       
+      boost::thread serviceThread(bind(&ClientEventService::run, this));
       serviceThread_ = MOVE_THREAD(serviceThread);
       
       return Success();
    }
    catch(const boost::thread_resource_error& e)
    {
-      return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);       
+      return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
    }
 }
    

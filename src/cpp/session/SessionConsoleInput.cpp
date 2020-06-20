@@ -86,7 +86,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    clientEventQueue().add(consolePromptEvent);
    
    // allow modules to detect changes after execution of previous REPL
-   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);   
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
    // call prompt hook
    module_context::events().onConsolePrompt(prompt);

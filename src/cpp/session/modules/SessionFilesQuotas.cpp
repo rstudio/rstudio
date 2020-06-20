@@ -43,7 +43,7 @@ namespace quotas {
 namespace {
 
 // does the system have quotas?
-bool s_systemHasQuotas = false;   
+bool s_systemHasQuotas = false;
    
 struct QuotaInfo
 {

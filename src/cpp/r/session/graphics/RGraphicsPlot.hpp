@@ -54,7 +54,7 @@ public:
         const std::string& storageUuid,
         const DisplaySize& renderedSize);
    
-   std::string storageUuid() const;  
+   std::string storageUuid() const;
    bool hasValidStorage() const;
    const DisplaySize& renderedSize() const { return renderedSize_; }
 

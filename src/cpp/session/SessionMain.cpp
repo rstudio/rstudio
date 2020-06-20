@@ -1003,7 +1003,7 @@ void rBrowseURL(const std::string& url)
 {
    // first see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseUrlHandler>::const_iterator 
-            it = s_rBrowseUrlHandlers.begin(); 
+            it = s_rBrowseUrlHandlers.begin();
             it != s_rBrowseUrlHandlers.end();
             ++it)
    {
@@ -1019,7 +1019,7 @@ void rBrowseFile(const core::FilePath& filePath)
 {
    // see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseFileHandler>::const_iterator 
-            it = s_rBrowseFileHandlers.begin(); 
+            it = s_rBrowseFileHandlers.begin();
             it != s_rBrowseFileHandlers.end();
             ++it)
    {

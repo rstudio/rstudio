@@ -178,7 +178,7 @@ int exitFailure(const std::string& errMsg,
 // signals 
    
 // ignore selected signals
-Error ignoreTerminalSignals(); 
+Error ignoreTerminalSignals();
 Error ignoreChildExits();
    
 // reap children (better way to handle child exits than ignoreChildExits
@@ -221,7 +221,7 @@ private:
 core::Error clearSignalMask();
 
 core::Error handleSignal(SignalType signal, void (*handler)(int));
-core::Error ignoreSignal(SignalType signal);   
+core::Error ignoreSignal(SignalType signal);
 core::Error useDefaultSignalHandler(SignalType signal);
 
 void sendSignalToSelf(SignalType signal);

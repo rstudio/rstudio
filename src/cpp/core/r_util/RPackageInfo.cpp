@@ -138,7 +138,7 @@ std::string packageNameFromDirectory(const FilePath& dir)
          return "";
       }
 
-      return pkgInfo.name(); 
+      return pkgInfo.name();
    }
    else
    {

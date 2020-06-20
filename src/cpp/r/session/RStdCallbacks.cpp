@@ -483,7 +483,7 @@ int RChooseFile (int newFile, char *buf, int len)
          std::string absolutePath = filePath.getAbsolutePath();
          
          // trunate file if it is too long
-         std::string::size_type maxLen = len - 1; 
+         std::string::size_type maxLen = len - 1;
          if (absolutePath.length() > maxLen)
             absolutePath.resize(maxLen);
          

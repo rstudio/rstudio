@@ -35,7 +35,7 @@ namespace session {
    
 // singleton
 class ConsoleActions;
-ConsoleActions& consoleActions();   
+ConsoleActions& consoleActions();
    
 #define kConsoleActionPrompt        0
 #define kConsoleActionInput         1

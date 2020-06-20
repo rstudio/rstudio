@@ -1023,7 +1023,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    if (type == kRenderTypeNotebook)
    {
       // if this is a notebook, it's pre-rendered
-      FilePath inputFile = module_context::resolveAliasedPath(file); 
+      FilePath inputFile = module_context::resolveAliasedPath(file);
       FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() + 
                                                         kNotebookExt);
 
