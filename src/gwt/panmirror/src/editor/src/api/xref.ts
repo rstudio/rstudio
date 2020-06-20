@@ -27,6 +27,6 @@ export interface XRef {
   title: string;
 }
 
-export function xrefFormatId(xref: XRef) {
+export function xrefKey(xref: XRef) {
   return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
 }
