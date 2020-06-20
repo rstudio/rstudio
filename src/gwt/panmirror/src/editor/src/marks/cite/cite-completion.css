@@ -1,5 +1,5 @@
 /*
- * PanmirrorInsertCitationResult.java
+ * cite-completion.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,12 @@
  *
  */
 
-
-package org.rstudio.studio.client.panmirror.dialogs.model;
-
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorInsertCitationResult
-{
-   public String id;
-   public String locator;
+.pm-citation-completion-primary {
+  opacity: 100%;
 }
 
-
-
+.pm-citation-completion-secondary {
+  font-weight: normal !important;
+  font-size: 0.9em;
+  opacity: 80%;
+}

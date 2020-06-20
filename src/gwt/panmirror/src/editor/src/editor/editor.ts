@@ -67,6 +67,8 @@ import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
+import { CrossrefServer } from '../api/crossref';
+import { XRefServer } from '../api/xref';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -98,7 +100,6 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { CrossrefServer } from '../api/crossref';
 
 
 export interface EditorCode {
@@ -124,6 +125,7 @@ export interface EditorContext {
 export interface EditorServer {
   readonly pandoc: PandocServer;
   readonly crossref: CrossrefServer;
+  readonly xref: XRefServer;
 }
 
 export interface EditorHooks {
@@ -296,6 +298,10 @@ export class Editor {
             ...defaultImages.omni_insert,
             ...context.ui.images,
           },
+          citations: {
+            ...defaultImages.citations,
+            ...context.ui.images,
+          },
         },
       },
     };
@@ -305,6 +311,8 @@ export class Editor {
 
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
+
+
 
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
@@ -704,7 +712,7 @@ export class Editor {
       events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       pandocExtensions: this.pandocFormat.extensions,
       pandocCapabilities: this.pandocCapabilities,
-      pandocServer: this.context.server.pandoc
+      server: this.context.server
     }, this.context.extensions);
   }
 

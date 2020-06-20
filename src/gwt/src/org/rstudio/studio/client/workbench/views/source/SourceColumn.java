@@ -932,11 +932,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return temp.size() == 0;
    }
 
-   private void manageCommands()
-   {
-      manageCommands(false);
-   }
-
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {

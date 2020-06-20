@@ -17,6 +17,7 @@
 
 namespace rstudio {
    namespace core {
+         class Error;
       namespace json {
          class Object;
       }
@@ -30,6 +31,8 @@ namespace rmarkdown {
 namespace bookdown {
 
 bool hasRenumberFootnotes();
+
+core::Error initialize();
 
 } // namespace bookdown
 } // namespace rmarkdown

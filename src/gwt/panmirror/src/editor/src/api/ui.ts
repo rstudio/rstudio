@@ -45,10 +45,13 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
-  insertCitation: InsertCitationFn;
 }
 
 export interface EditorUIContext {
+
+  // get the path to the current document
+  getDocumentPath: () => string | null;
+
   // get the default directory for resources (e.g. where relative links point to)
   getDefaultResourceDir: () => string;
 
@@ -128,8 +131,6 @@ export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) =
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
-export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
-
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -198,11 +199,6 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
-}
-
-export interface InsertCitationResult {
-  id: string;
-  locator: string;
 }
 
 export interface RawFormatProps {

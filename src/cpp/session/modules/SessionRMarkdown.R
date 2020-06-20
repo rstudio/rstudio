@@ -462,6 +462,35 @@
       FALSE
 })
 
+.rs.addFunction("bookdown.SourceFiles", function(input_dir) {
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(input_dir)
+   bookdown:::source_files()
+})
+
+
+.rs.addFunction("bookdown.bibliographies", function(input_dir) {
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(input_dir)
+   files <- bookdown:::source_files()
+   if (length(files) > 0) 
+   {
+      index <- files[[1]]
+      front_matter <- rmarkdown::yaml_front_matter(index)
+      if (is.character(front_matter$bibliography))
+         front_matter$bibliography
+      else
+         character()
+   }
+   else
+   {
+      character()
+   }
+})
+
+
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
    
    index <- .rs.inputDirToIndexFile(input_dir)

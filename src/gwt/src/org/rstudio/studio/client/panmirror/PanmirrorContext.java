@@ -15,13 +15,12 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
-import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -31,13 +30,11 @@ public class PanmirrorContext
 {  
    public PanmirrorContext(PanmirrorUIContext uiContext, 
                            PanmirrorUIDisplay uiDisplay,
-                           PanmirrorUIExecute uiExecute)
+                           PanmirrorUIExecute uiExecute,
+                           TextEditingTarget target)
    {
-      ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute);  
-      
-      server = new PanmirrorServer();
-      server.pandoc = new PanmirrorPandocServer();
-      server.crossref = new PanmirrorCrossrefServer();
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute); 
+      this.server = new PanmirrorServer(target);
    }
    
    public PanmirrorUI ui;
