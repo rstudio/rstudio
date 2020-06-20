@@ -605,7 +605,7 @@ void run(const boost::function<void()>& checkForInput)
    while (true)
    {
       // look for changes and keep calling SleepEx as long as we have them
-      while(::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
+      while (::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
 
       checkForInput();
    }
