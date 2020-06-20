@@ -80,9 +80,9 @@ class FuseIndex {
   private fuse: Fuse<XRef, Fuse.IFuseOptions<XRef>>;
 
   private keys: Fuse.FuseOptionKeyObject[] = [
-    { name: 'type', weight: 10 },
-    { name: 'id', weight: 10 },
-    { name: 'title', weight: 10 },
+    { name: 'id', weight: 20 },
+    { name: 'type', weight: 1 },
+    { name: 'title', weight: 1 },
   ];
 
   constructor() {
@@ -94,16 +94,39 @@ class FuseIndex {
   }
 
   public search(query: string, limit: number) {
+
+    // see if we have an explicit type
+    let type: string | null = null;
+    let typeQuery: string | null = null;
+    const colonLoc = query.indexOf(':');
+    if (colonLoc !== -1) {
+      const prefix = query.slice(0, colonLoc);
+      if (kXRefTypes.hasOwnProperty(prefix)) {
+        type = prefix;
+        if (query.length > (type.length + 1)) {
+          typeQuery = query.slice(colonLoc + 1);
+        }
+      }
+    }
+
+    // search options
     const options = {
       isCaseSensitive: false,
       shouldSort: true,
-      includeMatches: false,
+      minMatchCharLength: 2,
       limit,
       keys: this.keys,
     };
-    const results = this.fuse.search(query, options);
-    const xrefs = results.map((result: { item: XRef }) => result.item);
-    return uniqby(xrefs, xrefKey);
+
+    // perform query (use type if we have one)
+    const results = type
+      ? typeQuery
+        ? this.fuse.search({ $and: [{ type }, { $or: [{ id: typeQuery }, { title: typeQuery }] }] }, options)
+        : this.fuse.search({ type }, options)
+      : this.fuse.search(query, options);
+
+    // return results (eliminating duplicates)
+    return uniqby(results.map((result: { item: XRef }) => result.item), xrefKey);
   }
 
   private createIndex(xrefs: XRef[]) {
@@ -152,16 +175,8 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
 function xrefView(ui: EditorUI): React.FC<XRef> {
 
   return (xref: XRef) => {
-
-    let image = ui.images.omni_insert?.generic!;
-    if (xref.type === 'fig') {
-      image = ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!;
-    } else if (xref.type === 'tab') {
-      image = ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark! : ui.images.omni_insert?.table!;
-    } else if (xref.type === 'eq') {
-      image = ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!;
-    }
-
+    const type = kXRefTypes[xref.type];
+    const image = type?.image(ui) || ui.images.omni_insert?.generic!;
     const idView = <>
       <div className={'pm-xref-completion-id pm-xref-completion-id-key pm-fixedwidth-font'}>{xrefKey(xref)}</div>
       <div className={'pm-xref-completion-id pm-xref-completion-id-file'}>{xref.file}</div>
@@ -179,4 +194,22 @@ function xrefView(ui: EditorUI): React.FC<XRef> {
   };
 
 }
+
+const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+  'fig': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.image_dark
+      : ui.images.omni_insert?.image
+  },
+  'tab': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.table_dark
+      : ui.images.omni_insert?.table
+  },
+  'eq': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.math_display_dark
+      : ui.images.omni_insert?.math_display
+  }
+};
 
