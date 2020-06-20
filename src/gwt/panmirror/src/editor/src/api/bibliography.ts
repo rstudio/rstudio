@@ -63,9 +63,9 @@ interface ParsedYaml {
 }
 
 // The fields and weights that will indexed and searched
-// when searching bibliographic entries
+// when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: 10 },
+  { name: 'id', weight: 500 },
   { name: 'author.family', weight: 10 },
   { name: 'author.literal', weight: 10 },
   { name: 'author.given', weight: 1 },
@@ -76,16 +76,16 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 export class BibliographyManager {
   private readonly server: PandocServer;
   private etag: string;
-  private bibEntries: BibliographySource[];
+  private bibSources: BibliographySource[];
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
 
   public constructor(server: PandocServer) {
     this.server = server;
     this.etag = '';
-    this.bibEntries = [];
+    this.bibSources = [];
   }
 
-  public async entries(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographySource[]> {
+  public async sources(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographySource[]> {
     const yamlNodes = yamlMetadataNodes(doc);
 
     const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
@@ -108,28 +108,28 @@ export class BibliographyManager {
       const result = await this.server.getBibliography(docPath, files ? files.bibliography : [], refBlock, this.etag);
 
       // Read bibliography data from files (via server)
-      if (!this.bibEntries || result.etag !== this.etag) {
+      if (!this.sources || result.etag !== this.etag) {
         const sources = result.bibliography.sources;
         const parsedIds = sources.map(source => source.id);
 
-        // Deduplicate entries
+        // Filter duplicate sources
         const dedupedSources = sources.filter((source, index) => {
           return parsedIds.indexOf(source.id) === index;
         });
 
         // Sort by id by default
-        const sortedEntries = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
+        const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
 
-        this.bibEntries = sortedEntries;
-        this.reindexEntries(sortedEntries);
+        this.bibSources = sortedSources;
+        this.updateIndex(sortedSources);
       }
 
       // record the etag for future queries
       this.etag = result.etag;
     }
 
-    // return entries
-    return this.bibEntries;
+    // return sources
+    return this.bibSources;
   }
 
   public search(query: string, limit: number): BibliographySource[] {
@@ -148,13 +148,13 @@ export class BibliographyManager {
     }
   }
 
-  private reindexEntries(bibEntries: BibliographySource[]) {
+  private updateIndex(bibSources: BibliographySource[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
     };
-    const index = Fuse.createIndex(options.keys, bibEntries);
-    this.fuse = new Fuse(bibEntries, options, index);
+    const index = Fuse.createIndex(options.keys, bibSources);
+    this.fuse = new Fuse(bibSources, options, index);
   }
 }
 

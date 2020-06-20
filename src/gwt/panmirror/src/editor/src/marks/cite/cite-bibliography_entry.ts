@@ -170,8 +170,15 @@ function etAl(authorStr: string, maxLength: number) {
   // author to accomodate
   const etAlStr = `${authorStr} ${kEtAl}`;
   if (maxLength && etAlStr.length > maxLength) {
-    const excessLength = etAlStr.length - maxLength - 1;
-    return `${authorStr.substr(0, authorStr.length - excessLength)}… ${kEtAl}`;
+    // First try to truncate to a space
+    const lastSpace = authorStr.lastIndexOf(' ');
+    if (lastSpace) {
+      return `${authorStr.substr(0, lastSpace)} ${kEtAl}`;
+    } else {
+      // As a last resort, truncate with ellipsis
+      const excessLength = etAlStr.length - maxLength - 1;
+      return `${authorStr.substr(0, authorStr.length - excessLength)}… ${kEtAl}`;
+    }
   }
   return etAlStr;
 }

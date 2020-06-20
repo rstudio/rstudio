@@ -15,13 +15,13 @@
 
 // TESTING
 // TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
-// TODO: How should I report errors to user (for example, invalid entry type)
 
 // FUTURE
-// TODO: Improve large bibliography performance by 'warming up' bibliography manager
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview
 // TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user
+// TODO: How should I report errors to user (for example, invalid entry type)
+// TODO: Improve large bibliography performance by 'warming up' bibliography manager
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
@@ -109,7 +109,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           pos,
           offset: -match[1].length,
           completions: (_state: EditorState) =>
-            manager.entries(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
+            manager.sources(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
           decorations:
             token.length === 0
               ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
@@ -122,22 +122,18 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   };
 }
 
-function formatIdentifier(entry: BibliographyEntry): string {
-  const idStr = `@${entry.source.id}`;
-  const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
-  if (authorStr.length > 0) {
-    return `${idStr} - ${authorStr}`;
-  }
-  return idStr;
-}
-
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
+  const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
   const idView = (
     <>
-      <div className={'pm-completion-citation-authors'}>{formatIdentifier(entry)}</div>
-      <div className={'pm-completion-citation-issuedate'}>{entry.issuedDateFormatter(entry.source.issued)}</div>
+      <div className={'pm-citation-completion-primary pm-fixedwidth-font'}>
+        <span className={'pm-fixedwidth-font'}>@{entry.source.id}</span>
+      </div>
+      <div className={'pm-citation-completion-secondary'}>
+        {authorStr} {entry.issuedDateFormatter(entry.source.issued)}
+      </div>
     </>
   );
 
