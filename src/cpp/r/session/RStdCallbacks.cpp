@@ -362,7 +362,7 @@ int RReadConsole (const char *pmt,
             buf[inputLen+1] = '\0';
          }
 
-         return 1 ;
+         return 1;
       }
       else
       {
@@ -416,7 +416,7 @@ void RShowMessage(const char* msg)
 {
    try 
    {
-      s_callbacks.showMessage(msg) ;
+      s_callbacks.showMessage(msg);
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
@@ -437,7 +437,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
          consoleActions().add(type, output);
          
          // write
-         s_callbacks.consoleWrite(output, otype) ;
+         s_callbacks.consoleWrite(output, otype);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -453,7 +453,7 @@ int REditFile(const char* file)
    CATCH_UNEXPECTED_EXCEPTION
    
    // error if we got this far
-   return 1 ;
+   return 1;
 }
 
 void RBusy(int which)   
@@ -483,7 +483,7 @@ int RChooseFile (int newFile, char *buf, int len)
          std::string absolutePath = filePath.getAbsolutePath();
          
          // trunate file if it is too long
-         std::string::size_type maxLen = len - 1; 
+         std::string::size_type maxLen = len - 1;
          if (absolutePath.length() > maxLen)
             absolutePath.resize(maxLen);
          
@@ -581,7 +581,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
    try
    {
       // get commands
-      std::vector<std::string> commands ;
+      std::vector<std::string> commands;
       Error error = sexp::extract(CAR(args), &commands);
       if (error)
          throw r::exec::RErrorException(error.getMessage());

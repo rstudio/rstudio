@@ -47,7 +47,7 @@
 
 #include "session-config.h"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -77,13 +77,13 @@ void ensureDefaultDirectory(std::string* pDirectory,
 
 Options& options()
 {
-   static Options instance ;
-   return instance ;
+   static Options instance;
+   return instance;
 }
    
 core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& osWarnings)
 {
-   using namespace boost::program_options ;
+   using namespace boost::program_options;
    
    // get the shared secret
    monitorSharedSecret_ = core::system::getenv(kMonitorSharedSecretEnvVar);
@@ -154,7 +154,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "custom docs url");
 
    // www options
-   options_description www("www") ;
+   options_description www("www");
    www.add_options()
       ("www-local-path",
          value<std::string>(&wwwLocalPath_)->default_value("www"),
@@ -178,7 +178,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // session options
    std::string saveActionDefault;
-   options_description session("session") ;
+   options_description session("session");
    session.add_options()
       (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
@@ -318,7 +318,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    bool rShellEscape; // no longer works but don't want to break any
                       // config files which formerly used it
                       // TODO: eliminate this option entirely
-   options_description r("r") ;
+   options_description r("r");
    r.add_options()
       ("r-core-source",
          value<std::string>(&coreRSourcePath_)->default_value("R"),
@@ -437,7 +437,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
    std::string project, scopeId;
-   options_description user("user") ;
+   options_description user("user");
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
        value<std::string>(&userIdentity_)->default_value(currentUsername),

@@ -30,7 +30,7 @@
 #include <server_core/UrlPorts.hpp>
 #endif
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -42,7 +42,7 @@ const char * const kAbend = "abend";
    
 PersistentState& persistentState()
 {
-   static PersistentState instance ;
+   static PersistentState instance;
    return instance;
 }
    

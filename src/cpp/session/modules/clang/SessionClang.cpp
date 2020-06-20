@@ -39,7 +39,7 @@
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
 namespace rstudio {
@@ -215,7 +215,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_isLibClangAvailable);
    RS_REGISTER_CALL_METHOD(rs_setClangDiagnostics);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    using boost::bind;
    using namespace module_context;
    initBlock.addFunctions()

@@ -81,7 +81,7 @@ Error lastCryptoError(const ErrorLocation& location)
    }
    
    // get the error message (docs say max len is 120)
-   const int ERR_BUFF_SIZE = 250; 
+   const int ERR_BUFF_SIZE = 250;
    char errorBuffer[ERR_BUFF_SIZE];
    ::ERR_error_string_n(ec, errorBuffer, ERR_BUFF_SIZE);
    
@@ -129,7 +129,7 @@ Error HMAC_SHA2(const std::string& data,
 {
    // copy data into vector
    std::vector<unsigned char> keyVector;
-   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));  
+   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));
    
    // call core
    return HMAC_SHA2(data, keyVector, pHMAC);
@@ -215,7 +215,7 @@ Error base64Encode(const unsigned char* pData,
    pB64 = ::BIO_push(pB64, pMem);
    
    // perform the encoding
-   int written = ::BIO_write(pB64, pData, len); 
+   int written = ::BIO_write(pB64, pData, len);
    if (written != len)
       return lastCryptoError(ERROR_LOCATION);
       

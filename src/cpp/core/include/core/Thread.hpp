@@ -279,9 +279,9 @@ public:
       }
       catch(const thread_resource_error& e)
       {
-         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION) ;
+         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
          LOG_ERROR(waitError);
-         return false ;
+         return false;
       }
    }
 
@@ -291,8 +291,8 @@ private:
    // they are destroyed or not (boost has been known to crash if a mutex
    // is being destroyed while it is being waited on so sometimes it is
    // better to simply never delete these objects
-   boost::mutex* pMutex_ ;
-   boost::condition* pWaitCondition_ ;
+   boost::mutex* pMutex_;
+   boost::condition* pWaitCondition_;
 
    // instance data
    const bool freeSyncObjects_;

@@ -102,7 +102,7 @@ void onDocPendingRemove(
 
 Error initialize()
 {  
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 

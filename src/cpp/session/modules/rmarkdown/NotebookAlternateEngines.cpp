@@ -247,7 +247,7 @@ Error executeStanEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        targetPath)); 
+                        targetPath));
    
    // write code to file
    FilePath tempFile = module_context::tempFile("stan-", "stan");
@@ -399,7 +399,7 @@ Error executeSqlEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        consolePath)); 
+                        consolePath));
 
    FilePath parentPath = notebook::chunkOutputPath(
        docId, chunkId, nbCtxId, ContextSaved);

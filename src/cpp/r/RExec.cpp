@@ -39,7 +39,7 @@ LibExtern int UserBreak;
 #endif
 }
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -106,7 +106,7 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
    {
       Error error(errc::ExpressionParsingError, ERROR_LOCATION);
       error.addProperty("code", str);
-      return error;      
+      return error;
    }
    else
    {
@@ -214,8 +214,8 @@ void topLevelExec(void *data)
 struct SEXPTopLevelExecContext
 {
    boost::function<SEXP()> function;
-   SEXP* pReturnSEXP ;
-};  
+   SEXP* pReturnSEXP;
+};
    
 void SEXPTopLevelExec(void *data)
 {
@@ -248,9 +248,9 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   SEXPTopLevelExecContext context ;
-   context.function = function ;
-   context.pReturnSEXP = pSEXP ;
+   SEXPTopLevelExecContext context;
+   context.function = function;
+   context.pReturnSEXP = pSEXP;
    Rboolean success = R_ToplevelExec(SEXPTopLevelExec, (void*)&context);
    if (!success)
    {
@@ -285,7 +285,7 @@ Error executeStringUnsafe(const std::string& str,
 Error executeString(const std::string& str)
 {
    sexp::Protect rProtect;
-   SEXP ignoredSEXP ;
+   SEXP ignoredSEXP;
    return evaluateString(str, &ignoredSEXP, &rProtect);
 }
    
@@ -318,7 +318,7 @@ Error evaluateString(const std::string& str,
    {
       // get error message (merely log on failure so we can continue
       // and return the real error)
-      std::string errorMsg ;
+      std::string errorMsg;
       Error extractError = sexp::extract(*pSEXP, &errorMsg);
       if (extractError)
          LOG_ERROR(extractError);
@@ -366,7 +366,7 @@ void RFunction::commonInit(const std::string& functionName)
    }
    else
    {
-      name = functionName_; 
+      name = functionName_;
    }
    
    // lookup function
@@ -383,7 +383,7 @@ Error RFunction::callUnsafe()
 Error RFunction::call(SEXP evalNS, bool safely)
 {
    sexp::Protect rProtect;
-   SEXP ignoredResultSEXP ;
+   SEXP ignoredResultSEXP;
    return call(evalNS, safely, &ignoredResultSEXP, &rProtect);
 }
 
@@ -411,7 +411,7 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    }
    
    // create the call object (LANGSXP) with the correct number of elements
-   SEXP callSEXP ;
+   SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));
    SET_TAG(callSEXP, R_NilValue); // just like do_ascall() does 
    
@@ -492,10 +492,10 @@ void errorCall(SEXP call, const std::string& message)
    
 std::string getErrorMessage()
 {
-   std::string errMessage ;
+   std::string errMessage;
    Error callError = RFunction("geterrmessage").call(&errMessage);
    if (callError)
-      LOG_ERROR(callError);   
+      LOG_ERROR(callError);
    return errMessage;
 }
    
@@ -532,7 +532,7 @@ void setInterruptsPending(bool pending)
 
 void checkUserInterrupt()
 {   
-   R_CheckUserInterrupt();  
+   R_CheckUserInterrupt();
 }
    
 IgnoreInterruptsScope::IgnoreInterruptsScope()

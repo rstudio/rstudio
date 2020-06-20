@@ -433,7 +433,7 @@ Error initialize()
    // install handlers
    using boost::bind;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_recent_history", getRecentHistory))
       (bind(registerRpcMethod, "get_history_items", getHistoryItems))

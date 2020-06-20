@@ -207,7 +207,7 @@ Error sourceDatabasePutWithUpdatedContents(boost::shared_ptr<SourceDocument> pDo
    // write the file to the database
    Error error = source_database::put(pDoc, writeContents);
    if (error)
-      return error ;
+      return error;
 
    source_database::events().onDocUpdated(pDoc);
 
@@ -226,10 +226,10 @@ Error newDocument(const json::JsonRpcRequest& request,
                                   &jsonContents,
                                   &properties);
    if (error)
-      return error ;
+      return error;
 
    // create the new doc and write it to the database
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type));
 
    if (json::isType<std::string>(jsonContents))
       pDoc->setContents(jsonContents.getString());
@@ -257,17 +257,17 @@ Error openDocument(const json::JsonRpcRequest& request,
    std::string path;
    Error error = json::readParam(request.params, 0, &path);
    if (error)
-      return error ;
+      return error;
    
    std::string type;
    error = json::readParam(request.params, 1, &type);
    if (error)
-      return error ;
+      return error;
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
    if (error && error != core::json::errc::ParamTypeMismatch)
-      return error ;
+      return error;
 
    if (encoding.empty())
    {
@@ -314,14 +314,14 @@ Error openDocument(const json::JsonRpcRequest& request,
    }
 
    // set the doc contents to the specified file
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type));
    pDoc->setEncoding(encoding);
    error = pDoc->setPathAndContents(path, false);
    if (error)
    {
       error = pDoc->setPathAndContents(path, true);
       if (error)
-         return error ;
+         return error;
 
       module_context::consoleWriteError(
          "Not all characters in " + documentPath.getAbsolutePath() +
@@ -450,12 +450,12 @@ Error saveDocumentCore(const std::string& contents,
       error = writeStringToFile(fullDocPath, encoded,
                                 module_context::lineEndings(fullDocPath));
       if (error)
-         return error ;
+         return error;
 
       // set the new path and contents for the document
       error = pDoc->setPathAndContents(path);
       if (error)
-         return error ;
+         return error;
 
       // enque file changed event if we need to
       if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
@@ -502,7 +502,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
                                   &jsonChunkOutput,
                                   &contents);
    if (error)
-      return error ;
+      return error;
    
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
@@ -626,15 +626,15 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
    pResponse->setSuppressDetectChanges(true);
 
    // params
-   std::string id ;
+   std::string id;
    Error error = json::readParams(request.params, &id);
    if (error)
       return error;
 
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error ;
+      return error;
 
    json::Object result;
    result["modified"] = false;
@@ -655,12 +655,12 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
       }
       else
       {
-         std::time_t lastWriteTime ;
+         std::time_t lastWriteTime;
          pDoc->checkForExternalEdit(&lastWriteTime);
 
          if (lastWriteTime)
          {
-            FilePath filePath = module_context::resolveAliasedPath(pDoc->path()) ;
+            FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
             json::Object fsItem = module_context::createFileSystemItem(filePath);
             result["item"] = fsItem;
             result["modified"] = true;
@@ -678,10 +678,10 @@ namespace {
 Error reopen(std::string id, std::string fileType, std::string encoding,
              json::JsonRpcResponse* pResponse)
 {
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    Error error = source_database::get(id, pDoc);
    if (error)
-      return error ;
+      return error;
 
    if (!encoding.empty())
       pDoc->setEncoding(encoding);
@@ -694,7 +694,7 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    {
       error = pDoc->setPathAndContents(pDoc->path(), true);
       if (error)
-         return error ;
+         return error;
 
       module_context::consoleWriteError(
                        "Not all characters in " + pDoc->path() +
@@ -719,8 +719,8 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
 Error revertDocument(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string id, fileType ;
-   Error error = json::readParams(request.params, &id, &fileType) ;
+   std::string id, fileType;
+   Error error = json::readParams(request.params, &id, &fileType);
    if (error)
       return error;
 
@@ -741,8 +741,8 @@ Error reopenWithEncoding(const json::JsonRpcRequest& request,
 Error ignoreExternalEdit(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
-   std::string id ;
-   Error error = json::readParams(request.params, &id) ;
+   std::string id;
+   Error error = json::readParams(request.params, &id);
    if (error)
       return error;
 
@@ -764,17 +764,17 @@ Error setSourceDocumentOnSave(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
    // params
-   std::string id ;
+   std::string id;
    bool value = false;
    Error error = json::readParams(request.params, &id, &value);
    if (error)
-      return error ;
+      return error;
    
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error ;
+      return error;
    
    // set source on save and then write it
    pDoc->setSourceOnSave(value);
@@ -786,17 +786,17 @@ Error modifyDocumentProperties(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
    // params
-   std::string id ;
+   std::string id;
    json::Object properties;
    Error error = json::readParams(request.params, &id, &properties);
    if (error)
-      return error ;
+      return error;
 
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, false, pDoc);
    if (error)
-      return error ;
+      return error;
 
    // edit properties and write the document
    pDoc->editProperties(properties);
@@ -806,7 +806,7 @@ Error modifyDocumentProperties(const json::JsonRpcRequest& request,
 Error getDocumentProperties(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   std::string path; 
+   std::string path;
    json::Object properties;
    Error error = json::readParams(request.params, &path);
    if (error)
@@ -825,10 +825,10 @@ Error closeDocument(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    // params
-   std::string id ;
+   std::string id;
    Error error = json::readParam(request.params, 0, &id);
    if (error)
-      return error ;
+      return error;
 
    // get the path (it's okay if this fails, unsaved docs don't have a path)
    std::string path;
@@ -1053,7 +1053,7 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    std::string path;
    Error error = json::readParam(request.params, 0, &path);
    if (error)
-      return error ;
+      return error;
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    pResponse->setResult(filePath.exists() &&
@@ -1069,7 +1069,7 @@ Error getMinimalSourcePath(const json::JsonRpcRequest& request,
    std::string path;
    Error error = json::readParams(request.params, &path);
    if (error)
-      return error ;
+      return error;
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    // calculate path
@@ -1088,7 +1088,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    std::string interpreter, path;
    Error error = json::readParams(request.params, &interpreter, &path);
    if (error)
-      return error ;
+      return error;
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    // use as minimal a path as possible
@@ -1278,7 +1278,7 @@ void onResume(const Settings&)
    source_database::events().onRemoveAll();
 
    // get the docs and sort them by created
-   std::vector<boost::shared_ptr<SourceDocument> > docs ;
+   std::vector<boost::shared_ptr<SourceDocument> > docs;
    Error error = source_database::list(&docs);
    if (error)
    {
@@ -1403,10 +1403,10 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
    source_database::events().onRemoveAll();
 
    // get the docs and sort them by relative order
-   std::vector<boost::shared_ptr<SourceDocument> > docs ;
+   std::vector<boost::shared_ptr<SourceDocument> > docs;
    Error error = source_database::list(&docs);
    if (error)
-      return error ;
+      return error;
    std::sort(docs.begin(), docs.end(), sortByRelativeOrder);
 
    // populate the array
@@ -1428,7 +1428,7 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
       if (error)
          LOG_ERROR(error);
 
-      json::Object jsonDoc ;
+      json::Object jsonDoc;
       writeDocToJson(pDoc, &jsonDoc);
       pJsonDocs->push_back(jsonDoc);
 
@@ -1461,7 +1461,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace rstudio::r::function_hook;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))

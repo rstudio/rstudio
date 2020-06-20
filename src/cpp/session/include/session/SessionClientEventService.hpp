@@ -64,11 +64,11 @@ private:
 
   
 private:
-   boost::mutex mutex_ ;
-   boost::thread serviceThread_ ;
+   boost::mutex mutex_;
+   boost::thread serviceThread_;
 
-   std::string clientId_ ;
-   core::json::Array clientEvents_ ;
+   std::string clientId_;
+   core::json::Array clientEvents_;
 };
    
   

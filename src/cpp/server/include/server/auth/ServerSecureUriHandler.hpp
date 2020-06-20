@@ -37,7 +37,7 @@ namespace auth {
 typedef boost::function<void(
                            const std::string& username,
                            const core::http::Request&,
-                           core::http::Response*)> SecureUriHandlerFunction ;
+                           core::http::Response*)> SecureUriHandlerFunction;
 
 typedef boost::function<void(
                      const std::string& username,

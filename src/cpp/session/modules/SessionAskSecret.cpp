@@ -35,7 +35,7 @@
 #endif
 
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -209,7 +209,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_askForSecret);
 
    // complete initialization
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionAskSecret.R"));
    return initBlock.execute();

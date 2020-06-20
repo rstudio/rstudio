@@ -108,7 +108,7 @@ void loadLoginPage(const core::http::Request& request,
                    std::map<std::string,std::string> variables)
 {
    // setup template variables
-   fillLoginFields(request, formAction, variables); 
+   fillLoginFields(request, formAction, variables);
 
    // get the path to the template file
    Options& options = server::options();
@@ -131,13 +131,13 @@ std::string generateLoginPath(const core::http::Request& request,
                               ErrorType error /*= kErrorNone*/)
 {
    // build fields
-   core::http::Fields fields ;
+   core::http::Fields fields;
    fields.push_back(std::make_pair(kAppUri, appUri));
    if (error != kErrorNone)
      fields.push_back(std::make_pair(kErrorParam, core::safe_convert::numberToString(error)));
 
    // build query string
-   std::string queryString ;
+   std::string queryString;
    if (!fields.empty())
      core::http::util::buildQueryString(fields, &queryString);
 

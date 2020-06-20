@@ -57,7 +57,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RJson.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -68,10 +68,10 @@ namespace {
 Error setJsonResult(SEXP resultSEXP, core::json::JsonRpcResponse* pResponse)
 {   
    // get the result
-   core::json::Value resultValue ;
+   core::json::Value resultValue;
    Error error = jsonValueFromObject(resultSEXP, &resultValue);
    if (error)
-      return error ;
+      return error;
    
    // set the result and return success
    pResponse->setResult(resultValue);
@@ -99,7 +99,7 @@ Error callRHandler(const std::string& functionName,
    }
    
    // call the function
-   return rFunction.call(pResult, pProtect);   
+   return rFunction.call(pResult, pProtect);
 }
 
 Error handleRequest(const std::string& rFunctionName,

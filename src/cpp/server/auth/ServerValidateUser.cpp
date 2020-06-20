@@ -102,7 +102,7 @@ bool validateUser(const std::string& username,
    {    
       // see if they are a member of one of the required groups
       bool belongsToGroup = false;
-      using namespace boost ;
+      using namespace boost;
       char_separator<char> comma(",");
       tokenizer<char_separator<char> > groups(requiredGroup, comma);
       for (const std::string& group : groups)

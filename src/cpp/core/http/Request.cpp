@@ -220,7 +220,7 @@ void Request::addCookie(const std::string& name, const std::string& value)
    std::vector<std::string> cookies;
    for (const auto cookie: cookies_)
    {
-      cookies.push_back(cookie.first + "=" + cookie.second); 
+      cookies.push_back(cookie.first + "=" + cookie.second);
    }
    setHeader("Cookie", boost::algorithm::join(cookies, "; "));
 }

@@ -421,7 +421,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // we wait to delete the pContext until here because it owns the
       // OVERLAPPED structure and buffers, and so if we deleted it earlier
       // and the OS tried to access those memory regions we would crash
-      delete pContext; 
+      delete pContext;
 
       return;
    }
@@ -605,7 +605,7 @@ void run(const boost::function<void()>& checkForInput)
    while (true)
    {
       // look for changes and keep calling SleepEx as long as we have them
-      while(::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
+      while (::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
 
       checkForInput();
    }

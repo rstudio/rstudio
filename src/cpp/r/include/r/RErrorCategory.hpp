@@ -55,7 +55,7 @@ struct is_error_code_enum<rstudio::r::errc::errc_t>
 namespace rstudio {
 namespace r {
 
-const boost::system::error_category& rCategory() ;
+const boost::system::error_category& rCategory();
 
 namespace errc {
 

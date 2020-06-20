@@ -38,7 +38,7 @@ namespace rstudio {
 namespace r {
 namespace options {
 
-core::Error saveOptions(const core::FilePath& filePath);  
+core::Error saveOptions(const core::FilePath& filePath);
 core::Error restoreOptions(const core::FilePath& filePath);
 
 // console width

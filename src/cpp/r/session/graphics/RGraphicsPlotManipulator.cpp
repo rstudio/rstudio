@@ -151,7 +151,7 @@ core::json::Value PlotManipulator::getAsJson(const std::string& name) const
 core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
 {
    // field names
-   std::vector<std::string> names ;
+   std::vector<std::string> names;
    Error error = sexp::getNames(controlSEXP, &names);
    if (error)
    {
@@ -204,7 +204,7 @@ core::json::Object PlotManipulator::getControlsAsJson() const
       {
 
          // control names
-         std::vector<std::string> controlNames ;
+         std::vector<std::string> controlNames;
          Error error = sexp::getNames(controlsSEXP, &controlNames);
          if (error)
          {

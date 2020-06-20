@@ -574,7 +574,7 @@ bool renderPresentation(
    try
    {
       os.exceptions(std::istream::failbit | std::istream::badbit);
-      boost::iostreams::filtering_ostream filteredStream ;
+      boost::iostreams::filtering_ostream filteredStream;
 
       // template filter
       text::TemplateFilter templateFilter(vars);

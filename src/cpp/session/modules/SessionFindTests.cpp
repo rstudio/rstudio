@@ -146,7 +146,7 @@ TEST_CASE("SessionFind")
 
       Replacer replacer(true);
       Error error = replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex,
-         &line, &replaceMatchOff); 
+         &line, &replaceMatchOff);
       CHECK(line.compare(kLine) == 0);
    }
 

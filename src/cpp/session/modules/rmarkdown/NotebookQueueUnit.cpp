@@ -198,7 +198,7 @@ void NotebookQueueUnit::updateFrom(const NotebookQueueUnit& other)
 
    // we don't support removing or changing executable ranges, so process only
    // additions
-   std::list<ExecRange>::iterator i = pending_.begin(); 
+   std::list<ExecRange>::iterator i = pending_.begin();
    for (std::list<ExecRange>::const_iterator o = other.pending_.begin();
         o != other.pending_.end();
         o ++)

@@ -1280,7 +1280,7 @@ Error initialize()
 
    initEnvironmentMonitoring();
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))

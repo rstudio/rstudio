@@ -45,12 +45,12 @@
 
 #include <r/session/RSessionUtils.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
    
-using namespace exec ;
+using namespace exec;
    
 namespace session {
 namespace search_path {
@@ -74,7 +74,7 @@ void reportRestoreError(const std::string& context,
       message += std::string(" (" + context + ")");
    
    // add context to error and log it
-   Error restoreError = error ;
+   Error restoreError = error;
    restoreError.addProperty("context", message);
    core::log::logError(restoreError, location);
    
@@ -241,7 +241,7 @@ Error save(const FilePath& statePath)
    FilePath searchPathDir = statePath.completePath(kSearchPathDir);
    error = searchPathDir.resetDirectory();
    if (error)
-      return error ;
+      return error;
    
    // create environment data subdirectory
    FilePath environmentDataPath = searchPathDir.completePath(kEnvDataDir);
@@ -255,8 +255,8 @@ Error save(const FilePath& statePath)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
    std::map<std::string,std::string> packagePaths;
-   for (SEXP envSEXP = ENCLOS(R_GlobalEnv); 
-        envSEXP != R_BaseEnv ; 
+   for (SEXP envSEXP = ENCLOS(R_GlobalEnv);
+        envSEXP != R_BaseEnv;
         envSEXP = ENCLOS(envSEXP))
    {
       // screen out UserDefinedDatabase elements (attempting to perisist

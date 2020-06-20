@@ -65,12 +65,9 @@ FileInfo::FileInfo(const std::string& absolutePath,
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo)
 {
    stream << fileInfo.absolutePath();
-   return stream ;
+   return stream;
 }
-   
-   
 
-   
 } // namespace core 
 } // namespace rstudio
 

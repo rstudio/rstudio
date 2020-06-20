@@ -149,7 +149,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
    }
 
    // read the properties file
-   std::string contents ;
+   std::string contents;
    FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = readStringFromFile(propertiesFilePath, &contents,
                               options().sourceLineEnding());
@@ -340,7 +340,7 @@ Error SourceDocument::setPathAndContents(const std::string& path,
                                                    allowSubstChars,
                                                    &contents);
    if (error)
-      return error ;
+      return error;
 
    // update path and contents
    path_ = path;
@@ -778,17 +778,17 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 
 Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
-   std::vector<FilePath> files ;
+   std::vector<FilePath> files;
    Error error = source_database::path().getChildren(files);
    if (error)
-      return error ;
+      return error;
    
    for (FilePath& filePath : files)
    {
       if (isSourceDocument(filePath))
       {
          // get the source doc
-         boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
+         boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
          Error error = source_database::get(filePath.getFilename(), pDoc);
          if (!error)
          {
@@ -828,7 +828,7 @@ Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
    FilePath filePath = source_database::path().completePath(pDoc->id());
    Error error = pDoc->writeToFile(filePath, writeContents);
    if (error)
-      return error ;
+      return error;
 
    // write properties to durable storage (if there is a path)
    if (!pDoc->path().empty())
@@ -848,16 +848,16 @@ Error remove(const std::string& id)
    
 Error removeAll()
 {
-   std::vector<FilePath> files ;
+   std::vector<FilePath> files;
    Error error = source_database::path().getChildren(files);
    if (error)
-      return error ;
+      return error;
    
    for (FilePath& filePath : files)
    {
       Error error = filePath.remove();
       if (error)
-         return error ;
+         return error;
    }
    
    return Success();

@@ -58,7 +58,7 @@ void ErrorCapture::disconnect()
 
 SEXP rs_recordNotebookError(SEXP errData)
 {
-   json::Value jsonErr; 
+   json::Value jsonErr;
    Error error = r::json::jsonValueFromList(errData, &jsonErr);
    if (error)
       LOG_ERROR(error);

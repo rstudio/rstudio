@@ -63,7 +63,7 @@ public:
                       const std::string& name,
                       const core::json::Value& value);
    
-   void putPersistent(const core::json::Object& persistentState); 
+   void putPersistent(const core::json::Object& persistentState);
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,

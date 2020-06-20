@@ -48,7 +48,7 @@ Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOp
       if ((*it).getType() != json::Type::STRING)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
-      std::string option = (*it).getString() ;
+      std::string option = (*it).getString();
       pOptions->push_back(option);
    }
    return Success();
