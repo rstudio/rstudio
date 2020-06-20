@@ -613,7 +613,7 @@ struct UserPrompt
                  yesIsDefault);
    }
 
-   int type ;
+   int type;
    std::string caption;
    std::string message;
    std::string yesLabel;

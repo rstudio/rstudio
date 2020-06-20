@@ -461,7 +461,7 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 // Common error creation functions =====================================================================================
 Error systemError(int in_code, const ErrorLocation& in_location)
 {
-   using namespace boost::system ;
+   using namespace boost::system;
    return Error(error_code(in_code, system_category()), in_location);
 }
 
@@ -479,7 +479,7 @@ Error systemError(int in_code,
                   const Error& in_cause,
                   const ErrorLocation& in_location)
 {
-   using namespace boost::system ;
+   using namespace boost::system;
    return Error(error_code(in_code, system_category()), in_cause, in_location);
 }
 

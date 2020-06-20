@@ -24,7 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -594,7 +594,7 @@ ClientEvent browseUrlEvent(const std::string& url, const std::string& window)
 ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message)
 {
-   json::Object errorMessage ;
+   json::Object errorMessage;
    errorMessage["title"] = title;
    errorMessage["message"] = message;
    return ClientEvent(client_events::kShowErrorMessage, errorMessage);

@@ -35,7 +35,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -247,7 +247,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/content", handleContentRequest))
       (bind(registerRpcMethod, "remove_content_url", removeContentUrl));

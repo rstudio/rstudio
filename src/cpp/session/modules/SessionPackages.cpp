@@ -373,7 +373,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPackages.R"))
       (bind(registerRpcMethod, "available_packages", availablePackages))

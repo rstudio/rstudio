@@ -459,7 +459,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using boost::bind;
    using namespace rstudio::core::system;
    using namespace rsession::module_context;
-   ExecBlock initialize ;
+   ExecBlock initialize;
    initialize.addFunctions()
    
       // client event service
@@ -640,10 +640,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    }
    
    // register all of the json rpc methods implemented in R
-   json::JsonRpcMethods rMethods ;
+   json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
-      return error ;
+      return error;
    for (const json::JsonRpcMethod& method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
@@ -788,7 +788,7 @@ int rEditFile(const std::string& file)
    rsession::clientEventQueue().add(editEvent);
 
    // wait for edit_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
@@ -825,7 +825,7 @@ int rEditFile(const std::string& file)
       }
       
       // success!
-      return 0 ;
+      return 0;
    }
 }
    
@@ -837,7 +837,7 @@ FilePath rChooseFile(bool newFile)
    rsession::clientEventQueue().add(chooseFileEvent);
    
    // wait for choose_file_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
@@ -917,7 +917,7 @@ bool rLocator(double* x, double* y)
    rsession::clientEventQueue().add(locatorEvent);
    
    // wait for locator_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
@@ -1252,7 +1252,7 @@ void rCleanup(bool terminatedNormally)
    
 void rSerialization(int action, const FilePath& targetPath)
 {
-   json::Object serializationActionObject ;
+   json::Object serializationActionObject;
    serializationActionObject["type"] = action;
    if (!targetPath.isEmpty())
    {
@@ -1506,7 +1506,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    rsession::clientEventQueue().add(userPromptEvent);
 
    // wait for user_prompt_completed
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
@@ -1762,14 +1762,14 @@ int main (int argc, char * const argv[])
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
-      ProgramStatus status = options.read(argc, argv, osWarnings) ;
+      ProgramStatus status = options.read(argc, argv, osWarnings);
       std::string optionsWarnings = osWarnings.str();
 
       if (!optionsWarnings.empty())
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       if (status.exit())
-         return status.exitCode() ;
+         return status.exitCode();
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -1976,7 +1976,7 @@ int main (int argc, char * const argv[])
       // initialize persistent state
       error = rsession::persistentState().initialize();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
@@ -2030,7 +2030,7 @@ int main (int argc, char * const argv[])
       modules::console::syncConsoleColorEnv();
 
       // r options
-      rstudio::r::session::ROptions rOptions ;
+      rstudio::r::session::ROptions rOptions;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
@@ -2142,7 +2142,7 @@ int main (int argc, char * const argv[])
       rCallbacks.handleUnsavedChanges = rHandleUnsavedChanges;
       rCallbacks.quit = rQuit;
       rCallbacks.suicide = rSuicide;
-      rCallbacks.cleanup = rCleanup ;
+      rCallbacks.cleanup = rCleanup;
       rCallbacks.browseURL = rBrowseURL;
       rCallbacks.browseFile = rBrowseFile;
       rCallbacks.showHelp = rShowHelp;
@@ -2150,7 +2150,7 @@ int main (int argc, char * const argv[])
       rCallbacks.serialization = rSerialization;
 
       // run r (does not return, terminates process using exit)
-      error = rstudio::r::session::run(rOptions, rCallbacks) ;
+      error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
           // this is logically equivilant to R_Suicide
@@ -2166,7 +2166,7 @@ int main (int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 

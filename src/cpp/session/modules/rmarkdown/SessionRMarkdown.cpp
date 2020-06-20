@@ -1146,7 +1146,7 @@ void handleRmdOutputRequest(const http::Request& request,
    catch (boost::bad_lexical_cast const&)
    {
       pResponse->setNotFoundError(request);
-      return ;
+      return;
    }
 
    // make sure the output identifier refers to a valid file

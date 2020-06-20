@@ -220,7 +220,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "write_config_json", writeConfigJSON))
       (bind(registerRpcMethod, "read_config_json", readConfigJSON));

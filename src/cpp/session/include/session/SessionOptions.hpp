@@ -52,7 +52,7 @@ private:
    Options()
    {
    }
-   friend Options& options() ;
+   friend Options& options();
    
    // COPYING: boost::noncopyable
 
@@ -722,7 +722,7 @@ private:
    std::string rCRANMultipleRepos_;
    std::string rCRANReposUrl_;
    std::string rCRANReposFile_;
-   bool autoReloadSource_ ;
+   bool autoReloadSource_;
    int rCompatibleGraphicsEngineVersion_;
    std::string rResourcesPath_;
    std::string rHomeDirOverride_;

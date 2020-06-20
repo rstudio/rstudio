@@ -31,13 +31,13 @@ namespace session {
 namespace postback {
 
 // singleton
-class Options ;
+class Options;
 Options& options();
    
 class Options : boost::noncopyable
 {
 private:
-   Options() {} ;
+   Options() {};
    friend Options& options();
    // COPYING: boost::noncopyable
    

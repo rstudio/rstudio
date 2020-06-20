@@ -123,7 +123,7 @@
 #define kSessionTmpDir             "rstudio-rsession"
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
-const char * const kClientInit = "client_init" ;
+const char * const kClientInit = "client_init";
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";

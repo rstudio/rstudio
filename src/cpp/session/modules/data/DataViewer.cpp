@@ -1045,9 +1045,9 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
-   using namespace rstudio::r::function_hook ;
+   using namespace rstudio::r::function_hook;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))

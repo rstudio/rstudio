@@ -193,7 +193,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    // prepare session info 
-   json::Object sessionInfo ;
+   json::Object sessionInfo;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
 

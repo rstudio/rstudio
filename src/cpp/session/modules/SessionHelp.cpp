@@ -284,7 +284,7 @@ const char * const kJsCallbacks =
 class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
-   typedef std::vector<char> Characters ;
+   typedef std::vector<char> Characters;
 
    void do_filter(const Characters& src, Characters& dest)
    {
@@ -299,7 +299,7 @@ public:
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
-   typedef std::vector<char> Characters ;
+   typedef std::vector<char> Characters;
 
    HelpContentsFilter(const http::Request& request)
    {
@@ -467,7 +467,7 @@ void handleHttpdResult(SEXP httpdSEXP,
          content = normalizeHttpdSearchContent(content);
       
       // check for special file returns
-      std::string fileName ;
+      std::string fileName;
       if (TYPEOF(namesSEXP) == STRSXP && LENGTH(namesSEXP) > 0 &&
           !std::strcmp(CHAR(STRING_ELT(namesSEXP, 0)), "file"))
       {
@@ -1010,8 +1010,8 @@ Error initialize()
    using boost::bind;
    using core::http::UriHandler;
    using namespace module_context;
-   using namespace rstudio::r::function_hook ;
-   ExecBlock initBlock ;
+   using namespace rstudio::r::function_hook;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))

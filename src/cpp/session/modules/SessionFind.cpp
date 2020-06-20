@@ -1637,7 +1637,7 @@ core::Error initialize()
    addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
 
    // install handlers
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "begin_find", beginFind))
       (bind(registerRpcMethod, "stop_find", stopFind))
