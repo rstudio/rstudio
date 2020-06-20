@@ -65,7 +65,7 @@ interface ParsedYaml {
 // The fields and weights that will indexed and searched
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: 500 },
+  { name: 'id', weight: 20 },
   { name: 'author.family', weight: 10 },
   { name: 'author.literal', weight: 10 },
   { name: 'author.given', weight: 1 },
@@ -138,10 +138,11 @@ export class BibliographyManager {
         isCaseSensitive: false,
         shouldSort: true,
         includeMatches: false,
+        includeScore: false,
         limit,
         keys: kFields,
       };
-      const results = this.fuse.search(query, options);
+      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
       return results.map((result: { item: any }) => result.item);
     } else {
       return [];
