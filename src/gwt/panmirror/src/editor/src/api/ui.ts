@@ -45,7 +45,6 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
-  insertCitation: InsertCitationFn;
 }
 
 export interface EditorUIContext {
@@ -132,8 +131,6 @@ export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) =
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
-export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
-
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -202,11 +199,6 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
-}
-
-export interface InsertCitationResult {
-  id: string;
-  locator: string;
 }
 
 export interface RawFormatProps {

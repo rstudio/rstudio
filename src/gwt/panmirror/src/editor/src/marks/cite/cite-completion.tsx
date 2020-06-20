@@ -137,5 +137,5 @@ const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     </>
   );
 
-  return <CompletionItemView image={entry.image} idView={idView} title={entry.source.title || ''} htmlTitle={true} />;
+  return <CompletionItemView width={400} image={entry.image} idView={idView} title={entry.source.title || ''} htmlTitle={true} />;
 };

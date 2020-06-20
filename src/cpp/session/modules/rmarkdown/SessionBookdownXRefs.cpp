@@ -149,6 +149,22 @@ XRefFileIndex indexForDoc(const FilePath& filePath)
    return indexForDoc(filePath, contents);
 }
 
+
+void writeEntryId(const std::string& id, json::Object* pEntryJson)
+{
+   std::size_t colonPos = id.find_first_of(':');
+   if (colonPos != std::string::npos)
+   {
+      pEntryJson->operator[]("type") = id.substr(0, colonPos);
+      pEntryJson->operator[]("id") = id.substr(colonPos + 1);
+   }
+   else
+   {
+      pEntryJson->operator[]("type") = "";
+      pEntryJson->operator[]("id") = id;
+   }
+}
+
 json::Array entriesJson(const std::string &file, const std::vector<std::string>& entries)
 {
    // entries
@@ -163,12 +179,12 @@ json::Array entriesJson(const std::string &file, const std::vector<std::string>&
          std::size_t spacePos = entry.find_first_of(' ');
          if (spacePos != std::string::npos)
          {
-            entryJson["id"] = entry.substr(0, spacePos);
+            writeEntryId(entry.substr(0, spacePos), &entryJson);
             entryJson["title"] = entry.substr(spacePos + 1);
          }
          else
          {
-            entryJson["id"] = entry;
+            writeEntryId(entry, &entryJson);
          }
          entriesJson.push_back(entryJson);
       }

@@ -30,7 +30,7 @@ namespace trace {
 
 namespace {
 
-boost::mutex s_traceMutex ;
+boost::mutex s_traceMutex;
 
 } // anonymous namespace
 

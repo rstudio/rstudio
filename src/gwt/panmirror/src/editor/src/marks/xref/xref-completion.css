@@ -14,8 +14,21 @@
  */
 
 
-.pm-completion-xref {
-  font-weight: bold;
-  opacity: 80%;
+.pm-xref-completion-id {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  font-size: 9pt;
 }
+
+.pm-xref-completion-id-key {
+  margin-right: 8px;
+}
+
+.pm-xref-completion-id-file{
+  opacity: 0.8;
+  font-weight: normal;
+}
+
 

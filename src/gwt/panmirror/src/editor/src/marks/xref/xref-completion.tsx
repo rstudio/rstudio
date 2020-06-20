@@ -19,15 +19,25 @@ import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
 
+import Fuse from 'fuse.js';
+import uniqby from 'lodash.uniqby';
+
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { XRef, XRefServer } from '../../api/xref';
+import { XRef, XRefServer, xrefKey } from '../../api/xref';
 import { markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
+import { CompletionItemView } from '../../api/widgets/completion';
 
 import './xref-completion.css';
 
+
+const kMaxResults = 20;
+
 export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): CompletionHandler<XRef> {
+
+  const index = new FuseIndex();
+
   return {
 
     id: 'BAACC160-56BE-4322-B079-54477A880623',
@@ -36,34 +46,101 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
       return markIsActive(context, context.doc.type.schema.marks.xref);
     },
 
-    completions: xrefCompletions(ui, server),
+    completions: xrefCompletions(ui, server, index),
 
-    filter: (completions: XRef[], state: EditorState, token: string) => {
-      return completions.filter(xref => {
-        return xref.id.includes(token);
-      });
+    filter: (completions: XRef[], _state: EditorState, token: string) => {
+      if (token.length > 0) {
+        return index.search(token, kMaxResults);
+      } else {
+        return completions.slice(0, kMaxResults);
+      }
     },
 
     replacement(schema: Schema, xref: XRef | null): string | ProsemirrorNode | null {
       if (xref) {
-        return xref.id;
+        return xrefKey(xref);
       } else {
         return null;
       }
     },
 
     view: {
-      component: XRefView,
-      key: xref => xref.id,
-      width: 200,
+      component: xrefView(ui),
+      key: xref => xrefKey(xref),
+      height: 52,
+      width: 350,
+      maxVisible: 5,
       hideNoResults: true
     },
   };
 }
 
+class FuseIndex {
+
+  private fuse: Fuse<XRef, Fuse.IFuseOptions<XRef>>;
+
+  private keys: Fuse.FuseOptionKeyObject[] = [
+    { name: 'id', weight: 20 },
+    { name: 'type', weight: 1 },
+    { name: 'title', weight: 1 },
+  ];
+
+  constructor() {
+    this.fuse = this.createIndex([]);
+  }
+
+  public update(xrefs: XRef[]) {
+    this.fuse = this.createIndex(xrefs);
+  }
+
+  public search(query: string, limit: number) {
+
+    // see if we have an explicit type
+    let type: string | null = null;
+    let typeQuery: string | null = null;
+    const colonLoc = query.indexOf(':');
+    if (colonLoc !== -1) {
+      const prefix = query.slice(0, colonLoc);
+      if (kXRefTypes.hasOwnProperty(prefix)) {
+        type = prefix;
+        if (query.length > (type.length + 1)) {
+          typeQuery = query.slice(colonLoc + 1);
+        }
+      }
+    }
+
+    // search options
+    const options = {
+      isCaseSensitive: false,
+      shouldSort: true,
+      minMatchCharLength: 2,
+      limit,
+      keys: this.keys,
+    };
+
+    // perform query (use type if we have one)
+    const results = type
+      ? typeQuery
+        ? this.fuse.search({ $and: [{ type }, { $or: [{ id: typeQuery }, { title: typeQuery }] }] }, options)
+        : this.fuse.search({ type }, options)
+      : this.fuse.search(query, options);
+
+    // return results (eliminating duplicates)
+    return uniqby(results.map((result: { item: XRef }) => result.item), xrefKey);
+  }
+
+  private createIndex(xrefs: XRef[]) {
+    const options = {
+      keys: this.keys.map(key => key.name)
+    };
+    const index = Fuse.createIndex(options.keys, xrefs);
+    return new Fuse(xrefs, options, index);
+  }
+}
 
 
-function xrefCompletions(ui: EditorUI, server: XRefServer) {
+
+function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
   const kXRefCompletionRegEx = /(@ref\()([A-Za-z0-9:-]*)$/;
   return (text: string, context: EditorState | Transaction): CompletionResult<XRef> | null => {
     const match = text.match(kXRefCompletionRegEx);
@@ -74,9 +151,16 @@ function xrefCompletions(ui: EditorUI, server: XRefServer) {
         pos,
         offset: -match[1].length,
         token,
-        completions: () => {
+        completions: async () => {
           const docPath = ui.context.getDocumentPath();
-          return docPath ? server.indexForFile(docPath) : Promise.resolve([]);
+          if (docPath) {
+            const xrefs = await server.indexForFile(docPath);
+            index.update(xrefs);
+            return xrefs;
+          } else {
+            index.update([]);
+            return Promise.resolve([]);
+          }
         },
         decorations: token.length === 0
           ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(pos, ui)])
@@ -88,11 +172,44 @@ function xrefCompletions(ui: EditorUI, server: XRefServer) {
   };
 }
 
-const XRefView: React.FC<XRef> = xref => {
-  return (
-    <div className={'pm-completion-xref'}>
-      {xref.id}
-    </div>
-  );
+function xrefView(ui: EditorUI): React.FC<XRef> {
+
+  return (xref: XRef) => {
+    const type = kXRefTypes[xref.type];
+    const image = type?.image(ui) || ui.images.omni_insert?.generic!;
+    const idView = <>
+      <div className={'pm-xref-completion-id pm-xref-completion-id-key pm-fixedwidth-font'}>{xrefKey(xref)}</div>
+      <div className={'pm-xref-completion-id pm-xref-completion-id-file'}>{xref.file}</div>
+    </>;
+
+    return (
+      <CompletionItemView
+        width={350}
+        classes={[]}
+        image={image}
+        idView={idView}
+        title={xref.title}
+      />
+    );
+  };
+
+}
+
+const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+  'fig': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.image_dark
+      : ui.images.omni_insert?.image
+  },
+  'tab': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.table_dark
+      : ui.images.omni_insert?.table
+  },
+  'eq': {
+    image: (ui: EditorUI) => ui.prefs.darkMode()
+      ? ui.images.omni_insert?.math_display_dark
+      : ui.images.omni_insert?.math_display
+  }
 };
 

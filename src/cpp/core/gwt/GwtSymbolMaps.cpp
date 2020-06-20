@@ -62,7 +62,7 @@ ReadCollectionAction parseSymbolMapLine(
       return ReadCollectionIgnoreLine;
 
    // HACK: workaround the fact that std::map uses const for the Key
-   std::string* pFirst = const_cast<std::string*>(&(pMapEntry->first)) ;
+   std::string* pFirst = const_cast<std::string*>(&(pMapEntry->first));
    *pFirst = line.substr(0, commaPos);
 
    pMapEntry->second = line.substr(commaPos+1);
