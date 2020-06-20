@@ -59,7 +59,7 @@ SEXP asNamespace(const std::string& name);
 SEXP forcePromise(SEXP objectSEXP);
    
 // variables within an environment
-typedef std::pair<std::string,SEXP> Variable ;
+typedef std::pair<std::string,SEXP> Variable;
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
@@ -271,7 +271,7 @@ public:
    void unprotectAll();
    
 private:
-   int protectCount_ ;
+   int protectCount_;
 };
 
 // set list element by name. note that the specified element MUST already

@@ -49,7 +49,7 @@ private:
    friend ConsoleActions& consoleActions();
    
 public:
-   int capacity() const ;
+   int capacity() const;
    void setCapacity(int capacity);
 
    void add(int type, const std::string& data);

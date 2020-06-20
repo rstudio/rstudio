@@ -52,7 +52,7 @@
 #endif
 
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -642,7 +642,7 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    // ensure we are active
    Error error = makeActive();
    if (error)
-      return error ;
+      return error;
    
    // save snaphot file
    error = r::exec::RFunction(".rs.saveGraphics",
@@ -660,7 +660,7 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    // ensure we are active
    Error error = makeActive();
    if (error)
-      return error ;
+      return error;
    
    // restore
    return r::exec::RFunction(".rs.restoreGraphics",

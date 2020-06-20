@@ -42,7 +42,7 @@
 #undef TRUE
 #undef FALSE
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -801,7 +801,7 @@ Error extract(SEXP valueSEXP, int* pInt)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
       
-   *pInt = INTEGER(valueSEXP)[0] ;
+   *pInt = INTEGER(valueSEXP)[0];
    return Success();
 }
    
@@ -813,7 +813,7 @@ Error extract(SEXP valueSEXP, bool* pBool)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
    
-   *pBool = LOGICAL(valueSEXP)[0] == TRUE ? true : false ;
+   *pBool = LOGICAL(valueSEXP)[0] == TRUE ? true : false;
    return Success();
    
 }
@@ -1011,7 +1011,7 @@ SEXP create(int value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(INTSXP, 1));
-   INTEGER(valueSEXP)[0] = value ;
+   INTEGER(valueSEXP)[0] = value;
    return valueSEXP;
 }
    
@@ -1019,7 +1019,7 @@ SEXP create(double value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(REALSXP, 1));
-   REAL(valueSEXP)[0] = value ;
+   REAL(valueSEXP)[0] = value;
    return valueSEXP;
 }
 
@@ -1027,7 +1027,7 @@ SEXP create(bool value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(LGLSXP, 1));
-   LOGICAL(valueSEXP)[0] = value ;
+   LOGICAL(valueSEXP)[0] = value;
    return valueSEXP;
 }
 
@@ -1049,11 +1049,11 @@ SEXP create(const core::json::Array& value, Protect* pProtect)
 SEXP create(const core::json::Object& value, Protect* pProtect)
 {
    // create the list
-   SEXP listSEXP ;
+   SEXP listSEXP;
    pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // build list of names
-   SEXP namesSEXP ;
+   SEXP namesSEXP;
    pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.getSize()));
    
    // add each object field to it
@@ -1099,7 +1099,7 @@ SEXP create(const std::vector<int>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(INTSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      INTEGER(valueSEXP)[i] = value[i] ;
+      INTEGER(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1110,7 +1110,7 @@ SEXP create(const std::vector<double>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(REALSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      REAL(valueSEXP)[i] = value[i] ;
+      REAL(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1121,7 +1121,7 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(LGLSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      LOGICAL(valueSEXP)[i] = value[i] ;
+      LOGICAL(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1136,7 +1136,7 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
             Protect* pProtect)
 {
    // first create a vector of doubles containing seconds since epoch
-   std::vector<int> seconds ;
+   std::vector<int> seconds;
    std::transform(value.begin(), 
                   value.end(),
                   std::back_inserter(seconds),
@@ -1352,7 +1352,7 @@ PreservedSEXP::PreservedSEXP(SEXP sexp)
 void PreservedSEXP::set(SEXP sexp)
 {
    releaseNow();
-   sexp_ = sexp ;
+   sexp_ = sexp;
    if (sexp_ != R_NilValue)
       ::R_PreserveObject(sexp_);
 }

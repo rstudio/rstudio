@@ -78,7 +78,7 @@ public:
 private:
    bool hasStorage() const;
 
-   core::FilePath snapshotFilePath() const ;
+   core::FilePath snapshotFilePath() const;
    core::FilePath snapshotFilePath(const std::string& storageUuid) const;
    core::FilePath imageFilePath(const std::string& storageUuid) const;
 
@@ -90,8 +90,8 @@ private:
 private:
    GraphicsDeviceFunctions graphicsDevice_;
    core::FilePath baseDirPath_;
-   std::string storageUuid_ ;
-   DisplaySize renderedSize_ ;
+   std::string storageUuid_;
+   DisplaySize renderedSize_;
    bool needsUpdate_;
 
    // manipulator and protection scope for it

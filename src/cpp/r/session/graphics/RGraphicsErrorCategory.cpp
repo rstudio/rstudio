@@ -31,18 +31,18 @@ public:
 
 const boost::system::error_category& rGraphicsCategory()
 {
-   static RGraphicsErrorCategory rGraphicsErrorCategoryConst ;
-   return rGraphicsErrorCategoryConst ;
+   static RGraphicsErrorCategory rGraphicsErrorCategoryConst;
+   return rGraphicsErrorCategoryConst;
 }
 
 const char * RGraphicsErrorCategory::name() const BOOST_NOEXCEPT
 {
-   return "r-graphics" ;
+   return "r-graphics";
 }
 
 std::string RGraphicsErrorCategory::message( int ev ) const
 {
-   std::string message ;
+   std::string message;
    switch (ev)
    {
       case errc::IncompatibleGraphicsEngine:
@@ -74,11 +74,11 @@ std::string RGraphicsErrorCategory::message( int ev ) const
          break;
          
       default:
-         message = "Unknown error" ;
+         message = "Unknown error";
          break;
    }
 
-   return message ;
+   return message;
 }
    
 } // namespace graphics

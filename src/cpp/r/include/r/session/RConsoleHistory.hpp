@@ -26,7 +26,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
    class FilePath;
 }
 }
@@ -36,7 +36,7 @@ namespace r {
 namespace session {
 
 // singleton
-class ConsoleHistory ;
+class ConsoleHistory;
 ConsoleHistory& consoleHistory();
    
 class ConsoleHistory : boost::noncopyable
@@ -96,7 +96,7 @@ private:
    
 private:   
    bool removeDuplicates_;
-   boost::circular_buffer<std::string> historyBuffer_ ;
+   boost::circular_buffer<std::string> historyBuffer_;
    AddSignal onAdd_;
 };
    

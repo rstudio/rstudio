@@ -35,8 +35,8 @@ namespace session {
    
 ConsoleHistory& consoleHistory()
 {
-   static ConsoleHistory instance ;
-   return instance ;
+   static ConsoleHistory instance;
+   return instance;
 }
    
 ConsoleHistory::ConsoleHistory()
