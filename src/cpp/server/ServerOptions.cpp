@@ -31,7 +31,7 @@
 
 #include <monitor/MonitorConstants.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace std
 {
@@ -152,8 +152,8 @@ unsigned int resolveMinimumUserId(std::string minimumUserId,
 
 Options& options()
 {
-   static Options instance ;
-   return instance ;
+   static Options instance;
+   return instance;
 }
 
 
@@ -161,7 +161,7 @@ ProgramStatus Options::read(int argc,
                             char * const argv[],
                             std::ostream& osWarnings)
 {
-   using namespace boost::program_options ;
+   using namespace boost::program_options;
 
    // compute install path
    Error error = core::system::installPath("..", argv[0], &installPath_);
@@ -234,7 +234,7 @@ ProgramStatus Options::read(int argc,
          "adds a header to all responses from RStudio Server");
 
    // www - web server options
-   options_description www("www") ;
+   options_description www("www");
    www.add_options()
       ("www-address",
          value<std::string>(&wwwAddress_)->default_value("0.0.0.0"),

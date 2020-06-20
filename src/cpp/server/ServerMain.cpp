@@ -519,7 +519,7 @@ int main(int argc, char * const argv[])
          if (!optionsWarnings.empty())
             program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
-         return status.exitCode() ;
+         return status.exitCode();
       }
       
       // daemonize if requested
@@ -762,7 +762,7 @@ int main(int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 
