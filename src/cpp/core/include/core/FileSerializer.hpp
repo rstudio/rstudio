@@ -196,14 +196,14 @@ Error appendToFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 template <typename T>
 Error appendStructToFile(const core::FilePath& filePath,
                          const T& data)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
 
    // open the file stream
    std::shared_ptr<std::ostream> pOfs;
@@ -229,14 +229,14 @@ Error appendStructToFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 template <typename T>
 Error readStructVectorFromFile(const core::FilePath& filePath,
                                std::vector<T>* pVector)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
 
    // open the file stream
    std::shared_ptr<std::istream> pIfs;
@@ -267,7 +267,7 @@ Error readStructVectorFromFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 
@@ -278,10 +278,10 @@ std::string stringifyString(const std::string& str);
 
       
 Error writeStringMapToFile(const core::FilePath& filePath,
-                           const std::map<std::string,std::string>& map) ;
+                           const std::map<std::string,std::string>& map);
 
 Error readStringMapFromFile(const core::FilePath& filePath,
-                            std::map<std::string,std::string>* pMap) ;
+                            std::map<std::string,std::string>* pMap);
    
 Error writeStringVectorToFile(const core::FilePath& filePath,
                               const std::vector<std::string>& vector);
@@ -327,7 +327,7 @@ Error readStringFromFile(
       ostr.exceptions(std::ostream::failbit | std::ostream::badbit);
 
       // do the copy
-      boost::iostreams::filtering_ostream filteringOStream ;
+      boost::iostreams::filtering_ostream filteringOStream;
       filteringOStream.push(filter);
       filteringOStream.push(ostr);
       boost::iostreams::copy(*pIfs, filteringOStream, 128);

@@ -51,7 +51,7 @@ namespace http {
 // uri not found handler
 typedef boost::function<void(const Request&, Response*)> NotFoundHandler;
 
-class Cookie ;
+class Cookie;
    
 namespace status {
 enum Code {
@@ -140,7 +140,7 @@ public:
    void setStatusCode(int statusCode) { statusCode_ = statusCode; }
    
    const std::string& statusMessage() const;
-   void setStatusMessage(const std::string& statusMessage) ;
+   void setStatusMessage(const std::string& statusMessage);
       
    std::string contentEncoding() const;
    void setContentEncoding(const std::string& encoding);
@@ -217,7 +217,7 @@ public:
          is.exceptions(std::istream::failbit | std::istream::badbit);
          
          // setup filtering stream for writing body
-         boost::iostreams::filtering_ostream filteringStream ;
+         boost::iostreams::filtering_ostream filteringStream;
          
          // don't bother adding the filter if it is the NullOutputFilter
          if ( !boost::is_same<Filter, NullOutputFilter>::value )
@@ -411,12 +411,12 @@ public:
 
 private:
    virtual void appendFirstLineBuffers(
-         std::vector<boost::asio::const_buffer>& buffers) const ;
+         std::vector<boost::asio::const_buffer>& buffers) const;
 
    virtual void resetMembers();
       
 private:
-   void ensureStatusMessage() const ;
+   void ensureStatusMessage() const;
    void removeCachingHeaders();
    void setCacheForeverHeaders(bool publicAccessiblity);
    std::string eTagForContent(const std::string& content);
@@ -427,18 +427,18 @@ private:
    // the implementation of the assign method!!!!!
 
 
-   int statusCode_ ;
-   mutable std::string statusMessage_ ;
+   int statusCode_;
+   mutable std::string statusMessage_;
 
    // string storage for integer members (need for toBuffers)
-   mutable std::string statusCodeStr_ ;
+   mutable std::string statusCodeStr_;
 
    NotFoundHandler notFoundHandler_;
 
    boost::shared_ptr<StreamResponse> streamResponse_;
 };
 
-std::ostream& operator << (std::ostream& stream, const Response& r) ;
+std::ostream& operator << (std::ostream& stream, const Response& r);
 
 } // namespace http
 } // namespace core

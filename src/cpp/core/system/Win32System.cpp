@@ -363,7 +363,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
       *pOutput += buffer;
 
    // check if an error terminated our output
-   Error error ;
+   Error error;
    if (::ferror(fp))
       error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
 

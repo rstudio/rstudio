@@ -202,7 +202,7 @@ Error addWatch(const FileInfo& fileInfo,
    // about adding duplicate watches
 
    // define watch mask
-   uint32_t mask = 0 ;
+   uint32_t mask = 0;
    mask |= IN_CREATE;
    mask |= IN_DELETE;
    mask |= IN_MODIFY;

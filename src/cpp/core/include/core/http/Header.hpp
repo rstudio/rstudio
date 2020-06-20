@@ -38,7 +38,7 @@ struct Header
    static Header connectionClose() { return Header("Connection", "close"); }
 };
    
-typedef std::vector<Header> Headers ;
+typedef std::vector<Header> Headers;
    
 class HeaderNamePredicate
 {
@@ -49,7 +49,7 @@ public:
    }
    bool operator()(const Header& header) const;
 private:
-   std::string name_ ;
+   std::string name_;
 };
    
 bool containsHeader(const Headers& headers, const std::string& name);

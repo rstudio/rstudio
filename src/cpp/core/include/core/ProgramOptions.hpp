@@ -43,7 +43,7 @@ struct OptionsDescription
          configFile("config-file options")
    {
    }
-   std::string programName ;
+   std::string programName;
    std::string defaultConfigFilePath;
    boost::program_options::options_description commandLine;
    boost::program_options::positional_options_description positionalOptions;

@@ -58,19 +58,19 @@ inline Error initLocalStreamAcceptor(
    
    // open
    boost::system::error_code ec;
-   acceptor.open(endpoint.protocol(), ec) ;
+   acceptor.open(endpoint.protocol(), ec);
    if (ec)
    {
-      Error error(ec, ERROR_LOCATION) ;
+      Error error(ec, ERROR_LOCATION);
       error.addProperty("stream", localStreamPath);
       return error;
    }
    
    // bind
-   acceptor.bind(endpoint, ec) ;
+   acceptor.bind(endpoint, ec);
    if (ec)
    {
-      Error error(ec, ERROR_LOCATION) ;
+      Error error(ec, ERROR_LOCATION);
       error.addProperty("stream", localStreamPath);
       return error;
    }
@@ -81,11 +81,11 @@ inline Error initLocalStreamAcceptor(
       return error;
    
    // listen
-   acceptor.listen(boost::asio::socket_base::max_connections, ec) ;
+   acceptor.listen(boost::asio::socket_base::max_connections, ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   return Success() ;
+   return Success();
 }
 
 } // namespace http

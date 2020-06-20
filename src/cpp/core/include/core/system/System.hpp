@@ -257,8 +257,8 @@ log::LoggerType loggerType(const std::string& logSection = "");
 log::LogLevel lowestLogLevel();
 
 // filesystem
-bool isHiddenFile(const FilePath& filePath) ;
-bool isHiddenFile(const FileInfo& fileInfo) ;
+bool isHiddenFile(const FilePath& filePath);
+bool isHiddenFile(const FileInfo& fileInfo);
 bool isReadOnly(const FilePath& filePath);
    
 // terminals

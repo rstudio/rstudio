@@ -48,8 +48,8 @@ public:
    int exitCode() const { return exitCode_; }
 
 private:
-   bool exit_ ;
-   int exitCode_ ;
+   bool exit_;
+   int exitCode_;
 };
    
 } // namespace core

@@ -51,7 +51,7 @@ public:
       return name_.compare(field.first) == 0;
    }
 private:
-   std::string name_ ;
+   std::string name_;
 };
    
 struct File
@@ -128,7 +128,7 @@ void parseFields(const std::string& fields,
                  const char* fieldDelim, 
                  const char* valueDelim, 
                  Fields* pFields, 
-                 FieldDecodeType fieldDecode) ;
+                 FieldDecodeType fieldDecode);
    
 void parseForm(const std::string& body, Fields* pFields);
    

@@ -309,7 +309,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
       break;
    }
 
-   return stream ;
+   return stream;
 }
 
 Error findProjectFile(FilePath filePath,
