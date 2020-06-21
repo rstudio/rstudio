@@ -36,7 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 using namespace rstudio::r::sexp;
 using namespace rstudio::r::exec;
 

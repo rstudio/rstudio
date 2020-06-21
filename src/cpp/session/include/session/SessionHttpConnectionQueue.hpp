@@ -65,8 +65,8 @@ private:
    // explicitly stop the queue and this sometimes results in mutex
    // destroy assertions if someone is waiting on the queue while
    // it is being destroyed
-   boost::mutex* pMutex_ ;
-   boost::condition* pWaitCondition_ ;
+   boost::mutex* pMutex_;
+   boost::condition* pWaitCondition_;
 
    // instance data
    boost::posix_time::ptime lastConnectionTime_;

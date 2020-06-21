@@ -32,7 +32,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -43,7 +43,7 @@ namespace quotas {
 namespace {
 
 // does the system have quotas?
-bool s_systemHasQuotas = false;   
+bool s_systemHasQuotas = false;
    
 struct QuotaInfo
 {

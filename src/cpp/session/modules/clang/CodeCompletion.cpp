@@ -32,7 +32,7 @@
 #include "RSourceIndex.hpp"
 #include "Diagnostics.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
 #ifndef _WIN32

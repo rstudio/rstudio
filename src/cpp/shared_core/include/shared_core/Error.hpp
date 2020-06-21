@@ -46,7 +46,7 @@ class Success;
  */
 class ErrorLock
 {
-   friend class Error ;
+   friend class Error;
    friend class Success;
 
    /**

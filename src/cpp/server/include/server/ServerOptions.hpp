@@ -38,7 +38,7 @@ namespace rstudio {
 namespace server {
 
 // singleton
-class Options ;
+class Options;
 Options& options();
 
 // add overlay-specific args and/or environment variables
@@ -96,7 +96,7 @@ public:
    // www 
    std::string wwwAddress() const
    { 
-      return std::string(wwwAddress_.c_str()) ; 
+      return std::string(wwwAddress_.c_str());
    }
    
    std::string wwwPort(bool secure = false) const
@@ -116,12 +116,12 @@ public:
 
    std::string wwwUrlPathPrefix() const
    {
-      return std::string(wwwUrlPathPrefix_.c_str()); 
+      return std::string(wwwUrlPathPrefix_.c_str());
    }
 
    std::string wwwLocalPath() const
    {
-      return std::string(wwwLocalPath_.c_str()); 
+      return std::string(wwwLocalPath_.c_str());
    }
 
    std::string wwwFrameOrigin() const
@@ -258,7 +258,7 @@ public:
 
    std::string rsessionPath() const
    { 
-      return std::string(rsessionPath_.c_str()); 
+      return std::string(rsessionPath_.c_str());
    }
 
    std::string rldpathPath() const
@@ -273,7 +273,7 @@ public:
    
    std::string rsessionConfigFile() const
    { 
-      return std::string(rsessionConfigFile_.c_str()); 
+      return std::string(rsessionConfigFile_.c_str());
    }
 
    int rsessionProxyMaxWaitSeconds()
@@ -354,10 +354,10 @@ private:
    bool serverOffline_;
    std::string serverDataDir_;
    std::vector<std::string> serverAddHeaders_;
-   std::string wwwAddress_ ;
-   std::string wwwPort_ ;
-   std::string wwwUrlPathPrefix_ ;
-   std::string wwwLocalPath_ ;
+   std::string wwwAddress_;
+   std::string wwwPort_;
+   std::string wwwUrlPathPrefix_;
+   std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;
    std::string wwwFrameOrigin_;
    bool wwwUseEmulatedStack_;

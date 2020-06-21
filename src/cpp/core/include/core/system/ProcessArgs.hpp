@@ -59,8 +59,8 @@ private:
       freeArgs();
 
       // allocate args
-      argCount_ = args.size()  ;
-      args_ = new char*[argCount_+1] ;
+      argCount_ = args.size();
+      args_ = new char*[argCount_+1];
 
       // copy each arg to a buffer
       for (unsigned int i=0; i<argCount_; i++)
@@ -80,15 +80,15 @@ private:
       if (args_ && argCount_ > 0)
       {
          for (std::size_t i = 0; i<argCount_; ++i)
-            delete [] args_[i] ;
+            delete [] args_[i];
       }
 
-      delete [] args_ ;
+      delete [] args_;
    }
    
 private:
-   std::size_t argCount_ ;
-   char** args_ ;
+   std::size_t argCount_;
+   char** args_;
 };
 
 } // namespace system 

@@ -215,7 +215,7 @@ core::Error initialize()
    // http endpoints
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "vcs_clone", vcsClone));
    Error error = initBlock.execute();

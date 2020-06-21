@@ -370,7 +370,7 @@ private:
    bool gitFlag_;
    std::string replacePattern_;
    json::Array replaceMatchOns_;
-   json::Array replaceMatchOffs_; 
+   json::Array replaceMatchOffs_;
    // this is not tracked via json because it exclusively applies to replaces (not previews)
    // which can not currently be paused
    LocalProgress* pReplaceProgress_;
@@ -1320,7 +1320,7 @@ void addDirectoriesToCommand(
       FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
       FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
       if (rPath.exists())
-         *pCmd << rPath; 
+         *pCmd << rPath;
       if (srcPath.exists())
          *pCmd << srcPath;
       else if (!rPath.exists())
@@ -1637,7 +1637,7 @@ core::Error initialize()
    addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
 
    // install handlers
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "begin_find", beginFind))
       (bind(registerRpcMethod, "stop_find", stopFind))

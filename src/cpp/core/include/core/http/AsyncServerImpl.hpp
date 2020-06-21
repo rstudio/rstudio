@@ -213,7 +213,7 @@ public:
          core::system::SignalBlocker signalBlocker;
          Error error = signalBlocker.blockAll();
          if (error)
-            return error ;
+            return error;
       
          // create the threads
          for (std::size_t i=0; i < threadPoolSize; ++i)
@@ -224,7 +224,7 @@ public:
                               this));
             
             // add to list of threads
-            threads_.push_back(pThread);            
+            threads_.push_back(pThread);
          }
       }
       catch(const boost::thread_resource_error& e)
@@ -402,7 +402,7 @@ private:
                 ec != boost::asio::error::bad_descriptor)
             {
                // log the error
-               LOG_ERROR(Error(ec, ERROR_LOCATION)) ;
+               LOG_ERROR(Error(ec, ERROR_LOCATION));
                
                // check for resource exhaustion
                checkForResourceExhaustion(ec, ERROR_LOCATION);
@@ -422,7 +422,7 @@ private:
       // ALWAYS accept next connection
       try
       {
-         acceptNextConnection() ;
+         acceptNextConnection();
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -555,7 +555,7 @@ private:
          // call handler if we have one
          if (handlerFunc)
          {
-            visitHandler(handlerFunc.get(), pAsyncConnection) ;
+            visitHandler(handlerFunc.get(), pAsyncConnection);
          }
          else
          {
@@ -740,7 +740,7 @@ private:
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
    std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
-   AsyncUriHandlers uriHandlers_ ;
+   AsyncUriHandlers uriHandlers_;
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    boost::posix_time::time_duration scheduledCommandInterval_;

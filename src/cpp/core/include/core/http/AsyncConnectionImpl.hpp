@@ -593,8 +593,8 @@ private:
    FormHandler formHandler_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
-   boost::array<char, 8192> buffer_ ;
-   RequestParser requestParser_ ;
+   boost::array<char, 8192> buffer_;
+   RequestParser requestParser_;
    std::string absoluteUri_;
    http::Request request_;
    http::Response response_;

@@ -287,7 +287,7 @@ void PlotManipulatorManager::manipulatorPlotClicked(int x, int y)
          double deviceX = x;
          double deviceY = y;
          double userX = x;
-         double userY = y; 
+         double userY = y;
          convert_.deviceToUser(&userX, &userY);
          double ndcX = x;
          double ndcY = y;

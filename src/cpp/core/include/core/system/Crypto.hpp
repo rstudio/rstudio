@@ -27,7 +27,7 @@ namespace core {
 namespace system {
 namespace crypto {
       
-void initialize();   
+void initialize();
 
 core::Error HMAC_SHA2(const std::string& data,
                       const std::string& key,
@@ -41,7 +41,7 @@ core::Error sha256(const std::string& message,
                    std::string* pHash);
 
 core::Error base64Encode(const std::vector<unsigned char>& data, 
-                         std::string* pEncoded);   
+                         std::string* pEncoded);
    
 core::Error base64Encode(const unsigned char* pData, 
                          int len, 

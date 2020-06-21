@@ -482,6 +482,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # Lua resources
+   file(GLOB LUA_RESOURCE_FILES "resources/*.lua")
+   install(FILES ${LUA_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)

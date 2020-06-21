@@ -51,7 +51,7 @@ public:
    static void unspecified_bool_true() {};
    operator unspecified_bool_type() const 
    { 
-      return pCntxt_ ? unspecified_bool_true : 0; 
+      return pCntxt_ ? unspecified_bool_true : 0;
    }
    bool operator!() const
    {

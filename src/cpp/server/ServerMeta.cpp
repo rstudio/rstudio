@@ -44,7 +44,7 @@ void handleMetaRequest(const std::string& username,
 {
    // parse request
    json::JsonRpcRequest jsonRpcRequest;
-   Error parseError = parseJsonRpcRequest(request.body(), &jsonRpcRequest) ;
+   Error parseError = parseJsonRpcRequest(request.body(), &jsonRpcRequest);
    if (parseError)
    {
       LOG_ERROR(parseError);

@@ -59,7 +59,7 @@ SEXP asNamespace(const std::string& name);
 SEXP forcePromise(SEXP objectSEXP);
    
 // variables within an environment
-typedef std::pair<std::string,SEXP> Variable ;
+typedef std::pair<std::string,SEXP> Variable;
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
@@ -68,7 +68,7 @@ void listEnvironment(SEXP env,
       
 // object info
 SEXP findVar(const std::string& name,
-             const std::string& ns = std::string()); 
+             const std::string& ns = std::string());
 SEXP findVar(const std::string& name,
              const SEXP env);
 SEXP findFunction(const std::string& name,
@@ -80,7 +80,7 @@ int length(SEXP object);
 SEXP getNames(SEXP sexp);
 bool setNames(SEXP sexp, const std::vector<std::string>& names);
 
-core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
+core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);
 bool hasActiveBinding(const std::string&, const SEXP);
 bool isActiveBinding(const std::string&, const SEXP);
 
@@ -93,7 +93,7 @@ bool isFunction(SEXP object);
 bool isLanguage(SEXP object);
 bool isList(SEXP object);
 bool isMatrix(SEXP object);
-bool isDataFrame(SEXP object);   
+bool isDataFrame(SEXP object);
 bool isNull(SEXP object);
 bool isEnvironment(SEXP object);
 bool isPrimitiveEnvironment(SEXP object);
@@ -129,7 +129,7 @@ void clearExternalPtr(SEXP extptr);
 core::Error extract(SEXP valueSEXP, int* pInt);
 core::Error extract(SEXP valueSEXP, bool* pBool);
 core::Error extract(SEXP valueSEXP, double* pDouble);
-core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);   
+core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
 core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = false);
@@ -237,7 +237,7 @@ core::Error getNamedListElement(SEXP listSEXP,
 template <typename T>
 core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
 {
-   SEXP attrib = getAttrib(object, name); 
+   SEXP attrib = getAttrib(object, name);
    if (attrib == R_NilValue) 
    {
       core::Error error(r::errc::AttributeNotFoundError, ERROR_LOCATION);
@@ -271,7 +271,7 @@ public:
    void unprotectAll();
    
 private:
-   int protectCount_ ;
+   int protectCount_;
 };
 
 // set list element by name. note that the specified element MUST already

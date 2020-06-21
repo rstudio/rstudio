@@ -52,7 +52,7 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 #define kReadBufferSize 4096
 

@@ -28,7 +28,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RGraphics.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -173,7 +173,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
                                     snapshot,
                                     string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
-      return error ;
+      return error;
 
    //
    // we can't generate an image file at this point in the processing

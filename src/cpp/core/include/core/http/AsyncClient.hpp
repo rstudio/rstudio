@@ -50,7 +50,7 @@
    catch(const std::exception& e) \
    { \
       handleUnexpectedError(std::string("Unexpected exception: ") + \
-                            e.what(), ERROR_LOCATION) ;  \
+                            e.what(), ERROR_LOCATION);  \
    } \
    catch(...) \
    { \

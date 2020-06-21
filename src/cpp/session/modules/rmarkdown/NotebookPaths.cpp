@@ -173,7 +173,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
 
    // need to generate a new ID for this path; make sure we don't collide with
    // an existing ID
-   std::string id; 
+   std::string id;
    bool existing;
    do 
    {
@@ -187,7 +187,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
             break;
          }
       }
-   } while (existing); 
+   } while (existing);
 
    // lock and update the cache
    PathLockGuard guard;

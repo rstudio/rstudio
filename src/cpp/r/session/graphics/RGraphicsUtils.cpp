@@ -232,7 +232,7 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
    {
       // reslect the previously selected device if we had one
       if (pImpl_->pPreviousDevice != nullptr)
-         Rf_selectDevice(Rf_ndevNumber(pImpl_->pPreviousDevice->dev));  
+         Rf_selectDevice(Rf_ndevNumber(pImpl_->pPreviousDevice->dev));
    }
    catch(...)
    {

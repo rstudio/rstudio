@@ -74,8 +74,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    s_lastPrompt = prompt;
 
    // enque the event
-   json::Object data ;
-   data["prompt"] = prompt ;
+   json::Object data;
+   data["prompt"] = prompt;
    data["history"] = addToHistory;
    bool isDefaultPrompt = 
       prompt == rstudio::r::options::getOption<std::string>("prompt");
@@ -86,7 +86,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    clientEventQueue().add(consolePromptEvent);
    
    // allow modules to detect changes after execution of previous REPL
-   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);   
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
    // call prompt hook
    module_context::events().onConsolePrompt(prompt);
@@ -309,7 +309,7 @@ bool rConsoleRead(const std::string& prompt,
          consolePrompt(prompt, addToHistory);
 
       // wait for console_input
-      json::JsonRpcRequest request ;
+      json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(
                         kConsoleInput,
                         boost::bind(consolePrompt, prompt, addToHistory),

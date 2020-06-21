@@ -58,7 +58,7 @@ core::Error runVerifyInstallationSession();
 
 void proxyContentRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
 
 bool proxyUploadRequest(
       const std::string& username,
@@ -70,7 +70,7 @@ bool proxyUploadRequest(
 void proxyRpcRequest(
       const std::string& username,
       const std::string& userIdentifier,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
 
 void proxyEventsRequest(
       const std::string& username,

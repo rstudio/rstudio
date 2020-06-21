@@ -120,6 +120,6 @@ int main(int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 

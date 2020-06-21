@@ -2569,7 +2569,7 @@
     for ( i=0 ; i<columnCount ; i++ ) {
       column = columns[i];
       columnSearch = preColSearch[i];
-      dataProp = typeof column.mData=="function" ? 'function' : column.mData ;
+      dataProp = typeof column.mData=="function" ? 'function' : column.mData;
   
       d.columns.push( {
         data:       dataProp,
@@ -8323,7 +8323,7 @@
   
   _api_registerPlural( 'columns().nodes()', 'column().nodes()', function () {
     return this.iterator( 'column-rows', function ( settings, column, i, j, rows ) {
-      return _pluck_order( settings.aoData, rows, 'anCells', column ) ;
+      return _pluck_order( settings.aoData, rows, 'anCells', column );
     }, 1 );
   } );
   

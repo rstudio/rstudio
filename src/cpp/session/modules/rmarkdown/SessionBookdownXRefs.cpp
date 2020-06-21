@@ -428,7 +428,7 @@ Error initialize()
    // register rpc functions
    ExecBlock initBlock;
    initBlock.addFunctions()
-     (bind(module_context::registerRpcMethod, "xref_index_for_file", xrefIndexForFile))
+     (boost::bind(module_context::registerRpcMethod, "xref_index_for_file", xrefIndexForFile))
    ;
    return initBlock.execute();
 

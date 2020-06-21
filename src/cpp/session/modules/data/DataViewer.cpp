@@ -273,8 +273,8 @@ struct CachedFrame
       if (!isFilterSubset(workingSearch, newSearch))
          return false;
 
-      for (unsigned i = 0; 
-           i < std::min(newFilters.size(), workingFilters.size()); 
+      for (unsigned i = 0;
+           i < std::min(newFilters.size(), workingFilters.size());
            i++)
       {
          if (!isFilterSubset(workingFilters[i], newFilters[i]))
@@ -322,7 +322,7 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
       return nullptr;
 
    // find the SEXP directly in the environment; return null if unbound
-   SEXP obj = r::sexp::findVar(name, env); 
+   SEXP obj = r::sexp::findVar(name, env);
    return obj == R_UnboundValue ? nullptr : obj;
 }
 
@@ -336,7 +336,7 @@ json::Value makeDataItem(SEXP dataSEXP,
                          const std::string& cacheKey, int preview)
 {
    int nrow = safeDim(dataSEXP, DIM_ROWS);
-   int ncol = safeDim(dataSEXP, DIM_COLS); 
+   int ncol = safeDim(dataSEXP, DIM_COLS);
 
    // fire show data event
    json::Object dataItem;
@@ -1045,9 +1045,9 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
-   using namespace rstudio::r::function_hook ;
+   using namespace rstudio::r::function_hook;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))

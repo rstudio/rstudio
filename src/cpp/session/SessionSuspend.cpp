@@ -47,7 +47,7 @@ bool s_rSessionResumed = false;
 // the presence of s_forceSuspend = 1)
 bool disallowSuspend() 
 { 
-   return false; 
+   return false;
 }
 
 bool sessionResumed()

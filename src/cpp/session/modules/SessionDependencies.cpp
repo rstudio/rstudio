@@ -635,7 +635,7 @@ Error initialize()
    // install handlers
    using boost::bind;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDependencies.R"))
       (bind(registerRpcMethod, "unsatisfied_dependencies", unsatisfiedDependencies))

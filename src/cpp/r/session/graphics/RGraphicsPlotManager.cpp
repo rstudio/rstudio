@@ -94,7 +94,7 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
       return error;
 
    // save reference to graphics path and make sure it exists
-   graphicsPath_ = graphicsPath ;
+   graphicsPath_ = graphicsPath;
    error = graphicsPath_.ensureDirectory();
    if (error)
       return error;
@@ -240,7 +240,7 @@ Error PlotManager::savePlotAsFile(const boost::function<Error()>&
    // create the target device
    Error error = deviceCreationFunction();
    if (error)
-      return error ;
+      return error;
    
    // copy the current contents of the graphics device to the target device
    graphicsDevice_.copyToActiveDevice();
@@ -431,7 +431,7 @@ bool PlotManager::hasOutput() const
     
 bool PlotManager::hasChanges() const
 {
-   return displayHasChanges_ ;
+   return displayHasChanges_;
 }
 
 bool PlotManager::isActiveDevice() const
@@ -515,7 +515,7 @@ std::string PlotManager::imageFilename() const
 {
    if (hasPlot())
    {
-      return plots_[activePlot_]->imageFilename();   
+      return plots_[activePlot_]->imageFilename();
    }
    else
    {
@@ -567,10 +567,10 @@ Error PlotManager::savePlotsState()
 {
    // exit if we don't have a graphics path
    if (!graphicsPath_.exists())
-      return Success() ;
+      return Success();
 
    // list to write
-   std::vector<std::string> plots ;
+   std::vector<std::string> plots;
    
     // write the storage id of the active plot
    if (hasPlot())
@@ -591,7 +591,7 @@ Error PlotManager::savePlotsState()
    }
    
    // suppres all device events after suspend
-   suppressDeviceEvents_ = true ;
+   suppressDeviceEvents_ = true;
    
    // write plot list
    return writeStringVectorToFile(plotsStateFile_, plots);
@@ -601,7 +601,7 @@ Error PlotManager::restorePlotsState()
 {
    // exit if we don't have a plot list
    if (!plotsStateFile_.exists())
-      return Success() ;
+      return Success();
    
    // read plot list from file
    std::vector<std::string> plots;
@@ -614,7 +614,7 @@ Error PlotManager::restorePlotsState()
       return Success();
 
    // read the storage id of the active plot them remove it from the list
-   std::string activePlotStorageId ;
+   std::string activePlotStorageId;
    if (!plots.empty())
    {
       activePlotStorageId = plots[0];
@@ -625,12 +625,12 @@ Error PlotManager::restorePlotsState()
    std::string plotInfo;
    for (int i=0; i<(int)plots.size(); ++i)
    {
-      std::string plotStorageId ;
+      std::string plotStorageId;
       DisplaySize renderedSize(0,0);
       
       // extract the id, width, and height
       plotInfo = plots[i];
-      boost::cmatch matches ;
+      boost::cmatch matches;
       if (regex_utils::match(plotInfo.c_str(), matches, plotInfoRegex_) &&
           (matches.size() > 3) )
       {
@@ -821,7 +821,7 @@ void PlotManager::onDeviceResized()
 void PlotManager::onDeviceClosed()
 {
    if (suppressDeviceEvents_)
-      return ;
+      return;
    
    // clear plots
    activePlot_ = -1;

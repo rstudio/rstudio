@@ -94,7 +94,7 @@ public:
 
       bool empty() { return !interrupt && text.empty(); }
 
-      bool interrupt ;
+      bool interrupt;
       std::string text;
       bool echoInput;
 

@@ -51,7 +51,7 @@ void HttpConnection::sendJsonRpcError(const core::Error& error)
 
 void HttpConnection::sendJsonRpcResponse()
 {
-   core::json::JsonRpcResponse jsonRpcResponse ;
+   core::json::JsonRpcResponse jsonRpcResponse;
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
@@ -59,7 +59,7 @@ void HttpConnection::sendJsonRpcResponse(
                      const core::json::JsonRpcResponse& jsonRpcResponse)
 {
    // setup response
-   core::http::Response response ;
+   core::http::Response response;
 
    // automagic gzip support
    if (request().acceptsEncoding(core::http::kGzipEncoding))

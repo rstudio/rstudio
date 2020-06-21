@@ -20,7 +20,7 @@
 
 #include <r/RExec.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
