@@ -86,7 +86,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   useEffect(() => {
     const containerEl = containerRef.current;
     if (containerEl) {
-      const rows = containerEl.getElementsByClassName('pm-completion-item-row');
+      const rows = containerEl.getElementsByClassName('pm-completion-list-item-row');
       const scrollToRow = rows.item(props.selectedIndex);
       if (scrollToRow) {
         const scroller = zenscroll.createScroller(containerEl);
@@ -155,7 +155,7 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number, ite
       <tr
         key={key}
         style={{ lineHeight: itemHeight + 'px' }}
-        className={'pm-completion-item-row'}
+        className={'pm-completion-list-item-row'}
         onClick={itemEventHandler(index, props.onClick)}
         onMouseMove={itemEventHandler(index, props.onHover)}
       >
@@ -188,7 +188,7 @@ function completionItemCell(
   // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
   const key = props.handler.view.key(completion);
   const item = React.createElement(props.handler.view.component, { ...completion, key });
-  const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
+  const className = 'pm-completion-list-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
   const cell = (
     <td
       key={key}

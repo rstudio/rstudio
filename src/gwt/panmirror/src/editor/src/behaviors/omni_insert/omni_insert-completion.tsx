@@ -41,7 +41,7 @@ export function omniInsertCompletionHandler(
     completions: omniInsertCompletions(omniInserters, ui),
 
     filter: (completions: OmniInserter[], state: EditorState, token: string) => {
-      
+
       // match contents of name or keywords (and verify the command is enabled)
       return completions
         .filter(inserter => {
@@ -158,8 +158,8 @@ const OmniInserterView: React.FC<OmniInserter> = inserter => {
             <img className={'pm-block-border-color'} src={inserter.image()} alt="" />
           </td>
           <td>
-            <div className={'pm-omni-insert-name pm-completion-item-text'}>{inserter.name}</div>
-            <div className={'pm-omni-insert-description pm-completion-item-text'}>{inserter.description}</div>
+            <div className={'pm-omni-insert-name pm-completion-list-item-text'}>{inserter.name}</div>
+            <div className={'pm-omni-insert-description pm-completion-list-item-text'}>{inserter.description}</div>
           </td>
         </tr>
       </tbody>
