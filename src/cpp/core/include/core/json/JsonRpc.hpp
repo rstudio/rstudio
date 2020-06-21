@@ -352,7 +352,7 @@ public:
    JsonRpcResponse() : suppressDetectChanges_(false)
    {
       setResult(Value());
-   };
+   }
 
    // COPYING: via compiler (copyable members)
    
@@ -493,6 +493,38 @@ void setErrorResponse(const core::Error& error, core::json::JsonRpcResponse* pRe
 void setProcessErrorResponse(const core::system::ProcessResult& result,
                              const core::ErrorLocation& location,
                              core::json::JsonRpcResponse* pResponse);
+
+// helper for reading a json value (and setting an error response if it
+// doesn't parse or is of the wrong type)
+template <typename T>
+bool parseJsonForResponse(const std::string& output, T* pVal, json::JsonRpcResponse* pResponse)
+{
+   using namespace json;
+   T jsonValue;
+   Error error = jsonValue.parse(output);
+   if (error)
+   {
+      Error parseError(boost::system::errc::state_not_recoverable,
+                       errorMessage(error),
+                       ERROR_LOCATION);
+      json::setErrorResponse(parseError, pResponse);
+      return false;
+   }
+   else if (!isType<T>(jsonValue))
+   {
+      Error outputError(boost::system::errc::state_not_recoverable,
+                       "Unexpected JSON output from pandoc",
+                       ERROR_LOCATION);
+      json::setErrorResponse(outputError, pResponse);
+      return false;
+   }
+   else
+   {
+      *pVal = jsonValue;
+      return true;
+   }
+}
+
 
 
 // convenience typedefs for managing a map of json rpc functions

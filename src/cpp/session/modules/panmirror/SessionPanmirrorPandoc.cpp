@@ -17,15 +17,12 @@
 
 
 #include <shared_core/Error.hpp>
-#include <core/Hash.hpp>
+
 #include <core/Exec.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
-
 #include <core/system/Process.hpp>
 
-#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -113,36 +110,6 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    }
 }
 
-template <typename T>
-bool readJsonValue(const std::string& output, T* pVal, json::JsonRpcResponse* pResponse)
-{
-   using namespace json;
-   T jsonValue;
-   Error error = jsonValue.parse(output);
-   if (error)
-   {
-      Error parseError(boost::system::errc::state_not_recoverable,
-                       errorMessage(error),
-                       ERROR_LOCATION);
-      json::setErrorResponse(parseError, pResponse);
-      return false;
-   }
-   else if (!isType<T>(jsonValue))
-   {
-      Error outputError(boost::system::errc::state_not_recoverable,
-                       "Unexpected JSON output from pandoc",
-                       ERROR_LOCATION);
-      json::setErrorResponse(outputError, pResponse);
-      return false;
-   }
-   else
-   {
-      *pVal = jsonValue;
-      return true;
-   }
-}
-
-
 void endJsonObjectRequest(const json::JsonRpcFunctionContinuation& cont,
                           const core::system::ProcessResult& result)
 {
@@ -150,7 +117,7 @@ void endJsonObjectRequest(const json::JsonRpcFunctionContinuation& cont,
    if (result.exitStatus == EXIT_SUCCESS)
    {
       json::Object jsonObject;
-      if (readJsonValue(result.stdOut, &jsonObject, &response))
+      if (json::parseJsonForResponse(result.stdOut, &jsonObject, &response))
         response.setResult(jsonObject);
    }
    else
@@ -273,7 +240,7 @@ void pandocGetCapabilities(const json::JsonRpcRequest&,
       return;
    }
    json::Object jsonAst;
-   if (!readJsonValue(apiOutput, &jsonAst, &response))
+   if (!json::parseJsonForResponse(apiOutput, &jsonAst, &response))
    {
       cont(Success(), &response);
       return;
@@ -343,171 +310,6 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
 
 }
 
-// cache the last bibliography we returned (along w/ enough info to construct an etag for the cache)
-class BiblioCache
-{
-public:
-   static std::string etag(const std::vector<core::FileInfo>& biblioFiles,
-                           const std::string& refBlock)
-   {
-      std::ostringstream ostr;
-      for (auto file : biblioFiles)
-          ostr << file.absolutePath() << ":" << file.lastWriteTime();
-      ostr << hash::crc32HexHash(refBlock);
-      return ostr.str();
-   }
-
-public:
-   void update(const json::Object& biblioJson,
-               const std::vector<core::FileInfo>& biblioFiles,
-               const std::string& refBlock)
-   {
-      biblioJson_ = biblioJson;
-      biblioFiles_ = biblioFiles;
-      refBlock_ = refBlock;
-   }
-
-   std::string etag()
-   {
-      return etag(biblioFiles_, refBlock_);
-   }
-
-   void setResponse(json::JsonRpcResponse* pResponse)
-   {
-      json::Object result;
-      result["etag"] = etag();
-      result["bibliography"] = biblioJson_;
-      pResponse->setResult(result);
-   }
-
-private:
-   json::Object biblioJson_;
-   std::vector<core::FileInfo> biblioFiles_;
-   std::string refBlock_;
-};
-BiblioCache s_biblioCache;
-
-
-void citeprocCompleted(const std::vector<core::FileInfo>& biblioFiles,
-                       const std::string& refBlock,
-                       const json::JsonRpcFunctionContinuation& cont,
-                       const core::system::ProcessResult& result)
-{
-   json::JsonRpcResponse response;
-   if (result.exitStatus == EXIT_SUCCESS)
-   {
-      json::Array jsonCitations;
-      if (readJsonValue(result.stdOut, &jsonCitations, &response))
-      {
-         // create bibliography
-         json::Object biblio;
-         biblio["sources"] = jsonCitations;
-
-         // cache last successful bibliograpy
-         s_biblioCache.update(biblio, biblioFiles, refBlock);
-
-         // set response
-         s_biblioCache.setResponse(&response);
-      }
-   }
-   else
-   {
-      json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
-   }
-
-   // call continuation
-   cont(Success(), &response);
-}
-
-void pandocGetBibliography(const json::JsonRpcRequest& request,
-                           const json::JsonRpcFunctionContinuation& cont)
-{
-   // response object
-   json::JsonRpcResponse response;
-
-   // extract params
-   std::string file, refBlock, etag;
-   json::Array bibliographiesJson;
-   Error error = json::readParams(request.params, &file, &bibliographiesJson, &refBlock, &etag);
-   if (error)
-   {
-      json::setErrorResponse(error, &response);
-      cont(Success(), &response);
-      return;
-   }
-
-
-
-
-   // determine biblio files
-   std::vector<FileInfo> biblioFiles;
-
-   // if there are bibliographies passed form the client then use those in preference to the
-   // project bibliographies (b/c they will appear after the project bibliographies)
-   if (bibliographiesJson.getSize() > 0)
-   {
-      std::vector<std::string> biblios;
-      bibliographiesJson.toVectorString(biblios);
-      for (auto biblio : biblios)
-      {
-         FilePath biblioPath = module_context::resolveAliasedPath(biblio);
-         biblioFiles.push_back(FileInfo(biblioPath));
-      }
-   }
-   // is this file part of the current project? if so then use the project bibliographies as the default
-   else if (!file.empty() && projects::projectContext().hasProject())
-   {
-      FilePath filePath = module_context::resolveAliasedPath(file);
-      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
-      {
-         std::vector<FilePath> projectBibs = module_context::bookdownBibliographies();
-         std::transform(projectBibs.begin(),
-                        projectBibs.end(),
-                        std::back_inserter(biblioFiles),
-                        toFileInfo);
-      }
-   }
-
-   // if the client, the filesystem, and the cache all agree on the etag then serve from cache
-   if (etag == s_biblioCache.etag() && etag == BiblioCache::etag(biblioFiles, refBlock))
-   {
-      s_biblioCache.setResponse(&response);
-      cont(Success(), &response);
-      return;
-   }
-
-   // build args
-   std::vector<std::string> args;
-
-   // always pass the biblio files
-   for (auto biblioFile : biblioFiles)
-      args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
-
-   // if a ref block is provided then write it to a temporary file and pass it as well
-   if (!refBlock.empty())
-   {
-      FilePath tempYaml = module_context::tempFile("biblio", "yaml");
-      Error error = writeStringToFile(tempYaml, refBlock);
-      if (error)
-         LOG_ERROR(error);
-      args.push_back(string_utils::utf8ToSystem(tempYaml.getAbsolutePath()));
-   }
-
-   // convert to json
-   args.push_back("--bib2json");
-
-   // run pandoc-citeproc
-   core::system::ProcessResult result;
-   error = module_context::runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, biblioFiles, refBlock, cont, _1));
-   if (error)
-   {
-      json::setErrorResponse(error, &response);
-      cont(Success(), &response);
-   }
-}
-
-
-
 } // end anonymous namespace
 
 Error initialize()
@@ -518,7 +320,6 @@ Error initialize()
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_ast_to_markdown", pandocAstToMarkdown))
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_markdown_to_ast", pandocMarkdownToAst))
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_list_extensions", pandocListExtensions))
-      (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_get_bibliography", pandocGetBibliography))
    ;
    return initBlock.execute();
 }

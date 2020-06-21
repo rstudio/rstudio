@@ -22,6 +22,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include "SessionPanmirrorPandoc.hpp"
+#include "SessionPanmirrorBibliogrpahy.hpp"
 #include "SessionPanmirrorCrossref.hpp"
 
 using namespace rstudio::core;
@@ -36,6 +37,7 @@ Error initialize()
    core::ExecBlock initBlock;
    initBlock.addFunctions()
       (pandoc::initialize)
+      (bibliography::initialize)
       (crossref::initialize)
     ;
    return initBlock.execute();
