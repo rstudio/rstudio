@@ -13,7 +13,6 @@
  *
  */
 
-
 .pm-completion-item {
   display: flex;
   align-items: center;
@@ -58,7 +57,20 @@
   opacity: 80%;
 }
 
+.pm-completion-item-primary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  font-size: 9pt;
+}
+
 .pm-completion-item-title {
+  margin-right: 8px;
+  opacity: 100%;
+}
+
+.pm-completion-item-subTitle {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -68,4 +80,7 @@
   line-height: 18px;
 }
 
-
+.pm-completion-item-detail {
+  opacity: 0.8;
+  font-weight: normal;
+}

@@ -13,23 +13,22 @@
  *
  */
 
+import React from 'react';
 
-import React from "react";
-
-import { WidgetProps } from "./react";
+import { WidgetProps } from './react';
 
 import './completion.css';
 
 export interface CompletionItemViewProps extends WidgetProps {
   width: number;
   image?: string;
-  idView: JSX.Element;
   title: string;
+  detail?: string;
+  subTitle: string;
   htmlTitle?: boolean;
 }
 
 export const CompletionItemView: React.FC<CompletionItemViewProps> = props => {
-
   const className = ['pm-completion-item'].concat(props.classes || []).join(' ');
   const style: React.CSSProperties = {
     width: props.width + 'px',
@@ -43,21 +42,15 @@ export const CompletionItemView: React.FC<CompletionItemViewProps> = props => {
       </div>
       <div className={'pm-completion-item-summary'} style={{ width: props.width - 40 - 36 + 'px' }}>
         <div className={'pm-completion-item-id'}>
-          {props.idView}
+          <div className={'pm-completion-item-primary pm-completion-item-title pm-fixedwidth-font'}>{props.title}</div>
+          <div className={'pm-completion-item-primary pm-completion-item-detail'}>{props.detail}</div>
         </div>
-        {props.htmlTitle ?
-          <div className={'pm-completion-item-title'}
-            dangerouslySetInnerHTML={{ __html: props.title || '' }}
-          />
-          :
-          <div className={'pm-completion-item-title'}>
-            {props.title}
-          </div>
-        }
+        {props.htmlTitle ? (
+          <div className={'pm-completion-item-subTitle'} dangerouslySetInnerHTML={{ __html: props.subTitle || '' }} />
+        ) : (
+          <div className={'pm-completion-item-subTitle'}>{props.subTitle}</div>
+        )}
       </div>
     </div>
   );
-
 };
-
-
