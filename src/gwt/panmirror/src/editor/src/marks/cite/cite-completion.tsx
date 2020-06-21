@@ -40,8 +40,6 @@ import { CompletionItemView } from '../../api/widgets/completion';
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { kEditingCiteIdRegEx } from './cite';
 
-import './cite-completion.css';
-
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 20;
 
@@ -126,16 +124,15 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
 // to render the title as HTML rather than as a string
 const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
   const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
-  const idView = (
-    <>
-      <div className={'pm-citation-completion-primary pm-fixedwidth-font'}>
-        <span className={'pm-fixedwidth-font'}>@{entry.source.id}</span>
-      </div>
-      <div className={'pm-citation-completion-secondary'}>
-        {authorStr} {entry.issuedDateFormatter(entry.source.issued)}
-      </div>
-    </>
+  const detail = `${authorStr} ${entry.issuedDateFormatter(entry.source.issued)}`;
+  return (
+    <CompletionItemView
+      width={400}
+      image={entry.image}
+      title={`@${entry.source.id}`}
+      subTitle={entry.source.title || ''}
+      detail={detail}
+      htmlTitle={true}
+    />
   );
-
-  return <CompletionItemView width={400} image={entry.image} idView={idView} title={entry.source.title || ''} htmlTitle={true} />;
 };
