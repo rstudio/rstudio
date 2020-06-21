@@ -38,7 +38,8 @@ export function completionExtension(
   handlers: readonly CompletionHandler[],
   inputRuleFilter: MarkInputRuleFilter,
   ui: EditorUI,
-  events: EditorEvents) {
+  events: EditorEvents,
+) {
   return {
     plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
@@ -80,7 +81,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
-  constructor(handlers: readonly CompletionHandler[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI, events: EditorEvents) {
+  constructor(
+    handlers: readonly CompletionHandler[],
+    inputRuleFilter: MarkInputRuleFilter,
+    ui: EditorUI,
+    events: EditorEvents,
+  ) {
     super({
       key,
       state: {
@@ -111,17 +117,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-
             // first check if the handler is enabled (null means use inputRuleFilter)
             if (handler.enabled === null || (handler.enabled ? handler.enabled(tr) : inputRuleFilter(tr))) {
               const result = handler.completions(textBefore, tr);
               if (result) {
-
                 // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
                 if (handler.id === prevState.handler?.id) {
-
-                  // suppress this handler if the last transaction was a completion result 
+                  // suppress this handler if the last transaction was a completion result
                   if (tr.getMeta(kInsertCompletionTransaction)) {
                     continue;
                   }
@@ -211,6 +214,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
                     this.selectedIndex + this.completionPageSize(),
                     this.completions.length - 1,
                   );
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'End':
+                  this.selectedIndex = this.completions.length - 1;
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'Home':
+                  this.selectedIndex = 0;
                   this.renderCompletions(view);
                   handled = true;
                   break;
@@ -375,7 +388,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // ensure we have a node
           if (replacement instanceof ProsemirrorNode) {
-
             // combine it's marks w/ whatever is active at the selection
             const marks = view.state.selection.$head.marks();
 
@@ -384,11 +396,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             // propapate marks
             marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
-
           } else {
-
             tr.insertText(replacement);
-
           }
 
           // mark the transaction as an completion insertin
