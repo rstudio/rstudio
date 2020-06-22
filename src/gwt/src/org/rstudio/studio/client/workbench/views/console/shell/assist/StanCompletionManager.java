@@ -250,6 +250,12 @@ public class StanCompletionManager extends CompletionManagerBase
       };
    }
    
+   @Override
+   public void detach()
+   {
+      sigTips_.detach();
+   }
+   
    private final CompletionContext context_;
    
    private final SignatureToolTipManager sigTips_;

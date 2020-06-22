@@ -56,14 +56,11 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
-public class SignatureToolTipManager
+public abstract class SignatureToolTipManager
 {
    // Sub-classes should override this to indicate
    // when the tooltip monitor is enabled / disabled.
-   protected boolean isEnabled(Position position)
-   {
-      return true;
-   }
+   protected abstract boolean isEnabled(Position position);
    
    // Subclasses should override this for their own
    // argument-retrieving behaviors.
