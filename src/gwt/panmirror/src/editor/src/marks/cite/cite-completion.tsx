@@ -41,7 +41,7 @@ import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { kEditingCiteIdRegEx } from './cite';
 
 const kAuthorMaxChars = 28;
-const kMaxCitationCompletions = 20;
+const kMaxCitationCompletions = 100;
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
