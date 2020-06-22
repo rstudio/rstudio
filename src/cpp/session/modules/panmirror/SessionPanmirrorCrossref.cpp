@@ -109,6 +109,30 @@ void crossrefWorks(const json::JsonRpcRequest& request,
    crossrefRequest(kCrossrefWorks, params, cont);
 }
 
+void crossrefDoi(const json::JsonRpcRequest& request,
+                 const json::JsonRpcFunctionContinuation& cont)
+{
+    std::string doi;
+    Error error = json::readParams(request.params, &doi);
+    if (error)
+    {
+      json::JsonRpcResponse response;
+      setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+    }
+    
+    // Path to DOI metadata works/doi/{doi}
+    boost::format fmt("%s/doi/%s");
+    const std::string resourcePath = boost::str(fmt % kCrossrefWorks % doi);
+    
+    // No parameters
+    core::http::Fields params;
+    
+    // make the request
+    crossrefRequest(resourcePath, params, cont);
+}
+
 
 } // end anonymous namespace
 
@@ -117,6 +141,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::registerAsyncRpcMethod, "crossref_works", crossrefWorks))
+      (boost::bind(module_context::registerAsyncRpcMethod, "crossref_doi", crossrefDoi))
    ;
    return initBlock.execute();
 }

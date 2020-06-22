@@ -17,6 +17,7 @@
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
   works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
+  doi: (doi: string) => Promise<CrossrefWork>;
 }
 
 export const kCrossrefItemsPerPage = 'items-per-page';
