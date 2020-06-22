@@ -491,7 +491,6 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    }
 
    // return requested file
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 
