@@ -94,11 +94,21 @@ Error runPandocAsync(const std::vector<std::string>& args,
    return runAsync(pandocPath(), args, input, onCompleted);
 }
 
+Error runPandocCiteproc(const std::vector<std::string>& args, core::system::ProcessResult* pResult)
+{
+   return core::system::runProgram(
+      pandocCiteprocPath(),
+      args,
+      "",
+      pandocOptions(),
+      pResult
+   );
+}
+
 Error runPandocCiteprocAsync(const std::vector<std::string>& args,
-                             const std::string&input,
                              const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
-   return runAsync(pandocCiteprocPath(), args, input, onCompleted);
+   return runAsync(pandocCiteprocPath(), args, "", onCompleted);
 }
 
 } // end namespace module_context

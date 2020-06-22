@@ -876,8 +876,9 @@ core::Error runPandocAsync(const std::vector<std::string>& args,
                            const std::string& input,
                            const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
+core::Error runPandocCiteproc(const std::vector<std::string>& args, core::system::ProcessResult* pResult);
+
 core::Error runPandocCiteprocAsync(const std::vector<std::string>& args,
-                                   const std::string&input,
                                    const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
 } // namespace module_context
