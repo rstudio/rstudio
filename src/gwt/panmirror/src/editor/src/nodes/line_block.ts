@@ -24,7 +24,6 @@ import { OmniInsertGroup } from '../api/omni_insert';
 import './line_block-styles.css';
 
 const extension = (context: ExtensionContext) => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.line_blocks) {

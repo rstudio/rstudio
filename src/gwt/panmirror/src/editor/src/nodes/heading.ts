@@ -34,7 +34,6 @@ const HEADING_CHILDREN = 2;
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, format, ui } = context;
 
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;

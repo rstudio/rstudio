@@ -23,7 +23,6 @@ import { EditorUI } from '../api/ui';
 import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension = (context: ExtensionContext) => {
-
   const { ui } = context;
 
   return {

@@ -44,7 +44,6 @@ const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, ui } = context;
 
   const capabilities = {

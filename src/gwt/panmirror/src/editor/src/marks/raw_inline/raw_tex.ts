@@ -36,7 +36,6 @@ import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './r
 const kTexPlaceholder = 'tex';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions } = context;
 
   if (!pandocExtensions.raw_tex) {

@@ -35,13 +35,11 @@ export function omniInsertCompletionHandler(
   ui: EditorUI,
 ): CompletionHandler<OmniInserter> {
   return {
-
     id: 'E305158D-20D6-474D-84E6-06607CA58578',
 
     completions: omniInsertCompletions(omniInserters, ui),
 
     filter: (completions: OmniInserter[], state: EditorState, token: string) => {
-
       // match contents of name or keywords (and verify the command is enabled)
       return completions
         .filter(inserter => {
@@ -59,7 +57,6 @@ export function omniInsertCompletionHandler(
             .thenBy(omniInsertPriorityCompare, { direction: 'desc' })
             .thenBy('name'),
         );
-
     },
 
     replace(view: EditorView, pos: number, completion: OmniInserter | null) {
@@ -123,8 +120,8 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
       const decorations =
         query.length === 0
           ? DecorationSet.create(context.doc, [
-            placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
-          ])
+              placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
+            ])
           : undefined;
 
       // return the completion result

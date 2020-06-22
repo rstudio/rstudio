@@ -42,7 +42,6 @@ import './definition_list-styles.css';
 import { emptyNodePlaceholderPlugin } from '../../api/placeholder';
 
 const extension = (context: ExtensionContext) => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.definition_lists) {
@@ -134,4 +133,3 @@ const extension = (context: ExtensionContext) => {
 };
 
 export default extension;
-

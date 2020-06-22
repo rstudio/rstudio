@@ -28,7 +28,6 @@ import { fancyQuotesToSimple } from '../api/quote';
 import { markIsActive } from '../api/mark';
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, format } = context;
 
   const fencedAttributes = pandocExtensions.fenced_code_attributes || !!format.rmdExtensions.codeChunks;

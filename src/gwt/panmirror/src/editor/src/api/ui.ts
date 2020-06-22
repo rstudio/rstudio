@@ -48,7 +48,6 @@ export interface EditorDialogs {
 }
 
 export interface EditorUIContext {
-
   // get the path to the current document
   getDocumentPath: () => string | null;
 

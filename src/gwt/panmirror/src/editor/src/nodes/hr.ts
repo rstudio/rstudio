@@ -27,7 +27,6 @@ import { OmniInsertGroup } from '../api/omni_insert';
 import './hr-styles.css';
 
 const extension = (context: ExtensionContext) => {
-
   const { ui } = context;
 
   return {

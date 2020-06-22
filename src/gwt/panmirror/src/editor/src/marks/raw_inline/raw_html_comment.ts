@@ -35,7 +35,6 @@ import './raw_html_comment-styles.css';
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { options, ui } = context;
 
   return {

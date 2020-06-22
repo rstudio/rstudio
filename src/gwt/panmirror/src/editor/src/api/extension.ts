@@ -47,7 +47,6 @@ export interface Extension {
   completionHandlers?: () => readonly CompletionHandler[];
 }
 
-
 export interface ExtensionContext {
   pandocExtensions: PandocExtensions;
   pandocCapabilities: PandocCapabilities;

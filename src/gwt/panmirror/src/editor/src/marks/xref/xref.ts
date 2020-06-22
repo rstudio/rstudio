@@ -35,7 +35,6 @@ import { xrefCompletionHandler } from './xref-completion';
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, format, ui, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
@@ -146,11 +145,10 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [
         // recoginize new ref
         new InputRule(/(^|[^`])(\\?@ref\()$/, (state: EditorState, match: string[], start: number, end: number) => {
-
           // if this completes an xref at this position then stand down
           const kRefLen = 4;
           const { parent, parentOffset } = state.selection.$head;
-          const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset)
+          const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset);
           const after = parent.textContent.slice(parentOffset);
           const potentialXref = before + '(' + after;
           if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXref)) {
@@ -191,7 +189,10 @@ const extension = (context: ExtensionContext): Extension | null => {
               description: ui.context.translateText('Reference to related content'),
               group: OmniInsertGroup.References,
               priority: 0,
-              image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.cross_reference_dark! : ui.images.omni_insert!.cross_reference!,
+              image: () =>
+                ui.prefs.darkMode()
+                  ? ui.images.omni_insert!.cross_reference_dark!
+                  : ui.images.omni_insert!.cross_reference!,
             },
           ),
         ];
