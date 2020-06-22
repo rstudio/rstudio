@@ -24,6 +24,7 @@ import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -54,6 +55,12 @@ public class StanCompletionManager extends CompletionManagerBase
       
       sigTips_ = new SignatureToolTipManager(docDisplay)
       {
+         @Override
+         protected boolean isEnabled(Position position)
+         {
+            return DocumentMode.isPositionInStanMode(docDisplay, position);
+         }
+         
          @Override
          protected void getFunctionArguments(final String name,
                                              final String source,
@@ -241,6 +248,12 @@ public class StanCompletionManager extends CompletionManagerBase
             })
             
       };
+   }
+   
+   @Override
+   public void detach()
+   {
+      sigTips_.detach();
    }
    
    private final CompletionContext context_;
