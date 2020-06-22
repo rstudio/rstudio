@@ -669,7 +669,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       commands_.switchToTab().setEnabled(hasDocs);
       commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs);
 
-      HashSet<AppCommand> newCommands = activeEditor_ != null
+      HashSet<AppCommand> newCommands = isActive && activeEditor_ != null
               ? activeEditor_.getSupportedCommands()
               : new HashSet<>();
 

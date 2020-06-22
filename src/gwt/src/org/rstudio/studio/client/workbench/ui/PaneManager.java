@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.events.ColumnClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -412,6 +413,30 @@ public class PaneManager
             {
                syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
             }
+         }
+      });
+
+      eventBus_.addHandler(ColumnClosedEvent.TYPE, new ColumnClosedEvent.Handler()
+      {
+         @Override
+         public void onColumnClosed(ColumnClosedEvent event)
+         {
+            SourceColumn column = event.getColumn();
+            panesByName_.remove(column.getName());
+
+            additionalSourceCount_ = sourceColumnManager_.getSize();
+            panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
+            PaneConfig paneConfig = getCurrentConfig();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               additionalSourceCount_).cast());
+            userPrefs_.writeUserPrefs();
+
          }
       });
 
@@ -1224,7 +1249,6 @@ public class PaneManager
 
          if (column.getTabCount() == 0)
          {
-            panel_.removeLeftWidget(column.asWidget());
             sourceColumnManager_.closeColumn(name);
             panesByName_.remove(name);
 
