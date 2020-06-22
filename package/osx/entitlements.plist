@@ -21,5 +21,9 @@
   <key>com.apple.security.cs.allow-dyld-environment-variables</key>
   <true/>
 
+  <!-- Required to knit to Word -->
+  <key>com.apple.security.automation.apple-events</key>
+  <true/>
+
 </dict>
 </plist>
