@@ -13,7 +13,6 @@
  *
  */
 
-
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
   works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
@@ -39,9 +38,43 @@ export interface CrossrefMessage<T> {
 export interface CrossrefWork {
   publisher: string;
   title: string[];
-  doi: string;
+  DOI: string;
   url: string;
   type: string;
+  author: CrossrefContributor[];
+  issued: CrossrefDate;
 }
 
+export interface CrossrefContributor {
+  family: string;
+  given: string;
+}
 
+export interface CrossrefDate {
+  'date-parts': [number, number?, number?];
+}
+
+// ^10.\d{4,9}/[-._;()/:A-Z0-9]+$
+// Core regexes come from https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+const kModernCrossrefDOIRegex = /10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
+const kEarlyWileyCrossrefDOIRegex = /10.1002\/[^\s]+$/i;
+const kOtherCrossrefDOIRegex1 = /10.\\d{4}\/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\d$/i;
+const kOtherCrossrefDOIRegex2 = /10.1021\/\w\w\d+$/i;
+const kOtherCrossrefDOIRegex3 = /10.1207\/[\w\d]+\&\d+_\d+$/i;
+
+const kCrossrefMatches = [
+  kModernCrossrefDOIRegex,
+  kEarlyWileyCrossrefDOIRegex,
+  kOtherCrossrefDOIRegex1,
+  kOtherCrossrefDOIRegex2,
+  kOtherCrossrefDOIRegex3,
+];
+
+export function parseDOI(token: string): string | undefined {
+  let match;
+  kCrossrefMatches.find(regex => {
+    match = token.match(regex);
+    return match && match[0].length > 0;
+  });
+  return match;
+}
