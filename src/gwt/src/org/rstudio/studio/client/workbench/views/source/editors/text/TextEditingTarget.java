@@ -3659,6 +3659,7 @@ public class TextEditingTarget implements
    @Handler
    void onPopoutDoc()
    {
+      Debug.logToConsole("onPopoutDoc in TextEditingTarget");
       if (docUpdateSentinel_ != null)
       {
          // ensure doc is synchronized with source database before popping it

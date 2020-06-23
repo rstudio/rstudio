@@ -150,7 +150,6 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartPa
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
@@ -1476,6 +1475,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {
+      Debug.logToConsole("onPopoutDocInitiated");
       columnManager_.inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
       {
          @Override
@@ -2638,7 +2638,7 @@ public class Source implements InsertSourceHandler,
          InputEditorDisplay editor = consoleEditorProvider_.getConsoleEditor();
          if (editor != null && editor instanceof DocDisplay)
          {
-            columnManager_.getEditorContext("#console", "", (DocDisplay) editor, server_);
+            SourceColumnManager.getEditorContext("#console", "", (DocDisplay) editor, server_);
             return;
          }
       }

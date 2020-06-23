@@ -337,7 +337,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return;
          }
       }
-      Debug.logWarning("Attempted to set unknown doc to active " + docId);
+      // if we didn't find the target editor then it was likely activated for pop out
    }
 
    public void setDocsRestored()
