@@ -172,7 +172,7 @@ Error setClientState(const json::JsonRpcRequest& request,
                                   &persistentState,
                                   &projPersistentState);
    if (error)
-      return error ;
+      return error;
    
    // set state
    r::session::ClientState& clientState = r::session::clientState();
@@ -190,7 +190,7 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* /*pResponse*/)
 {
    // extract fields
-   r::session::RClientMetrics metrics ;
+   r::session::RClientMetrics metrics;
    Error error = json::readObjectParam(request.params, 0,
                                  "consoleWidth", &(metrics.consoleWidth),
                                  "buildConsoleWidth", &(metrics.buildConsoleWidth),
@@ -418,7 +418,7 @@ void editFilePostback(const std::string& file,
    ClientEvent editEvent = session::showEditorEvent(fileContents, false, true);
 
    // wait for edit_completed
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = s_waitForEditCompleted(&request, editEvent);
 
    // cancelled or otherwise didn't succeed
@@ -474,7 +474,6 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    }
 
    // send it back
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 
@@ -531,17 +530,17 @@ Error initialize()
    // register postback handler for viewPDF (server-only)
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      std::string pdfShellCommand ;
+      std::string pdfShellCommand;
       Error error = module_context::registerPostbackHandler("pdfviewer",
                                                             viewPdfPostback,
                                                             &pdfShellCommand);
       if (error)
-         return error ;
+         return error;
 
       // set pdfviewer option
       error = r::options::setOption("pdfviewer", pdfShellCommand);
       if (error)
-         return error ;
+         return error;
 
 
       // register editfile handler and save its path
@@ -565,7 +564,7 @@ Error initialize()
    // complete initialization
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))

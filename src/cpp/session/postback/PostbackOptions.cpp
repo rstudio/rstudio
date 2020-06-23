@@ -18,7 +18,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -26,13 +26,13 @@ namespace postback {
 
 Options& options()
 {
-   static Options instance ;
-   return instance ;
+   static Options instance;
+   return instance;
 }
    
 ProgramStatus Options::read(int argc, char * const argv[])
 {
-   using namespace boost::program_options ;
+   using namespace boost::program_options;
    
    // postback includes command and optional argument
    options_description postback("postback");

@@ -18,13 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import {
-  PandocOutput,
-  PandocTokenType,
-  PandocToken,
-  tokensCollectText,
-  ProsemirrorWriter,
-} from '../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocToken, tokensCollectText, ProsemirrorWriter } from '../api/pandoc';
 
 import { kHugoDocType } from '../api/format';
 
@@ -43,7 +37,6 @@ import {
 } from '../api/pandoc_capsule';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { format } = context;
 
   // return null if no shortcodes

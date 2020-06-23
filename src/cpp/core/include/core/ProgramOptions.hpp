@@ -24,6 +24,20 @@
 
 #include <core/ProgramStatus.hpp>
 
+namespace std
+{
+   // needed for boost to compile std::vector<std::string> default value for option
+   inline std::ostream& operator<<(std::ostream &os, const std::vector<std::string>& vec)
+   {
+      for (auto item : vec)
+      {
+         os << item << " ";
+      }
+
+      return os;
+   }
+}
+
 namespace rstudio {
 namespace core {
 
@@ -43,7 +57,7 @@ struct OptionsDescription
          configFile("config-file options")
    {
    }
-   std::string programName ;
+   std::string programName;
    std::string defaultConfigFilePath;
    boost::program_options::options_description commandLine;
    boost::program_options::positional_options_description positionalOptions;

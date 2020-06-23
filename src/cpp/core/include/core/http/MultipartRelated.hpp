@@ -37,7 +37,7 @@ public:
 
    void terminate();
 
-   std::string contentType() const ;
+   std::string contentType() const;
    std::string body() const;
 
 private:

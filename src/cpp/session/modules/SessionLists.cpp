@@ -307,7 +307,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "list_get", listGet))
       (bind(registerRpcMethod, "list_set_contents", listSetContents))

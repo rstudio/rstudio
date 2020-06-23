@@ -33,7 +33,7 @@ namespace client_events {
    
 extern const int kConsolePrompt;
 extern const int kConsoleWriteOutput;
-extern const int kConsoleWriteError ;
+extern const int kConsoleWriteError;
 extern const int kShowErrorMessage;
 extern const int kShowHelp;
 extern const int kBrowseUrl;
@@ -231,7 +231,7 @@ public:
    
    ClientEvent(int type, bool data)
    {
-      core::json::Object boolObject ;
+      core::json::Object boolObject;
       boolObject["value"] = data;
       init(type, boolObject);
    }
@@ -250,8 +250,8 @@ private:
    void init(int type, const core::json::Value& data);
   
 private:
-   int type_ ;
-   core::json::Value data_ ;
+   int type_;
+   core::json::Value data_;
    std::string id_;
 };
 

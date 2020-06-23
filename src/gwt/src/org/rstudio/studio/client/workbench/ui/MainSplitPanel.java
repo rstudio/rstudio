@@ -335,7 +335,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Integer previousOffsetWidth_ = null;
 
    private final Session session_;
-   @SuppressWarnings("unused")
    private ArrayList<Widget> leftList_;
    private Widget center_;
    private Widget right_;

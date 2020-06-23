@@ -34,7 +34,6 @@ import { EditorOptions } from '../api/options';
 import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, pandocCapabilities, ui, options } = context;
 
   const hasAttr = hasFencedCodeBlocks(pandocExtensions);
@@ -65,12 +64,12 @@ const extension = (context: ExtensionContext): Extension => {
             const fontClass = 'pm-fixedwidth-font';
             const attrs = hasAttr
               ? pandocAttrToDomAttr({
-                ...node.attrs,
-                classes: [...node.attrs.classes, fontClass],
-              })
+                  ...node.attrs,
+                  classes: [...node.attrs.classes, fontClass],
+                })
               : {
-                class: fontClass,
-              };
+                  class: fontClass,
+                };
             return ['pre', attrs, ['code', 0]];
           },
         },
@@ -138,7 +137,8 @@ class CodeBlockFormatCommand extends ProsemirrorCommand {
         description: ui.context.translateText('Source code display'),
         group: OmniInsertGroup.Blocks,
         priority: 7,
-        image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.code_block_dark! : ui.images.omni_insert?.code_block!,
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.code_block_dark! : ui.images.omni_insert?.code_block!,
       },
     );
   }

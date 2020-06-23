@@ -50,7 +50,7 @@ namespace {
 const char * const kDelim = "|";
 
 // secure cookie key
-std::string s_secureCookieKey ;
+std::string s_secureCookieKey;
 
 
 Error base64HMAC(const std::string& value,
@@ -111,7 +111,7 @@ http::Cookie createSecureCookie(const std::string& name,
    // error occurs during encoding. this will cause the application to
    // fail downstream which is what we want given that we couldn't properly
    // secure the cookie)
-   std::string signedCookieValue ;
+   std::string signedCookieValue;
    std::string hmac;
    Error error = base64HMAC(value, expires, &hmac);
    if (error)

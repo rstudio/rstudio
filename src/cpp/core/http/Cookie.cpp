@@ -20,7 +20,7 @@
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
-using namespace boost::gregorian ;
+using namespace boost::gregorian;
 
 namespace rstudio {
 namespace core {
@@ -66,7 +66,7 @@ void Cookie::setExpires(const boost::posix_time::time_duration& expiresFromNow)
 void Cookie::setExpiresDelete() 
 {
    expires_ = boost::posix_time::ptime(date(day_clock::universal_day() - days(2)),
-                                       boost::posix_time::time_duration(23, 59, 59)) ;
+                                       boost::posix_time::time_duration(23, 59, 59));
 }
 
 void Cookie::setHttpOnly()   
@@ -87,21 +87,21 @@ void Cookie::setSameSite(SameSite sameSite)
 std::string Cookie::cookieHeaderValue() const
 {
    // basic name/value
-   std::ostringstream headerValue ;
-   headerValue << name() << "=" << value() ;
+   std::ostringstream headerValue;
+   headerValue << name() << "=" << value();
 
    // expiries if specified
    if ( !expires().is_not_a_date_time() )
    {
-      date::ymd_type ymd = expires_.date().year_month_day() ;
-      greg_weekday wd = expires_.date().day_of_week() ;
+      date::ymd_type ymd = expires_.date().year_month_day();
+      greg_weekday wd = expires_.date().day_of_week();
 
-      headerValue << "; expires=" ;
+      headerValue << "; expires=";
       headerValue << wd.as_short_string() << ", " 
                   << ymd.day << " " << ymd.month.as_short_string() << " "
                   << ymd.year << " " << expires_.time_of_day().hours() << ":"
                   << expires_.time_of_day().minutes() << ":"
-                  << expires_.time_of_day().seconds() << " GMT" ;
+                  << expires_.time_of_day().seconds() << " GMT";
    }
 
    // path if specified
@@ -110,7 +110,7 @@ std::string Cookie::cookieHeaderValue() const
 
    // domain if specified
    if ( !domain().empty() )
-      headerValue << "; domain=" << domain() ;
+      headerValue << "; domain=" << domain();
    
    // http only if specified
    if (httpOnly_)
@@ -137,7 +137,7 @@ std::string Cookie::cookieHeaderValue() const
       headerValue << "; secure";
 
    // return the header value 
-   return headerValue.str() ;
+   return headerValue.str();
 }
 
 } // namespace http

@@ -26,7 +26,6 @@ import { kShortcodeRegEx } from '../api/shortcode';
 import { PandocOutput } from '../api/pandoc';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { format } = context;
 
   if (!format.hugoExtensions.shortcodes) {

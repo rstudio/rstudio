@@ -527,6 +527,12 @@
             "title": "Highlight R function calls",
             "description": "Whether to highlight R function calls in the code editor."
         },
+        "rainbow_parentheses": {
+            "type": "boolean",
+            "default": false,
+            "title": "Rainbow parentheses",
+            "description": "Whether to highlight parentheses in a variety of colors."
+        },
         "console_line_length_limit": {
             "type": "integer",
             "default": 1000,

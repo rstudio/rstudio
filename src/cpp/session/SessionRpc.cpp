@@ -123,7 +123,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    {
       // specified method doesn't exist
       r::exec::error("Requested RPC method " + request.method + " does not exist.");
-      return R_NilValue;    
+      return R_NilValue;
    }
 
    std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
@@ -258,7 +258,7 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
 {
    // record the time just prior to execution of the event
    // (so we can determine if any events were added during execution)
-   using namespace boost::posix_time; 
+   using namespace boost::posix_time;
    ptime executeStartTime = microsec_clock::universal_time();
    
    // execute the method

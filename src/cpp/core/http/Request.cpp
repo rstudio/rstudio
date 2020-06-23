@@ -128,7 +128,7 @@ bool Request::acceptsContentType(const std::string& contentType) const
 bool Request::acceptsEncoding(const std::string& encoding) const
 {
    // read , separated fields
-   using namespace boost ;
+   using namespace boost;
    char_separator<char> comma(", ");
    std::string accepted = acceptEncoding();
    tokenizer<char_separator<char>> tokens(accepted, comma);
@@ -197,9 +197,9 @@ std::string Request::cookieValue(const std::string& name, bool iFrameLegacyCooki
       for (Headers::const_iterator it =
             headers().begin(); it != headers().end(); ++it )
       {
-         scanHeaderForCookie(it->name, it->value) ;
+         scanHeaderForCookie(it->name, it->value);
       }
-      parsedCookies_ = true ;
+      parsedCookies_ = true;
    }
 
    // lookup the cookie
@@ -220,7 +220,7 @@ void Request::addCookie(const std::string& name, const std::string& value)
    std::vector<std::string> cookies;
    for (const auto cookie: cookies_)
    {
-      cookies.push_back(cookie.first + "=" + cookie.second); 
+      cookies.push_back(cookie.first + "=" + cookie.second);
    }
    setHeader("Cookie", boost::algorithm::join(cookies, "; "));
 }
@@ -230,7 +230,7 @@ std::string Request::cookieValueFromHeader(const std::string& headerName) const
    std::string value = headerValue(headerName);
 
    Fields cookie;
-   util::parseFields(value, ";, ", "= ", &cookie, util::FieldDecodeNone) ;
+   util::parseFields(value, ";, ", "= ", &cookie, util::FieldDecodeNone);
 
    if (cookie.size() > 0)
       return cookie.at(0).second;
@@ -250,7 +250,7 @@ const Fields& Request::formFields() const
 {
    ensureFormFieldsParsed();
    
-   return formFields_ ;
+   return formFields_;
 }
    
 const File& Request::uploadedFile(const std::string& name) const
@@ -292,12 +292,12 @@ void Request::debugPrintUri(const std::string& caption) const
 
 void Request::resetMembers()
 {
-   method_.clear() ;
-   uri_.clear() ;
-   parsedCookies_ = false ;
-   cookies_.clear() ;
-   parsedFormFields_ = false ;
-   formFields_.clear() ;
+   method_.clear();
+   uri_.clear();
+   parsedCookies_ = false;
+   cookies_.clear();
+   parsedFormFields_ = false;
+   formFields_.clear();
    parsedQueryParams_ = false;
    queryParams_.clear();
 }
@@ -305,14 +305,14 @@ void Request::resetMembers()
 void Request::appendFirstLineBuffers(
       std::vector<boost::asio::const_buffer>& buffers) const 
 {
-   using boost::asio::buffer ;
+   using boost::asio::buffer;
    
    // request line
-   buffers.push_back(buffer(method_)) ;
-   appendSpaceBuffer(buffers) ;
-   buffers.push_back(buffer(uri_)) ;
-   appendSpaceBuffer(buffers) ;
-   appendHttpVersionBuffers(buffers) ;
+   buffers.push_back(buffer(method_));
+   appendSpaceBuffer(buffers);
+   buffers.push_back(buffer(uri_));
+   appendSpaceBuffer(buffers);
+   appendHttpVersionBuffers(buffers);
 }
 
 void Request::ensureFormFieldsParsed() const
@@ -338,7 +338,7 @@ void Request::ensureFormFieldsParsed() const
          // no form fields available
       }
       
-      parsedFormFields_ = true ;
+      parsedFormFields_ = true;
    }
 }
    
@@ -346,7 +346,7 @@ void Request::scanHeaderForCookie(const std::string& name,
                                   const std::string& value) const
 {
    if (boost::iequals(name, "cookie"))
-      util::parseFields(value, ";, ", "= ", &cookies_, util::FieldDecodeNone) ;
+      util::parseFields(value, ";, ", "= ", &cookies_, util::FieldDecodeNone);
 }
 
 std::ostream& operator << (std::ostream& stream, const Request& r)
@@ -355,13 +355,13 @@ std::ostream& operator << (std::ostream& stream, const Request& r)
    stream << r.method() << " " 
           << r.uri() 
           << " HTTP/" << r.httpVersionMajor() << "." << r.httpVersionMinor()
-          << std::endl ;
+          << std::endl;
 
    // output headers and body
-   const Message& m = r ;
-   stream << m ;
+   const Message& m = r;
+   stream << m;
 
-   return stream ;
+   return stream;
 }
 
 } // namespacce http

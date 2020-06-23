@@ -29,6 +29,8 @@ import './emoji-completion.css';
 
 export function emojiCompletionHandler(ui: EditorUI): CompletionHandler<Emoji> {
   return {
+    id: '95A133E1-968B-4D96-8849-4A325FF02C11',
+
     completions: emojiCompletions(ui),
 
     replacement(schema: Schema, emoji: Emoji | null): string | ProsemirrorNode | null {
@@ -78,6 +80,7 @@ function emojiCompletions(ui: EditorUI) {
       // return result
       return {
         pos,
+        token: prefix,
         completions: () => Promise.resolve(completions),
       };
 
@@ -90,7 +93,7 @@ function emojiCompletions(ui: EditorUI) {
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
-    <div className={'pm-completion-item-text'}>
+    <div className={'pm-completion-list-item-text'}>
       {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
     </div>
   );
@@ -98,6 +101,8 @@ const EmojiView: React.FC<Emoji> = emoji => {
 
 export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI): CompletionHandler<Emoji> {
   return {
+    id: '15E92D42-8006-40F4-8FFD-6526F6A8A7FD',
+
     completions: emojiSkintonePreferenceCompletions(ui),
 
     replacement(schema: Schema, emoji: Emoji | null): string | ProsemirrorNode | null {
@@ -164,6 +169,7 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
 
     return {
       pos: range.from,
+      token: emojiText,
       completions: () => Promise.resolve(emojiForAllSkinTones(emoji)),
     };
   };
@@ -179,5 +185,5 @@ const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = props
 
 // use outline to apply border as a separator
 const EmojiSkintonePreferenceView: React.FC<Emoji> = emoji => {
-  return <div className="pm-completion-item-text pm-completion-emoji-cell">{emoji.emoji}</div>;
+  return <div className="pm-completion-list-item-text pm-completion-emoji-cell">{emoji.emoji}</div>;
 };

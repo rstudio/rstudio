@@ -7,12 +7,11 @@
 		@external editor_dark, .gwt-Label;
 
 		.popup {
-			height: 400px;
 			width: 600px;
 			border: 1px solid;
 			border-radius: 4px;
 			overflow: hidden;
-			box-shadow: 0 15px 15px rgba(0, 0, 0, 0.26);
+			box-shadow: 0 1px 3px;
 			display: flex;
 			flex-direction: column;
 		}
@@ -24,13 +23,13 @@
 		.searchBox {
 			width: 100%;
 			box-sizing: border-box;
-			padding: 5px;
+			padding: 3px;
 			border: 1px solid;
+			font-size: 13px;
 		}
 		
 		.searchBar {
 			padding: 10px;
-			border-bottom: 1px solid;
 		}
 		
 		.editor_dark .searchBox {
@@ -41,12 +40,12 @@
 		.commandList {
 			height: 100%;
 			width: 100%;
+			padding-bottom: 10px;
 		}
 		
 		.commandPanel, .noResults {
 			width: 100%;
-			height: 100%;
-			padding-top: 10px;
+			max-height: 375px;
 		}
 		
 		.noResults {
@@ -54,19 +53,20 @@
 			text-align: center;
 			align-items: center;
 			justify-content: center;
-			font-size: 12pt;
+			font-size: 10pt;
+			padding-bottom: 10px;
 		}
 		
 		.noResults .gwt-Label {
 			font-family: proportionalFont;
 		}
 	</ui:style>
-	<g:HTMLPanel styleName="rstudio-themes-border {styles_.popup}">
-		<g:HTMLPanel styleName="{styles_.searchBar} rstudio-themes-background rstudio-themes-border">
+	<g:HTMLPanel styleName="rstudio-themes-border ace_editor {styles_.popup}">
+		<g:HTMLPanel styleName="{styles_.searchBar} rstudio-themes-border">
 			<g:TextBox styleName="{styles_.searchBox} rstudio-themes-border" ui:field="searchBox_">
 			</g:TextBox>
 		</g:HTMLPanel>
-		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
+		<g:ScrollPanel ui:field="scroller_" styleName="{styles_.commandPanel}">
 			<g:HTMLPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:HTMLPanel>
 		</g:ScrollPanel>
 		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">

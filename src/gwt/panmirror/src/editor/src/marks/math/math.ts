@@ -47,7 +47,6 @@ const MATH_TYPE = 0;
 const MATH_CONTENT = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, ui, format, events } = context;
 
   if (!pandocExtensions.tex_math_dollars) {
@@ -111,24 +110,24 @@ const extension = (context: ExtensionContext): Extension | null => {
             // extract math from backtick code for blogdown
             ...(blogdownMathInCode
               ? [
-                {
-                  token: PandocTokenType.Code,
-                  mark: 'math',
-                  match: (tok: PandocToken) => {
-                    const text = tok.c[kCodeText];
-                    return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
+                  {
+                    token: PandocTokenType.Code,
+                    mark: 'math',
+                    match: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
+                    },
+                    getAttrs: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return {
+                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                      };
+                    },
+                    getText: (tok: PandocToken) => {
+                      return tok.c[kCodeText];
+                    },
                   },
-                  getAttrs: (tok: PandocToken) => {
-                    const text = tok.c[kCodeText];
-                    return {
-                      type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
-                    };
-                  },
-                  getText: (tok: PandocToken) => {
-                    return tok.c[kCodeText];
-                  },
-                },
-              ]
+                ]
               : []),
           ],
           writer: {
@@ -145,11 +144,9 @@ const extension = (context: ExtensionContext): Extension | null => {
                   output.write(math);
                 });
               } else {
-
                 // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
                 if (math.startsWith(delimiter) && math.endsWith(delimiter)) {
-
                   // remove delimiter
                   math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
 
@@ -166,9 +163,8 @@ const extension = (context: ExtensionContext): Extension | null => {
                       output.write(math);
                     });
                   }
-
                 } else {
-                  // user removed the delimiter so write the content literally. when it round trips 
+                  // user removed the delimiter so write the content literally. when it round trips
                   // back into editor it will no longer be parsed by pandoc as math
                   output.writeRawMarkdown(math);
                 }

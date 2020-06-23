@@ -61,9 +61,7 @@ import { tablePaste } from './table-paste';
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
 
-
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, ui } = context;
 
   // not enabled if there are no tables enabled

@@ -64,7 +64,7 @@ export function attrEditCommandFn(ui: EditorUI, editors: AttrEditOptions[]) {
     if (node) {
       const editor = editors.find(ed => ed.type(state.schema) === node!.type)!;
       if (editor && editor.editFn) {
-        return editor.editFn(ui)(state, dispatch, view);
+        return editor.editFn()(state, dispatch, view);
       }
     }
 

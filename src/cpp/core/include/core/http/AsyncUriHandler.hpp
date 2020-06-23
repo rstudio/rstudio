@@ -129,7 +129,7 @@ public:
 
 private:
    std::string prefix_;
-   boost::optional<AsyncUriHandlerFunctionVariant> function_ ;
+   boost::optional<AsyncUriHandlerFunctionVariant> function_;
    bool isProxyHandler_;
 
 };

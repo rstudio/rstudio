@@ -108,7 +108,15 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
-      sigTipManager_ = new SignatureToolTipManager(docDisplay_);
+      sigTipManager_ = new SignatureToolTipManager(docDisplay_)
+      {
+         @Override
+         protected boolean isEnabled(Position position)
+         {
+            return DocumentMode.isPositionInRMode(docDisplay_, position);
+         }
+      };
+      
       suggestTimer_ = new SuggestionTimer(this, userPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);

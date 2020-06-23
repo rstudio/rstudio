@@ -91,4 +91,30 @@ export interface EditorUIImages {
     rcpp_chunk?: string;
     rcpp_chunk_dark?: string;
   };
+  citations?: {
+    article?: string;
+    article_dark?: string;
+    book?: string;
+    book_dark?: string;
+    broadcast?: string;
+    broadcast_dark?: string;
+    data?: string;
+    data_dark?: string;
+    entry?: string;
+    entry_dark?: string;
+    image?: string;
+    image_dark?: string;
+    legal?: string;
+    legal_dark?: string;
+    map?: string;
+    map_dark?: string;
+    movie?: string;
+    movie_dark?: string;
+    other?: string;
+    other_dark?: string;
+    song?: string;
+    song_dark?: string;
+    web?: string;
+    web_dark?: string;
+  };
 }

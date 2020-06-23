@@ -28,23 +28,20 @@
 #include <shared_core/SafeConvert.hpp>
 #include <core/system/Types.hpp>
 
-namespace rstudio {
-namespace core {
-   class ProgramStatus;
-}
-}
+#include <server/ServerOptions.gen.hpp>
 
 namespace rstudio {
 namespace server {
 
 // singleton
-class Options ;
+class Options;
 Options& options();
 
 // add overlay-specific args and/or environment variables
 void sessionProcessConfigOverlay(core::system::Options* pArgs, core::system::Options* pEnvironment);
 
-class Options : boost::noncopyable
+class Options : public GeneratedOptions,
+                boost::noncopyable
 {
 private:
    Options() {}
@@ -55,55 +52,15 @@ public:
    virtual ~Options() {}
    core::ProgramStatus read(int argc,
                             char * const argv[],
-                            std::ostream& osWarnings);
-   
-   bool verifyInstallation() const
-   {
-      return verifyInstallation_;
-   }
+                            std::ostream& osWarnings) override;
 
-   std::string serverWorkingDir() const
-   { 
-      return std::string(serverWorkingDir_.c_str());
-   }
-      
-   bool serverOffline() const
-   {
-      return serverOffline_;
-   }
-   
-   std::string serverUser() const
-   { 
-      return std::string(serverUser_.c_str());
-   }
-   
-   bool serverDaemonize() const { return serverDaemonize_; }
+   std::string gwtPrefix() const;
 
-   std::string serverPidFile() const { return serverPidFile_; }
-
-   bool serverSetUmask() const { return serverSetUmask_; }
-
-   core::FilePath serverDataDir() const
-   {
-      return core::FilePath(serverDataDir_);
-   }
-
-   const std::vector<std::string>& serverAddHeaders() const
-   {
-      return serverAddHeaders_;
-   }
-
-   // www 
-   std::string wwwAddress() const
-   { 
-      return std::string(wwwAddress_.c_str()) ; 
-   }
-   
    std::string wwwPort(bool secure = false) const
-   { 
+   {
       if (!wwwPort_.empty())
       {
-         return std::string(wwwPort_.c_str());
+         return wwwPort_;
       }
       else
       {
@@ -114,202 +71,29 @@ public:
       }
    }
 
-   std::string wwwUrlPathPrefix() const
-   {
-      return std::string(wwwUrlPathPrefix_.c_str()); 
-   }
-
-   std::string wwwLocalPath() const
-   {
-      return std::string(wwwLocalPath_.c_str()); 
-   }
-
-   std::string wwwFrameOrigin() const
-   {
-      return std::string(wwwFrameOrigin_.c_str());
-   }
-
-   core::FilePath wwwSymbolMapsPath() const
-   {
-      return core::FilePath(wwwSymbolMapsPath_.c_str());
-   }
-
-   bool wwwUseEmulatedStack() const
-   {
-      return wwwUseEmulatedStack_;
-   }
-   
-   int wwwThreadPoolSize() const
-   {
-      return wwwThreadPoolSize_;
-   }
-
-   bool wwwProxyLocalhost() const
-   {
-      return wwwProxyLocalhost_;
-   }
-
-   bool wwwVerifyUserAgent() const
-   {
-      return wwwVerifyUserAgent_;
-   }
-
-   bool wwwEnableOriginCheck() const
-   {
-      return wwwEnableOriginCheck_;
-   }
-
-   std::vector<boost::regex> wwwAllowedOrigins()
-   {
-      return wwwAllowedOrigins_;
-   }
-
-   bool wwwIFrameEmbedding() const
-   {
-      return wwwIFrameEmbedding_;
-   }
-
-   bool wwwLegacyCookies() const
-   {
-      return wwwLegacyCookies_;
-   }
-
-   bool wwwIFrameLegacyCookies() const
-   {
-      return wwwIFrameEmbedding_ && wwwLegacyCookies_;
-   }
-
-   // auth
-   bool authNone()
-   {
-      return authNone_;
-   }
-
-   bool authValidateUsers()
-   {
-      return authValidateUsers_;
-   }
-
-   int authStaySignedInDays()
-   {
-      return authStaySignedInDays_;
-   }
-
-   int authTimeoutMinutes()
-   {
-      return authTimeoutMinutes_;
-   }
-
-   bool authEncryptPassword()
-   {
-      return authEncryptPassword_;
-   }
-
-   std::string authLoginPageHtml()
-   {
-      return authLoginPageHtml_;
-   }
-
-   std::string authRdpLoginPageHtml()
-   {
-      return authRdpLoginPageHtml_;
-   }
-
-   std::string authRequiredUserGroup()
-   {
-      return std::string(authRequiredUserGroup_.c_str());
-   }
-
-   unsigned int authMinimumUserId()
-   {
-      return authMinimumUserId_;
-   }
-
-   int authSignInThrottleSeconds()
-   {
-      return authSignInThrottleSeconds_;
-   }
-
-   std::string authPamHelperPath() const
-   {
-      return std::string(authPamHelperPath_.c_str());
-   }
-
-   core::FilePath authRevocationListDir() const
-   {
-      return core::FilePath(authRevocationListDir_);
-   }
-   
-   bool authPamRequirePasswordPrompt() const
-   {
-      return authPamRequirePasswordPrompt_;
-   }
-
-   bool authCookiesForceSecure() const
-   {
-      return authCookiesForceSecure_;
-   }
-
-   // rsession
-   std::string rsessionWhichR() const
-   {
-      return std::string(rsessionWhichR_.c_str());
-   }
-
-   std::string rsessionPath() const
-   { 
-      return std::string(rsessionPath_.c_str()); 
-   }
-
-   std::string rldpathPath() const
-   {
-      return std::string(rldpathPath_.c_str());
-   }
-
-   std::string rsessionLdLibraryPath() const
-   {
-      return std::string(rsessionLdLibraryPath_.c_str());
-   }
-   
-   std::string rsessionConfigFile() const
-   { 
-      return std::string(rsessionConfigFile_.c_str()); 
-   }
-
-   int rsessionProxyMaxWaitSeconds()
-   {
-      return rsessionProxyMaxWaitSeconds_;
-   }
-
    std::string monitorSharedSecret() const
    {
-      return std::string(monitorSharedSecret_.c_str());
+      return monitorSharedSecret_;
    }
 
-   int monitorIntervalSeconds() const
+   bool serverOffline() const
    {
-      return monitorIntervalSeconds_;
+      return serverOffline_;
    }
 
-   std::string gwtPrefix() const;
-
-   core::FilePath secureCookieKeyFile() const
-   {
-      return core::FilePath(secureCookieKeyFile_);
-   }
-   
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
    }
 
-   // database
-   std::string databaseConfigFile() const
-   {
-      return databaseConfigFile_;
-   }
+   std::string rsessionExecutable() const;
 
 private:
+   std::string monitorSharedSecret_;
+   bool serverOffline_;
+   core::FilePath installPath_;
+
+   std::map<std::string,std::string> overlayOptions_;
 
    void resolvePath(const core::FilePath& basePath,
                     std::string* pPath) const;
@@ -318,6 +102,7 @@ private:
                           boost::program_options::options_description* pServer,
                           boost::program_options::options_description* pWWW,
                           boost::program_options::options_description* pRSession,
+                          boost::program_options::options_description* pDatabase,
                           boost::program_options::options_description* pAuth,
                           boost::program_options::options_description* pMonitor);
 
@@ -339,60 +124,6 @@ private:
    {
       setOverlayOption(name, core::safe_convert::numberToString(value));
    }
-
-   std::string rsessionExecutable() const;
-
-private:
-   core::FilePath installPath_;
-   bool verifyInstallation_;
-   std::string serverWorkingDir_;
-   std::string serverUser_;
-   bool serverDaemonize_;
-   std::string serverPidFile_;
-   bool serverAppArmorEnabled_;
-   bool serverSetUmask_;
-   bool serverOffline_;
-   std::string serverDataDir_;
-   std::vector<std::string> serverAddHeaders_;
-   std::string wwwAddress_ ;
-   std::string wwwPort_ ;
-   std::string wwwUrlPathPrefix_ ;
-   std::string wwwLocalPath_ ;
-   std::string wwwSymbolMapsPath_;
-   std::string wwwFrameOrigin_;
-   bool wwwUseEmulatedStack_;
-   int wwwThreadPoolSize_;
-   bool wwwProxyLocalhost_;
-   bool wwwVerifyUserAgent_;
-   bool wwwEnableOriginCheck_;
-   std::vector<boost::regex> wwwAllowedOrigins_;
-   bool wwwIFrameEmbedding_;
-   bool wwwLegacyCookies_;
-   bool authNone_;
-   bool authValidateUsers_;
-   int authStaySignedInDays_;
-   int authTimeoutMinutes_;
-   bool authEncryptPassword_;
-   std::string authLoginPageHtml_;
-   std::string authRdpLoginPageHtml_;
-   std::string authRequiredUserGroup_;
-   unsigned int authMinimumUserId_;
-   std::string authPamHelperPath_;
-   bool authPamRequirePasswordPrompt_;
-   int authSignInThrottleSeconds_;
-   std::string authRevocationListDir_;
-   bool authCookiesForceSecure_;
-   std::string rsessionWhichR_;
-   std::string rsessionPath_;
-   std::string rldpathPath_;
-   std::string rsessionConfigFile_;
-   std::string rsessionLdLibraryPath_;
-   int rsessionProxyMaxWaitSeconds_;
-   std::string monitorSharedSecret_;
-   int monitorIntervalSeconds_;
-   std::string secureCookieKeyFile_;
-   std::string databaseConfigFile_;
-   std::map<std::string,std::string> overlayOptions_;
 };
       
 } // namespace server

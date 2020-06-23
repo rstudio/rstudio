@@ -180,7 +180,7 @@ core::Error launchChildProcess(std::string path,
                                std::string runAsUser,
                                ProcessConfig config,
                                ProcessConfigFilter configFilter,
-                               PidType* pProcessId ) ;
+                               PidType* pProcessId );
 
 // runs a process, replacing the current process's image with that of the target
 // note, this does not create a child process, but replaces the currently running one

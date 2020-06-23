@@ -40,7 +40,6 @@ import { isSingleLineTex } from '../api/tex';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, pandocCapabilities, ui } = context;
 
   const rawAttribute = pandocExtensions.raw_attribute;

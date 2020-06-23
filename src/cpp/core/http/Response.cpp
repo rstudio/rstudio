@@ -271,10 +271,10 @@ Response::Response()
 {
 }   
    
-const std::string& Response::statusMessage() const    
+const std::string& Response::statusMessage() const
 { 
-   ensureStatusMessage();  
-   return statusMessage_; 
+   ensureStatusMessage();
+   return statusMessage_;
 } 
 
 void Response::setStatusMessage(const std::string& statusMessage) 
@@ -311,7 +311,7 @@ void Response::setCacheForeverHeaders(bool publicAccessiblity)
    std::string accessibility = publicAccessiblity ? "public" : "private";
    std::string cacheControl(accessibility + ", max-age=" + 
                             safe_convert::numberToString(durationSeconds));
-   setHeader("Cache-Control", cacheControl);   
+   setHeader("Cache-Control", cacheControl);
 }
 
 void Response::setCacheForeverHeaders()
@@ -717,19 +717,19 @@ void Response::ensureStatusMessage() const
             break;
 
          case SeeOther:
-            statusMessage_ = status::Message::SeeOther ;
+            statusMessage_ = status::Message::SeeOther;
             break;
 
          case NotModified:
-            statusMessage_ = status::Message::NotModified ;
+            statusMessage_ = status::Message::NotModified;
             break;
 
          case BadRequest:
-            statusMessage_ = status::Message::BadRequest ;
+            statusMessage_ = status::Message::BadRequest;
             break;
 
          case Unauthorized:
-            statusMessage_ = status::Message::Unauthorized ;
+            statusMessage_ = status::Message::Unauthorized;
             break;
 
          case Forbidden:

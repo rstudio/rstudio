@@ -1023,7 +1023,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    if (type == kRenderTypeNotebook)
    {
       // if this is a notebook, it's pre-rendered
-      FilePath inputFile = module_context::resolveAliasedPath(file); 
+      FilePath inputFile = module_context::resolveAliasedPath(file);
       FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() + 
                                                         kNotebookExt);
 
@@ -1146,7 +1146,7 @@ void handleRmdOutputRequest(const http::Request& request,
    catch (boost::bad_lexical_cast const&)
    {
       pResponse->setNotFoundError(request);
-      return ;
+      return;
    }
 
    // make sure the output identifier refers to a valid file

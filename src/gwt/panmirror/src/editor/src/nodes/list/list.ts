@@ -64,10 +64,9 @@ export enum ListNumberDelim {
 
 const plugin = new PluginKey('list');
 
-const extension = (context: ExtensionContext) : Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui } = context;
 
-  const { pandocExtensions } = context;
- 
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,
@@ -158,7 +157,7 @@ const extension = (context: ExtensionContext) : Extension => {
           writer: writePandocBulletList(capabilities),
         },
 
-        attr_edit: listAttrEdit('bullet_list', capabilities),
+        attr_edit: listAttrEdit('bullet_list', capabilities, ui),
       },
       {
         name: 'ordered_list',
@@ -239,7 +238,7 @@ const extension = (context: ExtensionContext) : Extension => {
           writer: writePandocOrderedList(capabilities),
         },
 
-        attr_edit: listAttrEdit('ordered_list', capabilities),
+        attr_edit: listAttrEdit('ordered_list', capabilities, ui),
       },
     ],
 
@@ -262,7 +261,7 @@ const extension = (context: ExtensionContext) : Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
@@ -321,12 +320,12 @@ const extension = (context: ExtensionContext) : Extension => {
   };
 };
 
-function listAttrEdit(type: string, capabilities: ListCapabilities) {
+function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI) {
   return () => {
     return {
       type: (schema: Schema) => schema.nodes[type],
       noDecorator: true,
-      editFn: (ui: EditorUI) => editListPropertiesCommandFn(ui, capabilities),
+      editFn: () => editListPropertiesCommandFn(ui, capabilities),
     };
   };
 }

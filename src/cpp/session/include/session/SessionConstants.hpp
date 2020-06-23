@@ -122,15 +122,19 @@
 #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
 #define kSessionTmpDir             "rstudio-rsession"
 
+#define kDefaultPandocPath         "bin/pandoc"
+#define kDefaultPostbackPath       "bin/postback/rpostback"
+#define kDefaultRsclangPath        "bin/rsclang"
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
-const char * const kClientInit = "client_init" ;
+const char * const kClientInit = "client_init";
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
 const char * const kUserPromptCompleted = "user_prompt_completed";
 const char * const kAdminNotificationAcknowledged = "admin_notification_acknowledged";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
-const char * const kQuitSession = "quit_session" ;   
+const char * const kQuitSession = "quit_session";
 const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
 const char * const kConsoleInput = "console_input";

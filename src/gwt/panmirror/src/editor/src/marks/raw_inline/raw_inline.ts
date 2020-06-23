@@ -31,8 +31,7 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
-  const { pandocExtensions, pandocCapabilities } = context;
+  const { pandocExtensions, pandocCapabilities, ui } = context;
 
   // always enabled so that extensions can make use of preprocessors + raw_attribute
   // to hoist content out of pandoc for further processing by our token handlers.
@@ -104,7 +103,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     // insert command
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (_schema: Schema) => {
       if (pandocExtensions.raw_attribute) {
         return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
       } else {

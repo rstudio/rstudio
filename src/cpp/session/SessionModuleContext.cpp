@@ -88,7 +88,7 @@
 
 #include "session-config.h"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {   
@@ -159,13 +159,13 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
    try
    {
       // extract name
-      std::string name = r::sexp::asString(nameSEXP); 
+      std::string name = r::sexp::asString(nameSEXP);
       
       // extract json value (for primitive types we only support scalars
       // since this is the most common type of event data). to return an
       // array of primitives you need to wrap them in a list/object
-      Error extractError ;
-      json::Value data ;
+      Error extractError;
+      json::Value data;
       switch(TYPEOF(dataSEXP))
       {
          case NILSXP:
@@ -194,7 +194,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
       }
       
       // determine the event type from the event name
-      int type = -1 ;
+      int type = -1;
       if (name == "package_status_changed")
          type = session::client_events::kPackageStatusChanged;
       else if (name == "unhandled_error")
@@ -280,7 +280,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
    }
    CATCH_UNEXPECTED_EXCEPTION
    
-   return R_NilValue ;
+   return R_NilValue;
 }
 
 SEXP rs_activatePane(SEXP paneSEXP)
@@ -694,7 +694,7 @@ private:
    // of subscription and call resume handlers in reverse order of
    // subscription.
    
-   int nextGroup_; 
+   int nextGroup_;
    
    RSTUDIO_BOOST_SIGNAL<void(const r::session::RSuspendOptions&,Settings*),
                  RSTUDIO_BOOST_LAST_VALUE<void>,
@@ -990,7 +990,7 @@ Error readAndDecodeFile(const FilePath& filePath,
                                     options().sourceLineEnding());
 
    if (error)
-      return error ;
+      return error;
 
    // convert to UTF-8
    return convertToUtf8(encodedContents,
@@ -1016,7 +1016,7 @@ Error convertToUtf8(const std::string& encodedContents,
    error = string_utils::utf8Clean(pContents->begin(),
                                    pContents->end(),
                                    '?');
-   return error ;
+   return error;
 }
 
 FilePath userHomePath()
@@ -1612,7 +1612,7 @@ SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
 
 SEXP rs_base64encodeFile(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asString(pathSEXP); 
+   std::string path = r::sexp::asString(pathSEXP);
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    std::string output;
@@ -1676,7 +1676,7 @@ SEXP rs_sessionModulePath()
 
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
-   json::Object entry ;
+   json::Object entry;
 
    std::string aliasedPath = module_context::createAliasedPath(fileInfo);
    std::string rawPath =
@@ -1954,7 +1954,7 @@ void enqueFileChangedEvent(
       boost::shared_ptr<modules::source_control::FileDecorationContext> pCtx)
 {
    // create file change object
-   json::Object fileChange ;
+   json::Object fileChange;
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
 
@@ -2128,7 +2128,7 @@ void showFile(const FilePath& filePath, const std::string& window)
 std::string createFileUrl(const core::FilePath& filePath)
 {
     // determine url based on whether this is in ~ or not
-    std::string url ;
+    std::string url;
     if (isVisibleUserFile(filePath))
     {
        std::string relPath = filePath.getRelativePath(
@@ -2398,31 +2398,41 @@ bool isSessionTempPath(FilePath filePath)
    return filePath.isWithin(tempDir);
 }
 
-std::string sessionTempDirUrl(const std::string& sessionTempPath)
+namespace {
+
+bool isUsingRHelpServer()
 {
-   static boost::optional<bool> useRHelpServer;
-
-   if (!useRHelpServer)
+   // don't use R help server in server mode
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // Initialize the flag indicating whether we should use the R help server;
-      // in desktop mode we can have R itself handle requests for content in
-      // the session temporary folder.
-      useRHelpServer = session::options().programMode() == kSessionProgramModeDesktop;
-
-#ifdef _WIN32
-      if (*useRHelpServer)
-      {
-         // There is a known issue serving content from the session temporary folder
-         // on R 4.0.0 for Windows
-         //
-         // https://github.com/rstudio/rstudio/issues/6737
-         //
-         useRHelpServer = !r::util::hasExactVersion("4.0.0");
-      }
-#endif
+      return false;
    }
 
-   if (*useRHelpServer)
+#ifdef _WIN32
+   // There is a known issue serving content from the session temporary folder
+   // on R 4.0.0 for Windows:
+   //
+   //    https://github.com/rstudio/rstudio/issues/6737
+   //
+   // so we avoid using the help server in that case.
+   if (r::util::hasExactVersion("4.0.0"))
+   {
+      return false;
+   }
+#endif
+
+   // we're running on desktop with a suitable version of R;
+   // okay to use the help server
+   return true;
+}
+
+} // end anonymous namespace
+
+std::string sessionTempDirUrl(const std::string& sessionTempPath)
+{
+   static bool useRHelpServer = isUsingRHelpServer();
+
+   if (useRHelpServer)
    {
       boost::format fmt("http://localhost:%1%/session/%2%");
       return boost::str(fmt % rLocalHelpPort() % sessionTempPath);

@@ -354,14 +354,14 @@ Error initialize()
                                                          rsinversePostback,
                                                          &ignoredCommand);
    if (error)
-      return error ;
+      return error;
 
 #endif
 
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "apply_forward_concordance", rpcApplyForwardConcordance))
       (bind(registerRpcMethod, "apply_inverse_concordance", rpcApplyInverseConcordance))

@@ -40,7 +40,7 @@ double secondsSinceEpoch(std::time_t time)
 double millisecondsSinceEpoch()
 {
    return millisecondsSinceEpoch(
-                     boost::posix_time::microsec_clock::universal_time());  
+                     boost::posix_time::microsec_clock::universal_time());
 }
    
 double millisecondsSinceEpoch(const boost::posix_time::ptime& time)

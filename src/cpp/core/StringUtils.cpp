@@ -399,7 +399,7 @@ std::string htmlEscape(const std::string& str, bool isAttributeValue)
 {
    std::string escapes = isAttributeValue ?
                          "<>&'\"/\r\n" :
-                         "<>&'\"/" ;
+                         "<>&'\"/";
 
    std::map<char, std::string> subs;
    subs['<'] = "&lt;";

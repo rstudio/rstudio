@@ -35,13 +35,13 @@ namespace {
 void extractToMap(const std::string& keyAndValue,
                   std::map<std::string,std::string>* pMap)
 {
-   std::string::size_type pos = keyAndValue.find("=") ;
+   std::string::size_type pos = keyAndValue.find("=");
    if ( pos != std::string::npos )
    {
-      std::string key = keyAndValue.substr(0, pos) ;
+      std::string key = keyAndValue.substr(0, pos);
       boost::algorithm::trim(key);
-      std::string value = keyAndValue.substr(pos + 1) ;
-      boost::algorithm::trim(value) ;
+      std::string value = keyAndValue.substr(pos + 1);
+      boost::algorithm::trim(value);
       boost::algorithm::replace_all(value, "\"", "");
       pMap->operator[](key) = value;
    }

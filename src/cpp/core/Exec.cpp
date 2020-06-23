@@ -22,7 +22,7 @@ namespace core {
 
 ExecBlock& ExecBlock::add(Function function) 
 { 
-   functions_.push_back(function); 
+   functions_.push_back(function);
    return *this;
 }   
    
@@ -33,14 +33,14 @@ Error ExecBlock::execute() const
    {
       Error error = (*it)();
       if (error)
-         return error ;
+         return error;
    }
    return Success();
 }
    
 Error ExecBlock::operator()() const 
 {  
-   return execute(); 
+   return execute();
 }
    
 } // namespace core 

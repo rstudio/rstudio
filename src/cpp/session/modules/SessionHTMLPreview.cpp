@@ -871,7 +871,7 @@ void handleInternalMarkdownPreviewRequest(
       std::istringstream previewInputStream(previewTemplate);
       std::stringstream previewStrStream;
       previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
-      boost::iostreams::filtering_ostream previewOutputStream ;
+      boost::iostreams::filtering_ostream previewOutputStream;
       previewOutputStream.push(templateFilter);
       previewOutputStream.push(imageFilter);
       previewOutputStream.push(previewStrStream);
@@ -1144,7 +1144,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionHTMLPreview.R"))
       (bind(registerRpcMethod, "preview_html", previewHTML))

@@ -41,7 +41,7 @@
   padding: 0 4px;
 }
 
-.pm-completion-item {
+.pm-completion-list-item {
   vertical-align: middle;
   border: 1px solid transparent;
 }
@@ -51,7 +51,7 @@
   text-align: center;
 }
 
-.pm-completion-item-text {
+.pm-completion-list-item-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

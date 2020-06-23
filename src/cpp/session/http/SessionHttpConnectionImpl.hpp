@@ -285,8 +285,8 @@ private:
 
 private:
    typename ProtocolType::socket socket_;
-   boost::array<char, 8192> buffer_ ;
-   core::http::RequestParser requestParser_ ;
+   boost::array<char, 8192> buffer_;
+   core::http::RequestParser requestParser_;
    core::http::Request request_;
    std::string requestId_;
    HeadersParsedHandler headersParsedHandler_;

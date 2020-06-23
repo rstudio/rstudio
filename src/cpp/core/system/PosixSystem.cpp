@@ -333,7 +333,7 @@ struct SignalBlocker::Impl
          return systemError(result, ERROR_LOCATION);
       
       // set restore bit and return success
-      blocked = true; 
+      blocked = true;
       return Success();
    }
 };

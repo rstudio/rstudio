@@ -1,5 +1,5 @@
 /*
- * PanmirrorInsertCitationResult.java
+ * PanmirroServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,16 @@
  *
  */
 
+package org.rstudio.studio.client.panmirror.server;
 
-package org.rstudio.studio.client.panmirror.dialogs.model;
 
-import jsinterop.annotations.JsType;
 
-@JsType
-public class PanmirrorInsertCitationResult
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
+
+
+public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
+                                                   PanmirrorCrossrefServerOperations,
+                                                   PanmirrorXRefServerOperations
 {
-   public String id;
-   public String locator;
+ 
 }
-
-
-

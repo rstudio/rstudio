@@ -14,50 +14,54 @@
  */
 
 import { wrappingInputRule } from 'prosemirror-inputrules';
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 
 import { WrapCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
+import { ExtensionContext } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { EditorUI } from '../api/ui';
 import { OmniInsertGroup } from '../api/omni_insert';
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'blockquote',
-      spec: {
-        content: 'block+',
-        group: 'block',
-        defining: true,
-        parseDOM: [{ tag: 'blockquote' }],
-        toDOM() {
-          return ['blockquote', { class: 'pm-blockquote pm-block-border-color' }, 0];
-        },
-      },
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.BlockQuote,
-            block: 'blockquote',
+const extension = (context: ExtensionContext) => {
+  const { ui } = context;
+
+  return {
+    nodes: [
+      {
+        name: 'blockquote',
+        spec: {
+          content: 'block+',
+          group: 'block',
+          defining: true,
+          parseDOM: [{ tag: 'blockquote' }],
+          toDOM(): DOMOutputSpec {
+            return ['blockquote', { class: 'pm-blockquote pm-block-border-color' }, 0];
           },
-        ],
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeToken(PandocTokenType.BlockQuote, () => {
-            output.writeNodes(node);
-          });
+        },
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.BlockQuote,
+              block: 'blockquote',
+            },
+          ],
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeToken(PandocTokenType.BlockQuote, () => {
+              output.writeNodes(node);
+            });
+          },
         },
       },
+    ],
+
+    commands: (schema: Schema) => {
+      return [new WrapCommand(EditorCommandId.Blockquote, [], schema.nodes.blockquote, {}, blockquoteOmniInsert(ui))];
     },
-  ],
 
-  commands: (schema: Schema, ui: EditorUI) => {
-    return [new WrapCommand(EditorCommandId.Blockquote, [], schema.nodes.blockquote, {}, blockquoteOmniInsert(ui))];
-  },
-
-  inputRules: (schema: Schema) => {
-    return [wrappingInputRule(/^\s*>\s$/, schema.nodes.blockquote)];
-  },
+    inputRules: (schema: Schema) => {
+      return [wrappingInputRule(/^\s*>\s$/, schema.nodes.blockquote)];
+    },
+  };
 };
 
 function blockquoteOmniInsert(ui: EditorUI) {

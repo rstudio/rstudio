@@ -60,7 +60,7 @@
 
 #include <core/Macros.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -1817,7 +1817,7 @@ public:
 
          // read , separated fields
          std::string types = match[2];
-         using namespace boost ;
+         using namespace boost;
          char_separator<char> comma(",");
          tokenizer<char_separator<char> > typeTokens(types, comma);
          std::transform(typeTokens.begin(),
@@ -2070,7 +2070,7 @@ json::Value createS3MethodDefinition(const std::string& name)
 json::Value createS4MethodDefinition(const FunctionInfo& functionInfo)
 {
    // lookup the method
-   std::string functionNamespace ;
+   std::string functionNamespace;
    r::sexp::Protect rProtect;
    SEXP functionSEXP = R_NilValue;
    Error error = getS4Method(functionInfo,
@@ -2479,7 +2479,7 @@ Error initialize()
    
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "search_code", searchCode))
       (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))

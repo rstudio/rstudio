@@ -162,7 +162,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
       }
       else
       {
-         return false; 
+         return false;
       }
    }
 
@@ -989,7 +989,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "validate_project_path", validateProjectPath))
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))

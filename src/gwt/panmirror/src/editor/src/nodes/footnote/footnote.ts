@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, Fragment, NodeType } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, Fragment, NodeType, DOMOutputSpec } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection, Selection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import {
@@ -24,7 +24,7 @@ import {
   findChildren,
 } from 'prosemirror-utils';
 
-import { Extension, extensionIfEnabled } from '../../api/extension';
+import { ExtensionContext } from '../../api/extension';
 import { uuidv4 } from '../../api/util';
 import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -47,82 +47,90 @@ import './footnote-styles.css';
 
 const plugin = new PluginKey('footnote');
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'footnote',
-      spec: {
-        inline: true,
-        attrs: {
-          number: { default: 1 },
-          ref: {},
-          content: { default: '' },
-        },
-        group: 'inline',
-        // atom: true,
-        parseDOM: [
-          {
-            tag: "span[class*='footnote']",
-            getAttrs(dom: Node | string) {
-              const el = dom as Element;
-              return {
-                ref: el.getAttribute('data-ref'),
-                content: el.getAttribute('data-content'),
-              };
+const extension = (context: ExtensionContext) => {
+  const { pandocExtensions, ui } = context;
+
+  if (!pandocExtensions.footnotes) {
+    return null;
+  }
+
+  return {
+    nodes: [
+      {
+        name: 'footnote',
+        spec: {
+          inline: true,
+          attrs: {
+            number: { default: 1 },
+            ref: {},
+            content: { default: '' },
+          },
+          group: 'inline',
+          // atom: true,
+          parseDOM: [
+            {
+              tag: "span[class*='footnote']",
+              getAttrs(dom: Node | string) {
+                const el = dom as Element;
+                return {
+                  ref: el.getAttribute('data-ref'),
+                  content: el.getAttribute('data-content'),
+                };
+              },
             },
+          ],
+          toDOM(node: ProsemirrorNode): DOMOutputSpec {
+            return [
+              'span',
+              { class: 'footnote pm-footnote', 'data-ref': node.attrs.ref, 'data-content': node.attrs.content },
+              node.attrs.number.toString(),
+            ];
           },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return [
-            'span',
-            { class: 'footnote pm-footnote', 'data-ref': node.attrs.ref, 'data-content': node.attrs.content },
-            node.attrs.number.toString(),
-          ];
+        },
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.Note,
+              handler: writePandocNote,
+            },
+          ],
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeNote(node);
+          },
         },
       },
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.Note,
-            handler: writePandocNote,
-          },
-        ],
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeNote(node);
-        },
-      },
+    ],
+
+    appendTransaction: (_schema: Schema) => {
+      return [footnoteAppendTransaction()];
     },
-  ],
 
-  appendTransaction: (_schema: Schema) => {
-    return [footnoteAppendTransaction()];
-  },
+    plugins: (_schema: Schema) => {
+      return [
+        footnoteEditorActivationPlugin(),
 
-  plugins: (_schema: Schema) => {
-    return [
-      footnoteEditorActivationPlugin(),
+        new Plugin({
+          key: plugin,
 
-      new Plugin({
-        key: plugin,
+          // footnote editor
+          props: {
+            handleKeyDown: footnoteEditorKeyDownHandler(),
+            nodeViews: footnoteEditorNodeViews(),
+          },
 
-        // footnote editor
-        props: {
-          handleKeyDown: footnoteEditorKeyDownHandler(),
-          nodeViews: footnoteEditorNodeViews(),
-        },
+          // footnote transactions (fixups, etc.)
+          filterTransaction: footnoteFilterTransaction(),
+          appendTransaction: footnoteSelectNoteAppendTransaction(),
+        }),
+      ];
+    },
 
-        // footnote transactions (fixups, etc.)
-        filterTransaction: footnoteFilterTransaction(),
-        appendTransaction: footnoteSelectNoteAppendTransaction(),
-      }),
-    ];
-  },
-
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [
-      new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn(), footnoteOmniInsert(ui)),
-    ];
-  },
+    commands: () => {
+      return [
+        new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn(), footnoteOmniInsert(ui)),
+      ];
+    },
+  };
 };
 
 function writePandocNote(schema: Schema) {
@@ -237,4 +245,4 @@ function findNodeOfTypeWithRef(doc: ProsemirrorNode, type: NodeType, ref: string
   }
 }
 
-export default extensionIfEnabled(extension, 'footnotes');
+export default extension;

@@ -66,7 +66,8 @@ void handleProfilerResReq(const http::Request& request,
    core::FilePath profilesPath = core::FilePath(profilesCacheDir());
    core::FilePath profileResource = profilesPath.completeChildPath(resourceName);
 
-   pResponse->setCacheableFile(profileResource, request);
+   // cache indefinitely (the cache dir is ephemeral)
+   pResponse->setIndefiniteCacheableFile(profileResource, request);
 }
 
 void handleProfilerResourceResReq(const http::Request& request,
@@ -102,7 +103,7 @@ void onDocPendingRemove(
 
 Error initialize()
 {  
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 

@@ -193,7 +193,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    // prepare session info 
-   json::Object sessionInfo ;
+   json::Object sessionInfo;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
 
@@ -258,7 +258,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    // resumed
-   sessionInfo["resumed"] = resumed; 
+   sessionInfo["resumed"] = resumed;
    if (resumed)
    {
       // console actions
@@ -309,7 +309,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["default_working_dir"] = defaultWorkingDir;
 
    // default project dir
-   sessionInfo["default_project_dir"] = options.defaultProjectDir();
+   sessionInfo["default_project_dir"] = options.deprecatedDefaultProjectDir();
 
    // active project file
    if (projects::projectContext().hasProject())

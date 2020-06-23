@@ -55,8 +55,7 @@ const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
 
-const extension = (context: ExtensionContext) : Extension => {
-
+const extension = (context: ExtensionContext): Extension => {
   const { pandocExtensions, ui, events } = context;
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);

@@ -214,3 +214,12 @@ p.ProseMirror-selectednode {
   border-style: solid;
   border-radius: 3px;
 }
+
+.pm-placeholder-icon {
+  height: 12px;
+  width: 12px;
+  padding-left: 4px;
+  padding-right: 4px;
+  display: inline-block;
+  vertical-align: middle;
+}

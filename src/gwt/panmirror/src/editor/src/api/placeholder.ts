@@ -19,6 +19,8 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { findParentNode } from 'prosemirror-utils';
 
+import { EditorUI } from './ui';
+
 export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
   const pluginKey = new PluginKey(nodeType.name + '-empty-placeholder');
 
@@ -54,4 +56,26 @@ export function placeholderDecoration(pos: number, text: string) {
     placeholder.innerText = text;
     return placeholder;
   });
+}
+
+export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text: string) {
+  return Decoration.widget(pos, (_view: EditorView, _getPos: () => number) => {
+    const container = window.document.createElement('span');
+
+    const iconImg = window.document.createElement('img');
+    iconImg.classList.add('pm-placeholder-icon');
+    iconImg.setAttribute('src', icon);
+
+    const message = window.document.createElement('span');
+    message.classList.add('pm-placeholder-text-color');
+    message.innerText = text;
+
+    container.appendChild(iconImg);
+    container.appendChild(message);
+    return container;
+  });
+}
+
+export function searchPlaceholderDecoration(pos: number, ui: EditorUI) {
+  return iconAndTextPlaceholderDecoration(pos, ui.images.search!, ui.context.translateText(''));
 }

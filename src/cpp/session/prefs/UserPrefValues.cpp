@@ -960,6 +960,19 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
+ * Whether to highlight parentheses in a variety of colors.
+ */
+bool UserPrefValues::rainbowParentheses()
+{
+   return readPref<bool>("rainbow_parentheses");
+}
+
+core::Error UserPrefValues::setRainbowParentheses(bool val)
+{
+   return writePref("rainbow_parentheses", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()
@@ -2685,6 +2698,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,

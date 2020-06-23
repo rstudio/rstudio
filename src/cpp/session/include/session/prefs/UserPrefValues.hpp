@@ -148,6 +148,7 @@ namespace prefs {
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kRainbowParentheses "rainbow_parentheses"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -794,6 +795,12 @@ public:
     */
    bool highlightRFunctionCalls();
    core::Error setHighlightRFunctionCalls(bool val);
+
+   /**
+    * Whether to highlight parentheses in a variety of colors.
+    */
+   bool rainbowParentheses();
+   core::Error setRainbowParentheses(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.

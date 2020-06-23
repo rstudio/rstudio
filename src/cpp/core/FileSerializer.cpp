@@ -33,7 +33,7 @@ namespace core {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
-   return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"" ;
+   return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"";
 }
 
 Error writeStringMapToFile(const core::FilePath& filePath,
@@ -42,32 +42,32 @@ Error writeStringMapToFile(const core::FilePath& filePath,
    return writeCollectionToFile<std::map<std::string,std::string> >(
                                                       filePath, 
                                                       map, 
-                                                      stringifyStringPair) ; 
+                                                      stringifyStringPair);
 }
 
 ReadCollectionAction parseStringPair(
                      const std::string& line, 
                      std::pair<const std::string,std::string>* pPair)
 {
-   std::string::size_type pos = line.find("=") ;
+   std::string::size_type pos = line.find("=");
    if ( pos != std::string::npos )
    {
-      std::string name = line.substr(0, pos) ;
+      std::string name = line.substr(0, pos);
       boost::algorithm::trim(name);
-      std::string value = line.substr(pos + 1) ;
-      boost::algorithm::trim(value) ;
+      std::string value = line.substr(pos + 1);
+      boost::algorithm::trim(value);
       if (value.length() >= 2 && value[0] == '"' && value[value.length() - 1] == '"')
       {
          value = string_utils::jsonLiteralUnescape(value);
       }
     
       // HACK: workaround the fact that std::map uses const for the Key
-      std::string* pFirst = const_cast<std::string*>(&(pPair->first)) ;
-      *pFirst = name ;
+      std::string* pFirst = const_cast<std::string*>(&(pPair->first));
+      *pFirst = name;
 
-      pPair->second = value ;
+      pPair->second = value;
 
-      return ReadCollectionAddLine ;
+      return ReadCollectionAddLine;
    } 
    else
    {
@@ -82,7 +82,7 @@ Error readStringMapFromFile(const core::FilePath& filePath,
    return readCollectionFromFile<std::map<std::string,std::string> >(
                                                       filePath,
                                                       pMap,
-                                                      parseStringPair) ;
+                                                      parseStringPair);
 }
 
    
@@ -104,8 +104,8 @@ Error writeStringVectorToFile(const core::FilePath& filePath,
    
 ReadCollectionAction parseString(const std::string& line, std::string* pStr)
 {
-   *pStr = line ;
-   return ReadCollectionAddLine ;
+   *pStr = line;
+   return ReadCollectionAddLine;
 }
    
 Error readStringVectorFromFile(const core::FilePath& filePath,
@@ -122,7 +122,7 @@ Error writeStringToFile(const FilePath& filePath,
                         string_utils::LineEnding lineEnding,
                         bool truncate)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
    
    // open file
    std::shared_ptr<std::ostream> pOfs;
@@ -162,7 +162,7 @@ Error readStringFromFile(const FilePath& filePath,
                          int startCharacter,
                          int endCharacter)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
    
    // open file
    std::shared_ptr<std::istream> pIfs;

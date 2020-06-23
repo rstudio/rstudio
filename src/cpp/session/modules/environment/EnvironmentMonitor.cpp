@@ -134,7 +134,7 @@ void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 void EnvironmentMonitor::checkForChanges()
 {
    // information about the current environment
-   std::vector<r::sexp::Variable> currentEnv ;
+   std::vector<r::sexp::Variable> currentEnv;
    std::vector<r::sexp::Variable> currentPromises;
 
    // list of assigns/removes (includes both value changes and promise

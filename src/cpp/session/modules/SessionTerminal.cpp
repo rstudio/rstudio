@@ -97,7 +97,7 @@ core::Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions));
    return initBlock.execute();

@@ -86,7 +86,7 @@ import markRawHTML from '../marks/raw_inline/raw_html';
 import markMath from '../marks/math/math';
 import markCite from '../marks/cite/cite';
 import markSpan from '../marks/span';
-import markXRef from '../marks/xref';
+import markXRef from '../marks/xref/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
 import markEmoji from '../marks/emoji/emoji';
@@ -108,7 +108,6 @@ import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
-
   // create extension manager
   const manager = new ExtensionManager(context);
 
@@ -190,7 +189,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   // in the chain registers something the later extensions are able to see it
   manager.register([
     // bindings to 'Edit Attribute' command and UI adornment
-    attrEditExtension(context.pandocExtensions, manager.attrEditors()),
+    attrEditExtension(context.pandocExtensions, context.ui, manager.attrEditors()),
 
     // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
@@ -221,7 +220,6 @@ export class ExtensionManager {
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-
         const ext = extension(this.context);
         if (ext) {
           this.extensions.push(ext);
@@ -300,13 +298,13 @@ export class ExtensionManager {
     });
   }
 
-  public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
-    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
+  public commands(schema: Schema): readonly ProsemirrorCommand[] {
+    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema));
   }
 
-  public omniInserters(schema: Schema, ui: EditorUI): OmniInserter[] {
+  public omniInserters(schema: Schema): OmniInserter[] {
     const omniInserters: OmniInserter[] = [];
-    const commands = this.commands(schema, ui);
+    const commands = this.commands(schema);
     commands.forEach(command => {
       if (command.omniInsert) {
         omniInserters.push({
@@ -347,8 +345,8 @@ export class ExtensionManager {
     return this.collect(extension => extension.appendMarkTransaction?.(schema));
   }
 
-  public plugins(schema: Schema, ui: EditorUI): readonly Plugin[] {
-    return this.collect(extension => extension.plugins?.(schema, ui));
+  public plugins(schema: Schema): readonly Plugin[] {
+    return this.collect(extension => extension.plugins?.(schema));
   }
 
   public fixups(schema: Schema, view: EditorView): readonly FixupFn[] {

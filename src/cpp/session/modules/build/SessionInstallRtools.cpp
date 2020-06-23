@@ -28,7 +28,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  

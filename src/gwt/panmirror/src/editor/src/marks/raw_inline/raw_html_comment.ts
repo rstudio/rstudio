@@ -35,8 +35,8 @@ import './raw_html_comment-styles.css';
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (context: ExtensionContext): Extension | null => {
+  const { options, ui } = context;
 
-  const { options } = context;
   return {
     marks: [
       {
@@ -124,7 +124,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       return [new InsertHTMLCommentCommand(schema, ui)];
     },
   };

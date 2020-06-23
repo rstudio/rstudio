@@ -52,15 +52,15 @@ Error closeSocket(SocketService& socket)
       // shutdown, but don't allow shutdown errors to prevent us from closing
       // (shutdown errors often occur b/c the other end of the socket has
       // already been closed)
-      boost::system::error_code ec ;
-      socket.shutdown(boost::asio::socket_base::shutdown_both, ec) ;
+      boost::system::error_code ec;
+      socket.shutdown(boost::asio::socket_base::shutdown_both, ec);
       
-      socket.close(ec) ;
+      socket.close(ec);
       if (ec)
-         return Error(ec, ERROR_LOCATION) ;
+         return Error(ec, ERROR_LOCATION);
    }
    
-   return Success() ; 
+   return Success();
 }
 
 inline bool isWrongProtocolTypeError(const core::Error& error)

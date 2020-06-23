@@ -78,7 +78,7 @@ void crossrefRequest(const std::string& resource,
                      const json::JsonRpcFunctionContinuation& cont)
 {
    // build query string
-   std::string queryString ;
+   std::string queryString;
    core::http::util::buildQueryString(params, &queryString);
 
    // build the url and make the request
@@ -102,7 +102,7 @@ void crossrefWorks(const json::JsonRpcRequest& request,
    }
 
    // build params
-   core::http::Fields params ;
+   core::http::Fields params;
    params.push_back(std::make_pair("query", query));
 
    // make the request

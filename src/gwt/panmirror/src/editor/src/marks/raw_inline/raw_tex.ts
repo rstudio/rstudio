@@ -24,7 +24,6 @@ import { setTextSelection } from 'prosemirror-utils';
 import { PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
 import { Extension, ExtensionContext } from '../../api/extension';
 import { kTexFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
 import { MarkTransaction } from '../../api/transaction';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
@@ -37,7 +36,6 @@ import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './r
 const kTexPlaceholder = 'tex';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions } = context;
 
   if (!pandocExtensions.raw_tex) {
@@ -90,7 +88,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       return [new InsertInlineLatexCommand(schema)];
     },
 

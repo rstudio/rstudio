@@ -247,7 +247,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/rmd_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_resource", secureAsyncHttpHandler(proxyContentRequest, true));
-   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true)); 
+   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));
@@ -519,7 +519,7 @@ int main(int argc, char * const argv[])
          if (!optionsWarnings.empty())
             program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
-         return status.exitCode() ;
+         return status.exitCode();
       }
       
       // daemonize if requested
@@ -762,7 +762,7 @@ int main(int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 

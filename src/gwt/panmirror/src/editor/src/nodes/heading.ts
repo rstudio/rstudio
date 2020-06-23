@@ -33,9 +33,8 @@ const HEADING_CHILDREN = 2;
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
-const extension = (context: ExtensionContext) : Extension => {
-
-  const { pandocExtensions, format } = context;
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, format, ui } = context;
 
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
@@ -124,7 +123,7 @@ const extension = (context: ExtensionContext) : Extension => {
       },
     ],
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       return [
         new HeadingCommand(schema, EditorCommandId.Heading1, 1, heading1OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading2, 2, heading2OmniInsert(ui)),
@@ -148,7 +147,7 @@ const extension = (context: ExtensionContext) : Extension => {
       ];
     },
 
-    plugins: (schema: Schema, ui: EditorUI) => {
+    plugins: (schema: Schema) => {
       return [emptyHeadingPlaceholderPlugin(schema.nodes.heading, ui)];
     },
   };

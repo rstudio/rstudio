@@ -322,6 +322,27 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
    
+   @Override
+   protected void setPaneVisible(boolean visible)
+   {
+      super.setPaneVisible(visible);
+      if (visible)
+      {
+         // When making the pane visible in desktop mode, jiggle the z-index of
+         // the iframe hosting the preview. This is gross but necessary to work
+         // around a QtWebEngine bug which causes the region to not paint at all
+         // (literally showing the previous contents of the screen buffer) until
+         // invalidated in some way.
+         // 
+         // Known to be an issue with Qt 5.12.8/Chromium 69; could be removed if
+         // the bug is fixed in later releases.
+         //
+         // See https://github.com/rstudio/rstudio/issues/6268
+        
+         preview_.getElement().getStyle().setZIndex(renderPass_++ % 2);
+      }
+   }
+   
    private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
       AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
@@ -763,6 +784,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;
    private final ThemeServerOperations server_;
+   private int renderPass_ = 1;
    
    private final static String DEFAULT_FONT_NAME = "(Default)";
    private final static String DEFAULT_FONT_VALUE = "__default__";

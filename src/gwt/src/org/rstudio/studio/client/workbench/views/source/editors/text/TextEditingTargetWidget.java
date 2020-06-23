@@ -207,6 +207,15 @@ public class TextEditingTargetWidget
                editor_.setUseWrapMode(wrap);
             });
 
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+         TextEditingTarget.USE_RAINBOW_PARENS, (newval) ->
+         {
+            boolean rainbowParens = StringUtil.equals(newval.getValue(),
+               DocUpdateSentinel.PROPERTY_TRUE);
+            commands_.toggleRainbowParens().setChecked(rainbowParens);
+            editor_.setRainbowParentheses(rainbowParens);
+         });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -242,6 +251,12 @@ public class TextEditingTargetWidget
    {
       docUpdateSentinel_.setBoolProperty(
             TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
+   public void toggleRainbowParens()
+   {
+      docUpdateSentinel_.setBoolProperty(
+         TextEditingTarget.USE_RAINBOW_PARENS, !editor_.getRainbowParentheses());
    }
 
    public void toggleDocumentOutline()
@@ -736,7 +751,8 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isRMarkdown2 = extendedType_ == "rmarkdown";
+      boolean isRMarkdown2 = extendedType_ != null && 
+                             extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
 
@@ -860,9 +876,10 @@ public class TextEditingTargetWidget
       }
 
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
-
-      // update wrap mode for filetype
+      
+      // update modes for filetype
       syncWrapMode();
+      syncRainbowParenMode();
 
       toolbar_.invalidateSeparators();
    }
@@ -1117,6 +1134,7 @@ public class TextEditingTargetWidget
 
       // sync the state of the command marking word wrap mode for this document
       syncWrapMode();
+      syncRainbowParenMode();
 
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -1745,6 +1763,17 @@ public class TextEditingTargetWidget
       }
       editor_.setUseWrapMode(wrapMode);
       commands_.toggleSoftWrapMode().setChecked(wrapMode);
+   }
+
+   private void syncRainbowParenMode()
+   {
+      boolean rainbowMode = editor_.getRainbowParentheses();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.USE_RAINBOW_PARENS))
+      {
+         rainbowMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.USE_RAINBOW_PARENS, rainbowMode);
+      }
+      editor_.setRainbowParentheses(rainbowMode);
+      commands_.toggleRainbowParens().setChecked(rainbowMode);
    }
 
    private final TextEditingTarget target_;

@@ -30,13 +30,16 @@ import { ScrollEvent } from '../../api/event-types';
 
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { EditorUI } from '../../api/ui';
-import { MarkInputRuleFilter, markInputRuleFilter } from '../../api/input_rule';
+import { PromiseQueue } from '../../api/promise';
+import { MarkInputRuleFilter } from '../../api/input_rule';
+import { kInsertCompletionTransaction } from '../../api/transaction';
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
   inputRuleFilter: MarkInputRuleFilter,
   ui: EditorUI,
-  events: EditorEvents) {
+  events: EditorEvents,
+) {
   return {
     plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
@@ -45,6 +48,7 @@ export function completionExtension(
 interface CompletionState {
   handler?: CompletionHandler;
   result?: CompletionResult;
+  prevToken?: string;
 }
 
 const key = new PluginKey<CompletionState>('completion');
@@ -66,26 +70,35 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
   private version = 0;
+  private allCompletions: any[] = [];
   private completions: any[] = [];
   private horizontal = false;
   private selectedIndex = 0;
 
+  // serialize async completion requests
+  private completionQueue = new PromiseQueue();
+
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
-  constructor(handlers: readonly CompletionHandler[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI, events: EditorEvents) {
+  constructor(
+    handlers: readonly CompletionHandler[],
+    inputRuleFilter: MarkInputRuleFilter,
+    ui: EditorUI,
+    events: EditorEvents,
+  ) {
     super({
       key,
       state: {
         init: () => ({}),
-        apply: (tr: Transaction) => {
+        apply: (tr: Transaction, prevState: CompletionState) => {
           // if we don't have a view then bail
           if (!this.view) {
             return {};
           }
 
           // selection only changes dismiss any active completion
-          if (!tr.docChanged && tr.selectionSet) {
+          if (!tr.docChanged && !tr.storedMarksSet && tr.selectionSet) {
             return {};
           }
 
@@ -104,16 +117,27 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-
-            // first check filter (null means apply no filter)
-            if (handler.filter === null || (handler.filter ? handler.filter(tr) : inputRuleFilter(tr))) {
-
-              // passted filter, check for completions
+            // first check if the handler is enabled (null means use inputRuleFilter)
+            if (handler.enabled === null || (handler.enabled ? handler.enabled(tr) : inputRuleFilter(tr))) {
               const result = handler.completions(textBefore, tr);
               if (result) {
-                return { handler, result };
-              }
+                // check if the previous state had a completion from the same handler
+                let prevToken: string | undefined;
+                if (handler.id === prevState.handler?.id) {
+                  // suppress this handler if the last transaction was a completion result
+                  if (tr.getMeta(kInsertCompletionTransaction)) {
+                    continue;
+                  }
 
+                  // pass the prevToken on if the completion was for the same position
+                  if (result.pos === prevState.result?.pos) {
+                    prevToken = prevState.result.token;
+                  }
+                }
+
+                // return state
+                return { handler, result, prevToken };
+              }
             }
           }
 
@@ -137,10 +161,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
         destroy: () => {
           // unsubscribe from events
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.hideCompletionPopup);
+          window.document.removeEventListener('focusin', this.clearCompletions);
 
           // tear down the popup
-          this.hideCompletionPopup();
+          this.clearCompletions();
         },
       }),
 
@@ -193,6 +217,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   this.renderCompletions(view);
                   handled = true;
                   break;
+                case 'End':
+                  this.selectedIndex = this.completions.length - 1;
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'Home':
+                  this.selectedIndex = 0;
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
               }
             }
 
@@ -213,35 +247,83 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.ui = ui;
 
     // hide completions when we scroll or the focus changes
-    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
-    window.document.addEventListener('focusin', this.hideCompletionPopup);
+    this.clearCompletions = this.clearCompletions.bind(this);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.clearCompletions);
+    window.document.addEventListener('focusin', this.clearCompletions);
   }
 
   private updateCompletions(view: EditorView) {
     const state = key.getState(view.state);
 
-    if (state?.handler) {
+    if (state?.handler && state?.result) {
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
 
-      // request completions
-      return state.result!.completions(view.state).then(completions => {
-        // if the version has incremented since the request then return false
-        if (this.version !== requestVersion) {
-          return false;
-        }
+      // make an async request for the completions, update allCompletions,
+      // and then apply any filter we have (allows the completer to just return
+      // everything from the aysnc query and fall back to the filter for refinement)
+      const requestAllCompletions = async () => {
+        return state.result!.completions(view.state).then(completions => {
+          // if we don't have a handler or result then return
+          if (!state.handler || !state.result) {
+            return;
+          }
 
-        // save completions
-        this.setCompletions(completions, state.handler?.view.horizontal);
+          // save completions
+          this.setAllCompletions(completions, state.handler.view.horizontal);
 
-        // render them
-        this.renderCompletions(view);
-      });
+          // display if the request still maps to the current state
+          if (this.version === requestVersion) {
+            // if there is a filter then call it and update displayed completions
+            const displayedCompletions = state.handler.filter
+              ? state.handler.filter(completions, view.state, state.result.token)
+              : null;
+            if (displayedCompletions) {
+              this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+            }
+
+            this.renderCompletions(view);
+          }
+        });
+      };
+
+      // first see if we can do this exclusively via filter
+
+      if (state.prevToken && state.handler.filter) {
+        this.completionQueue.enqueue(
+          () =>
+            new Promise(resolve => {
+              // display if the request still maps to the current state
+              if (state.handler && state.result && this.version === requestVersion) {
+                const filteredCompletions = state.handler.filter!(
+                  this.allCompletions,
+                  view.state,
+                  state.result.token,
+                  state.prevToken,
+                );
+
+                // got a hit from the filter!
+                if (filteredCompletions) {
+                  this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+                  this.renderCompletions(view);
+
+                  // couldn't use the filter, do a full request for all completions
+                } else {
+                  return this.completionQueue.enqueue(requestAllCompletions);
+                }
+              }
+
+              resolve();
+            }),
+        );
+      } else {
+        // no prevToken or no filter for this handler, request everything
+        this.completionQueue.enqueue(requestAllCompletions);
+      }
     } else {
-      this.setCompletions([]);
-      this.hideCompletionPopup();
+      // no handler/result for this document state
+      this.clearCompletions();
     }
   }
 
@@ -251,7 +333,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
     if (state && state.handler && (this.completions.length > 0 || !state.handler.view.hideNoResults)) {
       const props = {
         handler: state.handler!,
-        pos: state.result!.pos,
+        pos: state.result!.pos + (state.result!.offset || 0),
         completions: this.completions,
         selectedIndex: this.selectedIndex,
         noResults: this.ui.context.translateText('No Results'),
@@ -301,21 +383,25 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // create transaction
           const tr = view.state.tr;
 
-          // ensure we have a node
-          const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
-
-          // combine it's marks w/ whatever is active at the selection
-          const marks = view.state.selection.$head.marks();
-
-          // set selection and replace it
+          // set selection to area we will be replacing
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, false);
 
-          // propapate marks
-          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+          // ensure we have a node
+          if (replacement instanceof ProsemirrorNode) {
+            // combine it's marks w/ whatever is active at the selection
+            const marks = view.state.selection.$head.marks();
 
-          // place cursor after the completion
-          setTextSelection(tr.selection.to)(tr);
+            // set selection and replace it
+            tr.replaceSelectionWith(replacement, false);
+
+            // propapate marks
+            marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
+          } else {
+            tr.insertText(replacement);
+          }
+
+          // mark the transaction as an completion insertin
+          tr.setMeta(kInsertCompletionTransaction, true);
 
           // dispatch
           view.dispatch(tr);
@@ -324,7 +410,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // set focus
       view.focus();
     }
-    this.hideCompletionPopup();
+    this.clearCompletions();
   }
 
   // explicit user dismiss of completion (e.g. Esc key)
@@ -343,11 +429,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     }
 
+    this.clearCompletions();
+  }
+
+  private clearCompletions() {
+    this.setAllCompletions([]);
     this.hideCompletionPopup();
   }
 
   private hideCompletionPopup() {
-    this.setCompletions([]);
     if (this.completionPopup) {
       destroyCompletionPopup(this.completionPopup);
       this.completionPopup = null;
@@ -358,7 +448,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setCompletions(completions: any[], horizontal = false) {
+  private setAllCompletions(completions: any[], horizontal = false) {
+    this.allCompletions = completions;
+    this.setDisplayedCompletions(completions, horizontal);
+  }
+
+  private setDisplayedCompletions(completions: any[], horizontal = false) {
     this.completions = completions;
     this.horizontal = !!horizontal;
     this.selectedIndex = 0;

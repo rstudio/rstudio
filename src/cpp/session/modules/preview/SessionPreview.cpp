@@ -77,7 +77,7 @@ Error initialize()
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectSourceType);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    return initBlock.execute();
 }
 

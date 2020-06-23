@@ -43,7 +43,7 @@ public class KeyCombination
       }
       
       key_ = key;
-      keyCode_ = keyCode;
+      keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
       
    }
@@ -53,7 +53,7 @@ public class KeyCombination
                          int modifiers)
    {
       key_ = key;
-      keyCode_ = keyCode;
+      keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
    }
 
@@ -183,6 +183,21 @@ public class KeyCombination
       
       String version = BrowseCap.qtWebEngineVersion();
       return Version.compare(version, "5.15.0") < 0;
+   }
+   
+   private static int normalizeKeyCode(int keyCode)
+   {
+      switch (keyCode)
+      {
+      
+      case 109: // NumPad minus
+      case 173: // Firefox hyphen
+         return 189;
+         
+      default:
+         return keyCode;
+         
+      }
    }
    
    private final String key_;

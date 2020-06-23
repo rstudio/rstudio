@@ -29,7 +29,7 @@ URL::URL(const std::string& absoluteURL)
 {
    std::string protocol, host, path;
    boost::regex re("(http|https|file|ftp|ftps)://([^/#?]+)(.*)", boost::regex::icase);
-   boost::cmatch matches ;
+   boost::cmatch matches;
    if (regex_utils::match(absoluteURL.c_str(), matches, re))
    {
       protocol = matches[1];
@@ -38,7 +38,7 @@ URL::URL(const std::string& absoluteURL)
    }
    
    // thwart ref-counting
-   assign(absoluteURL, protocol, host, path); 
+   assign(absoluteURL, protocol, host, path);
 }
    
 void URL::split(std::string* pBaseURL, std::string* pQueryParams) const

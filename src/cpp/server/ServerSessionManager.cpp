@@ -77,7 +77,7 @@ core::system::ProcessConfig sessionProcessConfig(
 {
    // prepare command line arguments
    server::Options& options = server::options();
-   core::system::Options args ;
+   core::system::Options args;
 
    // check for options-specified config file and add to command
    // line if specified

@@ -567,7 +567,6 @@ void setCacheableFile(const FilePath& filePath,
                       const http::Request& request,
                       http::Response* pResponse)
 {
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 
@@ -633,7 +632,7 @@ Error syncThemePrefs()
    // Determine whether the preference storing the theme is out of sync with the theme details in
    // user state.
    Error err;
-   std::string prefTheme = prefs::userPrefs().editorTheme(); 
+   std::string prefTheme = prefs::userPrefs().editorTheme();
    json::Object stateTheme = prefs::userState().theme();
    auto themeName = stateTheme.find(kThemeName);
    if (themeName != stateTheme.end() &&

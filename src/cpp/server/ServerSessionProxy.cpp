@@ -73,7 +73,7 @@
 
 #include <server/ServerConstants.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {
@@ -529,7 +529,7 @@ void handleRpcError(
                error.getProperty("state"));
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
-      json::JsonRpcResponse jsonRpcResponse ;
+      json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
@@ -548,7 +548,7 @@ void handleRpcError(
    else if (!handleLicenseError(ptrConnection, error))
    {
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
@@ -589,7 +589,7 @@ void handleEventsError(
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
