@@ -291,9 +291,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Scope getCurrentScope();
    Scope getCurrentChunk();
-   Scope getCurrentChunk(Position position);
-   ScopeFunction getCurrentFunction(boolean allowAnonymous);
    Scope getCurrentSection();
+   ScopeFunction getCurrentFunction(boolean allowAnonymous);
+   
+   Scope getScopeAtPosition(Position position);
+   Scope getChunkAtPosition(Position position);
    ScopeFunction getFunctionAtPosition(Position position, boolean allowAnonymous);
    Scope getSectionAtPosition(Position position);
    boolean hasCodeModelScopeTree();
