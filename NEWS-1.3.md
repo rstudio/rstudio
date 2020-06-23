@@ -54,6 +54,7 @@
 - Fix painting of Appearance pane in Global Options on RStudio Desktop (#6268)
 - Fix `Alt+-` shortcut to insert assignment operator in R Markdown documents (#7169)
 - Fix issue with duplicated signature tooltips in R Markdown documents (#7154)
+- Fix RStudio Server Pro issue where R version modules would sometimes not be able to modify the PATH environment variable (Pro #1737)
 
 ### RStudio Server Pro
 
