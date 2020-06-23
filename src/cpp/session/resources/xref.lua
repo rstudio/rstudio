@@ -28,22 +28,38 @@ end
 function Code(s, attr)
   
   local chunk_begin = "^{[a-zA-Z0-9_]+[%s,]+" .. xref_label_pattern
+  local chunk_end = ".*}.*$"
   local param = "%s*=%s*[\"']([^\"']+)[\"']"
-  local fig_pattern = chunk_begin .. "[ ,].*fig%.cap" .. param .. ".*}.*$"
-  local tab_pattern = chunk_begin .. ".*}.*kable%s*%(.*caption" .. param .. ".*$"
-
-  local fig_label, fig_caption = string.match(s, fig_pattern)
-  local tab_label, tab_caption = string.match(s, tab_pattern)
   
-  if fig_label and fig_caption then
+  -- start by looking for just fig.cap. if we find that then also look for a quoted value
+  local fig_cap_begin = "[ ,].*fig%.cap"
+  local fig_label = string.match(s, chunk_begin .. fig_cap_begin .. chunk_end)
+  if fig_label then
     xref_pending = true
-    return 'fig:' .. fig_label .. ' ' .. fig_caption .. '\n'
-  elseif tab_label and tab_caption then
-    xref_pending = true
-    return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
-  else
-    return ''
+    local _, fig_caption = string.match(s, chunk_begin .. fig_cap_begin .. param .. chunk_end)
+    if fig_caption then
+      return 'fig:' .. fig_label .. ' ' .. fig_caption .. '\n'
+    else
+      return 'fig:' .. fig_label .. '\n'
+    end
   end
+  
+  -- start by looking for just caption, if we find that then also look for a quoted value
+  local tab_caption_begin = ".*}.*kable%s*%(.*caption"
+  local tab_label = string.match(s, chunk_begin .. tab_caption_begin .. ".*$")
+  if (tab_label) then
+    xref_pending = true
+    local _, tab_caption = string.match(s, chunk_begin .. tab_caption_begin .. param .. ".*$")
+    if tab_caption then
+       return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
+    else
+       return 'tab:' .. tab_label .. ' ' .. '\n'
+    end
+  end
+  
+  -- nothing found
+  return ''
+  
 end
 
 -- tables with specially formatted caption
