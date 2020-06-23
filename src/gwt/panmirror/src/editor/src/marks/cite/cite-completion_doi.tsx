@@ -20,7 +20,7 @@ import React from 'react';
 import { EditorUI, InsertBibEntryProps } from '../../api/ui';
 import { CrossrefServer, parseDOI, CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { parseCitation } from './cite-completion';
+import { parseCitation, kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate, suggestId } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
@@ -28,6 +28,8 @@ import { performCompletionReplacement } from '../../behaviors/completion/complet
 export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServer): CompletionHandler<CrossrefEntry> {
   return {
     id: '56DA14DD-6E3A-4481-93A9-938DC00393A5',
+
+    scope: kCitationCompleteScope,
 
     completions: citationDOICompletions(ui, server),
 

@@ -40,6 +40,12 @@ export interface CompletionHandler<T = any> {
   // unique id
   id: string;
 
+  // An optional scope for this completion handler. Completions
+  // triggered by a transaction will filter completion handlers
+  // that share a scope with the completion handler that originated
+  // a transaction.
+  scope?: string;
+
   // filter for determing whether we can call this handler from a given context (default is to
   // never offer completions if a mark with noInputRules is active). set to null to
   // allow completion anywhere
@@ -116,4 +122,22 @@ export function selectionAllowsCompletions(selection: Selection) {
   }
 
   return true;
+}
+
+// Determine whether two completionHandlers share the same scope. By default
+// completion handlers will share scope only if they share an id, but handlers
+// can provide a scope if they'd like to coordinate.
+export function completionsShareScope(handler: CompletionHandler, prevHandler?: CompletionHandler) {
+  // There is no previous handler, not shared
+  if (!prevHandler) {
+    return false;
+  }
+
+  // Previous handler with the same scope as the current handler
+  if (prevHandler.scope && prevHandler.scope === handler.scope) {
+    return true;
+  } else {
+    // Previous handler has the same id as the current handler
+    return prevHandler.id === handler.id;
+  }
 }

@@ -24,6 +24,7 @@ import {
   CompletionResult,
   selectionAllowsCompletions,
   kCompletionDefaultMaxVisible,
+  completionsShareScope,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -123,12 +124,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
               if (result) {
                 // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
-                if (handler.id === prevState.handler?.id) {
-                  // suppress this handler if the last transaction was a completion result
-                  if (tr.getMeta(kInsertCompletionTransaction)) {
-                    continue;
-                  }
 
+                // If this completion shares scope with the previous completion
+                // and this is a completion transaction, skip
+                if (tr.getMeta(kInsertCompletionTransaction) && completionsShareScope(handler, prevState.handler)) {
+                  continue;
+                }
+
+                if (handler.id === prevState.handler?.id) {
                   // pass the prevToken on if the completion was for the same position
                   if (result.pos === prevState.result?.pos) {
                     prevToken = prevState.result.token;

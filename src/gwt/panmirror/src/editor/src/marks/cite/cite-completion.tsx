@@ -43,11 +43,14 @@ import { kEditingCiteIdRegEx } from './cite';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
+export const kCitationCompleteScope = 'CitationScope';
 
 export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
   const bibliographyManager = new BibliographyManager(server);
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
+
+    scope: kCitationCompleteScope,
 
     completions: citationCompletions(ui, bibliographyManager),
 
