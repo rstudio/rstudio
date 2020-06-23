@@ -78,5 +78,5 @@ export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text
 }
 
 export function searchPlaceholderDecoration(pos: number, ui: EditorUI) {
-  return iconAndTextPlaceholderDecoration(pos, ui.images.search!, ui.context.translateText('Search or DOI'));
+  return iconAndTextPlaceholderDecoration(pos, ui.images.search!, ui.context.translateText('or DOI'));
 }
