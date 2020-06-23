@@ -13,7 +13,7 @@
  *
  */
 import { EditorView } from 'prosemirror-view';
-import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 
 import React from 'react';
 
@@ -23,6 +23,7 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { parseCitation } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate, suggestId } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
+import { performCompletionReplacement } from '../../behaviors/completion/completion';
 
 export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServer): CompletionHandler<CrossrefEntry> {
   return {
@@ -36,15 +37,15 @@ export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServe
           suggestedId: suggestId(completion.author, completion.issued),
           bibliographyFiles: [],
         };
+
+        // Use the biblography manager to write an entry to the user specified bibliography
+
         // Ask the user to provide information that we need in order to populate
         // this citation (id, bibliography)
         const citation = ui.dialogs.insertBibEntry(bibProps).then(result => {
           // If the user provided an id, insert the citation
           if (result && result.id.length) {
-            const tr = view.state.tr;
-            tr.setSelection(new TextSelection(tr.doc.resolve(pos), view.state.selection.$head));
-            tr.insertText(result.id);
-            view.dispatch(tr);
+            performCompletionReplacement(view, pos, result.id);
           }
         });
       }
