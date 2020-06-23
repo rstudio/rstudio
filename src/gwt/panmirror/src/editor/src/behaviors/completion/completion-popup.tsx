@@ -270,7 +270,7 @@ function horizontalCellWidths(props: CompletionListProps) {
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {
   // some constants
   const kMinimumPaddingToEdge = 5;
-  const kCompletionsVerticalPadding = 8;
+  const kCompletionsVerticalPadding = 5;
 
   // default position
   const selectionCoords = view.coordsAtPos(pos);

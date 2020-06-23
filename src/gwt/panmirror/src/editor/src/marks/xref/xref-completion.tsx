@@ -143,7 +143,7 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
       const token = match[2];
       return {
         pos,
-        offset: -match[1].length,
+        offset: -match[1].length + 1,
         token,
         completions: async () => {
           const docPath = ui.context.getDocumentPath();
