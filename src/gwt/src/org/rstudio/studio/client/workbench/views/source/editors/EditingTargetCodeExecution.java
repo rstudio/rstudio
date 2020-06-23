@@ -163,18 +163,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         if (DocumentMode.isCursorInPythonMode(docDisplay_))
-         {
-            // don't skip empty / blank lines when executing Python line-by-line
-            Position nextPos = Position.create(
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  0);
-            docDisplay_.setCursorPosition(nextPos);
-         }
-         else
-         {
-            moveCursorAfterExecution(selectionRange, true);
-         }
+         moveCursorAfterExecution(selectionRange, true);
       }
    }
    
