@@ -37,7 +37,7 @@ public class TextEditingTargetScopeHelper
    public Scope getCurrentSweaveChunk(Position position)
    {
       if (position != null)
-         return docDisplay_.getCurrentChunk(position);
+         return docDisplay_.getChunkAtPosition(position);
       else
          return docDisplay_.getCurrentChunk();
    }

@@ -123,7 +123,7 @@ public class ChunkOutputUi
 
    public Scope getScope()
    {
-      return display_.getCurrentChunk(Position.create(getCurrentRow(), 1));
+      return display_.getChunkAtPosition(Position.create(getCurrentRow(), 1));
    }
 
    public LineWidget getLineWidget()

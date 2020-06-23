@@ -2347,13 +2347,14 @@ public class AceEditor implements DocDisplay,
             row);
    }
 
+   @Override
    public Scope getCurrentChunk()
    {
-      return getCurrentChunk(getCursorPosition());
+      return getChunkAtPosition(getCursorPosition());
    }
 
    @Override
-   public Scope getCurrentChunk(Position position)
+   public Scope getChunkAtPosition(Position position)
    {
       return getSession().getMode().getCodeModel().getCurrentChunk(position);
    }
