@@ -18,6 +18,7 @@
 
 - Announce text of warnings bar via screen reader (#6963)
 - Fix issue where projects using renv sometimes failed to load (#7077)
+- Fix issue where attempts to create clusters via parallel package failed on macOS (#6692)
 - Fix display issue with keyboard shortcut in Modify Keyboard Shortcuts dialog (#7142)
 - Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix Compare Results and other incompatibility with newer versions of the `shinytest` package (#6960)
