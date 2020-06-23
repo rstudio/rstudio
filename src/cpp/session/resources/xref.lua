@@ -1,6 +1,9 @@
 
--- lua pattern (including capture) for an xref label
+-- lua patterns (including capture) used in various handlers
+local chunk_begin_pattern = "^{([a-zA-Z0-9_]+)[%s,]+"
+local chunk_end_pattern = ".*}.*$"
 local xref_label_pattern = "([a-zA-Z0-9/%-]+)"
+local param_pattern = "%s*=%s*[\"']([^\"']+)[\"']"
 
 -- output paragraph if it contains an xref (some of the functions below
 -- (e.g. Code and DisplayMath) set this flag if the discover an xref
@@ -24,19 +27,17 @@ function Header(lev, s, attr)
 end
 
 -- rmd code chunks w/ labels get turned into inline code within a paragraph
--- look for a code chunk w/ fig.cap or a kable w/ a caption
+-- look for a code chunk w/ fig.cap or a kable w/ a caption or a thereom
 function Code(s, attr)
   
-  local chunk_begin = "^{[a-zA-Z0-9_]+[%s,]+" .. xref_label_pattern
-  local chunk_end = ".*}.*$"
-  local param = "%s*=%s*[\"']([^\"']+)[\"']"
-  
-  -- start by looking for just fig.cap. if we find that then also look for a quoted value
+  local chunk_begin = chunk_begin_pattern .. xref_label_pattern
+ 
+  -- fig: start by looking for just fig.cap. if we find that then also look for a quoted value
   local fig_cap_begin = "[ ,].*fig%.cap"
-  local fig_label = string.match(s, chunk_begin .. fig_cap_begin .. chunk_end)
+  local _, fig_label = string.match(s, chunk_begin .. fig_cap_begin .. chunk_end_pattern)
   if fig_label then
     xref_pending = true
-    local _, fig_caption = string.match(s, chunk_begin .. fig_cap_begin .. param .. chunk_end)
+    local _, _, fig_caption = string.match(s, chunk_begin .. fig_cap_begin .. param_pattern .. chunk_end_pattern)
     if fig_caption then
       return 'fig:' .. fig_label .. ' ' .. fig_caption .. '\n'
     else
@@ -44,16 +45,60 @@ function Code(s, attr)
     end
   end
   
-  -- start by looking for just caption, if we find that then also look for a quoted value
+  -- tab: start by looking for just caption, if we find that then also look for a quoted value
   local tab_caption_begin = ".*}.*kable%s*%(.*caption"
-  local tab_label = string.match(s, chunk_begin .. tab_caption_begin .. ".*$")
+  local _, tab_label = string.match(s, chunk_begin .. tab_caption_begin .. ".*$")
   if (tab_label) then
     xref_pending = true
-    local _, tab_caption = string.match(s, chunk_begin .. tab_caption_begin .. param .. ".*$")
+    local _, _, tab_caption = string.match(s, chunk_begin .. tab_caption_begin .. param_pattern .. ".*$")
     if tab_caption then
        return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
     else
        return 'tab:' .. tab_label .. ' ' .. '\n'
+    end
+  end
+  
+  -- thereom
+  -- https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html#theorems
+  local theorem_types = 
+  {
+    theorem = 'thm',
+    lemma = 'lem',
+    corollary = 'cor',
+    proposition = 'prp',
+    conjecture = 'cnj',
+    definition = 'def',
+    example = 'exm',
+    exercise = 'exr'
+  }
+
+  -- look for a labeled chunk 
+  local chunk_type = string.match(s, chunk_begin_pattern .. chunk_end_pattern)
+
+  -- see if it's one of our supported types
+  if theorem_types[chunk_type] then
+    
+    -- set chunk_type to shorter variation
+    chunk_type = theorem_types[chunk_type]
+    
+    -- look for an explicit label 
+    local _, chunk_label = string.match(s, chunk_begin_pattern .. "label" .. param_pattern .. chunk_end_pattern)
+
+    -- look for a conventional knitr label
+    if not(chunk_label) then
+      _, chunk_label = string.match(s, chunk_begin .. chunk_end_pattern)
+    end
+    
+    -- if we found a label it's not 'name', look for a name before returning
+    if chunk_label and chunk_label ~= 'name' then
+       xref_pending = true
+       -- see if we can find a name
+       local _, thm_name = string.match(s, chunk_begin_pattern .. '.*' .. "name" .. param_pattern .. chunk_end_pattern)
+       if thm_name then
+         return chunk_type .. ':' .. chunk_label .. ' ' .. thm_name .. '\n'
+       else
+         return chunk_type .. ':' .. chunk_label .. '\n'
+       end
     end
   end
   
