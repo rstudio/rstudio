@@ -28,6 +28,7 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
+import { BibliographyManager } from '../../api/bibliography';
 
 const kCiteCitationsIndex = 0;
 
@@ -66,6 +67,8 @@ interface Citation {
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
+
+  const mgr = new BibliographyManager(context.server.pandoc);
 
   if (!pandocExtensions.citations) {
     return null;
@@ -204,8 +207,8 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     completionHandlers: () => [
-      citationDoiCompletionHandler(context.ui, context.server.crossref),
-      citationCompletionHandler(context.ui, context.server.pandoc),
+      citationDoiCompletionHandler(context.ui, mgr, context.server.crossref),
+      citationCompletionHandler(context.ui, mgr),
     ],
 
     plugins: (schema: Schema) => {

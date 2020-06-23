@@ -24,8 +24,13 @@ import { parseCitation, kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate, suggestId } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
+import { BibliographyManager, bibliographyPaths } from '../../api/bibliography';
 
-export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServer): CompletionHandler<CrossrefEntry> {
+export function citationDoiCompletionHandler(
+  ui: EditorUI,
+  bibManager: BibliographyManager,
+  server: CrossrefServer,
+): CompletionHandler<CrossrefEntry> {
   return {
     id: '56DA14DD-6E3A-4481-93A9-938DC00393A5',
 
@@ -35,20 +40,28 @@ export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServe
 
     replace(view: EditorView, pos: number, completion: CrossrefEntry | null) {
       if (completion) {
-        const bibProps: InsertBibEntryProps = {
-          suggestedId: suggestId(completion.author, completion.issued),
-          bibliographyFiles: [],
-        };
+        bibManager.sources(ui, view.state.doc).then(sources => {
+          // Figure out a unique Id (across all bibliographies in use) to suggest
+          const existingIds = sources.map(source => source.id);
+          const suggestedId = suggestId(existingIds, completion.author, completion.issued);
 
-        // Use the biblography manager to write an entry to the user specified bibliography
+          // Read bibliographies out of the document and pass those alone
+          const bibliographies = bibliographyPaths(ui, view.state.doc);
+          const bibProps: InsertBibEntryProps = {
+            suggestedId,
+            bibliographyFiles: bibliographies?.bibliography || [],
+          };
 
-        // Ask the user to provide information that we need in order to populate
-        // this citation (id, bibliography)
-        const citation = ui.dialogs.insertBibEntry(bibProps).then(result => {
-          // If the user provided an id, insert the citation
-          if (result && result.id.length) {
-            performCompletionReplacement(view, pos, result.id);
-          }
+          // Ask the user to provide information that we need in order to populate
+          // this citation (id, bibliography)
+          const citation = ui.dialogs.insertBibEntry(bibProps).then(result => {
+            // If the user provided an id, insert the citation
+            if (result && result.id.length) {
+              // Use the biblography manager to write an entry to the user specified bibliography
+
+              performCompletionReplacement(view, pos, result.id);
+            }
+          });
         });
       }
     },

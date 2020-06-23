@@ -45,17 +45,19 @@ const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
 export const kCitationCompleteScope = 'CitationScope';
 
-export function citationCompletionHandler(ui: EditorUI, server: PandocServer): CompletionHandler<BibliographyEntry> {
-  const bibliographyManager = new BibliographyManager(server);
+export function citationCompletionHandler(
+  ui: EditorUI,
+  bibManager: BibliographyManager,
+): CompletionHandler<BibliographyEntry> {
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
     scope: kCitationCompleteScope,
 
-    completions: citationCompletions(ui, bibliographyManager),
+    completions: citationCompletions(ui, bibManager),
 
     filter: (completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(completions, token, bibliographyManager, ui);
+      return filterCitations(completions, token, bibManager, ui);
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {

@@ -18,7 +18,7 @@ import { PandocServer } from './pandoc';
 import Fuse from 'fuse.js';
 
 import { EditorUIContext, EditorUI } from './ui';
-import { yamlMetadataNodes, parseYaml, stripYamlDelimeters, toYamlCode } from './yaml';
+import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -87,13 +87,8 @@ export class BibliographyManager {
   }
 
   public async sources(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographySource[]> {
-    const yamlNodes = yamlMetadataNodes(doc);
-
-    const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
-      const yamlText = node.node.textContent;
-      const yamlCode = stripYamlDelimeters(yamlText);
-      return { yamlCode, yaml: parseYaml(yamlCode) };
-    });
+    // read the Yaml blocks from the document
+    const parsedYamlNodes = parseYamlNodes(doc);
 
     // Currently edited doc
     const docPath = ui.context.getDocumentPath();
@@ -175,6 +170,22 @@ function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   }
 
   return '';
+}
+
+export function bibliographyPaths(ui: EditorUI, doc: ProsemirrorNode): BibliographyFiles | null {
+  // Gather the files from the document
+  return bibliographyFilesFromDoc(parseYamlNodes(doc), ui.context);
+}
+
+function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
+  const yamlNodes = yamlMetadataNodes(doc);
+
+  const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
+    const yamlText = node.node.textContent;
+    const yamlCode = stripYamlDelimeters(yamlText);
+    return { yamlCode, yaml: parseYaml(yamlCode) };
+  });
+  return parsedYamlNodes;
 }
 
 // TODO: path handling ok here?

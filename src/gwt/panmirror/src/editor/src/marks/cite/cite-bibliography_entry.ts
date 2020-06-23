@@ -49,7 +49,8 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
 }
 
 // Suggests a bibliographyic identifier based upon the source
-export function suggestId(author?: BibliographyAuthor[], issued?: BibliographyDate) {
+export function suggestId(existingIds: string[], author?: BibliographyAuthor[], issued?: BibliographyDate) {
+  // Try to get the last name
   let authorPart = '';
   if (author && author.length > 0) {
     if (author[0].family) {
@@ -59,12 +60,31 @@ export function suggestId(author?: BibliographyAuthor[], issued?: BibliographyDa
     }
   }
 
+  // Try to get the publication year
   let datePart = '';
   if (issued && issued['date-parts'].length > 0) {
     datePart = issued['date-parts'][0][0] + '';
   }
 
-  return `${authorPart}${datePart}`;
+  // Create a deduplicated string against the existing entries
+  let baseId = `${authorPart.toLowerCase()}${datePart}`;
+  let proposedId = baseId;
+  let count = 0;
+  const startCharacter = 65; // A
+
+  while (existingIds.includes(proposedId)) {
+    // If we've wrapped around to A and we haven't found a unique entry
+    // Add an 'A' to the end and try again. Will ultimately create an entry like
+    // Teague2012AAAAF
+    if (count !== 0 && count % 26 === 0) {
+      baseId = baseId + String.fromCharCode(startCharacter);
+    }
+
+    const postfix = String.fromCharCode(startCharacter + (count % 26));
+    proposedId = baseId + postfix;
+    count++;
+  }
+  return proposedId;
 }
 
 export function imageForType(ui: EditorUI, type: string): [string?, string?] {
