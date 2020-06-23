@@ -91,7 +91,7 @@ protected:
 
    pWww->add_options()
       ("www-local-path",
-      value<std::string>(&wwwLocalPath_)->default_value(std::string()),
+      value<std::string>(&wwwLocalPath_)->default_value("www"),
       "The relative path from the RStudio installation directory, or absolute path where web assets are stored.")
       ("www-symbol-maps-path",
       value<std::string>(&wwwSymbolMapsPath_)->default_value("www-symbolmaps"),
