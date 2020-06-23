@@ -68,6 +68,7 @@ export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text
 
     const message = window.document.createElement('span');
     message.classList.add('pm-placeholder-text-color');
+    message.classList.add('pm-placeholder-text');
     message.innerText = text;
 
     container.appendChild(iconImg);
@@ -77,9 +78,5 @@ export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text
 }
 
 export function searchPlaceholderDecoration(pos: number, ui: EditorUI) {
-  return iconAndTextPlaceholderDecoration(
-    pos,
-    ui.images.search!,
-    ui.context.translateText(''),
-  );
+  return iconAndTextPlaceholderDecoration(pos, ui.images.search!, ui.context.translateText('Search or DOI'));
 }

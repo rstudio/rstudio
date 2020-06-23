@@ -49,11 +49,12 @@ export interface BibliographyAuthor {
   family?: string;
   given?: string;
   literal?: string;
+  name?: string;
 }
 
 // Used for issue dates
 export interface BibliographyDate {
-  'date-parts': number[][];
+  'date-parts': Array<[number, number?, number?]>;
   raw?: string;
 }
 

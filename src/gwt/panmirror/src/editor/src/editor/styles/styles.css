@@ -219,7 +219,12 @@ p.ProseMirror-selectednode {
   height: 12px;
   width: 12px;
   padding-left: 4px;
-  padding-right: 4px;
+  padding-right: 3px;
   display: inline-block;
   vertical-align: middle;
+}
+
+.pm-placeholder-text {
+  padding-right: 4px;
+  font-size: 9pt;
 }

@@ -48,7 +48,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
   };
 }
 
-function imageForType(ui: EditorUI, type: string): [string?, string?] {
+export function imageForType(ui: EditorUI, type: string): [string?, string?] {
   switch (type) {
     case 'article':
     case 'article-journal':
@@ -116,7 +116,7 @@ function imageForType(ui: EditorUI, type: string): [string?, string?] {
 
 // TODO: Needs to support localization of the templated strings
 const kEtAl = 'et al.';
-function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
+export function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
   // No author(s) specified
   if (!authors) {
     return '';
@@ -126,12 +126,16 @@ function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): stri
     .map(author => {
       if (author.literal?.length) {
         return author.literal;
-      } else if (author.given?.length) {
+      } else if (author.given?.length && author.family?.length) {
         // Family and Given name
         return `${author.family}, ${author.given.substring(0, 1)}`;
-      } else {
+      } else if (author.family?.length) {
         // Family name only
         return `${author.family}`;
+      } else if (author.name?.length) {
+        return author.name;
+      } else {
+        return '';
       }
     })
     .reduce((previous, current, index, array) => {
@@ -149,6 +153,7 @@ function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): stri
         // The first author
         return current;
       } else if (index > 0 && index === array.length - 1) {
+        // The last author
         return addAuthorOrEtAl(previous, `${previous}, and ${current}`, maxLength);
       } else {
         // Middle authors
@@ -184,7 +189,7 @@ function etAl(authorStr: string, maxLength: number) {
 }
 
 // TODO: Needs to support localization of the templated strings
-function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
+export function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
   // No issue date for this
   if (!date) {
     return '';

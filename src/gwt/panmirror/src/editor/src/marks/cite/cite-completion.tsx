@@ -19,6 +19,7 @@
 // FUTURE
 // TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview
+// TODO: Should we show the bibliography at the end of the document as a formatted, uneditable block at the end?
 // TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user
 // TODO: How should I report errors to user (for example, invalid entry type)
 // TODO: Improve large bibliography performance by 'warming up' bibliography manager
@@ -80,44 +81,56 @@ function filterCitations(
   ui: EditorUI,
 ) {
   if (token.trim().length === 0) {
-    return bibliographyEntries;
+    return bibliographyEntries.slice(0, kMaxCitationCompletions);
   }
   return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
-    // return completions only if we are inside a cite id mark
-    const markType = context.doc.type.schema.marks.cite_id;
-    if (!markIsActive(context, markType)) {
-      return null;
+    const parsed = parseCitation(context);
+    if (parsed) {
+      return {
+        token: parsed.token,
+        pos: parsed.pos,
+        offset: parsed.offset,
+        completions: (_state: EditorState) =>
+          manager.sources(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
+        decorations:
+          parsed.token.length === 0
+            ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
+            : undefined,
+      };
     }
-
-    // Find the text and position of the user entry and use that for
-    // the completion
-    const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
-    if (range) {
-      const citeText = context.doc.textBetween(range.from, range.to);
-      const match = citeText.match(kEditingCiteIdRegEx);
-      if (match) {
-        const token = match[2];
-        const pos = range.from + match[1].length;
-        return {
-          token,
-          pos,
-          offset: -match[1].length,
-          completions: (_state: EditorState) =>
-            manager.sources(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
-          decorations:
-            token.length === 0
-              ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
-              : undefined,
-        };
-      }
-    }
-
     return null;
   };
+}
+
+export interface ParsedCitation {
+  token: string;
+  pos: number;
+  offset: number;
+}
+
+export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
+  // return completions only if we are inside a cite id mark
+  const markType = context.doc.type.schema.marks.cite_id;
+  if (!markIsActive(context, markType)) {
+    return null;
+  }
+
+  const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
+  if (range) {
+    const citeText = context.doc.textBetween(range.from, range.to);
+    const match = citeText.match(kEditingCiteIdRegEx);
+    if (match) {
+      const token = match[2];
+      const pos = range.from + match[1].length;
+      return { token, pos, offset: -match[1].length };
+    }
+  }
+
+  return null;
 }
 
 // The title may contain spans to control case specifically - consequently, we need

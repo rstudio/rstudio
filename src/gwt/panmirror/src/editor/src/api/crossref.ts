@@ -43,6 +43,9 @@ export interface CrossrefWork {
   type: string;
   author: CrossrefContributor[];
   issued: CrossrefDate;
+  'short-title'?: string;
+  'short-container-title'?: string;
+  abstract?: string;
 }
 
 export interface CrossrefContributor {
@@ -51,7 +54,7 @@ export interface CrossrefContributor {
 }
 
 export interface CrossrefDate {
-  'date-parts': [number, number?, number?];
+  'date-parts': Array<[number, number?, number?]>;
 }
 
 // ^10.\d{4,9}/[-._;()/:A-Z0-9]+$

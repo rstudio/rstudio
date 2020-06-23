@@ -27,6 +27,7 @@ import { fragmentText } from '../../api/fragment';
 import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
+import { citationDoiCompletionHandler } from './cite-completion_doi';
 
 const kCiteCitationsIndex = 0;
 
@@ -202,7 +203,10 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
     },
 
-    completionHandlers: () => [citationCompletionHandler(context.ui, context.server.pandoc)],
+    completionHandlers: () => [
+      citationDoiCompletionHandler(context.ui, context.server.crossref),
+      citationCompletionHandler(context.ui, context.server.pandoc),
+    ],
 
     plugins: (schema: Schema) => {
       return [citeHighlightPlugin(schema)];
