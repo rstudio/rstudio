@@ -1029,12 +1029,12 @@ Error initialize()
       LOG_ERROR(error);
 
 #ifdef _WIN32
-   // we also need to handle custom session URLs on Windows for R > 4.0
+   // R's help server handler has issues with R 4.0.0; disable it explicitly
+   // when that version of R is in use.
    // (see comments in module_context::sessionTempDirUrl)
-
-   if (!s_handleCustom)
+   if (r::util::hasExactVersion("4.0.0"))
    {
-      s_handleCustom = r::util::hasRequiredVersion("4.0");
+      s_handleCustom = false;
    }
 #endif
 
