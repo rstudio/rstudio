@@ -95,8 +95,18 @@ struct XRefFileIndex
    XRefFileIndex() {}
    explicit XRefFileIndex(const std::string& file) : file(file) {}
    std::string file;
-   // date time
    std::vector<std::string> entries;
+};
+
+struct XRefIndexEntry
+{
+   XRefIndexEntry() {}
+   XRefIndexEntry(const std::string& file, const std::string& entry)
+      : file(file), entry(entry)
+   {
+   }
+   std::string file;
+   std::string entry;
 };
 
 
@@ -165,79 +175,13 @@ void writeEntryId(const std::string& id, json::Object* pEntryJson)
    }
 }
 
-json::Array entriesJson(const std::string &file, const std::vector<std::string>& entries)
-{
-   // entries
-   json::Array entriesJson;
-   for (std::vector<std::string>::size_type e = 0; e < entries.size(); e++)
-   {
-      json::Object entryJson;
-      entryJson["file"] = file;
-      const std::string& entry = entries[e];
-      if (entry.size() > 0)
-      {
-         std::size_t spacePos = entry.find_first_of(' ');
-         if (spacePos != std::string::npos)
-         {
-            writeEntryId(entry.substr(0, spacePos), &entryJson);
-            entryJson["title"] = entry.substr(spacePos + 1);
-         }
-         else
-         {
-            writeEntryId(entry, &entryJson);
-         }
-         entriesJson.push_back(entryJson);
-      }
-   }
-   return entriesJson;
-}
 
-json::Array entriesJson(const XRefFileIndex& idx)
-{
-   return entriesJson(idx.file, idx.entries);
-}
-
-
-class XRefProjectIndex
+class XRefUnsavedIndex
 {
 public:
 
-   json::Array toJson()
-   {
-      json::Array indexJson;
-
-      // find out what the docs in the book are
-      std::vector<std::string> sourceFiles = bookdownSourceFiles();
-
-      for (std::vector<std::string>::size_type i = 0; i < sourceFiles.size(); i++) {
-
-         // alias source files
-         const std::string& sourceFile = sourceFiles[i];
-
-         // prefer unsaved files
-         std::vector<std::string> entries;
-         std::map<std::string, XRefFileIndex>::const_iterator it = unsavedFiles_.find(sourceFile);
-         if (it != unsavedFiles_.end())
-         {
-            entries = it->second.entries;
-         }
-         // then check the disk based index
-         else
-         {
-            FilePath filePath = xrefIndexFilePath(sourceFile);
-            if (filePath.exists())
-            {
-               Error error = readStringVectorFromFile(filePath, &entries);
-               if (error)
-                  LOG_ERROR(error);
-            }
-         }
-
-         json::Array fileIndex = entriesJson(sourceFile, entries);
-         std::copy(fileIndex.begin(), fileIndex.end(), std::back_inserter(indexJson));
-      }
-
-      return indexJson;
+   const std::map<std::string, XRefFileIndex>& unsavedIndexes(){
+      return unsavedFiles_;
    }
 
 
@@ -270,7 +214,120 @@ public:
 private:
    std::map<std::string, XRefFileIndex> unsavedFiles_;
 };
-XRefProjectIndex s_projectIndex;
+XRefUnsavedIndex s_unsavedIndex;
+
+std::vector<XRefIndexEntry> indexEntriesForProject()
+{
+   std::vector<XRefIndexEntry> indexEntries;
+
+   // find out what the docs in the book are
+   std::vector<std::string> sourceFiles = bookdownSourceFiles();
+
+   for (std::vector<std::string>::size_type i = 0; i < sourceFiles.size(); i++) {
+
+      // alias source files
+      const std::string& sourceFile = sourceFiles[i];
+
+      // prefer unsaved files
+      std::vector<std::string> entries;
+      auto unsaved = s_unsavedIndex.unsavedIndexes();
+      std::map<std::string, XRefFileIndex>::const_iterator it = unsaved.find(sourceFile);
+      if (it != unsaved.end())
+      {
+         entries = it->second.entries;
+      }
+      // then check the disk based index
+      else
+      {
+         FilePath filePath = xrefIndexFilePath(sourceFile);
+         if (filePath.exists())
+         {
+            Error error = readStringVectorFromFile(filePath, &entries);
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+
+      for (auto entry : entries)
+      {
+         XRefIndexEntry indexEntry(sourceFile, entry);
+         indexEntries.push_back(indexEntry);
+      }
+   }
+
+   return indexEntries;
+}
+
+std::vector<XRefIndexEntry> indexEntriesForFile(const XRefFileIndex& fileIndex)
+{
+   std::vector<XRefIndexEntry> indexEntries;
+   for (auto entry : fileIndex.entries)
+   {
+      XRefIndexEntry indexEntry(fileIndex.file, entry);
+      indexEntries.push_back(indexEntry);
+   }
+
+   return indexEntries;
+}
+
+
+json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
+{
+   // split out text refs (as a map) and normal entries
+   std::map<std::string,std::string> textRefs;
+   std::vector<XRefIndexEntry> normalEntries;
+   boost::regex textRefRe("^(\\(.*\\))\\s+(.*)$");
+   for (auto indexEntry : entries)
+   {
+      boost::smatch matches;
+      if (boost::regex_search(indexEntry.entry, matches, textRefRe))
+      {
+         textRefs[matches[1]] = matches[2];
+      }
+      else
+      {
+         normalEntries.push_back(indexEntry);
+      }
+   }
+
+   // turn normal entries into xref json
+   json::Array xrefsJson;
+   for (auto indexEntry : normalEntries)
+   {
+      json::Object xrefJson;
+
+      xrefJson["file"] = indexEntry.file;
+
+      auto entry = indexEntry.entry;
+      if (entry.size() > 0)
+      {
+         std::size_t spacePos = entry.find_first_of(' ');
+         if (spacePos != std::string::npos)
+         {
+            // write the id
+            writeEntryId(entry.substr(0, spacePos), &xrefJson);
+
+            // get the title (substitute textref if we have one)
+            std::string title = entry.substr(spacePos + 1);
+
+            std::string textrefTitle = textRefs[title];
+            if (textrefTitle.length() > 0)
+               title = textrefTitle;
+
+            // write the title
+            xrefJson["title"] = title;
+         }
+         else
+         {
+            writeEntryId(entry, &xrefJson);
+         }
+         xrefsJson.push_back(xrefJson);
+      }
+   }
+
+   return xrefsJson;
+}
+
 
 
 void fileChangeHandler(const core::system::FileChangeEvent& event)
@@ -317,7 +374,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // update unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(pDoc->path()));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.updateUnsaved(fileInfo, pDoc->contents(), pDoc->dirty());
+      s_unsavedIndex.updateUnsaved(fileInfo, pDoc->contents(), pDoc->dirty());
 
 }
 
@@ -330,12 +387,12 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
    // remove from unsaved if it's a bookdown rmd
    FileInfo fileInfo(module_context::resolveAliasedPath(path));
    if (isBookdownRmd(fileInfo))
-      s_projectIndex.removeUnsaved(fileInfo);
+      s_unsavedIndex.removeUnsaved(fileInfo);
 }
 
 void onAllSourceDocsRemoved()
 {
-   s_projectIndex.removeAllUnsaved();
+   s_unsavedIndex.removeAllUnsaved();
 }
 
 bool isBookdownContext()
@@ -378,7 +435,8 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    // if this is a bookdown context then send the whole project index
    if (isBookdownContext() && filePath.isWithin(projects::projectContext().buildTargetPath()))
    {
-      pResponse->setResult(s_projectIndex.toJson());
+      std::vector<XRefIndexEntry> entries = indexEntriesForProject();
+      pResponse->setResult(indexEntriesToXRefs(entries));
    }
 
    // otherwise just send an index for this file (it will be in the source database)
@@ -399,7 +457,8 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          else
          {
             XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
-            pResponse->setResult(entriesJson(idx));
+            std::vector<XRefIndexEntry> entries = indexEntriesForFile(idx);
+            pResponse->setResult(indexEntriesToXRefs(entries));
          }
       }
       else

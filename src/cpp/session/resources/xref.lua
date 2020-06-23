@@ -5,16 +5,27 @@ local chunk_end_pattern = ".*}.*$"
 local xref_label_pattern = "([a-zA-Z0-9/%-]+)"
 local param_pattern = "%s*=%s*[\"']([^\"']+)[\"']"
 
--- output paragraph if it contains an xref (some of the functions below
--- (e.g. Code and DisplayMath) set this flag if the discover an xref
+-- state indicating whether an xref write is pending (some of the functions
+-- below e.g. Code and DisplayMath set this flag if they discover an xref)
 local xref_pending = false
+
 function Para(s)
+  
+  -- write xref if it's pending
   if xref_pending then
     xref_pending = false
     return s
+  
+  -- otherwise look for a text reference
   else
-    return ''
+    local text_ref_pattern = "^%(ref:[a-zA-Z0-9_]+%)%s+.*$" 
+    if string.match(s, text_ref_pattern) then
+      return s .. '\n'
+    else
+      return ''
+    end
   end
+  
 end
 
 -- headers just output id and header text
