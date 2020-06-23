@@ -45,10 +45,10 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
+  insertBibEntry: InsertBibEntryFn;
 }
 
 export interface EditorUIContext {
-
   // get the path to the current document
   getDocumentPath: () => string | null;
 
@@ -131,6 +131,8 @@ export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) =
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
+export type InsertBibEntryFn = (props: InsertBibEntryProps) => Promise<InsertBibEntryResult | null>;
+
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -199,6 +201,15 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
+}
+
+export interface InsertBibEntryProps {
+  suggestedId: string;
+  bibliographyFiles: string[];
+}
+
+export interface InsertBibEntryResult {
+  id: string;
 }
 
 export interface RawFormatProps {

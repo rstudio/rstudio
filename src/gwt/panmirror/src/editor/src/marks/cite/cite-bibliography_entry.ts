@@ -48,6 +48,25 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
   };
 }
 
+// Suggests a bibliographyic identifier based upon the source
+export function suggestId(author?: BibliographyAuthor[], issued?: BibliographyDate) {
+  let authorPart = '';
+  if (author && author.length > 0) {
+    if (author[0].family) {
+      authorPart = author[0].family;
+    } else if (author[0].literal) {
+      authorPart = author[0].literal;
+    }
+  }
+
+  let datePart = '';
+  if (issued && issued['date-parts'].length > 0) {
+    datePart = issued['date-parts'][0][0] + '';
+  }
+
+  return `${authorPart}${datePart}`;
+}
+
 export function imageForType(ui: EditorUI, type: string): [string?, string?] {
   switch (type) {
     case 'article':

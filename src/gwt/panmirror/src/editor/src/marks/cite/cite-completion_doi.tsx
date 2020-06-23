@@ -12,16 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 
 import React from 'react';
 
-import { EditorUI } from '../../api/ui';
+import { EditorUI, InsertBibEntryProps } from '../../api/ui';
 import { CrossrefServer, parseDOI, CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { parseCitation } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
+import { imageForType, formatAuthors, formatIssuedDate, suggestId } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 
 export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServer): CompletionHandler<CrossrefEntry> {
@@ -30,11 +30,23 @@ export function citationDoiCompletionHandler(ui: EditorUI, server: CrossrefServe
 
     completions: citationDOICompletions(ui, server),
 
-    replacement(_schema: Schema, entry: CrossrefEntry | null): string | ProsemirrorNode | null {
-      if (entry) {
-        return entry.DOI;
-      } else {
-        return null;
+    replace(view: EditorView, pos: number, completion: CrossrefEntry | null) {
+      if (completion) {
+        const bibProps: InsertBibEntryProps = {
+          suggestedId: suggestId(completion.author, completion.issued),
+          bibliographyFiles: [],
+        };
+        // Ask the user to provide information that we need in order to populate
+        // this citation (id, bibliography)
+        const citation = ui.dialogs.insertBibEntry(bibProps).then(result => {
+          // If the user provided an id, insert the citation
+          if (result && result.id.length) {
+            const tr = view.state.tr;
+            tr.setSelection(new TextSelection(tr.doc.resolve(pos), view.state.selection.$head));
+            tr.insertText(result.id);
+            view.dispatch(tr);
+          }
+        });
       }
     },
 
