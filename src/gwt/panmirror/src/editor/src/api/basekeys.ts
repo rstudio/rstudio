@@ -49,6 +49,8 @@ export enum BaseKey {
   ArrowRight = 'Right|ArrowRight',
   ModArrowUp = 'Mod-Up|Mod-ArrowUp',
   ModArrowDown = 'Mod-Down|Mod-ArrowDown',
+  CtrlHome = 'Ctrl-Home',
+  CtrlEnd = 'Ctrl-End',
   ShiftArrowLeft = "Shift-Left|Shift-ArrowLeft",
   ShiftArrowRight = "Shift-Right|Shift-ArrowRight",
   AltArrowLeft = "Alt-Left|Alt-ArrowLeft",
@@ -92,6 +94,7 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.ArrowRight, command: arrowBodyNodeBoundary('right') },
     { key: BaseKey.ArrowDown, command: arrowBodyNodeBoundary('down') },
     { key: BaseKey.ModArrowDown, command: endTopLevelBodyNodeBoundary() },
+    { key: BaseKey.CtrlEnd, command: endTopLevelBodyNodeBoundary() },
 
     // merge keys provided by extensions
     ...keys,
