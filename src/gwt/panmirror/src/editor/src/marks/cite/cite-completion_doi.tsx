@@ -43,42 +43,17 @@ export function citationDoiCompletionHandler(
 
     completions: citationDOICompletions(ui, server),
 
-    replace(view: EditorView, pos: number, completion: CrossrefEntry | null) {
-      if (completion) {
-        bibManager.sources(ui, view.state.doc).then(sources => {
-          // Figure out a unique Id (across all bibliographies in use) to suggest
-          const existingIds = sources.map(source => source.id);
-          const suggestedId = suggestId(existingIds, completion.title[0], completion.author, completion.issued);
-
-          const previewPairs = new Array<InsertCitePreviewPair>();
-          previewPairs.push({ name: "Title", value: completion.title[0] });
-          previewPairs.push({ name: "Type", value: completion.type });
-          previewPairs.push({ name: "Authors", value: formatAuthors(completion.author, 255) });
-          previewPairs.push({ name: "Issue Date", value: formatIssuedDate(completion.issued, ui) });
-
-          const containerTitle = completion["container-title"];
-          if (containerTitle) {
-            previewPairs.push({ name: "Publication", value: containerTitle });
-          }
-
-          const volume = completion.volume;
-          if (volume) {
-            previewPairs.push({ name: "Volume", value: volume });
-          }
-
-          const page = completion.page;
-          if (volume) {
-            previewPairs.push({ name: "Page(s)", value: page });
-          }
-
-          previewPairs.push({ name: "DOI", value: completion.DOI });
+    replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
+      if (work) {
+        bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
 
           // Read bibliographies out of the document and pass those alone
           const bibliographies = bibliographyPaths(ui, view.state.doc);
+
           const citeProps: InsertCiteProps = {
-            suggestedId,
-            bibliographyFiles: bibliographies?.bibliography || [],
-            previewPairs
+            suggestedId: suggestId(bibliography.sources.map(source => source.id), work.title[0], work.author, work.issued),
+            bibliographyFiles: bibliography.project_biblios || bibliographies?.bibliography || [],
+            previewPairs: previewPairs(work, ui)
           };
 
           // Ask the user to provide information that we need in order to populate
@@ -130,6 +105,33 @@ function citationDOICompletions(ui: EditorUI, server: CrossrefServer) {
     }
     return null;
   };
+}
+
+function previewPairs(work: CrossrefWork, ui: EditorUI): InsertCitePreviewPair[] {
+
+  const pairs = new Array<InsertCitePreviewPair>();
+  pairs.push({ name: "Title", value: work.title[0] });
+  pairs.push({ name: "Type", value: work.type });
+  pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
+  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued, ui) });
+
+  const containerTitle = work["container-title"];
+  if (containerTitle) {
+    pairs.push({ name: "Publication", value: containerTitle });
+  }
+
+  const volume = work.volume;
+  if (volume) {
+    pairs.push({ name: "Volume", value: volume });
+  }
+
+  const page = work.page;
+  if (volume) {
+    pairs.push({ name: "Page(s)", value: page });
+  }
+
+  pairs.push({ name: "DOI", value: work.DOI });
+  return pairs;
 }
 
 interface CrossrefEntry extends CrossrefWork {

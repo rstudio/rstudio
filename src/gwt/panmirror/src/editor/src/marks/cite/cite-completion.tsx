@@ -91,6 +91,10 @@ function filterCitations(
   return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
+
+
+
+
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
     const parsed = parseCitation(context);
@@ -100,7 +104,19 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         pos: parsed.pos,
         offset: parsed.offset,
         completions: (_state: EditorState) =>
-          manager.sources(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
+          manager.loadBibliography(ui, context.doc).then((bibliography) => {
+
+            // Filter duplicate sources
+            const parsedIds = bibliography.sources.map(source => source.id);
+            const dedupedSources = bibliography.sources.filter((source, index) => {
+              return parsedIds.indexOf(source.id) === index;
+            });
+
+            // Sort by id by default
+            const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
+            return sortedSources.map(source => entryForSource(source, ui));
+          }
+          ),
         decorations:
           parsed.token.length === 0
             ? DecorationSet.create(

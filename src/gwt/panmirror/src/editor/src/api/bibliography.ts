@@ -78,16 +78,15 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 export class BibliographyManager {
   private readonly server: PandocServer;
   private etag: string;
-  private bibSources: BibliographySource[];
+  private bibliography: Bibliography | undefined;
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
 
   public constructor(server: PandocServer) {
     this.server = server;
     this.etag = '';
-    this.bibSources = [];
   }
 
-  public async sources(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographySource[]> {
+  public async loadBibliography(ui: EditorUI, doc: ProsemirrorNode): Promise<Bibliography> {
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
 
@@ -105,20 +104,12 @@ export class BibliographyManager {
       const result = await this.server.getBibliography(docPath, files ? files.bibliography : [], refBlock, this.etag);
 
       // Read bibliography data from files (via server)
-      if (!this.sources || result.etag !== this.etag) {
+      if (!this.bibliography || result.etag !== this.etag) {
         const sources = result.bibliography.sources;
         const parsedIds = sources.map(source => source.id);
 
-        // Filter duplicate sources
-        const dedupedSources = sources.filter((source, index) => {
-          return parsedIds.indexOf(source.id) === index;
-        });
-
-        // Sort by id by default
-        const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
-
-        this.bibSources = sortedSources;
-        this.updateIndex(sortedSources);
+        this.bibliography = result.bibliography;
+        this.updateIndex(this.bibliography.sources);
       }
 
       // record the etag for future queries
@@ -126,10 +117,12 @@ export class BibliographyManager {
     }
 
     // return sources
-    return this.bibSources;
+    return this.bibliography || { sources: [], project_biblios: [] };
   }
 
   public search(query: string, limit: number): BibliographySource[] {
+    // TODO: If search is called but the server hasn't downloaded, we should 
+    // download the data, then index, then search?
     if (this.fuse) {
       const options = {
         isCaseSensitive: false,
