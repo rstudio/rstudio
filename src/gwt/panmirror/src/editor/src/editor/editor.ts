@@ -266,8 +266,8 @@ export class Editor {
 
     // provide format defaults
     format = {
-      pandocMode: 'markdown',
-      pandocExtensions: '',
+      pandocMode: format.pandocMode || 'markdown',
+      pandocExtensions: format.pandocMode || '',
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
@@ -280,8 +280,7 @@ export class Editor {
         shortcodes: false,
         ...format.hugoExtensions,
       },
-      docTypes: [],
-      ...format,
+      docTypes: format.docTypes || [],
     };
 
     // provide context defaults
