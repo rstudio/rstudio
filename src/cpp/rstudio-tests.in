@@ -154,7 +154,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
 
     export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
     export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler"
-    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests --config-file="$SESSION_CONF_FILE"
+    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests 1 --config-file="$SESSION_CONF_FILE"
 fi
    
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
