@@ -42,6 +42,8 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -100,13 +102,45 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          parentToolbar_.invalidateSeparators();
       }
 
+      public boolean hasSourceColumn()
+      {
+         return false;
+      }
+
       private final AppCommand command_;
       private boolean synced_ = true;
       private HandlerRegistration handlerReg_;
       private HandlerRegistration handlerReg2_;
       private Toolbar parentToolbar_;
    }
-   
+
+   private class CommandSourceColumnToolbarButton extends CommandToolbarButton
+   {
+
+      public CommandSourceColumnToolbarButton(String buttonLabel,
+                                              String buttonTitle,
+                                              ImageResourceProvider imageResourceProvider,
+                                              AppCommand command,
+                                              boolean synced,
+                                              SourceColumn column)     {
+         super(buttonLabel, buttonTitle, imageResourceProvider, command, synced);
+         sourceColumn_ = column;
+      }
+
+      @Override
+      public boolean hasSourceColumn()
+      {
+         return true;
+      }
+
+      public SourceColumn getSourceColumn()
+      {
+         return sourceColumn_;
+      }
+
+      private final SourceColumn sourceColumn_;
+   }
+
    public AppCommand()
    {
       if (Desktop.hasDesktopFrame())
@@ -170,7 +204,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 
                   : "AppCommand executed but nobody was listening: " + getId();
       }
-      
+
+      if (!StringUtil.isNullOrEmpty(sourceColumnName_))
+      {
+         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+         mgr.setActive(sourceColumnName_);
+      }
+
       CommandEvent event = new CommandEvent(this);
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
@@ -528,6 +568,26 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return button;
    }
 
+   public ToolbarButton createToolbarButton(SourceColumn column)
+   {
+      return createToolbarButton(true, column);
+   }
+
+   public ToolbarButton createToolbarButton(boolean synced, SourceColumn column)
+   {
+      CommandSourceColumnToolbarButton button =
+         new CommandSourceColumnToolbarButton(getButtonLabel(),
+                                              getDesc(),
+                                              this,
+                                              this,
+                                              synced,
+                                              column);
+      if (getTooltip() != null)
+         button.setTitle(getTooltip());
+      sourceColumnName_ = column.getName();
+      return button;
+   }
+
    public MenuItem createMenuItem(boolean mainMenu)
    {
       return new AppMenuItem(this, mainMenu);
@@ -705,6 +765,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       return executedFromShortcut_;
    }
+
+   public String getSourceColumnName()
+   {
+      return sourceColumnName_;
+   }
    
    public static void disableNoHandlerAssertions()
    {
@@ -771,6 +836,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String id_;
    private ImageResource rightImage_ = null;
    private String rightImageDesc_ = null;
+   private String sourceColumnName_;
    
    private boolean executedFromShortcut_ = false;
  
@@ -779,4 +845,4 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public static final String WINDOW_MODE_BACKGROUND = "background";
    public static final String WINDOW_MODE_MAIN = "main";
    public static final String WINDOW_MODE_ANY = "any";
-}
+/**/}

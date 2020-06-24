@@ -143,6 +143,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -1386,7 +1387,8 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
-   public void initialize(final SourceDocument document,
+   public void initialize(SourceColumn column,
+                          final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           Provider<String> defaultNameProvider)
@@ -1422,7 +1424,8 @@ public class TextEditingTarget implements
                                           fileType_,
                                           extendedType_,
                                           events_,
-                                          session_);
+                                          session_,
+                                          column);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);

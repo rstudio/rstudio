@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -73,6 +74,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
                               implements CodeBrowserEditingTarget.Display
 {
    public CodeBrowserEditingTargetWidget(Commands commands,
+                                         SourceColumn column,
                                          final GlobalDisplay globalDisplay,
                                          final EventBus eventBus,
                                          final CodeToolsServerOperations server,
@@ -82,6 +84,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       server_ = server;
+      column_ = column;
       
       docDisplay_ = docDisplay;
       
@@ -111,7 +114,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          },
          false); // don't show replace UI
       
-      panel_ = new PanelWithToolbars(createToolbar(),
+      panel_ = new PanelWithToolbars(createToolbar(column),
                                      createSecondaryToolbar(),
                                      docDisplay_.asWidget(),
                                      null);
@@ -423,9 +426,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       private final GlobalProgressDelayer progress_;
    }
    
-   private Toolbar createToolbar()
+   private Toolbar createToolbar(SourceColumn column)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column);
 
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton()); 
       toolbar.addLeftSeparator();
@@ -504,5 +507,6 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
    private InfoBar warningBar_;
+   private SourceColumn column_;
   
 }

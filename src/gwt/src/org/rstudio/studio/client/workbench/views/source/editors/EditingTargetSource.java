@@ -19,6 +19,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
@@ -30,7 +31,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 public interface EditingTargetSource
 {
    EditingTarget getEditingTarget(FileType fileType);
-   EditingTarget getEditingTarget(SourceDocument document,
+   EditingTarget getEditingTarget(SourceColumn column,
+                                  SourceDocument document,
                                   RemoteFileSystemContext fileContext,
                                   Provider<String> defaultNameProvider);
    String getDefaultNamePrefix(SourceDocument doc);
@@ -73,15 +75,17 @@ public interface EditingTargetSource
             return null;
       }
 
-      public EditingTarget getEditingTarget(final SourceDocument document,
-                                   final RemoteFileSystemContext fileContext,
-                                   final Provider<String> defaultNameProvider)
+      public EditingTarget getEditingTarget(SourceColumn column,
+                                            final SourceDocument document,
+                                            final RemoteFileSystemContext fileContext,
+                                            final Provider<String> defaultNameProvider)
       {
          FileType type = getTypeFromDocument(document);
          
          final FileType finalType = type;
          EditingTarget target = getEditingTarget(type);
-         target.initialize(document,
+         target.initialize(column,
+                           document,
                            fileContext,
                            finalType,
                            defaultNameProvider);

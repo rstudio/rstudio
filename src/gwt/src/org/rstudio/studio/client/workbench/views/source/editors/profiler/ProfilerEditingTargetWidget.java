@@ -29,6 +29,7 @@ import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
@@ -37,14 +38,18 @@ public class ProfilerEditingTargetWidget extends Composite
 {
    private RStudioThemedFrame profilePage_;
    
-   public ProfilerEditingTargetWidget(String title, Commands commands, PublishHtmlSource publishHtmlSource)
+   public ProfilerEditingTargetWidget(String title,
+                                      Commands commands,
+                                      PublishHtmlSource publishHtmlSource,
+                                      SourceColumn column)
    {
       VerticalPanel panel = new VerticalPanel();
       Roles.getTabpanelRole().set(panel.getElement());
       Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), title + " Profile View");
 
+      column_ = column;
       PanelWithToolbars mainPanel = new PanelWithToolbars(
-                                          createToolbar(commands, publishHtmlSource), 
+                                          createToolbar(commands, publishHtmlSource),
                                           panel);
 
       profilePage_ = new RStudioThemedFrame(
@@ -148,9 +153,10 @@ public class ProfilerEditingTargetWidget extends Composite
       window.print();
    }
 
-   private Toolbar createToolbar(Commands commands, PublishHtmlSource publishHtmlSource)
+   private Toolbar createToolbar(Commands commands,
+                                 PublishHtmlSource publishHtmlSource)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands, true);
+      Toolbar toolbar = new EditingTargetToolbar(commands, true, column_);
       
       toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
       toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
@@ -184,4 +190,5 @@ public class ProfilerEditingTargetWidget extends Composite
    }
    
    private RSConnectPublishButton publishButton_;
+   private SourceColumn column_;
 }

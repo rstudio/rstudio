@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -97,7 +98,8 @@ public class TextEditingTargetWidget
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
-                                  Session session)
+                                  Session session,
+                                  SourceColumn column)
    {
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -105,6 +107,7 @@ public class TextEditingTargetWidget
       userPrefs_ = userPrefs;
       userState_ = userState;
       session_ = session;
+      column_ = column;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
       extendedType_ = extendedType;
@@ -311,7 +314,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
 
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -1789,6 +1792,7 @@ public class TextEditingTargetWidget
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private final ShinyTestPopupMenu shinyTestMenu_;
    private final PlumberViewerTypePopupMenu plumberViewerMenu_;
+   private SourceColumn column_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;

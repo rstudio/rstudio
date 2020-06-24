@@ -154,7 +154,8 @@ public class DataEditingTarget extends UrlContentEditingTarget
             "Data Browser",
             commands_,
             events_,
-            getDataItem());
+            getDataItem(),
+            column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,11 +24,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class EditingTargetToolbar extends Toolbar
 {
-   public EditingTargetToolbar(Commands commands, boolean includePopout)
+   public EditingTargetToolbar(Commands commands, boolean includePopout, SourceColumn column)
    {
       super("Code Editor Tab");
-      addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
+      addLeftWidget(commands.sourceNavigateBack().createToolbarButton(column));
+      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton(column);
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       addLeftWidget(forwardButton);
       addLeftSeparator();
@@ -35,11 +36,11 @@ public class EditingTargetToolbar extends Toolbar
       {
          if (SourceWindowManager.isMainSourceWindow())
          {
-            addLeftWidget(commands.popoutDoc().createToolbarButton());
+            addLeftWidget(commands.popoutDoc().createToolbarButton(column));
          }
          else
          {
-            addLeftWidget(commands.returnDocToMain().createToolbarButton());
+            addLeftWidget(commands.returnDocToMain().createToolbarButton(column));
          }
          addLeftSeparator();
       }
