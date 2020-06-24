@@ -50,12 +50,7 @@ const extension: Extension = {
 
   commands: (schema: Schema) => {
     return [
-      new BlockCommand(
-        EditorCommandId.Paragraph,
-        ['Mod-Alt-0'],
-        schema.nodes.paragraph,
-        schema.nodes.paragraph
-      ),
+      new BlockCommand(EditorCommandId.Paragraph, ['Mod-Alt-0'], schema.nodes.paragraph, schema.nodes.paragraph),
       new InsertParagraphCommand(),
     ];
   },

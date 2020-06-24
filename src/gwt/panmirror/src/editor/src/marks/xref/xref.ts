@@ -35,7 +35,6 @@ import { xrefCompletionHandler } from './xref-completion';
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, format, ui, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
@@ -146,6 +145,17 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [
         // recoginize new ref
         new InputRule(/(^|[^`])(\\?@ref\()$/, (state: EditorState, match: string[], start: number, end: number) => {
+          // if this completes an xref at this position then stand down
+          const kRefLen = 4;
+          const { parent, parentOffset } = state.selection.$head;
+          const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset);
+          const after = parent.textContent.slice(parentOffset);
+          const potentialXref = before + '(' + after;
+          if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXref)) {
+            return null;
+          }
+
+          // insert the xref
           const tr = state.tr;
           tr.delete(start + match[1].length, end);
           insertRef(tr);
@@ -179,7 +189,10 @@ const extension = (context: ExtensionContext): Extension | null => {
               description: ui.context.translateText('Reference to related content'),
               group: OmniInsertGroup.References,
               priority: 0,
-              image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.cross_reference_dark! : ui.images.omni_insert!.cross_reference!,
+              image: () =>
+                ui.prefs.darkMode()
+                  ? ui.images.omni_insert!.cross_reference_dark!
+                  : ui.images.omni_insert!.cross_reference!,
             },
           ),
         ];
@@ -194,7 +207,7 @@ function insertRef(tr: Transaction) {
   const schema = tr.doc.type.schema;
   const selection = tr.selection;
   const refText = '@ref()';
-  tr.replaceSelectionWith(schema.text(refText), false);
+  tr.replaceSelectionWith(schema.text(refText, schema.marks.xref.create()), false);
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }
 

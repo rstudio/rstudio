@@ -65,7 +65,6 @@ export enum ListNumberDelim {
 const plugin = new PluginKey('list');
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, ui } = context;
 
   // determine list capabilities based on active format options

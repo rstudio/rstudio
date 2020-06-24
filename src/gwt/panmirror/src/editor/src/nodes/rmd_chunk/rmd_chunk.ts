@@ -33,7 +33,6 @@ import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 import './rmd_chunk-styles.css';
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { ui, options, format } = context;
 
   if (!format.rmdExtensions.codeChunks) {
@@ -138,7 +137,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
     image: () => string,
     rowOffset = 1,
     colOffset = 0,
-    selectionOffset?: number
+    selectionOffset?: number,
   ) {
     super(id, keymap, insertRmdChunk(placeholder, rowOffset, colOffset), {
       name: `${lang} ${ui.context.translateText('Code Chunk')}`,
@@ -153,9 +152,8 @@ class RmdChunkCommand extends ProsemirrorCommand {
 
 class RChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(
-      ui, EditorCommandId.RCodeChunk, ['Mod-Alt-i'], 10, 'R', '{r}\n',
-      () => ui.prefs.darkMode() ? ui.images.omni_insert!.r_chunk_dark! : ui.images.omni_insert!.r_chunk!
+    super(ui, EditorCommandId.RCodeChunk, ['Mod-Alt-i'], 10, 'R', '{r}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.r_chunk_dark! : ui.images.omni_insert!.r_chunk!,
     );
   }
 }
@@ -163,26 +161,29 @@ class RChunkCommand extends RmdChunkCommand {
 class PythonChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
     super(
-      ui, EditorCommandId.PythonCodeChunk, [], 8, 'Python', '{python}\n',
-      () => ui.images.omni_insert!.python_chunk!
+      ui,
+      EditorCommandId.PythonCodeChunk,
+      [],
+      8,
+      'Python',
+      '{python}\n',
+      () => ui.images.omni_insert!.python_chunk!,
     );
   }
 }
 
 class BashChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(
-      ui, EditorCommandId.BashCodeChunk, [], 7, 'Bash', '{bash}\n',
-      () => ui.prefs.darkMode() ? ui.images.omni_insert!.bash_chunk_dark! : ui.images.omni_insert!.bash_chunk!
+    super(ui, EditorCommandId.BashCodeChunk, [], 7, 'Bash', '{bash}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.bash_chunk_dark! : ui.images.omni_insert!.bash_chunk!,
     );
   }
 }
 
 class RcppChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(
-      ui, EditorCommandId.RcppCodeChunk, [], 6, 'Rcpp', '{Rcpp}\n',
-      () => ui.prefs.darkMode() ? ui.images.omni_insert!.rcpp_chunk_dark! : ui.images.omni_insert!.rcpp_chunk!
+    super(ui, EditorCommandId.RcppCodeChunk, [], 6, 'Rcpp', '{Rcpp}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.rcpp_chunk_dark! : ui.images.omni_insert!.rcpp_chunk!,
     );
   }
 }
@@ -190,26 +191,37 @@ class RcppChunkCommand extends RmdChunkCommand {
 class SQLChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
     super(
-      ui, EditorCommandId.SQLCodeChunk, [], 5, 'SQL', '{sql connection=}\n',
-      () => ui.images.omni_insert!.sql_chunk!, 0, 16
+      ui,
+      EditorCommandId.SQLCodeChunk,
+      [],
+      5,
+      'SQL',
+      '{sql connection=}\n',
+      () => ui.images.omni_insert!.sql_chunk!,
+      0,
+      16,
     );
   }
 }
 
 class D3ChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(
-      ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n',
-      () => ui.images.omni_insert!.d3_chunk!, 0, 9
-    );
+    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, 0, 9);
   }
 }
 
 class StanChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
     super(
-      ui, EditorCommandId.StanCodeChunk, [], 7, 'Stan', '{stan output.var=}\n',
-      () => ui.images.omni_insert!.stan_chunk!, 0, 17
+      ui,
+      EditorCommandId.StanCodeChunk,
+      [],
+      7,
+      'Stan',
+      '{stan output.var=}\n',
+      () => ui.images.omni_insert!.stan_chunk!,
+      0,
+      17,
     );
   }
 }

@@ -27,7 +27,11 @@ import { hasFencedCodeBlocks } from '../../api/pandoc_format';
 
 export const kEditAttrShortcut = 'F4';
 
-export function attrEditExtension(pandocExtensions: PandocExtensions, ui: EditorUI, editors: AttrEditOptions[]): Extension {
+export function attrEditExtension(
+  pandocExtensions: PandocExtensions,
+  ui: EditorUI,
+  editors: AttrEditOptions[],
+): Extension {
   const hasAttr = pandocAttrEnabled(pandocExtensions) || hasFencedCodeBlocks(pandocExtensions);
 
   return {

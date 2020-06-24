@@ -31,7 +31,7 @@ import {
   emojiFromChar,
   emojiForAllSkinTones,
   Emoji,
-  emojiWithSkinTonePreference
+  emojiWithSkinTonePreference,
 } from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
@@ -40,7 +40,6 @@ const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { ui } = context;
 
   return {

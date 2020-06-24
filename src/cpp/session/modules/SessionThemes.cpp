@@ -567,7 +567,6 @@ void setCacheableFile(const FilePath& filePath,
                       const http::Request& request,
                       http::Response* pResponse)
 {
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 

@@ -39,7 +39,6 @@ const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
 
 const extension = (context: ExtensionContext) => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.fenced_divs && !pandocExtensions.native_divs) {

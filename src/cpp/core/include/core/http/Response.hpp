@@ -338,16 +338,65 @@ public:
              filePath.getMimeContentType() == "text/html";
    }
    
+   /**
+    * Sets the given file as the response to the request. Allows the file to be cached by the
+    * browser, but ensures that the browser will check for new copies of the file every time (using
+    * revalidation headers).
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    */
    void setCacheableFile(const FilePath& filePath, const Request& request)
    {
-      NullOutputFilter nullFilter;
-      setCacheableFile(filePath, request, nullFilter);
+      setCacheWithRevalidationHeaders();
+      setIndefiniteCacheableFile(filePath, request);
    }
-   
+
+   /**
+    * Sets the given file as the response to the request, filtering the file's contents through the
+    * given output filter before returning the response. Allows the result to be cached by the
+    * browser, but ensures that the browser will check for new copies of the file every time (using
+    * revalidation headers).
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    * @param filter    An output filter through which to process the file contents.
+    */
    template <typename Filter>
    void setCacheableFile(const FilePath& filePath, 
                          const Request& request, 
                          const Filter& filter)
+   {
+      setCacheWithRevalidationHeaders();
+      setIndefiniteCacheableFile(filePath, request, filter);
+   }
+
+   /**
+    * Sets the given file as the response to the request. Allows the file to be cached by the
+    * browser indefinitely. 
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    */
+   void setIndefiniteCacheableFile(const FilePath& filePath, const Request& request)
+   {
+      NullOutputFilter nullFilter;
+      setIndefiniteCacheableFile(filePath, request, nullFilter);
+   }
+   
+   /**
+    * Sets the given file as the response to the request, filtering the file's contents through the
+    * given output filter before returning the response. Allows the result to be cached by the
+    * browser indefinitely. 
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    * @param filter    An output filter through which to process the file contents.
+    */
+   template <typename Filter>
+   void setIndefiniteCacheableFile(const FilePath& filePath, 
+                                   const Request& request, 
+                                   const Filter& filter)
    {
       // ensure that the file exists
       if (!filePath.exists())
@@ -372,7 +421,6 @@ public:
          setFile(filePath, request, filter);
       }
    }
-
    void setRangeableFile(const FilePath& filePath, const Request& request);
 
    void setRangeableFile(const std::string& contents,

@@ -61,6 +61,9 @@ export interface EditorUIContext {
   // map from a resource reference (e.g. images/foo.png) to a URL we can use in the document
   mapResourceToURL: (path: string) => string;
 
+  // watch a resource for changes (returns an unsubscribe function)
+  watchResource: (path: string, notify: VoidFunction) => VoidFunction;
+
   // translate a string
   translateText: (text: string) => string;
 }

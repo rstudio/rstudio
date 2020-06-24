@@ -31,7 +31,6 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
-
   const { pandocExtensions, pandocCapabilities, ui } = context;
 
   // always enabled so that extensions can make use of preprocessors + raw_attribute

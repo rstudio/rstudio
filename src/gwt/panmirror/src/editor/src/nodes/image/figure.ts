@@ -47,7 +47,6 @@ import { imageNodeViewPlugins } from './image-view';
 import { figureKeys } from './figure-keys';
 
 const extension = (context: ExtensionContext): Extension => {
-
   const { pandocExtensions, ui, events } = context;
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);

@@ -101,7 +101,6 @@ import { editorSchema } from './editor-schema';
 import './styles/frame.css';
 import './styles/styles.css';
 
-
 export interface EditorCode {
   code: string;
   cursor?: { row: number; column: number };
@@ -312,8 +311,6 @@ export class Editor {
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
-
-
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
 
@@ -388,7 +385,12 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.server.pandoc, this.pandocCapabilities);
+    this.pandocConverter = new PandocConverter(
+      this.schema,
+      this.extensions,
+      context.server.pandoc,
+      this.pandocCapabilities,
+    );
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -705,15 +707,18 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions({
-      format: this.format,
-      options: this.options,
-      ui: this.context.ui,
-      events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
-      pandocExtensions: this.pandocFormat.extensions,
-      pandocCapabilities: this.pandocCapabilities,
-      server: this.context.server
-    }, this.context.extensions);
+    return initExtensions(
+      {
+        format: this.format,
+        options: this.options,
+        ui: this.context.ui,
+        events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+        pandocExtensions: this.pandocFormat.extensions,
+        pandocCapabilities: this.pandocCapabilities,
+        server: this.context.server,
+      },
+      this.context.extensions,
+    );
   }
 
   private registerCompletionExtension() {
@@ -726,7 +731,9 @@ export class Editor {
     ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events)]);
+    this.extensions.register([
+      completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events),
+    ]);
   }
 
   private createPlugins(): Plugin[] {
@@ -787,7 +794,7 @@ export class Editor {
             } else {
               return false;
             }
-          }
+          },
         },
       },
     });

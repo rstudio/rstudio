@@ -108,7 +108,6 @@ import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
-
   // create extension manager
   const manager = new ExtensionManager(context);
 
@@ -221,7 +220,6 @@ export class ExtensionManager {
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-
         const ext = extension(this.context);
         if (ext) {
           this.extensions.push(ext);

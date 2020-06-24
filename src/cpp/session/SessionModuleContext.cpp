@@ -2398,31 +2398,41 @@ bool isSessionTempPath(FilePath filePath)
    return filePath.isWithin(tempDir);
 }
 
-std::string sessionTempDirUrl(const std::string& sessionTempPath)
+namespace {
+
+bool isUsingRHelpServer()
 {
-   static boost::optional<bool> useRHelpServer;
-
-   if (!useRHelpServer)
+   // don't use R help server in server mode
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // Initialize the flag indicating whether we should use the R help server;
-      // in desktop mode we can have R itself handle requests for content in
-      // the session temporary folder.
-      useRHelpServer = session::options().programMode() == kSessionProgramModeDesktop;
-
-#ifdef _WIN32
-      if (*useRHelpServer)
-      {
-         // There is a known issue serving content from the session temporary folder
-         // on R 4.0.0 for Windows
-         //
-         // https://github.com/rstudio/rstudio/issues/6737
-         //
-         useRHelpServer = !r::util::hasExactVersion("4.0.0");
-      }
-#endif
+      return false;
    }
 
-   if (*useRHelpServer)
+#ifdef _WIN32
+   // There is a known issue serving content from the session temporary folder
+   // on R 4.0.0 for Windows:
+   //
+   //    https://github.com/rstudio/rstudio/issues/6737
+   //
+   // so we avoid using the help server in that case.
+   if (r::util::hasExactVersion("4.0.0"))
+   {
+      return false;
+   }
+#endif
+
+   // we're running on desktop with a suitable version of R;
+   // okay to use the help server
+   return true;
+}
+
+} // end anonymous namespace
+
+std::string sessionTempDirUrl(const std::string& sessionTempPath)
+{
+   static bool useRHelpServer = isUsingRHelpServer();
+
+   if (useRHelpServer)
    {
       boost::format fmt("http://localhost:%1%/session/%2%");
       return boost::str(fmt % rLocalHelpPort() % sessionTempPath);

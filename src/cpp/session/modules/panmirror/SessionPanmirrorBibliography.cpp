@@ -302,6 +302,7 @@ void indexProjectCompleted(const std::vector<core::FileInfo>& biblioFiles,
 
 void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
                               const std::string& refBlock,
+                              const json::Array& refBlockCitations,
                               const json::JsonRpcFunctionContinuation& cont,
                               const core::system::ProcessResult& result)
 {
@@ -311,6 +312,9 @@ void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
       json::Array jsonCitations;
       if (json::parseJsonForResponse(result.stdOut, &jsonCitations, &response))
       {
+         // append refBlockCitations if we have any
+         std::copy(refBlockCitations.begin(), refBlockCitations.end(), std::back_inserter(jsonCitations));
+
          // create bibliography
          json::Object biblio;
          biblio["sources"] = jsonCitations;
@@ -332,6 +336,50 @@ void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
 
    // call continuation
    cont(Success(), &response);
+}
+
+void refBlockToJsonCompleted(const std::vector<core::FileInfo>& biblioFiles,
+                             const std::string& refBlock,
+                             const json::JsonRpcFunctionContinuation& cont,
+                             const core::system::ProcessResult& result)
+{
+   json::JsonRpcResponse response;
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      logBiblioStatus("Completed reading YAML references block");
+
+      json::Array jsonCitations;
+      if (json::parseJsonForResponse(result.stdOut, &jsonCitations, &response))
+      {
+         // build args
+         std::vector<std::string> args;
+         for (auto biblioFile : biblioFiles)
+            args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+         args.push_back("--bib2json");
+
+         // run pandoc-citeproc
+         Error error = module_context::runPandocCiteprocAsync(
+            args, boost::bind(getBibliographyCompleted, biblioFiles, refBlock, jsonCitations, cont, _1)
+         );
+         // if error call continuation with it
+         if (error)
+         {
+            json::setErrorResponse(error, &response);
+            cont(Success(), &response);
+         }
+      }
+      // call continuation with json parsing errror
+      else
+      {
+         cont(Success(), &response);
+      }
+   }
+   // call continuation with process execution error
+   else
+   {
+      json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
+      cont(Success(), &response);
+   }
 }
 
 void pandocGetBibliography(const json::JsonRpcRequest& request,
@@ -405,28 +453,41 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       return;
    }
 
-   // build args
-   std::vector<std::string> args;
-
-   // always pass the biblio files
-   for (auto biblioFile : biblioFiles)
-      args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
-
-   // if a ref block is provided then write it to a temporary file and pass it as well
+   // we are either going to run citeproc on the refBlock (if we got one) or
+   // we are going to run it directly on the biblio files. in the former
+   // case we'll handle the biblio files in the continuation
    if (!refBlock.empty())
    {
+      // build args
       FilePath tempYaml = module_context::tempFile("biblio", "yaml");
       Error error = writeStringToFile(tempYaml, refBlock);
       if (error)
          LOG_ERROR(error);
+      std::vector<std::string> args;
       args.push_back(string_utils::utf8ToSystem(tempYaml.getAbsolutePath()));
+      args.push_back("--bib2json");
+
+      // run pandoc-citeproc
+      error = module_context::runPandocCiteprocAsync(
+         args, boost::bind(refBlockToJsonCompleted, biblioFiles, refBlock, cont, _1)
+      );
+   }
+   else
+   {
+      // build args
+      std::vector<std::string> args;
+      for (auto biblioFile : biblioFiles)
+         args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+      args.push_back("--bib2json");
+
+      // run pandoc-citeproc
+      error = module_context::runPandocCiteprocAsync(
+         args, boost::bind(getBibliographyCompleted, biblioFiles, refBlock, json::Array(), cont, _1)
+      );
+
    }
 
-   // convert to json
-   args.push_back("--bib2json");
-
-   // run pandoc-citeproc
-   error = module_context::runPandocCiteprocAsync(args, boost::bind(getBibliographyCompleted, biblioFiles, refBlock, cont, _1));
+   // error launching citeproc results in error response
    if (error)
    {
       json::setErrorResponse(error, &response);

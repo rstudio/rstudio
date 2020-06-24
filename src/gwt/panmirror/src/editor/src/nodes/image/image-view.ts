@@ -78,6 +78,7 @@ class ImageNodeView implements NodeView {
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
   private unregisterOnResize: VoidFunction;
+  private unregisterWatchImg: VoidFunction | null = null;
 
   constructor(
     node: ProsemirrorNode,
@@ -200,6 +201,9 @@ class ImageNodeView implements NodeView {
   }
 
   public destroy() {
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
     this.unregisterOnResize();
     this.clearSizeOnVisibleTimer();
     this.detachResizeUI();
@@ -264,8 +268,22 @@ class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg() {
+
+    // unsubscribe from any existing resource watcher
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
+
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourceToURL(this.node.attrs.src);
+    const src = this.node.attrs.src;
+    this.img.src = this.editorUI.context.mapResourceToURL(src);
+
+    // if this is a local resource then watch it and update when it changes
+    if (!src.match(/^\w+:\/\//)) {
+      this.unregisterWatchImg = this.editorUI.context.watchResource(src, () => {
+        this.img.src = this.editorUI.context.mapResourceToURL(src);
+      });
+    }
 
     // title/tooltip
     this.img.title = '';

@@ -143,7 +143,7 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
       const token = match[2];
       return {
         pos,
-        offset: -match[1].length,
+        offset: -match[1].length + 1,
         token,
         completions: async () => {
           const docPath = ui.context.getDocumentPath();
@@ -183,6 +183,15 @@ function xrefView(ui: EditorUI): React.FC<XRef> {
   };
 }
 
+const kGenericType = {
+  image: (ui: EditorUI) => ui.images.omni_insert?.generic!
+};
+
+const kEqType = {
+  image: (ui: EditorUI) =>
+    ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark : ui.images.omni_insert?.math_display,
+};
+
 const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
   fig: {
     image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
@@ -190,8 +199,13 @@ const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined
   tab: {
     image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
   },
-  eq: {
-    image: (ui: EditorUI) =>
-      ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark : ui.images.omni_insert?.math_display,
-  },
+  eq: kEqType,
+  thm: kEqType,
+  lem: kEqType,
+  cor: kEqType,
+  prp: kEqType,
+  cnj: kEqType,
+  def: kEqType,
+  exm: kGenericType,
+  exr: kGenericType
 };

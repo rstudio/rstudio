@@ -25,6 +25,7 @@ void Options::addOverlayOptions(
                        boost::program_options::options_description* pServer,
                        boost::program_options::options_description* pWWW,
                        boost::program_options::options_description* pRSession,
+                       boost::program_options::options_description* pDatabase,
                        boost::program_options::options_description* pAuth,
                        boost::program_options::options_description* pMonitor)
 {

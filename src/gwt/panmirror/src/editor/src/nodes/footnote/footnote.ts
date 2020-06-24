@@ -48,7 +48,6 @@ import './footnote-styles.css';
 const plugin = new PluginKey('footnote');
 
 const extension = (context: ExtensionContext) => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.footnotes) {

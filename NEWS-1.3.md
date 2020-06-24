@@ -51,6 +51,10 @@
 - Update editor toolbar when R Markdown documents are switched to/from Notebook mode in YAML header (#7051)
 - Fix error when invoking spell check manually on some languages (#7018)
 - Fix RStudio Desktop Pro Job Launcher connections and path mappings (Pro #1726 and Pro #1727) 
+- Fix painting of Appearance pane in Global Options on RStudio Desktop (#6268)
+- Fix `Alt+-` shortcut to insert assignment operator in R Markdown documents (#7169)
+- Fix issue with duplicated signature tooltips in R Markdown documents (#7154)
+- Fix RStudio Server Pro issue where R version modules would sometimes not be able to modify the PATH environment variable (Pro #1737)
 
 ### RStudio Server Pro
 

@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.panmirror.ui;
 
 
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
+
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
@@ -26,6 +28,7 @@ public class PanmirrorUIContext
    public Getter getDefaultResourceDir;
    public Mapper mapPathToResource;
    public Mapper mapResourceToURL;
+   public WatchResource watchResource;
    public Mapper translateText;
 
    
@@ -39,6 +42,12 @@ public class PanmirrorUIContext
    public interface Mapper
    {
       String map(String path);
+   }
+   
+   @JsFunction
+   public interface WatchResource
+   {
+      JsVoidFunction watch(String path, JsVoidFunction notify);
    }
 }
 

@@ -30,7 +30,6 @@ import { yamlMetadataBlockCapsuleFilter } from './yaml_metadata-capsule';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
 const extension = (context: ExtensionContext) => {
-
   const { ui } = context;
 
   return {
@@ -46,7 +45,7 @@ const extension = (context: ExtensionContext) => {
           parseDOM: [
             {
               tag: "div[class*='yaml-block']",
-              preserveWhitespace: "full",
+              preserveWhitespace: 'full',
             } as ParseRule,
           ],
           toDOM(node: ProsemirrorNode): DOMOutputSpec {

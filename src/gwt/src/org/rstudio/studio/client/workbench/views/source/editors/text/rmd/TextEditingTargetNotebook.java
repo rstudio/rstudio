@@ -1035,7 +1035,7 @@ public class TextEditingTargetNotebook
          {
             // save scope and widget
             int terminalLine = widget.getRow() - 1;
-            Scope scope = docDisplay_.getCurrentChunk(Position.create(
+            Scope scope = docDisplay_.getChunkAtPosition(Position.create(
                   terminalLine, 1));
             ChunkOutputWidget outputWidget = output.getOutputWidget();
 
@@ -1150,7 +1150,7 @@ public class TextEditingTargetNotebook
          ScopeList scopes)
    {
       // find the chunk at this row
-      Scope chunk = display.getCurrentChunk(Position.create(row, 0));
+      Scope chunk = display.getChunkAtPosition(Position.create(row, 0));
       if (chunk == null)
          return "";
       

@@ -28,7 +28,6 @@ const SPAN_ATTR = 0;
 const SPAN_CHILDREN = 1;
 
 const extension = (context: ExtensionContext) => {
-
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.bracketed_spans && !pandocExtensions.native_spans) {
