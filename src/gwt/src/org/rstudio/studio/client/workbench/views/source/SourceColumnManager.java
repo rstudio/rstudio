@@ -288,13 +288,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void setActive(String name)
    {
-      if (StringUtil.isNullOrEmpty(name))
+      if (StringUtil.isNullOrEmpty(name) &&
+          activeColumn_ != null)
       {
-         if (activeColumn_ != null)
-         {
-            activeColumn_.setActiveEditor("");
-            activeColumn_ = null;
-         }
+         activeColumn_ = null;
          return;
       }
 
@@ -319,7 +316,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // If the active column changed, we need to update the active editor
       if (prevColumn != null && prevColumn != activeColumn_)
       {
-         prevColumn.setActiveEditor("");
          if (!hasActiveEditor())
             activeColumn_.setActiveEditor();
          manageCommands(true);

@@ -93,7 +93,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          setEnabled(command_.isEnabled());
       }
 
-      public void onVisibleChanged(AppCommand command)
+      public void onVisibleChanged(VisibleChangedEvent event)
       {
          setVisible(command_.isVisible());
          if (command_.isVisible())
@@ -107,11 +107,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          return false;
       }
 
-      private final AppCommand command_;
-      private boolean synced_ = true;
-      private HandlerRegistration handlerReg_;
-      private HandlerRegistration handlerReg2_;
-      private Toolbar parentToolbar_;
+      protected final AppCommand command_;
+      protected boolean synced_ = true;
+      protected HandlerRegistration handlerReg_;
+      protected HandlerRegistration handlerReg2_;
+      protected Toolbar parentToolbar_;
    }
 
    private class CommandSourceColumnToolbarButton extends CommandToolbarButton
@@ -124,7 +124,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                               boolean synced,
                                               SourceColumn column)     {
          super(buttonLabel, buttonTitle, imageResourceProvider, command, synced);
-         sourceColumn_ = column;
+         column_ = column;
+      }
+
+      @Override
+      protected void onAttach()
+      {
+         super.onAttach();
       }
 
       @Override
@@ -135,10 +141,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
       public SourceColumn getSourceColumn()
       {
-         return sourceColumn_;
+         return column_;
       }
 
-      private final SourceColumn sourceColumn_;
+      public void onVisibleChanged(VisibleChangedEvent event)
+      {
+         if (StringUtil.equals(event.getColumnName(), column_.getName()))
+         {
+            setVisible(command_.isVisible());
+            parentToolbar_.invalidateSeparators();
+         }
+      }
+
+      private SourceColumn column_;
    }
 
    public AppCommand()
@@ -146,7 +161,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (Desktop.hasDesktopFrame())
       {
          addEnabledChangedHandler((command) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
-         addVisibleChangedHandler((command) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
+         addVisibleChangedHandler((event) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
       }
    }
 
@@ -253,6 +268,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this));
+      }
+   }
+
+   public void setVisible(boolean visible, String sourceColumnName)
+   {
+      if (!removed_ && visible != visible_)
+      {
+         visible_ = visible;
+         handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName));
       }
    }
    

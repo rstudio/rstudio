@@ -25,9 +25,21 @@ public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
       command_ = command;
    }
 
+   public VisibleChangedEvent(AppCommand command,
+                              String columnName)
+   {
+      command_ = command;
+      columnName_ = columnName;
+   }
+
    public AppCommand getCommand()
    {
       return command_;
+   }
+
+   public String getColumnName()
+   {
+      return columnName_;
    }
 
    @Override
@@ -39,8 +51,9 @@ public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
    @Override
    protected void dispatch(VisibleChangedHandler handler)
    {
-      handler.onVisibleChanged(command_);
+      handler.onVisibleChanged(this);
    }
 
    private final AppCommand command_;
+   private String columnName_;
 }
