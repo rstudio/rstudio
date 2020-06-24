@@ -474,6 +474,7 @@ public class ElementIds
    public static String getVisualMdAttrIdLabel1() { return getElementId(VISUAL_MD_ATTR_ID_LABEL1); }
    public final static String VISUAL_MD_ATTR_ID_LABEL2 = "visual_md_attr_id_label2";
    public static String getVisualMdAttrIdLabel2() { return getElementId(VISUAL_MD_ATTR_ID_LABEL2); }
+   public final static String VISUAL_MD_ATTR_ID_GENERATE = "visual_md_attr_id_generate";
    public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
    public static String getVisualMdAttrId() { return getElementId(VISUAL_MD_ATTR_ID); }
    public final static String VISUAL_MD_ATTR_CLASSES_LABEL1 = "visual_md_attr_classes_label1";
