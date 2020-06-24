@@ -15,6 +15,8 @@
 
 define("mode/token_cursor", ["require", "exports", "module"], function(require, exports, module) {
 
+var $reParenType = /(?:^|[.])paren(?:$|[.])/;
+
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");
 var TokenCursor = function(tokens, row, offset) {
@@ -26,8 +28,6 @@ var TokenCursor = function(tokens, row, offset) {
 };
 
 (function () {
-
-   var $reParenType = /(?:^|[.])paren(?:$|[.])/;
 
    this.cloneCursor = function()
    {
