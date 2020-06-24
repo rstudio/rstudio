@@ -61,7 +61,7 @@ protected:
 
    pTests->add_options()
       (kRunTestsSessionOption,
-      value<bool>(&runTests_)->default_value(false),
+      value<bool>(&runTests_)->default_value(false)->implicit_value(true),
       "Runs unit tests and exits.");
 
    pScript->add_options()
