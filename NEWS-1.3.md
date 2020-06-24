@@ -18,6 +18,7 @@
 
 - Announce text of warnings bar via screen reader (#6963)
 - Fix issue where projects using renv sometimes failed to load (#7077)
+- Fix issue where attempts to create clusters via parallel package failed on macOS (#6692)
 - Fix display issue with keyboard shortcut in Modify Keyboard Shortcuts dialog (#7142)
 - Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix Compare Results and other incompatibility with newer versions of the `shinytest` package (#6960)
@@ -54,7 +55,9 @@
 - Fix painting of Appearance pane in Global Options on RStudio Desktop (#6268)
 - Fix `Alt+-` shortcut to insert assignment operator in R Markdown documents (#7169)
 - Fix issue with duplicated signature tooltips in R Markdown documents (#7154)
+- Fix issue with chunk toolbars not showing up in some cases (#7067)
 - Fix RStudio Server Pro issue where R version modules would sometimes not be able to modify the PATH environment variable (Pro #1737)
+- Fix dealing with expired sessions due to inactivity or signed out when using multiple browser tabs (Pro #1731, #7205)
 
 ### RStudio Server Pro
 
