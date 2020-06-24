@@ -27,6 +27,8 @@ var TokenCursor = function(tokens, row, offset) {
 
 (function () {
 
+   var $reParenType = /(?:^|[.])paren(?:$|[.])/;
+
    this.cloneCursor = function()
    {
       return new TokenCursor(
@@ -1107,10 +1109,10 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidForEndOfStatement = function()
    {
       var type = this.currentType();
-      if (type === "paren.keyword.operator" || type.search("paren.paren_color") !== -1)
-         return isRightBracket(this.currentValue());
-
       var value = this.currentValue();
+
+      if (type.search($reParenType) !== -1)
+         return isRightBracket(value);
 
       return isSingleLineString(value) ||
              this.hasType("identifier", "constant", "variable");
@@ -1119,7 +1121,9 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidForStartOfStatement = function()
    {
       var type = this.currentType();
-     if (type === "paren.keyword.operator" || type.search("paren.paren_color") !== -1)
+      var value = this.currentValue();
+
+      if (type.search($reParenType) !== -1)
          return isLeftBracket(this.currentValue());
 
       var value = this.currentValue();
