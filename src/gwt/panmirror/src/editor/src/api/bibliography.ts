@@ -31,6 +31,7 @@ export interface BibliographyResult {
 
 export interface Bibliography {
   sources: BibliographySource[];
+  project_biblios: string[];
 }
 
 // The individual bibliographic source

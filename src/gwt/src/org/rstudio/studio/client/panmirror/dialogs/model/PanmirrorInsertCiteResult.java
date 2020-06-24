@@ -3,7 +3,7 @@ package org.rstudio.studio.client.panmirror.dialogs.model;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorInsertBibEntryResult {
+public class PanmirrorInsertCiteResult {
 	public String id;
 	public String bibliographyFile;
 }

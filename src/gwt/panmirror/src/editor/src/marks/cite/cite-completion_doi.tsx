@@ -12,12 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+
+// TODO: Be sure to use polite pool for CrossRef.append mailto:query param to query string
+
+
 import { EditorView } from 'prosemirror-view';
 import { EditorState, Transaction } from 'prosemirror-state';
 
 import React from 'react';
 
-import { EditorUI, InsertBibEntryProps } from '../../api/ui';
+import { EditorUI, InsertCiteProps, InsertCitePreviewPair } from '../../api/ui';
 import { CrossrefServer, parseDOI, CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { parseCitation, kCitationCompleteScope } from './cite-completion';
@@ -43,18 +48,42 @@ export function citationDoiCompletionHandler(
         bibManager.sources(ui, view.state.doc).then(sources => {
           // Figure out a unique Id (across all bibliographies in use) to suggest
           const existingIds = sources.map(source => source.id);
-          const suggestedId = suggestId(existingIds, completion.author, completion.issued);
+          const suggestedId = suggestId(existingIds, completion.title[0], completion.author, completion.issued);
+
+          const previewPairs = new Array<InsertCitePreviewPair>();
+          previewPairs.push({ name: "Title", value: completion.title[0] });
+          previewPairs.push({ name: "Type", value: completion.type });
+          previewPairs.push({ name: "Authors", value: formatAuthors(completion.author, 255) });
+          previewPairs.push({ name: "Issue Date", value: formatIssuedDate(completion.issued, ui) });
+
+          const containerTitle = completion["container-title"];
+          if (containerTitle) {
+            previewPairs.push({ name: "Publication", value: containerTitle });
+          }
+
+          const volume = completion.volume;
+          if (volume) {
+            previewPairs.push({ name: "Volume", value: volume });
+          }
+
+          const page = completion.page;
+          if (volume) {
+            previewPairs.push({ name: "Page(s)", value: page });
+          }
+
+          previewPairs.push({ name: "DOI", value: completion.DOI });
 
           // Read bibliographies out of the document and pass those alone
           const bibliographies = bibliographyPaths(ui, view.state.doc);
-          const bibProps: InsertBibEntryProps = {
+          const citeProps: InsertCiteProps = {
             suggestedId,
             bibliographyFiles: bibliographies?.bibliography || [],
+            previewPairs
           };
 
           // Ask the user to provide information that we need in order to populate
           // this citation (id, bibliography)
-          const citation = ui.dialogs.insertBibEntry(bibProps).then(result => {
+          const citation = ui.dialogs.insertCite(citeProps).then(result => {
             // If the user provided an id, insert the citation
             if (result && result.id.length) {
               // Use the biblography manager to write an entry to the user specified bibliography

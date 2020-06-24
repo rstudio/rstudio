@@ -49,7 +49,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
 }
 
 // Suggests a bibliographyic identifier based upon the source
-export function suggestId(existingIds: string[], author?: BibliographyAuthor[], issued?: BibliographyDate) {
+export function suggestId(existingIds: string[], title?: string, author?: BibliographyAuthor[], issued?: BibliographyDate) {
   // Try to get the last name
   let authorPart = '';
   if (author && author.length > 0) {
@@ -70,17 +70,22 @@ export function suggestId(existingIds: string[], author?: BibliographyAuthor[], 
   let baseId = `${authorPart.toLowerCase()}${datePart}`;
   let proposedId = baseId;
   let count = 0;
-  const startCharacter = 65; // A
+
+  // If there is a conflict with an existing id, we will append
+  // the following character and try again. If the conflict continues with
+  // the postfix character added, we'll increment and keep going through the 
+  // alphabet
+  const disambiguationStartCharacter = 97; // a
 
   while (existingIds.includes(proposedId)) {
-    // If we've wrapped around to A and we haven't found a unique entry
-    // Add an 'A' to the end and try again. Will ultimately create an entry like
-    // Teague2012AAAAF
+    // If we've wrapped around to a and we haven't found a unique entry
+    // Add an 'a' to the end and try again. Will ultimately create an entry like
+    // Teague2012aaaf
     if (count !== 0 && count % 26 === 0) {
-      baseId = baseId + String.fromCharCode(startCharacter);
+      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
     }
 
-    const postfix = String.fromCharCode(startCharacter + (count % 26));
+    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
     proposedId = baseId + postfix;
     count++;
   }

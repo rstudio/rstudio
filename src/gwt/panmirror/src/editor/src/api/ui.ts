@@ -45,7 +45,7 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
-  insertBibEntry: InsertBibEntryFn;
+  insertCite: InsertCiteFn;
 }
 
 export interface EditorUIContext {
@@ -134,7 +134,7 @@ export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) =
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
-export type InsertBibEntryFn = (props: InsertBibEntryProps) => Promise<InsertBibEntryResult | null>;
+export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
 
 export interface AttrProps {
   readonly id?: string;
@@ -206,13 +206,20 @@ export interface InsertTableResult {
   caption?: string;
 }
 
-export interface InsertBibEntryProps {
+export interface InsertCiteProps {
   suggestedId: string;
   bibliographyFiles: string[];
+  previewPairs: InsertCitePreviewPair[];
 }
 
-export interface InsertBibEntryResult {
+export interface InsertCitePreviewPair {
+  name: string;
+  value: string;
+}
+
+export interface InsertCiteResult {
   id: string;
+  bibliography: string;
 }
 
 export interface RawFormatProps {

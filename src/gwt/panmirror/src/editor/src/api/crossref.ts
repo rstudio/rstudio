@@ -36,23 +36,51 @@ export interface CrossrefMessage<T> {
 
 // https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#work
 export interface CrossrefWork {
+  // Name of work's publisher
   publisher: string;
+
+  // Work titles, including translated titles
   title: string[];
+
+  // DOI of the work 
   DOI: string;
-  url: string;
+
+  // URL form of the work's DOI
+  URL: string;
+
+  // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
+
+  // Array of Contributors
   author: CrossrefContributor[];
+
+  // Earliest of published-print and published-online
   issued: CrossrefDate;
-  'short-title'?: string;
+
+  // Full titles of the containing work (usually a book or journal)
+  'container-title'?: string;
+
+  // Short titles of the containing work (usually a book or journal)
   'short-container-title'?: string;
-  abstract?: string;
+
+  // Issue number of an article's journal
+  issue: string;
+
+  // Volume number of an article's journal
+  volume: string;
+
+  // Pages numbers of an article within its journal
+  page: string;
 }
 
 export interface CrossrefContributor {
   family: string;
-  given: string;
+  given?: string;
 }
 
+/* (Partial Date) Contains an ordered array of year, month, day of month. Only year is required. 
+Note that the field contains a nested array, e.g. [ [ 2006, 5, 19 ] ] to conform 
+to citeproc JSON dates */
 export interface CrossrefDate {
   'date-parts': Array<[number, number?, number?]>;
 }
