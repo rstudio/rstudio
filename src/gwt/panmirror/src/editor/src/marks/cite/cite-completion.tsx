@@ -103,7 +103,15 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           manager.sources(ui, context.doc).then(sources => sources.map(source => entryForSource(source, ui))),
         decorations:
           parsed.token.length === 0
-            ? DecorationSet.create(context.doc, [searchPlaceholderDecoration(context.selection.head, ui)])
+            ? DecorationSet.create(
+              context.doc,
+              [
+                searchPlaceholderDecoration(
+                  context.selection.head, ui,
+                  ui.context.translateText('or DOI')
+                )
+              ]
+            )
             : undefined,
       };
     }
