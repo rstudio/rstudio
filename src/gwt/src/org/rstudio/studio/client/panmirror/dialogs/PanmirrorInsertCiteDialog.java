@@ -20,7 +20,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 
 	public PanmirrorInsertCiteDialog(PanmirrorInsertCiteProps citeProps,
 			OperationWithInput<PanmirrorInsertCiteResult> operation) {
-		super("Insert Bibliography Entry", Roles.getDialogRole(), operation, () -> {
+		super("Insert Citation", Roles.getDialogRole(), operation, () -> {
 			operation.execute(null);
 		});
 		mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
@@ -47,7 +47,9 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 	private int addPreviewRow(String label, String value, int row) {
 		if (value != null && value.length() > 0) {
 			previewTable_.setText(row, 0, label);
+			previewTable_.getFlexCellFormatter().addStyleName(row, 0, PanmirrorDialogsResources.INSTANCE.styles().flexTablePreviewName());
 			previewTable_.setText(row, 1, value);
+			previewTable_.getFlexCellFormatter().addStyleName(row, 1, PanmirrorDialogsResources.INSTANCE.styles().flexTablePreviewValue());
 			return ++row;
 		}
 		return row;

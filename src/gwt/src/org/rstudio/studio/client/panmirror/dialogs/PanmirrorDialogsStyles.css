@@ -112,4 +112,28 @@
    text-overflow: ellipsis;
 }
 
+.flexTablePreview {
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   box-sizing: border-box;
+   border: 1px solid #c3c5c7;
+   border-radius: 4px;
+   resize: none;
+   width: 100%;
+   padding: 8px;
+}
+
+.flexTablePreviewName {
+   vertical-align: top;
+   font-weight: 600;
+   padding-right: 8px;
+   padding-bottom: 4px;
+}
+
+.flexTablePreviewValue {
+   font-weight: 500;
+   padding-bottom: 4px;
+}
+
+
 

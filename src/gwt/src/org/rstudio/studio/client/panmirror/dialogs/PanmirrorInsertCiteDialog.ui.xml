@@ -15,31 +15,31 @@
 
 		<!-- TODO: element ids -->
 		<rw:FormLabel
-			elementId="{ElementIds.getVisualMdAttrIdLabel1}" text="Citation Id" />
+			text="Citation Id:" />
 
 
 		<rw:FormTextBox
-			elementId="{ElementIds.getVisualMdAttrId}"
 			styleName="{res.styles.fullWidth} {res.styles.spaced}"
 			ui:field="citationId_" />
 
 
 		<rw:FormLabel
-			for="{ElementIds.getVisualMdListNumberDelim}" text="Bibliography:" />
+			text="Bibliography:" />
 		
+	
 		<rw:SelectWidget
-			elementId="{ElementIds.getVisualMdListNumberDelim}"
-			styleName="{res.styles.fullWidth}" ui:field="bibliographies_" />
+			styleName="{res.styles.fullWidth} {res.styles.spaced}" 
+			ui:field="bibliographies_" />
 
+					
 		<rw:FormLabel
-			elementId="{ElementIds.getVisualMdListNumberDelimNote}"
-			styleName="{res.styles.infoLabel} {res.styles.spaced}"
-			text="An entry with this Id will be created in the selected bibliography." />
-
-		<rw:FormLabel
-			for="{ElementIds.getVisualMdListNumberDelim}" text="Preview:" />
+			styleName="{res.styles.fullWidth} {res.styles.spaced}"
+			text="Citation:" />
 		
-		<g:FlexTable ui:field="previewTable_">
+		<g:FlexTable 
+			ui:field="previewTable_" 
+			styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}">
+			
 		</g:FlexTable>
 
 

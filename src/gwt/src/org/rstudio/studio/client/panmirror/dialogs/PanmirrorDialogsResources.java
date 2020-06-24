@@ -42,6 +42,9 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String lockRatioCheckbox();
       String heightAuto();
       String langSuggestionDisplay();
+      String flexTablePreview();
+      String flexTablePreviewName();
+      String flexTablePreviewValue();
    }
 
    @Source("PanmirrorDialogsStyles.css")
