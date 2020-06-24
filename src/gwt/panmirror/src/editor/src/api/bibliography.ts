@@ -19,6 +19,7 @@ import Fuse from 'fuse.js';
 
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
+import { expandPaths } from './path';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -93,15 +94,16 @@ export class BibliographyManager {
     // Currently edited doc
     const docPath = ui.context.getDocumentPath();
 
-    // Gather the files from the document
-    const files = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
+    // Gather the biblography files from the document
+    const bibliographiesRelative = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
+    const bibliographiesAbsolute = expandPaths(ui.context.getDefaultResourceDir(), bibliographiesRelative?.bibliography || []);
 
     // Gather the reference block
     const refBlock = referenceBlockFromYaml(parsedYamlNodes);
 
-    if (docPath || files || refBlock) {
+    if (docPath || bibliographiesAbsolute.length > 0 || refBlock) {
       // get the bibliography
-      const result = await this.server.getBibliography(docPath, files ? files.bibliography : [], refBlock, this.etag);
+      const result = await this.server.getBibliography(docPath, bibliographiesAbsolute, refBlock, this.etag);
 
       // Read bibliography data from files (via server)
       if (!this.bibliography || result.etag !== this.etag) {
@@ -197,19 +199,14 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUI
 
     if (
       Array.isArray(bibliographyFiles) &&
-      bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')
-    ) {
-      // An array of bibliographies
-      const bibPaths = bibliographyFiles.map(
-        bibliographyFile => uiContext.getDefaultResourceDir() + '/' + bibliographyFile,
-      );
+      bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')) {
       return {
-        bibliography: bibPaths,
+        bibliography: bibliographyFiles,
       };
     } else {
       // A single bibliography
       return {
-        bibliography: [uiContext.getDefaultResourceDir() + '/' + bibliographyFiles],
+        bibliography: [bibliographyFiles],
       };
     }
   }
