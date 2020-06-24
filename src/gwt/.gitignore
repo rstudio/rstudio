@@ -4,6 +4,7 @@ gen/
 log/
 sdk/
 war/
+panmirror/
 
 # ignore log files dumped by a crashing GWT devmode
 /*.log

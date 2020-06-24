@@ -57,6 +57,7 @@
 - Fix issue with duplicated signature tooltips in R Markdown documents (#7154)
 - Fix issue with chunk toolbars not showing up in some cases (#7067)
 - Fix RStudio Server Pro issue where R version modules would sometimes not be able to modify the PATH environment variable (Pro #1737)
+- Fix dealing with expired sessions due to inactivity or signed out when using multiple browser tabs (Pro #1731, #7205)
 
 ### RStudio Server Pro
 

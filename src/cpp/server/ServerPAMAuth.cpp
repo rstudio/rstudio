@@ -217,9 +217,31 @@ bool mainPageFilter(const http::Request& request,
    }
 }
 
+void removeAuthCookie(const http::Request& request,
+                      http::Response* pResponse)
+{
+   core::http::secure_cookie::remove(request,
+                                     kUserIdCookie,
+                                     server::options().wwwUrlPathPrefix(),
+                                     pResponse,
+                                     boost::algorithm::starts_with(request.absoluteUri(), "https"));
+
+   if (options().authTimeoutMinutes() > 0)
+   {
+      core::http::secure_cookie::remove(request,
+                                        kPersistAuthCookie,
+                                        server::options().wwwUrlPathPrefix(),
+                                        pResponse,
+                                        boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   }
+}
+
 void signInThenContinue(const core::http::Request& request,
                         core::http::Response* pResponse)
 {
+   // clear cookies - they are invalid if we got here
+   removeAuthCookie(request, pResponse);
+
    pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
 }
 
@@ -237,11 +259,14 @@ void refreshCredentialsThenContinue(
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
-   core::http::secure_cookie::remove(request,
-      kUserIdCookie,
-      server::options().wwwUrlPathPrefix(),
-      pResponse,
-      boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   // any attempt to load the sign in page with a valid cookie is sent back
+   std::string cookieUsername = core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
+   if (!cookieUsername.empty())
+   {
+      pResponse->setMovedTemporarily(request, "./");
+      return;
+   }
+
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -494,7 +519,7 @@ void doSignIn(const http::Request& request,
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 
-      setSignInCookies(request, username, persist, pResponse);
+      setSignInCookies(request, username, persist, pResponse, true);
       pResponse->setMovedTemporarily(request, appUri);
 
       // register login with monitor
@@ -545,21 +570,8 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username, true);
    }
 
-   // instruct browser to clear the user's auth cookies
-   core::http::secure_cookie::remove(request,
-      kUserIdCookie,
-      server::options().wwwUrlPathPrefix(),
-      pResponse,
-      boost::algorithm::starts_with(request.absoluteUri(), "https"));
-
-   if (options().authTimeoutMinutes() > 0)
-   {
-      core::http::secure_cookie::remove(request,
-                                        kPersistAuthCookie,
-                                        server::options().wwwUrlPathPrefix(),
-                                        pResponse,
-                                        boost::algorithm::starts_with(request.absoluteUri(), "https"));
-   }
+   // clear cookies
+   removeAuthCookie(request, pResponse);
 
    // invalidate the auth cookie so that it can no longer be used
    auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
@@ -628,7 +640,7 @@ Error initialize()
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
    if (canSetSignInCookies())
-      pamHandler.setSignInCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, false);
+      pamHandler.setSignInCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    pamHandler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    auth::handler::registerHandler(pamHandler);
 
