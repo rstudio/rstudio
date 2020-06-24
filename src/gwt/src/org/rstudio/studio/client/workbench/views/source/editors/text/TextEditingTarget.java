@@ -7016,11 +7016,10 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setShowInvisibles(arg);
                }}));
-      releaseOnDismiss.add(prefs.highlightWebLink().bind(
+      releaseOnDismiss.add(prefs_.highlightWebLink().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  //prefs.setHighlightWebLink(arg);
-		  prefs.writeUserPrefs();
+                  prefs_.setHighlightWebLink(arg);
                }}));
       releaseOnDismiss.add(prefs.showIndentGuides().bind(
             new CommandWithArg<Boolean>() {
@@ -7594,7 +7593,7 @@ public class TextEditingTarget implements
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
-   private final UserPrefs prefs_;
+   private static UserPrefs prefs_;
    private final UserState state_;
    private Display view_;
    private final Commands commands_;
