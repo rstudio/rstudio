@@ -32,6 +32,9 @@ import { CompletionItemDetailedView } from '../../api/widgets/completion-detaile
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { BibliographyManager, bibliographyPaths } from '../../api/bibliography';
 
+const kCompletionWidth = 400;
+const kCompletionItemPadding = 10;
+
 export function citationDoiCompletionHandler(
   ui: EditorUI,
   bibManager: BibliographyManager,
@@ -74,7 +77,7 @@ export function citationDoiCompletionHandler(
     view: {
       component: CrossrefWorkView,
       key: work => work.DOI,
-      width: 400,
+      width: kCompletionWidth,
       height: 120,
       maxVisible: 5,
       hideNoResults: true,
@@ -146,7 +149,7 @@ interface CrossrefEntry extends CrossrefWork {
 const CrossrefWorkView: React.FC<CrossrefEntry> = work => {
   return (
     <CompletionItemDetailedView
-      width={400}
+      width={kCompletionWidth - kCompletionItemPadding}
       image={work.image}
       heading={work['short-container-title'] || work.publisher}
       title={work.title[0]}

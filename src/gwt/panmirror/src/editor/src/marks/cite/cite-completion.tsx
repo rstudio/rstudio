@@ -35,7 +35,6 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange, markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
-import { PandocServer } from '../../api/pandoc';
 import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
@@ -43,6 +42,10 @@ import { kEditingCiteIdRegEx } from './cite';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
+
+const kCompletionWidth = 400;
+const kCompletionItemPadding = 10;
+
 export const kCitationCompleteScope = 'CitationScope';
 
 export function citationCompletionHandler(
@@ -71,7 +74,7 @@ export function citationCompletionHandler(
     view: {
       component: BibliographySourceView,
       key: entry => entry.source.id,
-      width: 400,
+      width: kCompletionWidth,
       height: 54,
       maxVisible: 5,
       hideNoResults: true,
@@ -169,7 +172,7 @@ const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
   const detail = `${authorStr} ${entry.issuedDateFormatter(entry.source.issued)}`;
   return (
     <CompletionItemView
-      width={400}
+      width={kCompletionWidth - kCompletionItemPadding}
       image={entry.image}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || ''}
