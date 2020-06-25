@@ -2626,7 +2626,7 @@ public class Source implements InsertSourceHandler,
 
       if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
       {
-         if (consoleEditorHadFocusLast() || columnManager_.hasActiveEditor())
+         if (consoleEditorHadFocusLast() || !columnManager_.hasActiveEditor())
             type = GetEditorContextEvent.TYPE_CONSOLE_EDITOR;
          else
             type = GetEditorContextEvent.TYPE_SOURCE_EDITOR;
