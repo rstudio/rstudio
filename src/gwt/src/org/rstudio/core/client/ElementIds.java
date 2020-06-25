@@ -293,6 +293,14 @@ public class ElementIds
    public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
    public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
 
+   // JobLauncherDialogPro
+   public final static String JOB_LAUNCHER_PRO_OPTIONS = "job_launcher_pro_options";
+   public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
+
+   // OpenSharedProjectDialog (Pro)
+   public final static String SHARED_PROJ_MINE = "shared_proj_mine";
+   public final static String SHARED_PROJ_SHARED = "shared_proj_shared";
+
    // RmdTemplateOptionsWidget
    public final static String RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT = "rmd_template_options_output_format";
    public static String getRmdTemplateOptionsOutputFormat() { return getElementId(RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT); }
