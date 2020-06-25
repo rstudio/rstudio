@@ -158,10 +158,10 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands, true, column_);
       
-      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
-      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton(column_));
+      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton(column_));
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.openProfileInBrowser().createToolbarButton());
+      toolbar.addLeftWidget(commands.openProfileInBrowser().createToolbarButton(column_));
       
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(

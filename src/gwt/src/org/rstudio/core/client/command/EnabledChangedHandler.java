@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface EnabledChangedHandler extends EventHandler
 {
-   void onEnabledChanged(AppCommand command);
+   void onEnabledChanged(EnabledChangedEvent event);
 }

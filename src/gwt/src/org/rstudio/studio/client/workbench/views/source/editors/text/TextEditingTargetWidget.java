@@ -180,7 +180,7 @@ public class TextEditingTargetWidget
          }
       );
 
-      // setup editign container (only activate editor if we are not in visual mode)
+      // setup editing container (only activate editor if we are not in visual mode)
       editorContainer_ = new TextEditorContainer(sourceEditor_);
       if (!isVisualMode())
         editorContainer_.activateEditor();
@@ -316,21 +316,21 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
 
-      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton(column_));
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
+      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton(column_));
 
       toolbar.addLeftWidget(findReplaceButton_ = findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
 
       notebookSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(notebookToolbarButton_ =
-            commands_.compileNotebook().createToolbarButton());
+            commands_.compileNotebook().createToolbarButton(column_));
 
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META :
          KeyboardShortcut.CTRL;
@@ -343,8 +343,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
+      toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton(column_));
+      knitDocumentButton_ = commands_.knitDocument().createToolbarButton(column_);
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
 
@@ -357,7 +357,7 @@ public class TextEditingTargetWidget
          toolbar.addLeftWidget(shinyLaunchButton_);
       }
 
-      toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
+      toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton(column_));
       rmdFormatButton_ = new ToolbarPopupMenuButton("Knit options", false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
@@ -385,7 +385,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(rmdOptionsButton_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
+      toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton(column_));
 
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
@@ -409,14 +409,14 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(insertChunkMenu_);
 
       // create button that just runs default chunk insertion
-      insertChunkButton_ = commands_.insertChunk().createToolbarButton(false);
+      insertChunkButton_ = commands_.insertChunk().createToolbarButton(column_);
       toolbar.addRightWidget(insertChunkButton_);
 
-      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
+      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(column_));
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
-      toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
-      toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
+      toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(column_));
+      toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(column_));
+      toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(column_));
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document";
 
@@ -432,10 +432,10 @@ public class TextEditingTargetWidget
             });
       toolbar.addRightWidget(sourceButton_);
 
-      previewJsButton_ = commands_.previewJS().createToolbarButton(false);
+      previewJsButton_ = commands_.previewJS().createToolbarButton(column_);
       toolbar.addRightWidget(previewJsButton_);
 
-      previewSqlButton_ = commands_.previewSql().createToolbarButton(false);
+      previewSqlButton_ = commands_.previewSql().createToolbarButton(column_);
       toolbar.addRightWidget(previewSqlButton_);
 
       createTestToolbarButtons(toolbar);

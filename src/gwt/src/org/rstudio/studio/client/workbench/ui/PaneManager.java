@@ -71,7 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.events.ColumnClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -413,30 +413,6 @@ public class PaneManager
             {
                syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
             }
-         }
-      });
-
-      eventBus_.addHandler(ColumnClosedEvent.TYPE, new ColumnClosedEvent.Handler()
-      {
-         @Override
-         public void onColumnClosed(ColumnClosedEvent event)
-         {
-            SourceColumn column = event.getColumn();
-            panesByName_.remove(column.getName());
-
-            additionalSourceCount_ = sourceColumnManager_.getSize();
-            panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
-            PaneConfig paneConfig = getCurrentConfig();
-            userPrefs_.panes().setGlobalValue(PaneConfig.create(
-               JsArrayUtil.copy(paneConfig.getQuadrants()),
-               paneConfig.getTabSet1(),
-               paneConfig.getTabSet2(),
-               paneConfig.getHiddenTabSet(),
-               paneConfig.getConsoleLeftOnTop(),
-               paneConfig.getConsoleRightOnTop(),
-               additionalSourceCount_).cast());
-            userPrefs_.writeUserPrefs();
-
          }
       });
 
@@ -1190,6 +1166,7 @@ public class PaneManager
       {
          int difference = additionalSourceCount_ - count;
          sourceColumnManager_.consolidateColumns(difference);
+         panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
          additionalSourceCount_ = sourceColumnManager_.getSize();
       }
    }
@@ -1221,21 +1198,9 @@ public class PaneManager
 
    public int closeAllAdditionalColumns()
    {
-      sourceColumnManager_.closeAllColumns();
-      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-      if (additionalSourceCount_ > 0)
-         Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
-
-      PaneConfig paneConfig = getCurrentConfig();
-      userPrefs_.panes().setGlobalValue(PaneConfig.create(
-         JsArrayUtil.copy(paneConfig.getQuadrants()),
-         paneConfig.getTabSet1(),
-         paneConfig.getTabSet2(),
-         paneConfig.getHiddenTabSet(),
-         paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
-      userPrefs_.writeUserPrefs();
+      ArrayList<String> columnNames = sourceColumnManager_.getNames(true);
+      for (String name : columnNames)
+         closeSourceWindow(name);
 
       return additionalSourceCount_;
    }

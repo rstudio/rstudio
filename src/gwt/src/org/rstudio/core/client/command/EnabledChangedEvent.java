@@ -25,9 +25,20 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
       command_ = command;
    }
 
+   public EnabledChangedEvent(AppCommand command, String columnName)
+   {
+      command_ = command;
+      columnName_ = columnName;
+   }
+
    public AppCommand getCommand()
    {
       return command_;
+   }
+
+   public String getColumnName()
+   {
+      return columnName_;
    }
 
    @Override
@@ -39,8 +50,9 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
    @Override
    protected void dispatch(EnabledChangedHandler handler)
    {
-      handler.onEnabledChanged(command_);
+      handler.onEnabledChanged(this);
    }
 
    private final AppCommand command_;
+   private String columnName_;
 }

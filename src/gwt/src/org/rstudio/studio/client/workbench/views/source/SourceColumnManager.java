@@ -324,6 +324,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void setActiveDocId(String docId)
    {
+      if (StringUtil.isNullOrEmpty(docId))
+         return;
+
       for (SourceColumn column : columnList_)
       {
          EditingTarget target = column.setActiveEditor(docId);
@@ -519,9 +522,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void manageCommands(boolean forceSync)
    {
+      // make sure we're always managing the commands with the same column
+      SourceColumn active = activeColumn_;
       columnList_.forEach((column) -> {
          if (column.isInitialized())
-            column.manageCommands(forceSync);
+            column.manageCommands(forceSync, active);
       });
    }
 
@@ -852,6 +857,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
+
+   /*
+   @Handler
+   void onPopoutDoc()
+   {
+      if (!hasActiveEditor())
+         Debug.log("Could not locate editor for popout.");
+
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (target instanceof TextEditingTarget)
+         ((TextEditingTarget) target).popoutDoc();
+   }
+    */
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent evt)
@@ -1316,27 +1334,29 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             if (column == activeColumn_)
                setActive(MAIN_SOURCE_NAME);
             result.add(column.asWidget());
-            columnList_.remove(column);
+            closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
                break;
          }
       }
 
-      ArrayList<EditingTarget> moveEditors = new ArrayList<>();
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      for (SourceColumn column : columnList_)
+      ArrayList<EditingTarget> moveEditors = new ArrayList<>();
+      if (num >= columnList_.size())
       {
-         if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+         for (SourceColumn column : columnList_)
          {
-            moveEditors.addAll(column.getEditors());
-            closeAllLocalSourceDocs("Close All", column, null, false);
-            if (columnList_.size() >= num || num == 1)
-               break;
+            if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            {
+               moveEditors.addAll(column.getEditors());
+               closeAllLocalSourceDocs("Close All", column, null, false);
+               if (columnList_.size() >= num || num == 1)
+                  break;
+            }
          }
       }
 
       SourceColumn column = getByName(MAIN_SOURCE_NAME);
-      assert(column != null);
       for (EditingTarget target : moveEditors)
       {
          column.addTab(
@@ -1352,12 +1372,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return result;
    }
 
-   public void closeAllColumns()
-   {
-      columnList_.forEach((column) -> closeColumn(column.getName()));
-      assert getSize() == 0;
-   }
-
    public void closeColumn(String name)
    {
       SourceColumn column = getByName(name);
@@ -1366,10 +1380,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column == activeColumn_)
          setActive(MAIN_SOURCE_NAME);
 
-      columnList_.remove(column.getName());
+      int testVar = columnList_.size();
+      columnList_.remove(column);
+      assert(testVar >= columnList_.size());
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
-
-      events_.fireEvent(new ColumnClosedEvent(column));
    }
 
    public void ensureVisible(boolean newTabPending)

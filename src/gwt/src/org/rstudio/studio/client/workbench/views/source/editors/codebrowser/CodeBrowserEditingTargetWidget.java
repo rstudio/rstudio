@@ -430,7 +430,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_, true, column);
 
-      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton()); 
+      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton(column_));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
      
@@ -442,9 +442,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       
-      toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
+      toolbar.addRightWidget(commands_.executeCode().createToolbarButton(column_));
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
+      toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton(column_));
       
       return toolbar;
    }
