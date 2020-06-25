@@ -25,6 +25,7 @@ import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.MouseTracker;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
@@ -153,7 +154,27 @@ public class AceEditorBackgroundLinkHighlighter
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
             if (pUserPrefs_.get().highlightWebLink().getValue())
+	    {
                highlighters_.add(webLinkHighlighter());
+	    }
+	    else
+	    {
+	       highlighters_.remove(webLinkHighlighter());
+	    }
+	    pUserPrefs_.get().highlightWebLink().bind(
+		    new CommandWithArg<Boolean>() {
+		       public void execute(Boolean arg) {
+			  if (arg)
+			  {
+				highlighters_.add(webLinkHighlighter());
+			  }
+		          else
+	  		  {
+				highlighters_.remove(webLinkHighlighter());
+			  }
+			  pUserPrefs_.get().highlightWebLink().setGlobalValue(arg);
+			  pUserPrefs_.get().writeUserPrefs();
+		       }});
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
             nextHighlightStart_ = 0;
