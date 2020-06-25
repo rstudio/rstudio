@@ -59,7 +59,7 @@ import {
 } from '../api/transaction';
 import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateToId } from '../api/navigation';
+import { navigateTo, Navigation } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -600,8 +600,8 @@ export class Editor {
     this.focus();
   }
 
-  public navigate(id: string) {
-    const nav = navigateToId(this.view, id, false);
+  public navigate(navigation: Navigation) {
+    const nav = navigateTo(this.view, navigation, false);
     if (nav) {
       this.emitEvent(NavigateEvent, nav);
     }

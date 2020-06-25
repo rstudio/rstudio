@@ -33,17 +33,23 @@ export interface Navigation {
   location: string;
 }
 
-export function navigateTo(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
-  const result = findChildren(view.state.doc, predicate);
-  if (result.length) {
-    return navigateToPosition(view, result[0].pos, animate);
-  } else {
-    return null;
+export function navigateTo(view: EditorView, navigation: Navigation, animate = true): Navigation | null {
+  switch (navigation.type) {
+    case NavigationType.Pos:
+      return navigateToPos(view, parseInt(navigation.location, 10), animate);
+    case NavigationType.Id:
+      return navigateToId(view, navigation.location, animate);
+    case NavigationType.Href:
+      return navigateToHref(view, navigation.location, animate);
+    case NavigationType.Heading:
+      return navigateToHeading(view, navigation.location, animate);
+    default:
+      return null;
   }
 }
 
 export function navigateToId(view: EditorView, id: string, animate = true): Navigation | null {
-  if (navigateTo(view, node => id === node.attrs.navigation_id, animate)) {
+  if (navigate(view, node => id === node.attrs.navigation_id, animate)) {
     return {
       type: NavigationType.Id,
       location: id
@@ -55,7 +61,7 @@ export function navigateToId(view: EditorView, id: string, animate = true): Navi
 }
 
 export function navigateToHref(view: EditorView, href: string, animate = true): Navigation | null {
-  if (navigateTo(view, node => node.attrs.id === href, animate)) {
+  if (navigate(view, node => node.attrs.id === href, animate)) {
     return {
       type: NavigationType.Href,
       location: href
@@ -66,7 +72,7 @@ export function navigateToHref(view: EditorView, href: string, animate = true): 
 }
 
 export function navigateToHeading(view: EditorView, heading: string, animate = true): Navigation | null {
-  if (navigateTo(
+  if (navigate(
     view,
     node => {
       return (
@@ -86,7 +92,7 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
 
 }
 
-export function navigateToPosition(view: EditorView, pos: number, animate = true): Navigation | null {
+export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
@@ -108,6 +114,14 @@ export function navigateToPosition(view: EditorView, pos: number, animate = true
   } else {
     return null;
   }
-
-
 }
+
+function navigate(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
+  const result = findChildren(view.state.doc, predicate);
+  if (result.length) {
+    return navigateToPos(view, result[0].pos, animate);
+  } else {
+    return null;
+  }
+}
+

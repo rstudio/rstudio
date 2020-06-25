@@ -27,6 +27,12 @@ public class PanmirrorNavigation
    public static final String Href= "href";
    public static final String Heading = "heading";
    
+   public PanmirrorNavigation(String type, String location)
+   {
+      this.type = type;
+      this.location = location;
+   }
+   
    public String type;
    public String location;
 }

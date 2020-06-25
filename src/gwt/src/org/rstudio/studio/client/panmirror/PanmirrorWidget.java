@@ -253,7 +253,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
-            editor_.navigate(event.getId());
+            editor_.navigate(new PanmirrorNavigation(PanmirrorNavigation.Id, event.getId()));
             editor_.focus();
          }
       });
@@ -467,9 +467,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   public void navigate(String id)
+   public void navigate(PanmirrorNavigation navigation)
    {
-      editor_.navigate(id);
+      editor_.navigate(navigation);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 
