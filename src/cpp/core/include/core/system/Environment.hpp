@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #include <core/system/Types.hpp>
 
 namespace rstudio {
@@ -84,6 +86,39 @@ void addToPath(Options* pEnvironment,
 *****************************************************************/
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar);
+
+// set an environment variable in some scope (overridding and
+// later restoring a previously-set environment variable)
+class EnvironmentScope : boost::noncopyable
+{
+   
+public:
+   
+   EnvironmentScope(const char* variable,
+                    const char* value)
+      : variable_(variable),
+        value_(::getenv(variable))
+   {
+      core::system::setenv(variable, value);
+   }
+   
+   ~EnvironmentScope()
+   {
+      if (value_)
+      {
+         core::system::setenv(variable_, value_);
+      }
+      else
+      {
+         core::system::unsetenv(variable_);
+      }
+   }
+   
+private:
+   const char* variable_;
+   const char* value_;
+   
+};
 
 } // namespace system
 } // namespace core
