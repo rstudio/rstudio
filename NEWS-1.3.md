@@ -58,6 +58,7 @@
 - Fix issue with chunk toolbars not showing up in some cases (#7067)
 - Fix RStudio Server Pro issue where R version modules would sometimes not be able to modify the PATH environment variable (Pro #1737)
 - Fix dealing with expired sessions due to inactivity or signed out when using multiple browser tabs (Pro #1731, #7205)
+- Fix dropdowns not repopulating after being closed via keyboard shortcut #7215
 
 ### RStudio Server Pro
 
