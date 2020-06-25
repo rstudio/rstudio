@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvent.java
+ * PanmirrorNavigation.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -15,17 +15,18 @@
 
 package org.rstudio.studio.client.panmirror;
 
-public class PanmirrorEvent
-{
-   public static String Update = "panmirrorUpdate";
-   public static String OutlineChange = "panmirrorOutlineChange";
-   public static String StateChange = "panmirrorStateChange";
-   public static String Resize = "panmirrorResize";
-   public static String Layout = "panmirrorLayout";
-   public static String Scroll = "panmirrorScroll";
-   public static String Focus = "panmirrorFocus";
-   public static String Navigate = "panmirrorNavigate";
+
+import jsinterop.annotations.JsType;
+
+
+@JsType
+public class PanmirrorNavigation
+{    
+   public static final String Pos = "pos";
+   public static final String Id = "id";
+   public static final String Href= "href";
+   public static final String Heading = "heading";
+   
+   public String type;
+   public String location;
 }
-
-
-

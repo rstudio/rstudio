@@ -43,6 +43,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
@@ -790,6 +791,17 @@ public class VisualMode implements VisualModeEditorSync,
                public void onPanmirrorStateChange(PanmirrorStateChangeEvent event)
                {
                   saveLocationOnIdle_.nudge();
+               }
+            });
+            
+            // record navigation event on navigate
+            panmirror_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler()
+            {
+               @Override
+               public void onPanmirrorNavigation(PanmirrorNavigationEvent event)
+               {
+                  
+                  
                }
             });
             

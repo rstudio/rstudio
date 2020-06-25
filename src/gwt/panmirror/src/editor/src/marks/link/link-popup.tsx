@@ -25,7 +25,7 @@ import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
 
-import { navigateToId, navigateToHeading } from '../../api/navigation';
+import { navigateToHref, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
 
 import { showTooltip } from '../../api/widgets/tooltip';
@@ -162,7 +162,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
     if (props.link.heading) {
       navigateToHeading(props.view, props.link.heading);
     } else if (props.link.href.startsWith('#')) {
-      navigateToId(props.view, props.link.href.substr(1));
+      navigateToHref(props.view, props.link.href.substr(1));
     } else {
       props.ui.display.openURL(props.link.href);
     }

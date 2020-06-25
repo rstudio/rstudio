@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror;
 
 import jsinterop.annotations.JsType;
 
+import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenus;
@@ -56,7 +57,7 @@ public class PanmirrorEditor
    
    public native boolean isInitialDoc();
    
-   public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
+   public native JsVoidFunction subscribe(String event, JsConsumerFunction handler);
    
    public native PanmirrorCommand[] commands();
    

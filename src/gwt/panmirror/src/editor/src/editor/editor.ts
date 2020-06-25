@@ -40,6 +40,7 @@ import {
   LayoutEvent,
   FocusEvent,
   DispatchEvent,
+  NavigateEvent,
 } from '../api/event-types';
 import {
   PandocFormat,
@@ -58,7 +59,7 @@ import {
 } from '../api/transaction';
 import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo } from '../api/navigation';
+import { navigateToId } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -600,7 +601,10 @@ export class Editor {
   }
 
   public navigate(id: string) {
-    navigateTo(this.view, node => id === node.attrs.navigation_id, false);
+    const nav = navigateToId(this.view, id, false);
+    if (nav) {
+      this.emitEvent(NavigateEvent, nav);
+    }
   }
 
   public resize() {

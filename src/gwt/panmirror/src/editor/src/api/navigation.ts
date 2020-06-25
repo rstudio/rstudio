@@ -14,24 +14,59 @@
  */
 
 import { EditorView } from 'prosemirror-view';
+
 import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
 
 import zenscroll from 'zenscroll';
+
 import { editingRootNode } from './node';
 
-export function navigateTo(view: EditorView, predicate: Predicate, animate = true) {
+export enum NavigationType {
+  Pos = "pos",
+  Id = "id",
+  Href = "href",
+  Heading = "heading"
+}
+
+export interface Navigation {
+  type: NavigationType;
+  location: string;
+}
+
+export function navigateTo(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
   const result = findChildren(view.state.doc, predicate);
   if (result.length) {
-    navigateToPosition(view, result[0].pos, animate);
+    return navigateToPosition(view, result[0].pos, animate);
+  } else {
+    return null;
   }
 }
 
-export function navigateToId(view: EditorView, id: string, animate = true) {
-  navigateTo(view, node => node.attrs.id === id, animate);
+export function navigateToId(view: EditorView, id: string, animate = true): Navigation | null {
+  if (navigateTo(view, node => id === node.attrs.navigation_id, animate)) {
+    return {
+      type: NavigationType.Id,
+      location: id
+    };
+  } else {
+    return null;
+  }
+
 }
 
-export function navigateToHeading(view: EditorView, heading: string, animate = true) {
-  navigateTo(
+export function navigateToHref(view: EditorView, href: string, animate = true): Navigation | null {
+  if (navigateTo(view, node => node.attrs.id === href, animate)) {
+    return {
+      type: NavigationType.Href,
+      location: href
+    };
+  } else {
+    return null;
+  }
+}
+
+export function navigateToHeading(view: EditorView, heading: string, animate = true): Navigation | null {
+  if (navigateTo(
     view,
     node => {
       return (
@@ -40,10 +75,18 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
       );
     },
     animate,
-  );
+  )) {
+    return {
+      type: NavigationType.Heading,
+      location: heading
+    };
+  } else {
+    return null;
+  }
+
 }
 
-export function navigateToPosition(view: EditorView, pos: number, animate = true) {
+export function navigateToPosition(view: EditorView, pos: number, animate = true): Navigation | null {
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
@@ -58,5 +101,13 @@ export function navigateToPosition(view: EditorView, pos: number, animate = true
     } else {
       scroller.to(node, 0);
     }
+    return {
+      type: NavigationType.Pos,
+      location: pos.toString()
+    };
+  } else {
+    return null;
   }
+
+
 }
