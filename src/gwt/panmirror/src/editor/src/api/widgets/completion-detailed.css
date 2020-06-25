@@ -54,11 +54,11 @@
   font-weight: 500;
   font-size: 8pt;
   opacity: 0.6;
-
+  width: 100%;
+  
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
 }
 
 .pm-completion-item-detailed-title {
@@ -68,6 +68,7 @@
   font-size: 11pt;
   opacity: 0.8;
 
+  width: 100%;
   max-height: 60px;
 
   overflow: hidden;
@@ -78,8 +79,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
-
   width: 100%;
   line-height: 18px;
   padding-top: 8px;
