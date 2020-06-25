@@ -4310,8 +4310,7 @@ public class TextEditingTarget implements
       final WordWrapCursorTracker wwct = new WordWrapCursorTracker(
                                                 cursorRowIndex, cursorColIndex);
 
-      int maxLineLength =
-                        prefs_.marginColumn().getValue() - prefix.length();
+      int maxLineLength = prefs_.marginColumn().getValue() - prefix.length();
 
       WordWrap wordWrap = new WordWrap(maxLineLength, false)
       {
@@ -7019,7 +7018,8 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs_.highlightWebLink().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  prefs_.setHighlightWebLink(arg);
+                  prefs_.highlightWebLink().setGlobalValue(arg);
+                  prefs_.writeUserPrefs();
                }}));
       releaseOnDismiss.add(prefs.showIndentGuides().bind(
             new CommandWithArg<Boolean>() {
