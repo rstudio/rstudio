@@ -23,6 +23,7 @@
 #include <core/Log.hpp>
 #include <core/PerformanceTimer.hpp>
 
+#include <core/system/Environment.hpp>
 #include <core/system/ProcessArgs.hpp>
 
 #include <core/libclang/LibClang.hpp>
@@ -157,6 +158,12 @@ std::map<std::string,TranslationUnit>
 TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
+#ifdef __APPLE__
+   // ensure that SDKROOT is defined so that libclang can find system headers
+   core::system::EnvironmentScope scope(
+            "SDKROOT", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+#endif
+   
    FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
@@ -250,11 +257,14 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    core::system::ProcessArgs argsArray(args);
 
    if (verbose_ > 0)
+   {
       std::cerr << "  (Creating new index)" << std::endl;
-
+   }
+   
    // create a new translation unit from the file
    unsigned options = applyTranslationUnitOptions(
                            clang().defaultEditingTranslationUnitOptions());
+   
    CXTranslationUnit tu = clang().parseTranslationUnit(
                          index_,
                          filename.c_str(),

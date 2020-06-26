@@ -34,6 +34,8 @@
 ### RStudio Server Pro
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
+* OpenID Connect is now support as an authentication mechanism (Pro #1747)
+* New `auth-proxy-sign-out-url` option specified an endpoint to take the user to when "Sign Out" is clicked in the IDE user interface (Pro #1745)
 * New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
