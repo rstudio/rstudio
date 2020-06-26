@@ -89,6 +89,7 @@ export function insertCitationForDOI(
       if (result && result.id.length) {
         // Use the biblography manager to write an entry to the user specified bibliography
         performReplacementPreventingCompletions(view, pos, result.id);
+        view.focus();
       }
     });
   });
