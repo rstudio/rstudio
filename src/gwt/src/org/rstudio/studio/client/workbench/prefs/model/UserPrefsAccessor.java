@@ -2722,6 +2722,25 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   public PrefValue<String> visualMarkdownChunkEditor()
+   {
+      return enumeration(
+         "visual_markdown_chunk_editor",
+         "Editor for code chunks in visual editing mode", 
+         "The name of the editor to use to provide code editing in visual mode", 
+         new String[] {
+            VISUAL_MARKDOWN_CHUNK_EDITOR_ACE,
+            VISUAL_MARKDOWN_CHUNK_EDITOR_CODEMIRROR
+         },
+         "codemirror");
+   }
+
+   public final static String VISUAL_MARKDOWN_CHUNK_EDITOR_ACE = "ace";
+   public final static String VISUAL_MARKDOWN_CHUNK_EDITOR_CODEMIRROR = "codemirror";
+
+   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -3246,6 +3265,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
+      if (source.hasKey("visual_markdown_chunk_editor"))
+         visualMarkdownChunkEditor().setValue(layer, source.getString("visual_markdown_chunk_editor"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3458,6 +3479,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingFontSizePoints());
+      prefs.add(visualMarkdownChunkEditor());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

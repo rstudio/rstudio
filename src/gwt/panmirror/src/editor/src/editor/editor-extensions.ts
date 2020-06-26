@@ -105,6 +105,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
+import { acePlugins } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
@@ -197,8 +198,10 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
 
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
-  if (context.options.codemirror) {
+  if (context.options.rmdChunkEditor === "codemirror") {
     plugins.push(...codeMirrorPlugins(manager.codeViews(), context.ui, context.options));
+  } else if (context.options.rmdChunkEditor === "ace") {
+    plugins.push(...acePlugins(manager.codeViews(), context.ui, context.options));
   }
 
   // register plugins

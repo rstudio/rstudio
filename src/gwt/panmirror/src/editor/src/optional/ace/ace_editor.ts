@@ -1,5 +1,5 @@
 /*
- * options.ts
+ * ace_editor.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,13 +13,8 @@
  *
  */
 
-export interface EditorOptions {
-  readonly autoFocus?: boolean;
-  readonly spellCheck?: boolean;
-  readonly rmdChunkEditor?: string;
-  readonly rmdImagePreview?: boolean;
-  readonly rmdExampleHighlight?: boolean;
-  readonly rmdChunkExecution?: string[];
-  readonly hideFormatComment?: boolean;
-  readonly className?: string;
+import Editor from 'ace'
+
+interface AceChunkEditor {
+    editor: AceEditor;
 }

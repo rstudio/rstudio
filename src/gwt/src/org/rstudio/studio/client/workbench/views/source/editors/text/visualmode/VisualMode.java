@@ -936,7 +936,7 @@ public class VisualMode implements VisualModeEditorSync,
       PanmirrorOptions options = new PanmirrorOptions();
       
       // use embedded codemirror for code blocks
-      options.codemirror = true;
+      options.rmdChunkEditor = prefs_.visualMardownChunkEditor().getValue();
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();

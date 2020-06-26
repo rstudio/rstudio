@@ -2520,6 +2520,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 }
 
 /**
+ * The name of the editor to use to provide code editing in visual mode
+ */
+std::string UserPrefValues::visualMarkdownChunkEditor()
+{
+   return readPref<std::string>("visual_markdown_chunk_editor");
+}
+
+core::Error UserPrefValues::setVisualMarkdownChunkEditor(std::string val)
+{
+   return writePref("visual_markdown_chunk_editor", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2818,6 +2831,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
+      kVisualMarkdownChunkEditor,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
