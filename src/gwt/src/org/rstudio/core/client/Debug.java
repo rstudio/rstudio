@@ -40,6 +40,10 @@ public class Debug
       };
       $wnd['$Debug'] = $Debug;
    }-*/;
+   
+   public static native void trace() /*-{
+      console.trace();
+   }-*/;
 
    public static void log(String message)
    {

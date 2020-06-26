@@ -463,9 +463,15 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public EditingTarget addTab(SourceDocument doc, Integer position, int mode)
    {
-      final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
       final EditingTarget target = editingTargetSource_.getEditingTarget(
-            doc, fileContext_, () -> getNextDefaultName(defaultNamePrefix));
+            doc,
+            fileContext_,
+            () -> 
+            {
+               String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
+               return getNextDefaultName(defaultNamePrefix);
+            });
+            
       final Widget widget = createWidget(target);
 
       if (position == null)
