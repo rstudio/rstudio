@@ -294,32 +294,27 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // first see if we can do this exclusively via filter
 
       if (state.prevToken && state.handler.filter) {
-        this.completionQueue.enqueue(
-          () =>
-            new Promise(resolve => {
-              // display if the request still maps to the current state
-              if (state.handler && state.result && this.version === requestVersion) {
-                const filteredCompletions = state.handler.filter!(
-                  this.allCompletions,
-                  view.state,
-                  state.result.token,
-                  state.prevToken,
-                );
 
-                // got a hit from the filter!
-                if (filteredCompletions) {
-                  this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
-                  this.renderCompletions(view);
+        // display if the request still maps to the current state
+        if (state.handler && state.result && this.version === requestVersion) {
+          const filteredCompletions = state.handler.filter!(
+            this.allCompletions,
+            view.state,
+            state.result.token,
+            state.prevToken,
+          );
 
-                  // couldn't use the filter, do a full request for all completions
-                } else {
-                  return this.completionQueue.enqueue(requestAllCompletions);
-                }
-              }
+          // got a hit from the filter!
+          if (filteredCompletions) {
+            this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+            this.renderCompletions(view);
 
-              resolve();
-            }),
-        );
+            // couldn't use the filter, do a full request for all completions
+          } else {
+            this.completionQueue.enqueue(requestAllCompletions);
+          }
+        }
+
       } else {
         // no prevToken or no filter for this handler, request everything
         this.completionQueue.enqueue(requestAllCompletions);
