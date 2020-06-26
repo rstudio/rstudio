@@ -405,7 +405,7 @@ Error launchSession(const r_util::SessionContext& context,
       }
       else
       {
-         config.environment.push_back(std::make_pair("XDG_CONFIG_HOME", tmpDir.getAbsolutePath()));
+         core::system::setenv(&config.environment, "XDG_CONFIG_HOME", tmpDir.getAbsolutePath());
       }
    }
 
