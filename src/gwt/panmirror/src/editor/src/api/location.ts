@@ -60,26 +60,22 @@ export function setEditingLocation(
         break;
       }
 
-      // if this is the active item
+      // if this is the active item then we are done
       if (item.active) {
-        // see if the previous location is actually a better target (because it's between this location and
-        // the next outline node). in that case we don't set the target node and we leave the restorePos
-        // at the previous location
-        if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i + 1], previousLocation)) {
-          // set the target
-          docOutlineLocationNode = docOutlineNode;
 
-          // if this is an rmd chunk then advance to the second line
-          if (docOutlineNode.node.type === view.state.schema.nodes.rmd_chunk) {
-            const chunkText = docOutlineNode.node.textContent;
-            const newlineIdx = chunkText.indexOf('\n');
-            if (newlineIdx !== -1) {
-              docOutlineLocationNode.pos += newlineIdx + 2;
-            }
+        docOutlineLocationNode = docOutlineNode;
+
+        // if this is an rmd chunk then advance to the second line
+        if (docOutlineNode.node.type === view.state.schema.nodes.rmd_chunk) {
+          const chunkText = docOutlineNode.node.textContent;
+          const newlineIdx = chunkText.indexOf('\n');
+          if (newlineIdx !== -1) {
+            docOutlineLocationNode.pos += newlineIdx + 2;
           }
         }
 
         break;
+
       }
     }
   }
