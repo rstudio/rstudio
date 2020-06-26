@@ -121,6 +121,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void onActivate()
    {
       super.onActivate();
+      isActive_ = true;
       if (view_ != null)
       {
          if (queuedRefresh_ != QueuedRefreshType.NoRefresh)
