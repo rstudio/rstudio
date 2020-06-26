@@ -25,7 +25,6 @@ import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
 
-import { navigateToHref, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
 
 import { showTooltip } from '../../api/widgets/tooltip';
@@ -35,11 +34,12 @@ import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
 import { kPlatformMac } from '../../api/platform';
+import { EditorNavigation, NavigationType } from '../../api/navigation';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
-  constructor(ui: EditorUI, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
+  constructor(ui: EditorUI, nav: EditorNavigation, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
     let editorView: EditorView;
     super({
       key,
@@ -101,6 +101,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                     removeLinkCmd={removeLinkCmd}
                     view={view}
                     ui={ui}
+                    nav={nav}
                     style={decorationPosition.style}
                   />
                 );
@@ -150,6 +151,7 @@ interface LinkPopupProps extends WidgetProps {
   maxLinkWidth: number;
   view: EditorView;
   ui: EditorUI;
+  nav: EditorNavigation;
   linkCmd: CommandFn;
   removeLinkCmd: CommandFn;
 }
@@ -160,9 +162,9 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
   const onLinkClicked = () => {
     props.view.focus();
     if (props.link.heading) {
-      navigateToHeading(props.view, props.link.heading);
+      props.nav.navigate(NavigationType.Heading, props.link.heading);
     } else if (props.link.href.startsWith('#')) {
-      navigateToHref(props.view, props.link.href.substr(1));
+      props.nav.navigate(NavigationType.Href, props.link.href.substr(1));
     } else {
       props.ui.display.openURL(props.link.href);
     }

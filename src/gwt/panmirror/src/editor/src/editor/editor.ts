@@ -59,7 +59,7 @@ import {
 } from '../api/transaction';
 import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo, Navigation } from '../api/navigation';
+import { navigateTo, Navigation, navigateToId, navigateToPos, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -600,11 +600,19 @@ export class Editor {
     this.focus();
   }
 
-  public navigate(navigation: Navigation) {
-    const nav = navigateTo(this.view, navigation, false);
-    if (nav) {
+  public navigate(type: NavigationType, location: string, animate = false) {
+    const nav = navigateTo(this.view, type, location, animate);
+    if (nav !== null) {
       this.emitEvent(NavigateEvent, nav);
     }
+  }
+
+  public navigateToId(id: string, animate = false) {
+    return this.navigate(NavigationType.Id, id, animate);
+  }
+
+  public navigateToPos(pos: number, animate = false) {
+    return this.navigate(NavigationType.Pos, pos.toString(), animate);
   }
 
   public resize() {
@@ -715,10 +723,16 @@ export class Editor {
         format: this.format,
         options: this.options,
         ui: this.context.ui,
-        events: { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+        events: {
+          subscribe: this.subscribe.bind(this),
+          emit: this.emitEvent.bind(this)
+        },
         pandocExtensions: this.pandocFormat.extensions,
         pandocCapabilities: this.pandocCapabilities,
         server: this.context.server,
+        navigation: {
+          navigate: this.navigate.bind(this)
+        }
       },
       this.context.extensions,
     );

@@ -21,6 +21,10 @@ import zenscroll from 'zenscroll';
 
 import { editingRootNode } from './node';
 
+export interface EditorNavigation {
+  navigate: (type: NavigationType, location: string, animate?: boolean) => void;
+}
+
 export enum NavigationType {
   Pos = "pos",
   Id = "id",
@@ -30,21 +34,21 @@ export enum NavigationType {
 }
 
 export interface Navigation {
-  type: NavigationType;
-  location: string;
   pos: number;
+  prevPos: number;
 }
 
-export function navigateTo(view: EditorView, navigation: Navigation, animate = true): Navigation | null {
-  switch (navigation.type) {
+export function navigateTo(view: EditorView, type: NavigationType, location: string, animate = true): Navigation | null {
+
+  switch (type) {
     case NavigationType.Pos:
-      return navigateToPos(view, parseInt(navigation.location, 10), animate);
+      return navigateToPos(view, parseInt(location, 10), animate);
     case NavigationType.Id:
-      return navigateToId(view, navigation.location, animate);
+      return navigateToId(view, location, animate);
     case NavigationType.Href:
-      return navigateToHref(view, navigation.location, animate);
+      return navigateToHref(view, location, animate);
     case NavigationType.Heading:
-      return navigateToHeading(view, navigation.location, animate);
+      return navigateToHeading(view, location, animate);
     case NavigationType.Top:
       return navigateToTop(view, animate);
     default:
@@ -53,35 +57,15 @@ export function navigateTo(view: EditorView, navigation: Navigation, animate = t
 }
 
 export function navigateToId(view: EditorView, id: string, animate = true): Navigation | null {
-  const nav = navigate(view, node => id === node.attrs.navigation_id, animate);
-  if (nav) {
-    return {
-      type: NavigationType.Id,
-      location: id,
-      pos: nav.pos
-    };
-  } else {
-    return null;
-  }
-
+  return navigate(view, node => id === node.attrs.navigation_id, animate);
 }
 
 export function navigateToHref(view: EditorView, href: string, animate = true): Navigation | null {
-  const nav = navigate(view, node => node.attrs.id === href, animate);
-  if (nav) {
-    return {
-      type: NavigationType.Href,
-      location: href,
-      pos: nav.pos
-    };
-  } else {
-    return null;
-  }
+  return navigate(view, node => node.attrs.id === href, animate);
 }
 
 export function navigateToHeading(view: EditorView, heading: string, animate = true): Navigation | null {
-
-  const nav = navigate(
+  return navigate(
     view,
     node => {
       return (
@@ -91,25 +75,18 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
     },
     animate,
   );
-
-  if (nav) {
-    return {
-      type: NavigationType.Heading,
-      location: heading,
-      pos: nav.pos
-    };
-  } else {
-    return null;
-  }
-
 }
 
 export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
+
+  // get previous position
+  const prevPos = view.state.selection.from;
+
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
   // scroll to selection
-  const node = view.nodeDOM(pos);
+  const node = view.domAtPos(pos).node;
   if (node instanceof HTMLElement) {
 
     // perform navigation
@@ -122,37 +99,27 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
       scroller.to(node, 0);
     }
 
-    // pos for locating dom elements is 1 before the target, so add 1 to pos before returning it
-    pos++;
+    return { pos, prevPos };
 
-    // return nav info
-    return {
-      type: NavigationType.Pos,
-      location: pos.toString(),
-      pos
-    };
   } else {
     return null;
   }
 }
 
 export function navigateToTop(view: EditorView, animate = true): Navigation | null {
-  const nav = navigateToPos(view, 2, animate);
-  if (nav) {
-    return {
-      type: NavigationType.Top,
-      location: "2",
-      pos: 2
-    };
-  } else {
-    return null;
-  }
+  return navigateToPos(view, 2, animate);
 }
+
+// TODO: we added a +1 here to make the targeting of nodes consistent however this
+// would have been causing us to 'miss' later when calling view.nodeDOM. We 
+// switched to calling view.domAtPos (above) but that may not be correct either?
+// do we need to call both? How do we normalize these positions? (maybe it's 
+// view.nodeDOM(pos - 1) to pickup both cases?)
 
 function navigate(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
   const result = findChildren(view.state.doc, predicate);
   if (result.length) {
-    return navigateToPos(view, result[0].pos, animate);
+    return navigateToPos(view, result[0].pos + 1, animate);
   } else {
     return null;
   }

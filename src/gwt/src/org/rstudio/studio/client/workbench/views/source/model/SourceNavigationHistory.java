@@ -43,6 +43,8 @@ public class SourceNavigationHistory
   
    public void add(SourceNavigation navigation)
    {
+      Debug.logToConsole(navigation.toDebugString());
+      
       // rewind the history to the current location
       while ( (history_.size() - 1) > currentLocation_)
          history_.removeLast();
@@ -96,6 +98,8 @@ public class SourceNavigationHistory
    
    public SourceNavigation goBack()
    {
+      debugPrintCurrentHistory();
+      
       if (!isBackEnabled())
          return null;
       

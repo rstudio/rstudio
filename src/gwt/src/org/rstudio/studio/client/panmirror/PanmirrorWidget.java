@@ -253,7 +253,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
-            editor_.navigate(PanmirrorNavigation.id(event.getId()));
+            editor_.navigateToId(event.getId());
             editor_.focus();
          }
       });
@@ -293,8 +293,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Navigate, (data) -> {
-         PanmirrorNavigation navigation = Js.uncheckedCast(data);
-         fireEvent(new PanmirrorNavigationEvent(navigation));  
+         
+         PanmirrorNavigation nav = Js.uncheckedCast(data);
+         fireEvent(new PanmirrorNavigationEvent(nav));  
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, (data) -> {
@@ -467,9 +468,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   public void navigate(PanmirrorNavigation navigation)
+   public void navigateToPos(int pos)
    {
-      editor_.navigate(navigation);
+      editor_.navigateToPos(pos);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 

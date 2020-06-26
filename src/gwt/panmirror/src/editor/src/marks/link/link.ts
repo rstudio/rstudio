@@ -44,7 +44,7 @@ const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
 const extension = (context: ExtensionContext): Extension => {
-  const { pandocExtensions, ui } = context;
+  const { pandocExtensions, ui, navigation } = context;
 
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
@@ -171,6 +171,7 @@ const extension = (context: ExtensionContext): Extension => {
       const plugins = [
         new LinkPopupPlugin(
           ui,
+          navigation,
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
           removeLinkCommand(schema.marks.link),
         ),

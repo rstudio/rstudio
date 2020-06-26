@@ -22,7 +22,6 @@ import org.rstudio.studio.client.panmirror.PanmirrorNavigation;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -31,11 +30,17 @@ import com.google.inject.Inject;
 
 public class VisualModeNavigation
 {
-   public VisualModeNavigation(DocUpdateSentinel docUpdateSentinel)
+   interface Context
+   {
+      String getId();
+      String getPath();
+      PanmirrorWidget panmirror();
+   }
+   
+   public VisualModeNavigation(Context context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      docUpdateSentinel_ = docUpdateSentinel;
-      
+      context_ = context;
    }
    
    @Inject
@@ -47,65 +52,67 @@ public class VisualModeNavigation
    
    public void onNavigated(PanmirrorNavigation navigation)
    {
-      events_.fireEvent(new SourceNavigationEvent(toSourceNavigation(navigation)));
+      events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.prevPos)));
+      events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.pos)));
    }
    
    public boolean isVisualModePosition(SourcePosition position)
    {
-      return PanmirrorNavigation.isPanmirrorPosition(position);
+      return kPanmirrorContext.equals(position.getContext());
    }
 
-   
-   public void navigate(PanmirrorWidget panmirror, SourcePosition position)
+   public void navigate(SourcePosition position)
    {
-      PanmirrorNavigation navigation = toPanmirrorNavigation(position);
-      if (navigation != null)
-         panmirror.navigate(navigation);
+      int pos = (kRowLength * position.getRow()) + position.getColumn();
+      context_.panmirror().navigateToPos(pos);
    }
    
-   public void recordCurrentNavigationPosition(PanmirrorWidget panmirror)
+   public void recordCurrentNavigationPosition()
    {
-      events_.fireEvent(new SourceNavigationEvent(SourceNavigation.create(
-         docUpdateSentinel_.getId(), 
-         docUpdateSentinel_.getPath(),
-         getSourcePosition(panmirror)
-      )));            
+      events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(getSourcePosition())));            
    }
    
-   public SourcePosition getSourcePosition(PanmirrorWidget panmirror)
+   public SourcePosition getSourcePosition()
    {
+      PanmirrorWidget panmirror = context_.panmirror();
       if (panmirror != null)
       {
          PanmirrorEditingLocation editingLocation = panmirror.getEditingLocation();
-         return PanmirrorNavigation.toSourcePosition(PanmirrorNavigation.pos(editingLocation.pos));
+         return createSourcePosition(editingLocation.pos);
       }
       else
       { 
-         return PanmirrorNavigation.toSourcePosition(PanmirrorNavigation.top());
+         return createSourcePosition(2);
       }
    }
    
-   private PanmirrorNavigation toPanmirrorNavigation(SourcePosition position)
+   private SourceNavigation createSourceNavigation(int pos)
    {
-      if (isVisualModePosition(position))
-      {
-         return PanmirrorNavigation.fromSourcePosition(position);
-      }
-      else
-      {
-         return null;
-      }
+      return createSourceNavigation(createSourcePosition(pos));
    }
    
-   private SourceNavigation toSourceNavigation(PanmirrorNavigation navigation)
+   private SourceNavigation createSourceNavigation(SourcePosition pos)
    {
-      return SourceNavigation.create(docUpdateSentinel_.getId(), 
-                                     docUpdateSentinel_.getPath(),
-                                     PanmirrorNavigation.toSourcePosition(navigation));  
+      return SourceNavigation.create(context_.getId(), context_.getPath(), pos);
    }
    
-   private final DocUpdateSentinel docUpdateSentinel_;
-   
+   private SourcePosition createSourcePosition(int pos)
+   {
+      // create 'virtual' rows based on 50 character chunks (this is used for 
+      // detecting duplicates in the navigation history, and 100 characters is
+      // hardly worth a navigation (source mode uses actual editor rows for this)
+      int row = pos / kRowLength;
+      int col = pos % kRowLength;
+      
+      // create the position
+      return SourcePosition.create(kPanmirrorContext, row, col, -1);
+   }
+  
+   private Context context_;
+     
    private EventBus events_;
+   
+   private final static String kPanmirrorContext = "panmirror";
+   private final static int kRowLength = 100;
    
 }

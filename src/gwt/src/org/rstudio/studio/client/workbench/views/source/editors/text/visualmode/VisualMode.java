@@ -38,7 +38,6 @@ import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
-import org.rstudio.studio.client.panmirror.PanmirrorNavigation;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
@@ -104,7 +103,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(docUpdateSentinel_, target_, visualModeExec_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter();
-      visualModeNavigation_ = new VisualModeNavigation(docUpdateSentinel_);
+      visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
@@ -575,22 +574,22 @@ public class VisualMode implements VisualModeEditorSync,
    
    public void navigate(SourcePosition position)
    {
-      visualModeNavigation_.navigate(panmirror_, position);
+      visualModeNavigation_.navigate(position);
    }
    
    public void recordCurrentNavigationPosition()
    {
-      visualModeNavigation_.recordCurrentNavigationPosition(panmirror_);
+      visualModeNavigation_.recordCurrentNavigationPosition();
    }
    
    public SourcePosition getSourcePosition()
    {
-      return visualModeNavigation_.getSourcePosition(panmirror_);
+      return visualModeNavigation_.getSourcePosition();
    }
    
    public boolean isAtRow(SourcePosition position)
    {
-      if (PanmirrorNavigation.isPanmirrorPosition(position))
+      if (visualModeNavigation_.isVisualModePosition(position))
       {
          return Math.abs(position.getRow() - getSourcePosition().getRow()) < 80;
       }
@@ -986,6 +985,28 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
    }
+   
+   private VisualModeNavigation.Context navigationContext_ = new  VisualModeNavigation.Context() {
+
+      @Override
+      public String getId()
+      {
+         return docUpdateSentinel_.getId();
+      }
+
+      @Override
+      public String getPath()
+      {
+         return docUpdateSentinel_.getPath();
+      }
+
+      @Override
+      public PanmirrorWidget panmirror()
+      {
+         return panmirror_;
+      }
+      
+   };
    
    
    private PanmirrorOptions panmirrorOptions()
