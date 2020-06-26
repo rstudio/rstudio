@@ -33,7 +33,7 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
-import { kInsertCompletionTransaction } from '../../api/transaction';
+import { kInsertCompletionTransaction, kPreventCompletionTransaction } from '../../api/transaction';
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -128,6 +128,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
                 // If this completion shares scope with the previous completion
                 // and this is a completion transaction, skip
                 if (tr.getMeta(kInsertCompletionTransaction) && completionsShareScope(handler, prevState.handler)) {
+                  continue;
+                }
+
+                // This transaction has been explicitly set to not permit completions
+                if (tr.getMeta(kPreventCompletionTransaction)) {
                   continue;
                 }
 
@@ -464,12 +469,41 @@ export function performCompletionReplacement(view: EditorView, pos: number, repl
     tr.insertText(replacement);
   }
 
-  // mark the transaction as an completion insertin
+  // mark the transaction as an completion insertion
   tr.setMeta(kInsertCompletionTransaction, true);
 
   // dispatch
   view.dispatch(tr);
 }
+
+export function performReplacementPreventingCompletions(view: EditorView, pos: number, replacement: ProsemirrorNode | string) {
+  // create transaction
+  const tr = view.state.tr;
+
+  // set selection to area we will be replacing
+  tr.setSelection(new TextSelection(tr.doc.resolve(pos), view.state.selection.$head));
+
+  // ensure we have a node
+  if (replacement instanceof ProsemirrorNode) {
+    // combine it's marks w/ whatever is active at the selection
+    const marks = view.state.selection.$head.marks();
+
+    // set selection and replace it
+    tr.replaceSelectionWith(replacement, false);
+
+    // propapate marks
+    marks.forEach(mark => tr.addMark(pos, view.state.selection.to, mark));
+  } else {
+    tr.insertText(replacement);
+  }
+
+  // mark the transaction as an completion insertion
+  tr.setMeta(kPreventCompletionTransaction, true);
+
+  // dispatch
+  view.dispatch(tr);
+}
+
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

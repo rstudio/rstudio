@@ -13,9 +13,9 @@
  *
  */
 
-import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { EditorState, Transaction, Selection } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
@@ -25,17 +25,22 @@ import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
 import { fragmentText } from '../../api/fragment';
 import { InsertCitationCommand } from './cite-commands';
-import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
-import { MarkTransaction } from '../../api/transaction';
+import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
+import { MarkTransaction, kInsertCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { BibliographyManager } from '../../api/bibliography';
+import { EditorView } from 'prosemirror-view';
+import { insertCitationForDOI, doiFromSlice } from './cite-doi';
+import { CrossrefServer } from '../../api/crossref';
+import { EditorUI } from '../../api/ui';
+import { performCompletionReplacement, performReplacementPreventingCompletions } from '../../behaviors/completion/completion';
 
 const kCiteCitationsIndex = 0;
 
 const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/]*';
+const kCiteIdOptionalCharsPattern = '[^\\]]*';
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
@@ -212,10 +217,56 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     plugins: (schema: Schema) => {
-      return [citeHighlightPlugin(schema)];
+      return [
+        new Plugin(
+          {
+            key: new PluginKey('paste_cite_doi'),
+            props: {
+              handlePaste: handlePaste(ui, mgr, context.server.crossref),
+            }
+          }),
+        citeHighlightPlugin(schema)];
     },
   };
 };
+
+function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: CrossrefServer) {
+  return (view: EditorView, _event: Event, slice: Slice) => {
+
+    const schema = view.state.schema;
+    if (markIsActive(view.state, schema.marks.cite)) {
+
+      // This is a DOI
+      const parsedDOI = doiFromSlice(view.state, slice);
+      if (parsedDOI) {
+        // Insert the DOI text as a placeholder
+        // This is using the completion insertion as this should be treated as a 
+        // completion handling the paste (e.g. no other competions should be fired)
+        performReplacementPreventingCompletions(view, parsedDOI.pos, parsedDOI.token);
+
+        // Do the server work to to try to resolve the DOI
+        server.doi(parsedDOI.token).then(work => {
+          if (work) {
+            insertCitationForDOI(work, bibManager, parsedDOI.pos, ui, view);
+          }
+        });
+        return true;
+      } else {
+        // This is just content, paste the text content into the citation
+        // and allow citations to fire
+        const tr = view.state.tr;
+        let text = '';
+        slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
+        tr.replaceSelectionWith(schema.text(text));
+        view.dispatch(tr);
+        return true;
+      }
+    } else {
+      // We aren't in a citation so let someone else handle the paste
+      return false;
+    }
+  };
+}
 
 // automatically create a citation given certain input
 function insertCiteInputRule(schema: Schema) {
@@ -472,5 +523,33 @@ function editingCiteIdLength(text: string) {
     return 0;
   }
 }
+
+export interface ParsedCitation {
+  token: string;
+  pos: number;
+  offset: number;
+}
+
+export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
+  // return completions only if we are inside a cite id mark
+  const markType = context.doc.type.schema.marks.cite_id;
+  if (!markIsActive(context, markType)) {
+    return null;
+  }
+
+  const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
+  if (range) {
+    const citeText = context.doc.textBetween(range.from, range.to);
+    const match = citeText.match(kEditingCiteIdRegEx);
+    if (match) {
+      const token = match[2];
+      const pos = range.from + match[1].length;
+      return { token, pos, offset: -match[1].length };
+    }
+  }
+
+  return null;
+}
+
 
 export default extension;

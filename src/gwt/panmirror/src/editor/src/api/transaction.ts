@@ -26,6 +26,7 @@ export const kFixupTransaction = 'docFixup';
 export const kRestoreLocationTransaction = 'restoreLocation';
 export const kInsertSymbolTransaction = 'insertSymbol';
 export const kInsertCompletionTransaction = 'insertCompletion';
+export const kPreventCompletionTransaction = 'preventCompletion';
 
 export type TransactionsFilter = (transactions: Transaction[], oldState: EditorState, newState: EditorState) => boolean;
 

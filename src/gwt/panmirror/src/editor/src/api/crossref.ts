@@ -101,11 +101,16 @@ const kCrossrefMatches = [
   kOtherCrossrefDOIRegex3,
 ];
 
-export function parseDOI(token: string): string | undefined {
-  let match;
+export function parseCrossRefDOI(token: string): string | undefined {
+  let match = null;
   kCrossrefMatches.find(regex => {
     match = token.match(regex);
     return match && match[0].length > 0;
   });
-  return match;
+
+  if (match === null) {
+    return undefined;
+  } else {
+    return match[0];
+  }
 }

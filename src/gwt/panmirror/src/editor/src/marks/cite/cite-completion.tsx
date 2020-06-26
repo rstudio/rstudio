@@ -17,7 +17,7 @@
 // TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
 
 // FUTURE
-// TODO: search doi, url, or crossref (data cite [hipster], pubmed?)
+// TODO: search url, or crossref (data cite [hipster], pubmed?)
 // TODO: Full insert reference panel including preview
 // TODO: Should we show the bibliography at the end of the document as a formatted, uneditable block at the end?
 // TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user
@@ -33,12 +33,12 @@ import React from 'react';
 import { BibliographyManager } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorUI } from '../../api/ui';
-import { getMarkRange, markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { kEditingCiteIdRegEx } from './cite';
+import { parseCitation } from './cite';
+import { isDOI } from './cite-doi';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -91,12 +91,13 @@ function filterCitations(
   if (token.trim().length === 0) {
     return bibliographyEntries.slice(0, kMaxCitationCompletions);
   }
+
+  if (isDOI(token)) {
+    return [];
+  }
+
   return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
-
-
-
-
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
@@ -136,33 +137,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
     }
     return null;
   };
-}
-
-export interface ParsedCitation {
-  token: string;
-  pos: number;
-  offset: number;
-}
-
-export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
-  // return completions only if we are inside a cite id mark
-  const markType = context.doc.type.schema.marks.cite_id;
-  if (!markIsActive(context, markType)) {
-    return null;
-  }
-
-  const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
-  if (range) {
-    const citeText = context.doc.textBetween(range.from, range.to);
-    const match = citeText.match(kEditingCiteIdRegEx);
-    if (match) {
-      const token = match[2];
-      const pos = range.from + match[1].length;
-      return { token, pos, offset: -match[1].length };
-    }
-  }
-
-  return null;
 }
 
 // The title may contain spans to control case specifically - consequently, we need
