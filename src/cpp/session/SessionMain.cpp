@@ -1871,53 +1871,56 @@ int main (int argc, char * const argv[])
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
 
-      // determine if this is a new user and get the first project path if so
       std::string firstProjectPath = "";
-      bool newUser = false;
-
-      FilePath userScratchPath = options.userScratchPath();
-      if (userScratchPath.exists())
+      if (!options.verifyInstallation())
       {
-         // if the lists directory has not yet been created,
-         // this is a new user
-         FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
-         if (!listsPath.exists())
-            newUser = true;
-      }
-      else
-      {
-         // create the scratch path
-         error = userScratchPath.ensureDirectory();
-         if (error)
-            return sessionExitFailure(error, ERROR_LOCATION);
+         // determine if this is a new user and get the first project path if so
+         bool newUser = false;
 
-         newUser = true;
-      }
-
-      if (newUser)
-      {
-         // this is a brand new user
-         // check to see if there is a first project template
-         if (!options.firstProjectTemplatePath().empty())
+         FilePath userScratchPath = options.userScratchPath();
+         if (userScratchPath.exists())
          {
-            // copy the project template to the user's home dir
-            FilePath templatePath = FilePath(options.firstProjectTemplatePath());
-            if (templatePath.exists())
+            // if the lists directory has not yet been created,
+            // this is a new user
+            FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+            if (!listsPath.exists())
+               newUser = true;
+         }
+         else
+         {
+            // create the scratch path
+            error = userScratchPath.ensureDirectory();
+            if (error)
+               return sessionExitFailure(error, ERROR_LOCATION);
+
+            newUser = true;
+         }
+
+         if (newUser)
+         {
+            // this is a brand new user
+            // check to see if there is a first project template
+            if (!options.firstProjectTemplatePath().empty())
             {
-               error = templatePath.copyDirectoryRecursive(
-                  options.userHomePath().completeChildPath(
-                     templatePath.getFilename()));
-               if (error)
-                  LOG_ERROR(error);
-               else
+               // copy the project template to the user's home dir
+               FilePath templatePath = FilePath(options.firstProjectTemplatePath());
+               if (templatePath.exists())
                {
-                  FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
-                                                  .completeChildPath(templatePath.getFilename() + ".Rproj");
-                  if (firstProjPath.exists())
-                     firstProjectPath = firstProjPath.getAbsolutePath();
+                  error = templatePath.copyDirectoryRecursive(
+                     options.userHomePath().completeChildPath(
+                        templatePath.getFilename()));
+                  if (error)
+                     LOG_ERROR(error);
                   else
-                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
-                                         ". Please ensure the template contains an Rproj file.");
+                  {
+                     FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
+                                                     .completeChildPath(templatePath.getFilename() + ".Rproj");
+                     if (firstProjPath.exists())
+                        firstProjectPath = firstProjPath.getAbsolutePath();
+                     else
+                        LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
+                                            ". Please ensure the template contains an Rproj file.");
+                  }
                }
             }
          }
@@ -1994,7 +1997,7 @@ int main (int argc, char * const argv[])
       // r options
       rstudio::r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
-      rOptions.userScratchPath = userScratchPath;
+      rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
