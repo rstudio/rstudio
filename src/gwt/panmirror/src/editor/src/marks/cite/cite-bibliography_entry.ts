@@ -48,7 +48,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
   };
 }
 
-// Suggests a bibliographyic identifier based upon the source
+// Suggests a bibliographic identifier based upon the source
 export function suggestId(existingIds: string[], title?: string, author?: BibliographyAuthor[], issued?: BibliographyDate) {
   // Try to get the last name
   let authorPart = '';

@@ -184,7 +184,6 @@ function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
   return parsedYamlNodes;
 }
 
-// TODO: path handling ok here?
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUIContext): BibliographyFiles | null {
   const bibliographyParsedYamls = parsedYamls.filter(
     parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.bibliography,

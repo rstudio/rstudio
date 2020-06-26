@@ -33,7 +33,7 @@ import { EditorView } from 'prosemirror-view';
 import { insertCitationForDOI, doiFromSlice } from './cite-doi';
 import { CrossrefServer } from '../../api/crossref';
 import { EditorUI } from '../../api/ui';
-import { performCompletionReplacement, performReplacementPreventingCompletions } from '../../behaviors/completion/completion';
+import { performReplacementPreventingCompletions } from '../../behaviors/completion/completion';
 
 const kCiteCitationsIndex = 0;
 
