@@ -382,7 +382,7 @@ Error launchSession(const r_util::SessionContext& context,
                     PidType* pPid)
 {
    // launch the session
-   // we use a modified configured home directory to provide a realiable temp dir that can be written to
+   // we use a modified configured home directory to provide a reliable temp dir that can be written to
    // as the server (service) user most likely does not have a home directory configured
    std::string username = context.username;
    std::string rsessionPath = server::options().rsessionPath();
@@ -419,4 +419,3 @@ Error launchSession(const r_util::SessionContext& context,
 
 } // namespace server
 } // namespace rstudio
-
