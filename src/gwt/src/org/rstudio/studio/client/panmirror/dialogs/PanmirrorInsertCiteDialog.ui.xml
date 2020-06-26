@@ -11,25 +11,17 @@
 	
 	</ui:style>
 
-	<g:VerticalPanel styleName="{res.styles.dialog}">
+	<g:VerticalPanel styleName="{res.styles.dialog} {res.styles.dialogWide}">
 
-		<!-- TODO: element ids -->
 		<rw:FormLabel
-			text="Citation Id:" />
-
+			for="{ElementIds.getVisualMdInsertCiteId}"
+			text="Citation Id:"
+			styleName="{res.styles.fullWidth}" />
 
 		<rw:FormTextBox
+			elementId="{ElementIds.getVisualMdInsertCiteId}"
 			styleName="{res.styles.fullWidth} {res.styles.spaced}"
 			ui:field="citationId_" />
-
-
-		<rw:FormLabel
-			text="Bibliography:" />
-		
-	
-		<rw:SelectWidget
-			styleName="{res.styles.fullWidth} {res.styles.spaced}" 
-			ui:field="bibliographies_" />
 
 					
 		<rw:FormLabel
@@ -38,10 +30,18 @@
 		
 		<g:FlexTable 
 			ui:field="previewTable_" 
-			styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}">
+			styleName="{res.styles.spaced} {res.styles.flexTablePreview}">
 			
 		</g:FlexTable>
 
+		<rw:FormLabel		
+			for="{ElementIds.getVisualMdInsertCiteBib}"
+			text="Bibliography:" />
+	
+		<rw:FormListBox
+			elementId="{ElementIds.getVisualMdInsertCiteBib}"
+			styleName="{res.styles.fullWidthSelect} {res.styles.spaced}"
+			ui:field="bibliographies_" />
 
 	</g:VerticalPanel>
 

@@ -8,6 +8,11 @@
    margin-bottom: 10px;
    position: relative;
 }
+
+.dialogWide {
+   width: 425px !important;
+}
+
 	   
 .dialog label,
 .dialog .gwt-Label {
@@ -48,6 +53,10 @@
 }
 
 .dialog .fullWidth select {
+	width: 100%;
+}
+
+.dialog .fullWidthSelect {
 	width: 100%;
 }
 
