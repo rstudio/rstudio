@@ -12,10 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 export function expandPaths(rootPath: string, paths: string[]): string[] {
   return paths.map(path => join([rootPath, path]));
 }
-
 
 const kPathReplaceRegex = new RegExp('//', 'g');
 export function join(paths: string[]) {

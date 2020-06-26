@@ -13,10 +13,6 @@
  *
  */
 
-
-// TODO: Be sure to use polite pool for CrossRef.append mailto:query param to query string
-// TODO: need to throttle searches when user is typing
-
 import { EditorView } from 'prosemirror-view';
 import { EditorState, Transaction } from 'prosemirror-state';
 

@@ -13,17 +13,6 @@
  *
  */
 
-// TESTING
-// TODO: let's make a note to ask for some targeted testing of fuzzy search weights by users that have large bibliographies
-
-// FUTURE
-// TODO: search url, or crossref (data cite [hipster], pubmed?)
-// TODO: Full insert reference panel including preview
-// TODO: Should we show the bibliography at the end of the document as a formatted, uneditable block at the end?
-// TODO: Could we adorn citations that don't resolve by id with a warning decoration as an aide to user
-// TODO: How should I report errors to user (for example, invalid entry type)
-// TODO: Improve large bibliography performance by 'warming up' bibliography manager
-
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
