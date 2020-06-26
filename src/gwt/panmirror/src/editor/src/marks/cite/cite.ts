@@ -40,7 +40,9 @@ const kCiteCitationsIndex = 0;
 const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[^\\]]*';
+const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/;()/+<>#]*';
+
+
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
