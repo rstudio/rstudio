@@ -83,6 +83,7 @@ MimeType s_mimeTypes[] =
       { "jpeg",         "image/jpeg" },
       { "jpe",          "image/jpeg" },
       { "png",          "image/png" },
+      { "webp",         "image/webp" },
       { "js",           "text/javascript" },
       { "pdf",          "application/pdf" },
       { "svg",          "image/svg+xml" },
