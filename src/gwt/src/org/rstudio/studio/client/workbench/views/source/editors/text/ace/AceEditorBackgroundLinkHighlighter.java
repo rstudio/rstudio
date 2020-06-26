@@ -157,10 +157,6 @@ public class AceEditorBackgroundLinkHighlighter
 	    {
                highlighters_.add(webLinkHighlighter());
 	    }
-	    else
-	    {
-	       highlighters_.remove(webLinkHighlighter());
-	    }
 	    pUserPrefs_.get().highlightWebLink().bind(
 		    new CommandWithArg<Boolean>() {
 		       public void execute(Boolean arg) {
@@ -168,12 +164,10 @@ public class AceEditorBackgroundLinkHighlighter
 			  {
 				highlighters_.add(webLinkHighlighter());
 			  }
-		          else
+			  else
 	  		  {
 				highlighters_.remove(webLinkHighlighter());
 			  }
-			  pUserPrefs_.get().highlightWebLink().setGlobalValue(arg);
-			  pUserPrefs_.get().writeUserPrefs();
 		       }});
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
