@@ -30,6 +30,7 @@
 * Colorize parentheses, braces, and brackets in assorted colors (#7027)
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
+* The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 
 ### RStudio Server Pro
 

@@ -24,31 +24,60 @@
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
-   col <- x[start:min(NROW(x), start+len)]
+   col <- x[start:min(NROW(x), start + len)]
    
+   # if this object has a format method, use it. catch errors
+   # and validate that the format method has given us something 'sane'
+   formatted <- .rs.tryCatch(.rs.formatDataColumnDispatch(col, ...))
+   if (is.character(formatted) && length(formatted) == length(col))
+      return(formatted)
+   
+   # otherwise, delegate to internal methods
    if (is.numeric(col))
-   {
-      # show numbers as doubles
-      storage.mode(col) <- "double"
-      
-      # remember which values are NA 
-      naVals <- is.na(col) 
-      
-      # format all the numeric values; this drops NAs (the na.encode option only
-      # preserves NA for character cols)
-      vals <- format(col, trim = TRUE, justify = "none", ...)
-      
-      # restore NA values if there were any
-      if (any(naVals)) {
-         vals[naVals] <- col[naVals]
-      } 
-      
-      # return formatted values
-      vals
-   } else {
-      # show everything else as characters
-      as.character(col)
-   }
+      .rs.formatDataColumnNumeric(col, ...)
+   else
+      .rs.formatDataColumnDefault(col, ...)
+})
+
+.rs.addFunction("formatDataColumnDispatch", function(col, ...)
+{
+   formatter <- utils::getS3method(
+      "format",
+      class = class(col),
+      optional = TRUE
+   )
+   
+   if (is.null(formatter))
+      return(NULL)
+   
+   formatter(col, trim = TRUE, justify = "none", ...)
+   
+})
+
+.rs.addFunction("formatDataColumnNumeric", function(col, ...)
+{
+   # show numbers as doubles
+   storage.mode(col) <- "double"
+   
+   # remember which values are NA 
+   naVals <- is.na(col) 
+   
+   # format all the numeric values; this drops NAs (the na.encode option only
+   # preserves NA for character cols)
+   vals <- format(col, trim = TRUE, justify = "none", ...)
+   
+   # restore NA values if there were any
+   if (any(naVals))
+      vals[naVals] <- col[naVals]
+   
+   # return formatted values
+   vals
+})
+
+.rs.addFunction("formatDataColumnDefault", function(col, ...)
+{
+   # show everything else as characters
+   as.character(col)
 })
 
 .rs.addFunction("describeCols", function(x, maxFactors) 
