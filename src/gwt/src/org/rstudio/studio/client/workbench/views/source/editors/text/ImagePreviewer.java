@@ -497,7 +497,8 @@ public class ImagePreviewer
           href.endsWith(".jpg")  ||
           href.endsWith(".jpeg") ||
           href.endsWith(".gif")  ||
-          href.endsWith(".svg");
+          href.endsWith(".svg")  ||
+          href.endsWith(".webp");
    }
    
    public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, String href)
