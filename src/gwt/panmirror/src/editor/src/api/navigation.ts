@@ -25,12 +25,14 @@ export enum NavigationType {
   Pos = "pos",
   Id = "id",
   Href = "href",
-  Heading = "heading"
+  Heading = "heading",
+  Top = "top"
 }
 
 export interface Navigation {
   type: NavigationType;
   location: string;
+  pos: number;
 }
 
 export function navigateTo(view: EditorView, navigation: Navigation, animate = true): Navigation | null {
@@ -43,16 +45,20 @@ export function navigateTo(view: EditorView, navigation: Navigation, animate = t
       return navigateToHref(view, navigation.location, animate);
     case NavigationType.Heading:
       return navigateToHeading(view, navigation.location, animate);
+    case NavigationType.Top:
+      return navigateToTop(view, animate);
     default:
       return null;
   }
 }
 
 export function navigateToId(view: EditorView, id: string, animate = true): Navigation | null {
-  if (navigate(view, node => id === node.attrs.navigation_id, animate)) {
+  const nav = navigate(view, node => id === node.attrs.navigation_id, animate);
+  if (nav) {
     return {
       type: NavigationType.Id,
-      location: id
+      location: id,
+      pos: nav.pos
     };
   } else {
     return null;
@@ -61,10 +67,12 @@ export function navigateToId(view: EditorView, id: string, animate = true): Navi
 }
 
 export function navigateToHref(view: EditorView, href: string, animate = true): Navigation | null {
-  if (navigate(view, node => node.attrs.id === href, animate)) {
+  const nav = navigate(view, node => node.attrs.id === href, animate);
+  if (nav) {
     return {
       type: NavigationType.Href,
-      location: href
+      location: href,
+      pos: nav.pos
     };
   } else {
     return null;
@@ -72,7 +80,8 @@ export function navigateToHref(view: EditorView, href: string, animate = true): 
 }
 
 export function navigateToHeading(view: EditorView, heading: string, animate = true): Navigation | null {
-  if (navigate(
+
+  const nav = navigate(
     view,
     node => {
       return (
@@ -81,10 +90,13 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
       );
     },
     animate,
-  )) {
+  );
+
+  if (nav) {
     return {
       type: NavigationType.Heading,
-      location: heading
+      location: heading,
+      pos: nav.pos
     };
   } else {
     return null;
@@ -99,6 +111,8 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   // scroll to selection
   const node = view.nodeDOM(pos);
   if (node instanceof HTMLElement) {
+
+    // perform navigation
     const editingRoot = editingRootNode(view.state.selection)!;
     const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
     const scroller = zenscroll.createScroller(container, 700, 20);
@@ -107,9 +121,28 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
     } else {
       scroller.to(node, 0);
     }
+
+    // pos for locating dom elements is 1 before the target, so add 1 to pos before returning it
+    pos++;
+
+    // return nav info
     return {
       type: NavigationType.Pos,
-      location: pos.toString()
+      location: pos.toString(),
+      pos
+    };
+  } else {
+    return null;
+  }
+}
+
+export function navigateToTop(view: EditorView, animate = true): Navigation | null {
+  const nav = navigateToPos(view, 2, animate);
+  if (nav) {
+    return {
+      type: NavigationType.Top,
+      location: "2",
+      pos: 2
     };
   } else {
     return null;

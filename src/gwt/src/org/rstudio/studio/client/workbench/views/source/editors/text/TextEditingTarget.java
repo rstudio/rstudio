@@ -1109,17 +1109,21 @@ public class TextEditingTarget implements
       moveCursorToPreviousSectionOrChunk(false);
    }
 
-   @Override
-   public void recordCurrentNavigationPosition()
-   {
-      docDisplay_.recordCurrentNavigationPosition();
-   }
 
    public void ensureTextEditorActive(Command command)
    {
       visualMode_.deactivate(command);
    }
+   
+   public void ensureVisualModeActive(Command command)
+   {
+      visualMode_.activate(command);
+   }
 
+   // the navigateToPosition methods are called by modules that explicitly
+   // want the text editor active (e.g. debugging, find in files, etc.) so they
+   // don't chec for visual mode
+   
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
@@ -1138,31 +1142,76 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
       });
    }
-
+   
+   // These methods are called by SourceNavigationHistory and source pane management
+   // features (e.g. external source window and source columns) so need to check for
+   // and dispatch to visual mode
+   
+   @Override
+   public void recordCurrentNavigationPosition()
+   {
+      if (visualMode_.isActivated())
+      {
+         visualMode_.recordCurrentNavigationPosition();
+      }
+      else 
+      {
+         docDisplay_.recordCurrentNavigationPosition();
+      }
+   }
+   
+ 
    @Override
    public void restorePosition(SourcePosition position)
    {
-      docDisplay_.restorePosition(position);
+      if (visualMode_.isVisualModePosition(position))
+      {
+         ensureVisualModeActive(() -> {
+            visualMode_.navigate(position);
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() -> {
+            docDisplay_.restorePosition(position);
+         });
+      }
    }
 
    @Override
    public SourcePosition currentPosition()
    {
-      Position cursor = docDisplay_.getCursorPosition();
-      if (docDisplay_.hasLineWidgets())
+      if (visualMode_.isActivated())
       {
-         // if we have line widgets, they create an non-reproducible scroll
-         // position, so use the cursor position only
-         return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+         return visualMode_.getSourcePosition();
       }
-      return SourcePosition.create(getContext(), cursor.getRow(),
-            cursor.getColumn(), docDisplay_.getScrollTop());
+      else
+      {
+         Position cursor = docDisplay_.getCursorPosition();
+         if (docDisplay_.hasLineWidgets())
+         {
+            // if we have line widgets, they create an non-reproducible scroll
+            // position, so use the cursor position only
+            return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+         }
+         return SourcePosition.create(getContext(), cursor.getRow(),
+               cursor.getColumn(), docDisplay_.getScrollTop());
+      }
+     
    }
 
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
-      return docDisplay_.isAtSourceRow(position);
+      if (visualMode_.isActivated())
+      {
+         return visualMode_.isAtRow(position);
+      }
+      else
+      {
+         return docDisplay_.isAtSourceRow(position);
+      }
+     
    }
 
    @Override
@@ -2455,7 +2504,7 @@ public class TextEditingTarget implements
       // switching tabs is a navigation action
       try
       {
-         docDisplay_.recordCurrentNavigationPosition();
+         recordCurrentNavigationPosition();
       }
       catch(Exception e)
       {

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
+import org.rstudio.studio.client.panmirror.PanmirrorNavigation;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
@@ -62,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorC
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.Scheduler;
@@ -102,6 +104,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(docUpdateSentinel_, target_, visualModeExec_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter();
+      visualModeNavigation_ = new VisualModeNavigation(docUpdateSentinel_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
@@ -158,6 +161,18 @@ public class VisualMode implements VisualModeEditorSync,
       return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
+   public void activate(ScheduledCommand completed)
+   {
+      if (!isActivated())
+      {
+         docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, true);
+         manageUI(true, true, completed);
+      }
+      else
+      {
+         completed.execute();
+      }
+   }
   
    public void deactivate(ScheduledCommand completed)
    {
@@ -553,6 +568,38 @@ public class VisualMode implements VisualModeEditorSync,
       return findReplaceButton_;
    }
 
+   public boolean isVisualModePosition(SourcePosition position)
+   {
+      return visualModeNavigation_.isVisualModePosition(position);
+   }
+   
+   public void navigate(SourcePosition position)
+   {
+      visualModeNavigation_.navigate(panmirror_, position);
+   }
+   
+   public void recordCurrentNavigationPosition()
+   {
+      visualModeNavigation_.recordCurrentNavigationPosition(panmirror_);
+   }
+   
+   public SourcePosition getSourcePosition()
+   {
+      return visualModeNavigation_.getSourcePosition(panmirror_);
+   }
+   
+   public boolean isAtRow(SourcePosition position)
+   {
+      if (PanmirrorNavigation.isPanmirrorPosition(position))
+      {
+         return Math.abs(position.getRow() - getSourcePosition().getRow()) < 80;
+      }
+      else
+      {
+         return false;
+      }
+            
+   }
    
    public void activateDevTools()
    {
@@ -794,14 +841,13 @@ public class VisualMode implements VisualModeEditorSync,
                }
             });
             
-            // record navigation event on navigate
+            // forward navigation event
             panmirror_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler()
             {
                @Override
                public void onPanmirrorNavigation(PanmirrorNavigationEvent event)
                {
-                  
-                  
+                  visualModeNavigation_.onNavigated(event.getNavigation());
                }
             });
             
@@ -1002,6 +1048,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
+   private final VisualModeNavigation visualModeNavigation_;
    
    private VisualModeReloadChecker panmirrorFormatConfig_;
    

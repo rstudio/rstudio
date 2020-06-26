@@ -141,10 +141,10 @@ public class SourceNavigationHistory
    @SuppressWarnings("unused")
    private void debugPrintCurrentHistory()
    {
-      Debug.log("HISTORY (location=" + currentLocation_ + ")");
+      Debug.logToConsole("HISTORY (location=" + currentLocation_ + ")");
       for (int i=0; i<history_.size(); i++)
-         Debug.log(history_.get(i).toDebugString());
-      Debug.log("");
+         Debug.logToConsole(history_.get(i).toDebugString());
+      Debug.logToConsole("");
    }
   
    private final int maxItems_;
