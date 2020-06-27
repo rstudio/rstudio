@@ -30,7 +30,6 @@ export enum NavigationType {
   Id = "id",
   Href = "href",
   Heading = "heading",
-  Top = "top"
 }
 
 export interface Navigation {
@@ -49,8 +48,6 @@ export function navigateTo(view: EditorView, type: NavigationType, location: str
       return navigateToHref(view, location, animate);
     case NavigationType.Heading:
       return navigateToHeading(view, location, animate);
-    case NavigationType.Top:
-      return navigateToTop(view, animate);
     default:
       return null;
   }
@@ -82,6 +79,9 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   // get previous position
   const prevPos = view.state.selection.from;
 
+  // need to target at least the body
+  pos = Math.max(pos, 2);
+
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
@@ -104,10 +104,6 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   } else {
     return null;
   }
-}
-
-export function navigateToTop(view: EditorView, animate = true): Navigation | null {
-  return navigateToPos(view, 2, animate);
 }
 
 function navigate(view: EditorView, predicate: Predicate, animate = true): Navigation | null {

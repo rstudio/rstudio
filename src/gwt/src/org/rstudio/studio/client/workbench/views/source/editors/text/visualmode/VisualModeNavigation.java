@@ -82,7 +82,7 @@ public class VisualModeNavigation
       }
       else
       { 
-         return createSourcePosition(2);
+         return createSourcePosition(0);
       }
    }
    
@@ -114,5 +114,6 @@ public class VisualModeNavigation
    
    private final static String kPanmirrorContext = "panmirror";
    private final static int kRowLength = 50;
+   
    
 }

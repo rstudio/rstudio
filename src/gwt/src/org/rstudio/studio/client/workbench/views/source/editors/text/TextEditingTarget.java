@@ -3143,9 +3143,7 @@ public class TextEditingTarget implements
    @Handler
    void onToggleRmdVisualMode()
    {
-      // explicit change of modes is a navigation event
       recordCurrentNavigationPosition();
-      
       view_.toggleRmdVisualMode();
    }
 
