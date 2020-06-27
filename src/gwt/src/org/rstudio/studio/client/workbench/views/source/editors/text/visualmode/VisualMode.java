@@ -591,7 +591,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (visualModeNavigation_.isVisualModePosition(position))
       {
-         return Math.abs(position.getRow() - getSourcePosition().getRow()) < 80;
+         return position.getRow() == getSourcePosition().getRow();
       }
       else
       {

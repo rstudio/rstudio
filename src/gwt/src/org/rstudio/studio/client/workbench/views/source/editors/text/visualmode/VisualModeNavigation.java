@@ -99,7 +99,7 @@ public class VisualModeNavigation
    private SourcePosition createSourcePosition(int pos)
    {
       // create 'virtual' rows based on 50 character chunks (this is used for 
-      // detecting duplicates in the navigation history, and 100 characters is
+      // detecting duplicates in the navigation history, and 50 characters is
       // hardly worth a navigation (source mode uses actual editor rows for this)
       int row = pos / kRowLength;
       int col = pos % kRowLength;
@@ -113,6 +113,6 @@ public class VisualModeNavigation
    private EventBus events_;
    
    private final static String kPanmirrorContext = "panmirror";
-   private final static int kRowLength = 100;
+   private final static int kRowLength = 50;
    
 }
