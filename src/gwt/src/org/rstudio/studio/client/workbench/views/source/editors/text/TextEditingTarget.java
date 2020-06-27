@@ -146,6 +146,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -1438,7 +1439,7 @@ public class TextEditingTarget implements
    public void initialize(final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
-                          Provider<String> defaultNameProvider)
+                          EditingTargetNameProvider defaultNameProvider)
    {
       id_ = document.getId();
       fileContext_ = fileContext;
@@ -1503,7 +1504,8 @@ public class TextEditingTarget implements
          }
       });
 
-      name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
+      String name = getNameFromDocument(document, defaultNameProvider);
+      name_.setValue(name, true);
       String contents = document.getContents();
 
       // disable change detection when setting code (since we're just doing
@@ -2261,7 +2263,7 @@ public class TextEditingTarget implements
    }
 
    private String getNameFromDocument(SourceDocument document,
-                                      Provider<String> defaultNameProvider)
+                                      EditingTargetNameProvider defaultNameProvider)
    {
       if (document.getPath() != null)
          return FileSystemItem.getNameFromPath(document.getPath());
@@ -2270,7 +2272,7 @@ public class TextEditingTarget implements
       if (!StringUtil.isNullOrEmpty(name))
          return name;
 
-      String defaultName = defaultNameProvider.get();
+      String defaultName = defaultNameProvider.defaultNamePrefix(this);
       docUpdateSentinel_.setProperty("tempName", defaultName, null);
       return defaultName;
    }

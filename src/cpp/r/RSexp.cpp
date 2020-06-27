@@ -1454,6 +1454,9 @@ bool isCallToNSEFunction(SEXP nodeSEXP,
                          const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
+   if (nodeSEXP == nullptr)
+      return false;
+   
    if (TYPEOF(nodeSEXP) == LANGSXP)
    {
       SEXP headSEXP = CAR(nodeSEXP);

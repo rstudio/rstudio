@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -135,7 +136,7 @@ public interface EditingTarget extends IsWidget,
    void initialize(SourceDocument document,
                    FileSystemContext fileContext,
                    FileType type,
-                   Provider<String> defaultNameProvider);
+                   EditingTargetNameProvider defaultNameProvider);
 
    /**
     * Any bigger than this, and the file should NOT be allowed to open
