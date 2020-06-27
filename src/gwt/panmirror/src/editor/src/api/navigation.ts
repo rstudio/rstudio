@@ -15,7 +15,7 @@
 
 import { EditorView } from 'prosemirror-view';
 
-import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
+import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'prosemirror-utils';
 
 import zenscroll from 'zenscroll';
 
@@ -85,8 +85,8 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
-  // scroll to selection
-  const node = view.domAtPos(pos).node;
+  // find a targetable dom node at the position
+  const node = findDomRefAtPos(pos, view.domAtPos.bind(view));
   if (node instanceof HTMLElement) {
 
     // perform navigation
@@ -110,16 +110,12 @@ export function navigateToTop(view: EditorView, animate = true): Navigation | nu
   return navigateToPos(view, 2, animate);
 }
 
-// TODO: we added a +1 here to make the targeting of nodes consistent however this
-// would have been causing us to 'miss' later when calling view.nodeDOM. We 
-// switched to calling view.domAtPos (above) but that may not be correct either?
-// do we need to call both? How do we normalize these positions? (maybe it's 
-// view.nodeDOM(pos - 1) to pickup both cases?)
-
 function navigate(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
   const result = findChildren(view.state.doc, predicate);
   if (result.length) {
-    return navigateToPos(view, result[0].pos + 1, animate);
+    // pos points immediately before the node so add 1 to it
+    const pos = result[0].pos + 1;
+    return navigateToPos(view, pos, animate);
   } else {
     return null;
   }

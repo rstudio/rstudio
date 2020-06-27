@@ -59,7 +59,7 @@ import {
 } from '../api/transaction';
 import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo, Navigation, navigateToId, navigateToPos, NavigationType } from '../api/navigation';
+import { navigateTo, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
