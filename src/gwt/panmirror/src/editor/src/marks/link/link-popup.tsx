@@ -32,7 +32,7 @@ import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { Popup } from '../../api/widgets/popup';
 import { EditorNavigation, NavigationType } from '../../api/navigation';
 import { Schema } from 'prosemirror-model';
-import { textPopupDecorationPlugin } from '../../api/text-popup';
+import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
 
 
 export function linkPopupPlugin(
@@ -51,10 +51,10 @@ export function linkPopupPlugin(
     key: new PluginKey<DecorationSet>('link-popup'),
     markType: schema.marks.link,
     maxWidth,
-    createPopup: (view: EditorView, attrs: LinkProps, style: React.CSSProperties) => {
+    createPopup: (view: EditorView, target: TextPopupTarget<LinkProps>, style: React.CSSProperties) => {
       return (
         <LinkPopup
-          link={attrs}
+          link={target.attrs}
           maxLinkWidth={kMaxLinkWidth - 10} // prevent off by pixel(s) overflow
           linkCmd={linkCmd}
           removeLinkCmd={removeLinkCmd}
@@ -64,15 +64,15 @@ export function linkPopupPlugin(
           style={style}
         />);
     },
-    specKey: (attrs: LinkProps) => {
-      const linkText = attrs.heading ? attrs.heading : attrs.href;
+    specKey: (target: TextPopupTarget<LinkProps>) => {
+      const linkText = target.attrs.heading ? target.attrs.heading : target.attrs.href;
       return `link:${linkText}`;
     },
     filter: (selection: Selection) => {
       return !selectionIsImageNode(schema, selection);
     },
-    onCmdClick: (attrs: LinkProps) => {
-      ui.display.openURL(attrs.href);
+    onCmdClick: (target: TextPopupTarget<LinkProps>) => {
+      ui.display.openURL(target.attrs.href);
     }
   });
 }

@@ -27,15 +27,20 @@ import { kPlatformMac } from './platform';
 import { MarkType } from 'prosemirror-model';
 
 
+export interface TextPopupTarget<AttrsType = any> {
+  attrs: AttrsType;
+  text: string;
+}
+
 export interface TextPopupDecoration<AttrsType = any> {
   key: PluginKey<DecorationSet>;
   markType: MarkType;
   maxWidth: number;
-  createPopup: (view: EditorView, attrs: AttrsType, style: React.CSSProperties) => JSX.Element;
+  createPopup: (view: EditorView, target: TextPopupTarget<AttrsType>, style: React.CSSProperties) => JSX.Element;
   dismissOnEdit?: boolean;
-  specKey?: (attrs: AttrsType) => string;
+  specKey?: (target: TextPopupTarget<AttrsType>) => string;
   filter?: (selection: Selection) => boolean;
-  onCmdClick?: (attrs: AttrsType) => void;
+  onCmdClick?: (target: TextPopupTarget<AttrsType>) => void;
 }
 
 export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<DecorationSet> {
@@ -83,8 +88,10 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
             return DecorationSet.empty;
           }
 
-          // link attrs
+          // mark target
           const attrs = getMarkAttrs(newState.doc, range, markType);
+          const text = newState.doc.textBetween(range.from, range.to);
+          const target = { attrs, text };
 
           // compute position (we need this both for setting the styles on the LinkPopup
           // as well as for setting the Decorator pos)
@@ -94,7 +101,7 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
           let decoratorSpec: { key: string } | undefined;
           if (specKey) {
             decoratorSpec = {
-              key: specKey(attrs)
+              key: specKey(target)
             };
           }
 
@@ -106,7 +113,7 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
             (view: EditorView, getPos: () => number) => {
 
               // create  popup component
-              const popup = createPopup(view, attrs, decorationPosition.style);
+              const popup = createPopup(view, target, decorationPosition.style);
 
               // create decorator and render popup into it
               const decorationEl = window.document.createElement('div');
@@ -136,10 +143,12 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
         const keyPressed = kPlatformMac && event.metaKey;
         if (keyPressed) {
           const attrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, markType);
-          if (attrs) {
+          const range = getMarkRange(view.state.doc.resolve(pos));
+          if (attrs && range) {
             event.stopPropagation();
             event.preventDefault();
-            onCmdClick(attrs);
+            const text = view.state.doc.textBetween(range.from, range.to);
+            onCmdClick({ attrs, text });
             return true;
           }
         }
