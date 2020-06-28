@@ -38,19 +38,20 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
     dismissOnEdit: true,
     createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
 
+      const kXRefRegEx = /^@ref\(([A-Za-z0-9:-]*)\)$/;
+
       // lookup xref on server
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
-        const xrefs = await server.xref.xrefForId(docPath, 'spatial-join');
-        if (xrefs.refs.length) {
-          return (<XRefPopup xrefs={xrefs} ui={ui} nav={nav} style={style} />);
-        } else {
-          return null;
+        const match = target.text.match(kXRefRegEx);
+        if (match && match[1].length) {
+          const xrefs = await server.xref.xrefForId(docPath, match[1]);
+          if (xrefs.refs.length) {
+            return (<XRefPopup xrefs={xrefs} ui={ui} nav={nav} style={style} />);
+          }
         }
-      } else {
-        return null;
       }
-
+      return null;
     },
     specKey: (target: TextPopupTarget) => {
       return `xref:${target.text}`;

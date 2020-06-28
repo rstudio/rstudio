@@ -507,7 +507,11 @@ Error xrefForId(const json::JsonRpcRequest& request,
    json::Array refsJson;
    std::copy_if(allRefsJson.begin(), allRefsJson.end(), std::back_inserter(refsJson),
                 [id](const json::Value& refJson) {
-                  return refJson.getObject()[kId].getString() == id;
+                  std::string refId = refJson.getObject()[kType].getString();
+                  if (!refId.empty())
+                     refId += ":";
+                  refId += refJson.getObject()[kId].getString();
+                  return refId == id;
                 }
    );
    resultJson[kRefs] = refsJson;
