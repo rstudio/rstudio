@@ -39,7 +39,12 @@ using namespace rstudio::core;
 
 namespace {
 
-
+const char * const kBaseDir = "baseDir";
+const char * const kRefs = "refs";
+const char * const kFile = "file";
+const char * const kType = "type";
+const char * const kId = "id";
+const char * const kTitle = "title";
 
 bool isBookdownRmd(const FileInfo& fileInfo)
 {
@@ -165,13 +170,13 @@ void writeEntryId(const std::string& id, json::Object* pEntryJson)
    std::size_t colonPos = id.find_first_of(':');
    if (colonPos != std::string::npos)
    {
-      pEntryJson->operator[]("type") = id.substr(0, colonPos);
-      pEntryJson->operator[]("id") = id.substr(colonPos + 1);
+      pEntryJson->operator[](kType) = id.substr(0, colonPos);
+      pEntryJson->operator[](kId) = id.substr(colonPos + 1);
    }
    else
    {
-      pEntryJson->operator[]("type") = "";
-      pEntryJson->operator[]("id") = id;
+      pEntryJson->operator[](kType) = "";
+      pEntryJson->operator[](kId) = id;
    }
 }
 
@@ -296,7 +301,7 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
    {
       json::Object xrefJson;
 
-      xrefJson["file"] = indexEntry.file;
+      xrefJson[kFile] = indexEntry.file;
 
       auto entry = indexEntry.entry;
       if (entry.size() > 0)
@@ -315,7 +320,7 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
                title = textrefTitle;
 
             // write the title
-            xrefJson["title"] = title;
+            xrefJson[kTitle] = title;
          }
          else
          {
@@ -420,29 +425,6 @@ void onDeferredInit(bool)
 }
 
 
-Error xrefForId(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
-{
-   // read params
-   std::string file, id;
-   Error error = json::readParams(request.params, &file, &id);
-   if (error)
-      return error;
-
-   // resolve path
-   FilePath filePath = module_context::resolveAliasedPath(file);
-
-   json::Object xrefJson;
-   xrefJson["file"] = "02-visualizations.Rmd";
-   xrefJson["type"] = "fig";
-   xrefJson["id"] = "foobar";
-   xrefJson["title"] = "This is the title";
-
-   pResponse->setResult(xrefJson);
-
-   return Success();
-}
-
 Error xrefIndexForFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -455,16 +437,26 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(file);
 
+   // result to return
+   json::Object resultJson;
+
    // if this is a bookdown context then send the whole project index
    if (isBookdownContext() && filePath.isWithin(projects::projectContext().buildTargetPath()))
    {
+
+      resultJson[kBaseDir] = module_context::createAliasedPath(
+         projects::projectContext().buildTargetPath());
+
       std::vector<XRefIndexEntry> entries = indexEntriesForProject();
-      pResponse->setResult(indexEntriesToXRefs(entries));
+      resultJson[kRefs] = indexEntriesToXRefs(entries);
+
    }
 
    // otherwise just send an index for this file (it will be in the source database)
    else
    {
+      resultJson[kBaseDir] = module_context::createAliasedPath(filePath.getParent());
+
       std::string id;
       source_database::getId(filePath, &id);
       if (!id.empty())
@@ -475,21 +467,51 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          if (error)
          {
             LOG_ERROR(error);
-            pResponse->setResult(json::Array());
+            resultJson[kRefs] = json::Array();
          }
          else
          {
             XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
             std::vector<XRefIndexEntry> entries = indexEntriesForFile(idx);
-            pResponse->setResult(indexEntriesToXRefs(entries));
+            resultJson["refs"] = indexEntriesToXRefs(entries);
          }
       }
       else
       {
-         pResponse->setResult(json::Array());
+         resultJson[kRefs] = json::Array();
       }
    }
 
+   pResponse->setResult(resultJson);
+
+   return Success();
+}
+
+Error xrefForId(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string file, id;
+   Error error = json::readParams(request.params, &file, &id);
+   if (error)
+      return error;
+
+   // delegate to project indexer (will then filter these results)
+   error = xrefIndexForFile(request, pResponse);
+   if (error)
+      return error;
+
+   // filter by the id we were passed
+   json::Object resultJson = pResponse->result().getObject();
+   json::Array allRefsJson = resultJson[kRefs].getArray();
+   json::Array refsJson;
+   std::copy_if(allRefsJson.begin(), allRefsJson.end(), std::back_inserter(refsJson),
+                [id](const json::Value& refJson) {
+                  return refJson.getObject()[kId].getString() == id;
+                }
+   );
+   resultJson[kRefs] = refsJson;
+   pResponse->setResult(resultJson);
 
    return Success();
 }

@@ -149,8 +149,8 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
           const docPath = ui.context.getDocumentPath();
           if (docPath) {
             const xrefs = await server.indexForFile(docPath);
-            index.update(xrefs);
-            return xrefs;
+            index.update(xrefs.refs);
+            return xrefs.refs;
           } else {
             index.update([]);
             return Promise.resolve([]);

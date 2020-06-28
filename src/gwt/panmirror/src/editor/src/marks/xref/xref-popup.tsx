@@ -26,7 +26,7 @@ import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
 import { EditorServer } from "../../editor/editor";
-import { XRef } from "../../api/xref";
+import { XRefs } from "../../api/xref";
 
 
 export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigation, server: EditorServer) {
@@ -41,9 +41,9 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
       // lookup xref on server
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
-        const xref = await server.xref.xrefForId(docPath, 'foo');
-        if (xref) {
-          return (<XRefPopup xref={xref} ui={ui} nav={nav} style={style} />);
+        const xrefs = await server.xref.xrefForId(docPath, 'spatial-join');
+        if (xrefs.refs.length) {
+          return (<XRefPopup xrefs={xrefs} ui={ui} nav={nav} style={style} />);
         } else {
           return null;
         }
@@ -60,7 +60,7 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
 }
 
 interface XRefPopupProps extends WidgetProps {
-  xref: XRef;
+  xrefs: XRefs;
   ui: EditorUI;
   nav: EditorNavigation;
   style: React.CSSProperties;
@@ -69,7 +69,7 @@ interface XRefPopupProps extends WidgetProps {
 const XRefPopup: React.FC<XRefPopupProps> = props => {
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      {props.xref.title}
+      {props.xrefs.refs[0].title}
     </Popup>
   );
 };
