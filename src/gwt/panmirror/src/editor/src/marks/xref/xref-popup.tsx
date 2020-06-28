@@ -25,24 +25,32 @@ import { EditorNavigation } from "../../api/navigation";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
+import { EditorServer } from "../../editor/editor";
+import { XRef } from "../../api/xref";
 
 
-export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigation) {
+export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigation, server: EditorServer) {
 
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('xref-popup'),
     markType: schema.marks.xref,
     maxWidth: 370,
     dismissOnEdit: true,
-    createPopup: (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
-      return (
-        <XRefPopup
-          target={target}
-          ui={ui}
-          nav={nav}
-          style={style}
-        />
-      );
+    createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
+
+      // lookup xref on server
+      const docPath = ui.context.getDocumentPath();
+      if (docPath) {
+        const xref = await server.xref.xrefForId(docPath, 'foo');
+        if (xref) {
+          return (<XRefPopup xref={xref} ui={ui} nav={nav} style={style} />);
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+
     },
     specKey: (target: TextPopupTarget) => {
       return `xref:${target.text}`;
@@ -52,7 +60,7 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
 }
 
 interface XRefPopupProps extends WidgetProps {
-  target: TextPopupTarget;
+  xref: XRef;
   ui: EditorUI;
   nav: EditorNavigation;
   style: React.CSSProperties;
@@ -61,7 +69,7 @@ interface XRefPopupProps extends WidgetProps {
 const XRefPopup: React.FC<XRefPopupProps> = props => {
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      {props.target.text}
+      {props.xref.title}
     </Popup>
   );
 };

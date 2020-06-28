@@ -17,6 +17,7 @@ import { xrefCompletionHandler } from '../marks/xref/xref-completion';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRef[]>;
+  xrefForId: (file: string, id: string) => Promise<XRef | null>;
 }
 
 export interface XRef {

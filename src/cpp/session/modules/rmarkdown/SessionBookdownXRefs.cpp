@@ -420,6 +420,29 @@ void onDeferredInit(bool)
 }
 
 
+Error xrefForId(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string file, id;
+   Error error = json::readParams(request.params, &file, &id);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   json::Object xrefJson;
+   xrefJson["file"] = "02-visualizations.Rmd";
+   xrefJson["type"] = "fig";
+   xrefJson["id"] = "foobar";
+   xrefJson["title"] = "This is the title";
+
+   pResponse->setResult(xrefJson);
+
+   return Success();
+}
+
 Error xrefIndexForFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -488,6 +511,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "xref_index_for_file", xrefIndexForFile))
+     (boost::bind(module_context::registerRpcMethod, "xref_for_id", xrefForId))
    ;
    return initBlock.execute();
 

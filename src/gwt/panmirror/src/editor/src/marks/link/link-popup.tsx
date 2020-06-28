@@ -52,7 +52,7 @@ export function linkPopupPlugin(
     markType: schema.marks.link,
     maxWidth,
     createPopup: (view: EditorView, target: TextPopupTarget<LinkProps>, style: React.CSSProperties) => {
-      return (
+      return Promise.resolve((
         <LinkPopup
           link={target.attrs}
           maxLinkWidth={kMaxLinkWidth - 10} // prevent off by pixel(s) overflow
@@ -62,7 +62,8 @@ export function linkPopupPlugin(
           ui={ui}
           nav={nav}
           style={style}
-        />);
+        />
+      ));
     },
     specKey: (target: TextPopupTarget<LinkProps>) => {
       const linkText = target.attrs.heading ? target.attrs.heading : target.attrs.href;

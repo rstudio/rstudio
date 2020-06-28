@@ -36,7 +36,7 @@ export interface TextPopupDecoration<AttrsType = any> {
   key: PluginKey<DecorationSet>;
   markType: MarkType;
   maxWidth: number;
-  createPopup: (view: EditorView, target: TextPopupTarget<AttrsType>, style: React.CSSProperties) => JSX.Element;
+  createPopup: (view: EditorView, target: TextPopupTarget<AttrsType>, style: React.CSSProperties) => Promise<JSX.Element | null>;
   dismissOnEdit?: boolean;
   specKey?: (target: TextPopupTarget<AttrsType>) => string;
   filter?: (selection: Selection) => boolean;
@@ -112,12 +112,18 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
 
             (view: EditorView, getPos: () => number) => {
 
-              // create  popup component
-              const popup = createPopup(view, target, decorationPosition.style);
-
               // create decorator and render popup into it
               const decorationEl = window.document.createElement('div');
-              reactRenderForEditorView(popup, decorationEl, view);
+              decorationEl.style.visibility = 'hidden';
+
+              // create popup component
+              createPopup(view, target, decorationPosition.style).then(popup => {
+                if (popup) {
+                  reactRenderForEditorView(popup, decorationEl, view);
+                  decorationEl.style.visibility = 'visible';
+                }
+              });
+
               return decorationEl;
 
             },
