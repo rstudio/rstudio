@@ -61,13 +61,15 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const schema = newState.doc.type.schema;
           const selection = newState.selection;
 
-          // don't show the link popup if the selection is an image node (as it has it's own popup)
-          if (selectionIsImageNode(schema, selection)) {
-            return DecorationSet.empty;
-          }
 
           const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
+
+            // don't show the link popup if the selection is an image node (as it has it's own popup)
+            if (selectionIsImageNode(schema, selection)) {
+              return DecorationSet.empty;
+            }
+
             // don't show the link popup if it's positioned at the far left of the link
             // (awkward when cursor is just left of an image)
             if (selection.empty && range.from === selection.from) {
