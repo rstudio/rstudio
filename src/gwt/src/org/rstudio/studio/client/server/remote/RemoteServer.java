@@ -6182,7 +6182,7 @@ public class RemoteServer implements Server
    public void xrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(file)));
+      params.set(0, new JSONString(file));
       params.set(1, new JSONString(id));
       sendRequest(RPC_SCOPE, XREF_FOR_ID, params, callback);
    }
