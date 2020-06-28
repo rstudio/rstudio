@@ -15,6 +15,8 @@
 
 #include "SessionBookdownXRefs.hpp"
 
+#include <boost/lambda/bind.hpp>
+
 #include <shared_core/FilePath.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -221,7 +223,9 @@ private:
 };
 XRefUnsavedIndex s_unsavedIndex;
 
-std::vector<XRefIndexEntry> indexEntriesForProject()
+typedef boost::function<bool(const std::string&)> IndexEntryFilter;
+
+std::vector<XRefIndexEntry> indexEntriesForProject(IndexEntryFilter filter)
 {
    std::vector<XRefIndexEntry> indexEntries;
 
@@ -255,21 +259,27 @@ std::vector<XRefIndexEntry> indexEntriesForProject()
 
       for (auto entry : entries)
       {
-         XRefIndexEntry indexEntry(sourceFile, entry);
-         indexEntries.push_back(indexEntry);
+         if (filter(entry))
+         {
+            XRefIndexEntry indexEntry(sourceFile, entry);
+            indexEntries.push_back(indexEntry);
+         }
       }
    }
 
    return indexEntries;
 }
 
-std::vector<XRefIndexEntry> indexEntriesForFile(const XRefFileIndex& fileIndex)
+std::vector<XRefIndexEntry> indexEntriesForFile(const XRefFileIndex& fileIndex, IndexEntryFilter filter)
 {
    std::vector<XRefIndexEntry> indexEntries;
    for (auto entry : fileIndex.entries)
    {
-      XRefIndexEntry indexEntry(fileIndex.file, entry);
-      indexEntries.push_back(indexEntry);
+      if (filter(entry))
+      {
+         XRefIndexEntry indexEntry(fileIndex.file, entry);
+         indexEntries.push_back(indexEntry);
+      }
    }
 
    return indexEntries;
@@ -424,38 +434,30 @@ void onDeferredInit(bool)
 
 }
 
-
-Error xrefIndexForFile(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+json::Object xrefIndex(const std::string& file, IndexEntryFilter filter)
 {
-   // read params
-   std::string file;
-   Error error = json::readParams(request.params, &file);
-   if (error)
-      return error;
-
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(file);
 
    // result to return
-   json::Object resultJson;
+   json::Object indexJson;
 
    // if this is a bookdown context then send the whole project index
    if (isBookdownContext() && filePath.isWithin(projects::projectContext().buildTargetPath()))
    {
 
-      resultJson[kBaseDir] = module_context::createAliasedPath(
+      indexJson[kBaseDir] = module_context::createAliasedPath(
          projects::projectContext().buildTargetPath());
 
-      std::vector<XRefIndexEntry> entries = indexEntriesForProject();
-      resultJson[kRefs] = indexEntriesToXRefs(entries);
+      std::vector<XRefIndexEntry> entries = indexEntriesForProject(filter);
+      indexJson[kRefs] = indexEntriesToXRefs(entries);
 
    }
 
    // otherwise just send an index for this file (it will be in the source database)
    else
    {
-      resultJson[kBaseDir] = module_context::createAliasedPath(filePath.getParent());
+      indexJson[kBaseDir] = module_context::createAliasedPath(filePath.getParent());
 
       std::string id;
       source_database::getId(filePath, &id);
@@ -467,22 +469,39 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          if (error)
          {
             LOG_ERROR(error);
-            resultJson[kRefs] = json::Array();
+            indexJson[kRefs] = json::Array();
          }
          else
          {
             XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
-            std::vector<XRefIndexEntry> entries = indexEntriesForFile(idx);
-            resultJson["refs"] = indexEntriesToXRefs(entries);
+            std::vector<XRefIndexEntry> entries = indexEntriesForFile(idx, filter);
+            indexJson["refs"] = indexEntriesToXRefs(entries);
          }
       }
       else
       {
-         resultJson[kRefs] = json::Array();
+         indexJson[kRefs] = json::Array();
       }
    }
 
-   pResponse->setResult(resultJson);
+   return indexJson;
+}
+
+
+Error xrefIndexForFile(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   // filter that returns all entries
+   IndexEntryFilter includeAll = boost::lambda::constant(true);
+
+   // get index and return it
+   pResponse->setResult(xrefIndex(file, includeAll));
 
    return Success();
 }
@@ -496,26 +515,13 @@ Error xrefForId(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // delegate to project indexer (will then filter these results)
-   error = xrefIndexForFile(request, pResponse);
-   if (error)
-      return error;
+   // get index containing just the entry that matches this id
+   json::Object indexJson = xrefIndex(file, [id](const std::string& entry) {
+     return id == entry.substr(0, entry.find_first_of(' '));
+   });
 
-   // filter by the id we were passed
-   json::Object resultJson = pResponse->result().getObject();
-   json::Array allRefsJson = resultJson[kRefs].getArray();
-   json::Array refsJson;
-   std::copy_if(allRefsJson.begin(), allRefsJson.end(), std::back_inserter(refsJson),
-                [id](const json::Value& refJson) {
-                  std::string refId = refJson.getObject()[kType].getString();
-                  if (!refId.empty())
-                     refId += ":";
-                  refId += refJson.getObject()[kId].getString();
-                  return refId == id;
-                }
-   );
-   resultJson[kRefs] = refsJson;
-   pResponse->setResult(resultJson);
+   // return it
+   pResponse->setResult(indexJson);
 
    return Success();
 }
