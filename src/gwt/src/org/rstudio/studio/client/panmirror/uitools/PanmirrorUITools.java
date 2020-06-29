@@ -25,5 +25,6 @@ public class PanmirrorUITools
    public PanmirrorUIToolsImage image;
    public PanmirrorUIToolsFormat format;
    public PanmirrorUIToolsSource source;
+   public PanmirrorUIToolsCite cite;
 }
 

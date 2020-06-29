@@ -33,7 +33,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
   // Formatter used for shortening and displaying issue dates.
   const issuedDateFormatter = (date?: BibliographyDate): string => {
     if (date) {
-      return formatIssuedDate(date, ui);
+      return formatIssuedDate(date);
     }
     return '';
   };
@@ -49,7 +49,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
 }
 
 // Suggests a bibliographic identifier based upon the source
-export function suggestId(existingIds: string[], title?: string, author?: BibliographyAuthor[], issued?: BibliographyDate) {
+export function suggestIdForEntry(existingIds: string[], author?: BibliographyAuthor[], issued?: BibliographyDate) {
   // Try to get the last name
   let authorPart = '';
   if (author && author.length > 0) {
@@ -68,6 +68,33 @@ export function suggestId(existingIds: string[], title?: string, author?: Biblio
 
   // Create a deduplicated string against the existing entries
   let baseId = `${authorPart.toLowerCase()}${datePart}`;
+  let proposedId = baseId;
+  let count = 0;
+
+  // If there is a conflict with an existing id, we will append
+  // the following character and try again. If the conflict continues with
+  // the postfix character added, we'll increment and keep going through the 
+  // alphabet
+  const disambiguationStartCharacter = 97; // a
+
+  while (existingIds.includes(proposedId)) {
+    // If we've wrapped around to a and we haven't found a unique entry
+    // Add an 'a' to the end and try again. Will ultimately create an entry like
+    // Teague2012aaaf
+    if (count !== 0 && count % 26 === 0) {
+      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
+    }
+
+    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
+    proposedId = baseId + postfix;
+    count++;
+  }
+  return proposedId;
+}
+
+export function suggestCiteId(existingIds: string[], authorLastName: string, issuedYear: number) {
+  // Create a deduplicated string against the existing entries
+  let baseId = `${authorLastName.toLowerCase()}${issuedYear}`;
   let proposedId = baseId;
   let count = 0;
 
@@ -233,7 +260,7 @@ function etAl(authorStr: string, maxLength: number) {
 }
 
 // TODO: Needs to support localization of the templated strings
-export function formatIssuedDate(date: BibliographyDate, ui: EditorUI): string {
+export function formatIssuedDate(date: BibliographyDate): string {
   // No issue date for this
   if (!date) {
     return '';

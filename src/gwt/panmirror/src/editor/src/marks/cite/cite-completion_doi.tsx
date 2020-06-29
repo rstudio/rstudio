@@ -13,6 +13,7 @@
  *
  */
 
+
 import { EditorView } from 'prosemirror-view';
 import { EditorState, Transaction } from 'prosemirror-state';
 
@@ -22,7 +23,7 @@ import { EditorUI } from '../../api/ui';
 import { CrossrefServer, CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { kCitationCompleteScope } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate, suggestId } from './cite-bibliography_entry';
+import { imageForType, formatAuthors, formatIssuedDate, suggestIdForEntry } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { parseDOI, insertCitationForDOI } from './cite-doi';
@@ -44,7 +45,7 @@ export function citationDoiCompletionHandler(
 
     replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
       if (work) {
-        insertCitationForDOI(work, bibManager, pos, ui, view);
+        insertCitationForDOI(work.DOI, bibManager, pos, ui, view, work);
       }
     },
 
@@ -68,12 +69,12 @@ function citationDOICompletions(ui: EditorUI, server: CrossrefServer) {
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
         completions: (_state: EditorState) =>
-          server.doi(parsedDOI.token).then(work => [
+          server.doi(parsedDOI.token, 350).then(work => [
             {
               ...work,
               image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
               formattedAuthor: formatAuthors(work.author, 50),
-              formattedIssueDate: formatIssuedDate(work.issued, ui),
+              formattedIssueDate: formatIssuedDate(work.issued),
             },
           ]),
       };

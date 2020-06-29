@@ -4,7 +4,10 @@ import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorInsertCiteProps {
-	public String suggestedId;
+	public String doi;
+	public String[] existingIds;
 	public String[] bibliographyFiles;
-	public PanMirrorInsertCitePreviewPair[] previewPairs;
+	public String suggestedId;
+	public PanmirrorInsertCitePreviewPair[] previewPairs;
+	
 }

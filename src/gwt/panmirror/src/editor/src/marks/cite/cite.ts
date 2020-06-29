@@ -247,9 +247,9 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Cros
         performReplacementPreventingCompletions(view, parsedDOI.pos, parsedDOI.token);
 
         // Do the server work to to try to resolve the DOI
-        server.doi(parsedDOI.token).then(work => {
+        server.doi(parsedDOI.token, 500).then(work => {
           if (work) {
-            insertCitationForDOI(work, bibManager, parsedDOI.pos, ui, view);
+            insertCitationForDOI(parsedDOI.token, bibManager, parsedDOI.pos, ui, view);
           }
         });
         return true;

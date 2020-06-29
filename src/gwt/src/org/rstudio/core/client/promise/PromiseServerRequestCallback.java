@@ -38,7 +38,7 @@ public class PromiseServerRequestCallback<T> extends ServerRequestCallback<T> {
                                        String progress, int progressDelayMs) {
       this.resolve_ = resolve;
       this.reject_ = reject;
-      if (progress != null)
+      if (progress != null && progressDelayMs >= 0)
       {
          GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
          delayedProgress_ = new GlobalProgressDelayer(globalDisplay, progressDelayMs, progress);

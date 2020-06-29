@@ -22,7 +22,7 @@ import { parseCrossRefDOI, CrossrefWork } from "../../api/crossref";
 import { EditorUI, InsertCiteProps, InsertCitePreviewPair } from "../../api/ui";
 import { performReplacementPreventingCompletions } from "../../behaviors/completion/completion";
 import { BibliographyManager, bibliographyPaths } from "../../api/bibliography";
-import { suggestId, formatAuthors, formatIssuedDate } from "./cite-bibliography_entry";
+import { suggestIdForEntry, formatAuthors, formatIssuedDate } from "./cite-bibliography_entry";
 
 
 // Parses the transation or state to determine whether the current position
@@ -65,21 +65,26 @@ export function isDOI(token: string): boolean {
 
 // Replaces the current selection with a resolved citation id
 export function insertCitationForDOI(
-  work: CrossrefWork,
+  doi: string,
   bibManager: BibliographyManager,
   pos: number,
   ui: EditorUI,
-  view: EditorView
+  view: EditorView,
+  work?: CrossrefWork
 ) {
   bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(ui, view.state.doc);
 
+    const existingIds = bibliography.sources.map(source => source.id);
+
     const citeProps: InsertCiteProps = {
-      suggestedId: suggestId(bibliography.sources.map(source => source.id), work.title[0], work.author, work.issued),
+      doi,
+      existingIds,
       bibliographyFiles: bibliography.project_biblios || bibliographies?.bibliography || [],
-      previewPairs: previewPairs(work, ui)
+      suggestedId: work ? suggestIdForEntry(existingIds, work.author, work.issued) : undefined,
+      previewPairs: work ? previewPairs(work) : undefined
     };
 
     // Ask the user to provide information that we need in order to populate
@@ -95,13 +100,13 @@ export function insertCitationForDOI(
   });
 }
 
-function previewPairs(work: CrossrefWork, ui: EditorUI): InsertCitePreviewPair[] {
+export function previewPairs(work: CrossrefWork): InsertCitePreviewPair[] {
 
   const pairs = new Array<InsertCitePreviewPair>();
   pairs.push({ name: "Title", value: work.title[0] });
   pairs.push({ name: "Type", value: work.type });
   pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
-  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued, ui) });
+  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued) });
 
   const containerTitle = work["container-title"];
   if (containerTitle) {

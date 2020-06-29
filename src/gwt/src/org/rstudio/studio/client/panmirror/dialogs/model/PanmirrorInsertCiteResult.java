@@ -6,4 +6,5 @@ import jsinterop.annotations.JsType;
 public class PanmirrorInsertCiteResult {
 	public String id;
 	public String bibliographyFile;
+	//TODO: will need to pass the citation data back
 }

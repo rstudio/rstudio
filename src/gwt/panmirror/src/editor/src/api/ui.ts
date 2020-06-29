@@ -207,9 +207,11 @@ export interface InsertTableResult {
 }
 
 export interface InsertCiteProps {
-  suggestedId: string;
+  doi: string;
   bibliographyFiles: string[];
-  previewPairs: InsertCitePreviewPair[];
+  existingIds: string[];
+  suggestedId?: string;
+  previewPairs?: InsertCitePreviewPair[];
 }
 
 export interface InsertCitePreviewPair {
