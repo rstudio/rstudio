@@ -11,32 +11,39 @@
 	
 	</ui:style>
 
-	<g:VerticalPanel styleName="{res.styles.dialog} {res.styles.dialogWide}">
+	<g:VerticalPanel 
+		styleName="{res.styles.dialog} {res.styles.dialogWide}"
+		ui:field="panel_">
 
 		<rw:FormLabel
 			for="{ElementIds.getVisualMdInsertCiteId}"
 			text="Citation Id:"
-			styleName="{res.styles.fullWidth}" />
+			styleName="{res.styles.fullWidth}"
+			ui:field="citationLabel_"/>
 
 		<rw:FormTextBox
 			elementId="{ElementIds.getVisualMdInsertCiteId}"
 			styleName="{res.styles.fullWidth} {res.styles.spaced}"
 			ui:field="citationId_" />
-
 					
 		<rw:FormLabel
 			styleName="{res.styles.fullWidth} {res.styles.spaced}"
 			text="Citation:" />
 		
-		<g:FlexTable 
-			ui:field="previewTable_" 
-			styleName="{res.styles.spaced} {res.styles.flexTablePreview}">
-			
-		</g:FlexTable>
+		<g:ScrollPanel
+			styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}"
+			ui:field="previewScrollPanel_"
+		>
+			<g:FlexTable 
+				ui:field="previewTable_">
+				
+			</g:FlexTable>
+		</g:ScrollPanel>
 
-		<rw:FormLabel		
+		<rw:FormLabel
 			for="{ElementIds.getVisualMdInsertCiteBib}"
-			text="Bibliography:" />
+			styleName="{res.styles.fullWidth} {res.styles.spaced}"		
+			text="Add to bibliography:" />
 	
 		<rw:FormListBox
 			elementId="{ElementIds.getVisualMdInsertCiteBib}"

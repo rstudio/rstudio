@@ -25,7 +25,7 @@ import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCitePreviewPair } from '../api/ui';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui';
 import { Extension } from '../api/extension';
 import { PandocServer, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
@@ -68,8 +68,9 @@ import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
-import { CrossrefServer, CrossrefWork } from '../api/crossref';
+import { CrossrefServer } from '../api/crossref';
 import { XRefServer } from '../api/xref';
+import { citeUI } from "../marks/cite/cite";
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -101,9 +102,6 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { previewPairs } from '../marks/cite/cite-doi';
-import { BibliographyAuthor, BibliographyDate } from '../api/bibliography';
-import { suggestCiteId } from '../marks/cite/cite-bibliography_entry';
 
 export interface EditorCode {
   code: string;
@@ -180,9 +178,8 @@ export interface UIToolsSource {
   diffChars(from: string, to: string, timeout: number): EditorChange[];
 }
 
-export interface UIToolsCite {
-  previewPairs(work: CrossrefWork): InsertCitePreviewPair[];
-  suggestCiteId(existingIds: string[], authorLastName: string, issuedYear: number): string;
+export interface UIToolsCitation {
+  citeUI(citeProps: InsertCiteProps): InsertCiteUI;
 }
 
 export class UITools {
@@ -190,7 +187,7 @@ export class UITools {
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
   public readonly source: UIToolsSource;
-  public readonly cite: UIToolsCite;
+  public readonly citation: UIToolsCitation;
 
   constructor() {
     this.attr = {
@@ -214,9 +211,8 @@ export class UITools {
       diffChars,
     };
 
-    this.cite = {
-      previewPairs,
-      suggestCiteId,
+    this.citation = {
+      citeUI,
     };
   }
 }

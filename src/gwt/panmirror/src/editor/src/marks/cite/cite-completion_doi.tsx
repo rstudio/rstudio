@@ -26,7 +26,8 @@ import { kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate, suggestIdForEntry } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
-import { parseDOI, insertCitationForDOI } from './cite-doi';
+import { parseDOI } from './cite-doi';
+import { insertCitationForDOI } from './cite';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;

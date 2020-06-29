@@ -18,8 +18,8 @@ import { Slice } from "prosemirror-inputrules/node_modules/@types/prosemirror-mo
 import { EditorState, Transaction } from "prosemirror-state";
 
 import { parseCitation, ParsedCitation } from "./cite";
-import { parseCrossRefDOI, CrossrefWork } from "../../api/crossref";
-import { EditorUI, InsertCiteProps, InsertCitePreviewPair } from "../../api/ui";
+import { parseCrossRefDOI, CrossrefWork, formatForPreview } from "../../api/crossref";
+import { EditorUI, InsertCiteProps, InsertCiteUI } from "../../api/ui";
 import { performReplacementPreventingCompletions } from "../../behaviors/completion/completion";
 import { BibliographyManager, bibliographyPaths } from "../../api/bibliography";
 import { suggestIdForEntry, formatAuthors, formatIssuedDate } from "./cite-bibliography_entry";
@@ -63,66 +63,4 @@ export function isDOI(token: string): boolean {
   return parseCrossRefDOI(token) !== undefined;
 }
 
-// Replaces the current selection with a resolved citation id
-export function insertCitationForDOI(
-  doi: string,
-  bibManager: BibliographyManager,
-  pos: number,
-  ui: EditorUI,
-  view: EditorView,
-  work?: CrossrefWork
-) {
-  bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
 
-    // Read bibliographies out of the document and pass those alone
-    const bibliographies = bibliographyPaths(ui, view.state.doc);
-
-    const existingIds = bibliography.sources.map(source => source.id);
-
-    const citeProps: InsertCiteProps = {
-      doi,
-      existingIds,
-      bibliographyFiles: bibliography.project_biblios || bibliographies?.bibliography || [],
-      suggestedId: work ? suggestIdForEntry(existingIds, work.author, work.issued) : undefined,
-      previewPairs: work ? previewPairs(work) : undefined
-    };
-
-    // Ask the user to provide information that we need in order to populate
-    // this citation (id, bibliography)
-    const citation = ui.dialogs.insertCite(citeProps).then(result => {
-      // If the user provided an id, insert the citation
-      if (result && result.id.length) {
-        // Use the biblography manager to write an entry to the user specified bibliography
-        performReplacementPreventingCompletions(view, pos, result.id);
-        view.focus();
-      }
-    });
-  });
-}
-
-export function previewPairs(work: CrossrefWork): InsertCitePreviewPair[] {
-
-  const pairs = new Array<InsertCitePreviewPair>();
-  pairs.push({ name: "Title", value: work.title[0] });
-  pairs.push({ name: "Type", value: work.type });
-  pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
-  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued) });
-
-  const containerTitle = work["container-title"];
-  if (containerTitle) {
-    pairs.push({ name: "Publication", value: containerTitle });
-  }
-
-  const volume = work.volume;
-  if (volume) {
-    pairs.push({ name: "Volume", value: volume });
-  }
-
-  const page = work.page;
-  if (volume) {
-    pairs.push({ name: "Page(s)", value: page });
-  }
-
-  pairs.push({ name: "DOI", value: work.DOI });
-  return pairs;
-}

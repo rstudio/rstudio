@@ -1,5 +1,5 @@
 /*
- * PanmirrorUITools.java
+ * PanmirrorUIToolsAttr.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -16,15 +16,15 @@
 
 package org.rstudio.studio.client.panmirror.uitools;
 
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteUI;
+
+
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, name="UITools", namespace = "Panmirror")
-public class PanmirrorUITools
+@JsType
+public class PanmirrorUIToolsCitation
 {
-   public PanmirrorUIToolsAttr attr;
-   public PanmirrorUIToolsImage image;
-   public PanmirrorUIToolsFormat format;
-   public PanmirrorUIToolsSource source;
-   public PanmirrorUIToolsCitation citation;
+   public native PanmirrorInsertCiteUI citeUI(PanmirrorInsertCiteProps props);
 }
 

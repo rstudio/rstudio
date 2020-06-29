@@ -28,12 +28,13 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction, kInsertCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager, bibliographyPaths } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
-import { insertCitationForDOI, doiFromSlice } from './cite-doi';
-import { CrossrefServer } from '../../api/crossref';
-import { EditorUI } from '../../api/ui';
+import { doiFromSlice } from './cite-doi';
+import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossref';
+import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performReplacementPreventingCompletions } from '../../behaviors/completion/completion';
+import { suggestIdForEntry } from './cite-bibliography_entry';
 
 const kCiteCitationsIndex = 0;
 
@@ -552,6 +553,64 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 
   return null;
 }
+
+// Replaces the current selection with a resolved citation id
+export function insertCitationForDOI(
+  doi: string,
+  bibManager: BibliographyManager,
+  pos: number,
+  ui: EditorUI,
+  view: EditorView,
+  work?: CrossrefWork
+) {
+  bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
+
+    // Read bibliographies out of the document and pass those alone
+    const bibliographies = bibliographyPaths(ui, view.state.doc);
+
+    const existingIds = bibliography.sources.map(source => source.id);
+
+    const citeProps: InsertCiteProps = {
+      doi,
+      existingIds,
+      bibliographyFiles: bibliography.project_biblios || bibliographies?.bibliography || [],
+      work,
+      citeUI: work ? {
+        suggestedId: suggestIdForEntry(existingIds, work.author, work.issued),
+        previewFields: formatForPreview(work)
+      } : undefined
+    };
+
+    // Ask the user to provide information that we need in order to populate
+    // this citation (id, bibliography)
+    const citation = ui.dialogs.insertCite(citeProps).then(result => {
+      // If the user provided an id, insert the citation
+      if (result && result.id.length) {
+        // Use the biblography manager to write an entry to the user specified bibliography
+        performReplacementPreventingCompletions(view, pos, result.id);
+        view.focus();
+      }
+    });
+  });
+}
+
+export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
+  if (citeProps.work) {
+    const suggestedId = suggestIdForEntry(citeProps.existingIds, citeProps.work.author, citeProps.work.issued);
+    const previewFields = formatForPreview(citeProps.work);
+    return {
+      suggestedId,
+      previewFields
+    };
+  } else {
+    // This should never happen - this function should always be called with a work
+    return {
+      suggestedId: "",
+      previewFields: []
+    };
+  }
+}
+
 
 
 export default extension;

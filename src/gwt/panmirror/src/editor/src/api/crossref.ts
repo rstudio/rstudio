@@ -13,6 +13,8 @@
  *
  */
 
+import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography_entry";
+
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
   works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
@@ -73,6 +75,11 @@ export interface CrossrefWork {
   page: string;
 }
 
+export interface CrossrefFormattedField {
+  name: string;
+  value: string;
+}
+
 export interface CrossrefContributor {
   family: string;
   given?: string;
@@ -113,4 +120,29 @@ export function parseCrossRefDOI(token: string): string | undefined {
   } else {
     return match[0];
   }
+}
+
+export function formatForPreview(work: CrossrefWork): CrossrefFormattedField[] {
+
+  const pairs = new Array<CrossrefFormattedField>();
+  pairs.push({ name: "Title", value: work.title[0] });
+  pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
+  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued) });
+
+  const containerTitle = work["container-title"];
+  if (containerTitle) {
+    pairs.push({ name: "Publication", value: containerTitle });
+  }
+
+  const volume = work.volume;
+  if (volume) {
+    pairs.push({ name: "Volume", value: volume });
+  }
+
+  const page = work.page;
+  if (volume) {
+    pairs.push({ name: "Page(s)", value: page });
+  }
+
+  return pairs;
 }
