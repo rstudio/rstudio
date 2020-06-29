@@ -607,13 +607,6 @@ export class Editor {
     }
   }
 
-  public navigateToId(id: string, animate = false) {
-    return this.navigate(NavigationType.Id, id, animate);
-  }
-
-  public navigateToPos(pos: number, animate = false) {
-    return this.navigate(NavigationType.Pos, pos.toString(), animate);
-  }
 
   public resize() {
     this.syncContentWidth();
