@@ -29,6 +29,8 @@ import { markIsActive } from '../../api/mark';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { CompletionItemView } from '../../api/widgets/completion';
 
+import './xref-completion.css';
+
 const kMaxResults = 20;
 
 export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): CompletionHandler<XRef> {
@@ -173,7 +175,7 @@ function xrefView(ui: EditorUI): React.FC<XRef> {
     return (
       <CompletionItemView
         width={350}
-        classes={[]}
+        classes={['pm-xref-completion-item']}
         image={image}
         title={xrefKey(xref)}
         subTitle={xref.title}
