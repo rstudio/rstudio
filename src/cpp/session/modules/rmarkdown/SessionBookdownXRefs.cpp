@@ -73,7 +73,7 @@ std::string bookRelativePath(const FilePath& rmdFile)
 
 FilePath xrefIndexDirectory()
 {
-   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-xrefs");
+   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-xref-index");
    Error error = xrefsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
