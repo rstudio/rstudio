@@ -13,6 +13,7 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'prosemirror-utils';
@@ -30,6 +31,7 @@ export enum NavigationType {
   Id = "id",
   Href = "href",
   Heading = "heading",
+  XRef = "xref"
 }
 
 export interface Navigation {
@@ -48,6 +50,8 @@ export function navigateTo(view: EditorView, type: NavigationType, location: str
       return navigateToHref(view, location, animate);
     case NavigationType.Heading:
       return navigateToHeading(view, location, animate);
+    case NavigationType.XRef:
+      return navigateToXRef(view, location, animate);
     default:
       return null;
   }
@@ -73,6 +77,14 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
     animate,
   );
 }
+
+export function navigateToXRef(view: EditorView, xref: string, animate = true): Navigation | null {
+  const xrefPredicate = (node: ProsemirrorNode) => {
+    return node.attrs.id === xref;
+  };
+  return navigate(view, xrefPredicate, animate);
+}
+
 
 export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
 

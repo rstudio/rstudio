@@ -27,13 +27,13 @@ import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
 import { EditorServer } from "../../editor/editor";
 import { XRef, xrefKey } from "../../api/xref";
+import { LinkButton } from "../../api/widgets/button";
 
 import './xref-popup.css';
-import { LinkButton } from "../../api/widgets/button";
 
 const kMaxWidth = 350; // also in xref-popup.css
 
-export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigation, server: EditorServer) {
+export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServer) {
 
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('xref-popup'),
@@ -41,12 +41,6 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
     maxWidth: kMaxWidth,
     dismissOnEdit: true,
     createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
-
-      // click handler
-      const onClick = () => {
-        // 
-      };
-
       // lookup xref on server
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
@@ -54,8 +48,20 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigat
         const match = target.text.match(kXRefRegEx);
         if (match && match[1].length) {
           const xrefs = await server.xref.xrefForId(docPath, match[1]);
+
+
+
           if (xrefs.refs.length) {
-            return (<XRefPopup xref={xrefs.refs[0]} onClick={onClick} style={style} />);
+
+            const xref = xrefs.refs[0];
+
+            // click handler
+            const onClick = () => {
+              const file = xrefs.baseDir + '/' + xref.file;
+              ui.display.navigateToXRef(file, xref.type, xref.id);
+            };
+
+            return (<XRefPopup xref={xref} onClick={onClick} style={style} />);
           }
         }
       }
