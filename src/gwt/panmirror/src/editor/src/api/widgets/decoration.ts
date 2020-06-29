@@ -23,6 +23,7 @@ import { kPixelUnit } from '../css';
 export interface DecorationPosition {
   pos: number;
   style: { [key: string]: string };
+  key: string;
 }
 
 export function textRangePopupDecorationPosition(
@@ -84,9 +85,13 @@ export function textRangePopupDecorationPosition(
     };
   }
 
+  // calculate key
+  const key = Object.keys(style).map(attrib => `${attrib}=${style[attrib]}`).join(';');
+
   return {
     pos: containingBlockPos,
     style,
+    key
   };
 }
 

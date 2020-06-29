@@ -101,7 +101,7 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
           let decoratorSpec: { key: string } | undefined;
           if (specKey) {
             decoratorSpec = {
-              key: specKey(target)
+              key: decorationPosition.key + specKey(target)
             };
           }
 
