@@ -268,6 +268,20 @@ void logBiblioStatus(const std::string& str)
    // std::cerr << str << std::endl;
 }
 
+json::Object createBiblioJson(const json::Array& jsonCitations, bool project)
+{
+   // citations
+   json::Object biblioJson;
+   biblioJson["sources"] = jsonCitations;
+
+   // relative path to project biblios
+   biblioJson["project_biblios"] = project
+      ? json::toJsonArray(module_context::bookdownBibliographiesRelative())
+      : json::Array();
+
+   return biblioJson;
+}
+
 void indexProjectCompleted(const std::vector<core::FileInfo>& biblioFiles,
                            const core::system::ProcessResult& result)
 {
@@ -278,11 +292,10 @@ void indexProjectCompleted(const std::vector<core::FileInfo>& biblioFiles,
       if (!error)
       {
          // create bibliography
-         json::Object biblio;
-         biblio["sources"] = jsonCitations;
+         json::Object biblioJson = createBiblioJson(jsonCitations, true);
 
          // cache it
-         s_biblioCache.update(biblio, biblioFiles, "");
+         s_biblioCache.update(biblioJson, biblioFiles, "");
 
          // status
          logBiblioStatus("Indexed and updated project bibliography");
@@ -300,7 +313,8 @@ void indexProjectCompleted(const std::vector<core::FileInfo>& biblioFiles,
    }
 }
 
-void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
+void getBibliographyCompleted(bool isProjectFile,
+                              const std::vector<core::FileInfo>& biblioFiles,
                               const std::string& refBlock,
                               const json::Array& refBlockCitations,
                               const json::JsonRpcFunctionContinuation& cont,
@@ -316,11 +330,10 @@ void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
          std::copy(refBlockCitations.begin(), refBlockCitations.end(), std::back_inserter(jsonCitations));
 
          // create bibliography
-         json::Object biblio;
-         biblio["sources"] = jsonCitations;
+         json::Object biblioJson = createBiblioJson(jsonCitations, isProjectFile);
 
          // cache last successful bibliograpy
-         s_biblioCache.update(biblio, biblioFiles, refBlock);
+         s_biblioCache.update(biblioJson, biblioFiles, refBlock);
 
          // status
          logBiblioStatus("Cached getBibliography response");
@@ -338,7 +351,8 @@ void getBibliographyCompleted(const std::vector<core::FileInfo>& biblioFiles,
    cont(Success(), &response);
 }
 
-void refBlockToJsonCompleted(const std::vector<core::FileInfo>& biblioFiles,
+void refBlockToJsonCompleted(bool isProjectFile,
+                             const std::vector<core::FileInfo>& biblioFiles,
                              const std::string& refBlock,
                              const json::JsonRpcFunctionContinuation& cont,
                              const core::system::ProcessResult& result)
@@ -351,20 +365,29 @@ void refBlockToJsonCompleted(const std::vector<core::FileInfo>& biblioFiles,
       json::Array jsonCitations;
       if (json::parseJsonForResponse(result.stdOut, &jsonCitations, &response))
       {
-         // build args
-         std::vector<std::string> args;
-         for (auto biblioFile : biblioFiles)
-            args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
-         args.push_back("--bib2json");
-
-         // run pandoc-citeproc
-         Error error = module_context::runPandocCiteprocAsync(
-            args, boost::bind(getBibliographyCompleted, biblioFiles, refBlock, jsonCitations, cont, _1)
-         );
-         // if error call continuation with it
-         if (error)
+         if (biblioFiles.size() > 0)
          {
-            json::setErrorResponse(error, &response);
+            // build args
+            std::vector<std::string> args;
+            for (auto biblioFile : biblioFiles)
+               args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+            args.push_back("--bib2json");
+
+            // run pandoc-citeproc
+            Error error = module_context::runPandocCiteprocAsync(
+               args, boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, jsonCitations, cont, _1)
+            );
+            // if error call continuation with it
+            if (error)
+            {
+               json::setErrorResponse(error, &response);
+               cont(Success(), &response);
+            }
+         }
+         else
+         {
+            s_biblioCache.update(createBiblioJson(jsonCitations, isProjectFile), biblioFiles, refBlock);
+            s_biblioCache.setResponse(&response);
             cont(Success(), &response);
          }
       }
@@ -402,7 +425,18 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    // determine biblio files
    std::vector<FileInfo> biblioFiles;
 
-   // if there are bibliographies passed form the client then use those in preference to the
+   // determine whether the file the bibliography is requested for is part of the current project
+   bool isProjectFile = false;
+   if (!file.empty() && projects::projectContext().hasProject())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(file);
+      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
+      {
+         isProjectFile = true;
+      }
+   }
+
+   // if there are bibliographies passed from the client then use those in preference to the
    // project bibliographies (b/c they will appear after the project bibliographies)
    if (bibliographiesJson.getSize() > 0)
    {
@@ -415,13 +449,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       }
    }
    // is this file part of the current project? if so then use the project bibliographies as the default
-   else if (!file.empty() && projects::projectContext().hasProject())
+   else if (isProjectFile)
    {
-      FilePath filePath = module_context::resolveAliasedPath(file);
-      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
-      {
-         biblioFiles = projectBibliographies();
-      }
+      biblioFiles = projectBibliographies();
    }
 
    // if the filesystem and the cache agree on the etag then we can serve from cache
@@ -469,10 +499,10 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
       // run pandoc-citeproc
       error = module_context::runPandocCiteprocAsync(
-         args, boost::bind(refBlockToJsonCompleted, biblioFiles, refBlock, cont, _1)
+         args, boost::bind(refBlockToJsonCompleted, isProjectFile, biblioFiles, refBlock, cont, _1)
       );
    }
-   else
+   else if (biblioFiles.size() > 0)
    {
       // build args
       std::vector<std::string> args;
@@ -482,9 +512,14 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
       // run pandoc-citeproc
       error = module_context::runPandocCiteprocAsync(
-         args, boost::bind(getBibliographyCompleted, biblioFiles, refBlock, json::Array(), cont, _1)
+         args, boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, json::Array(), cont, _1)
       );
-
+   }
+   else
+   {
+      s_biblioCache.update(createBiblioJson(json::Array(), isProjectFile), biblioFiles, refBlock);
+      s_biblioCache.setResponse(&response);
+      cont(Success(), &response);
    }
 
    // error launching citeproc results in error response
@@ -543,7 +578,7 @@ void onDeferredInit(bool)
    if (projects::projectContext().hasProject())
    {
       std::vector<FileInfo> biblioFiles = projectBibliographies();
-      if (biblioFiles.size())
+      if (biblioFiles.size() > 0)
       {
          // update the project bibliography cache if we need to
          if (s_biblioCache.etag() != BiblioCache::etag(biblioFiles, ""))

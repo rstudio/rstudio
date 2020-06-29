@@ -14,24 +14,55 @@
  */
 
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
+
+import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'prosemirror-utils';
 
 import zenscroll from 'zenscroll';
+
 import { editingRootNode } from './node';
 
-export function navigateTo(view: EditorView, predicate: Predicate, animate = true) {
-  const result = findChildren(view.state.doc, predicate);
-  if (result.length) {
-    navigateToPosition(view, result[0].pos, animate);
+export interface EditorNavigation {
+  navigate: (type: NavigationType, location: string, animate?: boolean) => void;
+}
+
+export enum NavigationType {
+  Pos = "pos",
+  Id = "id",
+  Href = "href",
+  Heading = "heading",
+}
+
+export interface Navigation {
+  pos: number;
+  prevPos: number;
+}
+
+export function navigateTo(view: EditorView, type: NavigationType, location: string, animate = true): Navigation | null {
+
+  switch (type) {
+    case NavigationType.Pos:
+      return navigateToPos(view, parseInt(location, 10), animate);
+    case NavigationType.Id:
+      return navigateToId(view, location, animate);
+    case NavigationType.Href:
+      return navigateToHref(view, location, animate);
+    case NavigationType.Heading:
+      return navigateToHeading(view, location, animate);
+    default:
+      return null;
   }
 }
 
-export function navigateToId(view: EditorView, id: string, animate = true) {
-  navigateTo(view, node => node.attrs.id === id, animate);
+export function navigateToId(view: EditorView, id: string, animate = true): Navigation | null {
+  return navigate(view, node => id === node.attrs.navigation_id, animate);
 }
 
-export function navigateToHeading(view: EditorView, heading: string, animate = true) {
-  navigateTo(
+export function navigateToHref(view: EditorView, href: string, animate = true): Navigation | null {
+  return navigate(view, node => node.attrs.id === href, animate);
+}
+
+export function navigateToHeading(view: EditorView, heading: string, animate = true): Navigation | null {
+  return navigate(
     view,
     node => {
       return (
@@ -43,13 +74,22 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
   );
 }
 
-export function navigateToPosition(view: EditorView, pos: number, animate = true) {
+export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
+
+  // get previous position
+  const prevPos = view.state.selection.from;
+
+  // need to target at least the body
+  pos = Math.max(pos, 2);
+
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
-  // scroll to selection
-  const node = view.nodeDOM(pos);
+  // find a targetable dom node at the position
+  const node = findDomRefAtPos(pos, view.domAtPos.bind(view));
   if (node instanceof HTMLElement) {
+
+    // perform navigation
     const editingRoot = editingRootNode(view.state.selection)!;
     const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
     const scroller = zenscroll.createScroller(container, 700, 20);
@@ -58,5 +98,22 @@ export function navigateToPosition(view: EditorView, pos: number, animate = true
     } else {
       scroller.to(node, 0);
     }
+
+    return { pos, prevPos };
+
+  } else {
+    return null;
   }
 }
+
+function navigate(view: EditorView, predicate: Predicate, animate = true): Navigation | null {
+  const result = findChildren(view.state.doc, predicate);
+  if (result.length) {
+    // pos points immediately before the node so add 1 to it
+    const pos = result[0].pos + 1;
+    return navigateToPos(view, pos, animate);
+  } else {
+    return null;
+  }
+}
+

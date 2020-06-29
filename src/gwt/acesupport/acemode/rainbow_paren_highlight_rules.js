@@ -36,6 +36,7 @@ define("mode/rainbow_paren_highlight_rules", ["require", "exports", "module"], f
     return {
       token : "paren.keyword.operator.nomatch",
       regex : "[[({})\\]]",
+      merge : false,
       onMatch: function(val, state, stack) {
 
       if (!$rainbowParentheses) {

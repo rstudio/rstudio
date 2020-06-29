@@ -13,136 +13,69 @@
  *
  */
 
-import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
-import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
+import { DecorationSet, EditorView } from 'prosemirror-view';
+import { Selection, PluginKey } from 'prosemirror-state';
 
 import * as React from 'react';
 
 import ClipboardJS from 'clipboard';
 
-import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
-import { kRestoreLocationTransaction } from '../../api/transaction';
 
-import { navigateToId, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
 
 import { showTooltip } from '../../api/widgets/tooltip';
 
-import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
+import { WidgetProps } from '../../api/widgets/react';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
-import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
-import { kPlatformMac } from '../../api/platform';
+import { EditorNavigation, NavigationType } from '../../api/navigation';
+import { Schema } from 'prosemirror-model';
+import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
 
-const key = new PluginKey<DecorationSet>('link-popup');
 
-export class LinkPopupPlugin extends Plugin<DecorationSet> {
-  constructor(ui: EditorUI, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
-    let editorView: EditorView;
-    super({
-      key,
-      view(view: EditorView) {
-        editorView = view;
-        return {};
-      },
-      state: {
-        init: (_config: { [key: string]: any }) => {
-          return DecorationSet.empty;
-        },
-        apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
-          // if this a restore location then return empty
-          if (tr.getMeta(kRestoreLocationTransaction)) {
-            return DecorationSet.empty;
-          }
+export function linkPopupPlugin(
+  schema: Schema,
+  ui: EditorUI,
+  nav: EditorNavigation,
+  linkCmd: CommandFn,
+  removeLinkCmd: CommandFn
+) {
 
-          // if the selection is contained within a link then show the popup
-          const schema = newState.doc.type.schema;
-          const selection = newState.selection;
+  const kPopupChromeWidth = 70;
+  const kMaxLinkWidth = 300;
+  const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
 
-          // don't show the link popup if the selection is an image node (as it has it's own popup)
-          if (selectionIsImageNode(schema, selection)) {
-            return DecorationSet.empty;
-          }
-
-          const range = getMarkRange(selection.$from, schema.marks.link);
-          if (range) {
-            // don't show the link popup if it's positioned at the far left of the link
-            // (awkward when cursor is just left of an image)
-            if (selection.empty && range.from === selection.from) {
-              return DecorationSet.empty;
-            }
-
-            // link attrs
-            const attrs = getMarkAttrs(newState.doc, range, schema.marks.link) as LinkProps;
-
-            // compute position (we need this both for setting the styles on the LinkPopup
-            // as well as for setting the Decorator pos)
-            const kPopupChromeWidth = 70;
-            const kMaxLinkWidth = 300;
-            const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
-            const decorationPosition = textRangePopupDecorationPosition(editorView, range, maxWidth);
-
-            // compute unique key (will allow us to only recreate the popup when necessary)
-            const linkText = attrs.heading ? attrs.heading : attrs.href;
-            const specKey = `link:${linkText}`;
-
-            // create decorator
-            const linkPopupDecorator = Decoration.widget(
-              decorationPosition.pos,
-              (view: EditorView, getPos: () => number) => {
-                // create link popup component
-                const popup = (
-                  <LinkPopup
-                    link={attrs}
-                    maxLinkWidth={kMaxLinkWidth - 10} // prevent off by pixel(s) overflow
-                    linkCmd={linkCmd}
-                    removeLinkCmd={removeLinkCmd}
-                    view={view}
-                    ui={ui}
-                    style={decorationPosition.style}
-                  />
-                );
-
-                // create decorator and render popup into it
-                const decoration = window.document.createElement('div');
-                reactRenderForEditorView(popup, decoration, view);
-                return decoration;
-              },
-              {
-                key: specKey,
-              },
-            );
-
-            // return decorations
-            return DecorationSet.create(tr.doc, [linkPopupDecorator]);
-          } else {
-            return DecorationSet.empty;
-          }
-        },
-      },
-      props: {
-        decorations: (state: EditorState) => {
-          return key.getState(state);
-        },
-        handleClick: (view: EditorView, pos: number, event: MouseEvent) => {
-          const keyPressed = kPlatformMac && event.metaKey;
-          if (keyPressed) {
-            const schema = view.state.schema;
-            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, schema.marks.link);
-            if (linkAttrs) {
-              event.stopPropagation();
-              event.preventDefault();
-              ui.display.openURL(linkAttrs.href);
-              return true;
-            }
-          }
-          return false;
-        },
-      },
-    });
-  }
+  return textPopupDecorationPlugin({
+    key: new PluginKey<DecorationSet>('link-popup'),
+    markType: schema.marks.link,
+    maxWidth,
+    createPopup: (view: EditorView, target: TextPopupTarget<LinkProps>, style: React.CSSProperties) => {
+      return Promise.resolve((
+        <LinkPopup
+          link={target.attrs}
+          maxLinkWidth={kMaxLinkWidth - 10} // prevent off by pixel(s) overflow
+          linkCmd={linkCmd}
+          removeLinkCmd={removeLinkCmd}
+          view={view}
+          ui={ui}
+          nav={nav}
+          style={style}
+        />
+      ));
+    },
+    specKey: (target: TextPopupTarget<LinkProps>) => {
+      const linkText = target.attrs.heading ? target.attrs.heading : target.attrs.href;
+      return `link:${linkText}`;
+    },
+    filter: (selection: Selection) => {
+      return !selectionIsImageNode(schema, selection);
+    },
+    onCmdClick: (target: TextPopupTarget<LinkProps>) => {
+      ui.display.openURL(target.attrs.href);
+    }
+  });
 }
 
 interface LinkPopupProps extends WidgetProps {
@@ -150,6 +83,7 @@ interface LinkPopupProps extends WidgetProps {
   maxLinkWidth: number;
   view: EditorView;
   ui: EditorUI;
+  nav: EditorNavigation;
   linkCmd: CommandFn;
   removeLinkCmd: CommandFn;
 }
@@ -160,9 +94,9 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
   const onLinkClicked = () => {
     props.view.focus();
     if (props.link.heading) {
-      navigateToHeading(props.view, props.link.heading);
+      props.nav.navigate(NavigationType.Heading, props.link.heading);
     } else if (props.link.href.startsWith('#')) {
-      navigateToId(props.view, props.link.href.substr(1));
+      props.nav.navigate(NavigationType.Href, props.link.href.substr(1));
     } else {
       props.ui.display.openURL(props.link.href);
     }

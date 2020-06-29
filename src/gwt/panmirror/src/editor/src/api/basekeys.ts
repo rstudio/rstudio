@@ -26,9 +26,14 @@ import {
 } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
-import { EditorState, Transaction, Plugin } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, Selection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+
+import { setTextSelection } from 'prosemirror-utils';
 
 import { CommandFn } from './command';
+import { editingRootNodeClosestToPos, editingRootNode } from './node';
+import { selectionIsBodyTopLevel } from './selection';
 
 export enum BaseKey {
   Enter = 'Enter',
@@ -42,6 +47,18 @@ export enum BaseKey {
   ArrowDown = 'Down|ArrowDown',
   ArrowLeft = 'Left|ArrowLeft',
   ArrowRight = 'Right|ArrowRight',
+  ModArrowUp = 'Mod-Up|Mod-ArrowUp',
+  ModArrowDown = 'Mod-Down|Mod-ArrowDown',
+  CtrlHome = 'Ctrl-Home',
+  CtrlEnd = 'Ctrl-End',
+  ShiftArrowLeft = "Shift-Left|Shift-ArrowLeft",
+  ShiftArrowRight = "Shift-Right|Shift-ArrowRight",
+  AltArrowLeft = "Alt-Left|Alt-ArrowLeft",
+  AltArrowRight = "Alt-Right|Alt-ArrowRight",
+  CtrlArrowLeft = "Ctrl-Left|Ctrl-ArrowLeft",
+  CtrlArrowRight = "Ctrl-Right|Ctrl-ArrowRight",
+  CtrlShiftArrowLeft = "Ctrl-Shift-Left|Ctrl-Shift-ArrowLeft",
+  CtrlShiftArrowRight = "Ctrl-Shift-Right|Ctrl-Shift-ArrowRight",
 }
 
 export interface BaseKeyBinding {
@@ -70,6 +87,14 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     // base tab key behavior (ignore)
     { key: BaseKey.Tab, command: ignoreKey },
     { key: BaseKey.ShiftTab, command: ignoreKey },
+
+    // base arrow key behavior (prevent traversing top-level body notes)
+    { key: BaseKey.ArrowLeft, command: arrowBodyNodeBoundary('left') },
+    { key: BaseKey.ArrowUp, command: arrowBodyNodeBoundary('up') },
+    { key: BaseKey.ArrowRight, command: arrowBodyNodeBoundary('right') },
+    { key: BaseKey.ArrowDown, command: arrowBodyNodeBoundary('down') },
+    { key: BaseKey.ModArrowDown, command: endTopLevelBodyNodeBoundary() },
+    { key: BaseKey.CtrlEnd, command: endTopLevelBodyNodeBoundary() },
 
     // merge keys provided by extensions
     ...keys,
@@ -102,4 +127,35 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
+}
+
+function arrowBodyNodeBoundary(dir: 'up' | 'down' | 'left' | 'right') {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    if (view && view.endOfTextblock(dir) && selectionIsBodyTopLevel(state.selection)) {
+      const side = dir === 'left' || dir === 'up' ? -1 : 1;
+      const $head = state.selection.$head;
+      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
+      const currentRootNode = editingRootNodeClosestToPos($head);
+      const nextRootNode = editingRootNodeClosestToPos(nextPos.$head);
+      return currentRootNode?.node?.type !== nextRootNode?.node?.type;
+    } else {
+      return false;
+    }
+  };
+}
+
+function endTopLevelBodyNodeBoundary() {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    const editingNode = editingRootNode(state.selection);
+    if (editingNode && selectionIsBodyTopLevel(state.selection)) {
+      if (dispatch) {
+        const tr = state.tr;
+        setTextSelection(editingNode.pos + editingNode.node.nodeSize - 2)(tr).scrollIntoView();
+        dispatch(tr);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  };
 }

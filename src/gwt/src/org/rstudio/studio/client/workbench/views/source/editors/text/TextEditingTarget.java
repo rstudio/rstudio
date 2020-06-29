@@ -146,6 +146,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -1109,17 +1110,21 @@ public class TextEditingTarget implements
       moveCursorToPreviousSectionOrChunk(false);
    }
 
-   @Override
-   public void recordCurrentNavigationPosition()
-   {
-      docDisplay_.recordCurrentNavigationPosition();
-   }
 
    public void ensureTextEditorActive(Command command)
    {
       visualMode_.deactivate(command);
    }
+   
+   public void ensureVisualModeActive(Command command)
+   {
+      visualMode_.activate(command);
+   }
 
+   // the navigateToPosition methods are called by modules that explicitly
+   // want the text editor active (e.g. debugging, find in files, etc.) so they
+   // don't chec for visual mode
+   
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
@@ -1138,31 +1143,76 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
       });
    }
-
+   
+   // These methods are called by SourceNavigationHistory and source pane management
+   // features (e.g. external source window and source columns) so need to check for
+   // and dispatch to visual mode
+   
+   @Override
+   public void recordCurrentNavigationPosition()
+   {
+      if (visualMode_.isActivated())
+      {
+         visualMode_.recordCurrentNavigationPosition();
+      }
+      else 
+      {
+         docDisplay_.recordCurrentNavigationPosition();
+      }
+   }
+   
+ 
    @Override
    public void restorePosition(SourcePosition position)
    {
-      docDisplay_.restorePosition(position);
+      if (visualMode_.isVisualModePosition(position))
+      {
+         ensureVisualModeActive(() -> {
+            visualMode_.navigate(position);
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() -> {
+            docDisplay_.restorePosition(position);
+         });
+      }
    }
 
    @Override
    public SourcePosition currentPosition()
    {
-      Position cursor = docDisplay_.getCursorPosition();
-      if (docDisplay_.hasLineWidgets())
+      if (visualMode_.isActivated())
       {
-         // if we have line widgets, they create an non-reproducible scroll
-         // position, so use the cursor position only
-         return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+         return visualMode_.getSourcePosition();
       }
-      return SourcePosition.create(getContext(), cursor.getRow(),
-            cursor.getColumn(), docDisplay_.getScrollTop());
+      else
+      {
+         Position cursor = docDisplay_.getCursorPosition();
+         if (docDisplay_.hasLineWidgets())
+         {
+            // if we have line widgets, they create an non-reproducible scroll
+            // position, so use the cursor position only
+            return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+         }
+         return SourcePosition.create(getContext(), cursor.getRow(),
+               cursor.getColumn(), docDisplay_.getScrollTop());
+      }
+     
    }
 
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
-      return docDisplay_.isAtSourceRow(position);
+      if (visualMode_.isActivated())
+      {
+         return visualMode_.isAtRow(position);
+      }
+      else
+      {
+         return docDisplay_.isAtSourceRow(position);
+      }
+     
    }
 
    @Override
@@ -1389,7 +1439,7 @@ public class TextEditingTarget implements
    public void initialize(final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
-                          Provider<String> defaultNameProvider)
+                          EditingTargetNameProvider defaultNameProvider)
    {
       id_ = document.getId();
       fileContext_ = fileContext;
@@ -1454,7 +1504,8 @@ public class TextEditingTarget implements
          }
       });
 
-      name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
+      String name = getNameFromDocument(document, defaultNameProvider);
+      name_.setValue(name, true);
       String contents = document.getContents();
 
       // disable change detection when setting code (since we're just doing
@@ -2212,7 +2263,7 @@ public class TextEditingTarget implements
    }
 
    private String getNameFromDocument(SourceDocument document,
-                                      Provider<String> defaultNameProvider)
+                                      EditingTargetNameProvider defaultNameProvider)
    {
       if (document.getPath() != null)
          return FileSystemItem.getNameFromPath(document.getPath());
@@ -2221,7 +2272,7 @@ public class TextEditingTarget implements
       if (!StringUtil.isNullOrEmpty(name))
          return name;
 
-      String defaultName = defaultNameProvider.get();
+      String defaultName = defaultNameProvider.defaultNamePrefix(this);
       docUpdateSentinel_.setProperty("tempName", defaultName, null);
       return defaultName;
    }
@@ -2455,7 +2506,7 @@ public class TextEditingTarget implements
       // switching tabs is a navigation action
       try
       {
-         docDisplay_.recordCurrentNavigationPosition();
+         recordCurrentNavigationPosition();
       }
       catch(Exception e)
       {
@@ -3094,6 +3145,7 @@ public class TextEditingTarget implements
    @Handler
    void onToggleRmdVisualMode()
    {
+      recordCurrentNavigationPosition();
       view_.toggleRmdVisualMode();
    }
 

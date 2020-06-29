@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvent.java
+ * xref-completion.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,19 +13,19 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
-
-public class PanmirrorEvent
-{
-   public static String Update = "panmirrorUpdate";
-   public static String OutlineChange = "panmirrorOutlineChange";
-   public static String StateChange = "panmirrorStateChange";
-   public static String Resize = "panmirrorResize";
-   public static String Layout = "panmirrorLayout";
-   public static String Scroll = "panmirrorScroll";
-   public static String Focus = "panmirrorFocus";
-   public static String Navigate = "panmirrorNavigate";
+.pm-xref-completion-item .pm-completion-item-id {
+  justify-content: stretch;
+  align-items: flex-start;
 }
 
+.pm-xref-completion-item .pm-completion-item-id > *:first-child {
+  flex: 2
+}
+
+.pm-xref-completion-item .pm-completion-item-id > *:last-child {
+  flex: 1;
+  align-self: flex-end;
+  text-align: right;
+}
 
 

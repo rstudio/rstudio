@@ -13,10 +13,15 @@
  *
  */
 
-import { xrefCompletionHandler } from '../marks/xref/xref-completion';
 
 export interface XRefServer {
-  indexForFile: (file: string) => Promise<XRef[]>;
+  indexForFile: (file: string) => Promise<XRefs>;
+  xrefForId: (file: string, id: string) => Promise<XRefs>;
+}
+
+export interface XRefs {
+  baseDir: string;
+  refs: XRef[];
 }
 
 export interface XRef {

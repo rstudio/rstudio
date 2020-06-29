@@ -36,21 +36,36 @@ namespace module_context {
 // only known source of project level bibliographies
 std::vector<FilePath> bookdownBibliographies()
 {
-   std::vector<FilePath> bibliographies;
+   std::vector<std::string> biblios = bookdownBibliographiesRelative();
+   if (biblios.size() > 0)
+   {
+       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+       std::vector<FilePath> biblioPaths;
+       std::transform(biblios.begin(), biblios.end(), std::back_inserter(biblioPaths),
+                      boost::bind(&FilePath::completeChildPath, &buildTargetPath, _1));
+       return biblioPaths;
+   }
+   else
+   {
+      return std::vector<FilePath>();
+   }
+}
+
+std::vector<std::string> bookdownBibliographiesRelative()
+{
+   std::vector<std::string> files;
+
    if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
    {
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
-      std::vector<std::string> files;
+
       Error error = r::exec::RFunction(".rs.bookdown.bibliographies", inputDir).call(&files);
       if (error)
          LOG_ERROR(error);
-      std::transform(files.begin(),
-                     files.end(),
-                     std::back_inserter(bibliographies),
-                     boost::bind(&FilePath::completeChildPath, &buildTargetPath, _1));
    }
-   return bibliographies;
+
+   return files;
 }
 
 } // namespace module_context

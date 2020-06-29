@@ -9,14 +9,21 @@
    .editAttr {
       width: 100%;
    }
- 
+
    </ui:style>
 
    <g:VerticalPanel styleName="{style.editAttr}">
       
-      <g:HorizontalPanel>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel1}" text="ID"/>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel2}" text="(e.g. #overview)" styleName="{res.styles.inlineInfoLabel}"/>
+      <g:HorizontalPanel styleName="{style.editAttr}" ui:field="idPanel_">
+         <g:cell horizontalAlignment="ALIGN_LEFT">
+            <g:HorizontalPanel>
+               <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel1}" text="ID"/>
+               <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel2}" text="(e.g. #overview)" styleName="{res.styles.inlineInfoLabel}"/>
+            </g:HorizontalPanel>
+         </g:cell> 
+         <g:cell width="50px" horizontalAlignment="ALIGN_RIGHT">
+            <rw:SmallButton ui:field="autogenBtn_" text="Auto Generate" />
+         </g:cell>
       </g:HorizontalPanel>
       <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrId}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_"/>
      

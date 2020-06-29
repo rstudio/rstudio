@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -42,9 +44,24 @@ public class DialogTabLayoutPanel extends TabLayoutPanel
       tabInner.getStyle().clearWidth();
    }
 
-   public void add(Widget child, String text, String tabId)
+   public void add(VerticalTabPanel child, String text, String tabId)
    {
       super.add(child, text);
       setTabId(child, ElementIds.getElementId(VerticalTabPanel.getTabId(tabId)));
+   }
+
+   /**
+    * Add a widget as a tab panel, applying appropriate Aria annotations
+    * @param child widget to add as a tab panel
+    * @param text name of the tab
+    * @param tabId unique identifier for element
+    */
+   public void addWidgetPanel(Widget child, String text, String tabId)
+   {
+      super.add(child, text);
+      setTabId(child, ElementIds.getElementId(VerticalTabPanel.getTabId(tabId)));
+      Roles.getTabpanelRole().set(child.getElement());
+      Roles.getTabpanelRole().setAriaLabelledbyProperty(child.getElement(),
+            Id.of(ElementIds.getElementId(VerticalTabPanel.getTabId(tabId))));
    }
 }

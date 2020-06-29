@@ -126,7 +126,7 @@ void signIn(const http::Request& request,
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
    else
-      variables[kFormAction] = "action=\"" + std::string(kDoSignIn) + "\" "
+      variables[kFormAction] = "action=\"" + core::http::URL::uncomplete(request.uri(), kDoSignIn) + "\" "
                                "onsubmit=\"return verifyMe()\"";
    const std::string& templatePath = "templates/encrypted-sign-in.htm";
    auth::common::signIn(request, pResponse, templatePath, kDoSignIn, variables);
@@ -145,10 +145,12 @@ void publicKey(const http::Request&,
 void doSignIn(const http::Request& request,
               http::Response* pResponse)
 {
-   if (!auth::common::validateSignIn(request, pResponse))
-      return;
-
    std::string appUri = request.formFieldValue(kAppUri);
+   if (!auth::common::validateSignIn(request, pResponse))
+   {
+      redirectToLoginPage(request, pResponse, kAppUri, kErrorServer);
+      return;
+   }
 
    bool persist = false;
    std::string username, password;
