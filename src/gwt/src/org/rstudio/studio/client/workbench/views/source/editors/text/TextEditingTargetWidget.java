@@ -623,6 +623,7 @@ public class TextEditingTargetWidget
          false, /* textIndicatesState */
          new ImageResource2x(StandardIcons.INSTANCE.visual_mode2x()), event -> {
             boolean visible = !isVisualMode();
+            target_.recordCurrentNavigationPosition();
             docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, visible);
             toggleRmdVisualModeButton_.setLatched(visible);
          });

@@ -144,28 +144,28 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorAttrEditResult> editAttr(PanmirrorAttrProps attr)
+   public Promise<PanmirrorAttrEditResult> editAttr(PanmirrorAttrProps attr, String idHint)
    {
-      return editPanmirrorAttr("Edit Attributes", null, attr);
+      return editPanmirrorAttr("Edit Attributes", null, idHint, attr);
    }
 
    
    public Promise<PanmirrorAttrEditResult> editSpan(PanmirrorAttrProps attr)
    {
-      return editPanmirrorAttr("Span Attributes", "Unwrap Span", attr);
+      return editPanmirrorAttr("Span Attributes", "Unwrap Span", null, attr);
    }
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, attr);
+      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, null, attr);
    }
 
 
-   private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, PanmirrorAttrProps attr) 
+   private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, String idHint, PanmirrorAttrProps attr) 
    {
       return new Promise<PanmirrorAttrEditResult>(
          (ResolveCallbackFn<PanmirrorAttrEditResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeButtonCaption, attr, 
+            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeButtonCaption, idHint, attr, 
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);

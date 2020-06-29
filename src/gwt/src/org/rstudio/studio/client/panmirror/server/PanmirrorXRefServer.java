@@ -54,6 +54,19 @@ public class PanmirrorXRefServer
          
       });
    }
+   
+   public Promise<JavaScriptObject> xrefForId(String file, String id)
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         target_.withSavedDoc(() -> {
+            server_.xrefForId(
+               file,
+               id,
+               new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            );
+         });
+      });
+   }
 
    private final TextEditingTarget target_;
    private PanmirrorXRefServerOperations server_;

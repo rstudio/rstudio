@@ -17,7 +17,7 @@ import { Fragment, Mark, Schema } from 'prosemirror-model';
 import { PluginKey, Plugin } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocToken, PandocOutput, PandocTokenType } from '../../api/pandoc';
 import {
   pandocAttrSpec,
   pandocAttrParseDom,
@@ -25,14 +25,12 @@ import {
   pandocAttrReadAST,
   PandocAttr,
 } from '../../api/pandoc_attr';
-import { EditorUI } from '../../api/ui';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { linkCommand, removeLinkCommand, linkOmniInsert } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
 import { linkHeadingsPostprocessor, syncHeadingLinksAppendTransaction } from './link-headings';
-import { LinkPopupPlugin } from './link-popup';
+import { linkPopupPlugin } from './link-popup';
 
 import './link-styles.css';
 
@@ -44,7 +42,7 @@ const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
 const extension = (context: ExtensionContext): Extension => {
-  const { pandocExtensions, ui } = context;
+  const { pandocExtensions, ui, navigation } = context;
 
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
@@ -169,8 +167,10 @@ const extension = (context: ExtensionContext): Extension => {
 
     plugins: (schema: Schema) => {
       const plugins = [
-        new LinkPopupPlugin(
+        linkPopupPlugin(
+          schema,
           ui,
+          navigation,
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
           removeLinkCommand(schema.marks.link),
         ),

@@ -349,10 +349,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void onCommand(AppCommand command)
    {
       if (command.getExecutedFromShortcut())
-      {
-         if (menuBar_.isVisible())
-            menuBar_.setVisible(false);
-      }
+         hide();
    }
    
    protected final ToolbarMenuBar menuBar_;

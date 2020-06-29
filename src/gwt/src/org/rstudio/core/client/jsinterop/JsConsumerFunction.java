@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvent.java
+ * JsConsumerFunction.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,19 +13,14 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.core.client.jsinterop;
 
-public class PanmirrorEvent
+
+import elemental2.core.JsObject;
+import jsinterop.annotations.JsFunction;
+
+@JsFunction
+public interface JsConsumerFunction
 {
-   public static String Update = "panmirrorUpdate";
-   public static String OutlineChange = "panmirrorOutlineChange";
-   public static String StateChange = "panmirrorStateChange";
-   public static String Resize = "panmirrorResize";
-   public static String Layout = "panmirrorLayout";
-   public static String Scroll = "panmirrorScroll";
-   public static String Focus = "panmirrorFocus";
-   public static String Navigate = "panmirrorNavigate";
+   void call(JsObject obj);
 }
-
-
-

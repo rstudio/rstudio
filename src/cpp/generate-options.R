@@ -455,7 +455,7 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
                implicitValue <- defaultValueCode
             }
             
-            implcitValueStr <- sprintf("->implicit_value(%s)", implicitValue)
+            implicitValueStr <- sprintf("->implicit_value(%s)", implicitValue)
          }
          
          isMultitoken <- option$isMultitoken

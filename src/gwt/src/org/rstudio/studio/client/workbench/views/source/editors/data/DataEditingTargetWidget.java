@@ -87,7 +87,7 @@ public class DataEditingTargetWidget extends Composite
       // when loaded, hook up event handlers
       frame_.addLoadHandler((event) ->
       {
-         CommandWith2Args<Integer, Integer> view = (row, col) ->
+         CommandWith2Args<Double, Double> view = (row, col) ->
          {
             String lho = dataItem.getExpression();
             String object = dataItem.getObject();

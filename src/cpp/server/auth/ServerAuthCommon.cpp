@@ -64,6 +64,7 @@ bool mainPageFilter(const core::http::Request& request,
 void signInThenContinue(const core::http::Request& request,
                         core::http::Response* pResponse)
 {
+   clearSignInCookies(request, pResponse);
    redirectToLoginPage(request, pResponse, request.uri());
 }
 
@@ -85,7 +86,13 @@ void signIn(const core::http::Request& request,
             const std::string& formAction,
             std::map<std::string,std::string> variables /*= {}*/)
 {
-   clearSignInCookies(request, pResponse);
+   // any attempt to load the sign in page with a valid cookie is sent back
+   std::string cookieUsername = core::http::secure_cookie::readSecureCookie(request, kUserIdCookie, options().wwwIFrameLegacyCookies());
+   if (!cookieUsername.empty())
+   {
+      pResponse->setMovedTemporarily(request, "./");
+      return;
+   }
 
    // re-use existing cookie refreshing its expiration or set new if not present
    std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options().wwwIFrameLegacyCookies());
