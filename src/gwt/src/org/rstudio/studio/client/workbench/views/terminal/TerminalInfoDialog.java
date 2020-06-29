@@ -78,14 +78,6 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
 
-         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
-         for (String optionName : XTermOptions.stringOptions)
-            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.boolOptions)
-            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.numberOptions)
-            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
-
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
          diagnostics.append("Remote:     '").append(Desktop.isRemoteDesktop()).append("'\n");

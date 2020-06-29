@@ -221,16 +221,13 @@ public class XTermWidget extends Widget
       {
          XTermDimensions size = getTerminalSize();
 
-         int cols = size.getCols();
-         int rows = size.getRows();
-
          // ignore if a reasonable size couldn't be computed
-         if (cols < 1 || rows < 1)
+         if (size.cols < 1 || size.rows < 1)
          {
             return;
          }
 
-         resizePTY(cols, rows);
+         resizePTY(size.cols, size.rows);
       }
    };
 
@@ -383,21 +380,6 @@ public class XTermWidget extends Widget
    public HandlerRegistration addXTermTitleHandler(Handler handler)
    {
       return addHandler(handler, XTermTitleEvent.TYPE);
-   }
-
-   public String getStringOption(String option)
-   {
-      return terminal_.getStringOption(option);
-   }
-
-   public boolean getBoolOption(String option)
-   {
-      return terminal_.getBoolOption(option);
-   }
-
-   public double getNumberOption(String option)
-   {
-      return terminal_.getNumberOption(option);
    }
 
    public void updateTheme(XTermTheme theme)
