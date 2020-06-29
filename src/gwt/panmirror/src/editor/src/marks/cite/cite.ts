@@ -28,7 +28,7 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction, kInsertCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager, bibliographyPaths } from '../../api/bibliography';
+import { BibliographyManager, bibliographyPaths, Bibliography, BibliographyFiles } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
 import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossref';
@@ -567,13 +567,12 @@ export function insertCitationForDOI(
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(ui, view.state.doc);
-
     const existingIds = bibliography.sources.map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliography.project_biblios || bibliographies?.bibliography || [],
+      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
       work,
       citeUI: work ? {
         suggestedId: suggestIdForEntry(existingIds, work.author, work.issued),
@@ -592,6 +591,16 @@ export function insertCitationForDOI(
       }
     });
   });
+}
+
+function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): string[] {
+  if (projectBiblios.length > 0) {
+    return projectBiblios;
+  } else if (docBiblios) {
+    return docBiblios;
+  } else {
+    return [];
+  }
 }
 
 export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
