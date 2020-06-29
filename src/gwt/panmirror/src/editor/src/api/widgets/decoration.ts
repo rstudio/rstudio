@@ -61,7 +61,9 @@ export function textRangePopupDecorationPosition(
   const positionRight = linkCoords.left + maxWidth > editingBox.right;
   if (positionRight) {
     const rightCoords = view.coordsAtPos(range.to);
-    const rightPos = editingBox.right - rightCoords.right;
+    const rightPos = linkCoords.top === rightCoords.top
+      ? editingBox.right - rightCoords.right
+      : editingBox.right - containingBlockBox.right;
     style = {
       ...popupStyle,
       right: rightPos + kPixelUnit,
