@@ -268,7 +268,7 @@ export class Editor {
     // provide format defaults
     format = {
       pandocMode: format.pandocMode || 'markdown',
-      pandocExtensions: format.pandocMode || '',
+      pandocExtensions: format.pandocExtensions || '',
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
