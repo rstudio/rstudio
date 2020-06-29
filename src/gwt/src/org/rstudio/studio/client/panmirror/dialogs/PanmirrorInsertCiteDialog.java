@@ -84,7 +84,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
                citeProps_.citeUI = citeUI;
                onCiteUI(citeUI);
 
+               // Enable the UI and Focus the Citation Id
                setEnabled(true);
+               citationId_.selectAll();
+               citationId_.setFocus(true);              
+               
                indicator.onCompleted();
             }
 
@@ -115,7 +119,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    {
       PanmirrorInsertCiteResult result = new PanmirrorInsertCiteResult();
       result.id = citationId_.getText();
-      result.bibliographyFile = bibliographies_.getValue(bibliographies_.getSelectedIndex());
+      if (createBibliographyFileName_.isEnabled() && createBibliographyFileName_.getText().length() > 0) {
+         result.bibliographyFile = createBibliographyFileName_.getText().trim();
+      } else {
+         result.bibliographyFile = bibliographies_.getValue(bibliographies_.getSelectedIndex());
+      }     
       result.work = citeProps_.work;
       return result;
    }
@@ -157,28 +165,35 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    {
       citationId_.setEnabled(enabled);
       bibliographies_.setEnabled(enabled);
+      createBibliographyFileName_.setEnabled(enabled);
       if (enabled)
       {
-         panel_.removeStyleName(RES.styles().disabled());
+         mainPanel_.removeStyleName(RES.styles().disabled());
       }
       else
       {
-         panel_.addStyleName(RES.styles().disabled());
+         mainPanel_.addStyleName(RES.styles().disabled());
       }
 
    }
 
    private void setBibliographies(String[] bibliographyFiles)
    {
+      GWT.log("COOL" + bibliographyFiles.length);
       if (bibliographyFiles.length == 0)
       {
-         // TODO: Replace this with a text, prefilled with references.bib
-         // Label 'Create bibliography'
-         bibliographies_.addItem("New bibliography (references.bib)", "references.bib");
+         // There isn't a currently configured bibliography
+         // Show create UI
+         createBibliographyPanel_.setVisible(true);
+         addTobibliographyPanel_.setVisible(false);
+         createBibliographyFileName_.setText("references.bib");
       }
       else
       {
-         /// 'Add to bibliography'
+         // There is a currently configured bibliography
+         // Show add UI
+         createBibliographyPanel_.setVisible(false);
+         addTobibliographyPanel_.setVisible(true);
          for (String file : bibliographyFiles)
          {
             bibliographies_.addItem(file);
@@ -189,7 +204,6 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    private void displayPreview(PanmirrorInsertCitePreviewPair[] previewPairs)
    {
       previewTable_.clear();
-      // Display a preview
       int row = 0;
       for (PanmirrorInsertCitePreviewPair pair : previewPairs)
       {
@@ -197,25 +211,39 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       }
    }
    
-   private static String title(String doi) {
-      return "Citation from " + doi;       
-   }
-
+   // Root panel
+   @UiField
+   VerticalPanel mainPanel_;
+   
+   // Citation Id
    @UiField
    Label citationLabel_;
    @UiField
    TextBox citationId_;
+
+   // Preview
+   @UiField
+   ScrollPanel previewScrollPanel_;
+   @UiField
+   FlexTable previewTable_;
+   
+   // Bibliography information
+   @UiField
+   VerticalPanel addTobibliographyPanel_;
    @UiField
    FormListBox bibliographies_;
    @UiField
-   FlexTable previewTable_;
+   VerticalPanel createBibliographyPanel_;
    @UiField
-   VerticalPanel panel_;
-   @UiField
-   ScrollPanel previewScrollPanel_;
+   TextBox createBibliographyFileName_;
 
+   
    interface Binder extends UiBinder<Widget, PanmirrorInsertCiteDialog>
    {
+   }
+
+   private static String title(String doi) {
+      return "Citation from " + doi;       
    }
 
    private Widget mainWidget_;
