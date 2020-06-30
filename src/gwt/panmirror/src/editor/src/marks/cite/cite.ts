@@ -26,14 +26,14 @@ import { Extension, ExtensionContext } from '../../api/extension';
 import { fragmentText } from '../../api/fragment';
 import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
-import { MarkTransaction, kInsertCompletionTransaction } from '../../api/transaction';
+import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager, bibliographyPaths, Bibliography, BibliographyFiles } from '../../api/bibliography';
+import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
 import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossref';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
-import { performReplacementPreventingCompletions } from '../../behaviors/completion/completion';
+import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
 
 const kCiteCitationsIndex = 0;
@@ -245,14 +245,13 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Cros
         // Insert the DOI text as a placeholder
         // This is using the completion insertion as this should be treated as a 
         // completion handling the paste (e.g. no other competions should be fired)
-        performReplacementPreventingCompletions(view, parsedDOI.pos, parsedDOI.token);
+        const tr = view.state.tr;
+        tr.setMeta(kPreventCompletionTransaction, true);
+        tr.insertText(parsedDOI.token, parsedDOI.pos);
+        view.dispatch(tr);
 
-        // Do the server work to to try to resolve the DOI
-        server.doi(parsedDOI.token, 500).then(work => {
-          if (work) {
-            insertCitationForDOI(parsedDOI.token, bibManager, parsedDOI.pos, ui, view);
-          }
-        });
+        insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui);
+
         return true;
       } else {
         // This is just content, paste the text content into the citation
@@ -556,11 +555,11 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 
 // Replaces the current selection with a resolved citation id
 export function insertCitationForDOI(
+  view: EditorView,
   doi: string,
   bibManager: BibliographyManager,
   pos: number,
   ui: EditorUI,
-  view: EditorView,
   work?: CrossrefWork
 ) {
   bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
@@ -582,11 +581,19 @@ export function insertCitationForDOI(
 
     // Ask the user to provide information that we need in order to populate
     // this citation (id, bibliography)
-    const citation = ui.dialogs.insertCite(citeProps).then(result => {
+    ui.dialogs.insertCite(citeProps).then(result => {
       // If the user provided an id, insert the citation
       if (result && result.id.length) {
+
+        const tr = view.state.tr;
+
+        // Update the bibliography on the page if need be
+        ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui);
+
         // Use the biblography manager to write an entry to the user specified bibliography
-        performReplacementPreventingCompletions(view, pos, result.id);
+        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+
+        view.dispatch(tr);
         view.focus();
       }
     });

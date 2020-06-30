@@ -222,7 +222,7 @@ export interface InsertCiteUI {
 
 export interface InsertCiteResult {
   id: string;
-  bibliography: string;
+  bibliographyFile: string;
   work: CrossrefWork;
 }
 

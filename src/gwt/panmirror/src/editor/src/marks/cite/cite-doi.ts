@@ -20,7 +20,7 @@ import { EditorState, Transaction } from "prosemirror-state";
 import { parseCitation, ParsedCitation } from "./cite";
 import { parseCrossRefDOI, CrossrefWork, formatForPreview } from "../../api/crossref";
 import { EditorUI, InsertCiteProps, InsertCiteUI } from "../../api/ui";
-import { performReplacementPreventingCompletions } from "../../behaviors/completion/completion";
+import { performCompletionReplacement } from "../../behaviors/completion/completion";
 import { BibliographyManager, bibliographyPaths } from "../../api/bibliography";
 import { suggestIdForEntry, formatAuthors, formatIssuedDate } from "./cite-bibliography_entry";
 

@@ -46,7 +46,7 @@ export function citationDoiCompletionHandler(
 
     replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
       if (work) {
-        insertCitationForDOI(work.DOI, bibManager, pos, ui, view, work);
+        insertCitationForDOI(view, work.DOI, bibManager, pos, ui, work);
       }
     },
 

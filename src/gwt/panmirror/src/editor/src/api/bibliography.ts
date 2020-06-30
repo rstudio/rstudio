@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { PandocServer } from './pandoc';
 
 import Fuse from 'fuse.js';
@@ -20,6 +20,9 @@ import Fuse from 'fuse.js';
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
 import { expandPaths } from './path';
+import { Transaction, EditorState } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { NodeWithPos } from 'prosemirror-utils';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -63,6 +66,7 @@ export interface BibliographyDate {
 interface ParsedYaml {
   yamlCode: string;
   yaml: any;
+  node: NodeWithPos;
 }
 
 // The fields and weights that will indexed and searched
@@ -179,7 +183,7 @@ function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
   const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
     const yamlText = node.node.textContent;
     const yamlCode = stripYamlDelimeters(yamlText);
-    return { yamlCode, yaml: parseYaml(yamlCode) };
+    return { yamlCode, yaml: parseYaml(yamlCode), node };
   });
   return parsedYamlNodes;
 }
@@ -211,3 +215,58 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUI
   }
   return null;
 }
+
+export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: string, ui: EditorUI) {
+
+  // read the Yaml blocks from the document
+  const parsedYamlNodes = parseYamlNodes(tr.doc);
+
+  // Gather the biblography files from the document
+  const bibliographiesRelative = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
+  if (bibliographiesRelative && bibliographiesRelative?.bibliography.length > 0) {
+    // The user selected bibliography is already in the document OR
+    // There is a bibliography entry, but it doesn't include the user
+    // selected bibliography. In either case, we're not going to write
+    // a bibliography entry to any YAML node. 
+    return bibliographiesRelative.bibliography.includes(bibliographyFile);
+  } else {
+    // There aren't any bibliographies declared for this document yet either because
+    // there are no yaml metadata blocks or the yaml metadata blocks that exist omit
+    // the bibliography property
+    if (parsedYamlNodes.length === 0) {
+
+      // There aren't any yaml nodes in this document, need to create one
+      const biblioNode = createBiblographyYamlNode(tr.doc.type.schema, bibliographyFile);
+      tr.insert(1, biblioNode);
+
+    } else {
+
+      // We found at least one node in the document, add to the first node that we found
+      const firstBlock = parsedYamlNodes[0];
+      const updatedNode = addBibliographyToYamlNode(tr.doc.type.schema, bibliographyFile, firstBlock);
+      tr.replaceRangeWith(firstBlock.node.pos, firstBlock.node.pos + firstBlock.node.node.nodeSize, updatedNode);
+
+    }
+    return true;
+  }
+}
+
+// TODO: string based replace to avoid mauling their yaml
+// Even treat arrays like text
+function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
+  // Add this to the first node
+  const firstBlockYaml = parsedYaml.yaml || {};
+  firstBlockYaml.bibliography = bibliographyFile;
+  const updatedYamlCode = toYamlCode(firstBlockYaml);
+
+  const yamlLines = `\n${updatedYamlCode}`;
+  const yamlText = schema.text(`---${yamlLines}---`);
+  return schema.nodes.yaml_metadata.create({}, yamlText);
+}
+
+function createBiblographyYamlNode(schema: Schema, bibliographyFile: string) {
+  const bibliographyLine = `\nbibliography: "${bibliographyFile}"\n`;
+  const yamlText = schema.text(`---${bibliographyLine}---`);
+  return schema.nodes.yaml_metadata.create({}, yamlText);
+}
+

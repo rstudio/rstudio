@@ -383,7 +383,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
         // get replacement from handler
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
         if (replacement) {
-          performCompletionReplacement(view, result.pos, replacement);
+          const tr = view.state.tr;
+          performCompletionReplacement(tr, result.pos, replacement);
+          view.dispatch(tr);
         }
       }
       // set focus
@@ -448,23 +450,21 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 }
 
-export function performCompletionReplacement(view: EditorView, pos: number, replacement: ProsemirrorNode | string) {
-  // create transaction
-  const tr = view.state.tr;
+export function performCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
 
   // set selection to area we will be replacing
-  tr.setSelection(new TextSelection(tr.doc.resolve(pos), view.state.selection.$head));
+  tr.setSelection(new TextSelection(tr.doc.resolve(pos), tr.selection.$head));
 
   // ensure we have a node
   if (replacement instanceof ProsemirrorNode) {
     // combine it's marks w/ whatever is active at the selection
-    const marks = view.state.selection.$head.marks();
+    const marks = tr.selection.$head.marks();
 
     // set selection and replace it
     tr.replaceSelectionWith(replacement, false);
 
     // propapate marks
-    marks.forEach(mark => tr.addMark(pos, view.state.selection.to, mark));
+    marks.forEach(mark => tr.addMark(pos, tr.selection.to, mark));
   } else {
     tr.insertText(replacement);
   }
@@ -472,38 +472,7 @@ export function performCompletionReplacement(view: EditorView, pos: number, repl
   // mark the transaction as an completion insertion
   tr.setMeta(kInsertCompletionTransaction, true);
 
-  // dispatch
-  view.dispatch(tr);
 }
-
-export function performReplacementPreventingCompletions(view: EditorView, pos: number, replacement: ProsemirrorNode | string) {
-  // create transaction
-  const tr = view.state.tr;
-
-  // set selection to area we will be replacing
-  tr.setSelection(new TextSelection(tr.doc.resolve(pos), view.state.selection.$head));
-
-  // ensure we have a node
-  if (replacement instanceof ProsemirrorNode) {
-    // combine it's marks w/ whatever is active at the selection
-    const marks = view.state.selection.$head.marks();
-
-    // set selection and replace it
-    tr.replaceSelectionWith(replacement, false);
-
-    // propapate marks
-    marks.forEach(mark => tr.addMark(pos, view.state.selection.to, mark));
-  } else {
-    tr.insertText(replacement);
-  }
-
-  // mark the transaction as an completion insertion
-  tr.setMeta(kPreventCompletionTransaction, true);
-
-  // dispatch
-  view.dispatch(tr);
-}
-
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

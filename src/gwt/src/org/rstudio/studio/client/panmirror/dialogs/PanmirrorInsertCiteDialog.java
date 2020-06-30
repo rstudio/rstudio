@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -45,7 +47,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       citeProps_ = citeProps;
 
       setBibliographies(citeProps.bibliographyFiles);
-      previewScrollPanel_.setSize("100%", "90px");
+      previewScrollPanel_.setSize("100%", "160px");
 
       if (citeProps_.citeUI != null)
       {
@@ -179,7 +181,6 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 
    private void setBibliographies(String[] bibliographyFiles)
    {
-      GWT.log("COOL" + bibliographyFiles.length);
       if (bibliographyFiles.length == 0)
       {
          // There isn't a currently configured bibliography
@@ -243,7 +244,12 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    }
 
    private static String title(String doi) {
-      return "Citation from " + doi;       
+      String title = "Citation from DOI";
+      String doiTitle = title + ": " + doi;
+      if (DomMetrics.measureHTML(doiTitle).width < 350)
+         return doiTitle;
+      else
+         return title;      
    }
 
    private Widget mainWidget_;
