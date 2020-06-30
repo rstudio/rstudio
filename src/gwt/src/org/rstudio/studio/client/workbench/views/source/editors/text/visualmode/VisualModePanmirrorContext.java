@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -37,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
@@ -62,6 +62,7 @@ public class VisualModePanmirrorContext
    {
       workbenchContext_ = workbenchContext;
       sessionInfo_ = session.getSessionInfo();
+      events_ = events;
       
       // notify watchers of file changes
       events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
@@ -138,8 +139,6 @@ public class VisualModePanmirrorContext
       
       uiContext.translateText = text -> {
          return text;
-      
-      
       };
       return uiContext;
    }
@@ -148,8 +147,8 @@ public class VisualModePanmirrorContext
    {
       PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
       uiDisplay.showContextMenu = showContextMenu;
-      uiDisplay.navigateToXRef = (file, type, id) -> {
-         Debug.logToRConsole(file + ": " + type + ':' + id);
+      uiDisplay.navigateToXRef = (file, xref) -> {
+         events_.fireEvent(new XRefNavigationEvent(FileSystemItem.createFile(file), xref));
       };
       return uiDisplay;
    }
@@ -247,5 +246,6 @@ public class VisualModePanmirrorContext
    
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;
+   private EventBus events_;
    
 }

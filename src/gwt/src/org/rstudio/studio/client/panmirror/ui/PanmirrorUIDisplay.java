@@ -50,7 +50,7 @@ public class PanmirrorUIDisplay {
    @JsFunction
    public interface NavigateToXRef
    {
-      void navigate(String file, String type, String id);
+      void navigate(String file, String xref);
    }
 
    public ShowContextMenu showContextMenu;   

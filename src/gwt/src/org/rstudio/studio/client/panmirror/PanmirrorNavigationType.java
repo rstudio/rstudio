@@ -24,4 +24,3 @@ public class PanmirrorNavigationType
   public final static String Heading = "heading";
   public final static String XRef = "xref";
 }
-

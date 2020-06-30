@@ -58,7 +58,7 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
             // click handler
             const onClick = () => {
               const file = xrefs.baseDir + '/' + xref.file;
-              ui.display.navigateToXRef(file, xref.type, xref.id);
+              ui.display.navigateToXRef(file, xrefKey(xref));
             };
 
             return (<XRefPopup xref={xref} onClick={onClick} style={style} />);
