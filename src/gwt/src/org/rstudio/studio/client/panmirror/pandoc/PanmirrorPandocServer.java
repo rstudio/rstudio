@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror.pandoc;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -90,6 +91,19 @@ public class PanmirrorPandocServer {
          );
       });
    }
+   
+   public Promise<Boolean> addToBibliography(String bibliography, JavaScriptObject source)
+   {
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {       
+         server_.pandocAddToBibliography(
+           bibliography,
+           source,
+           new PromiseServerRequestCallback<Boolean>(resolve, reject)
+        );
+     });
+    
+   }
+
 
    public Promise<String> listExtensions(String format)
    {
