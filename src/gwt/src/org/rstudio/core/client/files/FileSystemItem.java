@@ -218,7 +218,7 @@ public class FileSystemItem extends JavaScriptObject
       else if (lowerExt.equals(".jpg") || lowerExt.equals(".jpeg") ||
                lowerExt.equals(".gif") || lowerExt.equals(".bmp")  ||
                lowerExt.equals(".tiff")   || lowerExt.equals(".tif") ||
-               lowerExt.equals(".png"))
+               lowerExt.equals(".png") || lowerExt.equals(".webp"))
       {
          return FileIcon.IMAGE_ICON;
       }

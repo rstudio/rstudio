@@ -84,7 +84,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Set up rnbData structure (if we have a cache, these entries will be filled)
    rnbData[["chunk_info"]] <- list()
    rnbData[["chunk_data"]] <- list()
-   rnbData[["lib"]] <- list()
    
    # early return if we have no cache
    if (!file.exists(cachePath))
@@ -135,19 +134,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
    names(chunkData) <- basename(chunkDirs)
    rnbData[["chunk_data"]] <- chunkData
-   
-   # Read in the 'libs' directory.
-   rnbData[["lib"]] <- list()
-   
-   libDir <- file.path(cachePath, "lib")
-   if (file.exists(libDir)) {
-      owd <- setwd(libDir)
-      libFiles <- list.files(libDir, recursive = TRUE)
-      libData <- lapply(libFiles, .rs.readFile, encoding = "UTF-8")
-      names(libData) <- libFiles
-      rnbData[["lib"]] <- libData
-      setwd(owd)
-   }
    
    rnbData
 })

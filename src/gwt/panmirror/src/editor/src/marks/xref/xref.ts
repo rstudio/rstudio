@@ -31,11 +31,12 @@ import { fragmentText } from '../../api/fragment';
 import { PandocOutput } from '../../api/pandoc';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { xrefCompletionHandler } from './xref-completion';
+import { xrefPopupPlugin } from './xref-popup';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, format, ui, server } = context;
+  const { pandocExtensions, format, ui, navigation, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
@@ -163,6 +164,8 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
       ];
     },
+
+    // plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, navigation, server)],
 
     completionHandlers: () => [xrefCompletionHandler(ui, server.xref)],
 

@@ -1,5 +1,5 @@
 # Generating options
-The `generate-options.R` script within this directory can be used to automatically generated C++ options code and corresponding Rmd documentation for any option `json` files specified on the command line. By default, the following json files are loaded, generating code and documentation for each:
+The `generate-options.R` script within this directory can be used to automatically generate C++ options code and corresponding Rmd documentation for any option `json` files specified on the command line. By default, the following json files are loaded, generating code and documentation for each:
 
 * server/server-options.json
 * server/server-options-overlay.json
@@ -9,6 +9,8 @@ The `generate-options.R` script within this directory can be used to automatical
 The overlay options are only picked up if they exist, which they will not in the open source repo.
 
 To generate for all options file, simply invoke the script `./generate-options.R` from within the `src/cpp` directory. If you only want to generate specific options files, you can specify each one on the command line. Note that you should only specify the non-overlay file - the overlay files are **always** pulled in if they exist.
+
+*Note: When merging new open source options to Pro, you will need to rerun the generation script to ensure the documentation is generated, as the documentation only exists in the Pro repo.*
 
 ## Options JSON documentation
 The following sections list all of the properties that can be specified within an options json file.

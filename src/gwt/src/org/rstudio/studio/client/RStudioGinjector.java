@@ -180,6 +180,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunkExec;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -312,6 +313,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(PanmirrorUIPrefs panmirrorUIPrefs);
    void injectMembers(VisualMode visualMode);
+   void injectMembers(VisualModeNavigation visualModeNavigation);
    void injectMembers(VisualModeChunkExec visualModeChunkExec);
    void injectMembers(VisualModePanmirrorContext visualModePanmirrorContext);
    void injectMembers(VisualModePanmirrorFormat visualModePanmirrorFormat);

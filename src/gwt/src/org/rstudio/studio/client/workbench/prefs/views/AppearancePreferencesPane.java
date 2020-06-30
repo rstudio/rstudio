@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -328,18 +329,27 @@ public class AppearancePreferencesPane extends PreferencesPane
       super.setPaneVisible(visible);
       if (visible)
       {
-         // When making the pane visible in desktop mode, jiggle the z-index of
-         // the iframe hosting the preview. This is gross but necessary to work
-         // around a QtWebEngine bug which causes the region to not paint at all
-         // (literally showing the previous contents of the screen buffer) until
-         // invalidated in some way.
+         // When making the pane visible in desktop mode, add or remove a
+         // meaningless transform to the iframe hosting the preview. This is
+         // gross but necessary to work around a QtWebEngine bug which causes
+         // the region to not paint at all (literally showing the previous
+         // contents of the screen buffer) until invalidated in some way.
          // 
          // Known to be an issue with Qt 5.12.8/Chromium 69; could be removed if
          // the bug is fixed in later releases.
          //
          // See https://github.com/rstudio/rstudio/issues/6268
         
-         preview_.getElement().getStyle().setZIndex(renderPass_++ % 2);
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            Style style = preview_.getElement().getStyle();
+            String translate = "translate(0px, 0px)";
+            String transform = style.getProperty("transform");
+            style.setProperty("transform", 
+                    StringUtil.isNullOrEmpty(transform) || !StringUtil.equals(translate, transform) ? 
+                        translate : 
+                        "");
+         });
       }
    }
    

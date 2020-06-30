@@ -443,6 +443,7 @@ public class FileTypeRegistry
       registerIcon(".tiff", new FileIcon(new ImageResource2x(icons.iconPng2x()), "TIFF"));
       registerIcon(".tif", new FileIcon(new ImageResource2x(icons.iconPng2x()), "TIF"));
       registerIcon(".png", new FileIcon(new ImageResource2x(icons.iconPng2x()), "PNG"));
+      registerIcon(".webp", new FileIcon(new ImageResource2x(icons.iconPng2x()), "WEBP"));
 
       registerIcon(".pdf", FileIcon.PDF_ICON);
       registerIcon(".csv", FileIcon.CSV_ICON);

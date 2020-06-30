@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -512,12 +513,14 @@ public class ProfilerEditingTarget implements EditingTarget,
       if (!StringUtil.isNullOrEmpty(name)) {
          return name;
       }
-      else if (createProfile) {
-         String defaultName = defaultNameProvider_.get();
+      else if (createProfile)
+      {
+         String defaultName = defaultNameProvider_.defaultNamePrefix(this);
          persistDocumentProperty("name", defaultName);
          return defaultName;
       }
-      else {
+      else
+      {
          String nameFromFile = FileSystemItem.getNameFromPath(getPath());
          persistDocumentProperty("name", nameFromFile);
          return nameFromFile;
@@ -527,7 +530,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
-                          Provider<String> defaultNameProvider)
+                          EditingTargetNameProvider defaultNameProvider)
    {
       // initialize doc, view, and presenter
       doc_ = document;
@@ -881,7 +884,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
-   private Provider<String> defaultNameProvider_;
+   private EditingTargetNameProvider defaultNameProvider_;
    private final FileTypeRegistry fileTypeRegistry_;
 
    private ProfilerType fileType_ = new ProfilerType();

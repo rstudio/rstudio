@@ -22,5 +22,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 public interface PanmirrorXRefServerOperations 
 {
    void xrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback);
+   void xrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback);
 }
 
