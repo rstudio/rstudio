@@ -18,7 +18,7 @@ import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
@@ -28,7 +28,7 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
+import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc, BibliographySource } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
 import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossref';
@@ -560,6 +560,7 @@ export function insertCitationForDOI(
   bibManager: BibliographyManager,
   pos: number,
   ui: EditorUI,
+  server: PandocServer,
   work?: CrossrefWork
 ) {
   bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
@@ -585,16 +586,25 @@ export function insertCitationForDOI(
       // If the user provided an id, insert the citation
       if (result && result.id.length) {
 
-        const tr = view.state.tr;
+        // TODO: this is broken
+        server.addToBibliography(result.bibliographyFile, result.work as unknown as BibliographySource).then(() => {
 
-        // Update the bibliography on the page if need be
-        ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui);
+          const tr = view.state.tr;
 
-        // Use the biblography manager to write an entry to the user specified bibliography
-        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+          // Update the bibliography on the page if need be
+          if (ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
 
-        view.dispatch(tr);
-        view.focus();
+            // Use the biblography manager to write an entry to the user specified bibliography
+            performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+
+            view.dispatch(tr);
+            view.focus();
+          }
+
+
+
+        });
+
       }
     });
   });
