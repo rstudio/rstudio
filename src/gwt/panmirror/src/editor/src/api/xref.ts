@@ -87,7 +87,7 @@ function xrefTypeAndId(xref: string) {
 }
 
 interface XRefPositionLocator {
-  nodeTypes: [string];
+  nodeTypes: string[];
   hasXRef: (node: ProsemirrorNode, id: string) => boolean;
 }
 
@@ -101,11 +101,25 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
   'fig': {
     nodeTypes: ['rmd_chunk'],
     hasXRef: (node: ProsemirrorNode, id: string) => rmdChunkHasXRef(node, 'r', id, /^\{.*[ ,].*fig\.cap\s*=.*\}\s*\n/m)
+  },
+  'tab': {
+    nodeTypes: ['rmd_chunk', 'table_container'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      if (node.type.name === 'rmd_chunk') {
+        return rmdChunkHasXRef(node, 'r', id, /kable\s*\([\s\S]*caption/);
+      } else if (node.type.name === 'table_container') {
+        const caption = node.child(1);
+        const match = caption.textContent.match(/^\s*\(#tab\:([a-zA-Z0-9\/-]+)\)\s*(.*)$/);
+        return !!match && match[1].localeCompare(id, undefined, { sensitivity: 'accent' }) === 0;
+      } else {
+        return false;
+      }
+    }
   }
 };
 
 function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern: RegExp) {
-  const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/%-]+)/);
+  const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
   if (match) {
     return match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
       match[2] === label &&
