@@ -24,6 +24,7 @@ import org.rstudio.core.client.dom.DomUtils;
 
 /**
  * xterm.js ITheme
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermTheme

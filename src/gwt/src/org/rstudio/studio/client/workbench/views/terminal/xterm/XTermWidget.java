@@ -222,12 +222,12 @@ public class XTermWidget extends Widget
          XTermDimensions size = getTerminalSize();
 
          // ignore if a reasonable size couldn't be computed
-         if (size.cols < 1 || size.rows < 1)
+         if (size.getCols() < 1 || size.getRows() < 1)
          {
             return;
          }
 
-         resizePTY(size.cols, size.rows);
+         resizePTY(size.getCols(), size.getRows());
       }
    };
 
