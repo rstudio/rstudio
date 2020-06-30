@@ -29,5 +29,6 @@
 
 .pm-xref-popup-file {
   opacity: 0.6;
-  margin-top: 4px;
+  font-size: 0.9em;
+  margin-top: 3px;
 }

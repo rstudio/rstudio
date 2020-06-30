@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
@@ -253,7 +254,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
-            editor_.navigate(PanmirrorNavigationType.Id, event.getId());
+            editor_.navigate(PanmirrorNavigationType.Id, event.getId(), true);
             editor_.focus();
          }
       });
@@ -468,9 +469,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   public void navigate(String type, String location)
+   public void navigate(String type, String location, boolean recordCurrent)
    {
-      editor_.navigate(type, location);
+      // perform navigation
+      editor_.navigate(type, location, recordCurrent);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 

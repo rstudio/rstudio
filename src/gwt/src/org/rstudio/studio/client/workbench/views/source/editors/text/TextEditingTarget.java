@@ -1124,7 +1124,10 @@ public class TextEditingTarget implements
    public void navigateToXRef(String xref)
    {
       ensureVisualModeActive(() -> {
-         visualMode_.navigateToXRef(xref);
+         Scheduler.get().scheduleDeferred(() -> {
+            visualMode_.navigateToXRef(xref, false);
+         });
+        
       });
    }
 
@@ -1175,7 +1178,7 @@ public class TextEditingTarget implements
       if (visualMode_.isVisualModePosition(position))
       {
          ensureVisualModeActive(() -> {
-            visualMode_.navigate(position);
+            visualMode_.navigate(position, false);
          });
       }
       else

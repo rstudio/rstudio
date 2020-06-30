@@ -109,15 +109,19 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   const node = findDomRefAtPos(pos, view.domAtPos.bind(view));
   if (node instanceof HTMLElement) {
 
-    // perform navigation
-    const editingRoot = editingRootNode(view.state.selection)!;
-    const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-    const scroller = zenscroll.createScroller(container, 700, 20);
-    if (animate) {
-      scroller.to(node);
-    } else {
-      scroller.to(node, 0);
-    }
+    // auto-scroll to position (delay so we can grab the focus, as autoscrolling
+    // doesn't seem to work unless you have the focus)
+    setTimeout(() => {
+      view.focus();
+      const editingRoot = editingRootNode(view.state.selection)!;
+      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const scroller = zenscroll.createScroller(container, 700, 20);
+      if (animate) {
+        scroller.to(node);
+      } else {
+        scroller.to(node, 0);
+      }
+    }, 50);
 
     return { pos, prevPos };
 

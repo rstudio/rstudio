@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationE
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 
 
@@ -53,7 +54,8 @@ public class VisualModeNavigation
    
    public void onNavigated(PanmirrorNavigation navigation)
    {
-      events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.prevPos)));
+      if (navigation.prevPos != -1)
+         events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.prevPos)));
       events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.pos)));
    }
    
@@ -62,15 +64,15 @@ public class VisualModeNavigation
       return kPanmirrorContext.equals(position.getContext());
    }
 
-   public void navigate(SourcePosition position)
+   public void navigate(SourcePosition position, boolean recordCurrentPosition)
    {
       int pos = (kRowLength * position.getRow()) + position.getColumn();
-      context_.panmirror().navigate(PanmirrorNavigationType.Pos, Integer.toString(pos));
+      context_.panmirror().navigate(PanmirrorNavigationType.Pos, Integer.toString(pos), recordCurrentPosition);
    }
    
-   public void navigateToXRef(String xref)
+   public void navigateToXRef(String xref, boolean recordCurrentPosition)
    {
-      context_.panmirror().navigate(PanmirrorNavigationType.XRef, xref);
+      context_.panmirror().navigate(PanmirrorNavigationType.XRef, xref, recordCurrentPosition);
    }
    
    public void recordCurrentNavigationPosition()
