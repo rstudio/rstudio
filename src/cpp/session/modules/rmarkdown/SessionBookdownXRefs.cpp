@@ -73,7 +73,7 @@ std::string bookRelativePath(const FilePath& rmdFile)
 
 FilePath xrefIndexDirectory()
 {
-   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-xrefs-index");
+   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-crossrefs");
    Error error = xrefsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -119,31 +119,22 @@ struct XRefIndexEntry
 
 XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
 {
-   // strip blank lines and comments from code chunks. we do this because these things
-   // prevent pandoc from parsing chunk as inline code (they end up parsed as paragraphs
-   // which are more difficult to process cleanly in the lua filter)
+   // move rmd code chunk preamble *into* chunk (so pandoc parses it as a code block)
    std::vector<std::string> lines;
    boost::algorithm::split(lines, contents, boost::algorithm::is_any_of("\r\n"));
    std::vector<std::string> indexLines;
-   boost::regex beginChunkRe("^[\\t >]*```+\\s*\\{([a-zA-Z0-9_]+( *[ ,].*)?)\\}\\s*$");
-   boost::regex endChunkRe("^[\\t >]*```+\\s*$");
-   boost::regex emptyLineRe("^\\s*$");
-   boost::regex commentRe("^\\s*#.*$");
-   bool inChunk = false;
+   boost::regex beginChunkRe("^([\\t >]*```+\\s*)(\\{[a-zA-Z0-9_]+( *[ ,].*)?\\}\\s*)$");
    for (auto line : lines) {
-      if (boost::regex_match(line, beginChunkRe))
+      boost::smatch matches;
+      if (boost::regex_search(line, matches, beginChunkRe))
       {
-         inChunk = true;
+         indexLines.push_back(matches[1]);
+         indexLines.push_back(matches[2]);
       }
-      else if (inChunk)
+      else
       {
-         if (boost::regex_match(line, endChunkRe))
-            inChunk = false;
-         else if (boost::regex_match(line, emptyLineRe) || boost::regex_match(line, commentRe))
-            continue;
+         indexLines.push_back(line);
       }
-
-      indexLines.push_back(line);
    }
    std::string indexContents = boost::algorithm::join(indexLines, "\n");
 
