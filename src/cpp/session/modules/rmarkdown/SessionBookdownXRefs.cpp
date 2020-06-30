@@ -123,13 +123,13 @@ XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
    std::vector<std::string> lines;
    boost::algorithm::split(lines, contents, boost::algorithm::is_any_of("\r\n"));
    std::vector<std::string> indexLines;
-   boost::regex beginChunkRe("^([\\t >]*```+\\s*)(\\{[a-zA-Z0-9_]+( *[ ,].*)?\\}\\s*)$");
+   boost::regex beginChunkRe("^([\\t >]*)(```+\\s*)(\\{[a-zA-Z0-9_]+( *[ ,].*)?\\}\\s*)$");
    for (auto line : lines) {
       boost::smatch matches;
       if (boost::regex_search(line, matches, beginChunkRe))
       {
-         indexLines.push_back(matches[1]);
-         indexLines.push_back(matches[2]);
+         indexLines.push_back(matches[1] + matches[2]);
+         indexLines.push_back(matches[1] + matches[3]);
       }
       else
       {

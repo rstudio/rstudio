@@ -97,8 +97,23 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
     hasXRef: (node: ProsemirrorNode, id: string) => {
       return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
     }
+  },
+  'fig': {
+    nodeTypes: ['rmd_chunk'],
+    hasXRef: (node: ProsemirrorNode, id: string) => rmdChunkHasXRef(node, 'r', id, /^\{.*[ ,].*fig\.cap\s*=.*\}\s*\n/m)
   }
 };
+
+function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern: RegExp) {
+  const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/%-]+)/);
+  if (match) {
+    return match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+      match[2] === label &&
+      !!node.textContent.match(pattern);
+  } else {
+    return false;
+  }
+}
 
 
 
