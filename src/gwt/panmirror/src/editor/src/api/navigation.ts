@@ -22,6 +22,7 @@ import zenscroll from 'zenscroll';
 
 import { editingRootNode } from './node';
 import { pandocAutoIdentifier } from './pandoc_id';
+import { kNavigationTransaction } from './transaction';
 
 export interface EditorNavigation {
   navigate: (type: NavigationType, location: string, animate?: boolean) => void;
@@ -103,7 +104,10 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   pos = Math.max(pos, 2);
 
   // set selection
-  view.dispatch(setTextSelection(pos)(view.state.tr));
+  const tr = view.state.tr;
+  setTextSelection(pos)(tr);
+  tr.setMeta(kNavigationTransaction, true);
+  view.dispatch(tr);
 
   // find a targetable dom node at the position
   const node = findDomRefAtPos(pos, view.domAtPos.bind(view));

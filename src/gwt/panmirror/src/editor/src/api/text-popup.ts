@@ -19,7 +19,7 @@ import { Selection, Plugin, PluginKey, EditorState, Transaction } from 'prosemir
 import * as React from 'react';
 
 import { getMarkRange, getMarkAttrs } from './mark';
-import { kRestoreLocationTransaction } from './transaction';
+import { kRestoreLocationTransaction, kNavigationTransaction } from './transaction';
 
 import { reactRenderForEditorView } from './widgets/react';
 import { textRangePopupDecorationPosition } from './widgets/decoration';
@@ -61,8 +61,8 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
       },
       apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
 
-        // if this a restore location then return empty
-        if (tr.getMeta(kRestoreLocationTransaction)) {
+        // if this a restore location or navigation then return empty
+        if (tr.getMeta(kRestoreLocationTransaction) || tr.getMeta(kNavigationTransaction)) {
           return DecorationSet.empty;
         }
 
