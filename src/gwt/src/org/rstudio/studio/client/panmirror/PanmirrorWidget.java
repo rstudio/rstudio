@@ -468,9 +468,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   public void navigateToPos(int pos)
+   public void navigate(String type, String location)
    {
-      editor_.navigate(PanmirrorNavigationType.Pos, Integer.toString(pos));
+      editor_.navigate(type, location);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 

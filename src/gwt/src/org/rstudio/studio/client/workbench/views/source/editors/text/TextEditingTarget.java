@@ -1120,6 +1120,13 @@ public class TextEditingTarget implements
    {
       visualMode_.activate(command);
    }
+   
+   public void navigateToXRef(String xref)
+   {
+      ensureVisualModeActive(() -> {
+         visualMode_.navigateToXRef(xref);
+      });
+   }
 
    // the navigateToPosition methods are called by modules that explicitly
    // want the text editor active (e.g. debugging, find in files, etc.) so they

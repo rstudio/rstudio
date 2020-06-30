@@ -577,6 +577,11 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeNavigation_.navigate(position);
    }
    
+   public void navigateToXRef(String xref)
+   {
+      visualModeNavigation_.navigateToXRef(xref);
+   }
+   
    public void recordCurrentNavigationPosition()
    {
       visualModeNavigation_.recordCurrentNavigationPosition();

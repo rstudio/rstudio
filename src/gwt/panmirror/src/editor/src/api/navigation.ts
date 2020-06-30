@@ -21,6 +21,7 @@ import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'pros
 import zenscroll from 'zenscroll';
 
 import { editingRootNode } from './node';
+import { pandocAutoIdentifier } from './pandoc_id';
 
 export interface EditorNavigation {
   navigate: (type: NavigationType, location: string, animate?: boolean) => void;
@@ -80,7 +81,14 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
 
 export function navigateToXRef(view: EditorView, xref: string, animate = true): Navigation | null {
   const xrefPredicate = (node: ProsemirrorNode) => {
-    return node.attrs.id === xref;
+    if (node.attrs.id === xref) {
+      return true;
+    } else if (node.type === node.type.schema.nodes.heading) {
+      const autoId = pandocAutoIdentifier(node.textContent);
+      return autoId === xref;
+    } else {
+      return false;
+    }
   };
   return navigate(view, xrefPredicate, animate);
 }

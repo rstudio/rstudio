@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorNavigation;
+import org.rstudio.studio.client.panmirror.PanmirrorNavigationType;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
@@ -64,7 +65,12 @@ public class VisualModeNavigation
    public void navigate(SourcePosition position)
    {
       int pos = (kRowLength * position.getRow()) + position.getColumn();
-      context_.panmirror().navigateToPos(pos);
+      context_.panmirror().navigate(PanmirrorNavigationType.Pos, Integer.toString(pos));
+   }
+   
+   public void navigateToXRef(String xref)
+   {
+      context_.panmirror().navigate(PanmirrorNavigationType.XRef, xref);
    }
    
    public void recordCurrentNavigationPosition()
