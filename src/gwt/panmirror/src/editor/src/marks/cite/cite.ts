@@ -215,7 +215,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     completionHandlers: () => [
-      citationDoiCompletionHandler(context.ui, mgr, context.server.crossref),
+      citationDoiCompletionHandler(context.ui, mgr, context.server),
       citationCompletionHandler(context.ui, mgr),
     ],
 
@@ -225,7 +225,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           {
             key: new PluginKey('paste_cite_doi'),
             props: {
-              handlePaste: handlePaste(ui, mgr, context.server.crossref),
+              handlePaste: handlePaste(ui, mgr, context.server.pandoc),
             }
           }),
         citeHighlightPlugin(schema)];
@@ -233,7 +233,7 @@ const extension = (context: ExtensionContext): Extension | null => {
   };
 };
 
-function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: CrossrefServer) {
+function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: PandocServer) {
   return (view: EditorView, _event: Event, slice: Slice) => {
 
     const schema = view.state.schema;
@@ -250,7 +250,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Cros
         tr.insertText(parsedDOI.token, parsedDOI.pos);
         view.dispatch(tr);
 
-        insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui);
+        insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
 
         return true;
       } else {
@@ -587,7 +587,16 @@ export function insertCitationForDOI(
       if (result && result.id.length) {
 
         // TODO: this is broken
-        server.addToBibliography(result.bibliographyFile, result.work as unknown as BibliographySource).then(() => {
+        const project = bibliography.project_biblios.length > 0;
+        const bibliographyFile = project
+          ? result.bibliographyFile :
+          ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
+        const source = [{
+          id: result.id,
+          type: "book",
+          title: "book title"
+        }];
+        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify(source)).then(() => {
 
           const tr = view.state.tr;
 

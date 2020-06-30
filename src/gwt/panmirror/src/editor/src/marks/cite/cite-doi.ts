@@ -13,16 +13,12 @@
  *
  */
 
-import { EditorView } from "prosemirror-view";
-import { Slice } from "prosemirror-inputrules/node_modules/@types/prosemirror-model";
 import { EditorState, Transaction } from "prosemirror-state";
+import { Slice } from "prosemirror-model";
+
+import { parseCrossRefDOI } from "../../api/crossref";
 
 import { parseCitation, ParsedCitation } from "./cite";
-import { parseCrossRefDOI, CrossrefWork, formatForPreview } from "../../api/crossref";
-import { EditorUI, InsertCiteProps, InsertCiteUI } from "../../api/ui";
-import { performCompletionReplacement } from "../../behaviors/completion/completion";
-import { BibliographyManager, bibliographyPaths } from "../../api/bibliography";
-import { suggestIdForEntry, formatAuthors, formatIssuedDate } from "./cite-bibliography_entry";
 
 
 // Parses the transation or state to determine whether the current position

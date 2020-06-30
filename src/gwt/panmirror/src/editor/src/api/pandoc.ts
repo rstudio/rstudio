@@ -33,7 +33,9 @@ export interface PandocServer {
   ): Promise<BibliographyResult>;
   addToBibliography(
     bibliography: string,
-    source: BibliographySource
+    project: boolean,
+    id: string,
+    sourceAsJson: string
   ): Promise<boolean>;
 }
 

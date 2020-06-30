@@ -25,8 +25,8 @@ import { EditorNavigation } from "../../api/navigation";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
-import { EditorServer } from "../../editor/editor";
 import { XRefs } from "../../api/xref";
+import { EditorServer } from "../../api/server";
 
 
 export function xrefPopupPlugin(schema: Schema, ui: EditorUI, nav: EditorNavigation, server: EditorServer) {

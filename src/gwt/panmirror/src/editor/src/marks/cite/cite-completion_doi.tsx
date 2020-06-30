@@ -26,6 +26,8 @@ import { kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate, suggestIdForEntry } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
+import { EditorServer } from '../../api/server';
+
 import { parseDOI } from './cite-doi';
 import { insertCitationForDOI } from './cite';
 
@@ -35,18 +37,18 @@ const kCompletionItemPadding = 10;
 export function citationDoiCompletionHandler(
   ui: EditorUI,
   bibManager: BibliographyManager,
-  server: CrossrefServer,
+  server: EditorServer,
 ): CompletionHandler<CrossrefEntry> {
   return {
     id: '56DA14DD-6E3A-4481-93A9-938DC00393A5',
 
     scope: kCitationCompleteScope,
 
-    completions: citationDOICompletions(ui, server),
+    completions: citationDOICompletions(ui, server.crossref),
 
     replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
       if (work) {
-        insertCitationForDOI(view, work.DOI, bibManager, pos, ui, work);
+        insertCitationForDOI(view, work.DOI, bibManager, pos, ui, server.pandoc, work);
       }
     },
 

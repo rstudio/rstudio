@@ -6167,12 +6167,14 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void pandocAddToBibliography(String bibliography, JavaScriptObject source,
+   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson,
                                        ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(bibliography)));
-      params.set(1, new JSONObject(source));
+      params.set(1, JSONBoolean.getInstance(project));
+      params.set(2, new JSONString(id));
+      params.set(3, new JSONString(sourceAsJson));
       sendRequest(RPC_SCOPE, PANDOC_ADD_TO_BIBLIOGRAPHY, params, callback);
    }
 

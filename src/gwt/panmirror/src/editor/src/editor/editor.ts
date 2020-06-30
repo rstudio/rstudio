@@ -102,6 +102,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { EditorServer } from '../api/server';
 
 export interface EditorCode {
   code: string;
@@ -121,12 +122,6 @@ export interface EditorContext {
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
-}
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
 }
 
 export interface EditorHooks {

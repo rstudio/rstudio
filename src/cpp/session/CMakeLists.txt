@@ -487,6 +487,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
    file(GLOB LUA_RESOURCE_FILES "resources/*.lua")
    install(FILES ${LUA_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # CSL resources
+   file(GLOB CSL_RESOURCE_FILES "resources/*.csl")
+   install(FILES ${CSL_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
