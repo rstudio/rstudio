@@ -77,14 +77,17 @@ function filterCitations(
   manager: BibliographyManager,
   ui: EditorUI,
 ) {
+  // Empty query
   if (token.trim().length === 0) {
-    return bibliographyEntries.slice(0, kMaxCitationCompletions);
+    return [];
   }
 
+  // DOI
   if (isDOI(token)) {
     return [];
   }
 
+  // String for a search
   return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
