@@ -1,11 +1,13 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitePreviewPair;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
@@ -120,14 +122,53 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    {
       PanmirrorInsertCiteResult result = new PanmirrorInsertCiteResult();
       result.id = citationId_.getText();
-      if (createBibliographyFileName_.isEnabled() && createBibliographyFileName_.getText().length() > 0) {
-         result.bibliographyFile = createBibliographyFileName_.getText().trim();
-      } else {
+      if (addTobibliographyPanel_.isVisible() && bibliographies_.getSelectedIndex() < bibliographies_.getItemCount()) 
+      {
          result.bibliographyFile = bibliographies_.getValue(bibliographies_.getSelectedIndex());
-      }     
+      } 
+      else 
+      {
+         result.bibliographyFile = createBibliographyFileName_.getText().trim();
+      }
       result.work = citeProps_.work;
       return result;
    }
+   
+   @Override
+   protected boolean validate(PanmirrorInsertCiteResult result)
+   {
+      GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+      
+      
+      if (StringUtil.isNullOrEmpty(result.id))
+      {
+         globalDisplay.showErrorMessage(
+            "Error", "You must provide a value for the citation id."
+         );
+         citationId_.setFocus(true);
+         return false;
+      } 
+      else if (StringUtil.isNullOrEmpty(result.bibliographyFile)) 
+      {
+         if (addTobibliographyPanel_.isVisible()) {
+            globalDisplay.showErrorMessage(
+                  "Error", "You must select a bibliography."
+               );
+            bibliographies_.setFocus(true);            
+         } else {
+            globalDisplay.showErrorMessage(
+                  "Error", "You must provide a bibliography file name."
+               );            
+            createBibliographyFileName_.setFocus(true);
+         }
+         return false;         
+      }
+      else 
+      {
+         return true;
+      }
+   }
+
 
    @Override
    protected Widget createMainWidget()
