@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -194,9 +195,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((col) ->
-         col.manageSourceNavigationCommands()));
-
       new JSObjectStateValue("source-column-manager",
                              "column-info",
                               ClientState.PERSISTENT,
@@ -227,6 +225,35 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       };
       setActive(column.getName());
+
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!SourceWindowManager.isMainSourceWindow())
+         activeTabKey += "SourceWindow" +
+            pWindowManager_.get().getSourceWindowOrdinal();
+
+      new IntStateValue(MODULE_SOURCE, activeTabKey,
+         ClientState.PROJECT_PERSISTENT,
+         session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value == null)
+               return;
+
+            getActive().initialSelect(value);
+            // clear the history manager
+            columnList_.forEach((column) -> column.clearSourceNavigationHistory());
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return getActive().getPhysicalTabIndex();
+         }
+      };
    }
 
    public String add()
@@ -281,11 +308,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return column.getName();
    }
 
-   public void initialSelect(int index)
-   {
-      getActive().initialSelect(index);
-   }
-
    public void setActive(String name)
    {
       if (StringUtil.isNullOrEmpty(name) &&
@@ -302,7 +324,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       setActive(column);
    }
 
-   private void setActive(EditingTarget target)
+   public void setActive(EditingTarget target)
    {
       setActive(findByDocument(target.getId()));
       activeColumn_.setActiveEditor(target);
@@ -401,11 +423,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return activeColumn_ != null && activeColumn_.getActiveEditor() != null;
    }
 
-   public boolean isActiveEditor(EditingTarget editingTarget)
-   {
-      return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
-   }
-
    public boolean getDocsRestored()
    {
       return docsRestored_;
@@ -424,11 +441,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public int getTabCount()
    {
       return activeColumn_.getTabCount();
-   }
-
-   public int getPhysicalTabIndex()
-   {
-      return activeColumn_.getPhysicalTabIndex();
    }
 
    public ArrayList<String> getNames(boolean excludeMain)
@@ -465,17 +477,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public Session getSession()
    {
       return session_;
-   }
-
-   public SourceNavigationHistory getSourceNavigationHistory()
-   {
-      return sourceNavigationHistory_;
-   }
-
-   public void recordCurrentNavigationHistoryPosition()
-   {
-      if (hasActiveEditor())
-         activeColumn_.getActiveEditor().recordCurrentNavigationPosition();
    }
 
    public String getEditorPositionString()
@@ -515,25 +516,32 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
        return parseInt(match[1]);
    }-*/;
 
-   public void clearSourceNavigationHistory()
-   {
-      if (!hasDoc())
-         sourceNavigationHistory_.clear();
-   }
-
    public void manageCommands(boolean forceSync)
    {
+      // if one document is dirty then we are enabled
+      boolean saveAllEnabled = false;
+
       // make sure we're always managing the commands with the same column
       SourceColumn active = activeColumn_;
-      columnList_.forEach((column) -> {
-         if (active.getName() != column.getName() && column.isInitialized())
+      for (SourceColumn column : columnList_)
+      {
+         if (StringUtil.equals(active.getName(), column.getName()) && column.isInitialized())
             column.manageCommands(forceSync, active);
-      });
+         if (!saveAllEnabled && column.isSaveCommandActive())
+           saveAllEnabled = true;
+      }
 
       // all columns can disable commands but only the active column can enable them so it should
       // always be managed last
       if (active.isInitialized())
          active.manageCommands(forceSync, active);
+
+      // manage commands that cross all columns
+
+      // if source windows are open, managing state of the command becomes
+      // complicated, so leave it enabled
+      if (pWindowManager_.get().areSourceWindowsOpen())
+         commands_.saveAllSourceDocs().setEnabled(saveAllEnabled);
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
@@ -606,11 +614,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return getByName(name) == null || getByName(name).getTabCount() == 0;
    }
 
-   public boolean areSourceWindowsOpen()
-   {
-      return pWindowManager_.get().areSourceWindowsOpen();
-   }
-
    public boolean attemptTextEditorActivate()
    {
       if (!(hasActiveEditor() ||
@@ -627,7 +630,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
       return true;
    }
-
 
    public void activateCodeBrowser(
       final String codeBrowserPath,
@@ -800,6 +802,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    }
 
    @Handler
+   public void onSourceNavigateBack()
+   {
+      activeColumn_.navigateBack();
+   }
+
+   @Handler
+   public void onSourceNavigateForward()
+   {
+      activeColumn_.navigateForward();
+   }
+
+   @Handler
    public void onSwitchToTab()
    {
       if (activeColumn_.getTabCount() == 0)
@@ -863,19 +877,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
-
-   /*
-   @Handler
-   void onPopoutDoc()
-   {
-      if (!hasActiveEditor())
-         Debug.log("Could not locate editor for popout.");
-
-      EditingTarget target = activeColumn_.getActiveEditor();
-      if (target instanceof TextEditingTarget)
-         ((TextEditingTarget) target).popoutDoc();
-   }
-    */
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent evt)
@@ -1598,6 +1599,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          });
    }
 
+   public void openFile(FileSystemItem file,
+                        final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      openFile(file, fileTypeRegistry_.getTextTypeForFile(file), resultCallback);
+   }
+
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
    //  - checking whether it is already open and re-selecting its tab
@@ -1633,7 +1640,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          if (resultCallback != null)
             resultCallback.onCancelled();
          showFileTooLargeWarning(file, target.getFileSizeLimit());
-      } else if (file.getLength() > target.getLargeFileSize())
+      }
+      else if (file.getLength() > target.getLargeFileSize())
       {
          confirmOpenLargeFile(file, new Operation()
          {
@@ -1667,7 +1675,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          // file on disk matched the one inside the notebook
          openFileFromServer(rmdFile,
             FileTypeRegistry.RMARKDOWN, resultCallback);
-      } else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
+      }
+      else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
       {
          // this happens when we have to open an untitled buffer for the the
          // notebook (usually because the of a conflict between the Rmd on disk
@@ -2396,9 +2405,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private SourceServerOperations server_;
    private DependencyManager dependencyManager_;
 
-   private final SourceNavigationHistory sourceNavigationHistory_ =
-       new SourceNavigationHistory(30);
-
+   private static final String MODULE_SOURCE = "source-pane";
+   private static final String KEY_ACTIVETAB = "activeTab";
    public final static String COLUMN_PREFIX = "Source";
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
 }

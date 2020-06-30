@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -425,6 +426,9 @@ public class TextEditingTargetWidget
             SOURCE_BUTTON_TITLE,
             commands_.sourceActiveDocument().getImageResource(),
             event -> {
+               SourceColumnManager manager = RStudioGinjector.INSTANCE.getSourceColumnManager();
+               manager.setActive(target_);
+
                if (userPrefs_.sourceWithEcho().getValue())
                   commands_.sourceActiveDocumentWithEcho().execute();
                else

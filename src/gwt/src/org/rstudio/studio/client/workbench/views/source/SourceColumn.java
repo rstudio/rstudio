@@ -16,12 +16,15 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
@@ -46,19 +49,25 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -87,7 +96,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                           EventBus events,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
-                          SourceServerOperations sourceServerOperations)
+                          SourceServerOperations sourceServerOperations,
+                          FileTypeRegistry fileTypeRegistry,
+                          Provider<SourceWindowManager> pWindowManager)
    {
       commands_ = commands;
       binder.bind(commands_, this);
@@ -96,6 +107,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
+      fileTypeRegistry_ = fileTypeRegistry;
+      pWindowManager_ = pWindowManager;
    }
 
    public void loadDisplay(String name,
@@ -115,9 +128,30 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
+
       boolean isActive = this == manager_.getActive();
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive));
       events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive));
+
+      events_.addHandler(SourceNavigationEvent.TYPE,
+         new SourceNavigationHandler()
+         {
+            @Override
+            public void onSourceNavigation(SourceNavigationEvent event)
+            {
+               if (suspendSourceNavigationAdding_)
+                  sourceNavigationHistory_.add(event.getNavigation());
+            }
+         });
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageSourceNavigationCommands(isActive);
+         }
+      });
+
       initialized_ = true;
    }
 
@@ -217,6 +251,24 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void moveTab(int index, int delta)
    {
 	   display_.moveTab(index, delta);
+   }
+
+   public void navigateBack()
+   {
+      if (activeEditor_ != null && sourceNavigationHistory_.isForwardEnabled())
+         activeEditor_.recordCurrentNavigationPosition();
+   }
+
+   public void navigateForward()
+   {
+      SourceNavigation navigation = sourceNavigationHistory_.goForward();
+      if (navigation != null)
+         attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
+   }
+
+   public void clearSourceNavigationHistory()
+   {
+      sourceNavigationHistory_.clear();
    }
 
    public void selectTab(Widget widget)
@@ -677,19 +729,30 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       boolean hasDocs = isActive && hasDoc();
 
       commands_.newSourceDoc().setEnabled(true, name_);
-      commands_.closeSourceDoc().setEnabled(hasDocs, name_);
-      commands_.closeAllSourceDocs().setEnabled(hasDocs, name_);
-      commands_.nextTab().setEnabled(hasDocs, name_);
-      commands_.previousTab().setEnabled(hasDocs, name_);
-      commands_.firstTab().setEnabled(hasDocs, name_);
-      commands_.lastTab().setEnabled(hasDocs, name_);
-      commands_.switchToTab().setEnabled(hasDocs, name_);
-      commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs, name_);
 
-      if (!isActive)
+      if (isActive || !hasDocs)
       {
-         String debugvar = new String();
+         commands_.closeSourceDoc().setEnabled(hasDocs, name_);
+         commands_.closeAllSourceDocs().setEnabled(hasDocs, name_);
+         commands_.nextTab().setEnabled(hasDocs, name_);
+         commands_.previousTab().setEnabled(hasDocs, name_);
+         commands_.firstTab().setEnabled(hasDocs, name_);
+         commands_.lastTab().setEnabled(hasDocs, name_);
+         commands_.switchToTab().setEnabled(hasDocs, name_);
+         commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs, name_);
       }
+      else
+      {
+         commands_.closeSourceDoc().setButtonEnabled(hasDocs, name_);
+         commands_.closeAllSourceDocs().setButtonEnabled(hasDocs, name_);
+         commands_.nextTab().setButtonEnabled(hasDocs, name_);
+         commands_.previousTab().setButtonEnabled(hasDocs, name_);
+         commands_.firstTab().setButtonEnabled(hasDocs, name_);
+         commands_.lastTab().setButtonEnabled(hasDocs, name_);
+         commands_.switchToTab().setButtonEnabled(hasDocs, name_);
+         commands_.setWorkingDirToActiveDoc().setButtonEnabled(hasDocs, name_);
+      }
+
       HashSet<AppCommand> newCommands = getNextActiveEditor() != null
               ? getNextActiveEditor().getSupportedCommands()
               : new HashSet<>();
@@ -740,16 +803,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          for (AppCommand command : commandsToDisable)
          {
-            if (isActive)
-            {
-               command.setVisible(false, name_);
-               command.setEnabled(false, name_);
-            }
-            else
-            {
-               command.setButtonVisible(false, name_);
-               command.setButtonEnabled(false, name_);
-            }
+            command.setVisible(false, name_);
+            command.setEnabled(false, name_);
          }
       }
 
@@ -770,10 +825,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       manageSaveCommands(isActive);
 
       // manage source navigation
-      manageSourceNavigationCommands();
+      manageSourceNavigationCommands(isActive);
 
       // manage RSConnect commands
-      manageRSConnectCommands();
+      manageRSConnectCommands(isActive);
 
       // manage R Markdown commands
       manageRMarkdownCommands(isActive);
@@ -796,12 +851,12 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private void manageSynctexCommands(boolean isActive)
    {
       // synctex commands are enabled if we have synctex for the active editor
-      boolean synctexAvailable = isActive && manager_.getSynctex().isSynctexAvailable();
+      boolean synctexAvailable = manager_.getSynctex().isSynctexAvailable();
       if (synctexAvailable)
       {
-         if ((activeEditor_ != null) &&
-                 (activeEditor_.getPath() != null) &&
-                 activeEditor_.canCompilePdf())
+         if (getNextActiveEditor() != null &&
+             getNextActiveEditor().getPath() != null &&
+             getNextActiveEditor().canCompilePdf())
          {
             synctexAvailable = manager_.getSynctex().isSynctexAvailable();
          }
@@ -811,29 +866,42 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          }
       }
 
-      manager_.getSynctex().enableCommands(synctexAvailable);
+      if (isActive || !synctexAvailable)
+         manager_.getSynctex().enableCommands(synctexAvailable, name_);
+      else
+         manager_.getSynctex().enableCommandButtons(synctexAvailable, name_);
    }
 
    private void manageVcsCommands(boolean isActive)
    {
       // manage availability of vcs commands
-      boolean vcsCommandsVisible =
+      boolean vcsCommandsEnabled =
               manager_.getSession().getSessionInfo().isVcsEnabled() &&
-                      (activeEditor_ != null) &&
-                      (activeEditor_.getPath() != null) &&
-                      activeEditor_.getPath().startsWith(
+                      getNextActiveEditor() != null &&
+                      getNextActiveEditor().getPath() != null &&
+                      getNextActiveEditor().getPath().startsWith(
                               manager_.getSession().getSessionInfo().getActiveProjectDir().getPath());
-      boolean vcsCommandsEnabled = vcsCommandsVisible && isActive;
 
-      commands_.vcsFileLog().setVisible(vcsCommandsVisible, name_);
-      commands_.vcsFileDiff().setVisible(vcsCommandsVisible, name_);
-      commands_.vcsFileRevert().setVisible(vcsCommandsVisible, name_);
+      if (isActive || !vcsCommandsEnabled)
+      {
+         commands_.vcsFileLog().setVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileDiff().setVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileRevert().setVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileLog().setEnabled(vcsCommandsEnabled, name_);
+         commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled, name_);
+         commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled, name_);
+      }
+      else
+      {
+         commands_.vcsFileLog().setButtonVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileDiff().setButtonVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileRevert().setButtonVisible(vcsCommandsEnabled, name_);
+         commands_.vcsFileLog().setButtonEnabled(vcsCommandsEnabled, name_);
+         commands_.vcsFileDiff().setButtonEnabled(vcsCommandsEnabled, name_);
+         commands_.vcsFileRevert().setButtonEnabled(vcsCommandsEnabled, name_);
+      }
 
-      commands_.vcsFileLog().setEnabled(vcsCommandsEnabled, name_);
-      commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled, name_);
-      commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled, name_);
-
-      if (vcsCommandsEnabled)
+      if (isActive && vcsCommandsEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
          commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
@@ -843,14 +911,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean isGithubRepo = manager_.getSession().getSessionInfo().isGithubRepository();
-      if (vcsCommandsEnabled && isGithubRepo)
+      if (isActive && vcsCommandsEnabled && isGithubRepo)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
 
+         commands_.vcsViewOnGitHub().setVisible(true, name_);
          commands_.vcsViewOnGitHub().setEnabled(true, name_);
          commands_.vcsViewOnGitHub().setMenuLabel(
                  "_View \"" + name + "\" on GitHub");
 
+         commands_.vcsBlameOnGitHub().setVisible(true, name_);
          commands_.vcsBlameOnGitHub().setEnabled(true, name_);
          commands_.vcsBlameOnGitHub().setMenuLabel(
                  "_Blame \"" + name + "\" on GitHub");
@@ -859,59 +929,46 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       {
          commands_.vcsViewOnGitHub().setEnabled(false, name_);
          commands_.vcsBlameOnGitHub().setEnabled(false, name_);
-      }
-
-      if (vcsCommandsVisible && isGithubRepo)
-      {
-         commands_.vcsViewOnGitHub().setVisible(true, name_);
-         commands_.vcsBlameOnGitHub().setVisible(true, name_);
-      }
-      else
          commands_.vcsViewOnGitHub().setVisible(false, name_);
+      }
    }
 
    public void manageSaveCommands(boolean isActive)
    {
-      boolean saveEnabled = isActive &&
-                            activeEditor_ != null &&
-                            activeEditor_.isSaveCommandActive();
-      commands_.saveSourceDoc().setEnabled(saveEnabled, name_);
-      manageSaveAllCommand();
+      boolean saveEnabled = getNextActiveEditor() != null &&
+                            getNextActiveEditor().isSaveCommandActive();
+      if (isActive || !saveEnabled)
+         commands_.saveSourceDoc().setEnabled(saveEnabled, name_);
+      else
+         commands_.saveSourceDoc().setButtonEnabled(saveEnabled, name_);
    }
 
-   private void manageSaveAllCommand()
+   private void manageSourceNavigationCommands(boolean isActive)
    {
-      // if source windows are open, managing state of the command becomes
-      // complicated, so leave it enabled
-      if (manager_.areSourceWindowsOpen())
-      {
-         commands_.saveAllSourceDocs().setEnabled(true, name_);
-         return;
-      }
+      if (isActive || !sourceNavigationHistory_.isBackEnabled())
+         commands_.sourceNavigateBack().setEnabled(
+            sourceNavigationHistory_.isBackEnabled(), name_);
+      else
+         commands_.sourceNavigateBack().setButtonEnabled(true, name_);
 
-      // if one document is dirty then we are enabled
-      commands_.saveAllSourceDocs().setEnabled(isSaveCommandActive(), name_);
+      if (isActive || !sourceNavigationHistory_.isForwardEnabled())
+         commands_.sourceNavigateForward().setEnabled(
+            sourceNavigationHistory_.isForwardEnabled(), name_);
+      else
+         commands_.sourceNavigateForward().setButtonEnabled(true, name_);
    }
 
-   void manageSourceNavigationCommands()
-   {
-      commands_.sourceNavigateBack().setEnabled(
-              manager_.getSourceNavigationHistory().isBackEnabled(), name_);
-
-      commands_.sourceNavigateForward().setEnabled(
-              manager_.getSourceNavigationHistory().isForwardEnabled(), name_);
-   }
-
-   private void manageRSConnectCommands()
+   private void manageRSConnectCommands(boolean active)
    {
       boolean rsCommandsAvailable =
+              active; /* &&
               SessionUtils.showPublishUi(manager_.getSession(), manager_.getUserState()) &&
                  (activeEditor_ != null) &&
                  (activeEditor_.getPath() != null) &&
                  (activeEditor_.getExtendedFileType() != null &&
                     (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                      activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                     activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
+                     activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));*/
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable, name_);
       if (activeEditor_ != null)
       {
@@ -1049,7 +1106,81 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                }
             });
    }
-   // event handlers
+
+   private EditingTarget getEditingTargetForId(String id)
+   {
+      for (EditingTarget target : editors_)
+         if (id == target.getId())
+            return target;
+
+     return null;
+   }
+
+   private void attemptSourceNavigation(final SourceNavigation navigation,
+                                        final AppCommand retryCommand)
+   {
+      // see if we can navigate by id
+      String docId = navigation.getDocumentId();
+      final EditingTarget target = getEditingTargetForId(docId);
+      if (target != null)
+      {
+         // check for navigation to the current position -- in this
+         // case execute the retry command
+         if (target == activeEditor_ &&
+             target.isAtSourceRow(navigation.getPosition()))
+         {
+            if (retryCommand.isEnabled())
+               retryCommand.execute();
+         }
+         else
+         {
+            suspendSourceNavigationAdding_ = true;
+            try
+            {
+               display_.selectTab(target.asWidget());
+               target.restorePosition(navigation.getPosition());
+            }
+            finally
+            {
+               suspendSourceNavigationAdding_ = false;
+            }
+         }
+      }
+
+      // check for code browser navigation
+      else if (navigation.getPath() != null &&
+               navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
+      {
+         manager_.activateCodeBrowser(
+            navigation.getPath(),
+            false,
+            new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
+               navigation.getPosition(),
+               retryCommand));
+      }
+
+      // check for file path navigation
+      else if ((navigation.getPath() != null) &&
+         !navigation.getPath().startsWith(DataItem.URI_PREFIX) &&
+         !navigation.getPath().startsWith(ObjectExplorerHandle.URI_PREFIX))
+      {
+         FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
+
+         // open the file and restore the position
+         manager_.openFile(file,
+            new SourceNavigationResultCallback<EditingTarget>(
+               navigation.getPosition(),
+               retryCommand));
+      }
+      else
+      {
+         // couldn't navigate to this item, retry
+         if (retryCommand.isEnabled())
+            retryCommand.execute();
+      }
+   }
+
+
 
    @Override
    public void onBeforeShow(BeforeShowEvent event)
@@ -1144,7 +1275,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          // scan the source navigation history for an entry that can
          // be used as the next active tab (anything that doesn't have
          // the same document id as the currently active tab)
-         SourceNavigation srcNav = manager_.getSourceNavigationHistory().scanBack(
+         SourceNavigation srcNav = sourceNavigationHistory_.scanBack(
                  navigation -> navigation.getDocumentId() != activeEditorId);
 
          // see if the source navigation we found corresponds to an active
@@ -1238,15 +1369,65 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       if (display_.getTabCount() == 0)
       {
-         manager_.clearSourceNavigationHistory();
+         sourceNavigationHistory_.clear();
          events_.fireEvent(new LastSourceDocClosedEvent(name_));
       }
+   }
+
+   private class SourceNavigationResultCallback<T extends EditingTarget>
+      extends ResultCallback<T,ServerError>
+   {
+      public SourceNavigationResultCallback(SourcePosition restorePosition,
+                                            AppCommand retryCommand)
+      {
+         suspendSourceNavigationAdding_ = true;
+         restorePosition_ = restorePosition;
+         retryCommand_ = retryCommand;
+      }
+
+      @Override
+      public void onSuccess(final T target)
+      {
+         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               try
+               {
+                  target.restorePosition(restorePosition_);
+               }
+               finally
+               {
+                  suspendSourceNavigationAdding_ = false;
+               }
+            }
+         });
+      }
+
+      @Override
+      public void onFailure(ServerError info)
+      {
+         suspendSourceNavigationAdding_ = false;
+         if (retryCommand_.isEnabled())
+            retryCommand_.execute();
+      }
+
+      @Override
+      public void onCancelled()
+      {
+         suspendSourceNavigationAdding_ = false;
+      }
+
+      private final SourcePosition restorePosition_;
+      private final AppCommand retryCommand_;
    }
 
    private Commands commands_;
 
    private boolean initialized_ = false;
    private boolean suspendDocumentClose_ = false;
+   private boolean suspendSourceNavigationAdding_ = false;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
@@ -1263,7 +1444,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
    private EditingTargetSource editingTargetSource_;
+   private FileTypeRegistry fileTypeRegistry_;
+   private Provider<SourceWindowManager> pWindowManager_;
 
    private SourceColumnManager manager_;
-
+   private final SourceNavigationHistory sourceNavigationHistory_ =
+     new SourceNavigationHistory(30);
 }
