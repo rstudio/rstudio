@@ -620,6 +620,18 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return max;
    }
 
+   // Returns the current active editor if there is one. If not returns the editor that would
+   // become the active editor if this column was activated without specifying an editor.
+   private EditingTarget getNextActiveEditor()
+   {
+      if (activeEditor_ != null)
+         return activeEditor_;
+      if (display_.getActiveTabIndex() > 0 &&
+         editors_.size() > display_.getActiveTabIndex())
+         return editors_.get(display_.getActiveTabIndex());
+      return null;
+   }
+
    private String getNextDefaultName(String defaultNamePrefix)
    {
       if (StringUtil.isNullOrEmpty(defaultNamePrefix))
@@ -674,24 +686,30 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       commands_.switchToTab().setEnabled(hasDocs, name_);
       commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs, name_);
 
-      HashSet<AppCommand> newCommands = activeEditor_ != null
-              ? activeEditor_.getSupportedCommands()
+      if (!isActive)
+      {
+         String debugvar = new String();
+      }
+      HashSet<AppCommand> newCommands = getNextActiveEditor() != null
+              ? getNextActiveEditor().getSupportedCommands()
               : new HashSet<>();
 
       if (forceSync)
       {
          for (AppCommand command : activeCommands_)
          {
-            if (command == commands_.popoutDoc())
+            if (isActive)
             {
-               Debug.logToConsole("Force Sync Disabling popoutDoc for Column " + name_);
-            }
-            //if (isActive)
+               if (command == commands_.popoutDoc())
+                  Debug.logToConsole("Force Sync Disabling popoutDoc for Column " + name_);
                command.setEnabled(false, name_);
-            /*
+            }
             else
+            {
+               if (command == commands_.popoutDoc())
+                  Debug.logToConsole("Force Sync Disabling popoutDoc **Button only** for Column " + name_);
                command.setButtonEnabled(false, name_);
-             */
+            }
             command.setVisible(false, name_);
          }
 
@@ -702,6 +720,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                if (command == commands_.popoutDoc())
                   Debug.logToConsole("Force Sync Enabling popoutDoc for Column " + name_);
                command.setEnabled(true, name_);
+            }
+            else
+            {
+               if (command == commands_.popoutDoc())
+                  Debug.logToConsole("Force Sync Enabling popoutDoc **Button only** for Column" +
+                     " " + name_);
+               command.setButtonEnabled(true, name_);
             }
             command.setVisible(true, name_);
          }

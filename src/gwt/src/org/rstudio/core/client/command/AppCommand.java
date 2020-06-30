@@ -156,6 +156,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          handlerReg2_.removeHandler();
       }
 
+
       @Override
       public void onEnabledChanged(EnabledChangedEvent event)
       {
@@ -163,6 +164,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             return;
          //setEnabled(isVisible());
          super.onEnabledChanged(event);
+         /*
          if (command_.getDesc() == "Show in new window")
          {
             if (command_.isEnabled())
@@ -174,6 +176,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             else
                Debug.logToConsole(" --- button is disabled");
          }
+          */
       }
 
       @Override
@@ -183,15 +186,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             return;
 
          super.onVisibleChanged(event);
+         /*
          // once visibility is enabled don't disable it
          // the button should be enabled regardless of if the command is enabled
-         /*
          if (command_.isVisible())
          {
             setVisible(true);
             setEnabled(true);
          }
-          */
          if (command_.getDesc() == "Show in new window")
          {
             if (command_.isEnabled())
@@ -205,6 +207,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          }
 
          parentToolbar_.invalidateSeparators();
+         */
       }
 
       private SourceColumn column_;
@@ -233,12 +236,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    private void doExecute()
    {
-      if (!StringUtil.isNullOrEmpty(sourceColumnName_))
-      {
-         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
-         mgr.setActive(sourceColumnName_);
-      }
-
       assert enabled_ : "AppCommand executed when it was not enabled";
       if (!enabled_)
          return;
@@ -283,7 +280,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       CommandEvent event = new CommandEvent(this);
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
-      sourceColumnName_ = null;
    }
 
    public boolean isEnabled()
@@ -624,6 +620,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public HandlerRegistration addHandler(CommandHandler handler)
    {
+      if (getDesc() == "Show in new window")
+      {
+         Debug.logToConsole("add handler to " + getDesc());
+         Debug.logToConsole("Handler count: " + Integer.toString(handlers_.getHandlerCount(CommandEvent.TYPE) + 1));
+      }
       return handlers_.addHandler(CommandEvent.TYPE, handler);
    }
 
@@ -641,6 +642,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void onClick(ClickEvent event)
    {
+      Debug.logToConsole("command onClick");
       execute();
    }
 
@@ -668,7 +670,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                                  getDesc(),
                                                  this,
                                                  event -> {
-                                                    sourceColumnName_ = column.getName();
+                                                    SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+                                                    mgr.setActive(column.getName());
+
                                                     execute();
                                                  },
                                                  this,
@@ -922,7 +926,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String id_;
    private ImageResource rightImage_ = null;
    private String rightImageDesc_ = null;
-   private String sourceColumnName_;
 
    private boolean executedFromShortcut_ = false;
  

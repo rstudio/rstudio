@@ -2407,6 +2407,7 @@ public class TextEditingTarget implements
          commandHandlerReg_.removeHandler();
          commandHandlerReg_ = null;
       }
+      Debug.logToConsole("bind commandHandlerReg_");
       commandHandlerReg_ = commandBinder.bind(commands_, this);
 
       // show outline if not yet rendered (deferred so that widget itself can
@@ -2452,6 +2453,7 @@ public class TextEditingTarget implements
 
       externalEditCheckInvalidation_.invalidate();
 
+      Debug.logToConsole("remove commandHandlerReg_");
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
 
