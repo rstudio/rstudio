@@ -1,4 +1,4 @@
-## v1.3 Patch 1 (Water Lily) - Release Notes
+## v1.3 Patch 2 (Giant Goldenrod) - Release Notes
 
 
 ### Misc
