@@ -15,7 +15,6 @@
 
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { findChildren } from 'prosemirror-utils';
 import { pandocAutoIdentifier } from './pandoc_id';
 
 export interface XRefServer {
@@ -41,22 +40,65 @@ export function xrefKey(xref: XRef) {
 
 export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
 
+  // alias schema
   const schema = doc.type.schema;
 
-  let xrefPos = -1;
-  const headingPos = doc.descendants((node, pos) => {
+  // get type and id
+  const { type, id } = xrefTypeAndId(xref);
 
+  // search all descendents recursively for the xref
+  let xrefPos = -1;
+  doc.descendants((node, pos) => {
+
+    // bail if we already found it
     if (xrefPos !== -1) {
       return false;
     }
 
-    if (node.type === schema.nodes.heading) {
-      if (node.attrs.id === xref || pandocAutoIdentifier(node.textContent) === xref) {
+    // see if we have a locator for this type that can handle this node type
+    const locator = xrefPositionLocators[type];
+    if (locator && locator.nodeTypes.includes(node.type.name)) {
+      if (locator.hasXRef(node, id)) {
         xrefPos = pos;
         return false;
       }
     }
   });
 
+  // return the position
   return xrefPos;
 }
+
+
+
+function xrefTypeAndId(xref: string) {
+  const colonPos = xref.indexOf(':');
+  if (colonPos !== -1) {
+    return {
+      type: xref.substring(0, colonPos),
+      id: xref.substring(colonPos + 1)
+    };
+  } else {
+    return {
+      type: 'heading',
+      id: xref
+    };
+  }
+}
+
+interface XRefPositionLocator {
+  nodeTypes: [string];
+  hasXRef: (node: ProsemirrorNode, id: string) => boolean;
+}
+
+const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+  'heading': {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
+    }
+  }
+};
+
+
+
