@@ -177,8 +177,9 @@ class CodeBlockNodeView implements NodeView {
     if (change) {
       this.updating = true;
       const doc = this.chunk.editor.getSession().getDocument();
-      const range = AceAjax.Range.fromPoints(doc.indexToPosition(change.from, 0), 
-                                             doc.indexToPosition(change.to, 0));
+      const AceRange = window.require("ace/range").Range;
+      const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
+                                        doc.indexToPosition(change.to, 0));
       this.chunk.editor.getSession().replace(range, change.text);
       this.updating = false;
     }
@@ -191,8 +192,9 @@ class CodeBlockNodeView implements NodeView {
     // this.chunk.getElement().classList.add('CodeMirror-focused');
     this.updating = true;
     const doc = this.chunk.editor.getSession().getDocument();
-    const range = AceAjax.Range.fromPoints(doc.indexToPosition(anchor, 0),
-                                           doc.indexToPosition(head, 0));
+    const AceRange = window.require("ace/range").Range;
+    const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
+                                      doc.indexToPosition(head, 0));
     this.chunk.editor.getSession().getSelection().setSelectionRange(range);
     this.updating = false;
   }

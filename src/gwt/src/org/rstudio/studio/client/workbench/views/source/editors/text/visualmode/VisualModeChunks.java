@@ -29,11 +29,13 @@ public class VisualModeChunks
       factory.createChunkEditor = () -> {
          PanmirrorUIChunk chunk = new PanmirrorUIChunk();
          DivElement ele = Document.get().createDivElement(); 
-         AceEditorNative.createEditor(ele);
          
          chunk.editor = AceEditorNative.createEditor(ele);
          chunk.element = ele;
          
+         chunk.editor.setMaxLines(1000);
+         chunk.editor.setMinLines(3);
+
          return chunk;
       };
       return factory;
