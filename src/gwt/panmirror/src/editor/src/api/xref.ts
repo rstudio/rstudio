@@ -14,6 +14,10 @@
  */
 
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { findChildren } from 'prosemirror-utils';
+import { pandocAutoIdentifier } from './pandoc_id';
+
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
   xrefForId: (file: string, id: string) => Promise<XRefs>;
@@ -33,4 +37,26 @@ export interface XRef {
 
 export function xrefKey(xref: XRef) {
   return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
+}
+
+export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
+
+  const schema = doc.type.schema;
+
+  let xrefPos = -1;
+  const headingPos = doc.descendants((node, pos) => {
+
+    if (xrefPos !== -1) {
+      return false;
+    }
+
+    if (node.type === schema.nodes.heading) {
+      if (node.attrs.id === xref || pandocAutoIdentifier(node.textContent) === xref) {
+        xrefPos = pos;
+        return false;
+      }
+    }
+  });
+
+  return xrefPos;
 }

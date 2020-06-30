@@ -23,6 +23,7 @@ import zenscroll from 'zenscroll';
 import { editingRootNode } from './node';
 import { pandocAutoIdentifier } from './pandoc_id';
 import { kNavigationTransaction } from './transaction';
+import { xrefPosition } from './xref';
 
 export interface EditorNavigation {
   navigate: (type: NavigationType, location: string, animate?: boolean) => void;
@@ -81,17 +82,12 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
 }
 
 export function navigateToXRef(view: EditorView, xref: string, animate = true): Navigation | null {
-  const xrefPredicate = (node: ProsemirrorNode) => {
-    if (node.attrs.id === xref) {
-      return true;
-    } else if (node.type === node.type.schema.nodes.heading) {
-      const autoId = pandocAutoIdentifier(node.textContent);
-      return autoId === xref;
-    } else {
-      return false;
-    }
-  };
-  return navigate(view, xrefPredicate, animate);
+  const xrefPos = xrefPosition(view.state.doc, xref);
+  if (xrefPos !== -1) {
+    return navigateToPos(view, xrefPos, animate);
+  } else {
+    return null;
+  }
 }
 
 
