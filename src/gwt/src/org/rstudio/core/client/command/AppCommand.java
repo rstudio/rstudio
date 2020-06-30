@@ -162,21 +162,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          if (!StringUtil.equals(column_.getName(), event.getColumnName()))
             return;
-         //setEnabled(isVisible());
-         super.onEnabledChanged(event);
-         /*
-         if (command_.getDesc() == "Show in new window")
-         {
-            if (command_.isEnabled())
-               Debug.logToConsole(" --- command_ is enabled");
-            else
-               Debug.logToConsole(" --- command_ is disabled");
-            if (isEnabled())
-               Debug.logToConsole(" --- button is enabled");
-            else
-               Debug.logToConsole(" --- button is disabled");
-         }
-          */
+         setEnabled(event.getButtonEnabled());
       }
 
       @Override
@@ -184,30 +170,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          if (!StringUtil.equals(column_.getName(), event.getColumnName()))
             return;
-
-         super.onVisibleChanged(event);
-         /*
-         // once visibility is enabled don't disable it
-         // the button should be enabled regardless of if the command is enabled
-         if (command_.isVisible())
-         {
-            setVisible(true);
-            setEnabled(true);
-         }
-         if (command_.getDesc() == "Show in new window")
-         {
-            if (command_.isEnabled())
-               Debug.logToConsole(" --- command_ is enabled");
-            else
-               Debug.logToConsole(" --- command_ is disabled");
-            if (isEnabled())
-               Debug.logToConsole(" --- button is enabled");
-            else
-               Debug.logToConsole(" --- button is disabled");
-         }
-
-         parentToolbar_.invalidateSeparators();
-         */
+         setVisible(event.getButtonVisible());
       }
 
       private SourceColumn column_;
@@ -319,7 +282,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setButtonEnabled(boolean buttonEnabled, String sourceColumnName)
    {
-      handlers_.fireEvent(new EnabledChangedEvent(this, sourceColumnName));
+      handlers_.fireEvent(new EnabledChangedEvent(this, sourceColumnName, buttonEnabled));
    }
 
    public boolean isVisible()
@@ -343,6 +306,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName));
       }
+   }
+
+   public void setButtonVisible(boolean buttonVisible, String sourceColumnName)
+   {
+      handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName, buttonVisible));
    }
    
    /**
@@ -620,11 +588,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public HandlerRegistration addHandler(CommandHandler handler)
    {
-      if (getDesc() == "Show in new window")
-      {
-         Debug.logToConsole("add handler to " + getDesc());
-         Debug.logToConsole("Handler count: " + Integer.toString(handlers_.getHandlerCount(CommandEvent.TYPE) + 1));
-      }
       return handlers_.addHandler(CommandEvent.TYPE, handler);
    }
 
@@ -642,7 +605,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void onClick(ClickEvent event)
    {
-      Debug.logToConsole("command onClick");
       execute();
    }
 

@@ -29,6 +29,14 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
    {
       command_ = command;
       columnName_ = columnName;
+      buttonEnabled_ = command.isEnabled();
+   }
+
+   public EnabledChangedEvent(AppCommand command, String columnName, boolean buttonEnabled)
+   {
+      command_ = command;
+      columnName_ = columnName;
+      buttonEnabled_ = buttonEnabled;
    }
 
    public AppCommand getCommand()
@@ -39,6 +47,11 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
    public String getColumnName()
    {
       return columnName_;
+   }
+
+   public boolean getButtonEnabled()
+   {
+      return buttonEnabled_;
    }
 
    @Override
@@ -55,4 +68,5 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
 
    private final AppCommand command_;
    private String columnName_;
+   private boolean buttonEnabled_;
 }

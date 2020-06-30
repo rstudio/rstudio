@@ -698,37 +698,22 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       {
          for (AppCommand command : activeCommands_)
          {
-            if (isActive)
-            {
-               if (command == commands_.popoutDoc())
-                  Debug.logToConsole("Force Sync Disabling popoutDoc for Column " + name_);
-               command.setEnabled(false, name_);
-            }
-            else
-            {
-               if (command == commands_.popoutDoc())
-                  Debug.logToConsole("Force Sync Disabling popoutDoc **Button only** for Column " + name_);
-               command.setButtonEnabled(false, name_);
-            }
             command.setVisible(false, name_);
+            command.setEnabled(false, name_);
          }
 
          for (AppCommand command : newCommands)
          {
             if (isActive)
             {
-               if (command == commands_.popoutDoc())
-                  Debug.logToConsole("Force Sync Enabling popoutDoc for Column " + name_);
+               command.setVisible(true, name_);
                command.setEnabled(true, name_);
             }
             else
             {
-               if (command == commands_.popoutDoc())
-                  Debug.logToConsole("Force Sync Enabling popoutDoc **Button only** for Column" +
-                     " " + name_);
+               command.setButtonVisible(true, name_);
                command.setButtonEnabled(true, name_);
             }
-            command.setVisible(true, name_);
          }
       }
       else
@@ -740,11 +725,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          {
             if (isActive)
             {
-               if (command == commands_.popoutDoc())
-                  Debug.logToConsole("Enabling popoutDoc for Column " + name_);
+               command.setVisible(true, name_);
                command.setEnabled(true, name_);
             }
-            command.setVisible(true, name_);
+            else
+            {
+               command.setButtonVisible(true, name_);
+               command.setButtonEnabled(true, name_);
+            }
          }
 
          HashSet<AppCommand> commandsToDisable = new HashSet<>(activeCommands_);
@@ -752,10 +740,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          for (AppCommand command : commandsToDisable)
          {
-            if (command == commands_.popoutDoc())
-               Debug.logToConsole("Disabling popoutDoc for Column " + name_);
-            command.setEnabled(false, name_);
-            command.setVisible(false, name_);
+            if (isActive)
+            {
+               command.setVisible(false, name_);
+               command.setEnabled(false, name_);
+            }
+            else
+            {
+               command.setButtonVisible(false, name_);
+               command.setButtonEnabled(false, name_);
+            }
          }
       }
 

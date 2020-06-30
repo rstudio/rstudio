@@ -30,6 +30,16 @@ public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
    {
       command_ = command;
       columnName_ = columnName;
+      buttonVisible_ = command_.isVisible();
+   }
+
+   public VisibleChangedEvent(AppCommand command,
+                              String columnName,
+                              boolean buttonVisible)
+   {
+      command_ = command;
+      columnName_ = columnName;
+      buttonVisible_ = buttonVisible;
    }
 
    public AppCommand getCommand()
@@ -40,6 +50,11 @@ public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
    public String getColumnName()
    {
       return columnName_;
+   }
+
+   public boolean getButtonVisible()
+   {
+      return buttonVisible_;
    }
 
    @Override
@@ -56,4 +71,5 @@ public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
 
    private final AppCommand command_;
    private String columnName_;
+   private boolean buttonVisible_;
 }

@@ -526,9 +526,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // make sure we're always managing the commands with the same column
       SourceColumn active = activeColumn_;
       columnList_.forEach((column) -> {
-         if (column.isInitialized())
+         if (active.getName() != column.getName() && column.isInitialized())
             column.manageCommands(forceSync, active);
       });
+
+      // all columns can disable commands but only the active column can enable them so it should
+      // always be managed last
+      if (active.isInitialized())
+         active.manageCommands(forceSync, active);
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
