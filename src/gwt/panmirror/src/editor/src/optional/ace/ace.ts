@@ -90,6 +90,7 @@ class CodeBlockNodeView implements NodeView {
   private node: ProsemirrorNode;
   private incomingChanges: boolean;
   private updating: boolean;
+  private mode: string;
 
   constructor(
     node: ProsemirrorNode,
@@ -104,6 +105,7 @@ class CodeBlockNodeView implements NodeView {
     this.view = view;
     this.getPos = getPos;
     this.incomingChanges = false;
+    this.mode = "";
 
     // options
     this.editorOptions = editorOptions;
@@ -250,12 +252,11 @@ class CodeBlockNodeView implements NodeView {
     const lang = this.options.lang(this.node, this.getContents());
 
     // syntax highlighting
-    /*
     const mode = lang ? modeForLang(lang, this.options) : null;
-    if (mode !== this.cm.getOption('mode')) {
-      this.cm.setOption('mode', mode);
+    if (mode !== null && mode !== this.mode) {
+       this.chunk.editor.getSession().setMode(mode);
+       this.mode = mode;
     }
-    */
 
     // if we have a language check whether execution should be enabled for this language
     if (lang && this.canExecuteChunks()) {
@@ -490,36 +491,35 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]
   };
 }
 
-/*
 const kModeMap: { [key: string]: string } = {
-  r: 'r',
-  python: 'python',
-  sql: 'sql',
-  c: 'clike',
-  cpp: 'clike',
-  java: 'clike',
-  js: 'javascript',
-  javascript: 'javascript',
-  html: 'xml',
-  tex: 'stex',
-  latex: 'stex',
-  css: 'css',
-  markdown: 'markdown',
-  yaml: 'yaml',
-  'yaml-frontmatter': 'yaml-frontmatter',
-  shell: 'shell',
-  bash: 'bash',
+  r: 'mode/r',
+  python: 'mode/python',
+  sql: 'mode/sql',
+  c: 'mode/c_cpp',
+  cpp: 'mode/c_cpp',
+  java: 'ace/mode/java',
+  js: 'ace/mode/javascript',
+  javascript: 'ace/mode/javascript',
+  html: 'ace/mode/html',
+  tex: 'mode/tex',
+  latex: 'mode/tex',
+  css: 'ace/mode/css',
+  markdown: 'mode/markdown',
+  yaml: 'mode/yaml',
+  'yaml-frontmatter': 'mode/yaml',
+  shell: 'mode/sh',
+  bash: 'mode/sh',
 };
 
 const kBookdownThereomModeMap: { [key: string]: string } = {
-  theorem: 'stex',
-  lemma: 'stex',
-  corollary: 'stex',
-  proposition: 'stex',
-  conjecture: 'stex',
-  definition: 'stex',
-  example: 'stex',
-  exercise: 'stex',
+  theorem: 'mode/tex',
+  lemma: 'mode/tex',
+  corollary: 'mode/tex',
+  proposition: 'mode/tex',
+  conjecture: 'mode/tex',
+  definition: 'mode/tex',
+  example: 'mode/tex',
+  exercise: 'mode/tex',
 };
 
 function modeForLang(lang: string, options: CodeViewOptions) {
@@ -534,4 +534,4 @@ function modeForLang(lang: string, options: CodeViewOptions) {
     return null;
   }
 }
-*/
+
