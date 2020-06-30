@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
@@ -31,9 +32,10 @@ public class PanmirrorContext
    public PanmirrorContext(PanmirrorUIContext uiContext, 
                            PanmirrorUIDisplay uiDisplay,
                            PanmirrorUIExecute uiExecute,
+                           PanmirrorUIChunkFactory uiChunks,
                            TextEditingTarget target)
    {
-      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute); 
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute, uiChunks); 
       this.server = new PanmirrorServer(target);
    }
    

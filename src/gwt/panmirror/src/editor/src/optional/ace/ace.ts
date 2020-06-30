@@ -20,24 +20,27 @@ import {
   EditorState,
   Transaction,
   Selection,
-  NodeSelection,
+  // NodeSelection,
 } from 'prosemirror-state';
+
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
-import { undo, redo } from 'prosemirror-history';
-import { exitCode } from 'prosemirror-commands';
+// import { undo, redo } from 'prosemirror-history';
+// import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
-import { undoInputRule } from 'prosemirror-inputrules';
+// import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
-import { insertParagraph } from '../../api/paragraph';
+// import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 
-import { selectAll } from '../../behaviors/select_all';
+// import { selectAll } from '../../behaviors/select_all';
+
+import { AceChunkEditor } from "../ace/ace_editor";
 
 const plugin = new PluginKey('ace');
 
@@ -78,7 +81,7 @@ class CodeBlockNodeView implements NodeView {
   public readonly dom: HTMLElement;
   private readonly view: EditorView;
   private readonly getPos: () => number;
-  private readonly editor: AceEditor;
+  private readonly chunk: AceChunkEditor;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
 
@@ -106,11 +109,11 @@ class CodeBlockNodeView implements NodeView {
     this.editorOptions = editorOptions;
     this.options = options;
 
-    // TODO (jmcphers): call host factory to instantiate editor
-    this.editor = null;
+    // call host factory to instantiate editor
+    this.chunk = ui.chunks.createChunkEditor();
 
     // The editor's outer node is our DOM representation
-    this.dom = this.editor.getElement();
+    this.dom = this.chunk.element;
 
     // add a chunk execution button if execution is supported
     this.runChunkToolbar = this.initRunChunkToolbar(ui);
@@ -147,12 +150,12 @@ class CodeBlockNodeView implements NodeView {
     // this.editor.on("beforeChange", () => (this.incomingChanges = true));
 
     // Propagate updates from the code editor to ProseMirror
-    this.editor.on("changeCursor", () => {
+    this.chunk.editor.on("changeCursor", () => {
       if (!this.updating && !this.incomingChanges) {
         this.forwardSelection();
       }
     });
-    this.editor.on('change', () => {
+    this.chunk.editor.on('change', () => {
       if (!this.updating) {
         this.valueChanged();
         this.forwardSelection();
@@ -160,7 +163,7 @@ class CodeBlockNodeView implements NodeView {
       this.incomingChanges = false;
     });
 
-    this.editor.on('focus', () => this.forwardSelection());
+    this.chunk.editor.on('focus', () => this.forwardSelection());
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -169,27 +172,33 @@ class CodeBlockNodeView implements NodeView {
     }
     this.node = node;
     this.updateMode();
-    const change = computeChange(this.editor.getValue(), node.textContent);
+    
+    const change = computeChange(this.chunk.editor.getSession().getValue(), node.textContent);
     if (change) {
       this.updating = true;
-      const cmDoc = this.cm.getDoc();
-      cmDoc.replaceRange(change.text, cmDoc.posFromIndex(change.from), cmDoc.posFromIndex(change.to));
+      const doc = this.chunk.editor.getSession().getDocument();
+      const range = AceAjax.Range.fromPoints(doc.indexToPosition(change.from, 0), 
+                                             doc.indexToPosition(change.to, 0));
+      this.chunk.editor.getSession().replace(range, change.text);
       this.updating = false;
     }
     return true;
   }
 
   public setSelection(anchor: number, head: number) {
-    this.editor.focus();
-    this.editor.getElement().classList.add('CodeMirror-focused');
+    this.chunk.editor.focus();
+    // TODO (jmcphers) Is this necessary?
+    // this.chunk.getElement().classList.add('CodeMirror-focused');
     this.updating = true;
-    const cmDoc = this.cm.getDoc();
-    cmDoc.setSelection(cmDoc.posFromIndex(anchor), cmDoc.posFromIndex(head));
+    const doc = this.chunk.editor.getSession().getDocument();
+    const range = AceAjax.Range.fromPoints(doc.indexToPosition(anchor, 0),
+                                           doc.indexToPosition(head, 0));
+    this.chunk.editor.getSession().getSelection().setSelectionRange(range);
     this.updating = false;
   }
 
   public selectNode() {
-    this.cm.focus();
+    this.chunk.editor.focus();
   }
 
   public stopEvent() {
@@ -197,8 +206,10 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private forwardSelection() {
-    if (!this.cm.hasFocus()) {
-      return;
+
+    // ignore if we don't have focus
+    if (!this.chunk.element.contains(window.document.activeElement)) {
+        return;
     }
 
     const state = this.view.state;
@@ -210,14 +221,15 @@ class CodeBlockNodeView implements NodeView {
 
   private asProseMirrorSelection(doc: ProsemirrorNode) {
     const offset = this.getPos() + 1;
-    const cmDoc = this.cm.getDoc();
-    const anchor = cmDoc.indexFromPos(cmDoc.getCursor('anchor')) + offset;
-    const head = cmDoc.indexFromPos(cmDoc.getCursor('head')) + offset;
+    const session = this.chunk.editor.getSession();
+    const range = session.getSelection().getRange();
+    const anchor = session.getDocument().positionToIndex(range.start, 0) + offset;
+    const head = session.getDocument().positionToIndex(range.end, 0) + offset;
     return TextSelection.create(doc, anchor, head);
   }
 
   private valueChanged() {
-    const change = computeChange(this.node.textContent, this.cm.getValue());
+    const change = computeChange(this.node.textContent, this.getContents());
     if (change) {
       // update content
       const start = this.getPos() + 1;
@@ -233,13 +245,15 @@ class CodeBlockNodeView implements NodeView {
 
   private updateMode() {
     // get lang
-    const lang = this.options.lang(this.node, this.cm.getValue());
+    const lang = this.options.lang(this.node, this.getContents());
 
     // syntax highlighting
+    /*
     const mode = lang ? modeForLang(lang, this.options) : null;
     if (mode !== this.cm.getOption('mode')) {
       this.cm.setOption('mode', mode);
     }
+    */
 
     // if we have a language check whether execution should be enabled for this language
     if (lang && this.canExecuteChunks()) {
@@ -252,6 +266,7 @@ class CodeBlockNodeView implements NodeView {
     }
   }
 
+  /*
   private codeMirrorKeymap() {
     const view = this.view;
     const mod = kPlatformMac ? 'Cmd' : 'Ctrl';
@@ -288,7 +303,9 @@ class CodeBlockNodeView implements NodeView {
     });
     return cmKeymap;
   }
+  */
 
+  /*
   private backspaceMaybeDeleteNode() {
     // if the node is empty and we execute a backspace then delete the node
     if (this.node.childCount === 0) {
@@ -365,6 +382,7 @@ class CodeBlockNodeView implements NodeView {
     // set focus
     this.view.focus();
   }
+  */
 
   private initRunChunkToolbar(ui: EditorUI) {
     const toolbar = window.document.createElement('div');
@@ -426,6 +444,10 @@ class CodeBlockNodeView implements NodeView {
   private isChunkExecutionEnabled() {
     return this.runChunkToolbar.style.display !== 'none';
   }
+
+  private getContents(): string {
+    return this.chunk.editor.getSession().getValue();
+  }
 }
 
 function computeChange(oldVal: string, newVal: string) {
@@ -466,6 +488,7 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]
   };
 }
 
+/*
 const kModeMap: { [key: string]: string } = {
   r: 'r',
   python: 'python',
@@ -509,3 +532,4 @@ function modeForLang(lang: string, options: CodeViewOptions) {
     return null;
   }
 }
+*/
