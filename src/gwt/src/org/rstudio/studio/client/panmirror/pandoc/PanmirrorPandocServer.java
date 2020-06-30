@@ -18,7 +18,6 @@ package org.rstudio.studio.client.panmirror.pandoc;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;

@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.ModalDialog;
