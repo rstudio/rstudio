@@ -44,15 +44,41 @@ const char * const kDOIHost = "https://doi.org";
 const char * const kDataCiteHost = "https://data.datacite.org";
 const char * const kCSLJsonFormat = "application/vnd.citationstyles.csl+json";
 
-void logIfNot404(const std::string& stdErr, const core::ErrorLocation& location)
+const char * const kStatusOK = "ok";
+const char * const kStatusNotFound = "notfound";
+const char * const kStatusNoHost = "nohost";
+const char * const kStatusError = "error";
+
+bool is404Error(const std::string& stdErr)
 {
-   if (stdErr.find_first_of("404 Not Found") == std::string::npos)
-      core::log::logErrorMessage("Error fetching CSL for DOI: " + stdErr, location);
+   return boost::algorithm::contains(stdErr, "404 Not Found");
 }
 
-void doiRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
+bool isHostError(const std::string& stdErr)
 {
-   pResponse->setResult(value);
+   return boost::algorithm::contains(stdErr, "resolve host name");
+}
+
+std::string errorDescription(const Error& error)
+{
+   std::string description = error.getProperty("description");
+   if (description.empty())
+      description = error.getSummary();
+   return description;
+}
+
+void resolveContinuation(const json::JsonRpcFunctionContinuation& cont,
+                         const std::string& status,
+                         const json::Value& messageJson = json::Value(),
+                         const std::string& error = "")
+{
+   json::Object resultJson;
+   resultJson["status"] = status;
+   resultJson["message"] = messageJson;
+   resultJson["error"] = error;
+   json::JsonRpcResponse response;
+   response.setResult(resultJson);
+   cont(Success(), &response);
 }
 
 Error handleProcessResult(const core::system::ProcessResult& result, json::Value* pValue)
@@ -63,8 +89,9 @@ Error handleProcessResult(const core::system::ProcessResult& result, json::Value
    }
    else
    {
-      // log if it's not a 404 error
-      logIfNot404(result.stdErr, ERROR_LOCATION);
+      // log if it's not a 404 or host not found error
+      if (!is404Error(result.stdErr) && !isHostError(result.stdErr))
+         LOG_ERROR_MESSAGE("Error fetching CSL for DOI: " + result.stdErr);
 
       // return error
       return systemError(boost::system::errc::state_not_recoverable,
@@ -73,28 +100,30 @@ Error handleProcessResult(const core::system::ProcessResult& result, json::Value
    }
 }
 
-void resolveContinuation(const json::JsonRpcFunctionContinuation& cont,
-                         const json::Value& cslJson)
-{
-   json::JsonRpcResponse response;
-   response.setResult(cslJson);
-   cont(Success(), &response);
-}
-
-
-void dataciteDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
-                             const core::system::ProcessResult& result)
+void doiDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
+                        const core::system::ProcessResult& result)
 {
    json::Value cslJson;
    Error error = handleProcessResult(result, &cslJson);
+   // return citation for no error
    if (!error)
    {
-      resolveContinuation(cont, cslJson);
+      resolveContinuation(cont, kStatusOK, cslJson);
    }
+   // not found (404)
+   else if (is404Error(result.stdErr))
+   {
+      resolveContinuation(cont, kStatusNotFound);
+   }
+   // no host (offline?)
+   else if (isHostError(result.stdErr))
+   {
+      resolveContinuation(cont, kStatusNoHost);
+   }
+   // return error
    else
    {
-      json::JsonRpcResponse response;
-      cont(error, &response);
+      resolveContinuation(cont, kStatusError, json::Value(), errorDescription(error));
    }
 }
 
@@ -106,17 +135,16 @@ void crossrefDownloadHandler(const std::string& doi,
    Error error = handleProcessResult(result, &cslJson);
    if (!error)
    {
-      resolveContinuation(cont, cslJson);
+      resolveContinuation(cont, kStatusOK, cslJson);
    }
    else
    {
       // do a datacite lookup (see: https://citation.crosscite.org/docs.html#sec-5)
       boost::format fmt("%s/%s/%s");
       std::string url = boost::str(fmt % kDataCiteHost % kCSLJsonFormat % doi);
-      asyncDownloadFile(url, boost::bind(dataciteDownloadHandler, cont, _1));
+      asyncDownloadFile(url, boost::bind(doiDownloadHandler, cont, _1));
    }
 }
-
 
 void doiFetchCSL(const json::JsonRpcRequest& request,
                  const json::JsonRpcFunctionContinuation& cont)
@@ -138,7 +166,7 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
        boost::format fmt("%s/%s");
        url = boost::str(fmt % kDOIHost % doi);
        headers.push_back(std::make_pair("Accept", kCSLJsonFormat));
-       asyncJsonRpcRequest(url, headers, doiRequestHandler, cont);
+       asyncDownloadFile(url, headers, boost::bind(doiDownloadHandler, cont, _1));
     }
     else
     {

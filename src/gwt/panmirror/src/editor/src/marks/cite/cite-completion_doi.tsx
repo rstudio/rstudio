@@ -74,15 +74,25 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         offset: parsedDOI.offset,
         completions: (_state: EditorState) =>
           server.fetchCSL(parsedDOI.token, 350).then(result => {
-            const work = result as CrossrefWork;
-            return [
-              {
-                ...work,
-                image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
-                formattedAuthor: formatAuthors(work.author, 50),
-                formattedIssueDate: formatIssuedDate(work.issued),
-              },
-            ];
+            if (result.status === "ok") {
+              const work = result.message as CrossrefWork;
+              return [
+                {
+                  ...work,
+                  image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
+                  formattedAuthor: formatAuthors(work.author, 50),
+                  formattedIssueDate: formatIssuedDate(work.issued),
+                },
+              ];
+            } else if (result.status === "notfound" || result.status === "nohost") {
+              return [];
+            } else if (result.status === "error") {
+              // TODO: deal w/ error? (it's already been logged on the server)
+              return [];
+            } else {
+              return [];
+            }
+
           }),
       };
     }

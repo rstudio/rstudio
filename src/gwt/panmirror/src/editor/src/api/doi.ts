@@ -14,6 +14,12 @@
  */
 
 
+export interface DOIResult {
+  status: "ok" | "notfound" | "nohost" | "error";
+  message: any | null;
+  error: string;
+}
+
 export interface DOIServer {
-  fetchCSL: (doi: string, progressDelay: number) => Promise<{}>;
+  fetchCSL: (doi: string, progressDelay: number) => Promise<DOIResult>;
 }
