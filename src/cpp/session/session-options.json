@@ -74,7 +74,7 @@
          {
             "name": "www-local-path",
             "type": "string",
-            "defautValue": "www",
+            "defaultValue": "www",
             "memberName": "wwwLocalPath_",
             "description": "The relative path from the RStudio installation directory, or absolute path where web assets are stored."
          },

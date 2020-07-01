@@ -187,7 +187,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       
       // standard pandoc attributes
       editAttr_ =  new PanmirrorEditAttrWidget();
-      editAttr_.setAttr(props);
+      editAttr_.setAttr(props, null);
       if (editAttributes)
       {
          VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);

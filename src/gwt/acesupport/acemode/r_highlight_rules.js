@@ -117,7 +117,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // highlight brackets
         token : "paren.keyword.operator",
         regex : "(?:" + reLhsBracket + "|" + reRhsBracket + ")",
-        merge: false
+        merge : false
       },
       {
         defaultToken: "comment"

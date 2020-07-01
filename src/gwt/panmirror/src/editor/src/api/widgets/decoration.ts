@@ -23,6 +23,7 @@ import { kPixelUnit } from '../css';
 export interface DecorationPosition {
   pos: number;
   style: { [key: string]: string };
+  key: string;
 }
 
 export function textRangePopupDecorationPosition(
@@ -60,7 +61,9 @@ export function textRangePopupDecorationPosition(
   const positionRight = linkCoords.left + maxWidth > editingBox.right;
   if (positionRight) {
     const rightCoords = view.coordsAtPos(range.to);
-    const rightPos = editingBox.right - rightCoords.right;
+    const rightPos = linkCoords.top === rightCoords.top
+      ? editingBox.right - rightCoords.right
+      : editingBox.right - containingBlockBox.right;
     style = {
       ...popupStyle,
       right: rightPos + kPixelUnit,
@@ -84,9 +87,13 @@ export function textRangePopupDecorationPosition(
     };
   }
 
+  // calculate key
+  const key = Object.keys(style).map(attrib => `${attrib}=${style[attrib]}`).join(';');
+
   return {
     pos: containingBlockPos,
     style,
+    key
   };
 }
 

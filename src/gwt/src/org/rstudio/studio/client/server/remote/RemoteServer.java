@@ -6177,6 +6177,15 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, XREF_INDEX_FOR_FILE, file, callback);
    }
+   
+   @Override
+   public void xrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(id));
+      sendRequest(RPC_SCOPE, XREF_FOR_ID, params, callback);
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6679,5 +6688,7 @@ public class RemoteServer implements Server
    private static final String CROSSREF_WORKS = "crossref_works";
    
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
+   private static final String XREF_FOR_ID = "xref_for_id";
+
    
 }

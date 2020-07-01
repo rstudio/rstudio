@@ -37,3 +37,16 @@ export function elementInnerDimensions(el: HTMLElement) {
     height: el.offsetHeight - paddingY - borderY,
   };
 }
+
+export function onElementRemoved(container: Node, el: HTMLElement, onRemoved: VoidFunction) {
+  const observer = new MutationObserver(mutationsList => {
+    mutationsList.forEach(mutation => {
+      mutation.removedNodes.forEach(node => {
+        if (node === el) {
+          onRemoved();
+        }
+      });
+    });
+  });
+  observer.observe(container, { attributes: false, childList: true, subtree: true });
+}

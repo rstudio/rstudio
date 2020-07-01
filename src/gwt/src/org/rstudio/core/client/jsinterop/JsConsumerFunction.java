@@ -1,5 +1,5 @@
 /*
- * XTermDimensions.java
+ * JsConsumerFunction.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,14 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal.xterm;
+package org.rstudio.core.client.jsinterop;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 
-/**
- * Size of xterm in rows and columns of text.
- */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermDimensions
+import elemental2.core.JsObject;
+import jsinterop.annotations.JsFunction;
+
+@JsFunction
+public interface JsConsumerFunction
 {
-   public int cols;
-   public int rows;
+   void call(JsObject obj);
 }

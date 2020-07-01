@@ -97,7 +97,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       );
         
       editAttr_ =  new PanmirrorEditAttrWidget();
-      editAttr_.setAttr(link);
+      editAttr_.setAttr(link, null);
       
       
       href_.addTypeChangedHandler((event) -> {

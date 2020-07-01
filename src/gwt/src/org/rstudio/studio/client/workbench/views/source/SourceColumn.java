@@ -488,9 +488,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public EditingTarget addTab(SourceDocument doc, Integer position, int mode)
    {
-      final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
-      final EditingTarget target = editingTargetSource_.getEditingTarget(this,
-            doc, fileContext_, () -> getNextDefaultName(defaultNamePrefix));
+      final EditingTarget target = editingTargetSource_.getEditingTarget(
+            this,
+            doc,
+            fileContext_,
+            (EditingTarget et) ->
+            {
+               String prefix = et.getDefaultNamePrefix();
+               return getNextDefaultName(prefix);
+            });
+
       final Widget widget = createWidget(target);
 
       if (position == null)
@@ -940,7 +947,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                     (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                      activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
                      activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
-
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
       {
@@ -996,7 +1002,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs, name_);
       else
          commands_.closeOtherSourceDocs().setButtonEnabled(hasMultipleDocs, name_);
-
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)

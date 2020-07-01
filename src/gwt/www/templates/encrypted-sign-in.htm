@@ -112,6 +112,10 @@ button.disabled {
   background-color: #e0e2e5;
   color: grey;
 }
+
+div.signinhidden {
+   display: none;
+}
 </style>
 
 <script type="text/javascript" src="js/encrypt.min.js"></script>
@@ -196,47 +200,54 @@ function submitRealForm() {
 </div>
 <div role="alert" aria-atomic="true" class="visuallyhidden" id="live-error"></div>
 
-<form method="POST" #!formAction#>
+<form name="login_form" method="POST" #!formAction#>
 <table role="presentation" id="border">
   <tr>
     <td>
-      <h1 id="caption">Sign in to RStudio</h1>
       <div role="group" aria-labelledby="caption">
-         <p>
-            <label for="username">Username:</label><br />
-            <input type='text' 
-                     name='username' 
-                     autocomplete='off'
-                     autocorrect='off'
-                     autocapitalize='off'
-                     spellcheck='false'
-                     value='' 
-                     id='username' 
-                     size='45'/><br />
-         </p>
-         <p>
-            <label for="password">Password:</label><br />
-            <input type='password' 
-                     name='password' 
-                     autocomplete='off'
-                     autocorrect='off'
-                     autocapitalize='off'
-                     spellcheck='false'
-                     value='' 
-                     id='password' 
-                     size='45'/><br />
-         </p>
-         <div style="display: #staySignedInDisplay#;">
-            <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-            <label for="staySignedIn">Stay signed in when browser closes</label>
-            <p style="display: #authTimeoutMinutesDisplay#;">
-               <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
+         <div id="controls">
+            <h1 id="caption">Sign in to RStudio</h1>
+            <p>
+               <label for="username">Username:</label><br />
+               <input type='text'
+                      name='username'
+                      autocomplete='off'
+                      autocorrect='off'
+                      autocapitalize='off'
+                      spellcheck='false'
+                      value=''
+                      id='username'
+                      size='45'/><br />
             </p>
+            <p>
+               <label for="password">Password:</label><br />
+               <input type='password'
+                      name='password'
+                      autocomplete='off'
+                      autocorrect='off'
+                      autocapitalize='off'
+                      spellcheck='false'
+                      value=''
+                      id='password'
+                      size='45'/><br />
+            </p>
+            <div style="display: #staySignedInDisplay#;">
+               <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
+               <label for="staySignedIn">Stay signed in when browser closes</label>
+               <p style="display: #authTimeoutMinutesDisplay#;">
+                  <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
+               </p>
+            </div>
+            <input type="hidden" name="csrf-token" value="#csrf_token#" />
+            <input type="hidden" name="appUri" value="#appUri#"/>
+            <div id="buttonpanel">
+               <button id="signinbutton" class="fancy" type="submit">Sign In</button>
+            </div>
          </div>
-         <input type="hidden" name="csrf-token" value="#csrf_token#" />
-         <input type="hidden" name="appUri" value="#appUri#"/>
-         <div id="buttonpanel">
-            <button id="signinbutton" class="fancy" type="submit">Sign In</button>
+         <div id="goback" class="signinhidden">
+            <h1 id="caption">Signed Out</h1>
+            <p role="alert" aria-atomic="true">This browser was signed out from RStudio due to inactivity or by a manual sign out initiated from another tab. A new sign in was detected and you may now return to RStudio using the button below.</p>
+            <div id="buttonpanel"><button class="fancy" type="button" onclick="window.location = responseURL;">Return to RStudio</button></div>
          </div>
       </div>
     </td>
@@ -278,6 +289,42 @@ if (displayProp !== "none")
       speakError();
    }, 2000);
 }
+
+// polling itself to see if the sign in page is still needed.
+// we may be here because our cookies expired and there might
+// be multiple tabs in the same situation. if one of those tabs
+// sign in back, a new cookie will be sent in this probing what
+// will cause a different url we should visit to be returned
+// skipping the need of a sign in attempt in all other tabs.
+var responseURL = '';
+setInterval(function() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "./", true);
+  xhr.onreadystatechange = function() {
+    try {
+      if (xhr.readyState == 4) {
+        if (xhr.status == 200) {
+          var url = xhr.responseURL.split('?')[0];
+          var href = location.href.split('?')[0];
+
+          var controls = document.getElementById("controls");
+          var goback = document.getElementById("goback");
+          if (url !== href) {
+            responseURL = url;
+            controls.classList.add('signinhidden');
+            goback.classList.remove('signinhidden');
+          } else {
+            controls.classList.remove('signinhidden');
+            goback.classList.add('signinhidden');
+          }
+        }
+      }
+    } catch (exception) {
+      showError("Error: " + exception);
+    }
+  };
+  xhr.send(null);
+}, 1000);
 </script>
 </main>
 <script type="text/javascript" src="js/focus-visible.min.js"></script>

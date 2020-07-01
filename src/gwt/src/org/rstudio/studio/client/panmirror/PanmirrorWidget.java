@@ -46,6 +46,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEve
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
@@ -85,6 +86,7 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
+import jsinterop.base.Js;
 
 
 public class PanmirrorWidget extends DockLayoutPanel implements 
@@ -96,6 +98,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
    PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers,
+   PanmirrorNavigationEvent.HasPanmirrorNavigationHandlers,
    PanmirrorFocusEvent.HasPanmirrorFocusHandlers
    
 {
@@ -250,12 +253,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
-            editor_.navigate(event.getId());
+            editor_.navigateToId(event.getId());
             editor_.focus();
          }
       });
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, (data) -> {
          fireEvent(new PanmirrorUpdatedEvent());
       }));
       
@@ -269,7 +272,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       };
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, (data) -> {
          
          // sync toolbar commands
          if (toolbar_ != null)
@@ -282,14 +285,20 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          fireEvent(new PanmirrorStateChangeEvent());
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, (data) -> {
          
          // sync outline
          updateOutineOnIdle.nudge();
          
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Navigate, (data) -> {
+         
+         PanmirrorNavigation nav = Js.uncheckedCast(data);
+         fireEvent(new PanmirrorNavigationEvent(nav));  
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, (data) -> {
          fireEvent(new PanmirrorFocusEvent());
       }));
       
@@ -459,9 +468,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   public void navigate(String id)
+   public void navigateToPos(int pos)
    {
-      editor_.navigate(id);
+      editor_.navigateToPos(pos);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 
@@ -572,6 +581,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public HandlerRegistration addPanmirrorFindReplaceVisibleHandler(Handler handler)
    {
       return handlers_.addHandler(PanmirrorFindReplaceVisibleEvent.getType(), handler);
+   }
+   
+   @Override
+   public HandlerRegistration addPanmirrorNavigationHandler(PanmirrorNavigationEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorNavigationEvent.getType(), handler);
    }
    
    @Override

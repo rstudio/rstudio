@@ -33,6 +33,7 @@ import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
 import { CompletionHandler } from './completion';
 import { EditorServer } from '../editor/editor';
+import { EditorNavigation } from './navigation';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -55,6 +56,7 @@ export interface ExtensionContext {
   format: EditorFormat;
   options: EditorOptions;
   events: EditorEvents;
+  navigation: EditorNavigation;
 }
 
 export type ExtensionFn = (context: ExtensionContext) => Extension | null;

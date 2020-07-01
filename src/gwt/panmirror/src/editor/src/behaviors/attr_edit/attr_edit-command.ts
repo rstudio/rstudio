@@ -121,7 +121,7 @@ async function editNodeAttrs(
   ui: EditorUI,
 ): Promise<void> {
   const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs });
+  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node));
   if (result) {
     dispatch(
       state.tr.setNodeMarkup(pos, node.type, {
@@ -131,3 +131,35 @@ async function editNodeAttrs(
     );
   }
 }
+
+
+function idHint(node: ProsemirrorNode) {
+
+  if (node.type === node.type.schema.nodes.heading) {
+
+    // emulate pandoc behavior (https://pandoc.org/MANUAL.html#headings-and-sections)
+    const hint = node.textContent
+
+      // Remove all non-alphanumeric characters, except underscores, hyphens, and periods.
+      .replace(/[^ _\-.\w]+/g, '')
+
+      // Replace all spaces and newlines with hyphens
+      .replace(/[ \n]/g, '-')
+
+      // Convert all alphabetic characters to lowercase
+      .toLowerCase()
+
+      // Remove everything up to the first letter 
+      // (identifiers may not begin with a number or punctuation mark
+      .replace(/^[^A-Za-z]+/, '');
+
+    // don't provide a hint if we ended up with an empty one!
+    return hint || undefined;
+
+  } else {
+
+    return undefined;
+
+  }
+}
+

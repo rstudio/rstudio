@@ -72,7 +72,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES);
       attributesTab.addStyleName(RES.styles().dialog());
       editAttr_ =  new PanmirrorEditAttrWidget();   
-      editAttr_.setAttr(codeBlock);
+      editAttr_.setAttr(codeBlock, null);
       attributesTab.add(editAttr_);
    
       if (attributes)

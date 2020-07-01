@@ -10,7 +10,7 @@ fi
 
 mkdir xterm.js
 cd xterm.js
-npm install xterm@4.6.0
+npm install xterm@4.7.0
 npm install xterm-addon-fit@0.4.0
 
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm

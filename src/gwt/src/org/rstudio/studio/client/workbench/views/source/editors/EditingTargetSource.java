@@ -30,12 +30,16 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public interface EditingTargetSource
 {
+   public interface EditingTargetNameProvider
+   {
+      public String defaultNamePrefix(EditingTarget target);
+   }
+
    EditingTarget getEditingTarget(FileType fileType);
    EditingTarget getEditingTarget(SourceColumn column,
                                   SourceDocument document,
                                   RemoteFileSystemContext fileContext,
-                                  Provider<String> defaultNameProvider);
-   String getDefaultNamePrefix(SourceDocument doc);
+                                  EditingTargetNameProvider defaultNameProvider);
 
    public static class Impl implements EditingTargetSource
    {
@@ -78,28 +82,18 @@ public interface EditingTargetSource
       public EditingTarget getEditingTarget(SourceColumn column,
                                             final SourceDocument document,
                                             final RemoteFileSystemContext fileContext,
-                                            final Provider<String> defaultNameProvider)
+                                            final EditingTargetNameProvider defaultNameProvider)
       {
-         FileType type = getTypeFromDocument(document);
-         
-         final FileType finalType = type;
+         final FileType type = getTypeFromDocument(document);
          EditingTarget target = getEditingTarget(type);
          target.initialize(column,
                            document,
                            fileContext,
-                           finalType,
+                           type,
                            defaultNameProvider);
          return target;
       }
-      
-      public String getDefaultNamePrefix(SourceDocument document)
-      {
-         FileType type = getTypeFromDocument(document);
-         EditingTarget target = getEditingTarget(type);
-         
-         return target.getDefaultNamePrefix();
-      }
-      
+
       private FileType getTypeFromDocument(SourceDocument document)
       {
          FileType type = registry_.getTypeByTypeName(document.getType());
