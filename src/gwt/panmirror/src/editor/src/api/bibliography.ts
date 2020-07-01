@@ -14,15 +14,14 @@
  */
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { PandocServer } from './pandoc';
+import { Transaction } from 'prosemirror-state';
+import { NodeWithPos } from 'prosemirror-utils';
 
 import Fuse from 'fuse.js';
 
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
 import { expandPaths } from './path';
-import { Transaction, EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { NodeWithPos } from 'prosemirror-utils';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -161,7 +160,7 @@ export class BibliographyManager {
 
 function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   const refBlockParsedYamls = parsedYamls.filter(
-    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.references,
+    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.references,
   );
 
   // Pandoc will use the last references node when generating a bibliography.
@@ -194,7 +193,7 @@ function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
 
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUIContext): BibliographyFiles | null {
   const bibliographyParsedYamls = parsedYamls.filter(
-    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.bibliography,
+    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.bibliography,
   );
 
   // Look through any yaml nodes to see whether any contain bibliography information
