@@ -437,8 +437,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.goToHelp().createMenuItem(false));
-      menu.addItem(commands_.goToDefinition().createMenuItem(false));
+      menu.addItem(commands_.goToHelp().createMenuItem(column_));
+      menu.addItem(commands_.goToDefinition().createMenuItem(column_));
       ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       
