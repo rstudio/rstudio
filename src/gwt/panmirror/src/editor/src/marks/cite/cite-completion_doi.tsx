@@ -74,15 +74,26 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         offset: parsedDOI.offset,
         completions: (_state: EditorState) =>
           server.fetchCSL(parsedDOI.token, 350).then(result => {
-            return [
-              {
-                id: result.DOI,
-                csl: result,
-                image: imageForType(ui, result.type)[ui.prefs.darkMode() ? 1 : 0],
-                formattedAuthor: formatAuthors(result.author, 50),
-                formattedIssueDate: formatIssuedDate(result.issued),
-              },
-            ];
+            if (result.status === "ok") {
+
+              const csl = result.message;
+              return [
+                {
+                  id: csl.DOI,
+                  csl,
+                  image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                  formattedAuthor: formatAuthors(csl.author, 50),
+                  formattedIssueDate: formatIssuedDate(csl.issued),
+                },
+              ];
+            } else if (result.status === "notfound" || result.status === "nohost") {
+              return [];
+            } else if (result.status === "error") {
+              // TODO: deal w/ error? (it's already been logged on the server)
+              return [];
+            } else {
+              return [];
+            }
           }),
       };
     }

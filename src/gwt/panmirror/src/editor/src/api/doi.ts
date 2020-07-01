@@ -16,8 +16,14 @@
 import { CSL } from "./csl";
 
 
+export interface DOIResult {
+  status: "ok" | "notfound" | "nohost" | "error";
+  message: any | null;
+  error: string;
+}
+
 export interface DOIServer {
-  fetchCSL: (doi: string, progressDelay: number) => Promise<CSL>;
+  fetchCSL: (doi: string, progressDelay: number) => Promise<DOIResult>;
 }
 
 // ^10.\d{4,9}/[-._;()/:A-Z0-9]+$
