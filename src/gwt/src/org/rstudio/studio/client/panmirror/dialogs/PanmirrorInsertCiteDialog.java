@@ -3,7 +3,6 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FormListBox;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -14,7 +13,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitePrev
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteUI;
-import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServerOperations;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsCitation;
 import org.rstudio.studio.client.server.ServerError;
@@ -71,7 +70,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          });
 
          // Lookup the DOI using Crossref
-         server_.crossrefDoi(citeProps_.doi, new ServerRequestCallback<JavaScriptObject>()
+         server_.doiFetchCSL(citeProps_.doi, new ServerRequestCallback<JavaScriptObject>()
          {
             @Override
             public void onResponseReceived(JavaScriptObject response)
@@ -119,6 +118,13 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             }
          });
       }
+   }
+   
+
+   @Inject
+   void initialize(PanmirrorDOIServerOperations server)
+   {
+      server_ = server;
    }
 
    @Override
@@ -185,12 +191,6 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    protected Widget createMainWidget()
    {
       return mainWidget_;
-   }
-
-   @Inject
-   void initialize(PanmirrorCrossrefServerOperations server)
-   {
-      server_ = server;
    }
 
    private void onCiteUI(PanmirrorInsertCiteUI citeUI)
@@ -304,7 +304,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    }
 
    private Widget mainWidget_;
-   private PanmirrorCrossrefServerOperations server_;
+   private PanmirrorDOIServerOperations server_;
    private boolean canceled_;
    private PanmirrorInsertCiteProps citeProps_;
 

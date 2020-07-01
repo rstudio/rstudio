@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * doi.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,15 +13,7 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
 
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
+export interface DOIServer {
+  fetchCSL: (doi: string, progressDelay: number) => Promise<{}>;
 }

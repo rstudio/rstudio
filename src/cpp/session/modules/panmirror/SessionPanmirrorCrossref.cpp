@@ -35,10 +35,6 @@ namespace crossref {
 
 namespace {
 
-const char * const kCrossrefApiHost = "https://api.crossref.org";
-const char * const kCrossrefWorks = "works";
-
-
 void crossrefContentRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(value);

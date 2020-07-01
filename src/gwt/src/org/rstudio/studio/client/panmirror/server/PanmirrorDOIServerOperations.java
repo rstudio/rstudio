@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * PanmirrorDOIServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,15 +13,13 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
+package org.rstudio.studio.client.panmirror.server;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
+import com.google.gwt.core.client.JavaScriptObject;
+
+public interface PanmirrorDOIServerOperations 
+{
+   void doiFetchCSL(String doi, ServerRequestCallback<JavaScriptObject> callback);
 }

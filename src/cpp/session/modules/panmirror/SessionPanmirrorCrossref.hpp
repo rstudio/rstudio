@@ -28,6 +28,9 @@ namespace modules {
 namespace panmirror {
 namespace crossref {
 
+const char * const kCrossrefApiHost = "https://api.crossref.org";
+const char * const kCrossrefWorks = "works";
+
 core::Error initialize();
 
 } // namespace crossref

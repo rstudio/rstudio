@@ -1,5 +1,5 @@
 /*
- * PanmirrorCrossrefServer.java
+ * PanmirrorDOIServer.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -28,27 +28,29 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorCrossrefServer
+public class PanmirrorDOIServer
 {
-   public PanmirrorCrossrefServer() {
+   public PanmirrorDOIServer() {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    @Inject
-   void initialize(PanmirrorCrossrefServerOperations server)
+   void initialize(PanmirrorDOIServerOperations server)
    {
       server_ = server;
    }
+
    
-   public Promise<JavaScriptObject> works(String query)
+   public Promise<JavaScriptObject> fetchCSL(String doi, int delayMs)
    {
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.crossrefWorks(
-            query,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         server_.doiFetchCSL(
+        		doi,
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Looking up DOI...", delayMs)
          );
       });
-   }
+   }   
 
-   PanmirrorCrossrefServerOperations server_;
+
+   PanmirrorDOIServerOperations server_;
 }
