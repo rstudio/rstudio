@@ -1,5 +1,5 @@
 /*
- * XTermDimensions.java
+ * xref-popup.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,22 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal.xterm;
+.pm-xref-popup {
+  max-width: 350px; /* also in xref-popup.tsx */
+}
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
+.pm-xref-popup > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-/**
- * Size of xterm in rows and columns of text.
- */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermDimensions
-{
-   public int cols;
-   public int rows;
+.pm-xref-popup-key {
+  cursor: pointer !important;
+}
+
+.pm-xref-popup-file {
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-top: 3px;
 }

@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 public class TerminalInfoDialog extends ModalDialogBase
 {
@@ -77,14 +76,6 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
-
-         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
-         for (String optionName : XTermOptions.stringOptions)
-            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.boolOptions)
-            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.numberOptions)
-            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
 
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");

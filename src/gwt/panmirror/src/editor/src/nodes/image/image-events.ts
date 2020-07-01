@@ -73,6 +73,7 @@ function imageDrop() {
         'pjp',
         'png',
         'svg',
+        'tif',
         'tiff',
         'webp',
       ];

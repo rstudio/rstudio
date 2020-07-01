@@ -14,31 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 /**
  * xterm.js ITerminalOptions
  */
-public class XTermOptions extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class XTermOptions
 {
-   public static final String[] stringOptions = {
-         "bellStyle", "cursorStyle", "fontFamily", "fontWeight", "fontWeightBold", "rendererType"
-   };
+   public String bellStyle;
+   public boolean cursorBlink;
+   public boolean screenReaderMode;
+   public String rendererType;
+   public boolean windowsMode;
+   public XTermTheme theme;
+   public String fontFamily;
+   public double fontSize;
 
-   public static final String[] boolOptions = {
-         "allowTransparency", "cancelEvents", "convertEol", "cursorBlink", "disableStdin",
-         "drawBoldTextInBrightColors", "macOptionClickForcesSelection", "macOptionIsMeta",
-         "rightClickSelectsWord", "screenReaderMode", "windowsMode"
-   };
-
-   public static final String[] numberOptions = {
-         "fontSize", "letterSpacing", "lineHeight", "tabStopWidth", "scrollback"
-   };
-
-   // Required by JavaScriptObject subclasses
-   protected XTermOptions() {}
-
-   public final native static XTermOptions create(
+   @JsOverlay public static XTermOptions create(
          String bellStyle,
          boolean cursorBlink,
          boolean screenReaderMode,
@@ -46,16 +41,17 @@ public class XTermOptions extends JavaScriptObject
          boolean windowsMode,
          XTermTheme theme,
          String fontFamily,
-         double fontSize) /*-{
-      return {
-         "bellStyle": bellStyle,
-         "cursorBlink": cursorBlink,
-         "screenReaderMode": screenReaderMode,
-         "rendererType": rendererType,
-         "windowsMode": windowsMode,
-         "theme": theme,
-         "fontFamily": fontFamily,
-         "fontSize": fontSize
-     };
-   }-*/;
+         double fontSize)
+   {
+      XTermOptions options = new XTermOptions();
+      options.bellStyle = bellStyle;
+      options.cursorBlink = cursorBlink;
+      options.screenReaderMode = screenReaderMode;
+      options.rendererType = rendererType;
+      options.windowsMode = windowsMode;
+      options.theme = theme;
+      options.fontFamily = fontFamily;
+      options.fontSize = fontSize;
+      return options;
+   }
 }

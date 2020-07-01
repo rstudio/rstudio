@@ -1,5 +1,5 @@
 /*
- * XTermDimensions.java
+ * PanmirrorNavigationType.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,14 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
+package org.rstudio.studio.client.panmirror;
 
-/**
- * Size of xterm in rows and columns of text.
- */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermDimensions
+public class PanmirrorNavigationType
 {
-   public int cols;
-   public int rows;
+  public final static String Pos = "pos";
+  public final static String Id = "id";
+  public final static String Href = "href";
+  public final static String Heading = "heading";
+  public final static String XRef = "xref";
 }

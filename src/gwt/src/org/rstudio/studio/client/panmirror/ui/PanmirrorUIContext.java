@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror.ui;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
+import elemental2.promise.Promise;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
@@ -25,6 +26,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIContext
 {
    public Getter getDocumentPath;
+   public WithSavedDocument withSavedDocument;
    public Getter getDefaultResourceDir;
    public Mapper mapPathToResource;
    public Mapper mapResourceToURL;
@@ -47,7 +49,13 @@ public class PanmirrorUIContext
    @JsFunction
    public interface WatchResource
    {
-      JsVoidFunction watch(String path, JsVoidFunction notify);
+      JsVoidFunction watchResource(String path, JsVoidFunction notify);
+   }
+   
+   @JsFunction
+   public interface WithSavedDocument
+   {
+      Promise<Boolean> withSavedDocument();
    }
 }
 

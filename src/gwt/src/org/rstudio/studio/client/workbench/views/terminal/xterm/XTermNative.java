@@ -160,18 +160,6 @@ public class XTermNative extends JavaScriptObject
          }));
    }-*/;
 
-   public final native String getStringOption(String optionName) /*-{
-      return this.getOption(optionName);
-   }-*/;
-
-   public final native boolean getBoolOption(String optionName) /*-{
-      return this.getOption(optionName);
-   }-*/;
-
-   public final native double getNumberOption(String optionName) /*-{
-      return this.getOption(optionName);
-   }-*/;
-
    public final native void updateTheme(XTermTheme theme) /*-{
       this.setOption("theme", theme);
    }-*/;

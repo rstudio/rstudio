@@ -37,9 +37,8 @@ function Header(lev, s, attr)
   end
 end
 
--- rmd code chunks w/ labels get turned into inline code within a paragraph
--- look for a code chunk w/ fig.cap or a kable w/ a caption or a thereom
-function Code(s, attr)
+-- code chunks can contain figure, table, or theorem xrefs
+function CodeBlock(s, attr)
   
   local chunk_begin = chunk_begin_pattern .. xref_label_pattern
  
@@ -47,7 +46,6 @@ function Code(s, attr)
   local fig_cap_begin = "[ ,].*fig%.cap"
   local _, fig_label = string.match(s, chunk_begin .. fig_cap_begin .. chunk_end_pattern)
   if fig_label then
-    xref_pending = true
     local _, _, fig_caption = string.match(s, chunk_begin .. fig_cap_begin .. param_pattern .. chunk_end_pattern)
     if fig_caption then
       return 'fig:' .. fig_label .. ' ' .. fig_caption .. '\n'
@@ -60,7 +58,6 @@ function Code(s, attr)
   local tab_caption_begin = ".*}.*kable%s*%(.*caption"
   local _, tab_label = string.match(s, chunk_begin .. tab_caption_begin .. ".*$")
   if (tab_label) then
-    xref_pending = true
     local _, _, tab_caption = string.match(s, chunk_begin .. tab_caption_begin .. param_pattern .. ".*$")
     if tab_caption then
        return 'tab:' .. tab_label .. ' ' .. tab_caption .. '\n'
@@ -102,7 +99,6 @@ function Code(s, attr)
     
     -- if we found a label it's not 'name', look for a name before returning
     if chunk_label and chunk_label ~= 'name' then
-       xref_pending = true
        -- see if we can find a name
        local _, thm_name = string.match(s, chunk_begin_pattern .. '.*' .. "name" .. param_pattern .. chunk_end_pattern)
        if thm_name then
@@ -239,7 +235,7 @@ function Plain(s)
   return '' 
 end
 
-function CodeBlock(s, attr)
+function Code(s, attr)
   return '' 
 end
 
