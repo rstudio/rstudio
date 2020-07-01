@@ -21,6 +21,7 @@
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Util.hpp>
+#include <core/system/Process.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
@@ -40,12 +41,82 @@ namespace {
 using namespace panmirror::crossref;
 
 const char * const kDOIHost = "https://doi.org";
+const char * const kDataCiteHost = "https://data.datacite.org";
 const char * const kCSLJsonFormat = "application/vnd.citationstyles.csl+json";
 
-void fetchDOIRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
+void logIfNot404(const std::string& stdErr, const core::ErrorLocation& location)
+{
+   if (stdErr.find_first_of("404 Not Found") == std::string::npos)
+      core::log::logErrorMessage("Error fetching CSL for DOI: " + stdErr, location);
+}
+
+void doiRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(value);
 }
+
+Error handleProcessResult(const core::system::ProcessResult& result, json::Value* pValue)
+{
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      return pValue->parse(result.stdOut);
+   }
+   else
+   {
+      // log if it's not a 404 error
+      logIfNot404(result.stdErr, ERROR_LOCATION);
+
+      // return error
+      return systemError(boost::system::errc::state_not_recoverable,
+                         result.stdErr,
+                         ERROR_LOCATION);
+   }
+}
+
+void resolveContinuation(const json::JsonRpcFunctionContinuation& cont,
+                         const json::Value& cslJson)
+{
+   json::JsonRpcResponse response;
+   response.setResult(cslJson);
+   cont(Success(), &response);
+}
+
+
+void dataciteDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
+                             const core::system::ProcessResult& result)
+{
+   json::Value cslJson;
+   Error error = handleProcessResult(result, &cslJson);
+   if (!error)
+   {
+      resolveContinuation(cont, cslJson);
+   }
+   else
+   {
+      json::JsonRpcResponse response;
+      cont(error, &response);
+   }
+}
+
+void crossrefDownloadHandler(const std::string& doi,
+                             const json::JsonRpcFunctionContinuation& cont,
+                             const core::system::ProcessResult& result)
+{
+   json::Value cslJson;
+   Error error = handleProcessResult(result, &cslJson);
+   if (!error)
+   {
+      resolveContinuation(cont, cslJson);
+   }
+   else
+   {
+      // do a datacite lookup (see: https://citation.crosscite.org/docs.html#sec-5)
+      boost::format fmt("%s/%s/%s");
+      std::string url = boost::str(fmt % kDataCiteHost % kCSLJsonFormat % doi);
+      asyncDownloadFile(url, boost::bind(dataciteDownloadHandler, cont, _1));
+   }
+}
+
 
 void doiFetchCSL(const json::JsonRpcRequest& request,
                  const json::JsonRpcFunctionContinuation& cont)
@@ -60,25 +131,23 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
       return;
     }
 
-    std::string url;
-    http::Fields headers;
-
     if (module_context::hasMinimumRVersion("3.6"))
     {
+       std::string url;
+       http::Fields headers;
        boost::format fmt("%s/%s");
        url = boost::str(fmt % kDOIHost % doi);
        headers.push_back(std::make_pair("Accept", kCSLJsonFormat));
+       asyncJsonRpcRequest(url, headers, doiRequestHandler, cont);
     }
     else
     {
        // Path to DOI metadata works/{doi}/transform/{format} (see: https://citation.crosscite.org/docs.html#sec-5)
        boost::format fmt("%s/%s/transform/%s");
        const std::string resourcePath = boost::str(fmt % kCrossrefWorks % doi % kCSLJsonFormat);
-       url = std::string(kCrossrefApiHost) + "/" + resourcePath;
+       std::string url = std::string(kCrossrefApiHost) + "/" + resourcePath;
+       asyncDownloadFile(url, boost::bind(crossrefDownloadHandler, doi, cont, _1));
     }
-
-    // make request
-    asyncJsonRpcRequest(url, headers, fetchDOIRequestHandler, cont);
 }
 
 
