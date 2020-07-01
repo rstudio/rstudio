@@ -142,34 +142,39 @@
     <layout>
       <text macro="zotero2bibtexType" prefix=" @"/>
       <group prefix="{" suffix=" }" delimiter=", ">
-        <text value="F3CCCD24-5C50-412A-AE47-549C9D147498"/>
-        <text variable="publisher-place" prefix=" place={" suffix="}"/>
+        <text value="F3CCCD24-5C50-412A-AE47-549C9D147498" display="left-margin"/>
+        <text variable="publisher-place" prefix="  place={" suffix="}" display="block"/>
         <!--Fix This-->
-        <text variable="chapter-number" prefix=" chapter={" suffix="}"/>
+        <text variable="chapter-number" prefix="  chapter={" suffix="}" display="block"/>
         <!--Fix This-->
-        <text macro="edition" prefix=" edition={" suffix="}"/>
-        <!--Is this in CSL? <text variable="type" prefix=" type={" suffix="}"/>-->
-        <text variable="collection-title" prefix=" series={" suffix="}"/>
-        <text macro="title" prefix=" title={" suffix="}"/>
-        <text variable="volume" prefix=" volume={" suffix="}"/>
-        <!--Not in CSL<text variable="rights" prefix=" rights={" suffix="}"/>-->
-        <text variable="ISBN" prefix=" ISBN={" suffix="}"/>
-        <text variable="ISSN" prefix=" ISSN={" suffix="}"/>
-        <!--Not in CSL <text variable="LCCN" prefix=" callNumber={" suffix="}"/>-->
-        <text variable="archive_location" prefix=" archiveLocation={" suffix="}"/>
-        <text variable="URL" prefix=" url={" suffix="}"/>
-        <text variable="DOI" prefix=" DOI={" suffix="}"/>
-        <text variable="abstract" prefix=" abstractNote={" suffix="}"/>
-        <text variable="note" prefix=" note={" suffix="}"/>
-        <text macro="number" prefix=" number={" suffix="}"/>
-        <text macro="container-title"/>
-        <text macro="publisher"/>
-        <text macro="author" prefix=" author={" suffix="}"/>
-        <text macro="editor-translator" prefix=" editor={" suffix="}"/>
-        <text macro="issued-year" prefix=" year={" suffix="}"/>
-        <text macro="issued-month" prefix=" month={" suffix="}"/>
-        <text macro="pages" prefix=" pages={" suffix="}"/>
-        <text variable="collection-title" prefix=" collection={" suffix="}"/>
+        <text macro="edition" prefix="  edition={" suffix="}" display="block"/>
+
+        <!--Is this in CSL? <text variable="type" prefix=" type={" suffix="}" display="block"/>-->
+        <group suffix="&#10;">
+          <text variable="collection-title" prefix="  series={" suffix="}" display="block"/>
+        </group>
+        <text macro="title" prefix="  title={" suffix="}" display="block"/>
+        <text variable="volume" prefix="  volume={" suffix="}" display="block"/>
+
+        <!--Not in CSL<text variable="rights" prefix=" rights={" suffix="}" display="block"/>-->
+        <text variable="ISBN" prefix=" ISBN={" suffix="}" display="block"/>
+        <text variable="ISSN" prefix=" ISSN={" suffix="}" display="block"/>
+
+        <!--Not in CSL <text variable="LCCN" prefix=" callNumber={" suffix="} display="block""/>-->
+        <text variable="archive_location" prefix=" archiveLocation={" suffix="}" display="block"/>
+        <text variable="URL" prefix=" url={" suffix="}" display="block"/>
+        <text variable="DOI" prefix=" DOI={" suffix="}" display="block"/>
+        <text variable="abstract" prefix=" abstractNote={" suffix="}" display="block"/>
+        <text variable="note" prefix=" note={" suffix="}" display="block"/>
+        <text macro="number" prefix=" number={" suffix="}" display="block"/>
+        <text macro="container-title" display="block"/>
+        <text macro="publisher" display="block"/>
+        <text macro="author" prefix=" author={" suffix="}" display="block"/>
+        <text macro="editor-translator" prefix=" editor={" suffix="}" display="block"/>
+        <text macro="issued-year" prefix=" year={" suffix="}" display="block"/>
+        <text macro="issued-month" prefix=" month={" suffix="}" display="block"/>
+        <text macro="pages" prefix=" pages={" suffix="}" display="block"/>
+        <text variable="collection-title" prefix=" collection={" suffix="}" display="block"/>
       </group>
     </layout>
   </bibliography>
