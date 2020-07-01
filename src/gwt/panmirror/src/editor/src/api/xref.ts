@@ -115,19 +115,46 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
         return false;
       }
     }
-  }
+  },
+  'thm': thereomLocator('theorem'),
+  'lem': thereomLocator('lemma'),
+  'cor': thereomLocator('corollary'),
+  'prp': thereomLocator('proposition'),
+  'cnj': thereomLocator('conjecture'),
+  'def': thereomLocator('definition'),
+  'exr': thereomLocator('exercise'),
 };
 
-function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern: RegExp) {
+function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern?: RegExp) {
   const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
   if (match) {
     return match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
       match[2] === label &&
-      !!node.textContent.match(pattern);
+      (!pattern || !!node.textContent.match(pattern));
   } else {
     return false;
   }
 }
+
+function thereomLocator(engine: string) {
+  return {
+    nodeTypes: ['rmd_chunk'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      // look for conventional engine/label
+      if (rmdChunkHasXRef(node, engine, id)) {
+        return true;
+
+      } else {
+        // look for explicit label= syntax
+        const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+label\s*=\s*['"]([^"']+)['"].*\}/);
+        return !!match &&
+          match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+          match[2] === id;
+      }
+    }
+  };
+}
+
 
 
 
