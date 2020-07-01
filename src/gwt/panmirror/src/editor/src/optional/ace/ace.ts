@@ -111,8 +111,10 @@ class CodeBlockNodeView implements NodeView {
     this.editorOptions = editorOptions;
     this.options = options;
 
-    // call host factory to instantiate editor
+    // call host factory to instantiate editor and populate with initial content
     this.chunk = ui.chunks.createChunkEditor();
+    this.chunk.editor.setValue(node.textContent);
+    this.chunk.editor.clearSelection();
 
     // The editor's outer node is our DOM representation
     this.dom = this.chunk.element;
@@ -123,23 +125,6 @@ class CodeBlockNodeView implements NodeView {
 
     // update mode
     this.updateMode();
-
-    // CodeMirror needs to be in the DOM to properly initialize, so
-    // schedule it to update itself
-    setTimeout(() => {
-      // this.cm.refresh();
-
-      // if we start out hidden then poll every 250ms to check if we
-      // have been shown (after which time we need to call refresh())
-      if (this.dom.offsetHeight === 0) {
-        const timerId = setInterval(() => {
-          if (this.dom.offsetHeight > 0) {
-            // this.cm.refresh();
-            clearInterval(timerId);
-          }
-        }, 250);
-      }
-    }, 20);
 
     // This flag is used to avoid an update loop between the outer and
     // inner editor
