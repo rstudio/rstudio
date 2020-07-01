@@ -507,7 +507,10 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       // build args
       std::vector<std::string> args;
       for (auto biblioFile : biblioFiles)
-         args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+      {
+         if (FilePath::exists(biblioFile.absolutePath()))
+            args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+      }
       args.push_back("--bib2json");
 
       // run pandoc-citeproc
