@@ -16,9 +16,8 @@
 import { EditorState, Transaction } from "prosemirror-state";
 import { Slice } from "prosemirror-model";
 
-import { parseCrossRefDOI } from "../../api/crossref";
-
 import { parseCitation, ParsedCitation } from "./cite";
+import { findDOI } from "../../api/doi";
 
 
 // Parses the transation or state to determine whether the current position
@@ -26,7 +25,7 @@ import { parseCitation, ParsedCitation } from "./cite";
 export function parseDOI(context: EditorState | Transaction): ParsedCitation | undefined {
   const parsedCitation = parseCitation(context);
   if (parsedCitation) {
-    const doi = parseCrossRefDOI(parsedCitation.token);
+    const doi = findDOI(parsedCitation.token);
     if (doi) {
       return parsedCitation;
     }
@@ -43,7 +42,7 @@ export function doiFromSlice(context: EditorState | Transaction, slice: Slice): 
     let text: string | null = null;
     slice.content.forEach(node => (text = text + node.textContent));
     if (text !== null) {
-      const doi = parseCrossRefDOI(text);
+      const doi = findDOI(text);
       if (doi) {
         return { ...parsedCitation, token: doi };
       }
@@ -52,11 +51,5 @@ export function doiFromSlice(context: EditorState | Transaction, slice: Slice): 
   }
 }
 
-// Determines whether a a given string may be a DOI
-// Note that this will validate the form of the string, but not
-// whether it is actually a registered DOI
-export function isDOI(token: string): boolean {
-  return parseCrossRefDOI(token) !== undefined;
-}
 
 

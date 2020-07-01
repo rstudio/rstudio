@@ -13,25 +13,26 @@
  *
  */
 
-import { BibliographySource, BibliographyAuthor, BibliographyDate } from '../../api/bibliography';
+import { BibliographySource } from '../../api/bibliography';
 import { EditorUI } from '../../api/ui';
+import { CSLDate, CSLName } from '../../api/csl';
 
 // An entry which includes the source as well
 // additional metadata for displaying a bibliograph item
 export interface BibliographyEntry {
   source: BibliographySource;
-  authorsFormatter: (authors?: BibliographyAuthor[], maxLength?: number) => string;
-  issuedDateFormatter: (issueDate?: BibliographyDate) => string;
+  authorsFormatter: (authors?: CSLName[], maxLength?: number) => string;
+  issuedDateFormatter: (issueDate?: CSLDate) => string;
   image?: string;
 }
 
 export function entryForSource(source: BibliographySource, ui: EditorUI): BibliographyEntry {
-  const authorsFormatter = (authors?: BibliographyAuthor[], maxLength?: number): string => {
+  const authorsFormatter = (authors?: CSLName[], maxLength?: number): string => {
     return formatAuthors(authors, maxLength);
   };
 
   // Formatter used for shortening and displaying issue dates.
-  const issuedDateFormatter = (date?: BibliographyDate): string => {
+  const issuedDateFormatter = (date?: CSLDate): string => {
     if (date) {
       return formatIssuedDate(date);
     }
@@ -49,7 +50,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
 }
 
 // Suggests a bibliographic identifier based upon the source
-export function suggestIdForEntry(existingIds: string[], author?: BibliographyAuthor[], issued?: BibliographyDate) {
+export function suggestIdForEntry(existingIds: string[], author?: CSLName[], issued?: CSLDate) {
   // Try to get the last name
   let authorPart = '';
   if (author && author.length > 0) {
@@ -62,7 +63,7 @@ export function suggestIdForEntry(existingIds: string[], author?: BibliographyAu
 
   // Try to get the publication year
   let datePart = '';
-  if (issued && issued['date-parts'].length > 0) {
+  if (issued && issued['date-parts'] && issued['date-parts'].length > 0) {
     datePart = issued['date-parts'][0][0] + '';
   }
 
@@ -187,7 +188,7 @@ export function imageForType(ui: EditorUI, type: string): [string?, string?] {
 
 // TODO: Needs to support localization of the templated strings
 const kEtAl = 'et al.';
-export function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number): string {
+export function formatAuthors(authors?: CSLName[], maxLength?: number): string {
   // No author(s) specified
   if (!authors) {
     return '';
@@ -203,8 +204,6 @@ export function formatAuthors(authors?: BibliographyAuthor[], maxLength?: number
       } else if (author.family?.length) {
         // Family name only
         return `${author.family}`;
-      } else if (author.name?.length) {
-        return author.name;
       } else {
         return '';
       }
@@ -260,7 +259,7 @@ function etAl(authorStr: string, maxLength: number) {
 }
 
 // TODO: Needs to support localization of the templated strings
-export function formatIssuedDate(date: BibliographyDate): string {
+export function formatIssuedDate(date: CSLDate): string {
   // No issue date for this
   if (!date) {
     return '';

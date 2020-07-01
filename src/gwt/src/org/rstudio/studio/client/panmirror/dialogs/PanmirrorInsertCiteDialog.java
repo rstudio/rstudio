@@ -82,7 +82,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
                }
 
                // Get the preview and suggested Id
-               citeProps_.work = Js.uncheckedCast(response);
+               citeProps_.csl = Js.uncheckedCast(response);
                PanmirrorUIToolsCitation citationTools = new PanmirrorUITools().citation;
                PanmirrorInsertCiteUI citeUI = citationTools.citeUI(citeProps_);
                citeProps_.citeUI = citeUI;
@@ -147,7 +147,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       {
          result.bibliographyFile = createBibliographyFileName_.getText().trim();
       }
-      result.work = citeProps_.work;
+      result.csl = citeProps_.csl;
       return result;
    }
    

@@ -22,6 +22,7 @@ import Fuse from 'fuse.js';
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
 import { expandPaths } from './path';
+import { CSLName, CSLDate } from './csl';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -44,22 +45,8 @@ export interface BibliographySource {
   DOI?: string;
   URL?: string;
   title?: string;
-  author?: BibliographyAuthor[];
-  issued?: BibliographyDate;
-}
-
-// Author
-export interface BibliographyAuthor {
-  family?: string;
-  given?: string;
-  literal?: string;
-  name?: string;
-}
-
-// Used for issue dates
-export interface BibliographyDate {
-  'date-parts': Array<[number, number?, number?]>;
-  raw?: string;
+  author?: CSLName[];
+  issued?: CSLDate;
 }
 
 interface ParsedYaml {

@@ -7,5 +7,5 @@ import jsinterop.annotations.JsType;
 public class PanmirrorInsertCiteResult {
 	public String id;
 	public String bibliographyFile;
-	public JsObject work;
+	public JsObject csl;
 }

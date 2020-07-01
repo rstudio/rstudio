@@ -22,7 +22,7 @@ import { CompletionHandler, CompletionResult } from "../../api/completion";
 import { BibliographyEntry, entryForSource } from "./cite-bibliography_entry";
 import { kCitationCompleteScope, kCiteCompletionWidth, BibliographySourceView } from "./cite-completion";
 import { parseCitation } from "./cite";
-import { isDOI } from "./cite-doi";
+import { hasDOI } from '../../api/doi';
 
 export function citationLocalDoiCompletionHandler(
   ui: EditorUI,
@@ -57,21 +57,18 @@ export function citationLocalDoiCompletionHandler(
 function citationLocaLDOICompletions(ui: EditorUI, manager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
     const parsed = parseCitation(context);
-    if (parsed && isDOI(parsed.token)) {
-      return {
-        token: parsed.token,
-        pos: parsed.pos,
-        offset: parsed.offset,
-        completions: (_state: EditorState) =>
-          manager.loadBibliography(ui, context.doc).then((bibliography) => {
-            const source = bibliography.sources.find(src => src.DOI === parsed.token);
-            if (source) {
-              return [entryForSource(source, ui)];
-            }
-            return [];
+    if (parsed && hasDOI(parsed.token)) {
+      const source = manager.findDoi(parsed.token);
+      if (source) {
+        return {
+          token: parsed.token,
+          pos: parsed.pos,
+          offset: parsed.offset,
+          completions: (_state: EditorState) => {
+            return Promise.resolve([entryForSource(source, ui)]);
           }
-          )
-      };
+        };
+      }
     }
     return null;
   };

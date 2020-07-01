@@ -28,14 +28,14 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc, BibliographySource } from '../../api/bibliography';
+import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
-import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossref';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
 import { citationLocalDoiCompletionHandler } from './cite-completion_doi_local';
+import { CSL, formatForPreview } from '../../api/csl';
 
 const kCiteCitationsIndex = 0;
 
@@ -570,7 +570,7 @@ export function insertCitationForDOI(
   pos: number,
   ui: EditorUI,
   server: PandocServer,
-  work?: CrossrefWork
+  csl?: CSL
 ) {
   bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
 
@@ -582,10 +582,10 @@ export function insertCitationForDOI(
       doi,
       existingIds,
       bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
-      work,
-      citeUI: work ? {
-        suggestedId: suggestIdForEntry(existingIds, work.author, work.issued),
-        previewFields: formatForPreview(work)
+      csl,
+      citeUI: csl ? {
+        suggestedId: suggestIdForEntry(existingIds, csl.author, csl.issued),
+        previewFields: formatForPreview(csl)
       } : undefined
     };
 
@@ -595,22 +595,27 @@ export function insertCitationForDOI(
       // If the user provided an id, insert the citation
       if (result && result.id.length) {
 
-        // TODO: this is broken
         const project = bibliography.project_biblios.length > 0;
         const bibliographyFile = project
           ? result.bibliographyFile :
           ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
-        const source = [{
-          id: result.id,
-          type: "book",
-          title: "book title"
-        }];
-        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify(source)).then(() => {
+
+        // TODO: This is broken
+        const garbageHack = {
+          ...result.csl,
+          ISSN: ''
+        };
+
+        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([garbageHack])).then(() => {
 
           const tr = view.state.tr;
 
           // Update the bibliography on the page if need be
           if (ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+
+            // Because this could be called by a paste handler or other non-completion end point
+            // we needd to completely suppress completions upon insert the citation
+            tr.setMeta(kPreventCompletionTransaction, true);
 
             // Use the biblography manager to write an entry to the user specified bibliography
             performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
@@ -618,9 +623,8 @@ export function insertCitationForDOI(
             view.dispatch(tr);
             view.focus();
           }
-
-
-
+        }).catch(error => {
+          // TODO: What do in the event of an error
         });
 
       }
@@ -639,9 +643,9 @@ function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): str
 }
 
 export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
-  if (citeProps.work) {
-    const suggestedId = suggestIdForEntry(citeProps.existingIds, citeProps.work.author, citeProps.work.issued);
-    const previewFields = formatForPreview(citeProps.work);
+  if (citeProps.csl) {
+    const suggestedId = suggestIdForEntry(citeProps.existingIds, citeProps.csl.author, citeProps.csl.issued);
+    const previewFields = formatForPreview(citeProps.csl);
     return {
       suggestedId,
       previewFields

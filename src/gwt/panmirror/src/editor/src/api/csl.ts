@@ -1,5 +1,5 @@
 /*
- * crossref.ts
+ * csl.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,33 +13,16 @@
  *
  */
 
-// https://github.com/CrossRef/rest-api-doc
-export interface CrossrefServer {
-  works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
-}
+import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography_entry";
 
-export const kCrossrefItemsPerPage = 'items-per-page';
-export const kCrossrefStartIndex = 'start-index';
-export const kCrossrefSearchTerms = 'search-terms';
-export const kCrossrefTotalResults = 'total-results';
 
-export interface CrossrefMessage<T> {
-  items: T[];
-  [kCrossrefItemsPerPage]: number;
-  query: {
-    [kCrossrefStartIndex]: number;
-    [kCrossrefSearchTerms]: string;
-  };
-  [kCrossrefTotalResults]: number;
-}
+export interface CSL {
 
-// https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#work
-export interface CrossrefWork {
   // Name of work's publisher
   publisher: string;
 
-  // Work titles, including translated titles
-  title: string[];
+  // Title
+  title: string;
 
   // DOI of the work 
   DOI: string;
@@ -51,10 +34,10 @@ export interface CrossrefWork {
   type: string;
 
   // Array of Contributors
-  author: CrossrefContributor[];
+  author: CSLName[];
 
   // Earliest of published-print and published-online
-  issued: CrossrefDate;
+  issued: CSLDate;
 
   // Full titles of the containing work (usually a book or journal)
   'container-title'?: string;
@@ -72,15 +55,42 @@ export interface CrossrefWork {
   page: string;
 }
 
-export interface CrossrefContributor {
+export interface CSLName {
   family: string;
-  given?: string;
+  given: string;
+  literal?: string;
 }
 
-/* (Partial Date) Contains an ordered array of year, month, day of month. Only year is required. 
-Note that the field contains a nested array, e.g. [ [ 2006, 5, 19 ] ] to conform 
-to citeproc JSON dates */
-export interface CrossrefDate {
-  'date-parts': Array<[number, number?, number?]>;
+export interface CSLDate {
+  'date-parts'?: Array<[number, number?, number?]>;
+  'raw'?: string;
+}
+export interface CSLField {
+  name: string;
+  value: string;
 }
 
+export function formatForPreview(work: CSL): CSLField[] {
+
+  const pairs = new Array<CSLField>();
+  pairs.push({ name: "Title", value: work.title[0] });
+  pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
+  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued) });
+
+  const containerTitle = work["container-title"];
+  if (containerTitle) {
+    pairs.push({ name: "Publication", value: containerTitle });
+  }
+
+  const volume = work.volume;
+  if (volume) {
+    pairs.push({ name: "Volume", value: volume });
+  }
+
+  const page = work.page;
+  if (volume) {
+    pairs.push({ name: "Page(s)", value: page });
+  }
+
+  return pairs;
+}

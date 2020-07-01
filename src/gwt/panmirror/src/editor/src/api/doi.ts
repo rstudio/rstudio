@@ -13,7 +13,46 @@
  *
  */
 
+import { CSL } from "./csl";
+
 
 export interface DOIServer {
-  fetchCSL: (doi: string, progressDelay: number) => Promise<{}>;
+  fetchCSL: (doi: string, progressDelay: number) => Promise<CSL>;
+}
+
+// ^10.\d{4,9}/[-._;()/:A-Z0-9]+$
+// Core regexes come from https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+const kModernCrossrefDOIRegex = /10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
+const kEarlyWileyCrossrefDOIRegex = /10.1002\/[^\s]+$/i;
+const kOtherCrossrefDOIRegex1 = /10.\\d{4}\/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\d$/i;
+const kOtherCrossrefDOIRegex2 = /10.1021\/\w\w\d+$/i;
+const kOtherCrossrefDOIRegex3 = /10.1207\/[\w\d]+\&\d+_\d+$/i;
+
+const kCrossrefMatches = [
+  kModernCrossrefDOIRegex,
+  kEarlyWileyCrossrefDOIRegex,
+  kOtherCrossrefDOIRegex1,
+  kOtherCrossrefDOIRegex2,
+  kOtherCrossrefDOIRegex3,
+];
+
+// Determines whether a a given string may be a DOI
+// Note that this will validate the form of the string, but not
+// whether it is actually a registered DOI
+export function hasDOI(token: string): boolean {
+  return findDOI(token) !== undefined;
+}
+
+export function findDOI(token: string): string | undefined {
+  let match = null;
+  kCrossrefMatches.find(regex => {
+    match = token.match(regex);
+    return match && match[0].length > 0;
+  });
+
+  if (match === null) {
+    return undefined;
+  } else {
+    return match[0];
+  }
 }

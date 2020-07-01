@@ -27,7 +27,7 @@ import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation } from './cite';
-import { isDOI } from './cite-doi';
+import { hasDOI } from '../../api/doi';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -77,7 +77,7 @@ function filterCitations(
   ui: EditorUI,
 ) {
   // Empty query or DOI
-  if (token.trim().length === 0 || isDOI(token)) {
+  if (token.trim().length === 0 || hasDOI(token)) {
     return [];
   }
 

@@ -22,7 +22,7 @@ import { EditorUIImages } from './ui-images';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
 import { SkinTone } from './emoji';
-import { CrossrefFormattedField, CrossrefWork } from './crossref';
+import { CSL, CSLField } from './csl';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -217,19 +217,19 @@ export interface InsertCiteProps {
   doi: string;
   existingIds: string[];
   bibliographyFiles: string[];
-  work?: CrossrefWork;
+  csl?: CSL;
   citeUI?: InsertCiteUI;
 }
 
 export interface InsertCiteUI {
   suggestedId: string;
-  previewFields: CrossrefFormattedField[];
+  previewFields: CSLField[];
 }
 
 export interface InsertCiteResult {
   id: string;
   bibliographyFile: string;
-  work: CrossrefWork;
+  csl: CSL;
 }
 
 export interface RawFormatProps {

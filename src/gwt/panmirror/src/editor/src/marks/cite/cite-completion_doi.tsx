@@ -20,7 +20,6 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
@@ -31,6 +30,7 @@ import { DOIServer } from '../../api/doi';
 
 import { parseDOI } from './cite-doi';
 import { insertCitationForDOI } from './cite';
+import { CSL } from '../../api/csl';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;
@@ -39,7 +39,7 @@ export function citationDoiCompletionHandler(
   ui: EditorUI,
   bibManager: BibliographyManager,
   server: EditorServer,
-): CompletionHandler<CrossrefEntry> {
+): CompletionHandler<CSLEntry> {
   return {
     id: '56DA14DD-6E3A-4481-93A9-938DC00393A5',
 
@@ -47,15 +47,15 @@ export function citationDoiCompletionHandler(
 
     completions: citationDOICompletions(ui, server.doi),
 
-    replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
-      if (work) {
-        insertCitationForDOI(view, work.DOI, bibManager, pos, ui, server.pandoc, work);
+    replace(view: EditorView, pos: number, cslEntry: CSLEntry | null) {
+      if (cslEntry) {
+        insertCitationForDOI(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
     },
 
     view: {
-      component: CrossrefWorkView,
-      key: work => work.DOI,
+      component: CSLSourceView,
+      key: cslEntry => cslEntry.csl.DOI,
       width: kCompletionWidth,
       height: 120,
       maxVisible: 5,
@@ -65,7 +65,7 @@ export function citationDoiCompletionHandler(
 }
 
 function citationDOICompletions(ui: EditorUI, server: DOIServer) {
-  return (_text: string, context: EditorState | Transaction): CompletionResult<CrossrefEntry> | null => {
+  return (_text: string, context: EditorState | Transaction): CompletionResult<CSLEntry> | null => {
     const parsedDOI = parseDOI(context);
     if (parsedDOI) {
       return {
@@ -74,13 +74,13 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         offset: parsedDOI.offset,
         completions: (_state: EditorState) =>
           server.fetchCSL(parsedDOI.token, 350).then(result => {
-            const work = result as CrossrefWork;
             return [
               {
-                ...work,
-                image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
-                formattedAuthor: formatAuthors(work.author, 50),
-                formattedIssueDate: formatIssuedDate(work.issued),
+                id: result.DOI,
+                csl: result,
+                image: imageForType(ui, result.type)[ui.prefs.darkMode() ? 1 : 0],
+                formattedAuthor: formatAuthors(result.author, 50),
+                formattedIssueDate: formatIssuedDate(result.issued),
               },
             ];
           }),
@@ -90,7 +90,9 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
   };
 }
 
-interface CrossrefEntry extends CrossrefWork {
+interface CSLEntry {
+  id: string;
+  csl: CSL;
   image?: string;
   formattedAuthor: string;
   formattedIssueDate: string;
@@ -98,14 +100,15 @@ interface CrossrefEntry extends CrossrefWork {
 
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
-const CrossrefWorkView: React.FC<CrossrefEntry> = work => {
+const CSLSourceView: React.FC<CSLEntry> = cslEntry => {
+  const csl = cslEntry.csl;
   return (
     <CompletionItemDetailedView
       width={kCompletionWidth - kCompletionItemPadding}
-      image={work.image}
-      heading={work['short-container-title'] || work.publisher}
-      title={work.title[0]}
-      subTitle={`${work.formattedAuthor} ${work.formattedIssueDate}` || ''}
+      image={cslEntry.image}
+      heading={csl['short-container-title'] || csl.publisher}
+      title={csl.title}
+      subTitle={`${cslEntry.formattedAuthor} ${cslEntry.formattedIssueDate}` || ''}
     />
   );
 };
