@@ -241,8 +241,6 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
   }
 }
 
-// TODO: string based replace to avoid mauling their yaml
-// Even treat arrays like text
 function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
   // Add this to the first node
   const yamlCode = parsedYaml.yamlCode;

@@ -150,9 +150,7 @@
         <text macro="edition" prefix="  edition={" suffix="}" display="block"/>
 
         <!--Is this in CSL? <text variable="type" prefix=" type={" suffix="}" display="block"/>-->
-        <group suffix="&#10;">
-          <text variable="collection-title" prefix="  series={" suffix="}" display="block"/>
-        </group>
+        <text variable="collection-title" prefix="  series={" suffix="}" display="block"/>
         <text macro="title" prefix="  title={" suffix="}" display="block"/>
         <text variable="volume" prefix="  volume={" suffix="}" display="block"/>
 
