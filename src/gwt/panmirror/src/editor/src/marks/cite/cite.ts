@@ -30,7 +30,7 @@ import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transa
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
-import { doiFromSlice } from './cite-doi';
+import { doiFromSlice, parseDOI } from './cite-doi';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
@@ -254,7 +254,8 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         // completion handling the paste (e.g. no other competions should be fired)
         const tr = view.state.tr;
         tr.setMeta(kPreventCompletionTransaction, source === undefined);
-        tr.insertText(parsedDOI.token, parsedDOI.pos);
+        const doiText = schema.text(parsedDOI.token);
+        tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
 
         if (!source) {
