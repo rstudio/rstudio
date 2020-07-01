@@ -23,7 +23,7 @@ public class PanmirrorOptions
 {    
    public boolean autoFocus;
    public boolean spellCheck;
-   public String rmdChunkEditor;
+   public String codeEditor;
    public boolean rmdImagePreview;
    public boolean rmdExampleHighlight;
    public String[] rmdChunkExecution;

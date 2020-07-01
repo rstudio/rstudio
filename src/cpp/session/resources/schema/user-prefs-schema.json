@@ -1271,7 +1271,7 @@
             "title": "Font size for visual editing mode",
             "description": "The default visual editing mode font size, in points"
         },
-        "visual_markdown_chunk_editor": {
+        "visual_markdown_code_editor": {
             "type": "string",
             "enum": ["ace", "codemirror"],
             "default": "codemirror",

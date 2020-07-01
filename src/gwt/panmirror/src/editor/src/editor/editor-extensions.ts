@@ -198,9 +198,9 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
 
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
-  if (context.options.rmdChunkEditor === "codemirror") {
+  if (context.options.codeEditor === "codemirror") {
     plugins.push(...codeMirrorPlugins(manager.codeViews(), context.ui, context.options));
-  } else if (context.options.rmdChunkEditor === "ace") {
+  } else if (context.options.codeEditor === "ace") {
     plugins.push(...acePlugins(manager.codeViews(), context.ui, context.options));
   }
 

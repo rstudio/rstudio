@@ -16,7 +16,7 @@ package org.rstudio.studio.client.panmirror.ui;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 
 import jsinterop.annotations.JsType;
 
@@ -24,5 +24,5 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIChunk
 {
    public AceEditorNative editor;
-   public JavaScriptObject element;
+   public Element element;
 }

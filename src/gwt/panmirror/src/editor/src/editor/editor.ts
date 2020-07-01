@@ -258,7 +258,7 @@ export class Editor {
     options = {
       autoFocus: false,
       spellCheck: false,
-      rmdChunkEditor: "codemirror",
+      codeEditor: "codemirror",
       rmdImagePreview: false,
       hideFormatComment: false,
       className: '',
