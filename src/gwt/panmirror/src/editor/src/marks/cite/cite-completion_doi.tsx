@@ -23,7 +23,7 @@ import { EditorUI } from '../../api/ui';
 import { CrossrefServer, CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { kCitationCompleteScope } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate, suggestIdForEntry } from './cite-bibliography_entry';
+import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';

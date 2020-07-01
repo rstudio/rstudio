@@ -35,6 +35,7 @@ import { CrossrefServer, CrossrefWork, formatForPreview } from '../../api/crossr
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
+import { citationLocalDoiCompletionHandler } from './cite-completion_doi_local';
 
 const kCiteCitationsIndex = 0;
 
@@ -215,6 +216,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     completionHandlers: () => [
+      citationLocalDoiCompletionHandler(context.ui, mgr),
       citationDoiCompletionHandler(context.ui, mgr, context.server),
       citationCompletionHandler(context.ui, mgr),
     ],
@@ -242,17 +244,24 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
       // This is a DOI
       const parsedDOI = doiFromSlice(view.state, slice);
       if (parsedDOI) {
+
+        // First check the local bibliography- if we already have this DOI
+        // we can just past the DOI and allow the completion to handle it
+        const source = bibManager.findDoi(parsedDOI.token);
+
         // Insert the DOI text as a placeholder
         // This is using the completion insertion as this should be treated as a 
         // completion handling the paste (e.g. no other competions should be fired)
         const tr = view.state.tr;
-        tr.setMeta(kPreventCompletionTransaction, true);
+        tr.setMeta(kPreventCompletionTransaction, source === undefined);
         tr.insertText(parsedDOI.token, parsedDOI.pos);
         view.dispatch(tr);
 
-        insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
-
+        if (!source) {
+          insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
+        }
         return true;
+
       } else {
         // This is just content, paste the text content into the citation
         // and allow citations to fire

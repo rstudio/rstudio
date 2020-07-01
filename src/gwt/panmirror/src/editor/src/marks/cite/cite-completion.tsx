@@ -32,8 +32,8 @@ import { isDOI } from './cite-doi';
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
 
-const kCompletionWidth = 400;
-const kCompletionItemPadding = 10;
+export const kCiteCompletionWidth = 400;
+const kCiteCompletionItemPadding = 10;
 
 export const kCitationCompleteScope = 'CitationScope';
 
@@ -48,8 +48,8 @@ export function citationCompletionHandler(
 
     completions: citationCompletions(ui, bibManager),
 
-    filter: (completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(completions, token, bibManager, ui);
+    filter: (_completions: BibliographyEntry[], _state: EditorState, token: string) => {
+      return filterCitations(token, bibManager, ui);
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -63,7 +63,7 @@ export function citationCompletionHandler(
     view: {
       component: BibliographySourceView,
       key: entry => entry.source.id,
-      width: kCompletionWidth,
+      width: kCiteCompletionWidth,
       height: 54,
       maxVisible: 5,
       hideNoResults: true,
@@ -72,18 +72,12 @@ export function citationCompletionHandler(
 }
 
 function filterCitations(
-  bibliographyEntries: BibliographyEntry[],
   token: string,
   manager: BibliographyManager,
   ui: EditorUI,
 ) {
-  // Empty query
-  if (token.trim().length === 0) {
-    return [];
-  }
-
-  // DOI
-  if (isDOI(token)) {
+  // Empty query or DOI
+  if (token.trim().length === 0 || isDOI(token)) {
     return [];
   }
 
@@ -133,12 +127,12 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
 
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
-const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
+export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
   const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
   const detail = `${authorStr} ${entry.issuedDateFormatter(entry.source.issued)}`;
   return (
     <CompletionItemView
-      width={kCompletionWidth - kCompletionItemPadding}
+      width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || ''}

@@ -126,6 +126,10 @@ export class BibliographyManager {
     return this.bibliography || { sources: [], project_biblios: [] };
   }
 
+  public findDoi(doi: string): BibliographySource | undefined {
+    return this.bibliography?.sources.find(source => source.DOI === doi);
+  }
+
   public search(query: string, limit: number): BibliographySource[] {
     // TODO: If search is called but the server hasn't downloaded, we should 
     // download the data, then index, then search?
