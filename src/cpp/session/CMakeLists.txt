@@ -196,6 +196,7 @@ set (SESSION_SOURCE_FILES
    modules/panmirror/SessionPanmirror.cpp
    modules/panmirror/SessionPanmirrorBibliography.cpp
    modules/panmirror/SessionPanmirrorCrossref.cpp
+   modules/panmirror/SessionPanmirrorDOI.cpp
    modules/panmirror/SessionPanmirrorPandoc.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp

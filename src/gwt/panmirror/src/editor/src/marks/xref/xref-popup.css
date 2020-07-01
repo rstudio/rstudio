@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * xref-popup.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,15 +13,22 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
+.pm-xref-popup {
+  max-width: 350px; /* also in xref-popup.tsx */
+}
 
+.pm-xref-popup > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
+.pm-xref-popup-key {
+  cursor: pointer !important;
+}
+
+.pm-xref-popup-file {
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-top: 3px;
 }

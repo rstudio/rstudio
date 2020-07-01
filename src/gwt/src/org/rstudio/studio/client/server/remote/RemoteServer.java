@@ -6185,10 +6185,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
    }
    
+   
    @Override
-   public void crossrefDoi(String doi, ServerRequestCallback<JavaScriptObject> callback)
+   public void doiFetchCSL(String doi, ServerRequestCallback<JavaScriptObject> callback)
    {
-      sendRequest(RPC_SCOPE, CROSSREF_DOI, doi, callback);
+      sendRequest(RPC_SCOPE, DOI_FETCH_CSL, doi, callback);
    }
    
    @Override
@@ -6706,10 +6707,9 @@ public class RemoteServer implements Server
    private static final String PANDOC_ADD_TO_BIBLIOGRAPHY = "pandoc_add_to_bibliography";
    
    private static final String CROSSREF_WORKS = "crossref_works";
-   private static final String CROSSREF_DOI = "crossref_doi";
+   
+   private static final String DOI_FETCH_CSL = "doi_fetch_csl";
    
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-  
-   
 }

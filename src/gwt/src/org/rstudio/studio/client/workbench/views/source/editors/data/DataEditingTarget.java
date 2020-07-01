@@ -112,6 +112,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void onActivate()
    {
       super.onActivate();
+      isActive_ = true;
       if (view_ != null)
       {
          // the data change while the window wasn't active, so refresh it,

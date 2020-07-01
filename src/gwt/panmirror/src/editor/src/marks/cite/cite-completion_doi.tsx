@@ -20,13 +20,14 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CrossrefServer, CrossrefWork } from '../../api/crossref';
+import { CrossrefWork } from '../../api/crossref';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { kCitationCompleteScope } from './cite-completion';
 import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';
+import { DOIServer } from '../../api/doi';
 
 import { parseDOI } from './cite-doi';
 import { insertCitationForDOI } from './cite';
@@ -44,7 +45,7 @@ export function citationDoiCompletionHandler(
 
     scope: kCitationCompleteScope,
 
-    completions: citationDOICompletions(ui, server.crossref),
+    completions: citationDOICompletions(ui, server.doi),
 
     replace(view: EditorView, pos: number, work: CrossrefEntry | null) {
       if (work) {
@@ -63,7 +64,7 @@ export function citationDoiCompletionHandler(
   };
 }
 
-function citationDOICompletions(ui: EditorUI, server: CrossrefServer) {
+function citationDOICompletions(ui: EditorUI, server: DOIServer) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CrossrefEntry> | null => {
     const parsedDOI = parseDOI(context);
     if (parsedDOI) {
@@ -72,14 +73,17 @@ function citationDOICompletions(ui: EditorUI, server: CrossrefServer) {
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
         completions: (_state: EditorState) =>
-          server.doi(parsedDOI.token, 350).then(work => [
-            {
-              ...work,
-              image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
-              formattedAuthor: formatAuthors(work.author, 50),
-              formattedIssueDate: formatIssuedDate(work.issued),
-            },
-          ]),
+          server.fetchCSL(parsedDOI.token, 350).then(result => {
+            const work = result as CrossrefWork;
+            return [
+              {
+                ...work,
+                image: imageForType(ui, work.type)[ui.prefs.darkMode() ? 1 : 0],
+                formattedAuthor: formatAuthors(work.author, 50),
+                formattedIssueDate: formatIssuedDate(work.issued),
+              },
+            ];
+          }),
       };
     }
     return null;

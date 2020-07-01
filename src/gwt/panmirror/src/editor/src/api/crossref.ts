@@ -18,7 +18,6 @@ import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
   works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
-  doi: (doi: string, progressDelay: number) => Promise<CrossrefWork>;
 }
 
 export const kCrossrefItemsPerPage = 'items-per-page';

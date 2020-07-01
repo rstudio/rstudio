@@ -22,5 +22,4 @@ import com.google.gwt.core.client.JavaScriptObject;
 public interface PanmirrorCrossrefServerOperations 
 {
    void crossrefWorks(String query, ServerRequestCallback<JavaScriptObject> callback);
-   void crossrefDoi(String doi, ServerRequestCallback<JavaScriptObject> callback);
 }

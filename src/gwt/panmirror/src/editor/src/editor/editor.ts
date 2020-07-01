@@ -68,8 +68,7 @@ import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
-import { CrossrefServer } from '../api/crossref';
-import { XRefServer } from '../api/xref';
+import { EditorServer } from '../api/server';
 import { citeUI } from "../marks/cite/cite";
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
@@ -102,7 +101,6 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { EditorServer } from '../api/server';
 
 export interface EditorCode {
   code: string;
@@ -273,7 +271,7 @@ export class Editor {
     // provide format defaults
     format = {
       pandocMode: format.pandocMode || 'markdown',
-      pandocExtensions: format.pandocMode || '',
+      pandocExtensions: format.pandocExtensions || '',
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
@@ -605,20 +603,20 @@ export class Editor {
     this.focus();
   }
 
-  public navigate(type: NavigationType, location: string, animate = false) {
+  public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
+
+    // perform navigation
     const nav = navigateTo(this.view, type, location, animate);
+
+    // emit event
     if (nav !== null) {
+      if (!recordCurrent) {
+        nav.prevPos = -1;
+      }
       this.emitEvent(NavigateEvent, nav);
     }
   }
 
-  public navigateToId(id: string, animate = false) {
-    return this.navigate(NavigationType.Id, id, animate);
-  }
-
-  public navigateToPos(pos: number, animate = false) {
-    return this.navigate(NavigationType.Pos, pos.toString(), animate);
-  }
 
   public resize() {
     this.syncContentWidth();

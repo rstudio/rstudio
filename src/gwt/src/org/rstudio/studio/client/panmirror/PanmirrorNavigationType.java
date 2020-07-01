@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * PanmirrorNavigationType.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,15 +13,14 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
 
+package org.rstudio.studio.client.panmirror;
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
+public class PanmirrorNavigationType
+{
+  public final static String Pos = "pos";
+  public final static String Id = "id";
+  public final static String Href = "href";
+  public final static String Heading = "heading";
+  public final static String XRef = "xref";
 }

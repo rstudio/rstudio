@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorNavigation;
+import org.rstudio.studio.client.panmirror.PanmirrorNavigationType;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
@@ -52,7 +53,8 @@ public class VisualModeNavigation
    
    public void onNavigated(PanmirrorNavigation navigation)
    {
-      events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.prevPos)));
+      if (navigation.prevPos != -1)
+         events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.prevPos)));
       events_.fireEvent(new SourceNavigationEvent(createSourceNavigation(navigation.pos)));
    }
    
@@ -61,10 +63,15 @@ public class VisualModeNavigation
       return kPanmirrorContext.equals(position.getContext());
    }
 
-   public void navigate(SourcePosition position)
+   public void navigate(SourcePosition position, boolean recordCurrentPosition)
    {
       int pos = (kRowLength * position.getRow()) + position.getColumn();
-      context_.panmirror().navigateToPos(pos);
+      context_.panmirror().navigate(PanmirrorNavigationType.Pos, Integer.toString(pos), recordCurrentPosition);
+   }
+   
+   public void navigateToXRef(String xref, boolean recordCurrentPosition)
+   {
+      context_.panmirror().navigate(PanmirrorNavigationType.XRef, xref, recordCurrentPosition);
    }
    
    public void recordCurrentNavigationPosition()

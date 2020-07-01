@@ -49,17 +49,6 @@ public class PanmirrorCrossrefServer
          );
       });
    }
-   
-   public Promise<JavaScriptObject> doi(String doi, int delayMs)
-   {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.crossrefDoi(
-        		 doi,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Looking up DOI...", delayMs)
-         );
-      });
-   }   
-
 
    PanmirrorCrossrefServerOperations server_;
 }

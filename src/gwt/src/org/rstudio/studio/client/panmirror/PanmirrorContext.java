@@ -20,7 +20,6 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -30,15 +29,13 @@ public class PanmirrorContext
 {  
    public PanmirrorContext(PanmirrorUIContext uiContext, 
                            PanmirrorUIDisplay uiDisplay,
-                           PanmirrorUIExecute uiExecute,
-                           TextEditingTarget target)
+                           PanmirrorUIExecute uiExecute)
    {
       this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute); 
-      this.server = new PanmirrorServer(target);
    }
    
    public PanmirrorUI ui;
-   public PanmirrorServer server;
+   public PanmirrorServer server = new PanmirrorServer();
    public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions = null;
 }

@@ -15,23 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 /**
- * Size of xterm in rows and columns of text. A dimension will be returned
- * as -1 if it could not be computed.
+ * Size of xterm in rows and columns of text.
  */
-public class XTermDimensions extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class XTermDimensions
 {
-   protected XTermDimensions() {}
-
-   public final native int getCols() /*-{
-      if (this.cols !== this.cols) { return -1; } // isNaN
-      return this.cols;
-   }-*/;
-
-   public final native int getRows() /*-{
-      if (this.rows !== this.rows) { return -1; } // isNaN
-      return this.rows;
-   }-*/;
+   public int cols;
+   public int rows;
 }

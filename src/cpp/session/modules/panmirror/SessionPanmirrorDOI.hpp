@@ -1,7 +1,7 @@
 /*
- * server.ts
+ * SessionPanmirrorDOI.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,16 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#ifndef SESSION_MODULES_PANMIRROR_DOI_HPP
+#define SESSION_MODULES_PANMIRROR_DOI_HPP
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
-
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
+namespace rstudio {
+namespace core {
+   class Error;
+   class FilePath;
 }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace panmirror {
+namespace doi {
+
+core::Error initialize();
+
+} // namespace doi
+} // namespace panmirror
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif /* SESSION_MODULES_PANMIRROR_DOI_HPP */

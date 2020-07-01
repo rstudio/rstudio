@@ -15,6 +15,8 @@
 
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include <boost/format.hpp>
+
 #include <shared_core/Error.hpp>
 #include <core/json/JsonRpc.hpp>
 
@@ -101,12 +103,31 @@ void endJsonRpcRequest(const json::JsonRpcFunctionContinuation& cont,
 
 } // anonymous namespace
 
-void asyncDownloadFile(const std::string& url, const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+
+void asyncDownloadFile(const std::string& url,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
+   http::Fields headers;
+   asyncDownloadFile(url, headers, onCompleted);
+}
+
+void asyncDownloadFile(const std::string& url,
+                       const http::Fields& headers,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   // create headers if we have them
+   std::vector<std::string> headerList;
+   std::transform(headers.begin(), headers.end(), std::back_inserter(headerList), [](const http::Field& field) {
+      return field.first + " = '" + field.second + "'";
+   });
+   std::string headersStr;
+   if (headerList.size() > 0)
+     headersStr = ", headers = c(" + boost::algorithm::join(headerList, ", ") + ")";
+
    // build the command
    std::string cmd("{ ");
    cmd += "tmp <- tempfile(); ";
-   cmd += "download.file('" + url +"', destfile = tmp, quiet = TRUE); ";
+   cmd += "download.file('" + url +"'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
    cmd += "cat(readLines(tmp, warn = FALSE)); ";
    cmd += "} ";
 
@@ -115,12 +136,20 @@ void asyncDownloadFile(const std::string& url, const boost::function<void(const 
    pDownload->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_NO_RDATA);
 }
 
-
 void asyncJsonRpcRequest(const std::string& url,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont)
 {
-   asyncDownloadFile(url, boost::bind(endJsonRpcRequest, cont, handler, _1));
+   http::Fields headers;
+   asyncJsonRpcRequest(url, headers, handler, cont);
+}
+
+void asyncJsonRpcRequest(const std::string& url,
+                         const http::Fields& headers,
+                         const JsonRpcResponseHandler& handler,
+                         const core::json::JsonRpcFunctionContinuation& cont)
+{
+   asyncDownloadFile(url, headers, boost::bind(endJsonRpcRequest, cont, handler, _1));
 }
 
 } // namespace session
