@@ -17,18 +17,17 @@ package org.rstudio.studio.client.panmirror.server;
 
 
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorServer
 {    
-   public PanmirrorServer(TextEditingTarget target)
+   public PanmirrorServer()
    {
       this.pandoc = new PanmirrorPandocServer();
       this.crossref = new PanmirrorCrossrefServer();
-      this.xref = new PanmirrorXRefServer(target);
+      this.xref = new PanmirrorXRefServer();
    }
    
    public PanmirrorPandocServer pandoc;

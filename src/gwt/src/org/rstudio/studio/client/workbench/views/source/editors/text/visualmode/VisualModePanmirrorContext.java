@@ -41,6 +41,10 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
 
+import elemental2.promise.Promise;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
+
 
 public class VisualModePanmirrorContext
 {
@@ -81,8 +85,7 @@ public class VisualModePanmirrorContext
       return new PanmirrorContext(
          uiContext(), 
          uiDisplay(showContextMenu), 
-         exec_.uiExecute(),
-         target_
+         exec_.uiExecute()
       );
    }
    
@@ -92,6 +95,14 @@ public class VisualModePanmirrorContext
       
       uiContext.getDocumentPath = () -> {
         return docUpdateSentinel_.getPath(); 
+      };
+      
+      uiContext.withSavedDocument = () -> {
+         return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+           target_.withSavedDoc(() -> {
+              resolve.onInvoke(true);
+           });
+         });
       };
       
       uiContext.getDefaultResourceDir = () -> {  

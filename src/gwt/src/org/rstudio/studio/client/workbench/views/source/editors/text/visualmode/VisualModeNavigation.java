@@ -26,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationE
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 
 

@@ -47,10 +47,8 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
         const kXRefRegEx = /^@ref\(([A-Za-z0-9:-]*)\)$/;
         const match = target.text.match(kXRefRegEx);
         if (match && match[1].length) {
+          await ui.context.withSavedDocument();
           const xrefs = await server.xref.xrefForId(docPath, match[1]);
-
-
-
           if (xrefs.refs.length) {
 
             const xref = xrefs.refs[0];
