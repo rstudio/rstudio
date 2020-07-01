@@ -258,12 +258,10 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
 // Even treat arrays like text
 function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
   // Add this to the first node
-  const firstBlockYaml = parsedYaml.yaml || {};
-  firstBlockYaml.bibliography = bibliographyFile;
-  const updatedYamlCode = toYamlCode(firstBlockYaml);
-
-  const yamlLines = `\n${updatedYamlCode}`;
-  const yamlText = schema.text(`---${yamlLines}---`);
+  const yamlCode = parsedYaml.yamlCode;
+  const bibliographyLine = `bibliography: "${bibliographyFile}"\n`;
+  const yamlWithBib = `---${yamlCode}${bibliographyLine}---`;
+  const yamlText = schema.text(yamlWithBib);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
 
