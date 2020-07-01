@@ -313,6 +313,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (StringUtil.isNullOrEmpty(name) &&
           activeColumn_ != null)
       {
+         if (hasActiveEditor())
+            activeColumn_.setActiveEditor("");
          activeColumn_ = null;
          return;
       }
@@ -359,7 +361,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return;
          }
       }
-      // if we didn't find the target editor then it was likely activated for pop out
    }
 
    public void setDocsRestored()
@@ -518,27 +519,27 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void manageCommands(boolean forceSync)
    {
-      // if one document is dirty then we are enabled
       boolean saveAllEnabled = false;
 
-      // make sure we're always managing the commands with the same column
-      SourceColumn active = activeColumn_;
       for (SourceColumn column : columnList_)
       {
-         if (!StringUtil.equals(active.getName(), column.getName()) && column.isInitialized())
-            column.manageCommands(forceSync, active);
+         if (column.isInitialized() &&
+            !StringUtil.equals(activeColumn_.getName(), column.getName()))
+            column.manageCommands(forceSync, activeColumn_);
+
+         // if one document is dirty then we are enabled
          if (!saveAllEnabled && column.isSaveCommandActive())
            saveAllEnabled = true;
       }
 
-      // all columns can disable commands but only the active column can enable them so it should
+      // any column can disable a command but only the active column can enable one so it should
       // always be managed last
-      if (active.isInitialized())
-         active.manageCommands(forceSync, active);
+      if (activeColumn_.isInitialized())
+         activeColumn_.manageCommands(forceSync, activeColumn_);
 
-      // manage commands that cross all columns
       if (!session_.getSessionInfo().getAllowShell())
          commands_.sendToTerminal().setVisible(false);
+
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
       if (windowManager_.areSourceWindowsOpen())
@@ -1388,9 +1389,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column == activeColumn_)
          setActive(MAIN_SOURCE_NAME);
 
-      int testVar = columnList_.size();
       columnList_.remove(column);
-      assert(testVar >= columnList_.size());
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
@@ -1518,16 +1517,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.fireDocTabsChanged();
    }
 
-   private boolean hasDoc()
-   {
-      for (SourceColumn column : columnList_)
-      {
-         if (column.hasDoc())
-            return true;
-      }
-      return false;
-   }
-
    private void vimSetTabIndex(int index)
    {
       int tabCount = activeColumn_.getTabCount();
@@ -1621,7 +1610,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       if (fileType.isRNotebook())
       {
-         openNotebook(file, fileType, resultCallback);
+         openNotebook(file, resultCallback);
          return;
       }
 
@@ -1824,7 +1813,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void initDynamicCommands()
    {
-      dynamicCommands_ = new HashSet<AppCommand>();
+      dynamicCommands_ = new HashSet<>();
       dynamicCommands_.add(commands_.saveSourceDoc());
       dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
       dynamicCommands_.add(commands_.saveSourceDocAs());
@@ -1950,7 +1939,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    }
 
    private void openNotebook(final FileSystemItem rnbFile,
-                             final TextFileType fileType,
                              final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       // construct path to .Rmd

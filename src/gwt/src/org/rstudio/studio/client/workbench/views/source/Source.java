@@ -44,7 +44,6 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyCombination;
@@ -92,7 +91,6 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
-import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
@@ -275,7 +273,6 @@ public class Source implements InsertSourceHandler,
                  AriaLiveService ariaLive,
                  final Session session,
                  WorkbenchContext workbenchContext,
-                 Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  DependencyManager dependencyManager,
@@ -587,11 +584,6 @@ public class Source implements InsertSourceHandler,
       return columnManager_.getCommandPaletteItems();
    }
 
-   public SourceColumnManager getColumnManager()
-   {
-      return columnManager_;
-   }
-
    private boolean consoleEditorHadFocusLast()
    {
       String id = MainWindowObject.lastFocusedEditorId().get();
@@ -854,7 +846,6 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
    
    @Handler
    public void onNewCppDoc()
@@ -1608,11 +1599,6 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   public Display getActiveView()
-   {
-      return (Display)columnManager_.getActive();
-   }
-
    @Handler
    public void onOpenSourceDoc()
    {
@@ -2258,55 +2244,6 @@ public class Source implements InsertSourceHandler,
                pos.getEndLine(),
                pos.getEndColumn() + 1),
             executing);
-   }
-
-   private class SourceNavigationResultCallback<T extends EditingTarget>
-                        extends ResultCallback<T,ServerError>
-   {
-      public SourceNavigationResultCallback(SourcePosition restorePosition,
-                                            AppCommand retryCommand)
-      {
-         suspendSourceNavigationAdding_ = true;
-         restorePosition_ = restorePosition;
-         retryCommand_ = retryCommand;
-      }
-
-      @Override
-      public void onSuccess(final T target)
-      {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               try
-               {
-                  target.restorePosition(restorePosition_);
-               }
-               finally
-               {
-                  suspendSourceNavigationAdding_ = false;
-               }
-            }
-         });
-      }
-
-      @Override
-      public void onFailure(ServerError info)
-      {
-         suspendSourceNavigationAdding_ = false;
-         if (retryCommand_.isEnabled())
-            retryCommand_.execute();
-      }
-
-      @Override
-      public void onCancelled()
-      {
-         suspendSourceNavigationAdding_ = false;
-      }
-
-      private final SourcePosition restorePosition_;
-      private final AppCommand retryCommand_;
    }
 
    @Override

@@ -114,7 +114,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          },
          false); // don't show replace UI
       
-      panel_ = new PanelWithToolbars(createToolbar(column),
+      panel_ = new PanelWithToolbars(createToolbar(),
                                      createSecondaryToolbar(),
                                      docDisplay_.asWidget(),
                                      null);
@@ -426,9 +426,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       private final GlobalProgressDelayer progress_;
    }
    
-   private Toolbar createToolbar(SourceColumn column)
+   private Toolbar createToolbar()
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
 
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton(column_));
       toolbar.addLeftSeparator();
@@ -437,8 +437,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.goToHelp().createMenuItem(column_));
-      menu.addItem(commands_.goToDefinition().createMenuItem(column_));
+      menu.addItem(commands_.goToHelp().createMenuItem(false));
+      menu.addItem(commands_.goToDefinition().createMenuItem(false));
       ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       

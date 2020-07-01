@@ -71,7 +71,6 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -291,9 +290,9 @@ public class PaneManager
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns;
       if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
-         sourceColumns = new ArrayList<Widget>(sourceColumnManager_.getWidgets(true));
+         sourceColumns = new ArrayList<>(sourceColumnManager_.getWidgets(true));
       else
-         sourceColumns =  new ArrayList<Widget>();
+         sourceColumns =  new ArrayList<>();
       panel_.initialize(sourceColumns, left_, right_);
 
       // count the number of source docs assigned to this window

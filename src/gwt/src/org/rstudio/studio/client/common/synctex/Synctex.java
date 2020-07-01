@@ -44,7 +44,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 
 @Singleton
 public class Synctex implements CompilePdfStartedEvent.Handler,
