@@ -21,5 +21,6 @@ export interface ChunkEditorFactory {
 
 export interface AceChunkEditor {
     editor: AceAjax.Editor;
+    setMode (mode: string): void;
     element: HTMLElement;
 }

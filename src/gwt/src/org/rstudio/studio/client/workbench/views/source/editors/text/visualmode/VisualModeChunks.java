@@ -14,12 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.RFileType;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunk;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class VisualModeChunks
 {
@@ -27,11 +26,16 @@ public class VisualModeChunks
    {
       PanmirrorUIChunkFactory factory = new PanmirrorUIChunkFactory();
       factory.createChunkEditor = () -> {
+
          PanmirrorUIChunk chunk = new PanmirrorUIChunk();
-         DivElement ele = Document.get().createDivElement(); 
+
+         final AceEditor editor = new AceEditor();
+         chunk.editor = editor.getWidget().getEditor();
+         chunk.element = chunk.editor.getContainer();
          
-         chunk.editor = AceEditorNative.createEditor(ele);
-         chunk.element = ele;
+         chunk.setMode = (String mode) -> {
+            setMode(editor, mode);
+         };
          
          chunk.editor.setMaxLines(1000);
          chunk.editor.setMinLines(3);
@@ -39,5 +43,51 @@ public class VisualModeChunks
          return chunk;
       };
       return factory;
+   }
+   
+   private void setMode(AceEditor editor, String mode)
+   {
+      switch(mode)
+      {
+      case "r":
+         editor.setFileType(FileTypeRegistry.R);
+         break;
+      case "python":
+         editor.setFileType(FileTypeRegistry.PYTHON);
+         break;
+      case "js":
+      case "javascript":
+         editor.setFileType(FileTypeRegistry.JS);
+         break;
+      case "tex":
+      case "latex":
+         editor.setFileType(FileTypeRegistry.TEX);
+         break;
+      case "c":
+         editor.setFileType(FileTypeRegistry.C);
+         break;
+      case "cpp":
+         editor.setFileType(FileTypeRegistry.CPP);
+         break;
+      case "sql":
+         editor.setFileType(FileTypeRegistry.SQL);
+         break;
+      case "yaml":
+         editor.setFileType(FileTypeRegistry.YAML);
+         break;
+      case "java":
+         editor.setFileType(FileTypeRegistry.JAVA);
+         break;
+      case "html":
+         editor.setFileType(FileTypeRegistry.HTML);
+         break;
+      case "shell":
+      case "bash":
+         editor.setFileType(FileTypeRegistry.SH);
+         break;
+      default:
+         editor.setFileType(FileTypeRegistry.TEXT);
+         break;
+      }
    }
 }

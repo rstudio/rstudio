@@ -251,11 +251,9 @@ class CodeBlockNodeView implements NodeView {
     // get lang
     const lang = this.options.lang(this.node, this.getContents());
 
-    // syntax highlighting
-    const mode = lang ? modeForLang(lang, this.options) : null;
-    if (mode !== null && mode !== this.mode) {
-       this.chunk.editor.getSession().setMode(mode);
-       this.mode = mode;
+    if (lang !== null && this.mode !== lang) {
+        this.chunk.setMode(lang);
+        this.mode = lang;
     }
 
     // if we have a language check whether execution should be enabled for this language

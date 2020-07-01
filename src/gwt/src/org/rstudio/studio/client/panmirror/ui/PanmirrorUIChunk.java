@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 
 import com.google.gwt.dom.client.Element;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -25,4 +26,11 @@ public class PanmirrorUIChunk
 {
    public AceEditorNative editor;
    public Element element;
+   public SetMode setMode;
+   
+   @JsFunction
+   public interface SetMode
+   {
+      void setMode(String mode);
+   }
 }
