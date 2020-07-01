@@ -2,6 +2,7 @@
 
 ### Python
 
+* Python indentation rules are now applied to Python code within R Markdown documents. (#5945)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
 
