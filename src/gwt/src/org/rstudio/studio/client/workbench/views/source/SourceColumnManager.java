@@ -139,7 +139,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                               UserPrefs userPrefs,
                               UserState userState,
                               Provider<FileMRUList> pMruList,
-                              Provider<SourceWindowManager> pWindowManager)
+                              SourceWindowManager windowManager)
    {
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(MAIN_SOURCE_NAME, display, this);
@@ -159,7 +159,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       userPrefs_ = userPrefs;
       userState_ = userState;
       pMruList_ = pMruList;
-      pWindowManager_ = pWindowManager;
+      windowManager_ = windowManager;
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
@@ -231,7 +231,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       String activeTabKey = KEY_ACTIVETAB;
       if (!SourceWindowManager.isMainSourceWindow())
          activeTabKey += "SourceWindow" +
-            pWindowManager_.get().getSourceWindowOrdinal();
+            windowManager_.getSourceWindowOrdinal();
 
       new IntStateValue(MODULE_SOURCE, activeTabKey,
          ClientState.PROJECT_PERSISTENT,
@@ -541,7 +541,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          commands_.sendToTerminal().setVisible(false);
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
-      if (pWindowManager_.get().areSourceWindowsOpen())
+      if (windowManager_.areSourceWindowsOpen())
          commands_.saveAllSourceDocs().setEnabled(saveAllEnabled);
    }
 
@@ -2393,7 +2393,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private Commands commands_;
    private EventBus events_;
    private Provider<FileMRUList> pMruList_;
-   private Provider<SourceWindowManager> pWindowManager_;
+   private SourceWindowManager windowManager_;
    private Session session_;
    private Synctex synctex_;
    private UserPrefs userPrefs_;
