@@ -26,6 +26,7 @@ import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { AttrEditOptions } from '../../api/attr_edit';
+import { pandocAutoIdentifier } from '../../api/pandoc_id';
 
 export class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, editors: AttrEditOptions[]) {
@@ -137,24 +138,7 @@ function idHint(node: ProsemirrorNode) {
 
   if (node.type === node.type.schema.nodes.heading) {
 
-    // emulate pandoc behavior (https://pandoc.org/MANUAL.html#headings-and-sections)
-    const hint = node.textContent
-
-      // Remove all non-alphanumeric characters, except underscores, hyphens, and periods.
-      .replace(/[^ _\-.\w]+/g, '')
-
-      // Replace all spaces and newlines with hyphens
-      .replace(/[ \n]/g, '-')
-
-      // Convert all alphabetic characters to lowercase
-      .toLowerCase()
-
-      // Remove everything up to the first letter 
-      // (identifiers may not begin with a number or punctuation mark
-      .replace(/^[^A-Za-z]+/, '');
-
-    // don't provide a hint if we ended up with an empty one!
-    return hint || undefined;
+    return pandocAutoIdentifier(node.textContent);
 
   } else {
 

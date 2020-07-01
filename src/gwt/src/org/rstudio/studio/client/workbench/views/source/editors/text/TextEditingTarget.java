@@ -1121,6 +1121,16 @@ public class TextEditingTarget implements
    {
       visualMode_.activate(command);
    }
+   
+   public void navigateToXRef(String xref)
+   {
+      ensureVisualModeActive(() -> {
+         Scheduler.get().scheduleDeferred(() -> {
+            visualMode_.navigateToXRef(xref, false);
+         });
+        
+      });
+   }
 
    // the navigateToPosition methods are called by modules that explicitly
    // want the text editor active (e.g. debugging, find in files, etc.) so they
@@ -1169,7 +1179,7 @@ public class TextEditingTarget implements
       if (visualMode_.isVisualModePosition(position))
       {
          ensureVisualModeActive(() -> {
-            visualMode_.navigate(position);
+            visualMode_.navigate(position, false);
          });
       }
       else

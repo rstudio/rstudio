@@ -13,6 +13,7 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'prosemirror-utils';
@@ -20,6 +21,9 @@ import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'pros
 import zenscroll from 'zenscroll';
 
 import { editingRootNode } from './node';
+import { pandocAutoIdentifier } from './pandoc_id';
+import { kNavigationTransaction } from './transaction';
+import { xrefPosition } from './xref';
 
 export interface EditorNavigation {
   navigate: (type: NavigationType, location: string, animate?: boolean) => void;
@@ -30,6 +34,7 @@ export enum NavigationType {
   Id = "id",
   Href = "href",
   Heading = "heading",
+  XRef = "xref"
 }
 
 export interface Navigation {
@@ -48,6 +53,8 @@ export function navigateTo(view: EditorView, type: NavigationType, location: str
       return navigateToHref(view, location, animate);
     case NavigationType.Heading:
       return navigateToHeading(view, location, animate);
+    case NavigationType.XRef:
+      return navigateToXRef(view, location, animate);
     default:
       return null;
   }
@@ -74,6 +81,16 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
   );
 }
 
+export function navigateToXRef(view: EditorView, xref: string, animate = true): Navigation | null {
+  const xrefPos = xrefPosition(view.state.doc, xref);
+  if (xrefPos !== -1) {
+    return navigateToPos(view, xrefPos, animate);
+  } else {
+    return null;
+  }
+}
+
+
 export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
 
   // get previous position
@@ -83,21 +100,28 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   pos = Math.max(pos, 2);
 
   // set selection
-  view.dispatch(setTextSelection(pos)(view.state.tr));
+  const tr = view.state.tr;
+  setTextSelection(pos)(tr);
+  tr.setMeta(kNavigationTransaction, true);
+  view.dispatch(tr);
 
   // find a targetable dom node at the position
   const node = findDomRefAtPos(pos, view.domAtPos.bind(view));
   if (node instanceof HTMLElement) {
 
-    // perform navigation
-    const editingRoot = editingRootNode(view.state.selection)!;
-    const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-    const scroller = zenscroll.createScroller(container, 700, 20);
-    if (animate) {
-      scroller.to(node);
-    } else {
-      scroller.to(node, 0);
-    }
+    // auto-scroll to position (delay so we can grab the focus, as autoscrolling
+    // doesn't seem to work unless you have the focus)
+    setTimeout(() => {
+      view.focus();
+      const editingRoot = editingRootNode(view.state.selection)!;
+      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const scroller = zenscroll.createScroller(container, 700, 20);
+      if (animate) {
+        scroller.to(node);
+      } else {
+        scroller.to(node, 0);
+      }
+    }, 50);
 
     return { pos, prevPos };
 

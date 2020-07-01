@@ -147,6 +147,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiat
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditHandler;
@@ -203,6 +204,7 @@ public class Source implements InsertSourceHandler,
                                RequestDocumentSaveEvent.Handler,
                                RequestDocumentCloseEvent.Handler,
                                EditPresentationSourceEvent.Handler,
+                               XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
@@ -310,6 +312,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
+      events_.addHandler(XRefNavigationEvent.TYPE, this);
 
       events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
       {
@@ -1756,6 +1759,25 @@ public class Source implements InsertSourceHandler,
          });
    }
    
+   @Override
+   public void onXRefNavigation(XRefNavigationEvent event)
+   {
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(event.getSourceFile());
+      
+      columnManager_.openFile(
+         event.getSourceFile(), 
+         fileType,
+         new CommandWithArg<EditingTarget>() {
+            @Override
+            public void execute(final EditingTarget editor)
+            {
+               TextEditingTarget target = (TextEditingTarget)editor;
+               target.navigateToXRef(event.getXRef());
+            }
+      });
+      
+   }
+   
    public void forceLoad()
    {
       AceEditor.preload();
@@ -2529,4 +2551,5 @@ public class Source implements InsertSourceHandler,
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
+  
 }

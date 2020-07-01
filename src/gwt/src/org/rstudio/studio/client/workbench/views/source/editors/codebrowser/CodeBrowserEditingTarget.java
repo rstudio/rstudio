@@ -27,7 +27,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;

@@ -18,7 +18,6 @@ import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.inject.Provider;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;

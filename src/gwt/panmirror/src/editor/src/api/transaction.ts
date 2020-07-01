@@ -24,6 +24,7 @@ export const kSetMarkdownTransaction = 'setMarkdown';
 export const kAddToHistoryTransaction = 'addToHistory';
 export const kFixupTransaction = 'docFixup';
 export const kRestoreLocationTransaction = 'restoreLocation';
+export const kNavigationTransaction = 'navigationTransaction';
 export const kInsertSymbolTransaction = 'insertSymbol';
 export const kInsertCompletionTransaction = 'insertCompletion';
 

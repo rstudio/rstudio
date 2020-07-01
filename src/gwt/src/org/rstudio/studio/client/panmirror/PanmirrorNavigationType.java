@@ -1,5 +1,5 @@
 /*
- * PanmirrorServer.java
+ * PanmirrorNavigationType.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,24 +13,14 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.server;
 
+package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
-
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorServer
-{    
-   public PanmirrorServer()
-   {
-      this.pandoc = new PanmirrorPandocServer();
-      this.crossref = new PanmirrorCrossrefServer();
-      this.xref = new PanmirrorXRefServer();
-   }
-   
-   public PanmirrorPandocServer pandoc;
-   public PanmirrorCrossrefServer crossref;
-   public PanmirrorXRefServer xref;
+public class PanmirrorNavigationType
+{
+  public final static String Pos = "pos";
+  public final static String Id = "id";
+  public final static String Href = "href";
+  public final static String Heading = "heading";
+  public final static String XRef = "xref";
 }

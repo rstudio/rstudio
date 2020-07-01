@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;

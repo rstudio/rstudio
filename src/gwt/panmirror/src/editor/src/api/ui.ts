@@ -51,6 +51,11 @@ export interface EditorUIContext {
   // get the path to the current document
   getDocumentPath: () => string | null;
 
+  // ensure the edited document is saved on the server before proceeding
+  // (note this just means that the server has a copy of it for e.g. 
+  // indexing xrefs, from the user's standpoint the doc is still dirty)
+  withSavedDocument: () => Promise<boolean>;
+
   // get the default directory for resources (e.g. where relative links point to)
   getDefaultResourceDir: () => string;
 
@@ -86,6 +91,7 @@ export interface EditorUIMath {
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
+  navigateToXRef: (file: string, xref: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
