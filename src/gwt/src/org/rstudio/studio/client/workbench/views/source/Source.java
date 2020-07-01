@@ -656,6 +656,7 @@ public class Source implements InsertSourceHandler,
          }
       }
       columnManager_.setDocsRestored();
+      columnManager_.beforeShow();
    }
    
    private void openEditPublishedDocs()

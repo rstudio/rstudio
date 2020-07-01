@@ -242,6 +242,7 @@ public class SourcePane extends LazyPanel implements Display,
       manageChevronVisibility();
    }
 
+   @Override
    public void onBeforeShow()
    {
       for (Widget w : panel_)

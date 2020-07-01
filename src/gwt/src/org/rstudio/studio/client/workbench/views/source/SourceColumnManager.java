@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -213,8 +214,28 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             for (int i = 0; i < columnState_.getNames().length; i++)
             {
                String name = columnState_.getNames()[i];
+
                if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
-                  add(name, false);
+               {
+                  if (userPrefs_.enableAdditionalColumns().getGlobalValue())
+                  {
+                     add(name, false);
+                  }
+                  else
+                  {
+                     PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+                     userPrefs_.panes().setGlobalValue(PaneConfig.create(
+                        JsArrayUtil.copy(paneConfig.getQuadrants()),
+                        paneConfig.getTabSet1(),
+                        paneConfig.getTabSet2(),
+                        paneConfig.getHiddenTabSet(),
+                        paneConfig.getConsoleLeftOnTop(),
+                        paneConfig.getConsoleRightOnTop(),
+                        0).cast());
+                     consolidateColumns(1);
+                     return;
+                  }
+               }
             }
          }
 
@@ -1328,13 +1349,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          null);
    }
 
-   public ArrayList<Widget> consolidateColumns(int num)
+   public void consolidateColumns(int num)
    {
-      // We are only removing the column from the column manager's knowledge.
-      // Its widget still needs to be removed from the display so we return the widgets to be removed.
-      ArrayList<Widget> result = new ArrayList<>();
       if (num >= columnList_.size() || num < 1)
-         return result;
+         return;
 
       for (SourceColumn column : columnList_)
       {
@@ -1342,7 +1360,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          {
             if (column == activeColumn_)
                setActive(MAIN_SOURCE_NAME);
-            result.add(column.asWidget());
             closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
                break;
@@ -1378,7 +1395,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             true);
       }
 
-      return result;
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
    public void closeColumn(String name)
