@@ -27,7 +27,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -50,7 +49,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
-   { 
+   {
       public CommandToolbarButton(String buttonLabel, String buttonTitle,
             ImageResourceProvider imageResourceProvider, AppCommand command,
             boolean synced)
@@ -130,7 +129,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                               ImageResourceProvider imageResourceProvider,
                                               ClickHandler clickHandler,
                                               AppCommand command,
-                                              boolean synced,
                                               SourceColumn column)     {
          super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler, command, true);
          column_ = column;
@@ -173,7 +171,21 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          setVisible(event.getButtonVisible());
       }
 
-      private SourceColumn column_;
+      private final SourceColumn column_;
+   }
+
+   private class CommandSourceColumnMenuItem extends AppMenuItem
+   {
+
+      public CommandSourceColumnMenuItem(AppCommand command,
+                                         SourceColumn column,
+                                         Command wrapper)
+      {
+         super(command, false, wrapper);
+         column_ = column;
+      }
+
+      private final SourceColumn column_;
    }
 
    public AppCommand()
@@ -632,13 +644,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                                  getDesc(),
                                                  this,
                                                  event -> {
-                                                    SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+                                                    SourceColumnManager mgr =
+                                                       RStudioGinjector.INSTANCE.getSourceColumnManager();
                                                     mgr.setActive(column.getName());
-
                                                     execute();
                                                  },
                                                  this,
-                                                 false,
                                                  column);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
@@ -648,6 +659,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public MenuItem createMenuItem(boolean mainMenu)
    {
       return new AppMenuItem(this, mainMenu);
+   }
+
+   public MenuItem createMenuItem(SourceColumn column)
+   {
+      return new CommandSourceColumnMenuItem(this,
+                                             column,
+                                             () -> {
+                                                SourceColumnManager mgr =
+                                                   RStudioGinjector.INSTANCE.getSourceColumnManager();
+                                                mgr.setActive(column.getName());
+                                                execute();
+                                              });
    }
 
    public String getMenuHTML(boolean mainMenu)

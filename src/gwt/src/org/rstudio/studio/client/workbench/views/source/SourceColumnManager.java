@@ -525,7 +525,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       SourceColumn active = activeColumn_;
       for (SourceColumn column : columnList_)
       {
-         if (StringUtil.equals(active.getName(), column.getName()) && column.isInitialized())
+         if (!StringUtil.equals(active.getName(), column.getName()) && column.isInitialized())
             column.manageCommands(forceSync, active);
          if (!saveAllEnabled && column.isSaveCommandActive())
            saveAllEnabled = true;
@@ -537,7 +537,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          active.manageCommands(forceSync, active);
 
       // manage commands that cross all columns
-
+      if (!session_.getSessionInfo().getAllowShell())
+         commands_.sendToTerminal().setVisible(false);
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
       if (pWindowManager_.get().areSourceWindowsOpen())

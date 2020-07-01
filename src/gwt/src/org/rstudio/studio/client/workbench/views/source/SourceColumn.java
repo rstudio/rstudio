@@ -24,7 +24,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
@@ -49,11 +48,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -96,9 +93,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                           EventBus events,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
-                          SourceServerOperations sourceServerOperations,
-                          FileTypeRegistry fileTypeRegistry,
-                          Provider<SourceWindowManager> pWindowManager)
+                          SourceServerOperations sourceServerOperations)
    {
       commands_ = commands;
       binder.bind(commands_, this);
@@ -107,8 +102,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
-      fileTypeRegistry_ = fileTypeRegistry;
-      pWindowManager_ = pWindowManager;
    }
 
    public void loadDisplay(String name,
@@ -226,16 +219,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void closeTab(Widget child, boolean interactive, Command onClosed)
    {
       display_.closeTab(child, interactive, onClosed);
-   }
-
-   public void closeTab(int index, boolean interactive)
-   {
-      display_.closeTab(index, interactive);
-   }
-
-   public void closeTab(int index, boolean interactive, Command onClosed)
-   {
-	   display_.closeTab(index, interactive, onClosed);
    }
 
    public int getTabCount()
@@ -475,16 +458,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return null;
    }
 
-   public boolean hasDocWithPath(String path)
-   {
-      for (EditingTarget target : editors_)
-      {
-         if (StringUtil.equals(path, target.getPath()))
-            return true;
-      }
-      return false;
-   }
-
    public EditingTarget getEditorWithPath(String path)
    {
       for (EditingTarget target : editors_)
@@ -720,17 +693,17 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       manageCommands(forceSync, manager_.getActive());
    }
 
-   public void manageCommands(boolean forceSync, SourceColumn active)
+   public void manageCommands(boolean forceSync, SourceColumn activeColumn)
    {
       if (manager_ == null)
          return;
 
-      boolean isActive = this == active;
-      boolean hasDocs = isActive && hasDoc();
+      boolean active = this == activeColumn;
+      boolean hasDocs = hasDoc();
 
       commands_.newSourceDoc().setEnabled(true, name_);
 
-      if (isActive || !hasDocs)
+      if (active || !hasDocs)
       {
          commands_.closeSourceDoc().setEnabled(hasDocs, name_);
          commands_.closeAllSourceDocs().setEnabled(hasDocs, name_);
@@ -767,7 +740,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          for (AppCommand command : newCommands)
          {
-            if (isActive)
+            if (active)
             {
                command.setVisible(true, name_);
                command.setEnabled(true, name_);
@@ -786,7 +759,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          for (AppCommand command : commandsToEnable)
          {
-            if (isActive)
+            if (active)
             {
                command.setVisible(true, name_);
                command.setEnabled(true, name_);
@@ -816,27 +789,25 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       commands_.debugBreakpoint().setVisible(true, name_);
 
       // manage synctex commands
-      manageSynctexCommands(isActive);
+      manageSynctexCommands(active);
 
       // manage vcs commands
-      manageVcsCommands(isActive);
+      manageVcsCommands(active);
 
       // manage save and save all
-      manageSaveCommands(isActive);
+      manageSaveCommands(active);
 
       // manage source navigation
-      manageSourceNavigationCommands(isActive);
+      manageSourceNavigationCommands(active);
 
       // manage RSConnect commands
-      manageRSConnectCommands(isActive);
+      manageRSConnectCommands(active);
 
       // manage R Markdown commands
-      manageRMarkdownCommands(isActive);
+      manageRMarkdownCommands(active);
 
       // manage multi-tab commands
-      manageMultiTabCommands(isActive);
-
-      manageTerminalCommands();
+      manageMultiTabCommands(active);
 
       activeCommands_ = newCommands;
 
@@ -848,7 +819,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
               : "Unsupported commands detected (please add to SourceColumnManager.getDynamicCommands())";
    }
 
-   private void manageSynctexCommands(boolean isActive)
+   private void manageSynctexCommands(boolean active)
    {
       // synctex commands are enabled if we have synctex for the active editor
       boolean synctexAvailable = manager_.getSynctex().isSynctexAvailable();
@@ -866,13 +837,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          }
       }
 
-      if (isActive || !synctexAvailable)
+      if (active || !synctexAvailable)
          manager_.getSynctex().enableCommands(synctexAvailable, name_);
       else
          manager_.getSynctex().enableCommandButtons(synctexAvailable, name_);
    }
 
-   private void manageVcsCommands(boolean isActive)
+   private void manageVcsCommands(boolean active)
    {
       // manage availability of vcs commands
       boolean vcsCommandsEnabled =
@@ -882,7 +853,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       getNextActiveEditor().getPath().startsWith(
                               manager_.getSession().getSessionInfo().getActiveProjectDir().getPath());
 
-      if (isActive || !vcsCommandsEnabled)
+      if (active || !vcsCommandsEnabled)
       {
          commands_.vcsFileLog().setVisible(vcsCommandsEnabled, name_);
          commands_.vcsFileDiff().setVisible(vcsCommandsEnabled, name_);
@@ -901,7 +872,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          commands_.vcsFileRevert().setButtonEnabled(vcsCommandsEnabled, name_);
       }
 
-      if (isActive && vcsCommandsEnabled)
+      if (active && vcsCommandsEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
          commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
@@ -911,7 +882,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean isGithubRepo = manager_.getSession().getSessionInfo().isGithubRepository();
-      if (isActive && vcsCommandsEnabled && isGithubRepo)
+      if (active && vcsCommandsEnabled && isGithubRepo)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
 
@@ -933,25 +904,25 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
    }
 
-   public void manageSaveCommands(boolean isActive)
+   public void manageSaveCommands(boolean active)
    {
       boolean saveEnabled = getNextActiveEditor() != null &&
                             getNextActiveEditor().isSaveCommandActive();
-      if (isActive || !saveEnabled)
+      if (active || !saveEnabled)
          commands_.saveSourceDoc().setEnabled(saveEnabled, name_);
       else
          commands_.saveSourceDoc().setButtonEnabled(saveEnabled, name_);
    }
 
-   private void manageSourceNavigationCommands(boolean isActive)
+   private void manageSourceNavigationCommands(boolean active)
    {
-      if (isActive || !sourceNavigationHistory_.isBackEnabled())
+      if (active || !sourceNavigationHistory_.isBackEnabled())
          commands_.sourceNavigateBack().setEnabled(
             sourceNavigationHistory_.isBackEnabled(), name_);
       else
          commands_.sourceNavigateBack().setButtonEnabled(true, name_);
 
-      if (isActive || !sourceNavigationHistory_.isForwardEnabled())
+      if (active || !sourceNavigationHistory_.isForwardEnabled())
          commands_.sourceNavigateForward().setEnabled(
             sourceNavigationHistory_.isForwardEnabled(), name_);
       else
@@ -961,15 +932,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private void manageRSConnectCommands(boolean active)
    {
       boolean rsCommandsAvailable =
-              active; /* &&
+              active &&
               SessionUtils.showPublishUi(manager_.getSession(), manager_.getUserState()) &&
                  (activeEditor_ != null) &&
                  (activeEditor_.getPath() != null) &&
                  (activeEditor_.getExtendedFileType() != null &&
                     (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                      activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                     activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));*/
-      commands_.rsconnectDeploy().setVisible(rsCommandsAvailable, name_);
+                     activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
+
+      commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
       {
          String deployLabel = null;
@@ -989,21 +961,21 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          commands_.rsconnectDeploy().setLabel(deployLabel);
       }
-      commands_.rsconnectConfigure().setVisible(rsCommandsAvailable, name_);
+      commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
 
-   private void manageRMarkdownCommands(boolean isActive)
+   private void manageRMarkdownCommands(boolean active)
    {
-      boolean rmdCommandsAvailable =
+      boolean rmdCommandsAvailable = active &&
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       activeEditor_ != null &&
                       activeEditor_.getExtendedFileType() != null &&
                       activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
-      commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable, name_);
-      commands_.editRmdFormatOptions().setEnabled(isActive && rmdCommandsAvailable, name_);
+      commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
+      commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }
 
-   public void manageMultiTabCommands(boolean isActive)
+   public void manageMultiTabCommands(boolean active)
    {
       boolean hasMultipleDocs = hasDoc();
 
@@ -1017,16 +989,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
               !SourceWindowManager.isMainSourceWindow())
       {
          commands_.popoutDoc().setVisible(hasMultipleDocs, name_);
-         commands_.popoutDoc().setEnabled(isActive && hasMultipleDocs, name_);
+         commands_.popoutDoc().setEnabled(active && hasMultipleDocs, name_);
       }
 
-      commands_.closeOtherSourceDocs().setEnabled(isActive && hasMultipleDocs, name_);
-   }
+      if (active || !hasMultipleDocs)
+         commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs, name_);
+      else
+         commands_.closeOtherSourceDocs().setButtonEnabled(hasMultipleDocs, name_);
 
-   private void manageTerminalCommands()
-   {
-      if (!manager_.getSession().getSessionInfo().getAllowShell())
-         commands_.sendToTerminal().setVisible(false, name_);
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
@@ -1074,7 +1044,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(false);
-      boolean isActive = activeEditor_ != null;
+      boolean active = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
             contents,
@@ -1091,7 +1061,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   if (contents != null)
                   {
                      target.forceSaveCommandActive();
-                     manageSaveCommands(isActive);
+                     manageSaveCommands(active);
                   }
 
                   if (resultCallback != null)
@@ -1154,7 +1124,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          manager_.activateCodeBrowser(
             navigation.getPath(),
             false,
-            new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
+            new SourceNavigationResultCallback<>(
                navigation.getPosition(),
                retryCommand));
       }
@@ -1168,7 +1138,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
          // open the file and restore the position
          manager_.openFile(file,
-            new SourceNavigationResultCallback<EditingTarget>(
+            new SourceNavigationResultCallback<>(
                navigation.getPosition(),
                retryCommand));
       }
@@ -1444,8 +1414,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
    private EditingTargetSource editingTargetSource_;
-   private FileTypeRegistry fileTypeRegistry_;
-   private Provider<SourceWindowManager> pWindowManager_;
 
    private SourceColumnManager manager_;
    private final SourceNavigationHistory sourceNavigationHistory_ =
