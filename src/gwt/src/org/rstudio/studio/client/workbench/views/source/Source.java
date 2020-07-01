@@ -1417,7 +1417,6 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {
-      Debug.logToConsole("onPopoutDocInitiated");
       columnManager_.inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
       {
          @Override
