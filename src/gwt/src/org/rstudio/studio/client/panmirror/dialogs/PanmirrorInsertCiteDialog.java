@@ -3,7 +3,9 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FormListBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -103,8 +105,17 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
                {
                   return;
                }
-
-               indicator.onError(error.getUserMessage());
+               indicator.onCompleted();
+               GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+               globalDisplay.showErrorMessage(
+                     "DOI Unavailable", 
+                     "Citation data for this DOI couldn't be found.",
+                     new Operation(){
+                        @Override
+                        public void execute()
+                        {
+                           PanmirrorInsertCiteDialog.super.closeDialog();
+                        }});
             }
          });
       }
