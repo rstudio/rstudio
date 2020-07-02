@@ -32,10 +32,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
-namespace rmarkdown {
-namespace bookdown {
-namespace xrefs {
 
 using namespace rstudio::core;
 
@@ -454,6 +450,15 @@ void onDeferredInit(bool)
 
 }
 
+json::Object xrefIndexforProject(IndexEntryFilter filter)
+{
+   json::Object indexJson;
+   indexJson[kBaseDir] = module_context::createAliasedPath(projects::projectContext().buildTargetPath());
+   std::vector<XRefIndexEntry> entries = indexEntriesForProject(filter);
+   indexJson[kRefs] = indexEntriesToXRefs(entries);
+   return indexJson;
+}
+
 json::Object xrefIndex(const std::string& file, IndexEntryFilter filter)
 {
    // resolve path
@@ -465,13 +470,7 @@ json::Object xrefIndex(const std::string& file, IndexEntryFilter filter)
    // if this is a bookdown context then send the whole project index
    if (isBookdownContext() && filePath.isWithin(projects::projectContext().buildTargetPath()))
    {
-
-      indexJson[kBaseDir] = module_context::createAliasedPath(
-         projects::projectContext().buildTargetPath());
-
-      std::vector<XRefIndexEntry> entries = indexEntriesForProject(filter);
-      indexJson[kRefs] = indexEntriesToXRefs(entries);
-
+      indexJson = xrefIndexforProject(filter);
    }
 
    // otherwise just send an index for this file (it will be in the source database)
@@ -548,6 +547,10 @@ Error xrefForId(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+namespace modules {
+namespace rmarkdown {
+namespace bookdown {
+namespace xrefs {
 
 Error initialize()
 {
@@ -574,5 +577,18 @@ Error initialize()
 } // namespace bookdown
 } // namespace rmarkdown
 } // namespace modules
+
+namespace module_context {
+
+core::json::Value bookdownXRefIndex()
+{
+   if (isBookdownContext())
+      return xrefIndexforProject(boost::lambda::constant(true));
+   else
+      return json::Value();
+}
+
+} // namespace module_context
+
 } // namespace session
 } // namespace rstudio
