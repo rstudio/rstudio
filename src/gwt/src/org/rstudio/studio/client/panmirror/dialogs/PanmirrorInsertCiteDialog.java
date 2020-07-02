@@ -32,7 +32,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import elemental2.core.JsObject;
 import jsinterop.base.Js;
+import jsinterop.base.JsPropertyMap;
 
 public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteResult>
 {
@@ -82,18 +84,27 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
                }
 
                // Get the preview and suggested Id
-               citeProps_.csl = Js.uncheckedCast(response);
-               PanmirrorUIToolsCitation citationTools = new PanmirrorUITools().citation;
-               PanmirrorInsertCiteUI citeUI = citationTools.citeUI(citeProps_);
-               citeProps_.citeUI = citeUI;
-               onCiteUI(citeUI);
+               JsPropertyMap<Object> responseObj = Js.asAny(response).asPropertyMap();
+               String status = (String) responseObj.get("status");
+               if (status.equals("ok")) {
 
-               // Enable the UI and Focus the Citation Id
-               setEnabled(true);
-               citationId_.selectAll();
-               citationId_.setFocus(true);              
-               
-               indicator.onCompleted();
+                  citeProps_.csl = (JsObject) responseObj.getAsAny("message");
+                  
+                  PanmirrorUIToolsCitation citationTools = new PanmirrorUITools().citation;
+                  PanmirrorInsertCiteUI citeUI = citationTools.citeUI(citeProps_);
+                  citeProps_.citeUI = citeUI;
+                  onCiteUI(citeUI);
+
+                  // Enable the UI and Focus the Citation Id
+                  setEnabled(true);
+                  citationId_.selectAll();
+                  citationId_.setFocus(true);              
+                  indicator.onCompleted();
+
+               } else {
+                  indicator.onCompleted();
+                  displayErrorForStatus(status);
+               }
             }
 
             @Override
@@ -105,16 +116,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
                   return;
                }
                indicator.onCompleted();
-               GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-               globalDisplay.showErrorMessage(
-                     "DOI Unavailable", 
-                     "Citation data for this DOI couldn't be found.",
-                     new Operation(){
-                        @Override
-                        public void execute()
-                        {
-                           PanmirrorInsertCiteDialog.super.closeDialog();
-                        }});
+               displayError(kUnknownError);
             }
          });
       }
@@ -263,6 +265,34 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       }
    }
    
+   private void displayError(String message) {
+      GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+      globalDisplay.showErrorMessage(
+            "DOI Unavailable", 
+            message,
+            new Operation(){
+               @Override
+               public void execute()
+               {
+                  PanmirrorInsertCiteDialog.super.closeDialog();
+               }});
+   }
+   
+   private void displayErrorForStatus(String status) { 
+      if (status.equals("notfound")) {
+
+         displayError(kNoDataError);
+         
+      } else if (status.equals("nohost")) {
+         displayError(kServerError);
+         
+      } else {
+         // Error
+         displayError(kUnknownError);
+      }
+   }
+
+   
    // Root panel
    @UiField
    VerticalPanel mainPanel_;
@@ -302,6 +332,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       else
          return title;      
    }
+   
+   private static String kUnknownError = "An error occurred while loading citation data for this DOI.";
+   private static String kNoDataError = "Citation data for this DOI couldn't be found.";
+   private static String kServerError = "Unable to reach server to load citation data for this DOI.";
+   
 
    private Widget mainWidget_;
    private PanmirrorDOIServerOperations server_;
