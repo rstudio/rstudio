@@ -189,7 +189,7 @@ FilePath permissionFile()
    return core::system::userSettingsPath(
       core::system::userHomePath(),
       "R",
-      false).completePath("crash-handler-permission");
+      true).completePath("crash-handler-permission");
 }
 
 } // anonymous namespace
