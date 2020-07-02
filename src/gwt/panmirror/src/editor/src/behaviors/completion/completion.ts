@@ -17,8 +17,6 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { setTextSelection } from 'prosemirror-utils';
-
 import {
   CompletionHandler,
   CompletionResult,
@@ -191,6 +189,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'Enter':
+                case 'Tab':
                   this.insertCompletion(view, this.selectedIndex);
                   handled = true;
                   break;
