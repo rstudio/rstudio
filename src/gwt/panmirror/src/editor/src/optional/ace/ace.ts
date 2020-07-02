@@ -28,7 +28,7 @@ import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 // import { undo, redo } from 'prosemirror-history';
 // import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
-// import { undoInputRule } from 'prosemirror-inputrules';
+import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
 // import { insertParagraph } from '../../api/paragraph';
@@ -194,6 +194,12 @@ class CodeBlockNodeView implements NodeView {
       bindKey: "Down",
       exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
     });
+
+    this.chunk.editor.commands.addCommand({
+      name: "backspaceDeleteNode",
+      bindKey: "Backspace",
+      exec: () => { this.backspaceMaybeDeleteNode(); } 
+    });
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -335,7 +341,6 @@ class CodeBlockNodeView implements NodeView {
   }
   */
 
-  /*
   private backspaceMaybeDeleteNode() {
     // if the node is empty and we execute a backspace then delete the node
     if (this.node.childCount === 0) {
@@ -351,11 +356,10 @@ class CodeBlockNodeView implements NodeView {
         this.view.focus();
       }
     } else {
-      return CodeMirror.Pass;
+      this.chunk.editor.execCommand("backspace");
     }
   }
 
-  */
 
   // Checks to see whether an arrow key should escape the editor or not. If so,
   // sends the focus to the right node; if not, executes the given Ace command

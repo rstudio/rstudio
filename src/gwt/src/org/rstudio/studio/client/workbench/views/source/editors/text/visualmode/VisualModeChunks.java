@@ -55,7 +55,7 @@ public class VisualModeChunks
          // settings trigger an auto-growing behavior), up to a max of 1000
          // lines.
          chunk.editor.setMaxLines(1000);
-         chunk.editor.setMinLines(2);
+         chunk.editor.setMinLines(1);
 
          return chunk;
       };
