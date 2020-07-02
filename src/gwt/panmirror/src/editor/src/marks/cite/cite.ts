@@ -264,14 +264,18 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         return true;
 
       } else {
-        // This is just content, paste the text content into the citation
-        // and allow citations to fire
-        const tr = view.state.tr;
+        // This is just content, accept any text and try pasting that
         let text = '';
         slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
-        tr.replaceSelectionWith(schema.text(text));
-        view.dispatch(tr);
-        return true;
+        if (text.length > 0) {
+          const tr = view.state.tr;
+          tr.replaceSelectionWith(schema.text(text));
+          view.dispatch(tr);
+          return true;
+        } else {
+          // There wasn't any text, just allow the paste to be handled by anyone else
+          return false;
+        }
       }
     } else {
       // We aren't in a citation so let someone else handle the paste
