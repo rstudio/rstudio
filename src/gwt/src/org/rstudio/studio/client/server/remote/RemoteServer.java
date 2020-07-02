@@ -1615,7 +1615,16 @@ public class RemoteServer implements Server
    // get file upload base url
    public String getFileUploadUrl()
    {
-      return getApplicationURL(UPLOAD_SCOPE);
+      String url = getApplicationURL(UPLOAD_SCOPE);
+
+      // if we are in a load balanced session, we need to send the upload to the correct node
+      String sessionNode = session_.getSessionInfo().getSessionNode();
+      if (!sessionNode.isEmpty())
+      {
+         url += "?host_node=" + sessionNode;
+      }
+
+      return url;
    }
       
    public void completeUpload(FileUploadToken token,

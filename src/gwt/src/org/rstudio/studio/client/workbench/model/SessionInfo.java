@@ -634,4 +634,8 @@ public class SessionInfo extends JavaScriptObject
    public final native String getProjectId() /*-{
       return this.project_id;
    }-*/;
+
+   public final native String getSessionNode() /*-{
+      return this.session_node;
+   }-*/;
 }

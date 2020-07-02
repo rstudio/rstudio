@@ -41,6 +41,8 @@ int verifyInstallation();
 void initMonitorClient();
 
 core::Error initialize();
+
+std::string sessionNode();
    
 } // namespace overlay
 } // namespace modules
