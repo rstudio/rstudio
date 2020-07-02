@@ -571,6 +571,8 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    args.push_back("plain");
    args.push_back("--filter");
    args.push_back(module_context::pandocCiteprocPath());
+   args.push_back("--wrap");
+   args.push_back("none");
    core::system::ProcessResult result;
    error = module_context::runPandoc(args, doc, &result);
    if (error)
@@ -590,6 +592,21 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    std::string entry = result.stdOut;
    boost::algorithm::trim(entry);
    boost::replace_all(entry, kIdToken, id);
+
+   // apply indentation
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\r\n"));
+   std::vector<std::string> indentedLines;
+   for (std::size_t i = 0; i<lines.size(); i++)
+   {
+      bool firstLine = i == 0;
+      bool lastLine = i == lines.size() - 1;
+      if (firstLine || lastLine)
+         indentedLines.push_back(lines[i]);
+      else
+         indentedLines.push_back("  " + lines[i]);
+   }
+   entry = boost::algorithm::join(indentedLines, "\n");
 
    // append the bibliography to the file
    error = core::writeStringToFile(bibliographyPath, "\n" + entry + "\n", string_utils::LineEndingPosix, false);
