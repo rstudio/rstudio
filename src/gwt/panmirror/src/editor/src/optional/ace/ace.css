@@ -16,6 +16,8 @@
 
 .pm-ace-editor {
   position: relative;
+  padding-top: 3px;
+  padding-bottom: 3px;
 }
 
 .ProseMirror .pm-ace-toolbar {
@@ -53,4 +55,11 @@
  */
 .pm-ace-editor-inactive .ace_marker-layer .ace_bracket {
   display: none;
+}
+
+/*
+ * Clear editor's default background color so we can draw our own
+ */
+.ProseMirror .pm-ace-editor .ace_editor {
+  background-color: transparent;
 }
