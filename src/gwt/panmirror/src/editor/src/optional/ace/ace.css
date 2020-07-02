@@ -39,6 +39,18 @@
   height: 13px;
 }
 
+/*
+ * Ace makes the cursor mostly transparent when the editor doesn't have focus,
+ * but we want to hide it entirely.
+ */
+.pm-ace-editor .ace_hidden-cursors .ace_cursor {
+  visibility: hidden;
+}
 
-
-
+/*
+ * Similarly, hide brackets highlighting due to a match with the invisible
+ * cursor position.
+ */
+.pm-ace-editor-inactive .ace_marker-layer .ace_bracket {
+  display: none;
+}

@@ -124,6 +124,7 @@ class CodeBlockNodeView implements NodeView {
     this.dom = this.chunk.element;
     this.dom.classList.add('pm-code-editor');
     this.dom.classList.add('pm-ace-editor');
+    this.dom.classList.add('pm-ace-editor-inactive');
     this.dom.classList.add(options.borderColorClass || 'pm-block-border-color');
     if (this.options.classes) {
       this.options.classes.forEach(className => this.dom.classList.add(className));
@@ -162,31 +163,36 @@ class CodeBlockNodeView implements NodeView {
 
     // Forward selection we we receive it
     this.chunk.editor.on('focus', () => {
-        this.forwardSelection();
+      this.dom.classList.remove("pm-ace-editor-inactive");
+      this.forwardSelection();
+    });
+
+    this.chunk.editor.on('blur', () => {
+      this.dom.classList.add("pm-ace-editor-inactive");
     });
 
     // Add custom escape commands for movement keys (left/right/up/down); these
     // will check to see whether the movement should leave the editor, and if
     // so will do so instead of moving the cursor.
     this.chunk.editor.commands.addCommand({
-        name: "leftEscape",
-        bindKey: "Left",
-        exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); } 
+      name: "leftEscape",
+      bindKey: "Left",
+      exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); } 
     });
     this.chunk.editor.commands.addCommand({
-        name: "rightEscape",
-        bindKey: "Right",
-        exec: () => { this.arrowMaybeEscape('char', 1, "gotoright" ); } 
+      name: "rightEscape",
+      bindKey: "Right",
+      exec: () => { this.arrowMaybeEscape('char', 1, "gotoright" ); } 
     });
     this.chunk.editor.commands.addCommand({
-        name: "upEscape",
-        bindKey: "Up",
-        exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); } 
+      name: "upEscape",
+      bindKey: "Up",
+      exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); } 
     });
     this.chunk.editor.commands.addCommand({
-        name: "downEscape",
-        bindKey: "Down",
-        exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
+      name: "downEscape",
+      bindKey: "Down",
+      exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
     });
   }
 
