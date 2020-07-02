@@ -224,7 +224,6 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
     // there are no yaml metadata blocks or the yaml metadata blocks that exist omit
     // the bibliography property
     if (parsedYamlNodes.length === 0) {
-
       // There aren't any yaml nodes in this document, need to create one
       const biblioNode = createBiblographyYamlNode(tr.doc.type.schema, bibliographyFile);
       tr.insert(1, biblioNode);

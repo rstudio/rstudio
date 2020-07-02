@@ -30,7 +30,7 @@ import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transa
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
 import { EditorView } from 'prosemirror-view';
-import { doiFromSlice, parseDOI } from './cite-doi';
+import { doiFromSlice } from './cite-doi';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
@@ -616,7 +616,7 @@ export function insertCitationForDOI(
           const tr = view.state.tr;
 
           // Update the bibliography on the page if need be
-          if (ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+          if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
 
             // Because this could be called by a paste handler or other non-completion end point
             // we needd to completely suppress completions upon insert the citation
