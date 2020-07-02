@@ -1,4 +1,4 @@
-## v1.3 Patch 1 (Water Lily) - Release Notes
+## v1.3 Patch 2 (Giant Goldenrod) - Release Notes
 
 
 ### Misc
@@ -13,6 +13,7 @@
 - Add additional keyboard shortcut (Ctrl+`) for Focus Console Output accessibility command (#6850)
 - Always set application role for screen readers and removed related accessibility preference checkbox (#6863)
 - Update `NOTICE` for Ace editor license (#7102)
+- Add realtime spellchecking to plain markdown files (#6988)
 
 ### Bugfixes
 
