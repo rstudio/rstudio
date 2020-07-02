@@ -42,6 +42,8 @@ import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api
 
 import { AceChunkEditor } from "../ace/ace_editor";
 
+import './ace.css';
+
 const plugin = new PluginKey('ace');
 
 export function acePlugins(
@@ -120,6 +122,12 @@ class CodeBlockNodeView implements NodeView {
 
     // The editor's outer node is our DOM representation
     this.dom = this.chunk.element;
+    this.dom.classList.add('pm-code-editor');
+    this.dom.classList.add('pm-ace-editor');
+    this.dom.classList.add(options.borderColorClass || 'pm-block-border-color');
+    if (this.options.classes) {
+      this.options.classes.forEach(className => this.dom.classList.add(className));
+    }
 
     // add a chunk execution button if execution is supported
     this.runChunkToolbar = this.initRunChunkToolbar(ui);
@@ -414,7 +422,7 @@ class CodeBlockNodeView implements NodeView {
 
   private initRunChunkToolbar(ui: EditorUI) {
     const toolbar = window.document.createElement('div');
-    toolbar.classList.add('pm-codemirror-toolbar');
+    toolbar.classList.add('pm-ace-toolbar');
     if (this.options.executeRmdChunkFn) {
       // run previous chunks button
       const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';

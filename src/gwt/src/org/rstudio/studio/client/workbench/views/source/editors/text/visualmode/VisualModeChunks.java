@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.RFileType;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunk;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 
 public class VisualModeChunks
 {
@@ -29,16 +31,31 @@ public class VisualModeChunks
 
          PanmirrorUIChunk chunk = new PanmirrorUIChunk();
 
+         // Create a new AceEditor instance and allow access to the underlying
+         // native JavaScript object it represents (AceEditorNative)
          final AceEditor editor = new AceEditor();
          chunk.editor = editor.getWidget().getEditor();
-         chunk.element = chunk.editor.getContainer();
+
+         // Provide the editor's container element; in the future this will be a
+         // host element which hosts chunk output
+         DivElement ele = Document.get().createDivElement();
+         ele.appendChild(chunk.editor.getContainer());
+         chunk.element = ele;
          
+         // Provide a callback to set the file's mode; this needs to happen in
+         // GWT land since the editor accepts GWT-flavored Filetype objects
          chunk.setMode = (String mode) -> {
             setMode(editor, mode);
          };
          
+         // Turn off line numbers as they're not helpful in chunks
+         chunk.editor.getRenderer().setShowGutter(false);
+
+         // Allow the editor's size to be determined by its content (these
+         // settings trigger an auto-growing behavior), up to a max of 1000
+         // lines.
          chunk.editor.setMaxLines(1000);
-         chunk.editor.setMinLines(3);
+         chunk.editor.setMinLines(2);
 
          return chunk;
       };
