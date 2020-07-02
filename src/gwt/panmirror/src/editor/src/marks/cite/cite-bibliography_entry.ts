@@ -49,6 +49,8 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
   };
 }
 
+const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
+
 // Suggests a bibliographic identifier based upon the source
 export function suggestIdForEntry(existingIds: string[], author?: CSLName[], issued?: CSLDate) {
   // Try to get the last name
@@ -69,6 +71,11 @@ export function suggestIdForEntry(existingIds: string[], author?: CSLName[], iss
 
   // Create a deduplicated string against the existing entries
   let baseId = `${authorPart.toLowerCase()}${datePart}`;
+  baseId = baseId + "@@@";
+
+  // Strip any characters that shouldn't appear in a bibtex citekey
+  baseId = baseId.replace(kInvalidCiteKeyChars, '');
+
   let proposedId = baseId;
   let count = 0;
 

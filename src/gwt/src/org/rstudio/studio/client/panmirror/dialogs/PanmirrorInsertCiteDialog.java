@@ -166,8 +166,18 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          );
          citationId_.setFocus(true);
          return false;
-      } 
-      else if (StringUtil.isNullOrEmpty(result.bibliographyFile)) 
+      }
+      
+      
+      if (!isValidCitationId(result.id)) {
+         globalDisplay.showErrorMessage(
+               "Error", "Please provide a validation citation Id."
+            );
+            citationId_.setFocus(true);
+            return false;        
+      }
+      
+      if (StringUtil.isNullOrEmpty(result.bibliographyFile)) 
       {
          if (addTobibliographyPanel_.isVisible()) {
             globalDisplay.showErrorMessage(
@@ -182,10 +192,8 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          }
          return false;         
       }
-      else 
-      {
-         return true;
-      }
+      
+      return true;
    }
 
 
@@ -215,7 +223,15 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       }
       return row;
    }
-
+   
+   // Very hard to figure out valid citation ids, but 
+   // they look to be based upon this:
+   // https://bibdesk.sourceforge.io/manual/BibDeskHelp_2.html
+   private boolean isValidCitationId(String citationId) {      
+      String invalidCharsRegex = ".*[\\s@',\\\\#}{~%&$^_].*";
+      return !citationId.matches(invalidCharsRegex);
+   }
+   
    private void setEnabled(boolean enabled)
    {
       citationId_.setEnabled(enabled);
