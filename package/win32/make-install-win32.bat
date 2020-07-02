@@ -18,14 +18,16 @@ cd %WIN32_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
 
 REM Build the project
-cmake -G"Visual Studio 15 2017" ^
-      -T host=x86 ^
+"%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat" -arch=x86 -startdir=none -host_arch=x86 -winsdk=10.0.17134.0
+cmake -G "Ninja" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_TARGET=SessionWin32 ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
+      -DCMAKE_C_COMPILER=cl.exe ^
+      -DCMAKE_CXX_COMPILER=cl.exe ^
       ..\..\.. || goto :error
-cmake --build . --config %CMAKE_BUILD_TYPE% --target install || goto :error
+cmake --build . %MAKEFLAGS% --config %CMAKE_BUILD_TYPE% --target install || goto :error
 cd ..
 
 endlocal
