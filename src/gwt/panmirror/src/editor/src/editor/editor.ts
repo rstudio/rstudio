@@ -491,7 +491,8 @@ export class Editor {
 
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
-    const canonical = await this.getMarkdownCode(this.state.doc, options);
+    const getMarkdownTr = this.state.tr;
+    const canonical = await this.getMarkdownCode(getMarkdownTr, options);
 
     // return
     return {
@@ -511,14 +512,17 @@ export class Editor {
     // do we need the cursor sentinel?
     const useCursorSentinel = this.lastTrSelectionOnly;
 
+    // create a transaction that will be used for this operation (won't be committed)
+    const tr = this.state.tr;
+
     // insert cursor sentinel if appropriate
-    const target = useCursorSentinel ? docWithCursorSentinel(this.state) : { doc: this.state.doc, sentinel: null };
+    const sentinel = useCursorSentinel ? injectCursorSentinel(tr) : null;
 
     // get the code
-    const code = await this.getMarkdownCode(target.doc, options);
+    const code = await this.getMarkdownCode(tr, options);
 
     // return
-    return codeWithCursor(code, target.sentinel);
+    return codeWithCursor(code, sentinel);
   }
 
   public getHTML(): string {
@@ -583,7 +587,7 @@ export class Editor {
     this.extensionFixups(tr, FixupContext.Load);
 
     // return markdown (will apply save fixups)
-    return this.getMarkdownCode(tr.doc, options);
+    return this.getMarkdownCode(tr, options);
   }
 
   public focus() {
@@ -911,10 +915,9 @@ export class Editor {
     });
   }
 
-  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // apply save fixups to a new transaction that we won't commit (b/c we don't
-    // want the fixups to affect the loaded editor state)
-    const tr = this.state.tr;
+  private async getMarkdownCode(tr: Transaction, options: PandocWriterOptions) {
+
+    // apply save fixups 
     this.extensionFixups(tr, FixupContext.Save);
 
     // get code
@@ -932,10 +935,7 @@ function navigationIdForSelection(state: EditorState): string | null {
   }
 }
 
-function docWithCursorSentinel(state: EditorState) {
-  // transaction for inserting the sentinel (won't actually commit since it will
-  // have the sentinel in it but rather will use the computed tr.doc)
-  const tr = state.tr;
+function injectCursorSentinel(tr: Transaction) {
 
   // cursorSentinel to return
   let sentinel: string | null = null;
@@ -946,7 +946,7 @@ function docWithCursorSentinel(state: EditorState) {
   // find the closest top-level text block that isn't an Rmd chunk (their
   // first line gets special processing so we can't put the sentinel there)
   const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => {
-    return node.isTextblock && node.type !== state.doc.type.schema.nodes.rmd_chunk;
+    return node.isTextblock && node.type !== tr.doc.type.schema.nodes.rmd_chunk;
   });
   const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
   if (textBlock) {
@@ -959,11 +959,8 @@ function docWithCursorSentinel(state: EditorState) {
     tr.insertText(sentinel);
   }
 
-  // return the doc and sentinel (if any)
-  return {
-    doc: tr.doc,
-    sentinel,
-  };
+  // return the sentinel
+  return sentinel;
 }
 
 // get editor code + cursor location and jsdiff changes from previousCode

@@ -432,7 +432,7 @@ void onAllSourceDocsRemoved()
 
 bool isBookdownContext()
 {
-   return module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown");
+   return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
 }
 
 void onDeferredInit(bool)

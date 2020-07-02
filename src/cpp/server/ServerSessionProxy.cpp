@@ -171,10 +171,11 @@ void invokeRequestFilter(http::Request* pRequest)
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler())
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, context);
+      return s_proxyFilter(ptrConnection, context, clientHandler);
    else
       return false;
 }
@@ -618,8 +619,6 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
-
-
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
@@ -629,7 +628,7 @@ void proxyRequest(
       const ClientHandler& clientHandler = ClientHandler())
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context))
+   if (applyProxyFilter(ptrConnection, context, clientHandler))
       return;
 
    // modify request
