@@ -148,11 +148,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   int offsetWidth = Window.getClientWidth() - delta;
                   double pct = (double)state.getSplitterPos()[0]
                                / state.getPanelWidth();
-
                   addEast(right_, pct * offsetWidth);
                   for (int i = 0; i < leftList_.size(); i++)
                   {
-                     pct = (double)state.getSplitterPos()[i]
+                     pct = (double)state.getSplitterPos()[i + 1]
                             / state.getPanelWidth();
                      addWest(leftList_.get(i), pct * offsetWidth);
                   }
@@ -161,7 +160,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                {
                   addEast(right_, state.getSplitterPos()[0]);
                   for (int i = 0; i < leftList_.size(); i++)
-                     addWest(leftList_.get(i), state.getSplitterPos()[i]);
+                     addWest(leftList_.get(i), state.getSplitterPos()[i + 1]);
                }
             }
             else
@@ -196,10 +195,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
             int[] splitterArray = new int[leftList_.size() + 1];
             splitterArray[0] = right_.getOffsetWidth();
-            for (int i = 1; i < leftList_.size(); i++)
-            {
-               splitterArray[i] = splitterArray[i-1] + leftList_.get(i).getOffsetWidth();
-            }
+            for (int i = 0; i < leftList_.size(); i++)
+               splitterArray[i + 1] = leftList_.get(i).getOffsetWidth();
             state.setSplitterPos(splitterArray);
             return state.cast();
          }
