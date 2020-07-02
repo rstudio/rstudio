@@ -241,18 +241,26 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
   }
 }
 
+const kSpaceOrColorRegex = /[\s:]/;
+function bibliographyLine(bibliographyFile: string): string {
+  const sketchyCharMatch = bibliographyFile.match(kSpaceOrColorRegex);
+  if (sketchyCharMatch) {
+    return `bibliography: "${bibliographyFile}"\n`;
+  } else {
+    return `bibliography: ${bibliographyFile}\n`;
+  }
+}
+
 function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
   // Add this to the first node
   const yamlCode = parsedYaml.yamlCode;
-  const bibliographyLine = `bibliography: "${bibliographyFile}"\n`;
-  const yamlWithBib = `---${yamlCode}${bibliographyLine}---`;
+  const yamlWithBib = `---${yamlCode}${bibliographyLine(bibliographyFile)}---`;
   const yamlText = schema.text(yamlWithBib);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
 
 function createBiblographyYamlNode(schema: Schema, bibliographyFile: string) {
-  const bibliographyLine = `\nbibliography: "${bibliographyFile}"\n`;
-  const yamlText = schema.text(`---${bibliographyLine}---`);
+  const yamlText = schema.text(`---${bibliographyLine(bibliographyFile)}---`);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
 
