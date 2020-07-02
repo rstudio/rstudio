@@ -85,6 +85,16 @@ public class VisualModeChunks
       case "bash":
          editor.setFileType(FileTypeRegistry.SH);
          break;
+      case "theorem":
+      case "lemma":
+      case "corollary":
+      case "proposition":
+      case "conjecture":
+      case "definition":
+      case "example":
+      case "exercise":
+         // These are Bookdown theorem types
+         editor.setFileType(FileTypeRegistry.TEX);
       default:
          editor.setFileType(FileTypeRegistry.TEXT);
          break;

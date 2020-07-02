@@ -20,7 +20,7 @@ import {
   EditorState,
   Transaction,
   Selection,
-  // NodeSelection,
+  NodeSelection,
 } from 'prosemirror-state';
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
@@ -90,6 +90,7 @@ class CodeBlockNodeView implements NodeView {
   private node: ProsemirrorNode;
   private incomingChanges: boolean;
   private updating: boolean;
+  private escaping: boolean;
   private mode: string;
 
   constructor(
@@ -106,6 +107,7 @@ class CodeBlockNodeView implements NodeView {
     this.getPos = getPos;
     this.incomingChanges = false;
     this.mode = "";
+    this.escaping = false;
 
     // options
     this.editorOptions = editorOptions;
@@ -150,7 +152,34 @@ class CodeBlockNodeView implements NodeView {
       this.incomingChanges = false;
     });
 
-    this.chunk.editor.on('focus', () => this.forwardSelection());
+    // Forward selection we we receive it
+    this.chunk.editor.on('focus', () => {
+        this.forwardSelection();
+    });
+
+    // Add custom escape commands for movement keys (left/right/up/down); these
+    // will check to see whether the movement should leave the editor, and if
+    // so will do so instead of moving the cursor.
+    this.chunk.editor.commands.addCommand({
+        name: "leftEscape",
+        bindKey: "Left",
+        exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); } 
+    });
+    this.chunk.editor.commands.addCommand({
+        name: "rightEscape",
+        bindKey: "Right",
+        exec: () => { this.arrowMaybeEscape('char', 1, "gotoright" ); } 
+    });
+    this.chunk.editor.commands.addCommand({
+        name: "upEscape",
+        bindKey: "Up",
+        exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); } 
+    });
+    this.chunk.editor.commands.addCommand({
+        name: "downEscape",
+        bindKey: "Down",
+        exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
+    });
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -174,9 +203,10 @@ class CodeBlockNodeView implements NodeView {
   }
 
   public setSelection(anchor: number, head: number) {
-    this.chunk.editor.focus();
-    // TODO (jmcphers) Is this necessary?
-    // this.chunk.getElement().classList.add('CodeMirror-focused');
+    if (!this.escaping)
+    {
+      this.chunk.editor.focus();
+    }
     this.updating = true;
     const doc = this.chunk.editor.getSession().getDocument();
     const AceRange = window.require("ace/range").Range;
@@ -311,15 +341,27 @@ class CodeBlockNodeView implements NodeView {
     }
   }
 
-  private arrowMaybeEscape(unit: string, dir: number) {
-    const pos = this.editor.getCursor();
-    if (
-      cmDoc.somethingSelected() ||
-      pos.line !== (dir < 0 ? cmDoc.firstLine() : cmDoc.lastLine()) ||
-      (unit === 'char' && pos.ch !== (dir < 0 ? 0 : cmDoc.getLine(pos.line).length))
-    ) {
-      return CodeMirror.Pass;
+  */
+
+  // Checks to see whether an arrow key should escape the editor or not. If so,
+  // sends the focus to the right node; if not, executes the given Ace command
+  // (to perform the arrow key's usual action)
+  private arrowMaybeEscape(unit: string, dir: number, command: string) {
+    const pos = this.chunk.editor.getCursorPosition();
+    const lastrow = this.chunk.editor.getSession().getLength() - 1;
+    if ((!this.chunk.editor.getSelection().isEmpty()) ||
+        pos.row !== (dir < 0 ? 0 : lastrow) ||
+        (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.chunk.editor.getSession().getDocument().getLine(pos.row).length)))
+    {
+        // this movement is happening inside the editor itself. don't escape
+        // the editor; just execute the underlying command
+        this.chunk.editor.execCommand(command);
+        return;
     }
+
+    // the cursor is about to leave the editor region; flag this to avoid side
+    // effects
+    this.escaping = true;
 
     // ensure we are focused
     this.view.focus();
@@ -367,8 +409,8 @@ class CodeBlockNodeView implements NodeView {
 
     // set focus
     this.view.focus();
+    this.escaping = false;
   }
-  */
 
   private initRunChunkToolbar(ui: EditorUI) {
     const toolbar = window.document.createElement('div');
@@ -472,49 +514,5 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]
     }
     return false;
   };
-}
-
-const kModeMap: { [key: string]: string } = {
-  r: 'mode/r',
-  python: 'mode/python',
-  sql: 'mode/sql',
-  c: 'mode/c_cpp',
-  cpp: 'mode/c_cpp',
-  java: 'ace/mode/java',
-  js: 'ace/mode/javascript',
-  javascript: 'ace/mode/javascript',
-  html: 'ace/mode/html',
-  tex: 'mode/tex',
-  latex: 'mode/tex',
-  css: 'ace/mode/css',
-  markdown: 'mode/markdown',
-  yaml: 'mode/yaml',
-  'yaml-frontmatter': 'mode/yaml',
-  shell: 'mode/sh',
-  bash: 'mode/sh',
-};
-
-const kBookdownThereomModeMap: { [key: string]: string } = {
-  theorem: 'mode/tex',
-  lemma: 'mode/tex',
-  corollary: 'mode/tex',
-  proposition: 'mode/tex',
-  conjecture: 'mode/tex',
-  definition: 'mode/tex',
-  example: 'mode/tex',
-  exercise: 'mode/tex',
-};
-
-function modeForLang(lang: string, options: CodeViewOptions) {
-  const modeMap = {
-    ...kModeMap,
-    ...(options.bookdownTheorems ? kBookdownThereomModeMap : {}),
-  };
-
-  if (modeMap.hasOwnProperty(lang)) {
-    return modeMap[lang];
-  } else {
-    return null;
-  }
 }
 
