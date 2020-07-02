@@ -165,7 +165,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
     },
 
-    // plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, navigation, server)],
+    plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, server)],
 
     completionHandlers: () => [xrefCompletionHandler(ui, server.xref)],
 

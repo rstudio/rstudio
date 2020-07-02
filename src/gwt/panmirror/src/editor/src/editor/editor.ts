@@ -600,20 +600,20 @@ export class Editor {
     this.focus();
   }
 
-  public navigate(type: NavigationType, location: string, animate = false) {
+  public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
+
+    // perform navigation
     const nav = navigateTo(this.view, type, location, animate);
+
+    // emit event
     if (nav !== null) {
+      if (!recordCurrent) {
+        nav.prevPos = -1;
+      }
       this.emitEvent(NavigateEvent, nav);
     }
   }
 
-  public navigateToId(id: string, animate = false) {
-    return this.navigate(NavigationType.Id, id, animate);
-  }
-
-  public navigateToPos(pos: number, animate = false) {
-    return this.navigate(NavigationType.Pos, pos.toString(), animate);
-  }
 
   public resize() {
     this.syncContentWidth();

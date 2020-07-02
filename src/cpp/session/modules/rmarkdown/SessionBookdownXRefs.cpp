@@ -73,7 +73,7 @@ std::string bookRelativePath(const FilePath& rmdFile)
 
 FilePath xrefIndexDirectory()
 {
-   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-xref-index");
+   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-crossrefs");
    Error error = xrefsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -119,6 +119,26 @@ struct XRefIndexEntry
 
 XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
 {
+   // move rmd code chunk preamble *into* chunk (so pandoc parses it as a code block)
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, contents, boost::algorithm::is_any_of("\r\n"));
+   std::vector<std::string> indexLines;
+   boost::regex beginChunkRe("^([\\t >]*)(```+\\s*)(\\{[a-zA-Z0-9_]+( *[ ,].*)?\\}\\s*)$");
+   for (auto line : lines) {
+      boost::smatch matches;
+      if (boost::regex_search(line, matches, beginChunkRe))
+      {
+         indexLines.push_back(matches[1] + matches[2]);
+         indexLines.push_back(matches[1] + matches[3]);
+      }
+      else
+      {
+         indexLines.push_back(line);
+      }
+   }
+   std::string indexContents = boost::algorithm::join(indexLines, "\n");
+
+   // build index
    XRefFileIndex index(file);
 
    // run pandoc w/ custom lua filter to capture index
@@ -131,7 +151,7 @@ XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
    std::string xrefLua = string_utils::utf8ToSystem(xrefLuaPath.getAbsolutePath());
    args.push_back(xrefLua);
    core::system::ProcessResult result;
-   Error error = module_context::runPandoc(args, contents, &result);
+   Error error = module_context::runPandoc(args, indexContents, &result);
    if (error)
    {
       LOG_ERROR(error);

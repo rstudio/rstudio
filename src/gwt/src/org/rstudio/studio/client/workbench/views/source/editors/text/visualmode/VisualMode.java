@@ -167,6 +167,10 @@ public class VisualMode implements VisualModeEditorSync,
          docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, true);
          manageUI(true, true, completed);
       }
+      else if (isLoading_)
+      {
+         onReadyHandlers_.add(completed);
+      }
       else
       {
          completed.execute();
@@ -572,9 +576,14 @@ public class VisualMode implements VisualModeEditorSync,
       return visualModeNavigation_.isVisualModePosition(position);
    }
    
-   public void navigate(SourcePosition position)
+   public void navigate(SourcePosition position, boolean recordCurrentPosition)
    {
-      visualModeNavigation_.navigate(position);
+      visualModeNavigation_.navigate(position, recordCurrentPosition);
+   }
+   
+   public void navigateToXRef(String xref, boolean recordCurrentPosition)
+   {
+      visualModeNavigation_.navigateToXRef(xref, recordCurrentPosition);
    }
    
    public void recordCurrentNavigationPosition()
@@ -654,6 +663,9 @@ public class VisualMode implements VisualModeEditorSync,
       // visual mode enabled (panmirror editor)
       if (activate)
       {
+         // set flag indicating that we are loading
+         isLoading_ = true;
+         
          // show progress (as this may well require either loading the 
          // panmirror library for the first time or a reload of visual mode,
          // which is normally instant but for very, very large documents
@@ -683,6 +695,11 @@ public class VisualMode implements VisualModeEditorSync,
                
                // execute completed hook
                Scheduler.get().scheduleDeferred(completed);  
+               
+               // clear loading flag and execute any onReady handlers
+               isLoading_ = false;
+               onReadyHandlers_.forEach(handler -> { Scheduler.get().scheduleDeferred(handler); });
+               onReadyHandlers_.clear();
             }
             else
             {
@@ -1088,6 +1105,10 @@ public class VisualMode implements VisualModeEditorSync,
    private final ProgressPanel progress_;
    
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
+   
+   private boolean isLoading_ = false;
+   private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<ScheduledCommand>(); 
+   
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;
