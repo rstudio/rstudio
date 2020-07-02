@@ -846,6 +846,7 @@ bool usingMingwGcc49();
 
 bool isWebsiteProject();
 bool isBookdownWebsite();
+bool isBookdownProject();
 bool isBlogdownProject();
 bool isDistillProject();
 std::string websiteOutputDir();

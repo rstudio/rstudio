@@ -55,7 +55,7 @@ std::vector<std::string> bookdownBibliographiesRelative()
 {
    std::vector<std::string> files;
 
-   if (module_context::isBookdownWebsite() && module_context::isPackageInstalled("bookdown"))
+   if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
    {
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());

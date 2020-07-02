@@ -401,7 +401,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
    sessionInfo["bookdown_has_renumber_footnotes"] = modules::rmarkdown::bookdown::hasRenumberFootnotes();
-
+   sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
