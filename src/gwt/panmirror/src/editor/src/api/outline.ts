@@ -14,8 +14,13 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { EditorState } from 'prosemirror-state';
+
+import { NodeWithPos, findChildrenByType } from 'prosemirror-utils';
 
 import { findTopLevelBodyNodes } from './node';
+import { titleFromYamlMetadataNode } from './yaml';
+import { rmdChunkEngineAndLabel } from './rmd';
 
 export interface EditorOutlineItem {
   navigation_id: string;
@@ -27,13 +32,116 @@ export interface EditorOutlineItem {
 
 export const kHeadingOutlineItemType = 'heading';
 export const kRmdchunkOutlineItemType = 'rmd_chunk';
-export const kYamlMetadataOutlineItenItem = 'yaml_metadata';
+export const kYamlMetadataOutlineItemType = 'yaml_metadata';
 
 export type EditorOutlineItemType = 'heading' | 'rmd_chunk' | 'yaml_metadata';
 
 export type EditorOutline = EditorOutlineItem[];
 
-export function outlineNodes(doc: ProsemirrorNode) {
+export interface EditingOutlineLocationItem {
+  type: EditorOutlineItemType;
+  level: number;
+  title: string;
+  active: boolean;
+}
+
+export interface EditingOutlineLocation {
+  items: EditingOutlineLocationItem[];
+}
+
+export function getEditingOutlineLocation(state: EditorState): EditingOutlineLocation {
+
+  // traverse document outline to get base location info
+  const itemsWithPos = getDocumentOutline(state).map(nodeWithPos => {
+    const schema = state.schema;
+    const node = nodeWithPos.node;
+    const item: EditingOutlineLocationItem = {
+      type: kYamlMetadataOutlineItemType,
+      level: 0,
+      title: '',
+      active: false,
+    };
+    if (node.type === schema.nodes.yaml_metadata) {
+      item.type = kYamlMetadataOutlineItemType;
+      item.title = titleFromYamlMetadataNode(node) || '';
+    } else if (node.type === schema.nodes.rmd_chunk) {
+      item.type = kRmdchunkOutlineItemType;
+      const chunk = rmdChunkEngineAndLabel(node.textContent);
+      if (chunk) {
+        item.title = chunk.label;
+      }
+    } else if (node.type === schema.nodes.heading) {
+      item.type = kHeadingOutlineItemType;
+      item.level = node.attrs.level;
+      item.title = node.textContent;
+    }
+    return {
+      item,
+      pos: nodeWithPos.pos
+    };
+  });
+
+  // return the location, set the active item by scanning backwards until
+  // we find an item with a position before the cursor
+  let foundActive = false;
+  const items: EditingOutlineLocationItem[] = [];
+  for (let i = itemsWithPos.length - 1; i >= 0; i--) {
+    const item = itemsWithPos[i].item;
+    if (!foundActive && (itemsWithPos[i].pos < state.selection.from)) {
+      item.active = true;
+      foundActive = true;
+    }
+    items.unshift(item);
+  }
+
+  // return the outline
+  return { items };
+}
+
+// get a document outline that matches the scheme provided in EditingOutlineLocation:
+//  - yaml metadata blocks
+//  - top-level headings
+//  - rmd chunks at the top level or within a top-level list
+export function getDocumentOutline(state: EditorState) {
+  // get top level body nodes
+  const schema = state.schema;
+  const bodyNodes = findTopLevelBodyNodes(state.doc, node => {
+    return [
+      schema.nodes.yaml_metadata,
+      schema.nodes.rmd_chunk,
+      schema.nodes.heading,
+      schema.nodes.bullet_list,
+      schema.nodes.ordered_list,
+    ].includes(node.type);
+  });
+
+  // reduce (explode lists into contained rmd chunks)
+  const outlineNodes: NodeWithPos[] = [];
+  bodyNodes.forEach(bodyNode => {
+    // explode lists
+    if ([schema.nodes.bullet_list, schema.nodes.ordered_list].includes(bodyNode.node.type)) {
+      // look for rmd chunks within list items (non-recursive, only want top level)
+      findChildrenByType(bodyNode.node, schema.nodes.list_item, false).forEach(listItemNode => {
+        findChildrenByType(listItemNode.node, schema.nodes.rmd_chunk, false).forEach(rmdChunkNode => {
+          outlineNodes.push({
+            node: rmdChunkNode.node,
+            pos: bodyNode.pos + 1 + listItemNode.pos + 1 + rmdChunkNode.pos,
+          });
+        });
+      });
+
+      // other nodes go straight through
+    } else {
+      outlineNodes.push(bodyNode);
+    }
+  });
+
+  // return outline nodes
+  return outlineNodes;
+}
+
+
+export function getOutlineNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isOutlineNode);
 }
 

@@ -57,8 +57,8 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline, outlineNodes } from '../api/outline';
-import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
+import { EditorOutline, getOutlineNodes, EditingOutlineLocation } from '../api/outline';
+import { EditingLocation, getEditingLocation, setEditingLocation } from '../api/location';
 import { navigateTo, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
@@ -908,7 +908,7 @@ export class Editor {
 }
 
 function navigationIdForSelection(state: EditorState): string | null {
-  const outline = outlineNodes(state.doc);
+  const outline = getOutlineNodes(state.doc);
   const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
   if (outlineNode) {
     return outlineNode.node.attrs.navigation_id;

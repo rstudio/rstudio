@@ -16,6 +16,7 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { pandocAutoIdentifier } from './pandoc_id';
+import { rmdChunkEngineAndLabel } from './rmd';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
@@ -126,10 +127,11 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
 };
 
 function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern?: RegExp) {
+  const chunk = rmdChunkEngineAndLabel(node.textContent);
   const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
-  if (match) {
-    return match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
-      match[2] === label &&
+  if (chunk) {
+    return chunk.engine.localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+      chunk.label === label &&
       (!pattern || !!node.textContent.match(pattern));
   } else {
     return false;
