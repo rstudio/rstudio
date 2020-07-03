@@ -34,7 +34,6 @@ import { doiFromSlice } from './cite-doi';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
-import { citationLocalDoiCompletionHandler } from './cite-completion_doi_local';
 import { CSL, formatForPreview, sanitizeForCiteproc } from '../../api/csl';
 
 const kCiteCitationsIndex = 0;
@@ -215,7 +214,6 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     completionHandlers: () => [
-      citationLocalDoiCompletionHandler(context.ui, mgr),
       citationDoiCompletionHandler(context.ui, mgr, context.server),
       citationCompletionHandler(context.ui, mgr),
     ],

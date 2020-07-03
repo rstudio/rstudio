@@ -22,7 +22,7 @@ import Fuse from 'fuse.js';
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
 import { expandPaths } from './path';
-import { CSLName, CSLDate } from './csl';
+import { CSLName, CSLDate, CSL } from './csl';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -39,7 +39,7 @@ export interface Bibliography {
 }
 
 // The individual bibliographic source
-export interface BibliographySource {
+export interface BibliographySource extends CSL {
   id: string;
   type: string;
   DOI?: string;

@@ -266,7 +266,7 @@ function etAl(authorStr: string, maxLength: number) {
 }
 
 // TODO: Needs to support localization of the templated strings
-export function formatIssuedDate(date: CSLDate): string {
+export function formatIssuedDate(date: CSLDate | undefined): string {
   // No issue date for this
   if (!date) {
     return '';

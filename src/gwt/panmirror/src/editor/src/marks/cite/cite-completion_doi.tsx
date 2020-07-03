@@ -22,7 +22,7 @@ import React from 'react';
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { kCitationCompleteScope } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
+import { imageForType, formatAuthors, formatIssuedDate, entryForSource } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';
@@ -31,6 +31,7 @@ import { DOIServer } from '../../api/doi';
 import { parseDOI } from './cite-doi';
 import { insertCitationForDOI } from './cite';
 import { CSL } from '../../api/csl';
+import { performCompletionReplacement } from '../../behaviors/completion/completion';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;
@@ -45,10 +46,16 @@ export function citationDoiCompletionHandler(
 
     scope: kCitationCompleteScope,
 
-    completions: citationDOICompletions(ui, server.doi),
+    completions: citationDOICompletions(ui, server.doi, bibManager),
 
     replace(view: EditorView, pos: number, cslEntry: CSLEntry | null) {
-      if (cslEntry && cslEntry.csl.DOI) {
+      if (cslEntry && cslEntry.inBibliography) {
+        // It's already in the bibliography, just write the id
+        const tr = view.state.tr;
+        performCompletionReplacement(tr, pos, cslEntry.id);
+        view.dispatch(tr);
+      } else if (cslEntry && cslEntry.csl.DOI) {
+        // It isn't in the bibliography, show the insert cite dialog
         insertCitationForDOI(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
     },
@@ -66,7 +73,7 @@ export function citationDoiCompletionHandler(
 
 const kPRogressDelay = 350;
 
-function citationDOICompletions(ui: EditorUI, server: DOIServer) {
+function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyManager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CSLEntry> | null => {
     const parsedDOI = parseDOI(context);
     if (parsedDOI) {
@@ -74,36 +81,53 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         token: parsedDOI.token,
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
-        completions: (_state: EditorState) => {
-          return server.fetchCSL(parsedDOI.token, kPRogressDelay).then(result => {
-            if (result.status === "ok") {
-              const csl = result.message;
+        completions: async (_state: EditorState) => {
 
-              // We should only return csl that includes a DOI since this UI depends upon that being present
-              // Note that this should always be true because we are looking up the CSL by DOI, but in the event
-              // that the server returns something unexpected, we will simply not match any completions
-              if (csl.DOI) {
-                return [
-                  {
-                    id: csl.DOI,
-                    csl,
-                    image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
-                    formattedAuthor: formatAuthors(csl.author, 50),
-                    formattedIssueDate: formatIssuedDate(csl.issued),
-                  },
-                ];
-              } else {
-                return [];
-              }
-            } else if (result.status === "notfound" || result.status === "nohost") {
-              return [];
-            } else if (result.status === "error") {
-              // TODO: deal w/ error? (it's already been logged on the server)
-              return [];
+          // First check whether the DOI is already contained in the current bibliography
+          await bibliographyManager.loadBibliography(ui, context.doc);
+          const source = bibliographyManager.findDoi(parsedDOI.token);
+          if (source) {
+            return [
+              {
+                id: source.id,
+                csl: source,
+                inBibliography: true,
+                image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
+                formattedAuthor: formatAuthors(source.author, 50),
+                formattedIssueDate: formatIssuedDate(source.issued),
+              }];
+          }
+
+          // Check with the server to see if we can get citation data for this DOI
+          const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
+          if (result.status === "ok") {
+            const csl = result.message;
+
+            // We should only return csl that includes a DOI since this UI depends upon that being present
+            // Note that this should always be true because we are looking up the CSL by DOI, but in the event
+            // that the server returns something unexpected, we will simply not match any completions
+            if (csl.DOI) {
+              return [
+                {
+                  id: csl.DOI,
+                  csl,
+                  inBibliography: false,
+                  image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                  formattedAuthor: formatAuthors(csl.author, 50),
+                  formattedIssueDate: formatIssuedDate(csl.issued),
+                },
+              ];
             } else {
               return [];
             }
-          });
+          } else if (result.status === "notfound" || result.status === "nohost") {
+            return [];
+          } else if (result.status === "error") {
+            // TODO: deal w/ error? (it's already been logged on the server)
+            return [];
+          } else {
+            return [];
+          }
         }
       };
     }
@@ -114,6 +138,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
 interface CSLEntry {
   id: string;
   csl: CSL;
+  inBibliography: boolean;
   image?: string;
   formattedAuthor: string;
   formattedIssueDate: string;
