@@ -13,9 +13,6 @@
  *
  */
 
-import { CSL } from "./csl";
-
-
 export interface DOIResult {
   status: "ok" | "notfound" | "nohost" | "error";
   message: any | null;

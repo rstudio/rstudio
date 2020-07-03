@@ -64,6 +64,8 @@ export function citationDoiCompletionHandler(
   };
 }
 
+const kPRogressDelay = 350;
+
 function citationDOICompletions(ui: EditorUI, server: DOIServer) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CSLEntry> | null => {
     const parsedDOI = parseDOI(context);
@@ -72,10 +74,10 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         token: parsedDOI.token,
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
-        completions: (_state: EditorState) =>
-          server.fetchCSL(parsedDOI.token, 350).then(result => {
+        completions: (_state: EditorState) => {
+          return server.fetchCSL(parsedDOI.token, kPRogressDelay).then(result => {
             if (result.status === "ok") {
-
+              console.log("completion");
               const csl = result.message;
               return [
                 {
@@ -94,7 +96,8 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
             } else {
               return [];
             }
-          }),
+          });
+        }
       };
     }
     return null;
