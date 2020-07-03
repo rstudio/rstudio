@@ -623,7 +623,7 @@ export function insertCitationForDOI(
             view.focus();
           }
         }).catch(error => {
-          // TODO: What do in the event of an error
+          // TODO: Log an error message since we failed to add the citation to the bibliography
         });
 
       }

@@ -123,7 +123,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
           } else if (result.status === "notfound" || result.status === "nohost") {
             return [];
           } else if (result.status === "error") {
-            // TODO: deal w/ error? (it's already been logged on the server)
+            // This error has already been logged on the server. 
             return [];
           } else {
             return [];
