@@ -39,15 +39,14 @@ if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
-set VSINSTALLDIR="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools"
-set VCINSTALLDIR="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\VC"
-"%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat" -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134.0
+call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -clean_env -no_logo || goto :error
+call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134.0 -no_logo || goto :error
 cmake -G "Ninja" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
-      -DCMAKE_C_COMPILER=cl.exe ^
-      -DCMAKE_CXX_COMPILER=cl.exe ^
+      -DCMAKE_C_COMPILER=cl ^
+      -DCMAKE_CXX_COMPILER=cl ^
       ..\..\.. || goto :error
 cmake --build . %MAKEFLAGS% --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..

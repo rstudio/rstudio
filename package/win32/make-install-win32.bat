@@ -18,7 +18,8 @@ cd %WIN32_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
 
 REM Build the project
-"%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat" -arch=x86 -startdir=none -host_arch=x86 -winsdk=10.0.17134.0
+call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -clean_env -no_logo || goto :error
+call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=x86 -startdir=none -host_arch=x86 -winsdk=10.0.17134.0 -no_logo || goto :error
 cmake -G "Ninja" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
