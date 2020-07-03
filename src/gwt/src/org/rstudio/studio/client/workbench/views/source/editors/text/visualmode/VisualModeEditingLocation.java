@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -117,6 +118,42 @@ public class VisualModeEditingLocation
       return location;
    }
    
+   public void setSourceOutlineLocation(PanmirrorEditingOutlineLocation location)
+   {
+   // if we don't have an outline then bail
+      if (docDisplay_.getScopeTree().length() == 0)
+         return;
+      
+      // build flattened version of scope tree which includes outline items
+      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = 
+         new ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>>();
+      buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
+      
+      // if the lengths differ then bail
+      if (outlineItems.size() != outlineItems.size())
+         return;
+      
+      // iterate over the items until we find the active one (bail if our own
+      // outline/scope-tree representation doesn't match the one passed to us)
+      for (int i = 0; i<outlineItems.size(); i++)
+      {
+         // structure check
+         Pair<PanmirrorEditingOutlineLocationItem, Scope> outlineItem = outlineItems.get(i);
+         if (!outlineLocationsAreSimilar(outlineItem.first, location.items[i]))
+            break;
+         
+         // check for active
+         if (location.items[i].active) 
+         {
+            Scope scope = outlineItem.second;
+            SourcePosition position = SourcePosition.create(scope.getPreamble().getRow(), 
+                                                            scope.getPreamble().getColumn());
+            docDisplay_.navigateToPosition(position, false);
+            break;
+         }  
+      }  
+   }
+   
    private void buildOutlineLocation(JsArray<Scope> scopes, 
                                      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems)
    {
@@ -150,6 +187,11 @@ public class VisualModeEditingLocation
             outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
          }
       }
+   }
+   
+   private boolean outlineLocationsAreSimilar(PanmirrorEditingOutlineLocationItem a, PanmirrorEditingOutlineLocationItem b)
+   {
+      return a.type.equals(b.type) && a.level == b.level;
    }
    
    private final DocUpdateSentinel docUpdateSentinel_;

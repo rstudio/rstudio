@@ -57,7 +57,7 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline, getOutlineNodes, EditingOutlineLocation } from '../api/outline';
+import { EditorOutline, getOutlineNodes, EditingOutlineLocation, getEditingOutlineLocation } from '../api/outline';
 import { EditingLocation, getEditingLocation, setEditingLocation } from '../api/location';
 import { navigateTo, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
@@ -104,7 +104,7 @@ import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  cursor?: { row: number; column: number };
+  location?: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
@@ -240,6 +240,10 @@ export class Editor {
   // content width constraints (if unset uses default editor CSS)
   private maxContentWidth = 0;
   private minContentPadding = 0;
+
+  // keep track of whether the last transaction was selection-only
+  // (indicates that we should forward an editing outline location when going to source mode)
+  private lastTrSelectionOnly = false;
 
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
@@ -505,9 +509,19 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
+
+    // do we need to provide an outline location
+    const useOutlineLocation = this.lastTrSelectionOnly;
+
+    // get the code
     const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
-    return { code };
+
+    // return code + perhaps outline location
+    return {
+      code,
+      location: useOutlineLocation ? getEditingOutlineLocation(this.state) : undefined
+    };
   }
 
   public getHTML(): string {
@@ -673,6 +687,9 @@ export class Editor {
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
+
+    // track whether this was a selection-only transaction
+    this.lastTrSelectionOnly = tr.selectionSet && !tr.docChanged;
 
     // apply the transaction
     this.state = this.state.apply(tr);
