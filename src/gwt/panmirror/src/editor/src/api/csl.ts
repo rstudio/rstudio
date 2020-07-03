@@ -22,22 +22,22 @@ export interface CSL {
   type: string;
 
   // Name of work's publisher
-  publisher: string;
+  publisher?: string;
 
   // Title
-  title: string;
+  title?: string;
 
   // DOI of the work 
-  DOI: string;
+  DOI?: string;
 
   // URL form of the work's DOI
-  URL: string;
+  URL?: string;
 
   // Array of Contributors
-  author: CSLName[];
+  author?: CSLName[];
 
   // Earliest of published-print and published-online
-  issued: CSLDate;
+  issued?: CSLDate;
 
   // Full titles of the containing work (usually a book or journal)
   'container-title'?: string;
@@ -46,15 +46,14 @@ export interface CSL {
   'short-container-title'?: string;
 
   // Issue number of an article's journal
-  issue: string;
+  issue?: string;
 
   // Volume number of an article's journal
-  volume: string;
+  volume?: string;
 
   // Pages numbers of an article within its journal
-  page: string;
+  page?: string;
 
-  // Could be a 
   ISSN?: string;
 }
 
@@ -91,9 +90,13 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
 export function formatForPreview(csl: CSL): CSLField[] {
 
   const pairs = new Array<CSLField>();
-  pairs.push({ name: "Title", value: csl.title });
+  if (csl.title) {
+    pairs.push({ name: "Title", value: csl.title });
+  }
   pairs.push({ name: "Authors", value: formatAuthors(csl.author, 255) });
-  pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
+  if (csl.issued) {
+    pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
+  }
 
   const containerTitle = csl["container-title"];
   if (containerTitle) {
@@ -106,7 +109,7 @@ export function formatForPreview(csl: CSL): CSLField[] {
   }
 
   const page = csl.page;
-  if (volume) {
+  if (page) {
     pairs.push({ name: "Page(s)", value: page });
   }
 

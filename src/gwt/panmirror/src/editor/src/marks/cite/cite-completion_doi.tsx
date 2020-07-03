@@ -48,7 +48,7 @@ export function citationDoiCompletionHandler(
     completions: citationDOICompletions(ui, server.doi),
 
     replace(view: EditorView, pos: number, cslEntry: CSLEntry | null) {
-      if (cslEntry) {
+      if (cslEntry && cslEntry.csl.DOI) {
         insertCitationForDOI(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
     },
@@ -77,17 +77,24 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer) {
         completions: (_state: EditorState) => {
           return server.fetchCSL(parsedDOI.token, kPRogressDelay).then(result => {
             if (result.status === "ok") {
-              console.log("completion");
               const csl = result.message;
-              return [
-                {
-                  id: csl.DOI,
-                  csl,
-                  image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
-                  formattedAuthor: formatAuthors(csl.author, 50),
-                  formattedIssueDate: formatIssuedDate(csl.issued),
-                },
-              ];
+
+              // We should only return csl that includes a DOI since this UI depends upon that being present
+              // Note that this should always be true because we are looking up the CSL by DOI, but in the event
+              // that the server returns something unexpected, we will simply not match any completions
+              if (csl.DOI) {
+                return [
+                  {
+                    id: csl.DOI,
+                    csl,
+                    image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                    formattedAuthor: formatAuthors(csl.author, 50),
+                    formattedIssueDate: formatIssuedDate(csl.issued),
+                  },
+                ];
+              } else {
+                return [];
+              }
             } else if (result.status === "notfound" || result.status === "nohost") {
               return [];
             } else if (result.status === "error") {
@@ -120,8 +127,8 @@ const CSLSourceView: React.FC<CSLEntry> = cslEntry => {
     <CompletionItemDetailedView
       width={kCompletionWidth - kCompletionItemPadding}
       image={cslEntry.image}
-      heading={csl['short-container-title'] || csl.publisher}
-      title={csl.title}
+      heading={csl['short-container-title'] || csl.publisher || ''}
+      title={csl.title || ''}
       subTitle={`${cslEntry.formattedAuthor} ${cslEntry.formattedIssueDate}` || ''}
     />
   );
