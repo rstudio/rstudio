@@ -549,6 +549,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
             "Please obtain an updated license to continue using the product.";
    }
 
+   // session route for load balanced sessions
+   sessionInfo["session_node"] = session::modules::overlay::sessionNode();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client

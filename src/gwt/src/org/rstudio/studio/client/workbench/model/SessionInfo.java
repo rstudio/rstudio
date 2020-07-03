@@ -650,4 +650,7 @@ public class SessionInfo extends JavaScriptObject
       return this.python_initialized;
    }-*/;
 
+   public final native String getSessionNode() /*-{
+      return this.session_node;
+   }-*/;
 }
