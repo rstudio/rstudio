@@ -35,36 +35,43 @@ export interface XRef {
   title: string;
 }
 
-export function xrefKey(xref: XRef) {
-  return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
+export function xrefKey(xref: XRef, headingType = false) {
+  // headings don't include their type in the key
+  return !headingType && /^h\d$/.test(xref.type)
+    ? xref.id
+    // no colon if there is no type
+    : xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
 }
 
 export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
 
-  // alias schema
-  const schema = doc.type.schema;
+  // -1 if not found
+  let xrefPos = -1;
 
   // get type and id
-  const { type, id } = xrefTypeAndId(xref);
+  const xrefInfo = xrefTypeAndId(xref);
+  if (xrefInfo) {
 
-  // search all descendents recursively for the xref
-  let xrefPos = -1;
-  doc.descendants((node, pos) => {
+    const { type, id } = xrefInfo;
 
-    // bail if we already found it
-    if (xrefPos !== -1) {
-      return false;
-    }
+    // search all descendents recursively for the xref
+    doc.descendants((node, pos) => {
 
-    // see if we have a locator for this type that can handle this node type
-    const locator = xrefPositionLocators[type];
-    if (locator && locator.nodeTypes.includes(node.type.name)) {
-      if (locator.hasXRef(node, id)) {
-        xrefPos = pos;
+      // bail if we already found it
+      if (xrefPos !== -1) {
         return false;
       }
-    }
-  });
+
+      // see if we have a locator for this type that can handle this node type
+      const locator = xrefPositionLocators[type];
+      if (locator && locator.nodeTypes.includes(node.type.name)) {
+        if (locator.hasXRef(node, id)) {
+          xrefPos = pos;
+          return false;
+        }
+      }
+    });
+  }
 
   // return the position
   return xrefPos;
@@ -80,10 +87,7 @@ function xrefTypeAndId(xref: string) {
       id: xref.substring(colonPos + 1)
     };
   } else {
-    return {
-      type: 'heading',
-      id: xref
-    };
+    return null;
   }
 }
 
@@ -93,12 +97,12 @@ interface XRefPositionLocator {
 }
 
 const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
-  'heading': {
-    nodeTypes: ['heading'],
-    hasXRef: (node: ProsemirrorNode, id: string) => {
-      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
-    }
-  },
+  'h1': headingLocator(),
+  'h2': headingLocator(),
+  'h3': headingLocator(),
+  'h4': headingLocator(),
+  'h5': headingLocator(),
+  'h6': headingLocator(),
   'fig': {
     nodeTypes: ['rmd_chunk'],
     hasXRef: (node: ProsemirrorNode, id: string) => rmdChunkHasXRef(node, 'r', id, /^\{.*[ ,].*fig\.cap\s*=.*\}\s*\n/m)
@@ -136,6 +140,15 @@ function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, p
   } else {
     return false;
   }
+}
+
+function headingLocator() {
+  return {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
+    }
+  };
 }
 
 function thereomLocator(engine: string) {

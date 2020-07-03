@@ -69,7 +69,7 @@ std::string bookRelativePath(const FilePath& rmdFile)
 
 FilePath xrefIndexDirectory()
 {
-   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-crossrefs");
+   FilePath xrefsPath = module_context::scopedScratchPath().completeChildPath("bookdown-crossref");
    Error error = xrefsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -183,18 +183,18 @@ XRefFileIndex indexForDoc(const FilePath& filePath)
 }
 
 
-void writeEntryId(const std::string& id, json::Object* pEntryJson)
+bool writeEntryId(const std::string& id, json::Object* pEntryJson)
 {
    std::size_t colonPos = id.find_first_of(':');
    if (colonPos != std::string::npos)
    {
       pEntryJson->operator[](kType) = id.substr(0, colonPos);
       pEntryJson->operator[](kId) = id.substr(colonPos + 1);
+      return true;
    }
    else
    {
-      pEntryJson->operator[](kType) = "";
-      pEntryJson->operator[](kId) = id;
+      return false;
    }
 }
 
@@ -332,11 +332,12 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
       auto entry = indexEntry.entry;
       if (entry.size() > 0)
       {
+         bool validEntryId = false;
          std::size_t spacePos = entry.find_first_of(' ');
          if (spacePos != std::string::npos)
          {
             // write the id
-            writeEntryId(entry.substr(0, spacePos), &xrefJson);
+            validEntryId = writeEntryId(entry.substr(0, spacePos), &xrefJson);
 
             // get the title (substitute textref if we have one)
             std::string title = entry.substr(spacePos + 1);
@@ -350,9 +351,10 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
          }
          else
          {
-            writeEntryId(entry, &xrefJson);
+            validEntryId = writeEntryId(entry, &xrefJson);
          }
-         xrefsJson.push_back(xrefJson);
+         if (validEntryId)
+            xrefsJson.push_back(xrefJson);
       }
    }
 
@@ -441,7 +443,7 @@ void onDeferredInit(bool)
          new IncrementalFileChangeHandler(
             isBookdownRmd,
             fileChangeHandler,
-            boost::posix_time::seconds(3),
+            boost::posix_time::seconds(1),
             boost::posix_time::milliseconds(500),
             true
          );
@@ -536,7 +538,17 @@ Error xrefForId(const json::JsonRpcRequest& request,
 
    // get index containing just the entry that matches this id
    json::Object indexJson = xrefIndex(file, [id](const std::string& entry) {
-     return id == entry.substr(0, entry.find_first_of(' '));
+      std::string entryId = entry.substr(0, entry.find_first_of(' '));
+      if (id == entryId)
+      {
+         return true;
+      }
+      else
+      {
+         // headings also match on just the id part
+         entryId = boost::regex_replace(entryId, boost::regex("^h\\d\\:"), "");
+         return id == entryId;
+      }
    });
 
    // return it
