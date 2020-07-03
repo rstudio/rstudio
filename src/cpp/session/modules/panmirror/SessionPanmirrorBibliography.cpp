@@ -583,6 +583,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    else if (result.exitStatus != EXIT_SUCCESS)
    {
       Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
+      error.addProperty("csl-json", sourceAsJson);
       LOG_ERROR(error);
       return error;
    }
