@@ -78,9 +78,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            // lowest possible mark priority since it doesn't call writeInlines
-            // (so will 'eat' any other marks on the stack)
-            priority: 0,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },
