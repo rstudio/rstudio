@@ -105,7 +105,7 @@ public class VisualModeEditingLocation
          Pair<PanmirrorEditingOutlineLocationItem, Scope> outlineItem = outlineItems.get(i);
          PanmirrorEditingOutlineLocationItem item = outlineItem.first;
          Scope scope = outlineItem.second;
-         if (!foundActive && scope.getPreamble().isBefore(cursorPos))
+         if (!foundActive && scope.getPreamble().isBeforeOrEqualTo(cursorPos))
          {
             item.active = true;
             foundActive = true;
