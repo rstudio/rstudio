@@ -35,7 +35,7 @@ import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 import { suggestIdForEntry } from './cite-bibliography_entry';
 import { citationLocalDoiCompletionHandler } from './cite-completion_doi_local';
-import { CSL, formatForPreview } from '../../api/csl';
+import { CSL, formatForPreview, sanitizeForCiteproc } from '../../api/csl';
 
 const kCiteCitationsIndex = 0;
 
@@ -43,7 +43,6 @@ const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
 const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/;()/+<>#]*';
-
 
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
@@ -605,13 +604,7 @@ export function insertCitationForDOI(
           ? result.bibliographyFile :
           ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
 
-        // TODO: This is broken
-        const garbageHack = {
-          ...result.csl,
-          ISSN: ''
-        };
-
-        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([garbageHack])).then(() => {
+        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([sanitizeForCiteproc(result.csl)])).then(() => {
 
           const tr = view.state.tr;
 

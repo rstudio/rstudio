@@ -18,6 +18,9 @@ import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography
 
 export interface CSL {
 
+  // Enumeration, one of the type ids from https://api.crossref.org/v1/types
+  type: string;
+
   // Name of work's publisher
   publisher: string;
 
@@ -29,9 +32,6 @@ export interface CSL {
 
   // URL form of the work's DOI
   URL: string;
-
-  // Enumeration, one of the type ids from https://api.crossref.org/v1/types
-  type: string;
 
   // Array of Contributors
   author: CSLName[];
@@ -53,6 +53,9 @@ export interface CSL {
 
   // Pages numbers of an article within its journal
   page: string;
+
+  // Could be a 
+  ISSN?: string;
 }
 
 export interface CSLName {
@@ -70,24 +73,39 @@ export interface CSLField {
   value: string;
 }
 
-export function formatForPreview(work: CSL): CSLField[] {
+export function sanitizeForCiteproc(csl: CSL): CSL {
+
+  // the CSL returned by the server may include some fields with invalid types
+  // for example, ISSN may be returned as an array of ISSNs. But Citeproc expects
+  // this to be a simple string.
+  if (csl.ISSN && Array.isArray(csl.ISSN)) {
+    return {
+      ...csl,
+      ISSN: csl.ISSN[0]
+    };
+  }
+
+  return csl;
+}
+
+export function formatForPreview(csl: CSL): CSLField[] {
 
   const pairs = new Array<CSLField>();
-  pairs.push({ name: "Title", value: work.title[0] });
-  pairs.push({ name: "Authors", value: formatAuthors(work.author, 255) });
-  pairs.push({ name: "Issue Date", value: formatIssuedDate(work.issued) });
+  pairs.push({ name: "Title", value: csl.title });
+  pairs.push({ name: "Authors", value: formatAuthors(csl.author, 255) });
+  pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
 
-  const containerTitle = work["container-title"];
+  const containerTitle = csl["container-title"];
   if (containerTitle) {
     pairs.push({ name: "Publication", value: containerTitle });
   }
 
-  const volume = work.volume;
+  const volume = csl.volume;
   if (volume) {
     pairs.push({ name: "Volume", value: volume });
   }
 
-  const page = work.page;
+  const page = csl.page;
   if (volume) {
     pairs.push({ name: "Page(s)", value: page });
   }
