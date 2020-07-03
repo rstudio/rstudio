@@ -42,7 +42,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 2,
+          priority: 3,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.Emph, parent);
           },

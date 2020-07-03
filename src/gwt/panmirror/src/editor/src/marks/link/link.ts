@@ -126,7 +126,7 @@ const extension = (context: ExtensionContext): Extension => {
           ],
 
           writer: {
-            priority: 15,
+            priority: 12,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               if (mark.attrs.heading) {
                 output.writeRawMarkdown('[');
