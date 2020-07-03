@@ -593,6 +593,8 @@ export function insertCitationForDOI(
       } : undefined
     };
 
+
+
     // Ask the user to provide information that we need in order to populate
     // this citation (id, bibliography)
     ui.dialogs.insertCite(citeProps).then(result => {
@@ -604,7 +606,8 @@ export function insertCitationForDOI(
           ? result.bibliographyFile :
           ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
 
-        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([sanitizeForCiteproc(result.csl)])).then(() => {
+        const cslToWrite = sanitizeForCiteproc(result.csl);
+        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite])).then(() => {
 
           const tr = view.state.tr;
 

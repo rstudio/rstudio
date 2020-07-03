@@ -54,7 +54,15 @@ export interface CSL {
   // Pages numbers of an article within its journal
   page?: string;
 
+  // These properties are often not included in CSL entries and are here
+  // primarily because they may need to be sanitized
   ISSN?: string;
+  ISBN?: string;
+  'original-title'?: string;
+  'short-title'?: string;
+  'subtitle'?: string;
+  subject?: string;
+  archive?: string;
 }
 
 export interface CSLName {
@@ -72,19 +80,31 @@ export interface CSLField {
   value: string;
 }
 
+// Crossref sends some items back with invalid data types in the CSL JSON
+// This appears to tend to happen the most frequently with fields that CrossRef
+// stores as Arrays which are not properly flatted to strings as Pandoc cite-proc expects.
+// This will flatten any of these fields to the first element of the array
 export function sanitizeForCiteproc(csl: CSL): CSL {
 
-  // the CSL returned by the server may include some fields with invalid types
-  // for example, ISSN may be returned as an array of ISSNs. But Citeproc expects
-  // this to be a simple string.
-  if (csl.ISSN && Array.isArray(csl.ISSN)) {
-    return {
-      ...csl,
-      ISSN: csl.ISSN[0]
-    };
-  }
-
-  return csl;
+  // This field list was create speculatively, so may contain fields that do not require
+  // sanitization (or may omit fields that require it). 
+  const sanitizeProperties = ['ISSN', 'ISBN', 'subject', 'archive', 'original-title', 'short-title', 'subtitle', 'container-title', 'short-container-title'];
+  const cslAny = csl as { [key: string]: any };
+  const keys = Object.keys(cslAny);
+  keys
+    .filter(key => sanitizeProperties.includes(key))
+    .forEach((property) => {
+      const value = cslAny[property];
+      if (value && Array.isArray(value)) {
+        if (value.length > 0) {
+          cslAny[property] = value[0];
+        } else {
+          cslAny[property] = undefined;
+        }
+      }
+      return csl;
+    });
+  return cslAny as CSL;
 }
 
 export function formatForPreview(csl: CSL): CSLField[] {
@@ -115,3 +135,5 @@ export function formatForPreview(csl: CSL): CSLField[] {
 
   return pairs;
 }
+
+
