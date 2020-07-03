@@ -58,6 +58,8 @@ function citationLocaLDOICompletions(ui: EditorUI, manager: BibliographyManager)
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
     const parsed = parseCitation(context);
     if (parsed && hasDOI(parsed.token)) {
+      // TODO: This could be called before the bibliography is downloaded
+      // And then items won't be loaded and duplicate DOIs will be missed
       const source = manager.findDoi(parsed.token);
       if (source) {
         return {

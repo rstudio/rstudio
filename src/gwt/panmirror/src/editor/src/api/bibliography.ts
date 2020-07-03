@@ -113,6 +113,8 @@ export class BibliographyManager {
   }
 
   public findDoi(doi: string): BibliographySource | undefined {
+    // TODO: If search is called but the server hasn't downloaded, we should 
+    // download the data, then index, then search?
     return this.bibliography?.sources.find(source => source.DOI === doi);
   }
 
