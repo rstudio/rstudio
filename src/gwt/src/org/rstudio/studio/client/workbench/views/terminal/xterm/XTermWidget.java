@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalStyleSheetLoader;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
@@ -109,6 +110,12 @@ public class XTermWidget extends Widget
 
             // Handle title events from the xterm and dispatch them
             addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
+
+            // Allow tab key to move focus out of terminal?
+            terminal_.attachCustomKeyEventHandler(keyboardEvent ->
+            {
+               return !(tabMovesFocus_ && StringUtil.equals(keyboardEvent.key, "Tab"));
+            });
 
             initialized_ = true;
 // TODO            terminal_.fit();
@@ -285,7 +292,7 @@ public class XTermWidget extends Widget
     */
    public void setTabMovesFocus(boolean movesFocus)
    {
-// TODO      terminal_.setTabMovesFocus(movesFocus);
+      tabMovesFocus_ = movesFocus;
    }
 
    /**

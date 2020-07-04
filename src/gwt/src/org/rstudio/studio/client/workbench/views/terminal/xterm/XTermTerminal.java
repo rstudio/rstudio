@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Element;
 import elemental2.core.Uint8Array;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLTextAreaElement;
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
@@ -34,6 +35,11 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Terminal")
 public class XTermTerminal extends XTermDisposable
 {
+   @JsFunction public interface KeyEventHandler
+   {
+      boolean handleKeyEvent(elemental2.dom.KeyboardEvent event);
+   }
+
    /**
     * The element containing the terminal.
     */
@@ -214,7 +220,7 @@ public class XTermTerminal extends XTermDisposable
     * propagation and/or prevent the default action. The function returns
     * whether the event should be processed by xterm.js.
     */
-   // attachCustomKeyEventHandler(customKeyEventHandler: (event: KeyboardEvent) => boolean): void;
+   public native void attachCustomKeyEventHandler(KeyEventHandler customKeyEventHandler);
 
    /**
     * (EXPERIMENTAL) Registers a link provider, allowing a custom parser to
