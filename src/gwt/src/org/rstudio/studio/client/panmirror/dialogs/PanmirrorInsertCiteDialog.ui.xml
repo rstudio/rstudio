@@ -1,3 +1,5 @@
+<!-- JJA: tabs for spaces in this file as well (we can leave it is it's too much of a pain to fixup) -->
+
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
 	xmlns:g='urn:import:com.google.gwt.user.client.ui'
 	xmlns:rw="urn:import:org.rstudio.core.client.widget"

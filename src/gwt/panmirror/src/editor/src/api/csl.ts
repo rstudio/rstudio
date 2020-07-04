@@ -13,8 +13,10 @@
  *
  */
 
+// JJA: code in api and code in extensions should never reach directly into other
+// extension code (e.g. ../marks/cite). Move any functions you need into appropriate
+// api source files.
 import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography_entry";
-
 
 export interface CSL {
 

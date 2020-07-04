@@ -20,6 +20,7 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 
+// JJA: order of imports
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
@@ -602,6 +603,7 @@ export function insertCitationForDOI(
 
         const project = bibliography.project_biblios.length > 0;
         const bibliographyFile = project
+          // JJA: I ususally put the : on the next line so the ? and : line up
           ? result.bibliographyFile :
           ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
 

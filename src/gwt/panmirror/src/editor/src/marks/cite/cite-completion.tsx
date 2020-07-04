@@ -27,6 +27,8 @@ import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation } from './cite';
+
+// JJA: order of imports
 import { hasDOI } from '../../api/doi';
 
 const kAuthorMaxChars = 28;

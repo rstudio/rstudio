@@ -17,11 +17,13 @@ import { EditorState, Transaction } from "prosemirror-state";
 import { Slice } from "prosemirror-model";
 
 import { parseCitation, ParsedCitation } from "./cite";
+// JJA: order of imports
 import { findDOI } from "../../api/doi";
 
 
 // Parses the transation or state to determine whether the current position
 // represents a citation containing a DOI
+// JJA: Maybe rename to doiFromEditingContext?
 export function parseDOI(context: EditorState | Transaction): ParsedCitation | undefined {
   const parsedCitation = parseCitation(context);
   if (parsedCitation) {

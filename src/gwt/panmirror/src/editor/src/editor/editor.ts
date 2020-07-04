@@ -70,6 +70,8 @@ import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
 
+// JJA: This will need to go into an API module. Note that right below you see me reaching directly
+// into the yaml_mdatadata and outline extensions -- I can explain why this is 'okay' realtime
 import { citeUI } from '../marks/cite/cite';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';

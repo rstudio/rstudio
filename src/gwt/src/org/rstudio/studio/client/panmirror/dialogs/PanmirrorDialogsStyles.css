@@ -2,6 +2,9 @@
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
+/* JJA: There are some tabs used for indentation that should be converted to spaces 
+   (you can't see them by default in Eclipse but you can see them in the diff)
+ */
 
 .dialog {
    width: 380px;

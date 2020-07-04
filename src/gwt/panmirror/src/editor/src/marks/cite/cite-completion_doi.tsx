@@ -21,8 +21,9 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
+// JJA: order of imports
 import { kCitationCompleteScope } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate, entryForSource } from './cite-bibliography_entry';
+import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';
@@ -31,6 +32,8 @@ import { DOIServer } from '../../api/doi';
 import { parseDOI } from './cite-doi';
 import { insertCitationForDOI } from './cite';
 import { CSL } from '../../api/csl';
+
+// JJA: Need to move this function out into e.g. api/completion.ts
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
 
 const kCompletionWidth = 400;
@@ -144,6 +147,7 @@ interface CSLEntry {
   formattedIssueDate: string;
 }
 
+// JJA: Is this comment out of date? (don't see the HTML rendering here)
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
 const CSLSourceView: React.FC<CSLEntry> = cslEntry => {

@@ -35,10 +35,12 @@ export const CompletionItemDetailedView: React.FC<CompletionItemDetailedViewProp
   };
 
   const detailSectionStyle: React.CSSProperties = {
+    // JJA: constant and/or make this a prop w/ default value?
     width: props.width - 40 + 'px',
   };
 
   const detailFieldStyle: React.CSSProperties = {
+    // JJA: constant and/or make this a prop w/ default value?
     maxWidth: props.width - 80 + 'px',
   };
 

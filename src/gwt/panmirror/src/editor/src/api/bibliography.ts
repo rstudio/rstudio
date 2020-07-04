@@ -13,6 +13,7 @@
  *
  */
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+// JJA: order of includes (review all for this)
 import { PandocServer } from './pandoc';
 import { Transaction } from 'prosemirror-state';
 import { NodeWithPos } from 'prosemirror-utils';
@@ -20,7 +21,7 @@ import { NodeWithPos } from 'prosemirror-utils';
 import Fuse from 'fuse.js';
 
 import { EditorUIContext, EditorUI } from './ui';
-import { yamlMetadataNodes, stripYamlDelimeters, toYamlCode, parseYaml } from './yaml';
+import { yamlMetadataNodes, stripYamlDelimeters, parseYaml } from './yaml';
 import { expandPaths } from './path';
 import { CSLName, CSLDate, CSL } from './csl';
 
@@ -69,6 +70,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 export class BibliographyManager {
   private readonly server: PandocServer;
   private etag: string;
+  // JJA: I think bibliography?: is equivalent?
   private bibliography: Bibliography | undefined;
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
 
@@ -115,6 +117,14 @@ export class BibliographyManager {
   public findDoi(doi: string): BibliographySource | undefined {
     // TODO: If search is called but the server hasn't downloaded, we should 
     // download the data, then index, then search?
+    // JJA: Seems like yes, but you'll just need to make the findDoi and search
+    // functions async (note that in doing this you may want to consider
+    // what happens for overlapping requests -- if it's just a double download
+    // of the bibliography I'm okay w/ that, as managing the concurrency issues
+    // is bound to get hairy/complicated, and I'd gladly trade extra server
+    // work for having to get that code right)
+    // JJA: In looking at the context where this is called (pasteHandler)
+    // I don't think it can be async. Maybe we should just discuss realtime?
     return this.bibliography?.sources.find(source => source.DOI === doi);
   }
 
@@ -149,6 +159,8 @@ export class BibliographyManager {
 
 function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   const refBlockParsedYamls = parsedYamls.filter(
+    // JJA: it seems like the second part of the conditional either should go before the
+    // first part or is unnecessary?
     parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.references,
   );
 
@@ -182,6 +194,8 @@ function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
 
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUIContext): BibliographyFiles | null {
   const bibliographyParsedYamls = parsedYamls.filter(
+    // JJA: it seems like the second part of the conditional either should go before the
+    // first part or is unnecessary?
     parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.bibliography,
   );
 
@@ -215,6 +229,7 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
 
   // Gather the biblography files from the document
   const bibliographiesRelative = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
+  // JJA: with the ? in the second part of the conditional do we need the first part?
   if (bibliographiesRelative && bibliographiesRelative?.bibliography.length > 0) {
     // The user selected bibliography is already in the document OR
     // There is a bibliography entry, but it doesn't include the user
@@ -242,6 +257,7 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
   }
 }
 
+// JJA: kSpaceOrColonRegex
 const kSpaceOrColorRegex = /[\s:]/;
 function bibliographyLine(bibliographyFile: string): string {
   const sketchyCharMatch = bibliographyFile.match(kSpaceOrColorRegex);
