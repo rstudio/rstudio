@@ -233,15 +233,16 @@ public class XTermWidget extends Widget
       @Override
       public void run()
       {
-         XTermDimensions size = getTerminalSize();
-
-         // ignore if a reasonable size couldn't be computed
-         if (size.getCols() < 1 || size.getRows() < 1)
-         {
-            return;
-         }
-
-         resizePTY(size.getCols(), size.getRows());
+         // TODO
+//         XTermDimensions size = getTerminalSize();
+//
+//         // ignore if a reasonable size couldn't be computed
+//         if (size.getCols() < 1 || size.getRows() < 1)
+//         {
+//            return;
+//         }
+//
+//         resizePTY(size.getCols(), size.getRows());
       }
    };
 
