@@ -40,15 +40,14 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 /**
  * Xterm-compatible terminal emulator widget. This widget does no network
  * communication.
  *
- * To receive input (user typing), subscribe to TerminalDataInputEvent, or
- * use addDataEventHandler, which stops TerminalDataInputEvent from being
- * fired and makes a direct callback.
+ * To receive input (user typing), subscribe to TerminalDataInputEvent.
  *
  * To send output to the terminal, use write() or writeln().
  *
@@ -163,6 +162,11 @@ public class XTermWidget extends Widget
       if (initialized_)
       {
          initialized_ = false;
+
+         for (XTermDisposable unsubscribe : xtermEventUnsubscribe_)
+            unsubscribe.dispose();
+         xtermEventUnsubscribe_.clear();
+
          Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
@@ -236,7 +240,7 @@ public class XTermWidget extends Widget
 
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
-// TODO       terminal_.onTerminalData(handler);
+      xtermEventUnsubscribe_.add(terminal_.onData(data -> handler.execute(data.toString())));
    }
 
    private void addTitleEventHandler(CommandWithArg<String> handler)
@@ -453,6 +457,7 @@ public class XTermWidget extends Widget
    private boolean initialized_ = false;
    private XTermOptions options_;
    private boolean tabMovesFocus_;
+   private final ArrayList<XTermDisposable> xtermEventUnsubscribe_ = new ArrayList<>();
 
    private final static String XTERM_CLASS = "xterm-rstudio";
 }

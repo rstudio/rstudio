@@ -24,6 +24,7 @@ import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
 import jsinterop.base.Js;
+import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
 /**
@@ -118,7 +119,7 @@ public class XTermTerminal extends XTermDisposable
     * on to the backing pty.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<string> onData;
+   public native XTermDisposable onData(JsConsumerFunction callback);
 
    /**
     * Adds an event listener for when a key is pressed. The event value contains the
