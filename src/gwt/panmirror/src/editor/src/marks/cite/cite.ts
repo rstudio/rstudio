@@ -603,9 +603,8 @@ export function insertCitationForDOI(
 
         const project = bibliography.project_biblios.length > 0;
         const bibliographyFile = project
-          // JJA: I ususally put the : on the next line so the ? and : line up
-          ? result.bibliographyFile :
-          ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
+          ? result.bibliographyFile
+          : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
 
         const cslToWrite = sanitizeForCiteproc(result.csl);
         server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite])).then(() => {

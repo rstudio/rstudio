@@ -158,8 +158,6 @@ export class BibliographyManager {
 
 function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   const refBlockParsedYamls = parsedYamls.filter(
-    // JJA: it seems like the second part of the conditional either should go before the
-    // first part or is unnecessary?
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.references,
   );
 
@@ -226,7 +224,6 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
 
   // Gather the biblography files from the document
   const bibliographiesRelative = bibliographyFilesFromDoc(parsedYamlNodes, ui.context);
-  // JJA: with the ? in the second part of the conditional do we need the first part?
   if (bibliographiesRelative && bibliographiesRelative?.bibliography.length > 0) {
     // The user selected bibliography is already in the document OR
     // There is a bibliography entry, but it doesn't include the user
@@ -254,10 +251,9 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
   }
 }
 
-// JJA: kSpaceOrColonRegex
-const kSpaceOrColorRegex = /[\s:]/;
+const kSpaceOrColonRegex = /[\s:]/;
 function bibliographyLine(bibliographyFile: string): string {
-  const sketchyCharMatch = bibliographyFile.match(kSpaceOrColorRegex);
+  const sketchyCharMatch = bibliographyFile.match(kSpaceOrColonRegex);
   if (sketchyCharMatch) {
     return `bibliography: "${bibliographyFile}"\n`;
   } else {

@@ -29,7 +29,7 @@ import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';
 import { DOIServer } from '../../api/doi';
 
-import { parseDOI } from './cite-doi';
+import { doiFromEditingContext } from './cite-doi';
 import { insertCitationForDOI } from './cite';
 import { CSL } from '../../api/csl';
 
@@ -78,7 +78,7 @@ const kPRogressDelay = 350;
 
 function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyManager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CSLEntry> | null => {
-    const parsedDOI = parseDOI(context);
+    const parsedDOI = doiFromEditingContext(context);
     if (parsedDOI) {
       return {
         token: parsedDOI.token,
@@ -147,9 +147,6 @@ interface CSLEntry {
   formattedIssueDate: string;
 }
 
-// JJA: Is this comment out of date? (don't see the HTML rendering here)
-// The title may contain spans to control case specifically - consequently, we need
-// to render the title as HTML rather than as a string
 const CSLSourceView: React.FC<CSLEntry> = cslEntry => {
   const csl = cslEntry.csl;
   return (

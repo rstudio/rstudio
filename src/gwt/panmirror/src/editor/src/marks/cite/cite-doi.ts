@@ -23,8 +23,7 @@ import { findDOI } from "../../api/doi";
 
 // Parses the transation or state to determine whether the current position
 // represents a citation containing a DOI
-// JJA: Maybe rename to doiFromEditingContext?
-export function parseDOI(context: EditorState | Transaction): ParsedCitation | undefined {
+export function doiFromEditingContext(context: EditorState | Transaction): ParsedCitation | undefined {
   const parsedCitation = parseCitation(context);
   if (parsedCitation) {
     const doi = findDOI(parsedCitation.token);
