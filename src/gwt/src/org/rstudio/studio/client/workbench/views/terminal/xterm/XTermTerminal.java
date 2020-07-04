@@ -29,7 +29,7 @@ import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
 /**
- * xterm.js Terminal class
+ * The class that represents an xterm.js terminal (Terminal).
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Terminal")

@@ -18,7 +18,7 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
- * An addon that can provide additional functionality to the terminal.
+ * An addon that can provide additional functionality to the terminal (ITerminalAddon).
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

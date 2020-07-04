@@ -18,12 +18,11 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
- * xterm.js IWindowOptions class
+ * Enable various window manipulation and report features (CSI Ps ; Ps ; Ps t) (IWindowOptions).
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
- *
- * Not currently used, only a stub supplied here.
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermWindowOptions
 {
+   // Not currently used, left intentionally blank.
 }
