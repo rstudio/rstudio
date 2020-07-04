@@ -43,10 +43,10 @@ public class XTermBufferLine
     * calling as when the terminal updates it could lead to unexpected
     * behavior.
     *
-    * @param x The character index to get.
+    * @param x    The character index to get.
     * @param cell Optional cell object to load data into for performance
-    * reasons. This is mainly useful when every cell in the buffer is being
-    * looped over to avoid creating new objects for every cell.
+    *             reasons. This is mainly useful when every cell in the buffer is being
+    *             looped over to avoid creating new objects for every cell.
     */
    public native XTermBufferCell getCell(int x, XTermBufferCell cell);
 
@@ -54,10 +54,11 @@ public class XTermBufferLine
     * Gets the line as a string. Note that this is gets only the string for the
     * line, not taking isWrapped into account.
     *
-    * @param trimRight Whether to trim any whitespace at the right of the line.
+    * @param trimRight   Whether to trim any whitespace at the right of the line.
     * @param startColumn The column to start from (inclusive).
-    * @param endColumn The column to end at (exclusive).
+    * @param endColumn   The column to end at (exclusive).
     */
    public native String translateToString(boolean trimRight, int startColumn, int endColumn);
+   public native String translateToString();
 }
 

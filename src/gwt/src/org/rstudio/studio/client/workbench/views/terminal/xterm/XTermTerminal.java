@@ -14,20 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import com.google.gwt.dom.client.Element;
 import elemental2.core.Uint8Array;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLTextAreaElement;
+import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
+import jsinterop.base.Js;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
 /**
- * xterm.js Terminal interface
+ * xterm.js Terminal class
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Terminal")
 public class XTermTerminal extends XTermDisposable
 {
    /**
@@ -59,7 +62,7 @@ public class XTermTerminal extends XTermDisposable
     * normal buffer or the alt buffer depending on what's running in the
     * terminal.
     */
-   // public IBufferNamespace buffer;
+   @JsProperty public native XTermBufferNamespace getBuffer();
 
    /**
     * (EXPERIMENTAL) Get all markers registered against the buffer. If the alt
@@ -180,6 +183,7 @@ public class XTermTerminal extends XTermDisposable
     * Resizes the terminal. It's best practice to debounce calls to resize,
     * this will help ensure that the pty can respond to the resize event
     * before another one occurs.
+    *
     * @param x The number of columns to resize to.
     * @param y The number of rows to resize to.
     */
@@ -187,11 +191,18 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Opens the terminal within an element.
+    *
     * @param parent The element to create the terminal within. This element
-    * must be visible (have dimensions) when `open` is called as several DOM-
-    * based measurements need to be performed when this function is called.
+    *               must be visible (have dimensions) when `open` is called as several DOM-
+    *               based measurements need to be performed when this function is called.
     */
    public native void open(HTMLElement parent);
+
+   @JsOverlay public final void open(Element parent)
+   {
+      HTMLElement element = Js.uncheckedCast(parent);
+      open(element);
+   }
 
    /**
     * Attaches a custom key event handler which is run before keys are
@@ -280,8 +291,9 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Selects text within the terminal.
+    *
     * @param column The column the selection starts at.
-    * @param row The row the selection starts at.
+    * @param row    The row the selection starts at.
     * @param length The length of the selection.
     */
    public native void select(int column, int row, int length);
@@ -293,19 +305,22 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Selects text in the buffer between 2 lines.
+    *
     * @param start The 0-based line index to select from (inclusive).
-    * @param end The 0-based line index to select to (inclusive).
+    * @param end   The 0-based line index to select to (inclusive).
     */
    public native void selectLines(int start, int end);
 
    /**
     * Scroll the display of the terminal
+    *
     * @param amount The number of lines to scroll down (negative scroll up).
     */
    public native void scrollLines(int amount);
 
    /**
     * Scroll the display of the terminal by a number of pages.
+    *
     * @param pageCount The number of pages to scroll (negative scrolls up).
     */
    public native void scrollPages(int pageCount);
@@ -322,6 +337,7 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Scrolls to a line within the buffer.
+    *
     * @param line The 0-based line index to scroll to.
     */
    public native void scrollToLine(int line);
@@ -333,41 +349,47 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Write data to the terminal.
-    * @param data The data to write to the terminal. This can either be raw
-    * bytes given as Uint8Array from the pty or a string. Raw bytes will always
-    * be treated as UTF-8 encoded, string data as UTF-16.
+    *
+    * @param data     The data to write to the terminal. This can either be raw
+    *                 bytes given as Uint8Array from the pty or a string. Raw bytes will always
+    *                 be treated as UTF-8 encoded, string data as UTF-16.
     * @param callback Optional callback that fires when the data was processed
-    * by the parser.
+    *                 by the parser.
     */
    public native void write(String data, JsVoidFunction callback);
    public native void write(Uint8Array data, JsVoidFunction callback);
 
    /**
     * Writes data to the terminal, followed by a break line character (\n).
-    * @param data The data to write to the terminal. This can either be raw
-    * bytes given as Uint8Array from the pty or a string. Raw bytes will always
-    * be treated as UTF-8 encoded, string data as UTF-16.
+    *
+    * @param data     The data to write to the terminal. This can either be raw
+    *                 bytes given as Uint8Array from the pty or a string. Raw bytes will always
+    *                 be treated as UTF-8 encoded, string data as UTF-16.
     * @param callback Optional callback that fires when the data was processed
-    * by the parser.
+    *                 by the parser.
     */
    public native void writeln(String data, JsVoidFunction callback);
+
    public native void writeln(Uint8Array data, JsVoidFunction callback);
 
    /**
     * Writes text to the terminal, performing the necessary transformations for pasted text.
+    *
     * @param data The text to write to the terminal.
     */
    public native void paste(String data);
 
    /**
     * Retrieves an option's value from the terminal.
+    *
     * @param key The option key.
     */
    public native Any getOption(String key);
 
    /**
     * Sets an option on the terminal.
-    * @param key The option key.
+    *
+    * @param key   The option key.
     * @param value The option value.
     */
    public native void setOption(String key, Any value);
@@ -375,8 +397,9 @@ public class XTermTerminal extends XTermDisposable
    /**
     * Tells the renderer to refresh terminal content between two rows
     * (inclusive) at the next opportunity.
+    *
     * @param start The row to start from (between 0 and this.rows - 1).
-    * @param end The row to end at (between start and this.rows - 1).
+    * @param end   The row to end at (between start and this.rows - 1).
     */
    public native void refresh(int start, int end);
 
@@ -387,8 +410,28 @@ public class XTermTerminal extends XTermDisposable
 
    /**
     * Loads an addon into this instance of xterm.js.
+    *
     * @param addon The addon to load.
     */
    public native void loadAddon(XTermAddon addon);
+
+   /**
+    * Add a class to the element containing the terminal.
+    *
+    * @param classStr Class to add
+    */
+   @JsOverlay public final void addClass(String classStr)
+   {
+      getElement().classList.add(classStr);
+   }
+
+   /**
+    * Remove a class from the element containing the terminal
+    * @param classStr Class to remove
+    */
+   @JsOverlay public final void removeClass(String classStr)
+   {
+      getElement().classList.remove(classStr);
+   }
 }
 
