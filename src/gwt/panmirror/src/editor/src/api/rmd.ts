@@ -161,6 +161,18 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
   }
 }
 
+export function rmdChunkEngineAndLabel(text: string) {
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
+  if (match) {
+    return {
+      engine: match[1],
+      label: match[2]
+    };
+  } else {
+    return null;
+  }
+}
+
 export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {
   const schema = doc.type.schema;
   const haveRCode = !!doc.type.schema.nodes.rmd_chunk;

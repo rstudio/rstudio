@@ -377,3 +377,19 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
 }
+
+
+// sort marks by priority (in descending order)
+export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {
+  return marks.sort((a: Mark, b: Mark) => {
+    const aPriority = markWriters[a.type.name].priority;
+    const bPriority = markWriters[b.type.name].priority;
+    if (aPriority < bPriority) {
+      return 1;
+    } else if (bPriority < aPriority) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
+}

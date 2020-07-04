@@ -449,7 +449,7 @@
       character()
 })
 
-.rs.addFunction("isBookdownWebsite", function(input_dir, encoding) {
+.rs.addFunction("isBookdownDir", function(input_dir, encoding) {
    index <- .rs.inputDirToIndexFile(input_dir)
    if (!is.null(index)) {
       

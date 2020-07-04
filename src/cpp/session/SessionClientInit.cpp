@@ -401,7 +401,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
    sessionInfo["bookdown_has_renumber_footnotes"] = modules::rmarkdown::bookdown::hasRenumberFootnotes();
-
+   sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
@@ -548,6 +548,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
             "There are more concurrent users of RStudio Server Pro than your license supports. "
             "Please obtain an updated license to continue using the product.";
    }
+
+   // session route for load balanced sessions
+   sessionInfo["session_node"] = session::modules::overlay::sessionNode();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

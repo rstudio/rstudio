@@ -28,10 +28,10 @@ function Para(s)
   
 end
 
--- headers just output id and header text
+-- headers
 function Header(lev, s, attr)
   if string.len(attr.id) > 0 then
-    return attr.id .. ' ' .. s .. '\n'
+    return 'h' .. lev .. ':' .. attr.id .. ' ' .. s .. '\n'
   else
     return ''
   end

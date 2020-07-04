@@ -19,6 +19,9 @@ import { findTopLevelBodyNodes } from './node';
 
 import yaml from 'js-yaml';
 
+export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
+export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
 }
@@ -27,7 +30,18 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
 }
 
-export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+export function titleFromYamlMetadataNode(node: ProsemirrorNode) {
+  const titleMatch = node.textContent.match(kYamlMetadataTitleRegex);
+  if (titleMatch) {
+    let title = titleMatch[1].trim();
+    title = title.replace(/^["']|["']$/g, '');
+    title = title.replace(/\\"/g, '"');
+    title = title.replace(/''/g, "'");
+    return title;
+  } else {
+    return null;
+  }
+}
 
 const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
 

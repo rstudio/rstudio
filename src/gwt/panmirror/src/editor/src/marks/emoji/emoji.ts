@@ -97,7 +97,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            priority: 16,
+            priority: 2,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // look for a matching emoji
               const char = fragmentText(parent);

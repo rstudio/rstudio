@@ -190,7 +190,7 @@ public class VisualModePanmirrorFormat
    
    public boolean isBookdownProjectDocument() 
    {
-      return sessionInfo_.getBuildToolsBookdownWebsite() && isDocInProject();
+      return sessionInfo_.getIsBookdownProject() && isDocInProject();
    }
     
   

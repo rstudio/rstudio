@@ -33,8 +33,9 @@ import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
 import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
 import { performCompletionReplacement } from '../../behaviors/completion/completion';
-import { suggestIdForEntry } from './cite-bibliography_entry';
 import { CSL, formatForPreview, sanitizeForCiteproc } from '../../api/csl';
+import { suggestIdForEntry } from './cite-bibliography_entry';
+
 
 const kCiteCitationsIndex = 0;
 
