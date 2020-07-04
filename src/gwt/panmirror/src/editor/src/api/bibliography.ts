@@ -70,8 +70,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 export class BibliographyManager {
   private readonly server: PandocServer;
   private etag: string;
-  // JJA: I think bibliography?: is equivalent?
-  private bibliography: Bibliography | undefined;
+  private bibliography?: Bibliography;
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
 
   public constructor(server: PandocServer) {
@@ -161,7 +160,7 @@ function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   const refBlockParsedYamls = parsedYamls.filter(
     // JJA: it seems like the second part of the conditional either should go before the
     // first part or is unnecessary?
-    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.references,
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.references,
   );
 
   // Pandoc will use the last references node when generating a bibliography.
@@ -194,9 +193,7 @@ function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
 
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUIContext): BibliographyFiles | null {
   const bibliographyParsedYamls = parsedYamls.filter(
-    // JJA: it seems like the second part of the conditional either should go before the
-    // first part or is unnecessary?
-    parsedYaml => typeof parsedYaml.yaml === 'object' && parsedYaml.yaml !== null && parsedYaml.yaml.bibliography,
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.bibliography,
   );
 
   // Look through any yaml nodes to see whether any contain bibliography information
