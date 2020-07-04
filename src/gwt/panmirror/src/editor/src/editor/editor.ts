@@ -57,8 +57,8 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline, outlineNodes } from '../api/outline';
-import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
+import { EditorOutline, getOutlineNodes, EditingOutlineLocation, getEditingOutlineLocation } from '../api/outline';
+import { EditingLocation, getEditingLocation, setEditingLocation } from '../api/location';
 import { navigateTo, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
@@ -104,7 +104,7 @@ import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  cursor?: { row: number; column: number };
+  location?: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
@@ -242,7 +242,7 @@ export class Editor {
   private minContentPadding = 0;
 
   // keep track of whether the last transaction was selection-only
-  // (indicates that we should use a cursorSentinel when going to source mode)
+  // (indicates that we should forward an editing outline location when going to source mode)
   private lastTrSelectionOnly = false;
 
   // create the editor -- note that the markdown argument does not substitute for calling
@@ -509,20 +509,19 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
-    // do we need the cursor sentinel?
-    const useCursorSentinel = this.lastTrSelectionOnly;
 
-    // create a transaction that will be used for this operation (won't be committed)
-    const tr = this.state.tr;
-
-    // insert cursor sentinel if appropriate
-    const sentinel = useCursorSentinel ? injectCursorSentinel(tr) : null;
+    // do we need to provide an outline location
+    const useOutlineLocation = this.lastTrSelectionOnly;
 
     // get the code
+    const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
 
-    // return
-    return codeWithCursor(code, sentinel);
+    // return code + perhaps outline location
+    return {
+      code,
+      location: useOutlineLocation ? getEditingOutlineLocation(this.state) : undefined
+    };
   }
 
   public getHTML(): string {
@@ -926,71 +925,13 @@ export class Editor {
 }
 
 function navigationIdForSelection(state: EditorState): string | null {
-  const outline = outlineNodes(state.doc);
+  const outline = getOutlineNodes(state.doc);
   const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
   if (outlineNode) {
     return outlineNode.node.attrs.navigation_id;
   } else {
     return null;
   }
-}
-
-function injectCursorSentinel(tr: Transaction) {
-
-  // cursorSentinel to return
-  let sentinel: string | null = null;
-
-  // find the anchor of the current selection
-  const { anchor } = tr.selection;
-
-  // find the closest top-level text block that isn't an Rmd chunk (their
-  // first line gets special processing so we can't put the sentinel there)
-  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => {
-    return node.isTextblock && node.type !== tr.doc.type.schema.nodes.rmd_chunk;
-  });
-  const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
-  if (textBlock) {
-    sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-    let pos = textBlock.pos;
-    if (textBlock.pos + textBlock.node.nodeSize < anchor) {
-      pos = textBlock.pos + textBlock.node.nodeSize - 1;
-    }
-    setTextSelection(pos)(tr);
-    tr.insertText(sentinel);
-  }
-
-  // return the sentinel
-  return sentinel;
-}
-
-// get editor code + cursor location and jsdiff changes from previousCode
-function codeWithCursor(code: string, cursorSentinel: string | null) {
-  // determine the cursor row and column using the sentinel (remove the sentinel from the code)
-  let newCode = code;
-  let cursor: { row: number; column: number } | undefined;
-  if (cursorSentinel) {
-    newCode = code
-      .split(/\r?\n/)
-      .map((line, index) => {
-        if (!cursor) {
-          const sentinelLoc = line.indexOf(cursorSentinel);
-          if (sentinelLoc !== -1) {
-            line = line.replace(cursorSentinel, '');
-            cursor = {
-              row: index,
-              column: sentinelLoc,
-            };
-          }
-        }
-        return line;
-      })
-      .join('\n');
-  }
-
-  return {
-    code: newCode,
-    cursor,
-  };
 }
 
 // custom DOMParser that preserves all whitespace (required by display math marks)

@@ -77,7 +77,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 17,
+          priority: 10,
           write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
             output.writeToken(PandocTokenType.Quoted, () => {
               output.writeToken(mark.attrs.type);

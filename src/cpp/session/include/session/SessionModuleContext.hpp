@@ -852,6 +852,7 @@ bool isDistillProject();
 std::string websiteOutputDir();
 std::vector<core::FilePath> bookdownBibliographies();
 std::vector<std::string> bookdownBibliographiesRelative();
+core::json::Value bookdownXRefIndex();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);

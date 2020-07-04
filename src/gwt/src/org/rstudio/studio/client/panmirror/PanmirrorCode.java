@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.panmirror;
 
 
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
+
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -27,5 +29,5 @@ public class PanmirrorCode
    }
    
    public String code;
-   public PanmirrorCursor cursor;
+   public PanmirrorEditingOutlineLocation location;
 }
