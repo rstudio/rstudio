@@ -168,7 +168,7 @@ public class XTermTerminal extends XTermDisposable
     * The event value is the new title.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<string> onTitleChange;
+   public native XTermDisposable onTitleChange(JsConsumerFunction callback);
 
    /**
     * Unfocus the terminal.

@@ -245,7 +245,7 @@ public class XTermWidget extends Widget
 
    private void addTitleEventHandler(CommandWithArg<String> handler)
    {
-// TODO      terminal_.onTitleData(handler);
+      xtermEventUnsubscribe_.add(terminal_.onTitleChange(data -> handler.execute(data.toString())));
    }
 
    private XTermDimensions getTerminalSize()
