@@ -623,13 +623,13 @@ export function insertCitationForDOI(
             performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
 
             view.dispatch(tr);
-            view.focus();
+
           }
         }).catch(error => {
           // TODO: Log an error message since we failed to add the citation to the bibliography
         });
-
       }
+      view.focus();
     });
   });
 }
