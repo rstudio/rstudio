@@ -1,5 +1,5 @@
 /*
- * XTermAddon.java
+ * XTermFitAddon.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,19 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
-
 /**
- * An addon that can provide additional functionality to the terminal (ITerminalAddon).
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
+ * An xterm.js addon that enables resizing the terminal to the dimensions of
+ * its containing element.
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-fit/typings/xterm-addon-fit.d.ts
  */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-class XTermAddon extends XTermDisposable
+@JsType(isNative = true, namespace = "FitAddon", name = "FitAddon")
+public class XTermFitAddon extends XTermAddon
 {
    /**
-    * Activates the addon
-    * @param terminal The terminal the addon is being loaded in.
+    * Resizes the terminal to the dimensions of its containing element.
     */
-   public native void activate(XTermTerminal terminal);
+   public native void fit();
+
+   /**
+    * Gets the proposed dimensions that will be used for a fit.
+    */
+   public native XTermDimensions proposeDimensions();
 }
+

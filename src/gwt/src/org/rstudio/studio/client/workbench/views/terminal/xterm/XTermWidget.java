@@ -92,6 +92,8 @@ public class XTermWidget extends Widget
          Scheduler.get().scheduleDeferred(() -> {
             // Create and attach the native terminal object to this Widget
             terminal_ = new XTermTerminal(options_);
+            fit_ = new XTermFitAddon();
+            terminal_.loadAddon(fit_);
             terminal_.open(getElement());
             terminal_.focus();
             terminal_.addClass("ace_editor");
@@ -118,7 +120,7 @@ public class XTermWidget extends Widget
             });
 
             initialized_ = true;
-// TODO            terminal_.fit();
+            fit_.fit();
             terminal_.focus();
             callback.execute();
          });
@@ -217,7 +219,7 @@ public class XTermWidget extends Widget
             return;
          }
 
-// TODO         terminal_.fit();
+         fit_.fit();
 
          // Notify the remote pseudo-terminal that it has resized; this is quite
          // expensive so debounce again; e.g. dragging the pane splitters or
@@ -233,16 +235,15 @@ public class XTermWidget extends Widget
       @Override
       public void run()
       {
-         // TODO
-//         XTermDimensions size = getTerminalSize();
-//
-//         // ignore if a reasonable size couldn't be computed
-//         if (size.getCols() < 1 || size.getRows() < 1)
-//         {
-//            return;
-//         }
-//
-//         resizePTY(size.getCols(), size.getRows());
+         XTermDimensions size = getTerminalSize();
+
+         // ignore if a reasonable size couldn't be computed
+         if (size.getCols() < 1 || size.getRows() < 1)
+         {
+            return;
+         }
+
+         resizePTY(size.getCols(), size.getRows());
       }
    };
 
@@ -258,8 +259,7 @@ public class XTermWidget extends Widget
 
    private XTermDimensions getTerminalSize()
    {
-      return new XTermDimensions();
-// TODO      return terminal_.proposeGeometry();
+      return fit_.proposeDimensions();
    }
 
    public void setFocus(boolean focused)
@@ -437,11 +437,16 @@ public class XTermWidget extends Widget
    public static void load(final Command command)
    {
       xtermCssLoader_.addCallback(() ->
-            xtermLoader_.addCallback(() ->
-                  xtermFitLoader_.addCallback(() -> {
-         if (command != null)
-            command.execute();
-      })));
+      {
+         xtermLoader_.addCallback(() ->
+         {
+            xtermFitLoader_.addCallback(() ->
+            {
+               if (command != null)
+                  command.execute();
+            });
+         });
+      });
    }
 
    public void refresh()
@@ -450,7 +455,7 @@ public class XTermWidget extends Widget
          terminal_.refresh(0, terminal_.getRows() - 1);
    }
 
-   private static int RESIZE_DELAY = 50;
+   private static final int RESIZE_DELAY = 50;
 
    private static final ExternalStyleSheetLoader xtermCssLoader_ =
          new ExternalStyleSheetLoader(XTermThemeResources.INSTANCE.xtermcss().getSafeUri().asString());
@@ -462,8 +467,9 @@ public class XTermWidget extends Widget
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
 
    private XTermTerminal terminal_;
+   private XTermFitAddon fit_;
    private boolean initialized_ = false;
-   private XTermOptions options_;
+   private final XTermOptions options_;
    private boolean tabMovesFocus_;
    private final ArrayList<XTermDisposable> xtermEventUnsubscribe_ = new ArrayList<>();
 
