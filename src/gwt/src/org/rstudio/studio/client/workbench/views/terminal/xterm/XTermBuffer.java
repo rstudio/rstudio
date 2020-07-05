@@ -25,6 +25,9 @@ import jsinterop.annotations.JsType;
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermBuffer
 {
+   public static final String NORMAL_BUFFER = "normal";
+   public static final String ALT_BUFFER = "alternate";
+
    /**
     * The type of the buffer.
     * 'normal' or 'alternate'

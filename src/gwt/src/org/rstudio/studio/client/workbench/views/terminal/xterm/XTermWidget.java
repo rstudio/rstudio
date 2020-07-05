@@ -342,7 +342,7 @@ public class XTermWidget extends Widget
    public boolean xtermAltBufferActive()
    {
       return terminalEmulatorLoaded() &&
-         (terminal_.getBuffer().getActive() == terminal_.getBuffer().getAlternate());
+         StringUtil.equals(terminal_.getBuffer().getActive().getType(), XTermBuffer.ALT_BUFFER);
    }
 
    /**
