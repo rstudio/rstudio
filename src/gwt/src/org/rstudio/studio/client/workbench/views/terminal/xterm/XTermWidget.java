@@ -249,12 +249,12 @@ public class XTermWidget extends Widget
 
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
-      xtermEventUnsubscribe_.add(terminal_.onData(data -> handler.execute(data.toString())));
+      xtermEventUnsubscribe_.add(terminal_.onData(data -> handler.execute(data)));
    }
 
    private void addTitleEventHandler(CommandWithArg<String> handler)
    {
-      xtermEventUnsubscribe_.add(terminal_.onTitleChange(data -> handler.execute(data.toString())));
+      xtermEventUnsubscribe_.add(terminal_.onTitleChange(data -> handler.execute(data)));
    }
 
    private XTermDimensions getTerminalSize()

@@ -25,7 +25,7 @@ import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
 import jsinterop.base.Js;
-import org.rstudio.core.client.jsinterop.JsConsumerFunction;
+import org.rstudio.core.client.jsinterop.JsConsumerWithArg;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
 /**
@@ -125,7 +125,7 @@ public class XTermTerminal extends XTermDisposable
     * on to the backing pty.
     * @returns an `IDisposable` to stop listening.
     */
-   public native XTermDisposable onData(JsConsumerFunction callback);
+   public native XTermDisposable onData(JsConsumerWithArg<String> callback);
 
    /**
     * Adds an event listener for when a key is pressed. The event value contains the
@@ -174,7 +174,7 @@ public class XTermTerminal extends XTermDisposable
     * The event value is the new title.
     * @returns an `IDisposable` to stop listening.
     */
-   public native XTermDisposable onTitleChange(JsConsumerFunction callback);
+   public native XTermDisposable onTitleChange(JsConsumerWithArg<String> callback);
 
    /**
     * Unfocus the terminal.
