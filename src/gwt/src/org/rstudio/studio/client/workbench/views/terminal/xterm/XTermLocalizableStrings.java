@@ -1,5 +1,5 @@
 /*
- * XTermAddon.java
+ * XTermLocalizableStrings.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -18,15 +18,21 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
- * An addon that can provide additional functionality to the terminal (ITerminalAddon).
+ * The set of localizable strings. (ILocalizableStrings)
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermAddon extends XTermDisposable
+public class XTermLocalizableStrings
 {
    /**
-    * Activates the addon
-    * @param terminal The terminal the addon is being loaded in.
+    * The aria label for the underlying input textarea for the terminal.
     */
-   public native void activate(XTermTerminal terminal);
+   public String promptLabel;
+
+   /**
+    * Announcement for when line reading is suppressed due to too many lines
+    * being printed to the terminal when `screenReaderMode` is enabled.
+    */
+   public String tooMuchOutput;
 }
+

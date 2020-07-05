@@ -35,11 +35,6 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Terminal")
 public class XTermTerminal extends XTermDisposable
 {
-   @JsFunction public interface KeyEventHandler
-   {
-      boolean handleKeyEvent(elemental2.dom.KeyboardEvent event);
-   }
-
    /**
     * The element containing the terminal.
     */
@@ -75,24 +70,24 @@ public class XTermTerminal extends XTermDisposable
     * (EXPERIMENTAL) Get all markers registered against the buffer. If the alt
     * buffer is active this will always return [].
     */
-   // public ReadonlyArray<IMarker> markers;
+   @JsProperty public native XTermMarker[] getMarkers();
 
    /**
     * (EXPERIMENTAL) Get the parser interface to register
     * custom escape sequence handlers.
     */
-   // public IParser parser;
+   public XTermParser parser;
 
    /**
     * (EXPERIMENTAL) Get the Unicode handling interface
     * to register and switch Unicode version.
     */
-   // public IUnicodeHandling unicode;
+   public XTermUnicodeHandling unicode;
 
    /**
     * Natural language strings that can be localized.
     */
-   // public static ILocalizableStrings strings;
+   public static XTermLocalizableStrings strings;
 
    /**
     * Creates a new `Terminal` object.
@@ -211,6 +206,11 @@ public class XTermTerminal extends XTermDisposable
       open(element);
    }
 
+   @JsFunction public interface KeyEventHandler
+   {
+      boolean handleKeyEvent(elemental2.dom.KeyboardEvent event);
+   }
+
    /**
     * Attaches a custom key event handler which is run before keys are
     * processed, giving consumers of xterm.js ultimate control as to what keys
@@ -273,7 +273,7 @@ public class XTermTerminal extends XTermDisposable
     * alt buffer is active, undefined is returned.
     * @param cursorYOffset The y position offset of the marker from the cursor.
     */
-   // registerMarker(cursorYOffset: number): IMarker;
+   public native XTermMarker registerMarker(int cursorYOffset);
 
    /**
     * Gets whether the terminal has an active selection.
@@ -376,7 +376,6 @@ public class XTermTerminal extends XTermDisposable
     *                 by the parser.
     */
    public native void writeln(String data, JsVoidFunction callback);
-
    public native void writeln(Uint8Array data, JsVoidFunction callback);
 
    /**

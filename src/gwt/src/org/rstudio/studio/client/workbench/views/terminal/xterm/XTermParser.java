@@ -1,5 +1,5 @@
 /*
- * XTermAddon.java
+ * XTermParser.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -18,15 +18,11 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
- * An addon that can provide additional functionality to the terminal (ITerminalAddon).
+ * Allows hooking into the parser for custom handling of escape sequences. (IParser)
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermAddon extends XTermDisposable
+public class XTermParser
 {
-   /**
-    * Activates the addon
-    * @param terminal The terminal the addon is being loaded in.
-    */
-   public native void activate(XTermTerminal terminal);
+   // not currently used, intentionally left blank
 }

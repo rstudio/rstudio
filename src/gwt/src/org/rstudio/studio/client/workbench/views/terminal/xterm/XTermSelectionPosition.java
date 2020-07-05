@@ -22,7 +22,7 @@ import jsinterop.annotations.JsType;
  * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-class XTermSelectionPosition
+public class XTermSelectionPosition
 {
    /**
     * The start column of the selection.
