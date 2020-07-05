@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -540,6 +542,9 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+      
+      //  handle mouse button navigations
+      handleMouseButtonNavigations();
       
       // on macOS, we need to aggressively re-sync commands when a new
       // window is selected (since the main menu applies to both main
@@ -2130,6 +2135,56 @@ public class Source implements InsertSourceHandler,
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
    
+   // handle mouse forward and back buttons if the mouse is within the source window
+   private native final void handleMouseButtonNavigations() /*-{
+   try {
+      if ($wnd.addEventListener) {
+         var self = this;
+         function handler(nav) {
+            return $entry(function(evt) {
+               if ((evt.button === 3 || evt.button === 4) &&
+                   self.@org.rstudio.studio.client.workbench.views.source.Source::isMouseEventInSourcePane(Lcom/google/gwt/dom/client/NativeEvent;)(evt)) {  
+                                  
+                  // perform navigation
+                  if (nav) {
+                     if (evt.button === 3) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateBack()();
+                     } else if (evt.button === 4) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateForward()(); 
+                     }
+                  }
+                 
+                  // prevent other handling
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                  evt.stopImmediatePropagation()
+                  return false;
+               }
+            });
+         }
+         
+         // mask mousedown from ace to prevent selection, mask mouseup from chrome 
+         // to prevent navigation of the entire browser
+         $wnd.addEventListener('mousedown', handler(false), false);
+         $wnd.addEventListener('mouseup', handler(true), false);
+      }
+   } catch(err) {
+      console.log(err);
+   }
+   }-*/;
+   
+   private boolean isMouseEventInSourcePane(NativeEvent event)
+   {
+      Element sourceEl = this.asWidget().getElement();
+      boolean inPane = event.getClientX() > sourceEl.getAbsoluteLeft() &&
+                       event.getClientX() < sourceEl.getAbsoluteRight() &&
+                       event.getClientY() > sourceEl.getAbsoluteTop() &&
+                       event.getClientY() < sourceEl.getAbsoluteBottom();
+      Debug.logToConsole("inPane: " + inPane);
+      return inPane;
+   }
+   
+  
    @Handler
    public void onOpenNextFileOnFilesystem()
    {
