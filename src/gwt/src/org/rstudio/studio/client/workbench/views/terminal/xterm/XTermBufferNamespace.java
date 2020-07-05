@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -41,10 +42,15 @@ public class XTermBufferNamespace
     */
    @JsProperty public native XTermBuffer getAlternate();
 
+   @JsFunction public interface BufferChangeEvent
+   {
+      void call(XTermBuffer buffer);
+   }
+
    /**
     * Adds an event listener for when the active buffer changes.
     * @returns an `IDisposable` to stop listening.
     */
-   // onBufferChange: IEvent<IBuffer>;
+   public native XTermDisposable onBufferChange(BufferChangeEvent callback);
 }
 
