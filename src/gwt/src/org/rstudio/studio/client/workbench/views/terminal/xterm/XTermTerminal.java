@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Element;
 import elemental2.core.Uint8Array;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLTextAreaElement;
+import elemental2.dom.KeyboardEvent;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
@@ -26,6 +27,7 @@ import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
 import jsinterop.base.Js;
 import org.rstudio.core.client.jsinterop.JsConsumerWithArg;
+import org.rstudio.core.client.jsinterop.JsIntConsumer;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
 /**
@@ -105,13 +107,14 @@ public class XTermTerminal extends XTermDisposable
     * binary data, e.g. `pty.write(Buffer.from(data, 'binary'))`.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<string> onBinary;
+   public native XTermDisposable onBinary(JsConsumerWithArg<String> callback);
 
    /**
     * Adds an event listener for the cursor moves.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<void> onCursorMove;
+   public native XTermDisposable onCursorMove(JsVoidFunction callback);
+
 
    /**
     * Adds an event listener for when a data event fires. This happens for
@@ -122,32 +125,46 @@ public class XTermTerminal extends XTermDisposable
     */
    public native XTermDisposable onData(JsConsumerWithArg<String> callback);
 
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class OnKeyCallback
+   {
+      String key;
+      KeyboardEvent domEvent;
+   }
+
    /**
     * Adds an event listener for when a key is pressed. The event value contains the
     * string that will be sent in the data event as well as the DOM event that
     * triggered it.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<{ key: string, domEvent: KeyboardEvent }> onKey;
+   public native XTermDisposable onKey(JsConsumerWithArg<OnKeyCallback> callback);
 
    /**
     * Adds an event listener for when a line feed is added.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<void> onLineFeed;
+   public native XTermDisposable onLineFeed(JsVoidFunction callback);
 
    /**
     * Adds an event listener for when a scroll occurs. The event value is the
     * new position of the viewport.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<number> onScroll;
+   public native XTermDisposable onScroll(JsIntConsumer callback);
 
    /**
     * Adds an event listener for when a selection change occurs.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<void> onSelectionChange;
+   public native XTermDisposable onSelectionChange(JsVoidFunction callback);
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class OnRenderCallback
+   {
+      int start;
+      int end;
+   }
 
    /**
     * Adds an event listener for when rows are rendered. The event value
@@ -155,14 +172,21 @@ public class XTermTerminal extends XTermDisposable
     * to `Terminal.rows - 1`).
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<{ start: number, end: number }> onRender;
+   public native XTermDisposable onRender(OnRenderCallback callback);
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class OnResizeCallback
+   {
+      int cols;
+      int rows;
+   }
 
    /**
     * Adds an event listener for when the terminal is resized. The event value
     * contains the new size.
     * @returns an `IDisposable` to stop listening.
     */
-   // public IEvent<{ cols: number, rows: number }> onResize;
+   public native XTermDisposable onResize(OnResizeCallback callback);
 
    /**
     * Adds an event listener for when an OSC 0 or OSC 2 title change occurs.
@@ -228,7 +252,7 @@ public class XTermTerminal extends XTermDisposable
     * they will be asked in the order in which they are registered.
     * @param linkProvider The link provider to use to detect links.
     */
-   // registerLinkProvider(linkProvider: ILinkProvider): IDisposable;
+   public native XTermDisposable registerLinkProvider(XTermLinkProvider linkProvider);
 
    /**
     * (EXPERIMENTAL) Registers a character joiner, allowing custom sequences of
@@ -259,6 +283,7 @@ public class XTermTerminal extends XTermDisposable
     * (exclusive) indexes of ranges that should be rendered as a single unit.
     * @return The ID of the new joiner, this can be used to deregister
     */
+   // Not currently implemented
    // registerCharacterJoiner(handler: (text: string) => [number, number][]): number;
 
    /**
@@ -266,6 +291,7 @@ public class XTermTerminal extends XTermDisposable
     * NOTE: character joiners are only used by the canvas renderer.
     * @param joinerId The character joiner's ID (returned after register)
     */
+   // Not currently implemented
    // deregisterCharacterJoiner(joinerId: number): void;
 
    /**
