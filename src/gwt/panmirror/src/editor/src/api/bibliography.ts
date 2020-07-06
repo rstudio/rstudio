@@ -113,23 +113,19 @@ export class BibliographyManager {
     return this.bibliography || { sources: [], project_biblios: [] };
   }
 
-  public findDoi(doi: string): BibliographySource | undefined {
-    // TODO: If search is called but the server hasn't downloaded, we should 
-    // download the data, then index, then search?
-    // JJA: Seems like yes, but you'll just need to make the findDoi and search
-    // functions async (note that in doing this you may want to consider
-    // what happens for overlapping requests -- if it's just a double download
-    // of the bibliography I'm okay w/ that, as managing the concurrency issues
-    // is bound to get hairy/complicated, and I'd gladly trade extra server
-    // work for having to get that code right)
-    // JJA: In looking at the context where this is called (pasteHandler)
-    // I don't think it can be async. Maybe we should just discuss realtime?
+  public findDoiInLoadedBibliography(doi: string): BibliographySource | undefined {
+    // NOTE: This will only search sources that have already been loaded.
+    // Please be sure to use loadBibliography before calling this or
+    // accept the risk that this will not properly search for a DOI if the
+    // bibliography hasn't already been loaded.
     return this.bibliography?.sources.find(source => source.DOI === doi);
   }
 
-  public search(query: string, limit: number): BibliographySource[] {
-    // TODO: If search is called but the server hasn't downloaded, we should 
-    // download the data, then index, then search?
+  public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {
+    // NOTE: This will only search sources that have already been loaded.
+    // Please be sure to use loadBibliography before calling this or
+    // accept the risk that this will not properly search for a source if the
+    // bibliography hasn't already been loaded.
     if (this.fuse) {
       const options = {
         isCaseSensitive: false,
@@ -139,7 +135,7 @@ export class BibliographyManager {
         limit,
         keys: kFields,
       };
-      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
+      const results: Fuse.FuseResult<BibliographySource>[] = this.fuse.search(query, options);
       return results.map((result: { item: any }) => result.item);
     } else {
       return [];

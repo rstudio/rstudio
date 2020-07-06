@@ -84,7 +84,7 @@ function filterCitations(
   }
 
   // String for a search
-  return manager.search(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+  return manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {

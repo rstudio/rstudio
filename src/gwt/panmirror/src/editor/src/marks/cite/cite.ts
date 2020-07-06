@@ -246,7 +246,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
         // First check the local bibliography- if we already have this DOI
         // we can just past the DOI and allow the completion to handle it
-        const source = bibManager.findDoi(parsedDOI.token);
+        const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
 
         // Insert the DOI text as a placeholder
         // This is using the completion insertion as this should be treated as a 

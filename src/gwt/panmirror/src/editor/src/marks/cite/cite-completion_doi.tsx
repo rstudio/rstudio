@@ -88,7 +88,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
 
           // First check whether the DOI is already contained in the current bibliography
           await bibliographyManager.loadBibliography(ui, context.doc);
-          const source = bibliographyManager.findDoi(parsedDOI.token);
+          const source = bibliographyManager.findDoiInLoadedBibliography(parsedDOI.token);
           if (source) {
             return [
               {

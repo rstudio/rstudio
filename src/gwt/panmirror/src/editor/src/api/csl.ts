@@ -74,7 +74,7 @@ export interface CSLName {
 }
 
 export interface CSLDate {
-  'date-parts'?: Array<[number, number?, number?]>;
+  'date-parts'?: [number, number?, number?][];
   'raw'?: string;
 }
 export interface CSLField {
