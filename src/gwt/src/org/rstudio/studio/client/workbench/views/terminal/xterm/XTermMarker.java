@@ -1,5 +1,5 @@
 /*
- * XTermDimensions.java
+ * XTermMarker.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import jsinterop.annotations.JsPackage;
@@ -20,12 +19,28 @@ import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
- * Size of xterm in rows and columns of text.
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-fit/typings/xterm-addon-fit.d.ts
+ * Represents a specific line in the terminal that is tracked when scrollback
+ * is trimmed and lines are added or removed. This is a single line that may
+ * be part of a larger wrapped line.
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermDimensions
+public class XTermMarker extends XTermDisposable
 {
-   @JsProperty public native int getCols();
-   @JsProperty public native int getRows();
+   /**
+    * A unique identifier for this marker.
+    */
+   @JsProperty public native double getId();
+
+   /**
+    * Whether this marker is disposed.
+    */
+   @JsProperty public native boolean getIsDisposed();
+
+   /**
+    * The actual line index in the buffer at this point in time. This is set to
+    * -1 if the marker has been disposed.
+    */
+   @JsProperty public native int getLine();
 }
+

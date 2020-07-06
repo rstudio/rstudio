@@ -1,5 +1,5 @@
 /*
- * XTermDimensions.java
+ * XTermParser.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,20 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
- * Size of xterm in rows and columns of text.
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-fit/typings/xterm-addon-fit.d.ts
+ * Allows hooking into the parser for custom handling of escape sequences. (IParser)
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermDimensions
+public class XTermParser
 {
-   @JsProperty public native int getCols();
-   @JsProperty public native int getRows();
+   // not currently used, intentionally left blank
 }
