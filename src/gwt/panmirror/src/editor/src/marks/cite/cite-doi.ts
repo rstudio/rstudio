@@ -16,10 +16,9 @@
 import { EditorState, Transaction } from "prosemirror-state";
 import { Slice } from "prosemirror-model";
 
-import { parseCitation, ParsedCitation } from "./cite";
-// JJA: order of imports
 import { findDOI } from "../../api/doi";
 
+import { parseCitation, ParsedCitation } from "./cite";
 
 // Parses the transation or state to determine whether the current position
 // represents a citation containing a DOI

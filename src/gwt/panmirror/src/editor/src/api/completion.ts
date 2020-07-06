@@ -13,12 +13,13 @@
  *
  */
 
-import { Selection, EditorState, Transaction } from 'prosemirror-state';
+import { Selection, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorView, DecorationSet } from 'prosemirror-view';
 
 import { canInsertNode } from './node';
 import { EditorUI } from './ui';
+import { kInsertCompletionTransaction } from './transaction';
 
 export const kCompletionDefaultItemHeight = 22;
 export const kCompletionDefaultMaxVisible = 10;
@@ -140,4 +141,28 @@ export function completionsShareScope(handler: CompletionHandler, prevHandler?: 
     // Previous handler has the same id as the current handler
     return prevHandler.id === handler.id;
   }
+}
+
+export function performCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
+
+  // set selection to area we will be replacing
+  tr.setSelection(new TextSelection(tr.doc.resolve(pos), tr.selection.$head));
+
+  // ensure we have a node
+  if (replacement instanceof ProsemirrorNode) {
+    // combine it's marks w/ whatever is active at the selection
+    const marks = tr.selection.$head.marks();
+
+    // set selection and replace it
+    tr.replaceSelectionWith(replacement, false);
+
+    // propapate marks
+    marks.forEach(mark => tr.addMark(pos, tr.selection.to, mark));
+  } else {
+    tr.insertText(replacement);
+  }
+
+  // mark the transaction as an completion insertion
+  tr.setMeta(kInsertCompletionTransaction, true);
+
 }

@@ -6,6 +6,6 @@ import jsinterop.annotations.JsType;
 public class PanmirrorInsertCiteUI
 {
    public String suggestedId;
-   public PanmirrorInsertCitePreviewPair[] previewFields;
+   public PanmirrorInsertCiteField[] previewFields;
 
 }

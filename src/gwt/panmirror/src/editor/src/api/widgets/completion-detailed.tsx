@@ -34,25 +34,15 @@ export const CompletionItemDetailedView: React.FC<CompletionItemDetailedViewProp
     ...props.style,
   };
 
-  const detailSectionStyle: React.CSSProperties = {
-    // JJA: constant and/or make this a prop w/ default value?
-    width: props.width - 40 + 'px',
-  };
-
-  const detailFieldStyle: React.CSSProperties = {
-    // JJA: constant and/or make this a prop w/ default value?
-    maxWidth: props.width - 80 + 'px',
-  };
-
   return (
     <div className={className} style={style}>
       <div className={'pm-completion-detailed-item-type'}>
         <img className={'pm-block-border-color'} src={props.image} />
       </div>
-      <div className={'pm-completion-item-detailed-summary'} style={detailSectionStyle}>
-        <div className={'pm-completion-item-detailed-heading'} style={detailFieldStyle}>{props.heading}</div>
-        <div className={'pm-completion-item-detailed-title'} style={detailFieldStyle}>{props.title}</div>
-        <div className={'pm-completion-item-detailed-subTitle'} style={detailFieldStyle}>{props.subTitle}</div>
+      <div className={'pm-completion-item-detailed-summary'}>
+        <div className={'pm-completion-item-detailed-heading'}>{props.heading}</div>
+        <div className={'pm-completion-item-detailed-title'}>{props.title}</div>
+        <div className={'pm-completion-item-detailed-subTitle'}>{props.subTitle}</div>
       </div>
     </div>
   );

@@ -20,10 +20,9 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
-// JJA: order of imports
-import { kCitationCompleteScope } from './cite-completion';
-import { imageForType, formatAuthors, formatIssuedDate } from './cite-bibliography_entry';
+import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
+import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
+import { CSL } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography';
 import { EditorServer } from '../../api/server';
@@ -31,10 +30,7 @@ import { DOIServer } from '../../api/doi';
 
 import { doiFromEditingContext } from './cite-doi';
 import { insertCitationForDOI } from './cite';
-import { CSL } from '../../api/csl';
-
-// JJA: Need to move this function out into e.g. api/completion.ts
-import { performCompletionReplacement } from '../../behaviors/completion/completion';
+import { kCitationCompleteScope } from './cite-completion';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;

@@ -22,12 +22,12 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
+import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocServer, PandocWriterOptions } from '../api/pandoc';
+import { PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
@@ -70,12 +70,7 @@ import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
 
-// JJA: This will need to go into an API module. Note that right below you see me reaching directly
-// into the yaml_mdatadata and outline extensions -- I can explain why this is 'okay' realtime
-import { citeUI } from '../marks/cite/cite';
-
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
-
 import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,

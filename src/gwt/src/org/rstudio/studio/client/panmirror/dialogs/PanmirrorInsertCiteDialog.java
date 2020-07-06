@@ -9,7 +9,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitePreviewPair;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteField;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteUI;
@@ -271,13 +271,13 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       }
    }
 
-   private void displayPreview(PanmirrorInsertCitePreviewPair[] previewPairs)
+   private void displayPreview(PanmirrorInsertCiteField[] fields)
    {
       previewTable_.clear();
       int row = 0;
-      for (PanmirrorInsertCitePreviewPair pair : previewPairs)
+      for (PanmirrorInsertCiteField field : fields)
       {
-         row = addPreviewRow(pair.name, pair.value, row);
+         row = addPreviewRow(field.name, field.value, row);
       }
    }
    

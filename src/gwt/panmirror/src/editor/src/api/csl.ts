@@ -13,11 +13,6 @@
  *
  */
 
-// JJA: code in api and code in extensions should never reach directly into other
-// extension code (e.g. ../marks/cite). Move any functions you need into appropriate
-// api source files.
-import { formatAuthors, formatIssuedDate } from "../marks/cite/cite-bibliography_entry";
-
 export interface CSL {
 
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
@@ -77,10 +72,6 @@ export interface CSLDate {
   'date-parts'?: [number, number?, number?][];
   'raw'?: string;
 }
-export interface CSLField {
-  name: string;
-  value: string;
-}
 
 // Crossref sends some items back with invalid data types in the CSL JSON
 // This appears to tend to happen the most frequently with fields that CrossRef
@@ -107,35 +98,6 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
       return csl;
     });
   return cslAny as CSL;
-}
-
-export function formatForPreview(csl: CSL): CSLField[] {
-
-  const pairs = new Array<CSLField>();
-  if (csl.title) {
-    pairs.push({ name: "Title", value: csl.title });
-  }
-  pairs.push({ name: "Authors", value: formatAuthors(csl.author, 255) });
-  if (csl.issued) {
-    pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
-  }
-
-  const containerTitle = csl["container-title"];
-  if (containerTitle) {
-    pairs.push({ name: "Publication", value: containerTitle });
-  }
-
-  const volume = csl.volume;
-  if (volume) {
-    pairs.push({ name: "Volume", value: volume });
-  }
-
-  const page = csl.page;
-  if (page) {
-    pairs.push({ name: "Page(s)", value: page });
-  }
-
-  return pairs;
 }
 
 

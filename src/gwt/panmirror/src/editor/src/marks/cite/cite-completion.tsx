@@ -21,15 +21,13 @@ import React from 'react';
 
 import { BibliographyManager } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { EditorUI } from '../../api/ui';
+import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
+import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation } from './cite';
-
-// JJA: order of imports
-import { hasDOI } from '../../api/doi';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;

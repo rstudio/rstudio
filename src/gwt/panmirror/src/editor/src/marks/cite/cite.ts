@@ -17,25 +17,25 @@ import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice } from 'prosemir
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
+import { EditorView } from 'prosemirror-view';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
+import { fragmentText } from '../../api/fragment';
+import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
+import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
+import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
+import { EditorUI, InsertCiteProps } from '../../api/ui';
+import { CSL, sanitizeForCiteproc } from '../../api/csl';
+import { suggestCiteId, formatForPreview } from '../../api/cite';
+import { performCompletionReplacement } from '../../api/completion';
 
-// JJA: order of imports
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { fragmentText } from '../../api/fragment';
 import { InsertCitationCommand } from './cite-commands';
-import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
-import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
-import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
-import { EditorView } from 'prosemirror-view';
 import { doiFromSlice } from './cite-doi';
-import { EditorUI, InsertCiteProps, InsertCiteUI } from '../../api/ui';
-import { performCompletionReplacement } from '../../behaviors/completion/completion';
-import { CSL, formatForPreview, sanitizeForCiteproc } from '../../api/csl';
-import { suggestIdForEntry } from './cite-bibliography_entry';
+
 
 
 const kCiteCitationsIndex = 0;
@@ -588,7 +588,7 @@ export function insertCitationForDOI(
       bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
       csl,
       citeUI: csl ? {
-        suggestedId: suggestIdForEntry(existingIds, csl.author, csl.issued),
+        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
         previewFields: formatForPreview(csl)
       } : undefined
     };
@@ -642,24 +642,5 @@ function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): str
     return [];
   }
 }
-
-export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
-  if (citeProps.csl) {
-    const suggestedId = suggestIdForEntry(citeProps.existingIds, citeProps.csl.author, citeProps.csl.issued);
-    const previewFields = formatForPreview(citeProps.csl);
-    return {
-      suggestedId,
-      previewFields
-    };
-  } else {
-    // This should never happen - this function should always be called with a work
-    return {
-      suggestedId: "",
-      previewFields: []
-    };
-  }
-}
-
-
 
 export default extension;

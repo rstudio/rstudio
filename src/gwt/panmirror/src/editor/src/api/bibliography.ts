@@ -13,12 +13,11 @@
  *
  */
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-// JJA: order of includes (review all for this)
-import { PandocServer } from './pandoc';
 import { Transaction } from 'prosemirror-state';
 import { NodeWithPos } from 'prosemirror-utils';
 
 import Fuse from 'fuse.js';
+import { PandocServer } from './pandoc';
 
 import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, parseYaml } from './yaml';
