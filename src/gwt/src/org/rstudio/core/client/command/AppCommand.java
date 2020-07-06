@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -78,8 +79,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          {
             setEnabled(command_.isEnabled());
             setVisible(command_.isVisible());
-            handlerReg_ = command_.addEnabledChangedHandler(this);
-            handlerReg2_ = command_.addVisibleChangedHandler(this);
+            handlers_.add(command_.addEnabledChangedHandler(this));
+            handlers_.add(command_.addVisibleChangedHandler(this));
          }
 
          parentToolbar_ = getParentToolbar();
@@ -94,10 +95,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          super.onDetach();
 
          if (synced_)
-         {
-            handlerReg_.removeHandler();
-            handlerReg2_.removeHandler();
-         }
+            handlers_.removeHandler();
       }
 
       public void onEnabledChanged(EnabledChangedEvent event)
@@ -116,8 +114,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
       protected final AppCommand command_;
       private boolean synced_ = true;
-      protected HandlerRegistration handlerReg_;
-      protected HandlerRegistration handlerReg2_;
+      protected HandlerRegistrations handlers_;
       protected Toolbar parentToolbar_;
    }
 
@@ -128,7 +125,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                               ImageResourceProvider imageResourceProvider,
                                               ClickHandler clickHandler,
                                               AppCommand command,
-                                              SourceColumn column)     {
+                                              SourceColumn column)
+      {
          super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler, command, false);
          column_ = column;
       }
@@ -138,8 +136,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          super.onAttach();
 
-         handlerReg_ = command_.addEnabledChangedHandler(this);
-         handlerReg2_ = command_.addVisibleChangedHandler(this);
+         handlers_.add(command_.addEnabledChangedHandler(this));
+         handlers_.add(command_.addVisibleChangedHandler(this));
 
          if (isVisible())
             setEnabled(true);
@@ -149,8 +147,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       protected void onDetach()
       {
          super.onDetach();
-         handlerReg_.removeHandler();
-         handlerReg2_.removeHandler();
+         handlers_.removeHandler();
       }
 
       @Override
