@@ -342,7 +342,7 @@ public class XTermWidget extends Widget
    public boolean xtermAltBufferActive()
    {
       return terminalEmulatorLoaded() &&
-         StringUtil.equals(terminal_.getBuffer().getActive().getType(), XTermBuffer.ALT_BUFFER);
+         StringUtil.equals(terminal_.getBuffer().getActive().getType(), ALT_BUFFER);
    }
 
    /**
@@ -454,6 +454,10 @@ public class XTermWidget extends Widget
       if (terminalEmulatorLoaded())
          terminal_.refresh(0, terminal_.getRows() - 1);
    }
+
+   // XTerm.js buffer modes
+   public static final String NORMAL_BUFFER = "normal";
+   public static final String ALT_BUFFER = "alternate";
 
    private static final int RESIZE_DELAY = 50;
 
