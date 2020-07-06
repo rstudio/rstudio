@@ -47,6 +47,7 @@
   padding-left: 0px;
   line-height: 20px;
   font-size: 14px;
+  max-width: calc(100% - 70px);
 }
 
 .pm-completion-item-detailed-heading {
@@ -82,7 +83,7 @@
   width: 100%;
   line-height: 18px;
   padding-top: 8px;
-
+  
   font-size: 11pt;
   opacity: 0.6;
 }

@@ -18,11 +18,12 @@ import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
-
+import { CiteField } from './cite';
+import { CSL } from './csl';
+import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
-import { SkinTone } from './emoji';
-import { CSL, CSLField } from './csl';
+
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -223,7 +224,7 @@ export interface InsertCiteProps {
 
 export interface InsertCiteUI {
   suggestedId: string;
-  previewFields: CSLField[];
+  previewFields: CiteField[];
 }
 
 export interface InsertCiteResult {
