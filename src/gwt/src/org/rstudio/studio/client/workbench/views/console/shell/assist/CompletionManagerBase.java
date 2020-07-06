@@ -57,6 +57,11 @@ import com.google.inject.Inject;
 public abstract class CompletionManagerBase
       implements CompletionRequestContext.Host
 {
+   public abstract void goToHelp();
+   public abstract void goToDefinition();
+   public abstract void showAdditionalHelp(QualifiedName completion);
+   public abstract boolean getCompletions(String line, CompletionRequestContext context);
+   
    public interface Callback
    {
       public void onToken(TokenIterator it, Token token);
@@ -319,10 +324,6 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
-   public abstract void goToHelp();
-   public abstract void goToDefinition();
-   public abstract boolean getCompletions(String line, CompletionRequestContext context);
-   
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
    {
@@ -450,6 +451,7 @@ public abstract class CompletionManagerBase
             case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests(); return true;
             case KeyCodes.KEY_ENTER:     return onPopupEnter();
             case KeyCodes.KEY_TAB:       return onPopupTab();
+            case KeyCodes.KEY_F1:        return onPopupAdditionalHelp();
             }
             
             break;
@@ -680,6 +682,19 @@ public abstract class CompletionManagerBase
       
       onPopupSelectionCommit(completion);
       return true;
+   }
+   
+   private boolean onPopupAdditionalHelp()
+   {
+      if (popup_.isOffscreen())
+         return false;
+      
+      QualifiedName completion = popup_.getSelectedValue();
+      if (completion == null)
+         return false;
+      
+      showAdditionalHelp(completion);
+      return false;
    }
    
    private void onDocumentChanged(DocumentChangedEvent event)
