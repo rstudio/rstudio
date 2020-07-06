@@ -33,7 +33,11 @@ export function suggestCiteId(existingIds: string[], author?: CSLName[], issued?
   // Try to get the publication year
   let datePart = '';
   if (issued && issued['date-parts'] && issued['date-parts'].length > 0) {
-    datePart = issued['date-parts'][0][0] + '';
+    const yearIssued = issued['date-parts'][0][0];
+    // Sometimes, data arrives with a null value, ignore null
+    if (yearIssued) {
+      datePart = yearIssued + '';
+    }
   }
 
   // Create a deduplicated string against the existing entries
@@ -145,7 +149,7 @@ export function formatForPreview(csl: CSL): CiteField[] {
     pairs.push({ name: "Title", value: csl.title });
   }
   pairs.push({ name: "Authors", value: formatAuthors(csl.author, 255) });
-  if (csl.issued) {
+  if (csl.issued && isValidDate(csl.issued)) {
     pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
   }
 
@@ -165,6 +169,20 @@ export function formatForPreview(csl: CSL): CiteField[] {
   }
 
   return pairs;
+}
+
+// Sometimes, data arrives with a null value
+// This function will validate that the year (required) doesn't
+// contain null
+function isValidDate(date: CSLDate): boolean {
+  const dateParts = date["date-parts"];
+  if (dateParts) {
+    const invalidElement = dateParts.find(
+      datePart => datePart[0] === null
+    );
+    return invalidElement === undefined;
+  }
+  return true;
 }
 
 // TODO: Needs to support localization of the templated strings

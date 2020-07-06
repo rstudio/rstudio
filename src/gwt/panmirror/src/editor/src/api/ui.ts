@@ -24,7 +24,6 @@ import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
 
-
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;

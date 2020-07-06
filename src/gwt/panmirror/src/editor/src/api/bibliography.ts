@@ -120,6 +120,14 @@ export class BibliographyManager {
     return this.bibliography?.sources.find(source => source.DOI === doi);
   }
 
+  public findIdInLoadedBibliography(id: string): BibliographySource | undefined {
+    // NOTE: This will only search sources that have already been loaded.
+    // Please be sure to use loadBibliography before calling this or
+    // accept the risk that this will not properly search for a DOI if the
+    // bibliography hasn't already been loaded.
+    return this.bibliography?.sources.find(source => source.id === id);
+  }
+
   public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use loadBibliography before calling this or

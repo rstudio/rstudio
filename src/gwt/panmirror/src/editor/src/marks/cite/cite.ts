@@ -245,7 +245,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
       if (parsedDOI) {
 
         // First check the local bibliography- if we already have this DOI
-        // we can just past the DOI and allow the completion to handle it
+        // we can just paste the DOI and allow the completion to handle it
         const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
 
         // Insert the DOI text as a placeholder
@@ -576,11 +576,19 @@ export function insertCitationForDOI(
   server: PandocServer,
   csl?: CSL
 ) {
-  bibManager.loadBibliography(ui, view.state.doc).then(bibliography => {
+  bibManager.loadBibliography(ui, view.state.doc).then(async bibliography => {
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(ui, view.state.doc);
     const existingIds = bibliography.sources.map(source => source.id);
+
+    // We try not call this function if the entry for this DOI is already in the bibliography,
+    // but it can happen. So we need to check here if it is already in the bibliography and 
+    // if it is, deal with it appropriately.
+    const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
+    if (existingEntry) {
+      csl = existingEntry;
+    }
 
     const citeProps: InsertCiteProps = {
       doi,
@@ -588,48 +596,46 @@ export function insertCitationForDOI(
       bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
       csl,
       citeUI: csl ? {
-        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
+        suggestedId: existingEntry?.id || suggestCiteId(existingIds, csl.author, csl.issued),
         previewFields: formatForPreview(csl)
       } : undefined
     };
 
+    const result = await ui.dialogs.insertCite(citeProps);
+    if (result && result.id.length) {
 
+      // Figure out whether this is a project or document level bibliography
+      const project = bibliography.project_biblios.length > 0;
+      const bibliographyFile = project
+        ? result.bibliographyFile
+        : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
 
-    // Ask the user to provide information that we need in order to populate
-    // this citation (id, bibliography)
-    ui.dialogs.insertCite(citeProps).then(result => {
-      // If the user provided an id, insert the citation
-      if (result && result.id.length) {
+      // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
+      const cslToWrite = sanitizeForCiteproc(result.csl);
 
-        const project = bibliography.project_biblios.length > 0;
-        const bibliographyFile = project
-          ? result.bibliographyFile
-          : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
-
-        const cslToWrite = sanitizeForCiteproc(result.csl);
-        server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite])).then(() => {
-
-          const tr = view.state.tr;
-
-          // Update the bibliography on the page if need be
-          if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
-
-            // Because this could be called by a paste handler or other non-completion end point
-            // we needd to completely suppress completions upon insert the citation
-            tr.setMeta(kPreventCompletionTransaction, true);
-
-            // Use the biblography manager to write an entry to the user specified bibliography
-            performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
-
-            view.dispatch(tr);
-
-          }
-        }).catch(error => {
-          // TODO: Log an error message since we failed to add the citation to the bibliography
-        });
+      // Write entry to a bibliography file if it isn't already present
+      await bibManager.loadBibliography(ui, view.state.doc);
+      if (!bibManager.findIdInLoadedBibliography(result.id)) {
+        await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
       }
-      view.focus();
-    });
+
+      const tr = view.state.tr;
+
+      // Update the bibliography on the page if need be
+      if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+
+        // Because this could be called by a paste handler or other non-completion end point
+        // we needd to completely suppress completions upon insert the citation
+        tr.setMeta(kPreventCompletionTransaction, true);
+
+        // Use the biblography manager to write an entry to the user specified bibliography
+        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+
+        view.dispatch(tr);
+
+      }
+    }
+    view.focus();
   });
 }
 
