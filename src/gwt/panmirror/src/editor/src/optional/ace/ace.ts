@@ -84,13 +84,13 @@ class CodeBlockNodeView implements NodeView {
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly chunk: AceChunkEditor;
+  private readonly editSession: AceAjax.IEditSession;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
 
   private readonly runChunkToolbar: HTMLDivElement;
 
   private node: ProsemirrorNode;
-  private incomingChanges: boolean;
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
@@ -107,7 +107,6 @@ class CodeBlockNodeView implements NodeView {
     this.node = node;
     this.view = view;
     this.getPos = getPos;
-    this.incomingChanges = false;
     this.mode = "";
     this.escaping = false;
 
@@ -119,6 +118,9 @@ class CodeBlockNodeView implements NodeView {
     this.chunk = ui.chunks.createChunkEditor();
     this.chunk.editor.setValue(node.textContent);
     this.chunk.editor.clearSelection();
+
+    // cache edit session for convenience; most operations happen on the session
+    this.editSession = this.chunk.editor.getSession();
 
     // The editor's outer node is our DOM representation
     this.dom = this.chunk.element;
@@ -141,15 +143,9 @@ class CodeBlockNodeView implements NodeView {
     // inner editor
     this.updating = false;
 
-    // TODO (jmcphers): In CodeMirror we can detect an incoming change with
-    // 'beforeChange', but Ace doesn't seem to have that event. Is it vital?
-    // 
-    // Track whether changes are have been made but not yet propagated
-    // this.editor.on("beforeChange", () => (this.incomingChanges = true));
-
     // Propagate updates from the code editor to ProseMirror
     this.chunk.editor.on("changeCursor", () => {
-      if (!this.updating && !this.incomingChanges) {
+      if (!this.updating) {
         this.forwardSelection();
       }
     });
@@ -158,7 +154,6 @@ class CodeBlockNodeView implements NodeView {
         this.valueChanged();
         this.forwardSelection();
       }
-      this.incomingChanges = false;
     });
 
     // Forward selection we we receive it
@@ -272,14 +267,14 @@ class CodeBlockNodeView implements NodeView {
     this.node = node;
     this.updateMode();
     
-    const change = computeChange(this.chunk.editor.getSession().getValue(), node.textContent);
+    const change = computeChange(this.editSession.getValue(), node.textContent);
     if (change) {
       this.updating = true;
-      const doc = this.chunk.editor.getSession().getDocument();
+      const doc = this.editSession.getDocument();
       const AceRange = window.require("ace/range").Range;
       const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
                                         doc.indexToPosition(change.to, 0));
-      this.chunk.editor.getSession().replace(range, change.text);
+      this.editSession.replace(range, change.text);
       this.updating = false;
     }
     return true;
@@ -291,11 +286,11 @@ class CodeBlockNodeView implements NodeView {
       this.chunk.editor.focus();
     }
     this.updating = true;
-    const doc = this.chunk.editor.getSession().getDocument();
+    const doc = this.editSession.getDocument();
     const AceRange = window.require("ace/range").Range;
     const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
                                       doc.indexToPosition(head, 0));
-    this.chunk.editor.getSession().getSelection().setSelectionRange(range);
+    this.editSession.getSelection().setSelectionRange(range);
     this.updating = false;
   }
 
@@ -323,7 +318,7 @@ class CodeBlockNodeView implements NodeView {
 
   private asProseMirrorSelection(doc: ProsemirrorNode) {
     const offset = this.getPos() + 1;
-    const session = this.chunk.editor.getSession();
+    const session = this.editSession;
     const range = session.getSelection().getRange();
     const anchor = session.getDocument().positionToIndex(range.start, 0) + offset;
     const head = session.getDocument().positionToIndex(range.end, 0) + offset;
@@ -390,10 +385,10 @@ class CodeBlockNodeView implements NodeView {
   // (to perform the arrow key's usual action)
   private arrowMaybeEscape(unit: string, dir: number, command: string) {
     const pos = this.chunk.editor.getCursorPosition();
-    const lastrow = this.chunk.editor.getSession().getLength() - 1;
+    const lastrow = this.editSession.getLength() - 1;
     if ((!this.chunk.editor.getSelection().isEmpty()) ||
         pos.row !== (dir < 0 ? 0 : lastrow) ||
-        (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.chunk.editor.getSession().getDocument().getLine(pos.row).length)))
+        (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length)))
     {
         // this movement is happening inside the editor itself. don't escape
         // the editor; just execute the underlying command
@@ -516,7 +511,7 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private getContents(): string {
-    return this.chunk.editor.getSession().getValue();
+    return this.editSession.getValue();
   }
 }
 
