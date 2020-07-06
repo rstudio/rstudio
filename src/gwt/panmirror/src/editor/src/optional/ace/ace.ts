@@ -26,12 +26,12 @@ import {
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
-// import { exitCode } from 'prosemirror-commands';
+import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
 import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
-// import { insertParagraph } from '../../api/paragraph';
+import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
@@ -230,6 +230,39 @@ class CodeBlockNodeView implements NodeView {
       exec: () => { selectAll(view.state, view.dispatch, view); }
     });
 
+    // Handle shortcuts for moving focus out of the code editor and into
+    // ProseMirror
+    this.chunk.editor.commands.addCommand({
+      name: "exitCodeBlock",
+      bindKey: {
+          win: "Ctrl-Enter|Shift-Enter", 
+          mac:"Ctrl-Enter|Shift-Enter|Command-Enter"
+      }, 
+      exec: () => { 
+        if (exitCode(view.state, view.dispatch)) {
+          view.focus();
+        }
+      }
+    });
+
+    // Create a command for inserting paragraphs from the code editor
+    this.chunk.editor.commands.addCommand({
+      name: "insertParagraph",
+      bindKey: {
+        win: "Ctrl-\\", 
+        mac:"Command-\\"
+      },
+      exec: () => { insertParagraph(view.state, view.dispatch); }
+    });
+
+    // If an attribute editor function was supplied, bind it to F4
+    if (this.options.attrEditFn) {
+      this.chunk.editor.commands.addCommand({
+        name: "editAttributes",
+        bindKey: "F4",
+        exec: () => { this.options.attrEditFn!(view.state, view.dispatch, view); }
+      });
+    }
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -331,45 +364,6 @@ class CodeBlockNodeView implements NodeView {
       this.enableChunkExecution(false);
     }
   }
-
-  /*
-  private codeMirrorKeymap() {
-    const view = this.view;
-    const mod = kPlatformMac ? 'Cmd' : 'Ctrl';
-
-    // exit code block
-    const exitBlock = () => {
-      if (exitCode(view.state, view.dispatch)) {
-        view.focus();
-      }
-    };
-
-    // Note: normalizeKeyMap not declared in CodeMirror types
-    // so we cast to any
-    const cmKeymap = (CodeMirror as any).normalizeKeyMap({
-      Up: () => this.arrowMaybeEscape('line', -1),
-      Left: () => this.arrowMaybeEscape('char', -1),
-      Down: () => this.arrowMaybeEscape('line', 1),
-      Right: () => this.arrowMaybeEscape('char', 1),
-      Backspace: () => this.backspaceMaybeDeleteNode(),
-      Tab: () => this.cm.execCommand(this.cm.getOption('indentWithTabs') ? 'insertTab' : 'insertSoftTab'),
-      // undo/redo keys are technically rebindable in the parent
-      // editor so we may need a way to propagate the rebinding here
-      [`${mod}-Z`]: () => undo(view.state, view.dispatch),
-      [`Shift-${mod}-Z`]: () => redo(view.state, view.dispatch),
-      [`${mod}-Y`]: () => redo(view.state, view.dispatch),
-      [`${mod}-A`]: () => selectAll(view.state, view.dispatch, view),
-      'Ctrl-Enter': exitBlock,
-      'Shift-Enter': exitBlock,
-      [`${mod}-Enter`]: exitBlock,
-      [`${mod}-\\`]: () => insertParagraph(view.state, view.dispatch),
-      F4: () => {
-        return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
-      },
-    });
-    return cmKeymap;
-  }
-  */
 
   private backspaceMaybeDeleteNode() {
     // if the node is empty and we execute a backspace then delete the node
