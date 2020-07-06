@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
@@ -55,16 +53,12 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
-import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -121,30 +115,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
-
       boolean isActive = this == manager_.getActive();
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive));
       events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive));
-
-      events_.addHandler(SourceNavigationEvent.TYPE,
-         new SourceNavigationHandler()
-         {
-            @Override
-            public void onSourceNavigation(SourceNavigationEvent event)
-            {
-               if (suspendSourceNavigationAdding_)
-                  sourceNavigationHistory_.add(event.getNavigation());
-            }
-         });
-      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
-      {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            manageSourceNavigationCommands(isActive);
-         }
-      });
-
       initialized_ = true;
    }
 
@@ -234,24 +207,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void moveTab(int index, int delta)
    {
 	   display_.moveTab(index, delta);
-   }
-
-   public void navigateBack()
-   {
-      if (activeEditor_ != null && sourceNavigationHistory_.isForwardEnabled())
-         activeEditor_.recordCurrentNavigationPosition();
-   }
-
-   public void navigateForward()
-   {
-      SourceNavigation navigation = sourceNavigationHistory_.goForward();
-      if (navigation != null)
-         attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
-   }
-
-   public void clearSourceNavigationHistory()
-   {
-      sourceNavigationHistory_.clear();
    }
 
    public void selectTab(Widget widget)
@@ -805,7 +760,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       manageSaveCommands(active);
 
       // manage source navigation
-      manageSourceNavigationCommands(active);
+      manageSourceNavigationCommands();
 
       // manage RSConnect commands
       manageRSConnectCommands(active);
@@ -921,19 +876,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          commands_.saveSourceDoc().setButtonEnabled(saveEnabled, name_);
    }
 
-   private void manageSourceNavigationCommands(boolean active)
+   public void manageSourceNavigationCommands()
    {
-      if (active || !sourceNavigationHistory_.isBackEnabled())
-         commands_.sourceNavigateBack().setEnabled(
-            sourceNavigationHistory_.isBackEnabled(), name_);
-      else
-         commands_.sourceNavigateBack().setButtonEnabled(true, name_);
+      commands_.sourceNavigateBack().setEnabled(
+         manager_.getSourceNavigationHistory().isBackEnabled(), name_);
 
-      if (active || !sourceNavigationHistory_.isForwardEnabled())
-         commands_.sourceNavigateForward().setEnabled(
-            sourceNavigationHistory_.isForwardEnabled(), name_);
-      else
-         commands_.sourceNavigateForward().setButtonEnabled(true, name_);
+      commands_.sourceNavigateForward().setEnabled(
+         manager_.getSourceNavigationHistory().isForwardEnabled(), name_);
    }
 
    private void manageRSConnectCommands(boolean active)
@@ -1082,81 +1031,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             });
    }
 
-   private EditingTarget getEditingTargetForId(String id)
-   {
-      for (EditingTarget target : editors_)
-         if (id == target.getId())
-            return target;
-
-     return null;
-   }
-
-   private void attemptSourceNavigation(final SourceNavigation navigation,
-                                        final AppCommand retryCommand)
-   {
-      // see if we can navigate by id
-      String docId = navigation.getDocumentId();
-      final EditingTarget target = getEditingTargetForId(docId);
-      if (target != null)
-      {
-         // check for navigation to the current position -- in this
-         // case execute the retry command
-         if (target == activeEditor_ &&
-             target.isAtSourceRow(navigation.getPosition()))
-         {
-            if (retryCommand.isEnabled())
-               retryCommand.execute();
-         }
-         else
-         {
-            suspendSourceNavigationAdding_ = true;
-            try
-            {
-               display_.selectTab(target.asWidget());
-               target.restorePosition(navigation.getPosition());
-            }
-            finally
-            {
-               suspendSourceNavigationAdding_ = false;
-            }
-         }
-      }
-
-      // check for code browser navigation
-      else if (navigation.getPath() != null &&
-               navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
-      {
-         manager_.activateCodeBrowser(
-            navigation.getPath(),
-            false,
-            new SourceNavigationResultCallback<>(
-               navigation.getPosition(),
-               retryCommand));
-      }
-
-      // check for file path navigation
-      else if ((navigation.getPath() != null) &&
-         !navigation.getPath().startsWith(DataItem.URI_PREFIX) &&
-         !navigation.getPath().startsWith(ObjectExplorerHandle.URI_PREFIX))
-      {
-         FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
-
-         // open the file and restore the position
-         manager_.openFile(file,
-            new SourceNavigationResultCallback<>(
-               navigation.getPosition(),
-               retryCommand));
-      }
-      else
-      {
-         // couldn't navigate to this item, retry
-         if (retryCommand.isEnabled())
-            retryCommand.execute();
-      }
-   }
-
-
-
    @Override
    public void onBeforeShow(BeforeShowEvent event)
    {
@@ -1250,7 +1124,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          // scan the source navigation history for an entry that can
          // be used as the next active tab (anything that doesn't have
          // the same document id as the currently active tab)
-         SourceNavigation srcNav = sourceNavigationHistory_.scanBack(
+         SourceNavigation srcNav = manager_.getSourceNavigationHistory().scanBack(
                  navigation -> navigation.getDocumentId() != activeEditorId);
 
          // see if the source navigation we found corresponds to an active
@@ -1344,65 +1218,15 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       if (display_.getTabCount() == 0)
       {
-         sourceNavigationHistory_.clear();
+         manager_.clearSourceNavigationHistory();
          events_.fireEvent(new LastSourceDocClosedEvent(name_));
       }
-   }
-
-   private class SourceNavigationResultCallback<T extends EditingTarget>
-      extends ResultCallback<T,ServerError>
-   {
-      public SourceNavigationResultCallback(SourcePosition restorePosition,
-                                            AppCommand retryCommand)
-      {
-         suspendSourceNavigationAdding_ = true;
-         restorePosition_ = restorePosition;
-         retryCommand_ = retryCommand;
-      }
-
-      @Override
-      public void onSuccess(final T target)
-      {
-         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               try
-               {
-                  target.restorePosition(restorePosition_);
-               }
-               finally
-               {
-                  suspendSourceNavigationAdding_ = false;
-               }
-            }
-         });
-      }
-
-      @Override
-      public void onFailure(ServerError info)
-      {
-         suspendSourceNavigationAdding_ = false;
-         if (retryCommand_.isEnabled())
-            retryCommand_.execute();
-      }
-
-      @Override
-      public void onCancelled()
-      {
-         suspendSourceNavigationAdding_ = false;
-      }
-
-      private final SourcePosition restorePosition_;
-      private final AppCommand retryCommand_;
    }
 
    private Commands commands_;
 
    private boolean initialized_ = false;
    private boolean suspendDocumentClose_ = false;
-   private boolean suspendSourceNavigationAdding_ = false;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
@@ -1421,6 +1245,5 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private EditingTargetSource editingTargetSource_;
 
    private SourceColumnManager manager_;
-   private final SourceNavigationHistory sourceNavigationHistory_ =
-     new SourceNavigationHistory(30);
+
 }

@@ -59,7 +59,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -196,6 +195,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
+      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((col) ->
+         col.manageSourceNavigationCommands()));
+
       new JSObjectStateValue("source-column-manager",
                              "column-info",
                               ClientState.PERSISTENT,
@@ -246,35 +248,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       };
       setActive(column.getName());
-
-      // get the key to use for active tab persistence; use ordinal-based key
-      // for source windows rather than their ID to avoid unbounded accumulation
-      String activeTabKey = KEY_ACTIVETAB;
-      if (!SourceWindowManager.isMainSourceWindow())
-         activeTabKey += "SourceWindow" +
-            windowManager_.getSourceWindowOrdinal();
-
-      new IntStateValue(MODULE_SOURCE, activeTabKey,
-         ClientState.PROJECT_PERSISTENT,
-         session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Integer value)
-         {
-            if (value == null)
-               return;
-
-            getActive().initialSelect(value);
-            // clear the history manager
-            columnList_.forEach((column) -> column.clearSourceNavigationHistory());
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return getActive().getPhysicalTabIndex();
-         }
-      };
    }
 
    public String add()
@@ -329,6 +302,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return column.getName();
    }
 
+   public void initialSelect(int index)
+   {
+      getActive().initialSelect(index);
+   }
+
    public void setActive(String name)
    {
       if (StringUtil.isNullOrEmpty(name) &&
@@ -347,7 +325,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       setActive(column);
    }
 
-   public void setActive(EditingTarget target)
+   private void setActive(EditingTarget target)
    {
       setActive(findByDocument(target.getId()));
       activeColumn_.setActiveEditor(target);
@@ -445,6 +423,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return activeColumn_ != null && activeColumn_.getActiveEditor() != null;
    }
 
+   public boolean isActiveEditor(EditingTarget editingTarget)
+   {
+      return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
+   }
+
    public boolean getDocsRestored()
    {
       return docsRestored_;
@@ -463,6 +446,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public int getTabCount()
    {
       return activeColumn_.getTabCount();
+   }
+
+   public int getPhysicalTabIndex()
+   {
+      return activeColumn_.getPhysicalTabIndex();
    }
 
    public ArrayList<String> getNames(boolean excludeMain)
@@ -501,6 +489,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return session_;
    }
 
+   public SourceNavigationHistory getSourceNavigationHistory()
+   {
+      return sourceNavigationHistory_;
+   }
+
+   public void recordCurrentNavigationHistoryPosition()
+   {
+      if (hasActiveEditor())
+         activeColumn_.getActiveEditor().recordCurrentNavigationPosition();
+   }
+
    public String getEditorPositionString()
    {
       if (hasActiveEditor())
@@ -537,6 +536,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
            return 0;
        return parseInt(match[1]);
    }-*/;
+
+   public void clearSourceNavigationHistory()
+   {
+      if (!hasDoc())
+         sourceNavigationHistory_.clear();
+   }
 
    public void manageCommands(boolean forceSync)
    {
@@ -822,18 +827,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
          (activeColumn_.getTabCount() -
             activeColumn_.getPhysicalTabIndex()) - 1);
-   }
-
-   @Handler
-   public void onSourceNavigateBack()
-   {
-      activeColumn_.navigateBack();
-   }
-
-   @Handler
-   public void onSourceNavigateForward()
-   {
-      activeColumn_.navigateForward();
    }
 
    @Handler
@@ -1532,6 +1525,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void fireDocTabsChanged()
    {
       activeColumn_.fireDocTabsChanged();
+   }
+
+   private boolean hasDoc()
+   {
+      for (SourceColumn column : columnList_)
+      {
+         if (column.hasDoc())
+            return true;
+      }
+      return false;
    }
 
    private void vimSetTabIndex(int index)
@@ -2411,8 +2414,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private SourceServerOperations server_;
    private DependencyManager dependencyManager_;
 
-   private static final String MODULE_SOURCE = "source-pane";
-   private static final String KEY_ACTIVETAB = "activeTab";
+   private final SourceNavigationHistory sourceNavigationHistory_ =
+       new SourceNavigationHistory(30);
+
    public final static String COLUMN_PREFIX = "Source";
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
 }
