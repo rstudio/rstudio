@@ -182,8 +182,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
-   return r::exec::RFunction(".rs.extractChunkInnerCode", 
-         string_utils::wideToUtf8(code_)).call(pCode);
+   return r::exec::RFunction(".rs.extractChunkInnerCode")
+       .addParam(string_utils::wideToUtf8(code_))
+       .callUtf8(pCode);
 }
 
 bool NotebookQueueUnit::hasPendingRanges()

@@ -14,6 +14,10 @@
  */
 
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { pandocAutoIdentifier } from './pandoc_id';
+import { rmdChunkEngineAndLabel } from './rmd';
+
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
   xrefForId: (file: string, id: string) => Promise<XRefs>;
@@ -31,6 +35,141 @@ export interface XRef {
   title: string;
 }
 
-export function xrefKey(xref: XRef) {
-  return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
+export function xrefKey(xref: XRef, headingType = false) {
+  // headings don't include their type in the key
+  return !headingType && /^h\d$/.test(xref.type)
+    ? xref.id
+    // no colon if there is no type
+    : xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
 }
+
+export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
+
+  // -1 if not found
+  let xrefPos = -1;
+
+  // get type and id
+  const xrefInfo = xrefTypeAndId(xref);
+  if (xrefInfo) {
+
+    const { type, id } = xrefInfo;
+
+    // search all descendents recursively for the xref
+    doc.descendants((node, pos) => {
+
+      // bail if we already found it
+      if (xrefPos !== -1) {
+        return false;
+      }
+
+      // see if we have a locator for this type that can handle this node type
+      const locator = xrefPositionLocators[type];
+      if (locator && locator.nodeTypes.includes(node.type.name)) {
+        if (locator.hasXRef(node, id)) {
+          xrefPos = pos;
+          return false;
+        }
+      }
+    });
+  }
+
+  // return the position
+  return xrefPos;
+}
+
+
+
+function xrefTypeAndId(xref: string) {
+  const colonPos = xref.indexOf(':');
+  if (colonPos !== -1) {
+    return {
+      type: xref.substring(0, colonPos),
+      id: xref.substring(colonPos + 1)
+    };
+  } else {
+    return null;
+  }
+}
+
+interface XRefPositionLocator {
+  nodeTypes: string[];
+  hasXRef: (node: ProsemirrorNode, id: string) => boolean;
+}
+
+const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+  'h1': headingLocator(),
+  'h2': headingLocator(),
+  'h3': headingLocator(),
+  'h4': headingLocator(),
+  'h5': headingLocator(),
+  'h6': headingLocator(),
+  'fig': {
+    nodeTypes: ['rmd_chunk'],
+    hasXRef: (node: ProsemirrorNode, id: string) => rmdChunkHasXRef(node, 'r', id, /^\{.*[ ,].*fig\.cap\s*=.*\}\s*\n/m)
+  },
+  'tab': {
+    nodeTypes: ['rmd_chunk', 'table_container'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      if (node.type.name === 'rmd_chunk') {
+        return rmdChunkHasXRef(node, 'r', id, /kable\s*\([\s\S]*caption/);
+      } else if (node.type.name === 'table_container') {
+        const caption = node.child(1);
+        const match = caption.textContent.match(/^\s*\(#tab\:([a-zA-Z0-9\/-]+)\)\s*(.*)$/);
+        return !!match && match[1].localeCompare(id, undefined, { sensitivity: 'accent' }) === 0;
+      } else {
+        return false;
+      }
+    }
+  },
+  'thm': thereomLocator('theorem'),
+  'lem': thereomLocator('lemma'),
+  'cor': thereomLocator('corollary'),
+  'prp': thereomLocator('proposition'),
+  'cnj': thereomLocator('conjecture'),
+  'def': thereomLocator('definition'),
+  'exr': thereomLocator('exercise'),
+};
+
+function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern?: RegExp) {
+  const chunk = rmdChunkEngineAndLabel(node.textContent);
+  const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
+  if (chunk) {
+    return chunk.engine.localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+      chunk.label === label &&
+      (!pattern || !!node.textContent.match(pattern));
+  } else {
+    return false;
+  }
+}
+
+function headingLocator() {
+  return {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
+    }
+  };
+}
+
+function thereomLocator(engine: string) {
+  return {
+    nodeTypes: ['rmd_chunk'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      // look for conventional engine/label
+      if (rmdChunkHasXRef(node, engine, id)) {
+        return true;
+
+      } else {
+        // look for explicit label= syntax
+        const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+label\s*=\s*['"]([^"']+)['"].*\}/);
+        return !!match &&
+          match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+          match[2] === id;
+      }
+    }
+  };
+}
+
+
+
+

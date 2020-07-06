@@ -44,6 +44,14 @@ public class PanmirrorUIDisplay {
    {
       globalDisplay_.openWindow(url);
    }
+   
+   public NavigateToXRef navigateToXRef;
+   
+   @JsFunction
+   public interface NavigateToXRef
+   {
+      void navigate(String file, String xref);
+   }
 
    public ShowContextMenu showContextMenu;   
    

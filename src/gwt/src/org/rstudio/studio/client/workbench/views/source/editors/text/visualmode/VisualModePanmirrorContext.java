@@ -36,9 +36,14 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
+
+import elemental2.promise.Promise;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 
 
 public class VisualModePanmirrorContext
@@ -63,6 +68,7 @@ public class VisualModePanmirrorContext
    {
       workbenchContext_ = workbenchContext;
       sessionInfo_ = session.getSessionInfo();
+      events_ = events;
       
       // notify watchers of file changes
       events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
@@ -81,9 +87,8 @@ public class VisualModePanmirrorContext
       return new PanmirrorContext(
          uiContext(), 
          uiDisplay(showContextMenu), 
-         exec_.uiExecute(),
          chunks_.uiChunkFactory(),
-         target_
+         exec_.uiExecute()
       );
    }
    
@@ -93,6 +98,14 @@ public class VisualModePanmirrorContext
       
       uiContext.getDocumentPath = () -> {
         return docUpdateSentinel_.getPath(); 
+      };
+      
+      uiContext.withSavedDocument = () -> {
+         return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+           target_.withSavedDoc(() -> {
+              resolve.onInvoke(true);
+           });
+         });
       };
       
       uiContext.getDefaultResourceDir = () -> {  
@@ -140,8 +153,6 @@ public class VisualModePanmirrorContext
       
       uiContext.translateText = text -> {
          return text;
-      
-      
       };
       return uiContext;
    }
@@ -150,6 +161,9 @@ public class VisualModePanmirrorContext
    {
       PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
       uiDisplay.showContextMenu = showContextMenu;
+      uiDisplay.navigateToXRef = (file, xref) -> {
+         events_.fireEvent(new XRefNavigationEvent(FileSystemItem.createFile(file), xref));
+      };
       return uiDisplay;
    }
    
@@ -247,5 +261,6 @@ public class VisualModePanmirrorContext
    
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;
+   private EventBus events_;
    
 }

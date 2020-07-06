@@ -14,5 +14,21 @@
  */
 
 .pm-xref-popup {
-  max-width: 370px;
+  max-width: 350px; /* also in xref-popup.tsx */
+}
+
+.pm-xref-popup > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-xref-popup-key {
+  cursor: pointer !important;
+}
+
+.pm-xref-popup-file {
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-top: 3px;
 }

@@ -86,7 +86,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // get raw content
               const raw = fragmentText(parent);

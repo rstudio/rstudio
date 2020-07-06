@@ -2,6 +2,8 @@
 
 ### Python
 
+* Python indentation rules are now applied to Python code within R Markdown documents. (#5945)
+* Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
 
@@ -30,6 +32,7 @@
 * Colorize parentheses, braces, and brackets in assorted colors (#7027)
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
+* The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 
 ### RStudio Server Pro
 
@@ -49,6 +52,7 @@
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
+* Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
 * Git integration now works properly for project names containing the '!' character. (#6160)
 * Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
 * Fixed header resizing in Data Viewer (#1665)

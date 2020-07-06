@@ -1542,14 +1542,23 @@ bool isWebsiteProject()
            r_util::kBuildTypeWebsite);
 }
 
+// used to determine if this is both a website build target AND a bookdown target
 bool isBookdownWebsite()
 {
-   if (!isWebsiteProject())
+   return isWebsiteProject() && isBookdownProject();
+}
+
+// used to determine whether the current project directory has a bookdown project
+// (distinct from isBookdownWebsite b/c includes scenarios where the book is
+// built by a makefile rather than "Build Website"
+bool isBookdownProject()
+{
+   if (!projects::projectContext().hasProject())
       return false;
 
    bool isBookdown = false;
    std::string encoding = projects::projectContext().defaultEncoding();
-   Error error = r::exec::RFunction(".rs.isBookdownWebsite",
+   Error error = r::exec::RFunction(".rs.isBookdownDir",
                               projectBuildDir(), encoding).call(&isBookdown);
    if (error)
       LOG_ERROR(error);

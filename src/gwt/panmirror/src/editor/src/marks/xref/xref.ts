@@ -63,7 +63,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         pandoc: {
           readers: [],
           writer: {
-            priority: 17,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               // alias xref (may need to transform it to deal with \ prefix)
               let xref = parent;
@@ -144,28 +144,12 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     inputRules: (_schema: Schema) => {
       return [
-        // recoginize new ref
-        new InputRule(/(^|[^`])(\\?@ref\()$/, (state: EditorState, match: string[], start: number, end: number) => {
-          // if this completes an xref at this position then stand down
-          const kRefLen = 4;
-          const { parent, parentOffset } = state.selection.$head;
-          const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset);
-          const after = parent.textContent.slice(parentOffset);
-          const potentialXref = before + '(' + after;
-          if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXref)) {
-            return null;
-          }
-
-          // insert the xref
-          const tr = state.tr;
-          tr.delete(start + match[1].length, end);
-          insertRef(tr);
-          return tr;
-        }),
+        atRefInputRule(),
+        ...(format.rmdExtensions.bookdownXRefUI ? [refPrefixInputRule()] : [])
       ];
     },
 
-    // plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, navigation, server)],
+    plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, server)],
 
     completionHandlers: () => [xrefCompletionHandler(ui, server.xref)],
 
@@ -206,10 +190,50 @@ const extension = (context: ExtensionContext): Extension | null => {
   };
 };
 
-function insertRef(tr: Transaction) {
+function atRefInputRule() {
+  return new InputRule(/(^|[^`])(\\?@ref\()$/, (state: EditorState, match: string[], start: number, end: number) => {
+    // if this completes an xref at this position then stand down
+    const kRefLen = 4;
+    const { parent, parentOffset } = state.selection.$head;
+    const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset);
+    const after = parent.textContent.slice(parentOffset);
+    const potentialXref = before + '(' + after;
+    if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXref)) {
+      return null;
+    }
+
+    // insert the xref
+    const tr = state.tr;
+    tr.delete(start + match[1].length, end);
+    insertRef(tr);
+    return tr;
+  });
+}
+
+function refPrefixInputRule() {
+  return new InputRule(/(^|[^`])(Chapter|Section|Figure|Table|Equation) $/,
+    (state: EditorState, match: string[], start: number, end: number) => {
+      const tr = state.tr;
+      tr.insertText(' ');
+      let prefix = '';
+      if (match[2] === 'Figure') {
+        prefix = 'fig:';
+      } else if (match[2] === 'Table') {
+        prefix = 'tab:';
+      } else if (match[2] === 'Equation') {
+        prefix = 'eq:';
+      }
+      insertRef(tr, prefix);
+      setTextSelection(tr.selection.head - 1)(tr);
+      return tr;
+    });
+}
+
+
+function insertRef(tr: Transaction, prefix = '') {
   const schema = tr.doc.type.schema;
   const selection = tr.selection;
-  const refText = '@ref()';
+  const refText = `@ref(${prefix})`;
   tr.replaceSelectionWith(schema.text(refText, schema.marks.xref.create()), false);
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }

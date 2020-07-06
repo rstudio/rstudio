@@ -29,28 +29,23 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
+   
+   
    public static class Changes
    {
-      public Changes(TextChange[] changes, Cursor cursor)
+      public Changes(TextChange[] changes, Navigator navigator)
       {
          this.changes = changes;
-         this.cursor = cursor;
+         this.navigator = navigator;
       }
       
       public final TextChange[] changes;
-      public final Cursor cursor;
+      public final Navigator navigator;
    }
-   
-   public static class Cursor
+
+   public static interface Navigator
    {
-      public Cursor(int row, int column)
-      {
-         this.row = row;
-         this.column = column;
-      }
-      
-      public final int row;
-      public final int column;
+      void onNavigate(DocDisplay docDisplay);
    }
    
    public static interface Editor extends IsHideableWidget
