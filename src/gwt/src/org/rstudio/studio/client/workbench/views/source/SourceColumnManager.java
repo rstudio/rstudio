@@ -1790,6 +1790,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return dynamicCommands_;
    }
 
+   public HashSet<SourceAppCommand> getSourceAppCommands()
+   {
+      return sourceAppCommands_;
+   }
+
    private void getEditorContext(String id, String path, DocDisplay docDisplay)
    {
       getEditorContext(id, path, docDisplay, server_);

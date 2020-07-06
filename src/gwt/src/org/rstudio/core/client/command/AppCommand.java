@@ -48,7 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
-   private class CommandToolbarButton extends ToolbarButton implements
+   protected class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
    {
       public CommandToolbarButton(String buttonLabel, String buttonTitle,
@@ -118,6 +118,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       protected Toolbar parentToolbar_;
    }
 
+   /*
    private class CommandSourceColumnToolbarButton extends CommandToolbarButton
    {
       public CommandSourceColumnToolbarButton(String buttonLabel,
@@ -127,9 +128,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                               AppCommand command,
                                               SourceColumn column)
       {
-         super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler, command, false);
-         column_ = column;
-      }
 
       @Override
       protected void onAttach()
@@ -177,6 +175,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          super(command, false, wrapper);
       }
    }
+   */
 
    public AppCommand()
    {
@@ -282,11 +281,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
    }
 
-   public void setButtonEnabled(boolean buttonEnabled, String sourceColumnName)
-   {
-      handlers_.fireEvent(new EnabledChangedEvent(this, sourceColumnName, buttonEnabled));
-   }
-
    public boolean isVisible()
    {
       return visible_;
@@ -308,11 +302,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName));
       }
-   }
-
-   public void setButtonVisible(boolean buttonVisible, String sourceColumnName)
-   {
-      handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName, buttonVisible));
    }
 
    /**
@@ -627,40 +616,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return button;
    }
 
-   public ToolbarButton createToolbarButton(SourceColumn column)
-   {
-      CommandSourceColumnToolbarButton button =
-            new CommandSourceColumnToolbarButton(getButtonLabel(),
-                                                 getDesc(),
-                                                 this,
-                                                 event -> {
-                                                    SourceColumnManager mgr =
-                                                       RStudioGinjector.INSTANCE.getSourceColumnManager();
-                                                    mgr.setActive(column.getName());
-                                                    execute();
-                                                 },
-                                                 this,
-                                                 column);
-      if (getTooltip() != null)
-         button.setTitle(getTooltip());
-      return button;
-   }
-
    public MenuItem createMenuItem(boolean mainMenu)
    {
       return new AppMenuItem(this, mainMenu);
-   }
-
-   public MenuItem createMenuItem(SourceColumn column)
-   {
-      return new CommandSourceColumnMenuItem(this,
-         column,
-         () -> {
-            SourceColumnManager mgr =
-               RStudioGinjector.INSTANCE.getSourceColumnManager();
-            mgr.setActive(column.getName());
-            execute();
-         });
    }
 
    public String getMenuHTML(boolean mainMenu)
@@ -882,8 +840,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    }
 
    private boolean enabled_ = true;
-   private boolean visible_ = true;
-   private boolean removed_ = false;
+   protected boolean visible_ = true;
+   protected boolean removed_ = false;
    private boolean checkable_ = false;
    private boolean radio_ = false;
    private boolean checked_ = false;

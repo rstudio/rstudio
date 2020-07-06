@@ -663,18 +663,19 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       boolean active = this == activeColumn;
       boolean hasDocs = hasDoc();
 
-      commands_.newSourceDoc().setEnabled(true, name_);
+      commands_.newSourceDoc().setEnabled(true);
 
       if (active || !hasDocs)
       {
-         commands_.closeSourceDoc().setEnabled(hasDocs, name_);
-         commands_.closeAllSourceDocs().setEnabled(hasDocs, name_);
-         commands_.nextTab().setEnabled(hasDocs, name_);
-         commands_.previousTab().setEnabled(hasDocs, name_);
-         commands_.firstTab().setEnabled(hasDocs, name_);
-         commands_.lastTab().setEnabled(hasDocs, name_);
-         commands_.switchToTab().setEnabled(hasDocs, name_);
-         commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs, name_);
+         new SourceAppCommand(commands_.closeSourceDoc(), this, manager_).setEnabled(hasDocs,
+            hasDocs);
+         commands_.closeAllSourceDocs().setEnabled(hasDocs, hasDocs);
+         commands_.nextTab().setEnabled(hasDocs, hasDocs);
+         commands_.previousTab().setEnabled(hasDocs, hasDocs);
+         commands_.firstTab().setEnabled(hasDocs, hasDocs);
+         commands_.lastTab().setEnabled(hasDocs, hasDocs);
+         commands_.switchToTab().setEnabled(hasDocs, hasDocs);
+         commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs, hasDocs);
       }
       else
       {
@@ -688,58 +689,44 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          commands_.setWorkingDirToActiveDoc().setButtonEnabled(hasDocs, name_);
       }
 
-      HashSet<AppCommand> newCommands = getNextActiveEditor() != null
-              ? getNextActiveEditor().getSupportedCommands()
-              : new HashSet<>();
+      HashSet<SourceAppCommand> newCommands = new HashSet<>();
+
+      if (getNextActiveEditor() != null)
+         for (AppCommand appCommand : getNextActiveEditor().getSupportedCommands())
+            newCommands.add(new SourceAppCommand(appCommand, this, manager_));
+
 
       if (forceSync)
       {
-         for (AppCommand command : activeCommands_)
+         for (SourceAppCommand command : activeCommands_)
          {
-            command.setVisible(false, name_);
-            command.setEnabled(false, name_);
+            command.setVisible(false, false);
+            command.setEnabled(false, false);
          }
 
-         for (AppCommand command : newCommands)
+         for (SourceAppCommand command : newCommands)
          {
-            if (active)
-            {
-               command.setVisible(true, name_);
-               command.setEnabled(true, name_);
-            }
-            else
-            {
-               command.setButtonVisible(true, name_);
-               command.setButtonEnabled(true, name_);
-            }
+            command.setVisible(active, true);
+            command.setEnabled(active, true);
          }
       }
       else
       {
-         HashSet<AppCommand> commandsToEnable = new HashSet<>(newCommands);
+         HashSet<SourceAppCommand> commandsToEnable = new HashSet<>(newCommands);
          commandsToEnable.removeAll(activeCommands_);
 
-         for (AppCommand command : commandsToEnable)
+         for (SourceAppCommand command : commandsToEnable)
          {
-            if (active)
-            {
-               command.setVisible(true, name_);
-               command.setEnabled(true, name_);
-            }
-            else
-            {
-               command.setButtonVisible(true, name_);
-               command.setButtonEnabled(true, name_);
-            }
+            command.setVisible(active, true);
          }
 
-         HashSet<AppCommand> commandsToDisable = new HashSet<>(activeCommands_);
+         HashSet<SourceAppCommand> commandsToDisable = new HashSet<>(activeCommands_);
          commandsToDisable.removeAll(newCommands);
 
-         for (AppCommand command : commandsToDisable)
+         for (SourceAppCommand command : commandsToDisable)
          {
-            command.setVisible(false, name_);
-            command.setEnabled(false, name_);
+            command.setVisible(false, false);
+            command.setEnabled(false, false);
          }
       }
 
@@ -1236,7 +1223,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private EditingTarget activeEditor_;
    private final ArrayList<EditingTarget> editors_ = new ArrayList<>();
    private final ArrayList<Integer> tabOrder_ = new ArrayList<>();
-   private HashSet<AppCommand> activeCommands_ = new HashSet<>();
+   private HashSet<SourceAppCommand> activeCommands_ = new HashSet<>();
 
    private RemoteFileSystemContext fileContext_;
    private SourceServerOperations server_;
