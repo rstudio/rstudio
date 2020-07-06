@@ -1,73 +1,71 @@
-<!-- JJA: tabs for spaces in this file as well (we can leave it is it's too much of a pain to fixup) -->
-
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-	xmlns:g='urn:import:com.google.gwt.user.client.ui'
-	xmlns:rw="urn:import:org.rstudio.core.client.widget"
-	xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+    xmlns:g='urn:import:com.google.gwt.user.client.ui'
+    xmlns:rw="urn:import:org.rstudio.core.client.widget"
+    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
 
-	<ui:with field="res"
-		type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
-	<ui:with field="ElementIds"
-		type="org.rstudio.core.client.ElementIds" />
-	<ui:style>
-	
-	</ui:style>
+    <ui:with field="res"
+        type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+    <ui:with field="ElementIds"
+        type="org.rstudio.core.client.ElementIds" />
+    <ui:style>
+    
+    </ui:style>
 
-	<g:VerticalPanel 
-		styleName="{res.styles.dialog} {res.styles.dialogWide}"
-		ui:field="mainPanel_">
+    <g:VerticalPanel 
+        styleName="{res.styles.dialog} {res.styles.dialogWide}"
+        ui:field="mainPanel_">
 
-		<rw:FormLabel
-			for="{ElementIds.getVisualMdInsertCiteId}"
-			text="Citation Id:"
-			styleName="{res.styles.fullWidth}"
-			ui:field="citationLabel_"/>
+        <rw:FormLabel
+            for="{ElementIds.getVisualMdInsertCiteId}" 
+            text="Citation Id:"
+            styleName="{res.styles.fullWidth}"
+            ui:field="citationLabel_"/>
 
-		<rw:FormTextBox
-			elementId="{ElementIds.getVisualMdInsertCiteId}"
-			styleName="{res.styles.fullWidth} {res.styles.spaced}"
-			ui:field="citationId_" />
-					
-		<rw:FormLabel
-			styleName="{res.styles.fullWidth} {res.styles.spaced}"
-			text="Citation:" />
-		
-		<g:ScrollPanel
-			styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}"
-			ui:field="previewScrollPanel_"
-		>
-			<g:FlexTable 
-				ui:field="previewTable_">
-				
-			</g:FlexTable>
-		</g:ScrollPanel>
+        <rw:FormTextBox
+            elementId="{ElementIds.getVisualMdInsertCiteId}"
+            styleName="{res.styles.fullWidth} {res.styles.spaced}"
+            ui:field="citationId_" />
+                    
+        <rw:FormLabel
+            styleName="{res.styles.fullWidth} {res.styles.spaced}"
+            text="Citation:" />
+        
+        <g:ScrollPanel
+            styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}"
+            ui:field="previewScrollPanel_"
+        >
+            <g:FlexTable 
+                ui:field="previewTable_">
+                
+            </g:FlexTable>
+        </g:ScrollPanel>
 
-		<g:VerticalPanel
-			styleName="{res.styles.fullWidth}"
-			ui:field="addTobibliographyPanel_">
-			<rw:FormLabel
-				for="{ElementIds.getVisualMdInsertCiteBib}"
-				styleName="{res.styles.fullWidth} {res.styles.spaced}"		
-				text="Add to bibliography:" />
-		
-			<rw:FormListBox
-				elementId="{ElementIds.getVisualMdInsertCiteBib}"
-				styleName="{res.styles.fullWidthSelect} {res.styles.spaced}"
-				ui:field="bibliographies_" />
-		</g:VerticalPanel>
+        <g:VerticalPanel
+            styleName="{res.styles.fullWidth}"
+            ui:field="addTobibliographyPanel_">
+            <rw:FormLabel
+                for="{ElementIds.getVisualMdInsertCiteBib}"
+                styleName="{res.styles.fullWidth} {res.styles.spaced}"        
+                text="Add to bibliography:" />
+        
+            <rw:FormListBox
+                elementId="{ElementIds.getVisualMdInsertCiteBib}"
+                styleName="{res.styles.fullWidthSelect} {res.styles.spaced}"
+                ui:field="bibliographies_" />
+        </g:VerticalPanel>
 
-		<g:VerticalPanel
-			styleName="{res.styles.fullWidth}"
-			ui:field="createBibliographyPanel_">
-			<rw:FormLabel
-				for="{ElementIds.getVisualMdInsertCiteCreateBib}"
-				styleName="{res.styles.fullWidth} {res.styles.spaced}"		
-				text="Create bibliography:" />	
-			
-			<rw:FormTextBox
-				elementId="{ElementIds.getVisualMdInsertCiteCreateBib}"
-				styleName="{res.styles.fullWidth} {res.styles.spaced}"
-				ui:field="createBibliographyFileName_" />
-		</g:VerticalPanel>
-	</g:VerticalPanel>
+        <g:VerticalPanel
+            styleName="{res.styles.fullWidth}"
+            ui:field="createBibliographyPanel_">
+            <rw:FormLabel
+                for="{ElementIds.getVisualMdInsertCiteCreateBib}"
+                styleName="{res.styles.fullWidth} {res.styles.spaced}"        
+                text="Create bibliography:" />    
+            
+            <rw:FormTextBox
+                elementId="{ElementIds.getVisualMdInsertCiteCreateBib}"
+                styleName="{res.styles.fullWidth} {res.styles.spaced}"
+                ui:field="createBibliographyFileName_" />
+        </g:VerticalPanel>
+    </g:VerticalPanel>
 </ui:UiBinder>
