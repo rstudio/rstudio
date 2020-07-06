@@ -25,7 +25,7 @@ import {
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
-// import { undo, redo } from 'prosemirror-history';
+import { undo, redo } from 'prosemirror-history';
 // import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
 import { undoInputRule } from 'prosemirror-inputrules';
@@ -38,7 +38,7 @@ import { EditorOptions } from '../../api/options';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 
-// import { selectAll } from '../../behaviors/select_all';
+import { selectAll } from '../../behaviors/select_all';
 
 import { AceChunkEditor } from "../ace/ace_editor";
 
@@ -195,11 +195,41 @@ class CodeBlockNodeView implements NodeView {
       exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
     });
 
+    // Pressing Backspace in the editor when it's empty should delete it.
     this.chunk.editor.commands.addCommand({
       name: "backspaceDeleteNode",
       bindKey: "Backspace",
       exec: () => { this.backspaceMaybeDeleteNode(); } 
     });
+
+    // Handle undo/redo in ProseMirror
+    this.chunk.editor.commands.addCommand({
+      name: "undoProsemirror",
+      bindKey: {
+          win: "Ctrl-Z", 
+          mac:"Command-Z"
+      }, 
+      exec: () => { undo(view.state, view.dispatch); }
+    });
+    this.chunk.editor.commands.addCommand({
+      name: "redoProsemirror",
+      bindKey: {
+          win: "Ctrl-Shift-Z|Ctrl-Y", 
+          mac:"Command-Shift-Z|Command-Y"
+      }, 
+      exec: () => { redo(view.state, view.dispatch); }
+    });
+
+    // Handle Select All in ProseMirror
+    this.chunk.editor.commands.addCommand({
+      name: "selectAllProsemirror",
+      bindKey: {
+          win: "Ctrl-A", 
+          mac:"Command-A"
+      }, 
+      exec: () => { selectAll(view.state, view.dispatch, view); }
+    });
+
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
