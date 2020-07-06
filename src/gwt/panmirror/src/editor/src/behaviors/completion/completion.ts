@@ -23,6 +23,7 @@ import {
   selectionAllowsCompletions,
   kCompletionDefaultMaxVisible,
   completionsShareScope,
+  performCompletionReplacement,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -454,30 +455,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
       return kCompletionDefaultMaxVisible;
     }
   }
-}
-
-export function performCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
-
-  // set selection to area we will be replacing
-  tr.setSelection(new TextSelection(tr.doc.resolve(pos), tr.selection.$head));
-
-  // ensure we have a node
-  if (replacement instanceof ProsemirrorNode) {
-    // combine it's marks w/ whatever is active at the selection
-    const marks = tr.selection.$head.marks();
-
-    // set selection and replace it
-    tr.replaceSelectionWith(replacement, false);
-
-    // propapate marks
-    marks.forEach(mark => tr.addMark(pos, tr.selection.to, mark));
-  } else {
-    tr.insertText(replacement);
-  }
-
-  // mark the transaction as an completion insertion
-  tr.setMeta(kInsertCompletionTransaction, true);
-
 }
 
 // extract the text before the cursor, dealing with block separators and

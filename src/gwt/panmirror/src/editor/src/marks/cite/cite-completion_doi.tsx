@@ -112,7 +112,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                   csl,
                   inBibliography: false,
                   image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
-                  formattedAuthor: formatAuthors(csl.author, 50),
+                  formattedAuthor: formatAuthors(csl.author, 40),
                   formattedIssueDate: formatIssuedDate(csl.issued),
                 },
               ];
