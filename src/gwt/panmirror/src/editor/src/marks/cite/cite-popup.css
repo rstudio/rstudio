@@ -12,16 +12,16 @@
   margin-bottom: 0px !important;
 }
 
+.pm-cite-popup a {
+  cursor: pointer !important;
+}
+
 .pm-cite-popup-preview {
   width: 100%;
   opacity: 0.8;
 }
 
-.pm-cite-key a {
-  float: right;
-  font-size: 0.8em;
-}
-
+/* Reference formatting styles */
 .hanging-indent p {
   padding-left: 12px;
   text-indent: -12px;
@@ -29,4 +29,8 @@
 
 .smallcaps {
   font-variant: small-caps;
+}
+
+.nocase {
+  text-transform: lowercase;
 }
