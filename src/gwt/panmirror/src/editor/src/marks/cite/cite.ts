@@ -249,10 +249,12 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
 
         // Insert the DOI text as a placeholder
-        // This is using the completion insertion as this should be treated as a 
-        // completion handling the paste (e.g. no other competions should be fired)
         const tr = view.state.tr;
+
+        // This is may use the prevent completion flag - if we are going to show
+        // the insert cite experience, we should suppress completions
         tr.setMeta(kPreventCompletionTransaction, source === undefined);
+
         const doiText = schema.text(parsedDOI.token);
         tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
@@ -567,7 +569,7 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 }
 
 // Replaces the current selection with a resolved citation id
-export function insertCitationForDOI(
+export async function insertCitationForDOI(
   view: EditorView,
   doi: string,
   bibManager: BibliographyManager,
@@ -576,19 +578,33 @@ export function insertCitationForDOI(
   server: PandocServer,
   csl?: CSL
 ) {
-  bibManager.loadBibliography(ui, view.state.doc).then(async bibliography => {
+
+  const bibliography = await bibManager.loadBibliography(ui, view.state.doc);
+
+  // We try not call this function if the entry for this DOI is already in the bibliography,
+  // but it can happen. So we need to check here if it is already in the bibliography and 
+  // if it is, deal with it appropriately.
+  const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
+  if (existingEntry) {
+    // Now that we have loaded the bibliography, there is an entry
+    // Just write it. Not an ideal experience, but something that
+    // should happen only in unusual experiences
+
+    const tr = view.state.tr;
+
+    // This could be called by paste handler, so stop completions
+    tr.setMeta(kPreventCompletionTransaction, true);
+    performCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
+    view.dispatch(tr);
+
+  } else {
+    // There isn't an entry in the existing bibliography
+    // Show the user UI to and ultimately create an entry in the biblography
+    // (even creating a bibliography if necessary)
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(ui, view.state.doc);
     const existingIds = bibliography.sources.map(source => source.id);
-
-    // We try not call this function if the entry for this DOI is already in the bibliography,
-    // but it can happen. So we need to check here if it is already in the bibliography and 
-    // if it is, deal with it appropriately.
-    const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
-    if (existingEntry) {
-      csl = existingEntry;
-    }
 
     const citeProps: InsertCiteProps = {
       doi,
@@ -596,7 +612,7 @@ export function insertCitationForDOI(
       bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
       csl,
       citeUI: csl ? {
-        suggestedId: existingEntry?.id || suggestCiteId(existingIds, csl.author, csl.issued),
+        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
         previewFields: formatForPreview(csl)
       } : undefined
     };
@@ -628,15 +644,16 @@ export function insertCitationForDOI(
         // we needd to completely suppress completions upon insert the citation
         tr.setMeta(kPreventCompletionTransaction, true);
 
-        // Use the biblography manager to write an entry to the user specified bibliography
+        // Write the cite id
         performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
 
         view.dispatch(tr);
-
       }
     }
-    view.focus();
-  });
+  }
+
+  view.focus();
+
 }
 
 function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): string[] {
