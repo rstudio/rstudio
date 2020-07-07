@@ -100,7 +100,7 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeChunks_ = new VisualModeChunks(target.getRCompletionContext());
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
       visualModeContext_ = new VisualModePanmirrorContext(
             docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);

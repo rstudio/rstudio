@@ -272,6 +272,11 @@ class CodeBlockNodeView implements NodeView {
     }
   }
 
+  public destroy() {
+    // Clean up attached editor instance when it's removed from the DOM
+    this.chunk.destroy();
+  }
+
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
     if (node.type !== this.node.type) {
       return false;

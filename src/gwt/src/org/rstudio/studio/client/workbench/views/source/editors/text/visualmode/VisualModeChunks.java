@@ -14,20 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunk;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 public class VisualModeChunks
 {
-   public VisualModeChunks(CompletionContext rCompletionContext)
+   public VisualModeChunks(DocUpdateSentinel sentinel, CompletionContext rCompletionContext)
    {
       rContext_ = rCompletionContext;
+      sentinel_ = sentinel;
    }
 
    public PanmirrorUIChunkFactory uiChunkFactory()
@@ -36,6 +44,8 @@ public class VisualModeChunks
       factory.createChunkEditor = () -> {
 
          PanmirrorUIChunk chunk = new PanmirrorUIChunk();
+         
+         final ArrayList<HandlerRegistration> releaseOnDismiss = new ArrayList<HandlerRegistration>();
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
@@ -53,12 +63,42 @@ public class VisualModeChunks
          
          // Provide a callback to set the file's mode; this needs to happen in
          // GWT land since the editor accepts GWT-flavored Filetype objects
-         chunk.setMode = (String mode) -> {
+         chunk.setMode = (String mode) ->
+         {
             setMode(editor, mode);
          };
          
-         // Turn off line numbers as they're not helpful in chunks
-         chunk.editor.getRenderer().setShowGutter(false);
+         // Register pref handlers, so that the new editor instance responds to
+         // changes in preference values
+         TextEditingTargetPrefsHelper.registerPrefs(
+               releaseOnDismiss, 
+               RStudioGinjector.INSTANCE.getUserPrefs(), 
+               null,  // Project context
+               editor, 
+               new TextEditingTargetPrefsHelper.PrefsContext() 
+               {
+                   @Override
+                   public FileSystemItem getActiveFile()
+                   {
+                      String path = sentinel_.getPath();
+                      if (path != null)
+                         return FileSystemItem.createFile(path);
+                      else
+                         return null;
+                   }
+               },
+               TextEditingTargetPrefsHelper.PrefsSet.Embedded);
+         
+         // Register callback to be invoked when the editor instance is
+         // destroyed; we use this opportunity to clean up pref handlers so they
+         // aren't attached to a dead editor instance
+         chunk.destroy = () ->
+         {
+            for (HandlerRegistration reg: releaseOnDismiss)
+            {
+               reg.removeHandler();
+            }
+         };
 
          // Allow the editor's size to be determined by its content (these
          // settings trigger an auto-growing behavior), up to a max of 1000
@@ -66,6 +106,9 @@ public class VisualModeChunks
          chunk.editor.setMaxLines(1000);
          chunk.editor.setMinLines(1);
 
+         // Turn off line numbers as they're not helpful in chunks
+         chunk.editor.getRenderer().setShowGutter(false);
+         
          return chunk;
       };
       return factory;
@@ -129,4 +172,5 @@ public class VisualModeChunks
    }
    
    private final CompletionContext rContext_;
+   private final DocUpdateSentinel sentinel_;
 }

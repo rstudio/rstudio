@@ -27,10 +27,17 @@ public class PanmirrorUIChunk
    public AceEditorNative editor;
    public Element element;
    public SetMode setMode;
+   public Destroy destroy;
    
    @JsFunction
    public interface SetMode
    {
       void setMode(String mode);
+   }
+   
+   @JsFunction
+   public interface Destroy
+   {
+      void destroy();
    }
 }

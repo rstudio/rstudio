@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
@@ -167,7 +168,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                                  server_,
                                                  docDisplay_);
 
-      TextEditingTarget.registerPrefs(releaseOnDismiss_,
+      TextEditingTargetPrefsHelper.registerPrefs(releaseOnDismiss_,
                                       prefs_,
                                       document.getProjectConfig(),
                                       docDisplay_,
