@@ -66,6 +66,7 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { editorMath } from '../api/math';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { CrossrefServer } from '../api/crossref';
@@ -726,6 +727,7 @@ export class Editor {
         format: this.format,
         options: this.options,
         ui: this.context.ui,
+        math: this.context.ui.math.typeset ? editorMath(this.context.ui) : undefined,
         events: {
           subscribe: this.subscribe.bind(this),
           emit: this.emitEvent.bind(this)

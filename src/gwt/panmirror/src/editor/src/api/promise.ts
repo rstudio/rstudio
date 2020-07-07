@@ -19,12 +19,12 @@ interface PendingPromise<T> {
   reject: (reason: any) => void;
 }
 
-export class PromiseQueue<T> {
+export class PromiseQueue<T = unknown> {
   private queue = new Array<PendingPromise<T>>();
   private running = false;
 
   public enqueue(promise: () => Promise<T>) {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       this.queue.push({
         promise,
         resolve,
