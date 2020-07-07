@@ -3,6 +3,7 @@
 
 ### Misc
 
+- Compatible with R 4.1.0's graphics engine (#7253)
 - Add realtime spellchecking to plain markdown files (#6988)
 
 ### Bugfixes
