@@ -19,12 +19,11 @@ import { EditorView } from 'prosemirror-view';
 
 import {
   CompletionHandler,
-  CompletionResult,
   selectionAllowsCompletions,
   kCompletionDefaultMaxVisible,
   completionsShareScope,
   performCompletionReplacement,
-  CompletionState,
+  CompletionResult,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -34,6 +33,14 @@ import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 import { kInsertCompletionTransaction, kPasteTransaction } from '../../api/transaction';
+
+interface CompletionState {
+  handler?: CompletionHandler;
+  result?: CompletionResult;
+  prevToken?: string;
+  isPaste?: boolean;
+}
+
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -266,7 +273,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       const requestAllCompletions = async () => {
 
         // fetch completions
-        const completions = await state.result!.completions(view.state, state);
+        const completions = await state.result!.completions(view.state, { isPaste: state.isPaste === true });
 
         // if we don't have a handler or result then return
         if (!state.handler || !state.result) {

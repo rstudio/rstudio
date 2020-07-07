@@ -20,7 +20,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionState } from '../../api/completion';
+import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionContext } from '../../api/completion';
 import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
 import { CSL } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
@@ -30,7 +30,6 @@ import { DOIServer } from '../../api/doi';
 
 import { doiFromEditingContext } from './cite-doi';
 import { insertCitationForDOI } from './cite';
-import { kCitationCompleteScope } from './cite-completion';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;
@@ -80,7 +79,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
         token: parsedDOI.token,
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
-        completions: async (_state: EditorState, completionState: CompletionState) => {
+        completions: async (_state: EditorState, completionContext: CompletionContext) => {
 
 
           await bibliographyManager.loadBibliography(ui, context.doc);
@@ -97,7 +96,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
               }];
           }
 
-          if (!completionState.isPaste) {
+          if (!completionContext.isPaste) {
             // Check with the server to see if we can get citation data for this DOI
             const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
             if (result.status === "ok") {
