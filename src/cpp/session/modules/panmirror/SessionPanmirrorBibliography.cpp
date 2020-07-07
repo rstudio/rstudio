@@ -534,7 +534,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 }
 
 
-Error pandocGenerateBibligraphy(const std::string& biblioJson,
+Error pandocGenerateBibliography(const std::string& biblioJson,
                                 const FilePath& cslPath,
                                 const std::vector<std::string>& extraArgs,
                                 std::string* pBiblio)
@@ -612,7 +612,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    args.push_back("--wrap");
    args.push_back("none");
    std::string biblio;
-   error = pandocGenerateBibligraphy(sourceAsJson, cslPath, args, &biblio);
+   error = pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
    if (error)
       return error;
 
@@ -671,7 +671,7 @@ Error pandocCitationHTML(const json::JsonRpcRequest& request, json::JsonRpcRespo
    args.push_back("--to");
    args.push_back("html");
    std::string biblio;
-   error = pandocGenerateBibligraphy(sourceAsJson, cslPath, args, &biblio);
+   error = pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
    if (error)
       return error;
 
