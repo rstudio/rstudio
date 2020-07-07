@@ -210,7 +210,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands()));
+      sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
 
       new JSObjectStateValue("source-column-manager",
