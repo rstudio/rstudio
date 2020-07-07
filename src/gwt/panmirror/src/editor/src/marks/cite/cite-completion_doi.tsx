@@ -82,7 +82,8 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
         offset: parsedDOI.offset,
         completions: async (_state: EditorState, completionContext: CompletionContext) => {
 
-
+          // If we have a local source that matches this DOI, just show the 
+          // completion for the entry
           await bibliographyManager.loadBibliography(ui, context.doc);
           const source = bibliographyManager.findDoiInLoadedBibliography(parsedDOI.token);
           if (source) {
@@ -97,6 +98,10 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
               }];
           }
 
+          // If we don't have a local source, we shouldn't handle pastes- the 
+          // paste handler is expected to deal with this case. If the user is typing
+          // a DOI, we may need to still check for completions below, but this should be 
+          // unusual
           if (!completionContext.isPaste) {
             // Check with the server to see if we can get citation data for this DOI
             const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
@@ -117,20 +122,10 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                     formattedIssueDate: formatIssuedDate(csl.issued),
                   },
                 ];
-              } else {
-                return [];
               }
-            } else if (result.status === "notfound" || result.status === "nohost") {
-              return [];
-            } else if (result.status === "error") {
-              // This error has already been logged on the server. 
-              return [];
-            } else {
-              return [];
             }
-          } else {
-            return [];
           }
+          return [];
         }
       };
     }
