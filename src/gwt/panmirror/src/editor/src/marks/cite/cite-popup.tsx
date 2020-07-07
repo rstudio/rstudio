@@ -24,9 +24,7 @@ import { EditorUI } from "../../api/ui";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
-import { LinkButton } from "../../api/widgets/button";
-import { join } from "../../api/path";
-import { BibliographySource, BibliographyManager, cslFromDoc } from "../../api/bibliography";
+import { BibliographyManager, cslFromDoc } from "../../api/bibliography";
 import { PandocServer } from "../../api/pandoc";
 
 import './cite-popup.css';
