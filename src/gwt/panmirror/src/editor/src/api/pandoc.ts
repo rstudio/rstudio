@@ -37,6 +37,11 @@ export interface PandocServer {
     id: string,
     sourceAsJson: string
   ): Promise<boolean>;
+  citationHTML(
+    sourceAsJson: string,
+    csl: string | null
+  ): Promise<string>;
+
 }
 
 export interface PandocWriterOptions {

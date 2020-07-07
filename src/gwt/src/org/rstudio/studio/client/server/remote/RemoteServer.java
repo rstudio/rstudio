@@ -6186,6 +6186,15 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(sourceAsJson));
       sendRequest(RPC_SCOPE, PANDOC_ADD_TO_BIBLIOGRAPHY, params, callback);
    }
+   
+   @Override
+   public void pandocCitationHTML(String sourceAsJson, String csl, ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(sourceAsJson));
+      params.set(1, new JSONString(StringUtil.notNull(csl)));
+      sendRequest(RPC_SCOPE, PANDOC_CITATION_HTML, params, callback);
+   }
 
     
    @Override
@@ -6714,6 +6723,7 @@ public class RemoteServer implements Server
    private static final String PANDOC_LIST_EXTENSIONS = "pandoc_list_extensions";
    private static final String PANDOC_GET_BIBLIOGRAPHY = "pandoc_get_bibliography";
    private static final String PANDOC_ADD_TO_BIBLIOGRAPHY = "pandoc_add_to_bibliography";
+   private static final String PANDOC_CITATION_HTML = "pandoc_citation_html";
    
    private static final String CROSSREF_WORKS = "crossref_works";
    

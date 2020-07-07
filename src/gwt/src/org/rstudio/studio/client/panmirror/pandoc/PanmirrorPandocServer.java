@@ -103,6 +103,16 @@ public class PanmirrorPandocServer {
         );
      }); 
    }
+   
+   public Promise<String> citationHTML(String sourceAsJson, String csl)
+   {
+      return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+         server_.pandocCitationHTML(
+            sourceAsJson, csl,
+            new PromiseServerRequestCallback<String>(resolve, reject)
+         );
+      });
+   }
 
 
    public Promise<String> listExtensions(String format)
