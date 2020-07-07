@@ -23,7 +23,7 @@ import zenscroll from 'zenscroll';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange } from '../../api/mark';
 import { EditorEvents } from '../../api/events';
-import { ScrollEvent, ResizeEvent } from '../../api/event-types';
+import { ScrollEvent, ResizeEvent, LayoutEvent } from '../../api/event-types';
 import { applyStyles } from '../../api/css';
 import { editingRootNodeClosestToPos, editingRootNode } from '../../api/node';
 import { createPopup } from '../../api/widgets/widgets';
@@ -43,6 +43,7 @@ export class MathPreviewPlugin extends Plugin {
 
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
+  private layoutUnsubscribe: VoidFunction;
 
   constructor(ui: EditorUI, events: EditorEvents) {
     super({
@@ -60,12 +61,14 @@ export class MathPreviewPlugin extends Plugin {
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
+            this.layoutUnsubscribe();
             this.closePopup();
           },
         };
       },
       props: {
         handleDOMEvents: {
+          /*
           mousemove: debounce((view: EditorView, event: Event) => {
             const ev = event as MouseEvent;
             const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
@@ -74,6 +77,7 @@ export class MathPreviewPlugin extends Plugin {
             }
             return false;
           }, kMathPopupInputDebuounceMs),
+          */
         },
       },
     });
@@ -85,6 +89,8 @@ export class MathPreviewPlugin extends Plugin {
     this.updatePopup = this.updatePopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
     this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
+    this.layoutUnsubscribe = events.subscribe(LayoutEvent, () => this.updatePopup());
+
   }
 
   private updatePopup($mousePos?: ResolvedPos) {
@@ -198,7 +204,9 @@ function popupPositionStyles(view: EditorView, range: { from: number; to: number
   let left = `calc(${Math.round(rangeStartCoords.left - editorBox.left)}px - 1ch)`;
 
   // if it flow across two lines then position at far left of editing root
-  if (rangeStartCoords.bottom !== rangeEndCoords.bottom) {
+  // (we give it the 5 pixels of wiggle room so that detection still works
+  // when a mathjax preview is shown in place of math text)
+  if (Math.abs(rangeStartCoords.bottom - rangeEndCoords.bottom) > 5) {
     const editingRoot = editingRootNodeClosestToPos(view.state.doc.resolve(range.from));
     if (editingRoot) {
       const editingEl = view.nodeDOM(editingRoot.pos) as HTMLElement;

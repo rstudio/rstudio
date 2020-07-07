@@ -23,4 +23,5 @@
 
 .pm-math-mathjax {
   display: inline-block;
+  cursor: text;
 }

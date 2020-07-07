@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Element;
@@ -21,7 +22,7 @@ import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Timer;
 
 public class MathJaxTypeset
-{
+{ 
    public static interface Callback
    {
       void onMathJaxTypesetComplete(boolean error);
@@ -29,7 +30,16 @@ public class MathJaxTypeset
    
    public static void typeset(Element el, String currentText, Callback callback)
    {
-      typesetNative(el, currentText, callback, 0);
+      TYPESET_QUEUE.addCommand((cont) -> {
+         typesetNative(el, currentText, new Callback() {
+            @Override
+            public void onMathJaxTypesetComplete(boolean error)
+            {
+               callback.onMathJaxTypesetComplete(error);
+               cont.execute();
+            }
+         }, 0);
+      });
    }
 
    public static final native void typesetNative(Element el, 
@@ -111,5 +121,8 @@ public class MathJaxTypeset
    // again; this is the maximum number of times we'll try to re-render the same
    // text automatically before giving up
    private static final int MAX_RENDER_ATTEMPTS = 2;
+   
+   // can't call mathjax for typesetting concurrently so we serialize the calls with this queue
+   private static final SerializedCommandQueue TYPESET_QUEUE = new SerializedCommandQueue();
    
 }

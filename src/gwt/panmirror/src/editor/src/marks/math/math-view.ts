@@ -17,16 +17,28 @@ import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 import { Schema } from "prosemirror-model";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
 
-import { findChildrenByMark } from "prosemirror-utils";
+import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
 import { getMarkRange } from "../../api/mark";
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 import { EditorMath } from "../../api/math";
 
 
-const key = new PluginKey<DecorationSet>('math-view');
+// TODO: reflow that result from math winding/unwinding cause the positioning 
+// of the preview popup to be off (try clicking between display math blocks). 
+// we added a layout updater and it didn't work -- perhaps we need a timer 
+// based one as we do elsewhere.
+
+// TODO: way to bump the priority of the active tab (use dom visibility?)
+// TODO: why isn't debouncing of the typed math preview happening?
+// TODO: cursor in math on "correct" side for arrow entry
+// TODO: cursor placement for mouse click
+// TODO: arrow up / arrow down (esp. w/ display math)
+
 
 export function mathViewPlugin(schema: Schema, math: EditorMath) {
 
+
+  const key = new PluginKey<DecorationSet>('math-view');
 
   function decorationsForDoc(state: EditorState) {
 
@@ -49,6 +61,13 @@ export function mathViewPlugin(schema: Schema, math: EditorMath) {
           (view: EditorView, getPos: () => number) => {
             const mathjaxDiv = window.document.createElement('div');
             mathjaxDiv.classList.add('pm-math-mathjax');
+            // text selection 'within' code for clicks on the preview image
+            mathjaxDiv.onclick = () => {
+              const tr = view.state.tr;
+              setTextSelection(getPos())(tr);
+              view.dispatch(tr);
+              view.focus();
+            };
             math.typeset(mathjaxDiv, mathText);
             return mathjaxDiv;
           },

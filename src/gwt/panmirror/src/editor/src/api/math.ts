@@ -14,7 +14,6 @@
  */
 
 
-import { PromiseQueue } from "./promise";
 import { EditorUI } from "./ui";
 
 export interface EditorMath {
@@ -23,32 +22,27 @@ export interface EditorMath {
 
 export function editorMath(ui: EditorUI): EditorMath {
 
-  // queue so we only do one typeset at a time
-  const typesetQueue = new PromiseQueue<boolean>();
-
   // return a promise that will typeset this node's math (including retrying as long as is
   // required if the element is not yet connected to the DOM)
   return {
 
     typeset: (el: HTMLElement, math: string): Promise<boolean> => {
 
-      // place the typeset request on the global queue
-      return typesetQueue.enqueue(() => {
-        return new Promise(resolve => {
-          // regular typeset if we are already connected
-          if (el.isConnected) {
-            ui.math.typeset!(el, math).then(resolve);
-          } else {
-            // otherwise wait 100ms then retry
-            const timerId = setInterval(() => {
-              if (el.isConnected) {
-                clearInterval(timerId);
-                ui.math.typeset!(el, math).then(resolve);
-              }
-            }, 100);
-          }
-        });
+      return new Promise(resolve => {
+        // regular typeset if we are already connected
+        if (el.isConnected) {
+          ui.math.typeset!(el, math).then(resolve);
+        } else {
+          // otherwise wait 100ms then retry
+          const timerId = setInterval(() => {
+            if (el.isConnected) {
+              clearInterval(timerId);
+              ui.math.typeset!(el, math).then(resolve);
+            }
+          }, 100);
+        }
       });
+
 
     }
   };
