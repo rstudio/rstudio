@@ -24,7 +24,7 @@
 
 extern "C" {
 
-struct DevDescVersion12
+struct DevDescVersion13
 {
    double left;
    double right;
@@ -118,6 +118,15 @@ struct DevDescVersion12
    int haveTransparentBg;
    int haveRaster;
    int haveCapture, haveLocator;
+   
+   // below added in version 13 (R 4.1.0)
+   SEXP (*setPattern)(SEXP pattern, pDevDesc dd);
+   void (*releasePattern)(SEXP ref, pDevDesc dd);
+   SEXP (*setClipPath)(SEXP path, SEXP ref, pDevDesc dd);
+   void (*releaseClipPath)(SEXP ref, pDevDesc dd);
+   SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd);
+   void (*releaseMask)(SEXP ref, pDevDesc dd);
+   int deviceVersion;
 
    char reserved[64];
 };
@@ -131,7 +140,7 @@ namespace graphics {
 namespace handler {
 namespace dev_desc {
 
-pDevDesc allocate(const DevDescVersion12& devDescVersion12);
+pDevDesc allocate(const DevDescVersion13& devDesc);
 void setSize(pDevDesc pDD);
 void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow);
 
