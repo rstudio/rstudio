@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -114,8 +115,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
-      events_.addHandler(SourceOnSaveChangedEvent.TYPE,
-         event -> manageSaveCommands(manager_.getActive() == this));
+      boolean active = this == manager_.getActive();
+      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(active));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(active));
       initialized_ = true;
    }
 
