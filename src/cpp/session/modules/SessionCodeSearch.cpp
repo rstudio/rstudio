@@ -32,10 +32,12 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/FileSerializer.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Debug.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/Exec.hpp>
 #include <core/collection/Tree.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
@@ -1399,13 +1401,16 @@ class SourceItem
 public:
    enum Type
    {
-      None = 0,
-      Function = 1,
-      Method = 2,
-      Class = 3,
-      Enum = 4,
+      None      = 0,
+      Function  = 1,
+      Method    = 2,
+      Class     = 3,
+      Enum      = 4,
       EnumValue = 5,
-      Namespace = 6
+      Namespace = 6,
+      Section   = 7,
+      Figure    = 8,
+      Table     = 9,
    };
 
    SourceItem()
@@ -1543,6 +1548,94 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       safe_convert::numberTo<int>(cppDefinition.location.column, 1));
 }
 
+void fillFromBookdownRefs(const std::string& term,
+                          std::vector<SourceItem>* pSourceItems)
+{
+   // retrieve refs for this project
+   core::json::Value bookdownIndex = module_context::bookdownXRefIndex();
+   
+   // may be null if we have no bookdown refs (typically implies
+   // we're not in a bookdown project)
+   if (!bookdownIndex.isObject())
+      return;
+   
+   std::string baseDir;
+   core::json::Array bookdownRefs;
+   
+   Error error = core::json::readObject(
+            bookdownIndex.getObject(),
+            "baseDir", baseDir,
+            "refs", bookdownRefs);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   FilePath basePath = module_context::resolveAliasedPath(baseDir);
+   
+   // {
+   //     "file": "01-intro.Rmd",
+   //     "type": "h1",
+   //     "id": "intro",
+   //     "title": "Introduction"
+   // }
+   
+   for (const json::Value& bookdownRef : bookdownRefs)
+   {
+      if (!bookdownRef.isObject())
+         continue;
+      
+      std::string file, type, id, title;
+      Error error = core::json::readObject(
+               bookdownRef.getObject(),
+               "file", file,
+               "type", type,
+               "id", id,
+               "title", title);
+      
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      
+      // figure out appropriate source item type
+      SourceItem::Type sourceType = SourceItem::None;
+      if (type == "fig")
+      {
+         sourceType = SourceItem::Figure;
+      }
+      else if (type == "tab")
+      {
+         sourceType = SourceItem::Table;
+      }
+      else if (type == "h1" || type == "h2" || type == "h3" ||
+               type == "h4" || type == "h5" || type == "h6")
+      {
+         sourceType = SourceItem::Section;
+      }
+      
+      // form appropriate text for display
+      std::string displayText = title;
+      
+      // check to see if this is a subsequence match of the
+      // user-provided search term
+      if (!string_utils::isSubsequence(displayText, term, true))
+         continue;
+      
+      // we found a match: construct source item and add to list
+      SourceItem item(
+               sourceType, title, "", type + ":" + id,
+               module_context::createAliasedPath(
+                  basePath.completeChildPath(file)),
+               -1, -1);
+      
+      pSourceItems->push_back(item);
+   }
+}
+
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
       const std::vector<SourceItem> &items,
@@ -1601,6 +1694,9 @@ Error searchCode(const json::JsonRpcRequest& request,
                   cppDefinitions.end(),
                   std::back_inserter(srcItems),
                   fromCppDefinition);
+   
+   // search bookdown xref index
+   fillFromBookdownRefs(term, &srcItems);
 
    // typedef necessary for range-based-for to work with pairs
    typedef std::pair<int, int> PairIntInt;

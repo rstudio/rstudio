@@ -78,6 +78,15 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.NAMESPACE:
          image = new ImageResource2x(CodeIcons.INSTANCE.namespace2x());
          break;
+      case SourceItem.SECTION:
+         image = new ImageResource2x(CodeIcons.INSTANCE.section2x());
+         break;
+      case SourceItem.FIGURE:
+         image = new ImageResource2x(CodeIcons.INSTANCE.figure2x());
+         break;
+      case SourceItem.TABLE:
+         image = new ImageResource2x(CodeIcons.INSTANCE.table2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());

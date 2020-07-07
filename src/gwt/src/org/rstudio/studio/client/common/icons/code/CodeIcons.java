@@ -69,4 +69,14 @@ public interface CodeIcons extends ClientBundle
 
    @Source("snippet_2x.png")
    ImageResource snippet2x();
+   
+   @Source("section_2x.png")
+   ImageResource section2x();
+   
+   @Source("figure_2x.png")
+   ImageResource figure2x();
+   
+   @Source("table_2x.png")
+   ImageResource table2x();
+   
 }

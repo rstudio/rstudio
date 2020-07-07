@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -74,6 +75,7 @@ public class CodeSearch
                      final EventBus eventBus)
    {
       display_ = display;
+      events_  = eventBus;
       
       final SearchDisplay searchDisplay = display_.getSearchDisplay();
       searchDisplay.setAutoSelectEnabled(true);
@@ -92,19 +94,24 @@ public class CodeSearch
             String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
             final FilePosition pos = target.getPosition();  
+            final String xref = target.getXref();
             
             // fire editing event (delayed so the Enter keystroke 
             // doesn't get routed into the source editor)
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-               @Override
-               public void execute()
-               {
-                  display_.getSearchDisplay().clear();
-                  display_.getSearchOracle().clear();
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               display_.getSearchDisplay().clear();
+               display_.getSearchOracle().clear();
 
-                  if (observer_ != null)
-                     observer_.onCompleted();
-                  
+               if (observer_ != null)
+                  observer_.onCompleted();
+
+               if (xref != null)
+               {
+                  events_.fireEvent(new XRefNavigationEvent(srcItem, xref));
+               }
+               else
+               {
                   fileTypeRegistry.editFile(srcItem, pos);
                }
             });
@@ -216,6 +223,8 @@ public class CodeSearch
    }
      
    private final Display display_;
+   private final EventBus events_;
+   
    private Observer observer_ = null;
    private ArrayList<HandlerRegistration> eventBusHandlers_ = 
                                  new ArrayList<HandlerRegistration>();

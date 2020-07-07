@@ -16,15 +16,28 @@ package org.rstudio.core.client;
 
 public class CodeNavigationTarget
 {
+   public CodeNavigationTarget(String file,
+                               FilePosition pos,
+                               String xref)
+   {
+      file_ = file;
+      pos_  = pos;
+      xref_ = xref;
+   }
+   
    public CodeNavigationTarget(String file)
    {
-      this(file, null);
+      this(file, null, null);
+   }
+   
+   public CodeNavigationTarget(String file, String xref)
+   {
+      this(file, null, xref);
    }
    
    public CodeNavigationTarget(String file, FilePosition pos)
    {
-      file_ = file;
-      pos_ = pos;
+      this(file, pos, null);
    }
    
    public String getFile()
@@ -37,6 +50,12 @@ public class CodeNavigationTarget
       return pos_;
    }
    
+   public String getXref()
+   {
+      return xref_;
+   }
+   
    private final String file_;
    private final FilePosition pos_;
+   private final String xref_;
 }

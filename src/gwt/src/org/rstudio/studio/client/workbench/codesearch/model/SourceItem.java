@@ -25,13 +25,17 @@ public class SourceItem extends JavaScriptObject
    {
    }
    
-   public static final int NONE = 0;
-   public static final int FUNCTION = 1;
-   public static final int METHOD = 2;
-   public static final int CLASS = 3;
-   public static final int ENUM = 4;
+   // NOTE: synchronize with class in SessionCodeSearch.cpp
+   public static final int NONE       = 0;
+   public static final int FUNCTION   = 1;
+   public static final int METHOD     = 2;
+   public static final int CLASS      = 3;
+   public static final int ENUM       = 4;
    public static final int ENUM_VALUE = 5;
-   public static final int NAMESPACE = 6;   
+   public static final int NAMESPACE  = 6; 
+   public static final int SECTION    = 7;
+   public static final int FIGURE     = 8;
+   public static final int TABLE      = 9;
 
    public final native int getType() /*-{
       return this.type;
@@ -64,8 +68,9 @@ public class SourceItem extends JavaScriptObject
 
    public final CodeNavigationTarget toCodeNavigationTarget()
    {
-      return new CodeNavigationTarget(getContext(),
-                                      FilePosition.create(getLine(),
-                                                          getColumn()));
+      return new CodeNavigationTarget(
+            getContext(),
+            FilePosition.create(getLine(), getColumn()),
+            getExtraInfo());
    }
 }
