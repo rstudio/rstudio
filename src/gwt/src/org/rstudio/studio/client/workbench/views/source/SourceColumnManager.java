@@ -18,6 +18,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -195,8 +197,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((col) ->
-         col.manageSourceNavigationCommands()));
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
+                                                {
+                                                   @Override
+                                                   public void onChange(ChangeEvent event)
+                                                   {
+                                                      manageSourceNavigationCommands();
+                                                   }
+                                                });
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -558,8 +566,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
            saveAllEnabled = true;
       }
 
-      // any column can disable a command but only the active column can enable one so it should
-      // always be managed last
+      // the active column is always managed last because any column can disable a command, but
+      // only the active one can enable a command
       if (activeColumn_.isInitialized())
          activeColumn_.manageCommands(forceSync, activeColumn_);
 
@@ -570,8 +578,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // complicated, so leave it enabled
       if (windowManager_.areSourceWindowsOpen())
          commands_.saveAllSourceDocs().setEnabled(saveAllEnabled);
+
+      manageSourceNavigationCommands();
    }
 
+   private void manageSourceNavigationCommands()
+   {
+      commands_.sourceNavigateBack().setEnabled(
+         sourceNavigationHistory_.isBackEnabled());
+      commands_.sourceNavigateBack().setEnabled(
+         sourceNavigationHistory_.isBackEnabled());
+   }
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
@@ -1960,14 +1977,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public SourceAppCommand getSourceCommand(AppCommand command, SourceColumn column)
    {
+      // check if we've already create a SourceAppCommand for this command
       for (SourceAppCommand cmd : sourceAppCommands_)
       {
          if (cmd.getCommand() == command &&
-             cmd.getColumn() == column)
+             cmd.getColumn() == column.getName())
             return cmd;
       }
 
-      SourceAppCommand sourceCommand = new SourceAppCommand(command, column, this);
+      // if not found, create it
+      SourceAppCommand sourceCommand =
+         new SourceAppCommand(command, column.getName(), this);
       sourceAppCommands_.add(sourceCommand);
       return sourceCommand;
    }

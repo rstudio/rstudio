@@ -65,14 +65,14 @@ public class SourceAppCommand
       @Override
       public void onEnabledChanged(EnabledChangedEvent event)
       {
-         if (StringUtil.equals(column_.getName(), event.getColumnName()))
+         if (StringUtil.equals(column_, event.getColumnName()))
             setEnabled(event.getButtonEnabled());
       }
 
       @Override
       public void onVisibleChanged(VisibleChangedEvent event)
       {
-         if (StringUtil.equals(column_.getName(), event.getColumnName()))
+         if (StringUtil.equals(column_, event.getColumnName()))
             setVisible(event.getButtonVisible());
       }
 
@@ -89,7 +89,7 @@ public class SourceAppCommand
    }
 
    public SourceAppCommand(AppCommand command,
-                           SourceColumn column,
+                           String column,
                            SourceColumnManager manager)
    {
       command_ = command;
@@ -102,7 +102,7 @@ public class SourceAppCommand
       return command_;
    }
 
-   public SourceColumn getColumn()
+   public String getColumn()
    {
       return column_;
    }
@@ -115,7 +115,7 @@ public class SourceAppCommand
             command_.getDesc(),
             command_,
             event -> {
-               columnManager_.setActive(column_.getName());
+               columnManager_.setActive(column_);
                command_.execute();
             });
       if (command_.getTooltip() != null)
@@ -127,35 +127,37 @@ public class SourceAppCommand
    {
       return new CommandSourceColumnMenuItem(
          () -> {
-            columnManager_.setActive(column_.getName());
+            columnManager_.setActive(column_);
             command_.execute();
          });
    }
 
    public void setVisible(boolean visible)
    {
-      setVisible(visible, visible);
+      setVisible(true, visible, visible);
    }
 
-   public void setVisible(boolean commandVisible, boolean buttonVisible)
+   public void setVisible(boolean setCommand, boolean commandVisible, boolean buttonVisible)
    {
-      command_.setVisible(commandVisible);
-      handlers_.fireEvent(new VisibleChangedEvent(command_, column_.getName(), buttonVisible));
+      if (setCommand)
+         command_.setVisible(commandVisible);
+      handlers_.fireEvent(new VisibleChangedEvent(command_, column_, buttonVisible));
    }
 
    public void setEnabled(boolean visible)
    {
-      setEnabled(visible, visible);
+      setEnabled(true, visible, visible);
    }
 
-   public void setEnabled(boolean commandEnabled, boolean buttonVisible)
+   public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonVisible)
    {
-      command_.setEnabled(commandEnabled);
-      handlers_.fireEvent((new EnabledChangedEvent(command_, column_.getName(), buttonVisible)));
+      if (setCommand)
+         command_.setEnabled(commandEnabled);
+      handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonVisible)));
    }
 
    private final AppCommand command_;
-   private final SourceColumn column_;
+   private final String column_;
    private final SourceColumnManager columnManager_;
    private final HandlerManager handlers_ = new HandlerManager(this);
 }
