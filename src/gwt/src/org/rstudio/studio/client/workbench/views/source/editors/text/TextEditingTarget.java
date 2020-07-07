@@ -7806,7 +7806,7 @@ public class TextEditingTarget implements
       autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
 
-   private boolean isVisualModeActivated()
+   public boolean isVisualModeActivated()
    {
       return docUpdateSentinel_.getBoolProperty(RMD_VISUAL_MODE, false);
    }
