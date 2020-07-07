@@ -200,23 +200,6 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
    return username;
 }
 
-bool mainPageFilter(const http::Request& request,
-                    http::Response* pResponse)
-{
-   // check for user identity, if we have one then allow the request to proceed
-   std::string userIdentifier = getUserIdentifier(request);
-   if (userIdentifier.empty())
-   {
-      // otherwise redirect to sign-in
-      pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
 void removeAuthCookie(const http::Request& request,
                       http::Response* pResponse)
 {
@@ -233,6 +216,24 @@ void removeAuthCookie(const http::Request& request,
                                         server::options().wwwUrlPathPrefix(),
                                         pResponse,
                                         boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   }
+}
+
+bool mainPageFilter(const http::Request& request,
+                    http::Response* pResponse)
+{
+   // check for user identity, if we have one then allow the request to proceed
+   std::string userIdentifier = getUserIdentifier(request);
+   if (userIdentifier.empty())
+   {
+      // otherwise redirect to sign-in
+      removeAuthCookie(request, pResponse);
+      pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
+      return false;
+   }
+   else
+   {
+      return true;
    }
 }
 
