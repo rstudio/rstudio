@@ -177,6 +177,19 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             return false;        
       }
       
+      // Bib text keys should be treated in a case insensitive manner
+      // http://maverick.inria.fr/~Xavier.Decoret/resources/xdkbibtex/bibtex_summary.html#stringdef
+      for (String existingId : citeProps_.existingIds) {
+         if (existingId.compareToIgnoreCase(result.id) == 0)
+         {
+            globalDisplay.showErrorMessage(
+                  "Error", "Please select a unique citation Id."
+               );
+               citationId_.setFocus(true);
+               return false;                   
+         }
+      }
+      
       if (StringUtil.isNullOrEmpty(result.bibliographyFile)) 
       {
          if (addTobibliographyPanel_.isVisible()) {
