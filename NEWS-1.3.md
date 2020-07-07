@@ -3,6 +3,7 @@
 
 ### Misc
 
+- Compatible with R graphics engine version 13 (R 4.1.0+) (#7253)
 - R 4.0.0's raw string literals are now handled properly by the diagnostics engine. (#6788)
 - Allow projects to reopen after a crash (#3220)
 - Added spellcheck blacklist item for preview Latvian dictionary (#6594)
