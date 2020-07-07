@@ -24,12 +24,14 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
@@ -157,11 +159,17 @@ public class ProfilerEditingTargetWidget extends Composite
                                  PublishHtmlSource publishHtmlSource)
    {
       Toolbar toolbar = new EditingTargetToolbar(commands, true, column_);
-      
-      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton(column_));
-      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton(column_));
+
+      // Buttons are unique to a source column so require SourceAppCommands
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.gotoProfileSource(), column_).createToolbarButton());
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.saveProfileAs(), column_).createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.openProfileInBrowser().createToolbarButton(column_));
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.openProfileInBrowser(), column_).createToolbarButton());
       
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(

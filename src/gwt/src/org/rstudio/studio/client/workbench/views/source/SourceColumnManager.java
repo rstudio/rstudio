@@ -1790,11 +1790,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return dynamicCommands_;
    }
 
-   public HashSet<SourceAppCommand> getSourceAppCommands()
-   {
-      return sourceAppCommands_;
-   }
-
    private void getEditorContext(String id, String path, DocDisplay docDisplay)
    {
       getEditorContext(id, path, docDisplay, server_);
@@ -1961,6 +1956,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       vimCommands_.openNextFile(this);
       vimCommands_.openPreviousFile(this);
       vimCommands_.addStarRegister();
+   }
+
+   public SourceAppCommand getSourceCommand(AppCommand command, SourceColumn column)
+   {
+      for (SourceAppCommand cmd : sourceAppCommands_)
+      {
+         if (cmd.getCommand() == command &&
+             cmd.getColumn() == column)
+            return cmd;
+      }
+
+      SourceAppCommand sourceCommand = new SourceAppCommand(command, column, this);
+      sourceAppCommands_.add(sourceCommand);
+      return sourceCommand;
    }
 
    private void openNotebook(final FileSystemItem rnbFile,
@@ -2401,6 +2410,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
+   private HashSet<SourceAppCommand> sourceAppCommands_ = new HashSet<>();
    private SourceVimCommands vimCommands_;
 
    private Commands commands_;

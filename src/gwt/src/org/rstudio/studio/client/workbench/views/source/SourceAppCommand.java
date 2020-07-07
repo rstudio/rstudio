@@ -79,7 +79,7 @@ public class SourceAppCommand
       private final HandlerRegistrations handlers_ = new HandlerRegistrations();
    }
 
-   private static class CommandSourceColumnMenuItem extends AppMenuItem
+   private class CommandSourceColumnMenuItem extends AppMenuItem
    {
 
       public CommandSourceColumnMenuItem(Command wrapper)
@@ -95,6 +95,16 @@ public class SourceAppCommand
       command_ = command;
       column_ = column;
       columnManager_ = manager;
+   }
+
+   public AppCommand getCommand()
+   {
+      return command_;
+   }
+
+   public SourceColumn getColumn()
+   {
+      return column_;
    }
 
    public ToolbarButton createToolbarButton()
@@ -122,19 +132,29 @@ public class SourceAppCommand
          });
    }
 
+   public void setVisible(boolean visible)
+   {
+      setVisible(visible, visible);
+   }
+
    public void setVisible(boolean commandVisible, boolean buttonVisible)
    {
-      command_.setVisible(commandVisible, column_.getName());
+      command_.setVisible(commandVisible);
       handlers_.fireEvent(new VisibleChangedEvent(command_, column_.getName(), buttonVisible));
+   }
+
+   public void setEnabled(boolean visible)
+   {
+      setEnabled(visible, visible);
    }
 
    public void setEnabled(boolean commandEnabled, boolean buttonVisible)
    {
-      command_.setEnabled(commandEnabled, column_.getName());
+      command_.setEnabled(commandEnabled);
       handlers_.fireEvent((new EnabledChangedEvent(command_, column_.getName(), buttonVisible)));
    }
 
-   private static AppCommand command_ = null;
+   private final AppCommand command_;
    private final SourceColumn column_;
    private final SourceColumnManager columnManager_;
    private final HandlerManager handlers_ = new HandlerManager(this);

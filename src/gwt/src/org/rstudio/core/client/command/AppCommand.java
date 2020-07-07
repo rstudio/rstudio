@@ -43,8 +43,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.workbench.views.source.SourceColumn;
-import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -114,68 +112,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
       protected final AppCommand command_;
       private boolean synced_ = true;
-      protected HandlerRegistrations handlers_;
+      protected HandlerRegistrations handlers_ = new HandlerRegistrations();
       protected Toolbar parentToolbar_;
    }
-
-   /*
-   private class CommandSourceColumnToolbarButton extends CommandToolbarButton
-   {
-      public CommandSourceColumnToolbarButton(String buttonLabel,
-                                              String buttonTitle,
-                                              ImageResourceProvider imageResourceProvider,
-                                              ClickHandler clickHandler,
-                                              AppCommand command,
-                                              SourceColumn column)
-      {
-
-      @Override
-      protected void onAttach()
-      {
-         super.onAttach();
-
-         handlers_.add(command_.addEnabledChangedHandler(this));
-         handlers_.add(command_.addVisibleChangedHandler(this));
-
-         if (isVisible())
-            setEnabled(true);
-      }
-
-      @Override
-      protected void onDetach()
-      {
-         super.onDetach();
-         handlers_.removeHandler();
-      }
-
-      @Override
-      public void onEnabledChanged(EnabledChangedEvent event)
-      {
-         if (StringUtil.equals(column_.getName(), event.getColumnName()))
-            setEnabled(event.getButtonEnabled());
-      }
-
-      @Override
-      public void onVisibleChanged(VisibleChangedEvent event)
-      {
-         if (StringUtil.equals(column_.getName(), event.getColumnName()))
-            setVisible(event.getButtonVisible());
-      }
-
-      private final SourceColumn column_;
-   }
-
-   private static class CommandSourceColumnMenuItem extends AppMenuItem
-   {
-
-      public CommandSourceColumnMenuItem(AppCommand command,
-                                         SourceColumn column,
-                                         Command wrapper)
-      {
-         super(command, false, wrapper);
-      }
-   }
-   */
 
    public AppCommand()
    {
@@ -272,15 +211,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
    }
 
-   public void setEnabled(boolean enabled, String sourceColumnName)
-   {
-      if (enabled != enabled_)
-      {
-         enabled_ = enabled;
-         handlers_.fireEvent(new EnabledChangedEvent(this, sourceColumnName));
-      }
-   }
-
    public boolean isVisible()
    {
       return visible_;
@@ -292,15 +222,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this));
-      }
-   }
-
-   public void setVisible(boolean visible, String sourceColumnName)
-   {
-      if (!removed_ && visible != visible_)
-      {
-         visible_ = visible;
-         handlers_.fireEvent(new VisibleChangedEvent(this, sourceColumnName));
       }
    }
 
