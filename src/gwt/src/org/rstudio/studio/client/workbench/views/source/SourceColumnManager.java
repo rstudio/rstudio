@@ -18,8 +18,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -1985,17 +1983,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public SourceAppCommand getSourceCommand(AppCommand command, SourceColumn column)
    {
       // check if we've already create a SourceAppCommand for this command
-      for (SourceAppCommand cmd : sourceAppCommands_)
-      {
-         if (cmd.getCommand() == command &&
-             cmd.getColumn() == column.getName())
-            return cmd;
-      }
+      String key = command.getId() + column.getName();
+       if (sourceAppCommands_.get(key) != null)
+         return sourceAppCommands_.get(key);
 
       // if not found, create it
       SourceAppCommand sourceCommand =
          new SourceAppCommand(command, column.getName(), this);
-      sourceAppCommands_.add(sourceCommand);
+      sourceAppCommands_.put(key, sourceCommand);
       return sourceCommand;
    }
 
@@ -2437,7 +2432,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
-   private HashSet<SourceAppCommand> sourceAppCommands_ = new HashSet<>();
+   private HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
 
    private Commands commands_;
