@@ -163,7 +163,14 @@ class CodeBlockNodeView implements NodeView {
     });
 
     this.chunk.editor.on('blur', () => {
+      // Add a class to editor; this class contains CSS rules that hide editor
+      // components that Ace cannot hide natively (such as the cursor and
+      // matching bracket indicator)
       this.dom.classList.add("pm-ace-editor-inactive");
+
+      // Clear the selection (otherwise could conflict with Prosemirror's
+      // selection)
+      this.editSession.selection.clearSelection();
     });
 
     // Add custom escape commands for movement keys (left/right/up/down); these
