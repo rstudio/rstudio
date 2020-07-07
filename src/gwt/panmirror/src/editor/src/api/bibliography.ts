@@ -23,6 +23,7 @@ import { EditorUIContext, EditorUI } from './ui';
 import { yamlMetadataNodes, stripYamlDelimeters, parseYaml } from './yaml';
 import { expandPaths } from './path';
 import { CSLName, CSLDate, CSL } from './csl';
+import { urlForDOI } from './doi';
 
 export interface BibliographyFiles {
   bibliography: string[];
@@ -128,6 +129,10 @@ export class BibliographyManager {
     return this.bibliography?.sources.find(source => source.id === id);
   }
 
+  public findCiteId(citeId: string): BibliographySource | undefined {
+    return this.bibliography?.sources.find(source => source.id === citeId);
+  }
+
   public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use loadBibliography before calling this or
@@ -146,6 +151,14 @@ export class BibliographyManager {
       return results.map((result: { item: any }) => result.item);
     } else {
       return [];
+    }
+  }
+
+  public urlForSource(source: BibliographySource): string | undefined {
+    if (source.URL) {
+      return source.URL;
+    } else if (source.DOI) {
+      return urlForDOI(source.DOI);
     }
   }
 

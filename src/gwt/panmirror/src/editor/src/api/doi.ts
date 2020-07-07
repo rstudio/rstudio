@@ -59,3 +59,7 @@ export function findDOI(token: string): string | undefined {
     return match[0];
   }
 }
+
+export function urlForDOI(doi: string): string {
+  return `https://doi.org/${doi}`;
+}

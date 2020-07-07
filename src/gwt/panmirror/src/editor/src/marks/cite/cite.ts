@@ -35,12 +35,11 @@ import { Extension, ExtensionContext } from '../../api/extension';
 import { InsertCitationCommand } from './cite-commands';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
-
-
+import { citePopupPlugin } from './cite-popup';
 
 const kCiteCitationsIndex = 0;
 
-const kCiteIdPrefixPattern = '-?@';
+export const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
 const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
@@ -229,7 +228,8 @@ const extension = (context: ExtensionContext): Extension | null => {
               handlePaste: handlePaste(ui, mgr, context.server.pandoc),
             }
           }),
-        citeHighlightPlugin(schema)];
+        citeHighlightPlugin(schema),
+        citePopupPlugin(schema, ui, mgr)];
     },
   };
 };
