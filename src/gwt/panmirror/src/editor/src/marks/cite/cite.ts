@@ -229,7 +229,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             }
           }),
         citeHighlightPlugin(schema),
-        citePopupPlugin(schema, ui, mgr)];
+        citePopupPlugin(schema, ui, mgr, context.server.pandoc)];
     },
   };
 };

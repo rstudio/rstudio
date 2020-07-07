@@ -657,7 +657,7 @@ Error pandocCitationHTML(const json::JsonRpcRequest& request, json::JsonRpcRespo
 
    // resolve the file and csl paths (if any)
    FilePath filePath = !file.empty() ? module_context::resolveAliasedPath(file): FilePath();
-   FilePath cslPath = !csl.empty() && !filePath.isEmpty() ? filePath.completePath(csl) : FilePath();
+   FilePath cslPath = (!csl.empty() && !filePath.isEmpty()) ? filePath.getParent().completePath(csl) : FilePath();
 
    // if there is no csl specified and a file is specified, see if we can resolve csl from the project
    if (cslPath.isEmpty() && !filePath.isEmpty() &&

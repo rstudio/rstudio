@@ -46,7 +46,7 @@ export function textRangePopupDecorationPosition(
   // base popup style
   const topPadding = parseInt(editingBoxStyle.paddingTop!, 10) || 0;
   const popupStyle = {
-    top: rangeCoords.bottom - editingBox.top - topPadding + 3 + kPixelUnit,
+    top: rangeCoords.bottom - editingBox.top - topPadding + 5 + kPixelUnit,
   };
 
   // we need to compute whether the popup will be visible (horizontally), do

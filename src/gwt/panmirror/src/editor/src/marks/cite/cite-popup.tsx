@@ -25,14 +25,16 @@ import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
 import { LinkButton } from "../../api/widgets/button";
+import { join } from "../../api/path";
+import { BibliographySource, BibliographyManager, cslFromDoc } from "../../api/bibliography";
+import { PandocServer } from "../../api/pandoc";
 
-//import './xref-popup.css';
-import { BibliographySource, BibliographyManager } from "../../api/bibliography";
-import { kCiteIdPrefixPattern } from "./cite";
+import './cite-popup.css';
 
-const kMaxWidth = 350; // also in xref-popup.css
 
-export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager) {
+const kMaxWidth = 400; // also in cite-popup.css
+
+export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager, server: PandocServer) {
 
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('cite-popup'),
@@ -42,11 +44,16 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
     createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
       await bibMgr.loadBibliography(ui, view.state.doc);
 
-      console.log(target.text);
+      const csl = cslFromDoc(view.state.doc);
       const citeId = target.text.replace(/^-@|^@/, '');
-      console.log(citeId);
       const source = bibMgr.findCiteId(citeId);
       if (source) {
+        const docPath = ui.context.getDocumentPath();
+        const previewHtml = await server.citationHTML(docPath, JSON.stringify([source]), csl || null);
+        const compressedPreviewHtml = previewHtml.replace(/\r?\n|\r/g, '');
+
+        // TODO: Deal with links in preview + append a link if needed
+
         // click handler
         const onClick = () => {
           const url = bibMgr.urlForSource(source);
@@ -55,38 +62,35 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
           }
         };
 
-        return (<CitePopup source={source} onClick={onClick} style={style} />);
+        return (
+          <CitePopup
+            previewHtml={compressedPreviewHtml}
+            linkText={ui.context.translateText("[Link]")}
+            onClick={onClick}
+            style={style} />
+        );
 
       }
       return null;
     },
     specKey: (target: TextPopupTarget) => {
-      return `xref:${target.text}`;
+      return `cite:${target.text}`;
     }
   });
-
 }
 
 interface CitePopupProps extends WidgetProps {
-  source: BibliographySource;
+  previewHtml: string;
+  linkText?: string;
   onClick: VoidFunction;
 }
 
 const CitePopup: React.FC<CitePopupProps> = props => {
   return (
-    <Popup classes={['pm-xref-popup']} style={props.style}>
-      <div>
-        <LinkButton
-          text={props.source.DOI || props.source.id}
-          onClick={props.onClick}
-          maxWidth={kMaxWidth - 20}
-          classes={['pm-xref-popup-key pm-fixedwidth-font']}
-        />
+    <Popup classes={['pm-cite-popup']} style={props.style}>
+      <div className='pm-cite-popup-preview'>
+        <div dangerouslySetInnerHTML={{ __html: props.previewHtml || '' }} />
       </div>
-      <div className="pm-xref-popup-file">
-        {props.source.title}
-      </div>
-
     </Popup>
   );
 };

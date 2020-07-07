@@ -73,6 +73,10 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
 
         // if the selection is contained within the mark then show the popup
         const selection = newState.selection;
+
+        // TODO JJA: The mark range is undefined when the the selection is 'after' the mark
+        // e.g.  [@allaire2012|] 
+        // which means that the preview doesn't show
         const range = getMarkRange(selection.$from, markType);
 
         if (range) {

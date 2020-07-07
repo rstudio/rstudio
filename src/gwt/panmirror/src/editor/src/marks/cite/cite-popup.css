@@ -1,0 +1,32 @@
+
+
+.pm-cite-popup {
+  max-width: 400px;
+  display: flex;
+  align-content: flex-start;
+  flex-direction: column;
+}
+
+.pm-cite-popup p {
+  font-size: 0.8em;
+  margin-bottom: 0px !important;
+}
+
+.pm-cite-popup-preview {
+  width: 100%;
+  opacity: 0.8;
+}
+
+.pm-cite-key a {
+  float: right;
+  font-size: 0.8em;
+}
+
+.hanging-indent p {
+  padding-left: 12px;
+  text-indent: -12px;
+}
+
+.smallcaps {
+  font-variant: small-caps;
+}

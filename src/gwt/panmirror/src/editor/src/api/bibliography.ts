@@ -233,6 +233,28 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[], uiContext: EditorUI
   return null;
 }
 
+export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
+
+  // read the Yaml blocks from the document
+  const parsedYamlNodes = parseYamlNodes(doc);
+
+  const cslParsedYamls = parsedYamlNodes.filter(
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.csl,
+  );
+
+  // Look through any yaml nodes to see whether any contain csl information
+  if (cslParsedYamls.length > 0) {
+
+    // Pandoc uses the last csl block (whether or not it shares a yaml block with the
+    // bibliographies element that pandoc will ultimately use) so just pick the last csl
+    // block.
+    const cslParsedYaml = cslParsedYamls[cslParsedYamls.length - 1];
+    const cslFile = cslParsedYaml.yaml.csl;
+    return cslFile;
+  }
+  return undefined;
+}
+
 export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: string, ui: EditorUI) {
 
   // read the Yaml blocks from the document
