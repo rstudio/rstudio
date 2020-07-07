@@ -24,6 +24,7 @@ import {
   kCompletionDefaultMaxVisible,
   completionsShareScope,
   performCompletionReplacement,
+  CompletionState,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -32,7 +33,7 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
-import { kInsertCompletionTransaction, kPreventCompletionTransaction } from '../../api/transaction';
+import { kInsertCompletionTransaction, kPasteTransaction } from '../../api/transaction';
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -43,12 +44,6 @@ export function completionExtension(
   return {
     plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
-}
-
-interface CompletionState {
-  handler?: CompletionHandler;
-  result?: CompletionResult;
-  prevToken?: string;
 }
 
 const key = new PluginKey<CompletionState>('completion');
@@ -115,6 +110,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
+          const isPaste = tr.getMeta(kPasteTransaction) === true;
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
             // first check if the handler is enabled (null means use inputRuleFilter)
@@ -130,11 +127,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   continue;
                 }
 
-                // This transaction has been explicitly set to not permit completions
-                if (tr.getMeta(kPreventCompletionTransaction)) {
-                  continue;
-                }
-
                 if (handler.id === prevState.handler?.id) {
                   // pass the prevToken on if the completion was for the same position
                   if (result.pos === prevState.result?.pos) {
@@ -143,7 +135,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                 }
 
                 // return state
-                return { handler, result, prevToken };
+                return { handler, result, prevToken, isPaste };
               }
             }
           }
@@ -274,7 +266,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       const requestAllCompletions = async () => {
 
         // fetch completions
-        const completions = await state.result!.completions(view.state);
+        const completions = await state.result!.completions(view.state, state);
 
         // if we don't have a handler or result then return
         if (!state.handler || !state.result) {

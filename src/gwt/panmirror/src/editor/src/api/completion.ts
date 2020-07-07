@@ -25,11 +25,18 @@ export const kCompletionDefaultItemHeight = 22;
 export const kCompletionDefaultMaxVisible = 10;
 export const kCompletionDefaultWidth = 180;
 
+export interface CompletionState {
+  handler?: CompletionHandler;
+  result?: CompletionResult;
+  prevToken?: string;
+  isPaste?: boolean;
+}
+
 export interface CompletionResult<T = any> {
   pos: number;
   offset?: number;
   token: string;
-  completions: (state: EditorState) => Promise<T[]>;
+  completions: (state: EditorState, completionState: CompletionState) => Promise<T[]>;
   decorations?: DecorationSet;
 }
 

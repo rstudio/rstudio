@@ -22,7 +22,7 @@ import { EditorView } from 'prosemirror-view';
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
-import { MarkTransaction, kPreventCompletionTransaction } from '../../api/transaction';
+import { MarkTransaction } from '../../api/transaction';
 import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
 import { EditorUI, InsertCiteProps } from '../../api/ui';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
@@ -43,7 +43,7 @@ const kCiteCitationsIndex = 0;
 const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/;()/+<>#]*';
+const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
 
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
@@ -55,7 +55,7 @@ const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOption
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern})`);
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -239,7 +239,6 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.cite)) {
-
       // This is a DOI
       const parsedDOI = doiFromSlice(view.state, slice);
       if (parsedDOI) {
@@ -250,10 +249,8 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
         // Insert the DOI text as a placeholder
         const tr = view.state.tr;
-
-        // This is may use the prevent completion flag - if we are going to show
-        // the insert cite experience, we should suppress completions
-        tr.setMeta(kPreventCompletionTransaction, source === undefined);
+        tr.setMeta('paste', true);
+        tr.setMeta('uiEvent', 'paste');
 
         const doiText = schema.text(parsedDOI.token);
         tr.replaceSelectionWith(doiText, true);
@@ -270,6 +267,8 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
         if (text.length > 0) {
           const tr = view.state.tr;
+          tr.setMeta('paste', true);
+          tr.setMeta('uiEvent', 'paste');
           tr.replaceSelectionWith(schema.text(text));
           view.dispatch(tr);
           return true;
@@ -593,7 +592,6 @@ export async function insertCitationForDOI(
     const tr = view.state.tr;
 
     // This could be called by paste handler, so stop completions
-    tr.setMeta(kPreventCompletionTransaction, true);
     performCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
     view.dispatch(tr);
 
@@ -639,10 +637,6 @@ export async function insertCitationForDOI(
 
       // Update the bibliography on the page if need be
       if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
-
-        // Because this could be called by a paste handler or other non-completion end point
-        // we needd to completely suppress completions upon insert the citation
-        tr.setMeta(kPreventCompletionTransaction, true);
 
         // Write the cite id
         performCompletionReplacement(tr, tr.mapping.map(pos), result.id);

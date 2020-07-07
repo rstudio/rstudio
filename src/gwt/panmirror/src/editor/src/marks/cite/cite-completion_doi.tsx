@@ -20,7 +20,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
+import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionState } from '../../api/completion';
 import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
 import { CSL } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
@@ -80,9 +80,9 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
         token: parsedDOI.token,
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
-        completions: async (_state: EditorState) => {
+        completions: async (_state: EditorState, completionState: CompletionState) => {
 
-          // First check whether the DOI is already contained in the current bibliography
+
           await bibliographyManager.loadBibliography(ui, context.doc);
           const source = bibliographyManager.findDoiInLoadedBibliography(parsedDOI.token);
           if (source) {
@@ -97,33 +97,37 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
               }];
           }
 
-          // Check with the server to see if we can get citation data for this DOI
-          const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
-          if (result.status === "ok") {
-            const csl = result.message;
+          if (!completionState.isPaste) {
+            // Check with the server to see if we can get citation data for this DOI
+            const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
+            if (result.status === "ok") {
+              const csl = result.message;
 
-            // We should only return csl that includes a DOI since this UI depends upon that being present
-            // Note that this should always be true because we are looking up the CSL by DOI, but in the event
-            // that the server returns something unexpected, we will simply not match any completions
-            if (csl.DOI) {
-              return [
-                {
-                  id: csl.DOI,
-                  csl,
-                  inBibliography: false,
-                  image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
-                  formattedAuthor: formatAuthors(csl.author, 40),
-                  formattedIssueDate: formatIssuedDate(csl.issued),
-                },
-              ];
+              // We should only return csl that includes a DOI since this UI depends upon that being present
+              // Note that this should always be true because we are looking up the CSL by DOI, but in the event
+              // that the server returns something unexpected, we will simply not match any completions
+              if (csl.DOI) {
+                return [
+                  {
+                    id: csl.DOI,
+                    csl,
+                    inBibliography: false,
+                    image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                    formattedAuthor: formatAuthors(csl.author, 40),
+                    formattedIssueDate: formatIssuedDate(csl.issued),
+                  },
+                ];
+              } else {
+                return [];
+              }
+            } else if (result.status === "notfound" || result.status === "nohost") {
+              return [];
+            } else if (result.status === "error") {
+              // This error has already been logged on the server. 
+              return [];
             } else {
               return [];
             }
-          } else if (result.status === "notfound" || result.status === "nohost") {
-            return [];
-          } else if (result.status === "error") {
-            // This error has already been logged on the server. 
-            return [];
           } else {
             return [];
           }

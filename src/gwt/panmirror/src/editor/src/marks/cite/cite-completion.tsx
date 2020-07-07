@@ -85,7 +85,13 @@ function filterCitations(
   // String for a search
   const searchResults = manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
   const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
-  return dedupedResults || [];
+
+  // If we hav an exact match, no need for completions
+  if (dedupedResults.length === 1 && dedupedResults[0].source.id === token) {
+    return [];
+  } else {
+    return dedupedResults || [];
+  }
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {

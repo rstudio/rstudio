@@ -275,6 +275,8 @@ function handlePasteIntoMath() {
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.math)) {
       const tr = view.state.tr;
+      tr.setMeta('paste', true);
+      tr.setMeta('uiEvent', 'paste');
       let math = '';
       slice.content.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
       tr.replaceSelectionWith(schema.text(math));
