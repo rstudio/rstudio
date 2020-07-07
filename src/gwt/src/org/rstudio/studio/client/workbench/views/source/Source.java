@@ -2135,7 +2135,7 @@ public class Source implements InsertSourceHandler,
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
    
-   // handle mouse forward and back buttons if the mouse is within the source window
+   // handle mouse forward and back buttons if the mouse is within a source pane
    private native final void handleMouseButtonNavigations() /*-{
    try {
       if ($wnd.addEventListener) {
@@ -2175,14 +2175,20 @@ public class Source implements InsertSourceHandler,
    
    private boolean isMouseEventInSourcePane(NativeEvent event)
    {
-      Element sourceEl = this.asWidget().getElement();
-      boolean inPane = event.getClientX() > sourceEl.getAbsoluteLeft() &&
-                       event.getClientX() < sourceEl.getAbsoluteRight() &&
-                       event.getClientY() > sourceEl.getAbsoluteTop() &&
-                       event.getClientY() < sourceEl.getAbsoluteBottom();
-      Debug.logToConsole("inPane: " + inPane);
-      return inPane;
+      ArrayList<Widget> sourceWidgets = columnManager_.getWidgets(false);
+      for (Widget sourceWidget : sourceWidgets)
+      {
+         Element sourceEl = sourceWidget.getElement();
+         boolean inPane = event.getClientX() > sourceEl.getAbsoluteLeft() &&
+                          event.getClientX() < sourceEl.getAbsoluteRight() &&
+                          event.getClientY() > sourceEl.getAbsoluteTop() &&
+                          event.getClientY() < sourceEl.getAbsoluteBottom();
+         if (inPane)
+            return true;
+      }
+      return false;
    }
+
    
   
    @Handler
