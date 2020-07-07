@@ -90,6 +90,7 @@ public class VisualModeChunks
          editor.setFileType(FileTypeRegistry.SQL);
          break;
       case "yaml":
+      case "yaml-frontmatter":
          editor.setFileType(FileTypeRegistry.YAML);
          break;
       case "java":
