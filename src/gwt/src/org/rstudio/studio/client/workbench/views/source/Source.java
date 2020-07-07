@@ -324,19 +324,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
 
-      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
-      {
-         public void onSwitchToDoc(SwitchToDocEvent event)
-         {
-            columnManager_.ensureVisible(false);
-            
-            // Fire an activation event just to ensure the activated
-            // tab gets focus
-            commands_.activateSource().execute();
-         }
-      });
-
-      events_.addHandler(SourcePathChangedEvent.TYPE, 
+      events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
       {
          
