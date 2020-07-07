@@ -23,17 +23,23 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class UrlContentEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display
 {
-   public UrlContentEditingTargetWidget(String title, Commands commands, String url)
+   public UrlContentEditingTargetWidget(String title,
+                                        Commands commands,
+                                        String url,
+                                        SourceColumn column)
    {
       commands_ = commands;
 
       frame_ = new RStudioThemedFrame(title, url, true, "allow-same-origin", null, null, false, true);
       frame_.setSize("100%", "100%");
+
+      column_ = column;
 
       panel_ = new PanelWithToolbars(createToolbar(), frame_);
       Roles.getTabpanelRole().set(panel_.getElement());
@@ -43,7 +49,7 @@ public class UrlContentEditingTargetWidget extends Composite
 
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
       return toolbar;
    }
 
@@ -69,4 +75,5 @@ public class UrlContentEditingTargetWidget extends Composite
    private final Commands commands_;
    private RStudioThemedFrame frame_;
    private final PanelWithToolbars panel_;
+   private SourceColumn column_;
 }

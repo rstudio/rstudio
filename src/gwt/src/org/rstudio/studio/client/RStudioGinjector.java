@@ -346,6 +346,7 @@ public interface RStudioGinjector extends Ginjector
    Session getSession();
    HelpStrategy getHelpStrategy();
    ShortcutViewer getShortcutViewer();
+   SourceColumnManager getSourceColumnManager();
    Satellite getSatellite();
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();

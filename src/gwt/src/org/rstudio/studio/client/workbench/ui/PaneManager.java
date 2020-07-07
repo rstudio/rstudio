@@ -290,9 +290,9 @@ public class PaneManager
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns;
       if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
-         sourceColumns = new ArrayList<Widget>(sourceColumnManager_.getWidgets(true));
+         sourceColumns = new ArrayList<>(sourceColumnManager_.getWidgets(true));
       else
-         sourceColumns =  new ArrayList<Widget>();
+         sourceColumns =  new ArrayList<>();
       panel_.initialize(sourceColumns, left_, right_);
 
       // count the number of source docs assigned to this window
@@ -1165,6 +1165,7 @@ public class PaneManager
       {
          int difference = additionalSourceCount_ - count;
          sourceColumnManager_.consolidateColumns(difference);
+         panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
          additionalSourceCount_ = sourceColumnManager_.getSize();
       }
    }
@@ -1196,21 +1197,9 @@ public class PaneManager
 
    public int closeAllAdditionalColumns()
    {
-      sourceColumnManager_.closeAllColumns();
-      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-      if (additionalSourceCount_ > 0)
-         Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
-
-      PaneConfig paneConfig = getCurrentConfig();
-      userPrefs_.panes().setGlobalValue(PaneConfig.create(
-         JsArrayUtil.copy(paneConfig.getQuadrants()),
-         paneConfig.getTabSet1(),
-         paneConfig.getTabSet2(),
-         paneConfig.getHiddenTabSet(),
-         paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
-      userPrefs_.writeUserPrefs();
+      ArrayList<String> columnNames = sourceColumnManager_.getNames(true);
+      for (String name : columnNames)
+         closeSourceWindow(name);
 
       return additionalSourceCount_;
    }
@@ -1227,7 +1216,6 @@ public class PaneManager
 
          if (column.getTabCount() == 0)
          {
-            panel_.removeLeftWidget(column.asWidget());
             sourceColumnManager_.closeColumn(name);
             panesByName_.remove(name);
 

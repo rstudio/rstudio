@@ -86,12 +86,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          }
       }
 
-      public void onEnabledChanged(AppCommand command)
+      public void onEnabledChanged(EnabledChangedEvent event)
       {
          setEnabled(command_.isEnabled());
       }
 
-      public void onVisibleChanged(AppCommand command)
+      public void onVisibleChanged(VisibleChangedEvent event)
       {
          setVisible(command_.isVisible());
          if (command_.isVisible())
@@ -111,8 +111,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (Desktop.hasDesktopFrame())
       {
-         addEnabledChangedHandler((command) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
-         addVisibleChangedHandler((command) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
+         addEnabledChangedHandler((event) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
+         addVisibleChangedHandler((event) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
       }
    }
 
