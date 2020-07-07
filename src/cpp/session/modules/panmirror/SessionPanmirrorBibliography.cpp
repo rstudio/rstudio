@@ -650,20 +650,22 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
 Error pandocCitationHTML(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    // extract params
-   std::string sourceAsJson, csl;
-   Error error = json::readParams(request.params, &sourceAsJson, &csl);
+   std::string file, sourceAsJson, csl;
+   Error error = json::readParams(request.params, &file, &sourceAsJson, &csl);
    if (error)
       return error;
 
-   // resolve the csl path (if any)
-   FilePath cslPath;
-   if (!csl.empty())
+   // resolve the file and csl paths (if any)
+   FilePath filePath = !file.empty() ? module_context::resolveAliasedPath(file): FilePath();
+   FilePath cslPath = !csl.empty() && !filePath.isEmpty() ? filePath.completePath(csl) : FilePath();
+
+   // if there is no csl specified and a file is specified, see if we can resolve csl from the project
+   if (cslPath.isEmpty() && !filePath.isEmpty() &&
+       projects::projectContext().hasProject() &&
+       filePath.isWithin(projects::projectContext().buildTargetPath()))
    {
-      cslPath = module_context::resolveAliasedPath(csl);
+      cslPath = module_context::bookdownCSL();
    }
-
-   // TODO: project/bookdown level csl
-
 
    std::vector<std::string> args;
    args.push_back("--to");

@@ -68,6 +68,27 @@ std::vector<std::string> bookdownBibliographiesRelative()
    return files;
 }
 
+FilePath bookdownCSL()
+{
+   FilePath cslPath;
+   if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
+   {
+      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
+      std::string csl;
+      Error error = r::exec::RFunction(".rs.bookdown.csl", inputDir).call(&csl);
+      if (error)
+         LOG_ERROR(error);
+      else if (!csl.empty())
+         cslPath = buildTargetPath.completePath(csl);
+
+   }
+   if (cslPath.exists())
+      return cslPath;
+   else
+      return FilePath();
+}
+
 } // namespace module_context
 
 namespace modules {

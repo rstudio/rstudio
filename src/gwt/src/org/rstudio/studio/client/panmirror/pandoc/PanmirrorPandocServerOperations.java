@@ -28,6 +28,6 @@ public interface PanmirrorPandocServerOperations
    void pandocListExtensions(String format, ServerRequestCallback<String> callback);
    void pandocGetBibliography(String file, JsArrayString bibliographies, String refBlock, String etag, ServerRequestCallback<JavaScriptObject> callback);
    void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, ServerRequestCallback<Boolean> callback);
-   void pandocCitationHTML(String sourceAsJson, String csl, ServerRequestCallback<String> callback);
+   void pandocCitationHTML(String file, String sourceAsJson, String csl, ServerRequestCallback<String> callback);
 }
       

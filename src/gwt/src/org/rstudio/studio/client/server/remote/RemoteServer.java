@@ -6188,11 +6188,12 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void pandocCitationHTML(String sourceAsJson, String csl, ServerRequestCallback<String> callback)
+   public void pandocCitationHTML(String file, String sourceAsJson, String csl, ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(sourceAsJson));
-      params.set(1, new JSONString(StringUtil.notNull(csl)));
+      params.set(0, new JSONString(StringUtil.notNull(file)));
+      params.set(1, new JSONString(sourceAsJson));
+      params.set(2, new JSONString(StringUtil.notNull(csl)));
       sendRequest(RPC_SCOPE, PANDOC_CITATION_HTML, params, callback);
    }
 

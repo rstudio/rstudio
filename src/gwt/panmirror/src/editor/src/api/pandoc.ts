@@ -38,6 +38,7 @@ export interface PandocServer {
     sourceAsJson: string
   ): Promise<boolean>;
   citationHTML(
+    file: string | null,
     sourceAsJson: string,
     csl: string | null
   ): Promise<string>;
