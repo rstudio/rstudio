@@ -30,6 +30,7 @@ import { DOIServer } from '../../api/doi';
 
 import { doiFromEditingContext } from './cite-doi';
 import { insertCitationForDOI } from './cite';
+import { kCitationCompleteScope } from './cite-completion';
 
 const kCompletionWidth = 400;
 const kCompletionItemPadding = 10;
