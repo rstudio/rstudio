@@ -86,6 +86,12 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
+   public void showAdditionalHelp(QualifiedName completion)
+   {
+      // NYI
+   }
+   
+   @Override
    public boolean getCompletions(String line, CompletionRequestContext context)
    {
       server_.stanGetCompletions(line, context);

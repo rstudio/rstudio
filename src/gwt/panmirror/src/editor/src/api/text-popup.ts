@@ -77,6 +77,11 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
 
         if (range) {
 
+          // selection has to be bounded by the range
+          if (selection.from < range.from || selection.to > range.to) {
+            return DecorationSet.empty;
+          }
+
           // apply the filter
           if (filter && !filter(selection)) {
             return DecorationSet.empty;

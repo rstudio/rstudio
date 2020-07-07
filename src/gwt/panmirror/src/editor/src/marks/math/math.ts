@@ -110,28 +110,28 @@ const extension = (context: ExtensionContext): Extension | null => {
             // extract math from backtick code for blogdown
             ...(blogdownMathInCode
               ? [
-                  {
-                    token: PandocTokenType.Code,
-                    mark: 'math',
-                    match: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
-                    },
-                    getAttrs: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return {
-                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
-                      };
-                    },
-                    getText: (tok: PandocToken) => {
-                      return tok.c[kCodeText];
-                    },
+                {
+                  token: PandocTokenType.Code,
+                  mark: 'math',
+                  match: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
                   },
-                ]
+                  getAttrs: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return {
+                      type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                    };
+                  },
+                  getText: (tok: PandocToken) => {
+                    return tok.c[kCodeText];
+                  },
+                },
+              ]
               : []),
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect math content
               let math = '';

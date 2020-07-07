@@ -252,7 +252,7 @@ void handleTutorialHomeRequest(const http::Request& request,
             << ">"
                
             << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
-            << "<span class=\"rstudio-tutorials-run-button-icon\">\u25b6</span>"
+            << "<span class=\"rstudio-tutorials-run-button-icon\">&#x25b6</span>"
             << "</button>"
             << "</span>";
          

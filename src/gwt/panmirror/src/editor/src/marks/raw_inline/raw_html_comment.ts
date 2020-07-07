@@ -91,7 +91,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             return isComment;
           },
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },

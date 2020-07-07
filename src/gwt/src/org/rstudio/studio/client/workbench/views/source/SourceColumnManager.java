@@ -197,14 +197,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
-                                                {
-                                                   @Override
-                                                   public void onChange(ChangeEvent event)
-                                                   {
-                                                      manageSourceNavigationCommands();
-                                                   }
-                                                });
+      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
+      {
+         public void onSwitchToDoc(SwitchToDocEvent event)
+         {
+            ensureVisible(false);
+            activeColumn_.setPhysicalTabIndex(event.getSelectedIndex());
+
+            // Fire an activation event just to ensure the activated
+            // tab gets focus
+            commands_.activateSource().execute();
+         }
+      });
+
+      sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands()));
+
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",

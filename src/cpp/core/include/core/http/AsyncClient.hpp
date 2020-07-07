@@ -233,6 +233,24 @@ public:
       });
    }
 
+   virtual void setConnectHandler(const ConnectHandler& connectHandler)
+   {
+      // if we are already connected, don't bother saving the connect handler
+      // and just invoke it directly
+      bool invokeConnectHandler = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!requestWritten_)
+            connectHandler_ = connectHandler;
+         else
+            invokeConnectHandler = true;
+      }
+      END_LOCK_MUTEX
+
+      if (invokeConnectHandler)
+         connectHandler();
+   }
+
 protected:
 
    boost::asio::io_service& ioService() { return ioService_; }
@@ -411,24 +429,6 @@ private:
          }
       }
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
-   }
-
-   virtual void setConnectHandler(const ConnectHandler& connectHandler)
-   {
-      // if we are already connected, don't bother saving the connect handler
-      // and just invoke it directly
-      bool invokeConnectHandler = false;
-      LOCK_MUTEX(socketMutex_)
-      {
-         if (!requestWritten_)
-            connectHandler_ = connectHandler;
-         else
-            invokeConnectHandler = true;
-      }
-      END_LOCK_MUTEX
-
-      if (invokeConnectHandler)
-         connectHandler();
    }
 
    void handleWrite(const boost::system::error_code& ec)

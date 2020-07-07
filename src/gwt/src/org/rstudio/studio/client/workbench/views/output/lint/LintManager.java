@@ -86,7 +86,7 @@ public class LintManager
       if (type.isC() || type.isCpp())
          return userPrefs_.showDiagnosticsCpp().getValue();
       
-      if (type.isR() || type.isRmd() || type.isRnw() || type.isRpres())
+      if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
       return false;
