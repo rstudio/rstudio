@@ -474,8 +474,8 @@ SEXP rs_createGD()
    
    BEGIN_SUSPEND_INTERRUPTS 
    {
-      // initialize v12 structure
-      DevDescVersion12 devDesc;
+      // initialize v13 structure
+      DevDescVersion13 devDesc;
 
       // device functions
       devDesc.activate = GD_Activate;
