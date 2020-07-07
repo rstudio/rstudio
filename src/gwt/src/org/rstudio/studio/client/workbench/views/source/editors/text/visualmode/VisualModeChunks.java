@@ -18,12 +18,18 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunk;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 
 public class VisualModeChunks
 {
+   public VisualModeChunks(CompletionContext rCompletionContext)
+   {
+      rContext_ = rCompletionContext;
+   }
+
    public PanmirrorUIChunkFactory uiChunkFactory()
    {
       PanmirrorUIChunkFactory factory = new PanmirrorUIChunkFactory();
@@ -35,6 +41,9 @@ public class VisualModeChunks
          // native JavaScript object it represents (AceEditorNative)
          final AceEditor editor = new AceEditor();
          chunk.editor = editor.getWidget().getEditor();
+
+         // Forward the R completion context from the parent editing session
+         editor.setRCompletionContext(rContext_);
 
          // Provide the editor's container element; in the future this will be a
          // host element which hosts chunk output
@@ -118,4 +127,6 @@ public class VisualModeChunks
          break;
       }
    }
+   
+   private final CompletionContext rContext_;
 }

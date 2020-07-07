@@ -7109,6 +7109,11 @@ public class TextEditingTarget implements
             return docUpdateSentinel_.getId();
       }
    };
+   
+   public CompletionContext getRCompletionContext()
+   {
+      return rContext_;
+   }
 
    // these methods are public static so that other editing targets which
    // display source code (but don't inherit from TextEditingTarget) can share
