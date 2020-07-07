@@ -138,17 +138,50 @@ std::string translate(SEXP charSEXP, bool asUtf8 = false)
    }
 }
 
+std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
+{
+   switch (TYPEOF(objectSEXP))
+   {
+   
+   case CHARSXP:
+      return translate(objectSEXP, asUtf8);
+      
+   case STRSXP:
+      if (length(objectSEXP) == 0)
+      {
+         return std::string();
+      }
+      else
+      {
+         SEXP charSEXP = STRING_ELT(objectSEXP, 0);
+         return translate(charSEXP, asUtf8);
+      }
+      
+   default:
+      Protect protect;
+      SEXP charSEXP;
+      protect.add(charSEXP = Rf_asChar(objectSEXP));
+      return translate(charSEXP, asUtf8);
+      
+   }
+}
+
 } // anonymous namespace
    
 std::string asString(SEXP object) 
 {
-   return translate(Rf_asChar(object));
+   return asStringImpl(object, false);
+}
+
+std::string asUtf8String(SEXP object)
+{
+   return asStringImpl(object, true);
 }
    
 std::string safeAsString(SEXP object, const std::string& defValue)
 {
    if (object != R_NilValue)
-      return asString(object);
+      return asStringImpl(object, false);
    else 
       return defValue;
 }
@@ -176,7 +209,11 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    int n = Rf_length(object);
    pVector->reserve(pVector->size() + n);
    for (int i = 0; i < n; i++)
-      pVector->push_back(std::string(CHAR(STRING_ELT(object, i))));
+   {
+      SEXP charSEXP = STRING_ELT(object, i);
+      pVector->push_back(
+               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+   }
    
    return true;
 }
@@ -188,7 +225,11 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
    
    int n = Rf_length(object);
    for (int i = 0; i < n; i++)
-      pSet->insert(std::string(CHAR(STRING_ELT(object, i))));
+   {
+      SEXP charSEXP = STRING_ELT(object, i);
+      pSet->insert(
+               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+   }
    
    return true;
 }
@@ -222,30 +263,25 @@ namespace {
 
 bool ensureNamespaceLoaded(const std::string& ns)
 {
-   if (ns.empty()) return false;
+   if (ns.empty())
+      return false;
+   
    SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP == R_UnboundValue)
-   {
-      r::exec::RFunction requireNamespace("base:::requireNamespace");
-      requireNamespace.addParam("package", ns);
-      requireNamespace.addParam("quietly", true);
-      Error error = requireNamespace.call();
-      if (error) return false;
-   }
+   if (nsSEXP != R_UnboundValue)
+      return true;
+   
+   Error error = r::exec::RFunction("base:::requireNamespace")
+         .addParam("package", ns)
+         .addParam("quietly", true)
+         .call();
+   
+   if (error)
+      return false;
+   
    return true;
 }
 
 } // anonymous namespace
-
-std::vector<std::string> getLoadedNamespaces()
-{
-   std::vector<std::string> result;
-   r::exec::RFunction loadedNamespaces("loadedNamespaces", "base");
-   Error error = loadedNamespaces.call(&result);
-   if (error)
-      LOG_ERROR(error);
-   return result;
-}
 
 SEXP asNamespace(const std::string& name)
 {
@@ -1001,9 +1037,13 @@ SEXP create(const char* value, Protect* pProtect)
 
 SEXP create(const std::string& value, Protect* pProtect)
 {
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), value.size(), CE_UTF8));
+   
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(STRSXP, 1));
-   SET_STRING_ELT(valueSEXP, 0, Rf_mkChar(value.c_str()));
+   
+   SET_STRING_ELT(valueSEXP, 0, charSEXP);
    return valueSEXP;
 }
    

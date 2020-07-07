@@ -813,7 +813,7 @@ var RCodeModel = function(session, tokenizer,
          position = iterator.getCurrentTokenPosition();
 
          // Skip roxygen comments.
-         var state = this.$session.getState(position.row);
+         var state = Utils.getPrimaryState(this.$session, position.row);
          if (state === "rd-start") {
             iterator.moveToEndOfRow();
             continue;
@@ -825,7 +825,7 @@ var RCodeModel = function(session, tokenizer,
          // create a scope when encountered within a chunk.
          var isInRMode = true;
          if (this.$codeBeginPattern)
-            isInRMode = /^r-/.test(this.$session.getState(iterator.$row));
+            isInRMode = /^r-/.test(state);
 
          // Add Markdown headers.
          //

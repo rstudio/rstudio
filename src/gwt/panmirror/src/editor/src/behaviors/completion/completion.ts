@@ -17,8 +17,6 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { setTextSelection } from 'prosemirror-utils';
-
 import {
   CompletionHandler,
   CompletionResult,
@@ -191,6 +189,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'Enter':
+                case 'Tab':
                   this.insertCompletion(view, this.selectedIndex);
                   handled = true;
                   break;
@@ -264,62 +263,64 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // and then apply any filter we have (allows the completer to just return
       // everything from the aysnc query and fall back to the filter for refinement)
       const requestAllCompletions = async () => {
-        return state.result!.completions(view.state).then(completions => {
-          // if we don't have a handler or result then return
-          if (!state.handler || !state.result) {
-            return;
+
+        // fetch completions
+        const completions = await state.result!.completions(view.state);
+
+        // if we don't have a handler or result then return
+        if (!state.handler || !state.result) {
+          return;
+        }
+
+        // save completions
+        this.setAllCompletions(completions, state.handler.view.horizontal);
+
+        // display if the request still maps to the current state
+        if (this.version === requestVersion) {
+          // if there is a filter then call it and update displayed completions
+          const displayedCompletions = state.handler.filter
+            ? state.handler.filter(completions, view.state, state.result.token)
+            : null;
+          if (displayedCompletions) {
+            this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
           }
 
-          // save completions
-          this.setAllCompletions(completions, state.handler.view.horizontal);
+          this.renderCompletions(view);
+        }
 
-          // display if the request still maps to the current state
-          if (this.version === requestVersion) {
-            // if there is a filter then call it and update displayed completions
-            const displayedCompletions = state.handler.filter
-              ? state.handler.filter(completions, view.state, state.result.token)
-              : null;
-            if (displayedCompletions) {
-              this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
-            }
-
-            this.renderCompletions(view);
-          }
-        });
       };
 
       // first see if we can do this exclusively via filter
 
       if (state.prevToken && state.handler.filter) {
-        this.completionQueue.enqueue(
-          () =>
-            new Promise(resolve => {
-              // display if the request still maps to the current state
-              if (state.handler && state.result && this.version === requestVersion) {
-                const filteredCompletions = state.handler.filter!(
-                  this.allCompletions,
-                  view.state,
-                  state.result.token,
-                  state.prevToken,
-                );
+        this.completionQueue.enqueue(async () => {
 
-                // got a hit from the filter!
-                if (filteredCompletions) {
-                  this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
-                  this.renderCompletions(view);
+          // display if the request still maps to the current state
+          if (state.handler && state.result && this.version === requestVersion) {
+            const filteredCompletions = state.handler.filter!(
+              this.allCompletions,
+              view.state,
+              state.result.token,
+              state.prevToken,
+            );
 
-                  // couldn't use the filter, do a full request for all completions
-                } else {
-                  return this.completionQueue.enqueue(requestAllCompletions);
-                }
-              }
+            // got a hit from the filter!
+            if (filteredCompletions) {
+              this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+              this.renderCompletions(view);
 
-              resolve();
-            }),
-        );
+              // couldn't use the filter, do a full request for all completions
+            } else {
+              await requestAllCompletions();
+            }
+          }
+        });
+
       } else {
+
         // no prevToken or no filter for this handler, request everything
         this.completionQueue.enqueue(requestAllCompletions);
+
       }
     } else {
       // no handler/result for this document state

@@ -196,6 +196,18 @@ const kEqType = {
 };
 
 const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+  h1: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.heading1_dark : ui.images.omni_insert?.heading1),
+  },
+  h2: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.heading2_dark : ui.images.omni_insert?.heading2),
+  },
+  h3: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.heading3_dark : ui.images.omni_insert?.heading3),
+  },
+  h4: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.heading4_dark : ui.images.omni_insert?.heading4),
+  },
   fig: {
     image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
   },

@@ -21,7 +21,6 @@ import { DecorationSet, EditorView } from "prosemirror-view";
 import React from "react";
 
 import { EditorUI } from "../../api/ui";
-import { EditorNavigation } from "../../api/navigation";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
@@ -56,7 +55,7 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
             // click handler
             const onClick = () => {
               const file = xrefs.baseDir + '/' + xref.file;
-              ui.display.navigateToXRef(file, xrefKey(xref));
+              ui.display.navigateToXRef(file, xrefKey(xref, true));
             };
 
             return (<XRefPopup xref={xref} onClick={onClick} style={style} />);

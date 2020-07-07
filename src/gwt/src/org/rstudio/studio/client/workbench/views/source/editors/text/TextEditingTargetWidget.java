@@ -77,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1803,9 +1802,9 @@ public class TextEditingTargetWidget
          // additional actions when activating
          if (activatingEditor)
          {
-            // set cursor position if one was provided
-            if (changes.cursor != null)
-               editor_.setCursorPosition(Position.create(changes.cursor.row, changes.cursor.column));
+            // call navigator if if one was provided
+            if (changes.navigator != null)
+               changes.navigator.onNavigate(editor_);
 
             // flag activation pending (triggers autoscroll)
             activationPending_ = true;

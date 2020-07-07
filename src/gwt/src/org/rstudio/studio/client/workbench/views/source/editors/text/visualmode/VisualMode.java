@@ -773,10 +773,15 @@ public class VisualMode implements VisualModeEditorSync,
       // return changes w/ cursor
       return new TextEditorContainer.Changes(
          changes, 
-         panmirrorCode.cursor != null 
-            ? new TextEditorContainer.Cursor(
-                  panmirrorCode.cursor.row, panmirrorCode.cursor.column
-              )
+         panmirrorCode.location != null 
+            ? new TextEditorContainer.Navigator()
+            {
+               @Override
+               public void onNavigate(DocDisplay docDisplay)
+               {
+                  visualModeLocation_.setSourceOutlineLocation(panmirrorCode.location); 
+               }
+            }
             : null
       );
    }

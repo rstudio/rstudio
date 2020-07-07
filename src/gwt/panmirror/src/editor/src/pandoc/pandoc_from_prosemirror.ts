@@ -26,6 +26,7 @@ import {
   PandocTokenType,
   PandocOutputOption,
   PandocExtensions,
+  marksByPriority,
 } from '../api/pandoc';
 
 import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
@@ -277,21 +278,12 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeInlines(fragment: Fragment) {
+
     // get the marks from a node that are not already on the stack of active marks
     const nodeMarks = (node: ProsemirrorNode) => {
-      // get marks -- order marks by priority (code lowest so that we never include
-      // other markup inside code)
-      let marks: Mark[] = node.marks.sort((a: Mark, b: Mark) => {
-        const aPriority = this.markWriters[a.type.name].priority;
-        const bPriority = this.markWriters[b.type.name].priority;
-        if (aPriority < bPriority) {
-          return -1;
-        } else if (bPriority < aPriority) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
+
+      // get marks ordered by writer priority
+      let marks = marksByPriority(node.marks, this.markWriters);
 
       // remove active marks
       for (const activeMark of this.activeMarks) {

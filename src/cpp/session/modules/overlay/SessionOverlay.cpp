@@ -53,6 +53,11 @@ void initMonitorClient(boost::asio::io_service& ioService)
 {
 }
 
+std::string sessionNode()
+{
+   return std::string();
+}
+
 } // namespace overlay
 } // namespace modules
 } // namespace session
