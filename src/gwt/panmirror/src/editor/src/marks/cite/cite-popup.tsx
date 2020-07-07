@@ -48,28 +48,22 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
       const citeId = target.text.replace(/^-@|^@/, '');
       const source = bibMgr.findCiteId(citeId);
       if (source) {
-        const docPath = ui.context.getDocumentPath();
-        const previewHtml = await server.citationHTML(docPath, JSON.stringify([source]), csl || null);
-        const compressedPreviewHtml = previewHtml.replace(/\r?\n|\r/g, '');
-
-        // TODO: Deal with links in preview + append a link if needed
-
-        // click handler
-        const onClick = () => {
+        const previewHtml = await server.citationHTML(ui.context.getDocumentPath(), JSON.stringify([source]), csl || null);
+        const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
           const url = bibMgr.urlForSource(source);
           if (url) {
-            ui.display.openURL(url);
+            return {
+              text: ui.context.translateText("[Link]"),
+              url
+            };
           }
-        };
+        });
 
         return (
           <CitePopup
-            previewHtml={compressedPreviewHtml}
-            linkText={ui.context.translateText("[Link]")}
-            onClick={onClick}
+            previewHtml={finalHtml}
             style={style} />
         );
-
       }
       return null;
     },
@@ -79,10 +73,51 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
   });
 }
 
+function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string, url: string } | undefined) {
+  const parser = new window.DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const linkElements = doc.body.getElementsByTagName('a');
+  if (linkElements.length === 0) {
+
+    const linkData = getLinkData();
+
+    // There aren't any links, we should append one 
+    // (If links are present, we assume that we shouldn't add another)  
+    const paragraphs = doc.body.getElementsByTagName('p');
+    if (paragraphs.length === 1 && linkData) {
+
+      // The paragraph containing the formatted source
+      const paragraph = paragraphs[0];
+
+      // Create a link to append
+      const linkElement = doc.createElement('a');
+      linkElement.innerText = linkData.text;
+      linkElement.setAttribute('href', linkData.url);
+      setLinkTarget(linkElement);
+
+      // Append the link to the formatted source
+      paragraph.innerText = paragraph.innerText + ' ';
+      paragraph.appendChild(linkElement);
+    }
+  } else {
+
+    // There are links, ensure all of them have appropriate target information
+    // tslint:disable-next-line: prefer-for-of
+    for (let i = 0; i < linkElements.length; i++) {
+      setLinkTarget(linkElements[i]);
+    }
+  }
+  return doc.body.outerHTML.replace(/\r?\n|\r/g, '');
+}
+
+function setLinkTarget(linkElement: HTMLAnchorElement) {
+  linkElement.setAttribute('target', '_blank');
+  linkElement.setAttribute('rel', 'noopener noreferrer');
+}
+
 interface CitePopupProps extends WidgetProps {
   previewHtml: string;
-  linkText?: string;
-  onClick: VoidFunction;
 }
 
 const CitePopup: React.FC<CitePopupProps> = props => {
