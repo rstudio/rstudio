@@ -31,7 +31,6 @@ import { PandocServer } from "../../api/pandoc";
 
 import './cite-popup.css';
 
-
 const kMaxWidth = 400; // also in cite-popup.css
 
 export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager, server: PandocServer) {
@@ -97,7 +96,8 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
       setLinkTarget(linkElement);
 
       // Append the link to the formatted source
-      paragraph.innerText = paragraph.innerText + ' ';
+      const space = document.createTextNode(' ');
+      paragraph.appendChild(space);
       paragraph.appendChild(linkElement);
     }
   } else {
@@ -108,6 +108,8 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
       setLinkTarget(linkElements[i]);
     }
   }
+
+  // Return the HTML omitting CR/LF - CR
   return doc.body.outerHTML.replace(/\r?\n|\r/g, '');
 }
 
