@@ -18,8 +18,9 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
+import uniqby from 'lodash.uniqby';
 
-import { BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager, BibliographySource } from '../../api/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
@@ -82,7 +83,9 @@ function filterCitations(
   }
 
   // String for a search
-  return manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+  const searchResults = manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+  const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
+  return dedupedResults || [];
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
@@ -97,10 +100,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           manager.loadBibliography(ui, context.doc).then((bibliography) => {
 
             // Filter duplicate sources
-            const parsedIds = bibliography.sources.map(source => source.id);
-            const dedupedSources = bibliography.sources.filter((source, index) => {
-              return parsedIds.indexOf(source.id) === index;
-            });
+            const dedupedSources = uniqby(bibliography.sources, (source: BibliographySource) => source.id);
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
