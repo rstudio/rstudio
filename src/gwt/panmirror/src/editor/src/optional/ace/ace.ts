@@ -132,6 +132,11 @@ class CodeBlockNodeView implements NodeView {
       this.options.classes.forEach(className => this.dom.classList.add(className));
     }
 
+    // Style the first line differently if requested
+    if (options.firstLineMeta) {
+      this.dom.classList.add('pm-ace-first-line-meta');
+    }
+
     // add a chunk execution button if execution is supported
     this.runChunkToolbar = this.initRunChunkToolbar(ui);
     this.dom.append(this.runChunkToolbar);
