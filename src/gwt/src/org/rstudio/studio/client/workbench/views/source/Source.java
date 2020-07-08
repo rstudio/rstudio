@@ -273,7 +273,6 @@ public class Source implements InsertSourceHandler,
       void ensureVisible();
       HandlerRegistration addBeforeShowHandler(BeforeShowEvent.Handler handler);
       HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler);
-
    }
 
    @Inject

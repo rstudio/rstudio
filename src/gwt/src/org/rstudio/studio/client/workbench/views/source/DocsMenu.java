@@ -48,7 +48,6 @@ public class DocsMenu extends AppMenuBar
    {
       assert events_ == null : "DocsMenu.initialize was called more than once";
       events_ = events;
-
       events_.addHandler(
             DocTabActivatedEvent.TYPE,
             new DocTabActivatedEvent.Handler()
@@ -201,5 +200,4 @@ public class DocsMenu extends AppMenuBar
    private ArrayList<MenuItem> menuItems_ = new ArrayList<MenuItem>();
    private EventBus events_;
    private PopupPanel panel_;
-
 }
