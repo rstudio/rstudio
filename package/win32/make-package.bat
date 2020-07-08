@@ -39,8 +39,12 @@ if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
-call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -clean_env -no_logo || goto :error
-call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134.0 -no_logo || goto :error
+set VS_DEV_CMD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat"
+if not exist %VS_DEV_CMD% set VS_DEV_CMD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
+if not exist %VS_DEV_CMD% echo "Could not find VsDevCmd.bat. Please ensure Microsoft Visual Studio 2017 Build tools are installed." && exit /b 1
+
+call %VS_DEV_CMD% -clean_env -no_logo || goto :error
+call %VS_DEV_CMD% -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134.0 -no_logo || goto :error
 cmake -G "Ninja" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
