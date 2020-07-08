@@ -119,6 +119,7 @@ const excludedChars = [
   119247, 119248, 119249, 119250, 119251, 119252, 119253, 119254, 119255, 119256, 119257, 119258,
   119259, 119260, 119261, // musical symbols
   8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, // en/em and other multicharacter spaces
+  8232, 8233 // separator characters
 ];
 
 const excludedEmoji = [
@@ -596,7 +597,7 @@ function filterEmoji(filePath: string) {
   const allEmoji = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
   // Remove any emoji that don't render properly
-  const filteredEmoji: Array<{
+  const filteredEmoji: {
     emoji: string;
     description: string;
     category: string;
@@ -605,7 +606,7 @@ function filterEmoji(filePath: string) {
     unicode_version?: string;
     ios_version?: string;
     skin_tones?: boolean;
-  }> = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
+  }[] = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
 
   // Remove emoji metadata that we don't need
   const thinnedEmoji = filteredEmoji.map(emoji => {

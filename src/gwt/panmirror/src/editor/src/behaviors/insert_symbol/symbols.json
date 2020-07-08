@@ -11538,16 +11538,6 @@
         "codepoint": 8231
       },
       {
-        "name": "LINE SEPARATOR",
-        "value": " ",
-        "codepoint": 8232
-      },
-      {
-        "name": "PARAGRAPH SEPARATOR",
-        "value": " ",
-        "codepoint": 8233
-      },
-      {
         "name": "NARROW NO-BREAK SPACE",
         "value": " ",
         "codepoint": 8239
