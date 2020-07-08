@@ -19,10 +19,11 @@
 
 .ProseMirror .math[data-type='DisplayMath'] {
   white-space: pre-wrap;  
+  margin: 0.5em;
 }
 
-.ProseMirror .math[data-type='DisplayMath']:only-child,
-.ProseMirror .math[data-type='DisplayMath']:only-child .pm-math-mathjax  {
+.ProseMirror .math[data-type='DisplayMath'],
+.ProseMirror .math[data-type='DisplayMath'] .pm-math-mathjax  {
   width: 100%; 
 }
 
@@ -32,5 +33,5 @@
 }
 
 .pm-math-mathjax .MJXc-display {
-  margin: 0.5em;
+  margin: 0;
 }
