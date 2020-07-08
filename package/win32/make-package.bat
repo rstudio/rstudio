@@ -39,21 +39,26 @@ if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
-cmake -G"Visual Studio 15 2017 Win64" ^
-      -T host=x64 ^
+set VS_DEV_CMD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat"
+if not exist %VS_DEV_CMD% set VS_DEV_CMD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
+if not exist %VS_DEV_CMD% echo "Could not find VsDevCmd.bat. Please ensure Microsoft Visual Studio 2017 Build tools are installed." && exit /b 1
+
+call %VS_DEV_CMD% -clean_env -no_logo || goto :error
+call %VS_DEV_CMD% -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134.0 -no_logo || goto :error
+cmake -G "Ninja" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
+      -DCMAKE_C_COMPILER=cl ^
+      -DCMAKE_CXX_COMPILER=cl ^
       ..\..\.. || goto :error
-cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
 call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
 
 REM create packages
-set VSINSTALLDIR="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools"
-set VCINSTALLDIR="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC"
 cd "%BUILD_DIR%"
 if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
@@ -66,4 +71,3 @@ goto :EOF
 :error
 echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
-
