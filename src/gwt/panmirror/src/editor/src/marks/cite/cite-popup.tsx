@@ -71,6 +71,9 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
   });
 }
 
+const kCiteHangingIndentClass = 'hanging-indent';
+const kCiteLinkClassName = 'pm-cite-popup-link';
+
 function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string, url: string } | undefined) {
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -78,9 +81,17 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
   // remove id, class, and role from main div
   const rootDiv = doc.body.getElementsByClassName('references');
   if (rootDiv.length > 0) {
+    const classNames = rootDiv[0].getAttribute('class');
+    const hasHangingIndent = classNames?.match(`(^|\\s)${kCiteHangingIndentClass}($|\\s)`);
+
     rootDiv[0].removeAttribute('id');
     rootDiv[0].removeAttribute('role');
-    rootDiv[0].removeAttribute('class');
+
+    if (hasHangingIndent && hasHangingIndent.length > 0) {
+      rootDiv[0].setAttribute('class', kCiteHangingIndentClass);
+    } else {
+      rootDiv[0].removeAttribute('class');
+    }
   }
 
   const linkElements = doc.body.getElementsByTagName('a');
@@ -100,11 +111,10 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
       const linkElement = doc.createElement('a');
       linkElement.innerText = linkData.text;
       linkElement.setAttribute('href', linkData.url);
+      linkElement.setAttribute('class', kCiteLinkClassName);
       setLinkTarget(linkElement);
 
       // Append the link to the formatted source
-      const space = document.createTextNode(' ');
-      paragraph.appendChild(space);
       paragraph.appendChild(linkElement);
     }
   } else {

@@ -13,8 +13,11 @@
 }
 
 .pm-cite-popup a {
-  cursor: pointer !important;
-  margin-left: 4px;
+  cursor: pointer !important; 
+}
+
+.pm-cite-popup-link {
+  margin-left: 6px;
 }
 
 .pm-cite-popup-preview {
