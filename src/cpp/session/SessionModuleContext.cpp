@@ -1661,7 +1661,7 @@ SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
 
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asString(pathSEXP);
+   std::string path = r::sexp::asUtf8String(pathSEXP);
    FilePath resolved = module_context::resolveAliasedPath(path);
    r::sexp::Protect protect;
    return r::sexp::create(resolved.getAbsolutePath(), &protect);
@@ -1897,7 +1897,8 @@ bool isRScriptInPackageBuildTarget(const FilePath &filePath)
 SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
 {
    r::sexp::Protect protect;
-   FilePath filePath = module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
+   FilePath filePath = module_context::resolveAliasedPath(
+      r::sexp::asUtf8String(filePathSEXP));
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 

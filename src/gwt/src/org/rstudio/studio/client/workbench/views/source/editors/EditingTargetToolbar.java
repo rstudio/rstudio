@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,11 +26,17 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class EditingTargetToolbar extends Toolbar
 {
-   public EditingTargetToolbar(Commands commands, boolean includePopout)
+   public EditingTargetToolbar(Commands commands, boolean includePopout, SourceColumn column)
    {
       super("Code Editor Tab");
-      addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
+
+      // Buttons are unique to a source column so require SourceAppCommands
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      addLeftWidget(
+         mgr.getSourceCommand(commands.sourceNavigateBack(), column).createToolbarButton());
+      Widget forwardButton =
+         mgr.getSourceCommand(commands.sourceNavigateForward(), column).createToolbarButton();
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       addLeftWidget(forwardButton);
       addLeftSeparator();
@@ -35,11 +44,13 @@ public class EditingTargetToolbar extends Toolbar
       {
          if (SourceWindowManager.isMainSourceWindow())
          {
-            addLeftWidget(commands.popoutDoc().createToolbarButton());
+            addLeftWidget(
+               mgr.getSourceCommand(commands.popoutDoc(), column).createToolbarButton());
          }
          else
          {
-            addLeftWidget(commands.returnDocToMain().createToolbarButton());
+            addLeftWidget(
+               mgr.getSourceCommand(commands.returnDocToMain(), column).createToolbarButton());
          }
          addLeftSeparator();
       }
