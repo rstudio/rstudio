@@ -26,10 +26,10 @@
                   <g:FlowPanel styleName="{res.styles.diffViewOptions}">
                      <rs_widget:FormLabel ui:field="lblContext_" display="inline" text="Context" styleName="{res.styles.contextLabel}"/>
                      <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="0">
-                        <g:item value="5">5 line</g:item>
-                        <g:item value="10">10 line</g:item>
-                        <g:item value="25">25 line</g:item>
-                        <g:item value="50">50 line</g:item>
+                        <g:item value="5">5 lines</g:item>
+                        <g:item value="10">10 lines</g:item>
+                        <g:item value="25">25 lines</g:item>
+                        <g:item value="50">50 lines</g:item>
                         <g:item value="-1">All lines</g:item>
                      </g:ListBox>
                      <rs_widget:Toolbar ui:field="diffToolbar_"/>
