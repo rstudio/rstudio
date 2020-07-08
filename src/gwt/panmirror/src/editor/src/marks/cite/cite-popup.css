@@ -8,12 +8,13 @@
 }
 
 .pm-cite-popup p {
-  font-size: 0.8em;
+  font-size: 0.9em;
   margin-bottom: 0px !important;
 }
 
 .pm-cite-popup a {
   cursor: pointer !important;
+  margin-left: 4px;
 }
 
 .pm-cite-popup-preview {

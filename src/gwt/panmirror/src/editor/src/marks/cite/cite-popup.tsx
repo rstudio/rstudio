@@ -38,6 +38,7 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
     markType: schema.marks.cite_id,
     maxWidth: kMaxWidth,
     dismissOnEdit: true,
+    makeLinksAccessible: true,
     createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
       await bibMgr.loadBibliography(ui, view.state.doc);
 
@@ -74,6 +75,14 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
+  // remove id, class, and role from main div
+  const rootDiv = doc.body.getElementsByClassName('references');
+  if (rootDiv.length > 0) {
+    rootDiv[0].removeAttribute('id');
+    rootDiv[0].removeAttribute('role');
+    rootDiv[0].removeAttribute('class');
+  }
+
   const linkElements = doc.body.getElementsByTagName('a');
   if (linkElements.length === 0) {
 
@@ -108,7 +117,7 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
   }
 
   // Return the HTML omitting CR/LF - CR
-  return doc.body.outerHTML.replace(/\r?\n|\r/g, '');
+  return doc.body.innerHTML.replace(/\r?\n|\r/g, '');
 }
 
 function setLinkTarget(linkElement: HTMLAnchorElement) {
