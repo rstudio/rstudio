@@ -1146,6 +1146,34 @@ public class TextEditingTarget implements
         
       });
    }
+   
+   public void navigateToXRef(XRef xref, boolean forceVisualMode)
+   {
+      if (isVisualModeActivated() || forceVisualMode)
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToXRef(xref.getXrefString(), false);
+            });
+         });
+      }
+      else
+      {
+         String title = xref.getTitle();
+         for (int i = 0, n = docDisplay_.getRowCount(); i < n; i++)
+         {
+            String line = docDisplay_.getLine(i);
+            int index = line.indexOf(title);
+            if (index == -1)
+               continue;
+            
+            navigateToPosition(
+                  SourcePosition.create(i, index),
+                  false);
+         }
+      }
+      
+   }
 
    // the navigateToPosition methods are called by modules that explicitly
    // want the text editor active (e.g. debugging, find in files, etc.) so they

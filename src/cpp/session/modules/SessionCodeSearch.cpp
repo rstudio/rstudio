@@ -1424,14 +1424,16 @@ public:
               const std::string& extraInfo,
               const std::string& context,
               int line,
-              int column)
+              int column,
+              const json::Object& metadata = json::Object())
       : type_(type),
         name_(name),
         parentName_(parentName),
         extraInfo_(extraInfo),
         context_(context),
         line_(line),
-        column_(column)
+        column_(column),
+        metadata_(metadata)
    {
    }
 
@@ -1444,6 +1446,7 @@ public:
    const std::string& context() const { return context_; }
    int line() const { return line_; }
    int column() const { return column_; }
+   const json::Object& metadata() const { return metadata_; }
 
 private:
    Type type_;
@@ -1453,6 +1456,7 @@ private:
    std::string context_;
    int line_;
    int column_;
+   json::Object metadata_;
 };
 
 SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
@@ -1553,6 +1557,7 @@ void fillFromBookdownRefs(const std::string& term,
 {
    // retrieve refs for this project
    core::json::Value bookdownIndex = module_context::bookdownXRefIndex();
+   core::debug::print(bookdownIndex);
    
    // may be null if we have no bookdown refs (typically implies
    // we're not in a bookdown project)
@@ -1625,12 +1630,17 @@ void fillFromBookdownRefs(const std::string& term,
       if (!string_utils::isSubsequence(displayText, term, true))
          continue;
       
+      // bundle xref into source item
+      json::Object meta;
+      meta["xref"] = bookdownRef;
+      
       // we found a match: construct source item and add to list
       SourceItem item(
-               sourceType, title, "", type + ":" + id,
+               sourceType, title, "", "",
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
-               -1, -1);
+               -1, -1,
+               meta);
       
       pSourceItems->push_back(item);
    }
@@ -1768,6 +1778,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    src["context"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::context);
    src["line"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::line);
    src["column"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::column);
+   src["metadata"] = toJsonArray<json::Object>(srcItemsFiltered, &SourceItem::metadata);
    result["source_items"] = src;
 
    // set more available bit

@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.XRef;
+import org.rstudio.core.client.js.JsObject;
 
 
 public class SourceItem extends JavaScriptObject
@@ -65,12 +67,40 @@ public class SourceItem extends JavaScriptObject
    public final native int getColumn() /*-{
       return this.column;
    }-*/;
+   
+   public final native JsObject getMetadata() /*-{
+      return this.metadata || {};
+   }-*/;
+   
+   public final boolean isBookdownXref()
+   {
+      switch (getType())
+      {
+      case SECTION:
+      case FIGURE:
+      case TABLE:
+         return true;
+      default:
+         return false;
+      }
+   }
 
    public final CodeNavigationTarget toCodeNavigationTarget()
    {
-      return new CodeNavigationTarget(
-            getContext(),
-            FilePosition.create(getLine(), getColumn()),
-            getExtraInfo());
+      JsObject meta = getMetadata();
+      if (meta.hasKey("xref"))
+      {
+         XRef xref = meta.getObject("xref").cast();
+         return new CodeNavigationTarget(
+               getContext(),
+               FilePosition.create(getLine(), getColumn()),
+               xref);
+      }
+      else
+      {
+         return new CodeNavigationTarget(
+               getContext(),
+               FilePosition.create(getLine(), getColumn()));
+      }
    }
 }

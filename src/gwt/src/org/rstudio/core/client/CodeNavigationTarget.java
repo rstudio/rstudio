@@ -14,11 +14,13 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.js.JsObject;
+
 public class CodeNavigationTarget
 {
    public CodeNavigationTarget(String file,
                                FilePosition pos,
-                               String xref)
+                               XRef xref)
    {
       file_ = file;
       pos_  = pos;
@@ -27,35 +29,30 @@ public class CodeNavigationTarget
    
    public CodeNavigationTarget(String file)
    {
-      this(file, null, null);
-   }
-   
-   public CodeNavigationTarget(String file, String xref)
-   {
-      this(file, null, xref);
+      this(file, null, XRef.create());
    }
    
    public CodeNavigationTarget(String file, FilePosition pos)
    {
-      this(file, pos, null);
+      this(file, pos, XRef.create());
    }
    
-   public String getFile()
+   public final String getFile()
    {
       return file_;
    }
    
-   public FilePosition getPosition()
+   public final FilePosition getPosition()
    {
       return pos_;
    }
    
-   public String getXref()
+   public final XRef getXref()
    {
       return xref_;
    }
    
    private final String file_;
    private final FilePosition pos_;
-   private final String xref_;
+   private final XRef xref_;
 }

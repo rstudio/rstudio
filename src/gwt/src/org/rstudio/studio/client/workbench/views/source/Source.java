@@ -1816,8 +1816,8 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(final EditingTarget editor)
             {
-               TextEditingTarget target = (TextEditingTarget) editor;
-               target.navigateToXRef(event.getXRef());
+               TextEditingTarget target = (TextEditingTarget)editor;
+               target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
             }
       });
 

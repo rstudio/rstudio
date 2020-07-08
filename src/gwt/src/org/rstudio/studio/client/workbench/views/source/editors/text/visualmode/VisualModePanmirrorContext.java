@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -162,9 +163,11 @@ public class VisualModePanmirrorContext
    {
       PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
       uiDisplay.showContextMenu = showContextMenu;
-      uiDisplay.navigateToXRef = (file, xref) -> {
-         events_.fireEvent(new XRefNavigationEvent(FileSystemItem.createFile(file), xref));
+      uiDisplay.navigateToXRef = (XRef xref, FileSystemItem srcItem) ->
+      {
+         events_.fireEvent(new XRefNavigationEvent(xref, srcItem, true));
       };
+      
       return uiDisplay;
    }
    

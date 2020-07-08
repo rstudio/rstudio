@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -93,8 +94,8 @@ public class CodeSearch
             // create full file path and position
             String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
-            final FilePosition pos = target.getPosition();  
-            final String xref = target.getXref();
+            final FilePosition pos = target.getPosition();
+            final XRef xref = target.getXref();
             
             // fire editing event (delayed so the Enter keystroke 
             // doesn't get routed into the source editor)
@@ -106,9 +107,9 @@ public class CodeSearch
                if (observer_ != null)
                   observer_.onCompleted();
 
-               if (xref != null)
+               if (xref != null && xref.hasXrefString())
                {
-                  events_.fireEvent(new XRefNavigationEvent(srcItem, xref));
+                  events_.fireEvent(new XRefNavigationEvent(xref, srcItem, false));
                }
                else
                {
