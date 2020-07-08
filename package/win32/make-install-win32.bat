@@ -32,7 +32,7 @@ cmake -G "Ninja" ^
       -DCMAKE_C_COMPILER=cl.exe ^
       -DCMAKE_CXX_COMPILER=cl.exe ^
       ..\..\.. || goto :error
-cmake --build . %MAKEFLAGS% --config %CMAKE_BUILD_TYPE% --target install || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% --target install -- %MAKEFLAGS% || goto :error
 cd ..
 
 endlocal

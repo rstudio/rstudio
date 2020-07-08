@@ -52,7 +52,7 @@ cmake -G "Ninja" ^
       -DCMAKE_C_COMPILER=cl ^
       -DCMAKE_CXX_COMPILER=cl ^
       ..\..\.. || goto :error
-cmake --build . %MAKEFLAGS% --config %CMAKE_BUILD_TYPE% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
