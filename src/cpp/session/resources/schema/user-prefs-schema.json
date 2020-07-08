@@ -261,7 +261,7 @@
         "show_indent_guides": {
             "type": "boolean",
             "default": false,
-            "title": "Show invisible characters in editor",
+            "title": "Show indentation guides",
             "description": "Whether to show indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
