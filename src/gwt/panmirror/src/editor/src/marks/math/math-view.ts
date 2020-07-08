@@ -26,7 +26,6 @@ import { kSetMarkdownTransaction } from "../../api/transaction";
 
 import { MathType } from "./math";
 
-
 // TODO: arrow up / arrow down (esp. w/ display math)
 
 export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {

@@ -25,3 +25,7 @@
   display: inline-block;
   cursor: text;
 }
+
+.pm-math-mathjax .MJXc-display {
+  margin: 0;
+}
