@@ -22,12 +22,12 @@ import { getMarkRange, getMarkAttrs } from "../../api/mark";
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 import { EditorMath } from "../../api/math";
 import { EditorUI } from "../../api/ui";
+import { kSetMarkdownTransaction } from "../../api/transaction";
+
 import { MathType } from "./math";
 
 
 // TODO: arrow up / arrow down (esp. w/ display math)
-
-// TODO: trigger decorationsForDoc when doc is replaced from source
 
 export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
@@ -95,8 +95,13 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
 
-        // if one of the steps added or removed a mark of our type then rescan the doc.
-        if (
+        // replacing the entire editor triggers decorations
+        if (tr.getMeta(kSetMarkdownTransaction)) {
+
+          return decorationsForDoc(newState);
+
+          // if one of the steps added or removed a mark of our type then rescan the doc.
+        } else if (
           tr.steps.some(
             step =>
               (step instanceof AddMarkStep && (step as any).mark.type === schema.marks.math) ||
