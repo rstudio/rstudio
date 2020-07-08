@@ -27,7 +27,6 @@ import { MathType } from "./math";
 
 
 // TODO: cursor in math on "correct" side for arrow entry
-// TODO: cursor placement for mouse click
 // TODO: arrow up / arrow down (esp. w/ display math)
 
 
