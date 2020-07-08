@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
@@ -132,7 +133,8 @@ public interface EditingTarget extends IsWidget,
     */
    void revertChanges(Command onCompleted);
 
-   void initialize(SourceDocument document,
+   void initialize(SourceColumn column,
+                   SourceDocument document,
                    FileSystemContext fileContext,
                    FileType type,
                    EditingTargetNameProvider defaultNameProvider);

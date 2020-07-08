@@ -83,6 +83,7 @@ public class SourcePane extends LazyPanel implements Display,
       tabOverflowPopup_ = new TabOverflowPopupPanel();
       tabOverflowPopup_.addCloseHandler(new CloseHandler<PopupPanel>()
       {
+         @Override
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
             manageChevronVisibility();
@@ -111,6 +112,7 @@ public class SourcePane extends LazyPanel implements Display,
       Scheduler.get().scheduleDeferred(() -> onResize());
    }
 
+   @Override
    public void addTab(Widget widget,
                       FileIcon icon,
                       String docId,
@@ -124,21 +126,25 @@ public class SourcePane extends LazyPanel implements Display,
          tabPanel_.selectTab(widget, true /* focus newly added tab */);
    }
 
+   @Override
    public int getTabCount()
    {
       return tabPanel_.getWidgetCount();
    }
 
+   @Override
    public int getActiveTabIndex()
    {
       return tabPanel_.getSelectedIndex();
    }
 
+   @Override
    public void selectTab(int tabIndex)
    {
       tabPanel_.selectTab(tabIndex);
    }
 
+   @Override
    public void selectTab(Widget child)
    {
       tabPanel_.selectTab(child);
@@ -172,26 +178,25 @@ public class SourcePane extends LazyPanel implements Display,
          tab.removeStyleName(ThemeStyles.INSTANCE.dirtyTab());
    }
 
-   public void closeTab(boolean interactive)
-   {
-      closeTab(getActiveTabIndex(), interactive, null);
-   }
-
+   @Override
    public void closeTab(Widget child, boolean interactive)
    {
       closeTab(child, interactive, null);
    }
 
+   @Override
    public void closeTab(Widget child, boolean interactive, Command onClosed)
    {
       closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
    }
 
+   @Override
    public void closeTab(int index, boolean interactive)
    {
       closeTab(index, interactive, null);
    }
 
+   @Override
    public void closeTab(int index, boolean interactive, Command onClosed)
    {
       if (interactive)
@@ -213,18 +218,21 @@ public class SourcePane extends LazyPanel implements Display,
                                onCancelled).showModal();
    }
 
+   @Override
    public void manageChevronVisibility()
    {
       int tabsWidth = tabPanel_.getTabsEffectiveWidth();
       setOverflowVisible(tabsWidth > getOffsetWidth() - 50);
    }
 
+   @Override
    public void showOverflowPopup()
    {
       setOverflowVisible(true);
       tabOverflowPopup_.showRelativeTo(chevron_);
    }
 
+   @Override
    public void ensureVisible()
    {
       fireEvent(new EnsureVisibleEvent(true));
@@ -236,12 +244,14 @@ public class SourcePane extends LazyPanel implements Display,
       return this;
    }
 
+   @Override
    public void onResize()
    {
       panel_.onResize();
       manageChevronVisibility();
    }
 
+   @Override
    public void onBeforeShow()
    {
       for (Widget w : panel_)
@@ -251,6 +261,7 @@ public class SourcePane extends LazyPanel implements Display,
       fireEvent(new BeforeShowEvent());
    }
 
+   @Override
    public void onVisibilityChanged(boolean visible)
    {
       if (getActiveTabIndex() >= 0)
@@ -261,51 +272,61 @@ public class SourcePane extends LazyPanel implements Display,
       }
    }
 
+   @Override
    public void cancelTabDrag()
    {
       tabPanel_.cancelTabDrag();
    }
 
+   @Override
    public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler)
    {
       return tabPanel_.addBeforeSelectionHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addBeforeShowHandler(BeforeShowEvent.Handler handler)
    {
       return addHandler(handler, BeforeShowEvent.TYPE);
    }
 
+   @Override
    public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
+   @Override
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
+   @Override
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
    {
       return tabPanel_.addSelectionHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addTabClosingHandler(TabClosingEvent.Handler handler)
    {
       return tabPanel_.addTabClosingHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addTabCloseHandler(TabCloseEvent.Handler handler)
    {
       return tabPanel_.addTabCloseHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addTabClosedHandler(TabClosedEvent.Handler handler)
    {
       return tabPanel_.addTabClosedHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addTabReorderHandler(TabReorderEvent.Handler handler)
    {
       return tabPanel_.addTabReorderHandler(handler);

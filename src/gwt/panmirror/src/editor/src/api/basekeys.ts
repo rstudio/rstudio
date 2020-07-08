@@ -86,10 +86,6 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Delete, command: joinForward },
     { key: BaseKey.Delete, command: deleteSelection },
 
-    // base tab key behavior (ignore)
-    { key: BaseKey.Tab, command: ignoreKey },
-    { key: BaseKey.ShiftTab, command: ignoreKey },
-
     // base home/end key behaviors (Mac desktop default behavior advances to beginning/end of
     // document, so we provide our own implementation rather than relying on contentEditable)
     { key: BaseKey.Home, command: homeKey },

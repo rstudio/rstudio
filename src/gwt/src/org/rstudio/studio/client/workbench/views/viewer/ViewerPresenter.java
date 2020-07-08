@@ -24,8 +24,8 @@ import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.EnabledChangedEvent;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -138,11 +138,11 @@ public class ViewerPresenter extends BasePresenter
       commands_.interruptR().addEnabledChangedHandler(
                                                 new EnabledChangedHandler() {
          @Override
-         public void onEnabledChanged(AppCommand command)
+         public void onEnabledChanged(EnabledChangedEvent event)
          {
-            commands_.viewerStop().setVisible(command.isEnabled());
-            commands_.viewerClear().setVisible(!command.isEnabled());
-            commands_.viewerClearAll().setVisible(!command.isEnabled());
+            commands_.viewerStop().setVisible(event.getCommand().isEnabled());
+            commands_.viewerClear().setVisible(!event.getCommand().isEnabled());
+            commands_.viewerClearAll().setVisible(!event.getCommand().isEnabled());
          }
       });
       

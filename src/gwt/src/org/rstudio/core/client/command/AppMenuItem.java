@@ -30,6 +30,14 @@ public class AppMenuItem extends MenuItem
       setTitle(cmd_.getDesc());
    }
 
+   public AppMenuItem(AppCommand cmd, boolean mainMenu, ScheduledCommand cmdWrapper)
+   {
+      super(cmd.getMenuHTML(mainMenu), true, cmd.getMenuRole(), cmd.isChecked(), cmdWrapper);
+      cmd_ = cmd;
+      mainMenu_ = mainMenu;
+      setTitle(cmd.getDesc());
+   }
+
    @Override
    public ScheduledCommand getScheduledCommand()
    {

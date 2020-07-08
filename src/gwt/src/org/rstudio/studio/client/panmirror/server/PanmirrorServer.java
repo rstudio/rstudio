@@ -28,9 +28,11 @@ public class PanmirrorServer
       this.pandoc = new PanmirrorPandocServer();
       this.crossref = new PanmirrorCrossrefServer();
       this.xref = new PanmirrorXRefServer();
+      this.doi = new PanmirrorDOIServer();
    }
    
    public PanmirrorPandocServer pandoc;
    public PanmirrorCrossrefServer crossref;
    public PanmirrorXRefServer xref;
+   public PanmirrorDOIServer doi;
 }

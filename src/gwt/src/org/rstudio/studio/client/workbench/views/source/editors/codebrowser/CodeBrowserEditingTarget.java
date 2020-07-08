@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -155,7 +156,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public void initialize(SourceDocument document,
+   public void initialize(SourceColumn column,
+                          SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           EditingTargetNameProvider defaultNameProvider)
@@ -163,6 +165,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       doc_ = document;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId());
       view_ = new CodeBrowserEditingTargetWidget(commands_,
+                                                 column,
                                                  globalDisplay_,
                                                  events_,
                                                  server_,

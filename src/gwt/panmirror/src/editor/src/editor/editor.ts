@@ -22,12 +22,12 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
+import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { findTopLevelBodyNodes } from '../api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocServer, PandocWriterOptions } from '../api/pandoc';
+import { PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
@@ -68,11 +68,9 @@ import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
-import { CrossrefServer } from '../api/crossref';
-import { XRefServer } from '../api/xref';
+import { EditorServer } from '../api/server';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
-
 import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,
@@ -120,12 +118,6 @@ export interface EditorContext {
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
-}
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
 }
 
 export interface EditorHooks {
@@ -177,11 +169,16 @@ export interface UIToolsSource {
   diffChars(from: string, to: string, timeout: number): EditorChange[];
 }
 
+export interface UIToolsCitation {
+  citeUI(citeProps: InsertCiteProps): InsertCiteUI;
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
   public readonly source: UIToolsSource;
+  public readonly citation: UIToolsCitation;
 
   constructor() {
     this.attr = {
@@ -203,6 +200,10 @@ export class UITools {
 
     this.source = {
       diffChars,
+    };
+
+    this.citation = {
+      citeUI,
     };
   }
 }

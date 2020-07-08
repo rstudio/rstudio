@@ -73,6 +73,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -96,7 +98,8 @@ public class TextEditingTargetWidget
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
-                                  Session session)
+                                  Session session,
+                                  SourceColumn column)
    {
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -104,6 +107,7 @@ public class TextEditingTargetWidget
       userPrefs_ = userPrefs;
       userState_ = userState;
       session_ = session;
+      column_ = column;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
       extendedType_ = extendedType;
@@ -176,7 +180,7 @@ public class TextEditingTargetWidget
          }
       );
 
-      // setup editign container (only activate editor if we are not in visual mode)
+      // setup editing container (only activate editor if we are not in visual mode)
       editorContainer_ = new TextEditorContainer(sourceEditor_);
       if (!isVisualMode())
         editorContainer_.activateEditor();
@@ -310,23 +314,28 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
 
-      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
+      // Buttons are unique to a source column so require SourceAppCommands
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands_.saveSourceDoc(), column_).createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands_.checkSpelling(), column_).createToolbarButton());
 
       toolbar.addLeftWidget(findReplaceButton_ = findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
 
       notebookSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(notebookToolbarButton_ =
-            commands_.compileNotebook().createToolbarButton());
+         mgr.getSourceCommand(commands_.compileNotebook(), column_).createToolbarButton());
 
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META :
          KeyboardShortcut.CTRL;
@@ -339,8 +348,10 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
-      knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
+      toolbar.addLeftWidget(previewHTMLButton_ =
+         mgr.getSourceCommand(commands_.previewHTML(), column_).createToolbarButton());
+      knitDocumentButton_ =
+         mgr.getSourceCommand(commands_.knitDocument(), column_).createToolbarButton();
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
 
@@ -353,7 +364,8 @@ public class TextEditingTargetWidget
          toolbar.addLeftWidget(shinyLaunchButton_);
       }
 
-      toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
+      toolbar.addLeftWidget(compilePdfButton_ =
+         mgr.getSourceCommand(commands_.compilePDF(), column_).createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton("Knit options", false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
@@ -361,15 +373,19 @@ public class TextEditingTargetWidget
       runDocumentMenuButton_ = new ToolbarPopupMenuButton("Run document options", false, true);
       addClearKnitrCacheMenu(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
-      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");
+      runDocumentMenuButton_.addMenuItem(mgr.getSourceCommand(commands_.clearPrerenderedOutput(),
+         column_).createMenuItem(), "");
       toolbar.addLeftWidget(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
-      runDocumentMenuButton_.addMenuItem(commands_.shinyRecordTest().createMenuItem(false), "");
-      runDocumentMenuButton_.addMenuItem(commands_.shinyRunAllTests().createMenuItem(false), "");
+      runDocumentMenuButton_.addMenuItem(
+         mgr.getSourceCommand(commands_.shinyRecordTest(), column_).createMenuItem(), "");
+      runDocumentMenuButton_.addMenuItem(
+         mgr.getSourceCommand(commands_.shinyRunAllTests(), column_).createMenuItem(), "");
       runDocumentMenuButton_.setVisible(false);
 
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
-      rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      rmdOptionsMenu.addItem(
+         mgr.getSourceCommand(commands_.editRmdFormatOptions(), column_).createMenuItem());
 
       rmdOptionsButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
@@ -381,19 +397,26 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(rmdOptionsButton_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands_.synctexSearch(), column_).createToolbarButton());
 
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
-      insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkR(), column_).createMenuItem());
       insertChunksMenu.addSeparator();
 
-      insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
-      insertChunksMenu.addItem(commands_.insertChunkD3().createMenuItem(false));
-      insertChunksMenu.addItem(commands_.insertChunkPython().createMenuItem(false));
-      insertChunksMenu.addItem(commands_.insertChunkRCPP().createMenuItem(false));
-      insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
-      insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkBash(), column_).createMenuItem());
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkD3(), column_).createMenuItem());
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkPython(), column_).createMenuItem());
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkRCPP(), column_).createMenuItem());
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkSQL(), column_).createMenuItem());
+      insertChunksMenu.addItem(
+         mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());
 
       insertChunkMenu_ = new ToolbarMenuButton(
                        "Insert",
@@ -405,14 +428,19 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(insertChunkMenu_);
 
       // create button that just runs default chunk insertion
-      insertChunkButton_ = commands_.insertChunk().createToolbarButton(false);
+      insertChunkButton_ = 
+         mgr.getSourceCommand(commands_.insertChunk(), column_).createToolbarButton();
       toolbar.addRightWidget(insertChunkButton_);
 
-      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
+      toolbar.addRightWidget(runButton_ = 
+         mgr.getSourceCommand(commands_.executeCode(), column_).createToolbarButton());
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
-      toolbar.addRightWidget(goToPrevButton_ = commands_.goToPrevSection().createToolbarButton(false));
-      toolbar.addRightWidget(goToNextButton_ = commands_.goToNextSection().createToolbarButton(false));
+      toolbar.addRightWidget(runLastButton_ = 
+         mgr.getSourceCommand(commands_.executeLastCode(), column_).createToolbarButton());
+      toolbar.addRightWidget(goToPrevButton_ = 
+         mgr.getSourceCommand(commands_.goToPrevSection(), column_).createToolbarButton());
+      toolbar.addRightWidget(goToNextButton_ = 
+         mgr.getSourceCommand(commands_.goToNextSection(), column_).createToolbarButton());
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document";
 
@@ -428,10 +456,12 @@ public class TextEditingTargetWidget
             });
       toolbar.addRightWidget(sourceButton_);
 
-      previewJsButton_ = commands_.previewJS().createToolbarButton(false);
+      previewJsButton_ = 
+         mgr.getSourceCommand(commands_.previewJS(), column_).createToolbarButton();
       toolbar.addRightWidget(previewJsButton_);
 
-      previewSqlButton_ = commands_.previewSql().createToolbarButton(false);
+      previewSqlButton_ = 
+         mgr.getSourceCommand(commands_.previewSql(), column_).createToolbarButton();
       toolbar.addRightWidget(previewSqlButton_);
 
       createTestToolbarButtons(toolbar);
@@ -445,11 +475,15 @@ public class TextEditingTargetWidget
             });
 
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
-      sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
-      sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      sourceMenu.addItem(
+         mgr.getSourceCommand(commands_.sourceActiveDocument(), column_).createMenuItem());
+      sourceMenu.addItem(
+         mgr.getSourceCommand(commands_.sourceActiveDocumentWithEcho(), column_).createMenuItem());
       sourceMenu.addSeparator();
-      sourceMenu.addItem(commands_.sourceAsLauncherJob().createMenuItem(false));
-      sourceMenu.addItem(commands_.sourceAsJob().createMenuItem(false));
+      sourceMenu.addItem(
+         mgr.getSourceCommand(commands_.sourceAsLauncherJob(), column_).createMenuItem());
+      sourceMenu.addItem(
+         mgr.getSourceCommand(commands_.sourceAsJob(), column_).createMenuItem());
 
       sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
@@ -457,28 +491,37 @@ public class TextEditingTargetWidget
       //toolbar.addRightSeparator();
 
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
-      chunksMenu.addItem(commands_.executeCode().createMenuItem(false));
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeCode(), column_).createMenuItem());
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
-      chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeCurrentChunk(), column_).createMenuItem());
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeNextChunk(), column_).createMenuItem());
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeSetupChunk(), column_).createMenuItem());
       chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<>(
             userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically",
             userPrefs_));
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
-      chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executePreviousChunks(), column_).createMenuItem());
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeSubsequentChunks(), column_).createMenuItem());
       if (userPrefs_.rmdChunkOutputInline().getValue())
       {
          chunksMenu.addSeparator();
          chunksMenu.addItem(
-               commands_.restartRRunAllChunks().createMenuItem(false));
+               
+         mgr.getSourceCommand(commands_.restartRRunAllChunks(), column_).createMenuItem());
          chunksMenu.addItem(
-               commands_.restartRClearOutput().createMenuItem(false));
+               
+         mgr.getSourceCommand(commands_.restartRClearOutput(), column_).createMenuItem());
       }
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
+      chunksMenu.addItem(
+         mgr.getSourceCommand(commands_.executeAllCode(), column_).createMenuItem());
       chunksButton_ = new ToolbarMenuButton(
                        "Run",
                        ToolbarButton.NoTitle,
@@ -695,30 +738,46 @@ public class TextEditingTargetWidget
    {
       if (codeTransform_ == null)
       {
+         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
          ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
-         menu.addItem(commands_.codeCompletion().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.codeCompletion(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.goToHelp().createMenuItem(false));
-         menu.addItem(commands_.goToDefinition().createMenuItem(false));
-         menu.addItem(commands_.findUsages().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.goToHelp(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.goToDefinition(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.findUsages(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.extractFunction().createMenuItem(false));
-         menu.addItem(commands_.extractLocalVariable().createMenuItem(false));
-         menu.addItem(commands_.renameInScope().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.extractFunction(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.extractLocalVariable(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.renameInScope(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.reflowComment().createMenuItem(false));
-         menu.addItem(commands_.commentUncomment().createMenuItem(false));
-         menu.addItem(commands_.insertRoxygenSkeleton().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.reflowComment(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.commentUncomment(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.insertRoxygenSkeleton(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.reindent().createMenuItem(false));
-         menu.addItem(commands_.reformatCode().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.reindent(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.reformatCode(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.showDiagnosticsActiveDocument().createMenuItem(false));
-         menu.addItem(commands_.showDiagnosticsProject().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.showDiagnosticsActiveDocument(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.showDiagnosticsProject(), column_).createMenuItem());
          menu.addSeparator();
-         menu.addItem(commands_.profileCode().createMenuItem(false));
+         menu.addItem(
+         mgr.getSourceCommand(commands_.profileCode(), column_).createMenuItem());
          codeTransform_ = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       }
 
@@ -1570,19 +1629,19 @@ public class TextEditingTargetWidget
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UserPrefMenuItem<>(
-               userPrefs_.rmdViewerType(),
-               UserPrefs.RMD_VIEWER_TYPE_PANE,
-               "Preview in Viewer Pane", userPrefs_);
+            userPrefs_.rmdViewerType(),
+            UserPrefs.RMD_VIEWER_TYPE_PANE,
+            "Preview in Viewer Pane", userPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
          rmdViewerWindowMenuItem_ = new UserPrefMenuItem<>(
-               userPrefs_.rmdViewerType(),
-               UserPrefs.RMD_VIEWER_TYPE_WINDOW,
-               "Preview in Window", userPrefs_);
+            userPrefs_.rmdViewerType(),
+            UserPrefs.RMD_VIEWER_TYPE_WINDOW,
+            "Preview in Window", userPrefs_);
       if (rmdViewerNoPreviewMenuItem_ == null)
          rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<>(
-               userPrefs_.rmdViewerType(),
-               UserPrefs.RMD_VIEWER_TYPE_NONE,
-               "(No Preview)", userPrefs_);
+            userPrefs_.rmdViewerType(),
+            UserPrefs.RMD_VIEWER_TYPE_NONE,
+            "(No Preview)", userPrefs_);
 
 
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
@@ -1596,9 +1655,11 @@ public class TextEditingTargetWidget
             visualMode,
             TextEditingTarget.RMD_VISUAL_MODE,
             DocUpdateSentinel.PROPERTY_TRUE
-         ) {
+         )
+         {
             @Override
-            public String getShortcut() {
+            public String getShortcut()
+            {
                return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
             }
 
@@ -1622,42 +1683,47 @@ public class TextEditingTargetWidget
       {
          String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
          menu.addItem(new DocPropMenuItem(
-               "Preview Images and Equations", docUpdateSentinel_,
-               docUpdateSentinel_.getBoolProperty(
-                  TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-                  pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
+            "Preview Images and Equations", docUpdateSentinel_,
+            docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-               DocUpdateSentinel.PROPERTY_TRUE));
+               pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
+            DocUpdateSentinel.PROPERTY_TRUE));
          menu.addItem(new DocPropMenuItem(
-               "Show Previews Inline", docUpdateSentinel_,
-               docUpdateSentinel_.getBoolProperty(
-                  TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
-                    pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
+            "Show Previews Inline", docUpdateSentinel_,
+            docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
-               DocUpdateSentinel.PROPERTY_TRUE));
+               pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
+            DocUpdateSentinel.PROPERTY_TRUE));
          menu.addSeparator();
 
          if (!isShinyFile)
          {
-           boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
-           menu.addItem(new DocPropMenuItem(
-                 "Chunk Output Inline", docUpdateSentinel_,
-                 inline,
-                 TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-                 TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-           menu.addItem(new DocPropMenuItem(
-                 "Chunk Output in Console", docUpdateSentinel_,
-                 !inline,
-                 TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-                 TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+            boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
+            menu.addItem(new DocPropMenuItem(
+               "Chunk Output Inline", docUpdateSentinel_,
+               inline,
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+            menu.addItem(new DocPropMenuItem(
+               "Chunk Output in Console", docUpdateSentinel_,
+               !inline,
+               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
 
             menu.addSeparator();
 
-            menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
-            menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
+            SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+            menu.addItem(
+               mgr.getSourceCommand(commands_.notebookExpandAllOutput(), column_).createMenuItem());
+            menu.addItem(
+               mgr.getSourceCommand(commands_.notebookCollapseAllOutput(), column_).createMenuItem());
             menu.addSeparator();
-            menu.addItem(commands_.notebookClearOutput().createMenuItem(false));
-            menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
+            menu.addItem(
+               mgr.getSourceCommand(commands_.notebookClearOutput(), column_).createMenuItem());
+            menu.addItem(
+               mgr.getSourceCommand(commands_.notebookClearAllOutput(), column_).createMenuItem());
             menu.addSeparator();
          }
 
@@ -1665,7 +1731,11 @@ public class TextEditingTargetWidget
       }
 
       if (showOutputOptions)
-         menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      {
+         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+         menu.addItem(
+            mgr.getSourceCommand(commands_.editRmdFormatOptions(), column_).createMenuItem());
+      }
    }
 
    @Override
@@ -1789,6 +1859,7 @@ public class TextEditingTargetWidget
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private final ShinyTestPopupMenu shinyTestMenu_;
    private final PlumberViewerTypePopupMenu plumberViewerMenu_;
+   private SourceColumn column_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;

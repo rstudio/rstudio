@@ -126,7 +126,7 @@ void setProcessErrorResponse(const core::system::ProcessResult& result,
                              core::json::JsonRpcResponse* pResponse)
 {
    Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, location);
-   pResponse->setError(error, result.stdErr);
+   pResponse->setError(error, json::Value(result.stdErr), true);
 }
 
 bool parseJsonRpcRequestForMethod(const std::string& input, 
