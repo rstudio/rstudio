@@ -19,9 +19,11 @@ import { EditorView } from 'prosemirror-view';
 
 import {
   CompletionHandler,
-  CompletionResult,
   selectionAllowsCompletions,
   kCompletionDefaultMaxVisible,
+  completionsShareScope,
+  performCompletionReplacement,
+  CompletionResult,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -30,7 +32,15 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
-import { kInsertCompletionTransaction } from '../../api/transaction';
+import { kInsertCompletionTransaction, kPasteTransaction } from '../../api/transaction';
+
+interface CompletionState {
+  handler?: CompletionHandler;
+  result?: CompletionResult;
+  prevToken?: string;
+  isPaste?: boolean;
+}
+
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -41,12 +51,6 @@ export function completionExtension(
   return {
     plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
-}
-
-interface CompletionState {
-  handler?: CompletionHandler;
-  result?: CompletionResult;
-  prevToken?: string;
 }
 
 const key = new PluginKey<CompletionState>('completion');
@@ -113,6 +117,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
+          const isPaste = tr.getMeta(kPasteTransaction) === true;
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
             // first check if the handler is enabled (null means use inputRuleFilter)
@@ -121,12 +127,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
               if (result) {
                 // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
-                if (handler.id === prevState.handler?.id) {
-                  // suppress this handler if the last transaction was a completion result
-                  if (tr.getMeta(kInsertCompletionTransaction)) {
-                    continue;
-                  }
 
+                // If this completion shares scope with the previous completion
+                // and this is a completion transaction, skip
+                if (tr.getMeta(kInsertCompletionTransaction) && completionsShareScope(handler, prevState.handler)) {
+                  continue;
+                }
+
+                if (handler.id === prevState.handler?.id) {
                   // pass the prevToken on if the completion was for the same position
                   if (result.pos === prevState.result?.pos) {
                     prevToken = prevState.result.token;
@@ -134,7 +142,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                 }
 
                 // return state
-                return { handler, result, prevToken };
+                return { handler, result, prevToken, isPaste };
               }
             }
           }
@@ -265,7 +273,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       const requestAllCompletions = async () => {
 
         // fetch completions
-        const completions = await state.result!.completions(view.state);
+        const completions = await state.result!.completions(view.state, { isPaste: state.isPaste === true });
 
         // if we don't have a handler or result then return
         if (!state.handler || !state.result) {
@@ -381,30 +389,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
         // get replacement from handler
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
         if (replacement) {
-          // create transaction
           const tr = view.state.tr;
-
-          // set selection to area we will be replacing
-          tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-
-          // ensure we have a node
-          if (replacement instanceof ProsemirrorNode) {
-            // combine it's marks w/ whatever is active at the selection
-            const marks = view.state.selection.$head.marks();
-
-            // set selection and replace it
-            tr.replaceSelectionWith(replacement, false);
-
-            // propapate marks
-            marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
-          } else {
-            tr.insertText(replacement);
-          }
-
-          // mark the transaction as an completion insertin
-          tr.setMeta(kInsertCompletionTransaction, true);
-
-          // dispatch
+          performCompletionReplacement(tr, result.pos, replacement);
           view.dispatch(tr);
         }
       }

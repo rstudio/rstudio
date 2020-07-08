@@ -196,6 +196,7 @@ set (SESSION_SOURCE_FILES
    modules/panmirror/SessionPanmirror.cpp
    modules/panmirror/SessionPanmirrorBibliography.cpp
    modules/panmirror/SessionPanmirrorCrossref.cpp
+   modules/panmirror/SessionPanmirrorDOI.cpp
    modules/panmirror/SessionPanmirrorPandoc.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
@@ -486,6 +487,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
    # Lua resources
    file(GLOB LUA_RESOURCE_FILES "resources/*.lua")
    install(FILES ${LUA_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # CSL resources
+   file(GLOB CSL_RESOURCE_FILES "resources/*.csl")
+   install(FILES ${CSL_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"

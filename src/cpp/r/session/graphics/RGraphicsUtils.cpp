@@ -44,7 +44,7 @@ namespace graphics {
 
 namespace {
 
-int s_compatibleEngineVersion = 12;
+int s_compatibleEngineVersion = 13;
 
 #ifdef __APPLE__
 class QuartzStatus : boost::noncopyable

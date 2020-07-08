@@ -18,10 +18,11 @@ import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
-
+import { CiteField } from './cite';
+import { CSL } from './csl';
+import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
-import { SkinTone } from './emoji';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -45,6 +46,7 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
+  insertCite: InsertCiteFn;
 }
 
 export interface EditorUIContext {
@@ -139,6 +141,8 @@ export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) =
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
+export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
+
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -207,6 +211,25 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
+}
+
+export interface InsertCiteProps {
+  doi: string;
+  existingIds: string[];
+  bibliographyFiles: string[];
+  csl?: CSL;
+  citeUI?: InsertCiteUI;
+}
+
+export interface InsertCiteUI {
+  suggestedId: string;
+  previewFields: CiteField[];
+}
+
+export interface InsertCiteResult {
+  id: string;
+  bibliographyFile: string;
+  csl: CSL;
 }
 
 export interface RawFormatProps {

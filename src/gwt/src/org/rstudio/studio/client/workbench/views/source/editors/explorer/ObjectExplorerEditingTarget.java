@@ -168,7 +168,7 @@ public class ObjectExplorerEditingTarget
          view_ = null;
       }
       
-      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_);
+      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_, column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }

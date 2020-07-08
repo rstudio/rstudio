@@ -18,7 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
-import { ExtensionContext } from '../../api/extension';
+import { ExtensionContext, Extension } from '../../api/extension';
 import { PandocOutput, PandocTokenType } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -29,7 +29,7 @@ import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 import { yamlMetadataBlockCapsuleFilter } from './yaml_metadata-capsule';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
-const extension = (context: ExtensionContext) => {
+const extension = (context: ExtensionContext): Extension => {
   const { ui } = context;
 
   return {

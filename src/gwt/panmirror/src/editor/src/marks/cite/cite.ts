@@ -13,27 +13,37 @@
  *
  */
 
-import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { EditorState, Transaction, Selection } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
+import { EditorView } from 'prosemirror-view';
 
-import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
+import { fragmentText } from '../../api/fragment';
+import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
+import { MarkTransaction } from '../../api/transaction';
+import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
+import { EditorUI, InsertCiteProps } from '../../api/ui';
+import { CSL, sanitizeForCiteproc } from '../../api/csl';
+import { suggestCiteId, formatForPreview } from '../../api/cite';
+import { performCompletionReplacement } from '../../api/completion';
 
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { fragmentText } from '../../api/fragment';
 import { InsertCitationCommand } from './cite-commands';
-import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
-import { MarkTransaction } from '../../api/transaction';
+import { citationDoiCompletionHandler } from './cite-completion_doi';
+import { doiFromSlice } from './cite-doi';
+import { citePopupPlugin } from './cite-popup';
 
 const kCiteCitationsIndex = 0;
 
-const kCiteIdPrefixPattern = '-?@';
+export const kCiteIdPrefixPattern = '-?@';
 
 const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/]*';
+const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
+
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
@@ -44,7 +54,7 @@ const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOption
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern})`);
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -65,6 +75,8 @@ interface Citation {
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
+
+  const mgr = new BibliographyManager(context.server.pandoc);
 
   if (!pandocExtensions.citations) {
     return null;
@@ -202,13 +214,75 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
     },
 
-    completionHandlers: () => [citationCompletionHandler(context.ui, context.server.pandoc)],
+    completionHandlers: () => [
+      citationDoiCompletionHandler(context.ui, mgr, context.server),
+      citationCompletionHandler(context.ui, mgr),
+    ],
 
     plugins: (schema: Schema) => {
-      return [citeHighlightPlugin(schema)];
+      return [
+        new Plugin(
+          {
+            key: new PluginKey('paste_cite_doi'),
+            props: {
+              handlePaste: handlePaste(ui, mgr, context.server.pandoc),
+            }
+          }),
+        citeHighlightPlugin(schema),
+        citePopupPlugin(schema, ui, mgr, context.server.pandoc)];
     },
   };
 };
+
+function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: PandocServer) {
+  return (view: EditorView, _event: Event, slice: Slice) => {
+
+    const schema = view.state.schema;
+    if (markIsActive(view.state, schema.marks.cite)) {
+      // This is a DOI
+      const parsedDOI = doiFromSlice(view.state, slice);
+      if (parsedDOI) {
+
+        // First check the local bibliography- if we already have this DOI
+        // we can just paste the DOI and allow the completion to handle it
+        const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
+
+        // Insert the DOI text as a placeholder
+        const tr = view.state.tr;
+        tr.setMeta('paste', true);
+        tr.setMeta('uiEvent', 'paste');
+
+        const doiText = schema.text(parsedDOI.token);
+        tr.replaceSelectionWith(doiText, true);
+        view.dispatch(tr);
+
+        if (!source) {
+          insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
+        }
+        return true;
+
+      } else {
+        // This is just content, accept any text and try pasting that
+        let text = '';
+        slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
+        if (text.length > 0) {
+          const tr = view.state.tr;
+          tr.setMeta('paste', true);
+          tr.setMeta('uiEvent', 'paste');
+          tr.replaceSelectionWith(schema.text(text));
+          view.dispatch(tr);
+          return true;
+        } else {
+          // There wasn't any text, just allow the paste to be handled by anyone else
+          return false;
+        }
+      }
+    } else {
+      // We aren't in a citation so let someone else handle the paste
+      return false;
+    }
+  };
+}
 
 // automatically create a citation given certain input
 function insertCiteInputRule(schema: Schema) {
@@ -463,6 +537,126 @@ function editingCiteIdLength(text: string) {
     return match[0].length;
   } else {
     return 0;
+  }
+}
+
+export interface ParsedCitation {
+  token: string;
+  pos: number;
+  offset: number;
+}
+
+export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
+  // return completions only if we are inside a cite id mark
+  const markType = context.doc.type.schema.marks.cite_id;
+  if (!markIsActive(context, markType)) {
+    return null;
+  }
+
+  const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
+  if (range) {
+    const citeText = context.doc.textBetween(range.from, range.to);
+    const match = citeText.match(kEditingCiteIdRegEx);
+    if (match) {
+      const token = match[2];
+      const pos = range.from + match[1].length;
+      return { token, pos, offset: -match[1].length };
+    }
+  }
+
+  return null;
+}
+
+// Replaces the current selection with a resolved citation id
+export async function insertCitationForDOI(
+  view: EditorView,
+  doi: string,
+  bibManager: BibliographyManager,
+  pos: number,
+  ui: EditorUI,
+  server: PandocServer,
+  csl?: CSL
+) {
+
+  const bibliography = await bibManager.loadBibliography(ui, view.state.doc);
+
+  // We try not call this function if the entry for this DOI is already in the bibliography,
+  // but it can happen. So we need to check here if it is already in the bibliography and 
+  // if it is, deal with it appropriately.
+  const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
+  if (existingEntry) {
+    // Now that we have loaded the bibliography, there is an entry
+    // Just write it. Not an ideal experience, but something that
+    // should happen only in unusual experiences
+
+    const tr = view.state.tr;
+
+    // This could be called by paste handler, so stop completions
+    performCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
+    view.dispatch(tr);
+
+  } else {
+    // There isn't an entry in the existing bibliography
+    // Show the user UI to and ultimately create an entry in the biblography
+    // (even creating a bibliography if necessary)
+
+    // Read bibliographies out of the document and pass those alone
+    const bibliographies = bibliographyPaths(ui, view.state.doc);
+    const existingIds = bibliography.sources.map(source => source.id);
+
+    const citeProps: InsertCiteProps = {
+      doi,
+      existingIds,
+      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
+      csl,
+      citeUI: csl ? {
+        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
+        previewFields: formatForPreview(csl)
+      } : undefined
+    };
+
+    const result = await ui.dialogs.insertCite(citeProps);
+    if (result && result.id.length) {
+
+      // Figure out whether this is a project or document level bibliography
+      const project = bibliography.project_biblios.length > 0;
+      const bibliographyFile = project
+        ? result.bibliographyFile
+        : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
+
+      // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
+      const cslToWrite = sanitizeForCiteproc(result.csl);
+
+      // Write entry to a bibliography file if it isn't already present
+      await bibManager.loadBibliography(ui, view.state.doc);
+      if (!bibManager.findIdInLoadedBibliography(result.id)) {
+        await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
+      }
+
+      const tr = view.state.tr;
+
+      // Update the bibliography on the page if need be
+      if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+
+        // Write the cite id
+        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+
+        view.dispatch(tr);
+      }
+    }
+  }
+
+  view.focus();
+
+}
+
+function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): string[] {
+  if (projectBiblios.length > 0) {
+    return projectBiblios;
+  } else if (docBiblios) {
+    return docBiblios;
+  } else {
+    return [];
   }
 }
 

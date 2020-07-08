@@ -32,9 +32,9 @@ import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
 import { CompletionHandler } from './completion';
-import { EditorServer } from '../editor/editor';
 import { EditorNavigation } from './navigation';
 import { EditorMath } from './math';
+import { EditorServer } from './server';
 
 export interface Extension {
   marks?: PandocMark[];
