@@ -26,7 +26,10 @@ import { kSetMarkdownTransaction } from "../../api/transaction";
 
 import { MathType } from "./math";
 
+// TODO: consider divs w/ inline-block for highlighting (then can set width to 0 and keep display)
 // TODO: arrow up / arrow down (esp. w/ display math)
+// TODO: need custom up/down arrow handlers for display math
+// TODO: why don't up/down arrow sometimes not work when editing math? (could be result of display: none)
 
 export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
@@ -161,12 +164,43 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
             if (match) {
               setTextSelection(mathRange.to - match[0].length)(tr);
             }
-
           }
-
 
           return tr;
         }
+
+        // not currently in a math mark
+      } else {
+
+        // did we end up just to the right of math? if so check for navigation from a distance
+        // (would imply an up/down arrow or perhaps a mouse click)
+        const prevMathRange = getMarkRange(newState.doc.resolve(newState.selection.from - 1), schema.marks.math);
+        if (prevMathRange) {
+          // if the selection came from afar then treat it as an actual selection
+          const delta = oldState.selection.from - newState.selection.from;
+
+          if (Math.abs(delta) > 2) {
+
+            const tr = newState.tr;
+
+            const mathText = newState.doc.textBetween(prevMathRange.from, prevMathRange.to);
+            const attrs = getMarkAttrs(newState.doc, prevMathRange, schema.marks.math);
+
+            if (attrs.type === MathType.Inline) {
+              setTextSelection(prevMathRange.from + (mathText.length / 2))(tr);
+            } else {
+              const match = mathText.match(/^[$\s]+/);
+              if (match) {
+                setTextSelection(prevMathRange.from + match[0].length)(tr);
+              }
+            }
+
+            return tr;
+          }
+
+
+        }
+
       }
 
       return null;
