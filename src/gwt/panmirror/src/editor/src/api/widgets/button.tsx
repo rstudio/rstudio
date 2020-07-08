@@ -37,8 +37,15 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
     props.onClick();
   };
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.keyCode === 32) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+
   return (
-    <a href={props.text} onClick={onClick} title={props.title || props.text} className={className} style={style}>
+    <a href={props.text} tabIndex={0} onClick={onClick} onKeyDown={onKeyDown} title={props.title || props.text} className={className} style={style}>
       {props.text}
     </a>
   );
