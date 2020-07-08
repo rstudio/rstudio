@@ -50,6 +50,9 @@ export interface EditorDialogs {
 }
 
 export interface EditorUIContext {
+  // check if we are the active tab
+  isActiveTab: () => boolean;
+
   // get the path to the current document
   getDocumentPath: () => string | null;
 
@@ -88,7 +91,7 @@ export interface EditorUIExecute {
 }
 
 export interface EditorUIMath {
-  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+  typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
 }
 
 export interface EditorDisplay {

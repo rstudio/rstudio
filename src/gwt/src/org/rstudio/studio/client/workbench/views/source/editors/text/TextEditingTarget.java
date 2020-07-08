@@ -2453,6 +2453,11 @@ public class TextEditingTarget implements
    {
       handlers_.fireEvent(event);
    }
+   
+   public boolean isActivated()
+   {
+      return commandHandlerReg_ != null;
+   }
 
    public void onActivate()
    {

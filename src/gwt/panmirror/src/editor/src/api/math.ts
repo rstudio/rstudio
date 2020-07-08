@@ -17,7 +17,7 @@
 import { EditorUI } from "./ui";
 
 export interface EditorMath {
-  typeset: (el: HTMLElement, math: string) => Promise<boolean>;
+  typeset: (el: HTMLElement, math: string, priority: boolean) => Promise<boolean>;
 }
 
 export function editorMath(ui: EditorUI): EditorMath {
@@ -26,18 +26,18 @@ export function editorMath(ui: EditorUI): EditorMath {
   // required if the element is not yet connected to the DOM)
   return {
 
-    typeset: (el: HTMLElement, math: string): Promise<boolean> => {
+    typeset: (el: HTMLElement, math: string, priority: boolean): Promise<boolean> => {
 
       return new Promise(resolve => {
         // regular typeset if we are already connected
         if (el.isConnected) {
-          ui.math.typeset!(el, math).then(resolve);
+          ui.math.typeset!(el, math, priority).then(resolve);
         } else {
           // otherwise wait 100ms then retry
           const timerId = setInterval(() => {
             if (el.isConnected) {
               clearInterval(timerId);
-              ui.math.typeset!(el, math).then(resolve);
+              ui.math.typeset!(el, math, priority).then(resolve);
             }
           }, 100);
         }

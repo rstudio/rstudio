@@ -25,6 +25,7 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIContext
 {
+   public BooleanGetter isActiveTab;
    public Getter getDocumentPath;
    public WithSavedDocument withSavedDocument;
    public Getter getDefaultResourceDir;
@@ -38,6 +39,12 @@ public class PanmirrorUIContext
    public interface Getter
    {
       String get();
+   }
+   
+   @JsFunction
+   public interface BooleanGetter
+   {
+      Boolean get();
    }
    
    @JsFunction

@@ -28,7 +28,7 @@ import { MarkInputRuleFilter } from '../../api/input_rule';
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
-import { MathPreviewPlugin } from './math-preview';
+import { MathPopupPlugin } from './math-popup';
 import { mathViewPlugin } from './math-view';
 
 import './math-styles.css';
@@ -256,8 +256,8 @@ const extension = (context: ExtensionContext): Extension | null => {
         mathHighlightPlugin(schema),
       ];
       if (math) {
-        plugins.push(new MathPreviewPlugin(ui, events));
-        plugins.push(mathViewPlugin(schema, math));
+        plugins.push(new MathPopupPlugin(ui, math, events, false));
+        plugins.push(mathViewPlugin(schema, ui, math));
       }
       return plugins;
     },

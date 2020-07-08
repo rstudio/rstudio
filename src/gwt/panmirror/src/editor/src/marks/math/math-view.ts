@@ -21,6 +21,7 @@ import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
 import { getMarkRange } from "../../api/mark";
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 import { EditorMath } from "../../api/math";
+import { EditorUI } from "../../api/ui";
 
 
 // TODO: reflow that result from math winding/unwinding cause the positioning 
@@ -29,13 +30,12 @@ import { EditorMath } from "../../api/math";
 // based one as we do elsewhere.
 
 // TODO: way to bump the priority of the active tab (use dom visibility?)
-// TODO: why isn't debouncing of the typed math preview happening?
 // TODO: cursor in math on "correct" side for arrow entry
 // TODO: cursor placement for mouse click
 // TODO: arrow up / arrow down (esp. w/ display math)
 
 
-export function mathViewPlugin(schema: Schema, math: EditorMath) {
+export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
 
   const key = new PluginKey<DecorationSet>('math-view');
@@ -68,7 +68,7 @@ export function mathViewPlugin(schema: Schema, math: EditorMath) {
               view.dispatch(tr);
               view.focus();
             };
-            math.typeset(mathjaxDiv, mathText);
+            math.typeset(mathjaxDiv, mathText, ui.context.isActiveTab());
             return mathjaxDiv;
           },
           { key: mathText },

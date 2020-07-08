@@ -27,14 +27,16 @@ import { ScrollEvent, ResizeEvent, LayoutEvent } from '../../api/event-types';
 import { applyStyles } from '../../api/css';
 import { editingRootNodeClosestToPos, editingRootNode } from '../../api/node';
 import { createPopup } from '../../api/widgets/widgets';
+import { EditorMath } from '../../api/math';
 
 const kMathPopupVerticalOffset = 10;
 const kMathPopupInputDebuounceMs = 250;
 
 const key = new PluginKey('math-preview');
 
-export class MathPreviewPlugin extends Plugin {
+export class MathPopupPlugin extends Plugin {
   private readonly ui: EditorUI;
+  private readonly math: EditorMath;
 
   private view: EditorView | null = null;
 
@@ -43,9 +45,8 @@ export class MathPreviewPlugin extends Plugin {
 
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
-  private layoutUnsubscribe: VoidFunction;
 
-  constructor(ui: EditorUI, events: EditorEvents) {
+  constructor(ui: EditorUI, math: EditorMath, events: EditorEvents, onHover: boolean) {
     super({
       key,
       view: () => {
@@ -61,36 +62,35 @@ export class MathPreviewPlugin extends Plugin {
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
-            this.layoutUnsubscribe();
             this.closePopup();
           },
         };
       },
       props: {
         handleDOMEvents: {
-          /*
-          mousemove: debounce((view: EditorView, event: Event) => {
-            const ev = event as MouseEvent;
-            const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
-            if (pos && pos.inside !== -1) {
-              this.updatePopup(view.state.doc.resolve(pos.pos));
-            }
-            return false;
-          }, kMathPopupInputDebuounceMs),
-          */
+          ...(onHover ? {
+            mousemove: debounce((view: EditorView, event: Event) => {
+              const ev = event as MouseEvent;
+              const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
+              if (pos && pos.inside !== -1) {
+                this.updatePopup(view.state.doc.resolve(pos.pos));
+              }
+              return false;
+            }, kMathPopupInputDebuounceMs),
+
+          } : {})
         },
       },
     });
 
-    // save reference to ui
+    // save reference to ui and math
     this.ui = ui;
+    this.math = math;
 
     // update position on scroll
     this.updatePopup = this.updatePopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
     this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
-    this.layoutUnsubscribe = events.subscribe(LayoutEvent, () => this.updatePopup());
-
   }
 
   private updatePopup($mousePos?: ResolvedPos) {
@@ -151,7 +151,7 @@ export class MathPreviewPlugin extends Plugin {
 
     // typeset the math if we haven't already
     if (inlineMath !== this.lastRenderedMath && this.popup) {
-      this.ui.math.typeset!(this.popup, inlineMath).then(error => {
+      this.math.typeset!(this.popup, inlineMath, true).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath;

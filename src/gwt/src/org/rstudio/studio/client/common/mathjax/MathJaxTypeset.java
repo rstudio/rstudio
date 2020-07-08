@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -30,7 +31,12 @@ public class MathJaxTypeset
    
    public static void typeset(Element el, String currentText, Callback callback)
    {
-      TYPESET_QUEUE.addCommand((cont) -> {
+      typeset(el, currentText, false, callback);
+   }
+   
+   public static void typeset(Element el, String currentText, boolean priority, Callback callback)
+   {
+      SerializedCommand cmd = (cont) -> {
          typesetNative(el, currentText, new Callback() {
             @Override
             public void onMathJaxTypesetComplete(boolean error)
@@ -39,7 +45,12 @@ public class MathJaxTypeset
                cont.execute();
             }
          }, 0);
-      });
+      };
+         
+      if (priority)
+         TYPESET_QUEUE.addPriorityCommand(cmd);
+      else
+         TYPESET_QUEUE.addCommand(cmd);
    }
 
    public static final native void typesetNative(Element el, 

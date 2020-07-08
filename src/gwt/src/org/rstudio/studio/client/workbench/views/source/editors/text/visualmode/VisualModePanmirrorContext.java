@@ -93,6 +93,10 @@ public class VisualModePanmirrorContext
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
       
+      uiContext.isActiveTab = () -> {
+         return target_.isActivated();
+      };
+      
       uiContext.getDocumentPath = () -> {
         return docUpdateSentinel_.getPath(); 
       };
