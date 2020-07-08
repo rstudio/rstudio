@@ -31,12 +31,12 @@ public class XRef extends JavaScriptObject
       return {};
    }-*/;
    
-   public final native boolean hasXrefString()
+   public final native boolean hasXRefString()
    /*-{
       return !!this.type && !!this.id;
    }-*/;
    
-   public final native String getXrefString()
+   public final native String getXRefString()
    /*-{
       return this.type + ":" + this.id;
    }-*/;

@@ -72,7 +72,7 @@ public class SourceItem extends JavaScriptObject
       return this.metadata || {};
    }-*/;
    
-   public final boolean isBookdownXref()
+   public final boolean isBookdownXRef()
    {
       switch (getType())
       {

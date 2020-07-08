@@ -307,8 +307,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    void injectMembers(PanmirrorPandocServer panmirrorPandocServer);
    void injectMembers(PanmirrorCrossrefServer panmirrorCrossrefServer);
-   void injectMembers(PanmirrorXRefServer panmirrorXrefServer);
    void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
+   void injectMembers(PanmirrorXRefServer panmirrorXRefServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);

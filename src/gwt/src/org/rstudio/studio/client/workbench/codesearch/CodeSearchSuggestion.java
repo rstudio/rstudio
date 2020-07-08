@@ -114,7 +114,7 @@ class CodeSearchSuggestion implements Suggestion
          name = sourceItem.getParentName() + "::" + name;
       
       // append info for non-bookdown references
-      String info = sourceItem.isBookdownXref() ? null : sourceItem.getExtraInfo();
+      String info = sourceItem.isBookdownXRef() ? null : sourceItem.getExtraInfo();
       
       // create display string
       displayString_ = createDisplayString(image, 

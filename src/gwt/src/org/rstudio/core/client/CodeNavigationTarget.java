@@ -47,7 +47,7 @@ public class CodeNavigationTarget
       return pos_;
    }
    
-   public final XRef getXref()
+   public final XRef getXRef()
    {
       return xref_;
    }

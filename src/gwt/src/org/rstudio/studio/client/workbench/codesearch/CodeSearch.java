@@ -95,7 +95,7 @@ public class CodeSearch
             String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
             final FilePosition pos = target.getPosition();
-            final XRef xref = target.getXref();
+            final XRef xref = target.getXRef();
             
             // fire editing event (delayed so the Enter keystroke 
             // doesn't get routed into the source editor)
@@ -107,7 +107,7 @@ public class CodeSearch
                if (observer_ != null)
                   observer_.onCompleted();
 
-               if (xref != null && xref.hasXrefString())
+               if (xref != null && xref.hasXRefString())
                {
                   events_.fireEvent(new XRefNavigationEvent(xref, srcItem, false));
                }

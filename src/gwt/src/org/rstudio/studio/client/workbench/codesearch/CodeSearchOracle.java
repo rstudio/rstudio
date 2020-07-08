@@ -226,7 +226,7 @@ public class CodeSearchOracle extends SuggestOracle
       return new CodeNavigationTarget(
             target.getFile(),
             filePosition,
-            target.getXref());
+            target.getXRef());
    }
             
 

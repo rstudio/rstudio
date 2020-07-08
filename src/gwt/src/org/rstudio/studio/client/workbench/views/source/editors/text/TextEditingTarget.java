@@ -1153,7 +1153,7 @@ public class TextEditingTarget implements
       {
          ensureVisualModeActive(() -> {
             Scheduler.get().scheduleDeferred(() -> {
-               visualMode_.navigateToXRef(xref.getXrefString(), false);
+               visualMode_.navigateToXRef(xref.getXRefString(), false);
             });
          });
       }
