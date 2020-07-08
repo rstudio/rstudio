@@ -18,10 +18,11 @@ import { Schema } from "prosemirror-model";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
 
 import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
-import { getMarkRange } from "../../api/mark";
+import { getMarkRange, getMarkAttrs } from "../../api/mark";
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 import { EditorMath } from "../../api/math";
 import { EditorUI } from "../../api/ui";
+import { MathType } from "./math";
 
 
 
@@ -39,8 +40,9 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
     const decorations: Decoration[] = [];
     findChildrenByMark(state.doc, schema.marks.math, true).forEach(markedNode => {
-      // get mark range
+      // get mark range and attributes
       const range = getMarkRange(state.doc.resolve(markedNode.pos), schema.marks.math) as { from: number, to: number };
+      const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
 
       // if the selection isn't in the mark, then show the preview
       if (state.selection.from < range.from || state.selection.from >= range.to) {
@@ -59,7 +61,18 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
             // text selection 'within' code for clicks on the preview image
             mathjaxDiv.onclick = () => {
               const tr = view.state.tr;
-              setTextSelection(getPos())(tr);
+              let pos = getPos();
+              if (attrs.type === MathType.Display) {
+                // set position to first non $, non whitespace character
+                const match = mathText.match(/^[$\s]+/);
+                if (match) {
+                  pos += match[0].length;
+                }
+              } else {
+                // set position to the middle of the equation
+                pos = pos + mathText.length / 2;
+              }
+              setTextSelection(pos)(tr);
               view.dispatch(tr);
               view.focus();
             };
