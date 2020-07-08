@@ -24,12 +24,7 @@ import { EditorMath } from "../../api/math";
 import { EditorUI } from "../../api/ui";
 
 
-// TODO: reflow that result from math winding/unwinding cause the positioning 
-// of the preview popup to be off (try clicking between display math blocks). 
-// we added a layout updater and it didn't work -- perhaps we need a timer 
-// based one as we do elsewhere.
 
-// TODO: way to bump the priority of the active tab (use dom visibility?)
 // TODO: cursor in math on "correct" side for arrow entry
 // TODO: cursor placement for mouse click
 // TODO: arrow up / arrow down (esp. w/ display math)

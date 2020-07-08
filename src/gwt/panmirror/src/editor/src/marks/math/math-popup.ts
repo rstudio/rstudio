@@ -23,7 +23,7 @@ import zenscroll from 'zenscroll';
 import { EditorUI } from '../../api/ui';
 import { getMarkRange } from '../../api/mark';
 import { EditorEvents } from '../../api/events';
-import { ScrollEvent, ResizeEvent, LayoutEvent } from '../../api/event-types';
+import { ScrollEvent, ResizeEvent } from '../../api/event-types';
 import { applyStyles } from '../../api/css';
 import { editingRootNodeClosestToPos, editingRootNode } from '../../api/node';
 import { createPopup } from '../../api/widgets/widgets';
@@ -43,6 +43,8 @@ export class MathPopupPlugin extends Plugin {
   private popup: HTMLElement | null = null;
   private lastRenderedMath: string | null = null;
 
+  private readonly updatePopupTimer: number;
+
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
 
@@ -60,6 +62,7 @@ export class MathPopupPlugin extends Plugin {
             { leading: true, trailing: true },
           ),
           destroy: () => {
+            clearInterval(this.updatePopupTimer);
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
             this.closePopup();
@@ -87,8 +90,11 @@ export class MathPopupPlugin extends Plugin {
     this.ui = ui;
     this.math = math;
 
-    // update position on scroll
+    // update popup for resize, scrolling, as well as every 100ms to cover reflowing
+    // of the document as a result of latex math being shown/hidden (will effectively 
+    // be a no-op if the math text and  document layout / scroll position hasn't changed)
     this.updatePopup = this.updatePopup.bind(this);
+    this.updatePopupTimer = setInterval(this.updatePopup, 100);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
     this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
   }
