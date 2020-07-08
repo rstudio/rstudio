@@ -1557,7 +1557,6 @@ void fillFromBookdownRefs(const std::string& term,
 {
    // retrieve refs for this project
    core::json::Value bookdownIndex = module_context::bookdownXRefIndex();
-   core::debug::print(bookdownIndex);
    
    // may be null if we have no bookdown refs (typically implies
    // we're not in a bookdown project)
