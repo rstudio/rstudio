@@ -320,6 +320,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().initialSelect(index);
    }
 
+   public void setActive(int xpos)
+   {
+      SourceColumn column = findByPosition(xpos);
+      if (column == null)
+         return;
+      setActive(column);
+   }
+
    public void setActive(String name)
    {
       if (StringUtil.isNullOrEmpty(name) &&
@@ -653,7 +661,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          int left = w.getAbsoluteLeft();
          int right = w.getAbsoluteLeft() + w.getOffsetWidth();
 
-         if (x > left && x < right)
+         if (x >= left && x <= right)
             return column;
       }
       return null;
