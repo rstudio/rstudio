@@ -21,11 +21,16 @@
   white-space: pre-wrap;  
 }
 
+.ProseMirror .math[data-type='DisplayMath']:only-child,
+.ProseMirror .math[data-type='DisplayMath']:only-child .pm-math-mathjax  {
+  width: 100%; 
+}
+
 .pm-math-mathjax {
   display: inline-block;
   cursor: text;
 }
 
 .pm-math-mathjax .MJXc-display {
-  margin: 0;
+  margin: 0.5em;
 }
