@@ -45,7 +45,6 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
       originator_ = originator;
       sourcePosition_ = sourcePosition;
       column_ = column;
-      Debug.logToConsole("new PopoutDocEvent for: " + originator_.getDocId());
    }
    
    public PopoutDocInitiatedEvent getOriginator()
