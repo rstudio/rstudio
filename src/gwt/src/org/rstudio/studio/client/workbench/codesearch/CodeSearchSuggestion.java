@@ -113,14 +113,11 @@ class CodeSearchSuggestion implements Suggestion
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       
-      // append info for non-bookdown references
-      String info = sourceItem.isBookdownXRef() ? null : sourceItem.getExtraInfo();
-      
       // create display string
       displayString_ = createDisplayString(image, 
                                            RES.styles().itemImage(),
                                            name,
-                                           info,
+                                           sourceItem.getExtraInfo(),
                                            context);
    }
    

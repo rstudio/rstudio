@@ -1635,7 +1635,7 @@ void fillFromBookdownRefs(const std::string& term,
       
       // we found a match: construct source item and add to list
       SourceItem item(
-               sourceType, title, "", "",
+               sourceType, displayText, "", "",
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
                -1, -1,
