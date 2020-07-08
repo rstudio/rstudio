@@ -25,10 +25,9 @@ import { EditorUI } from "../../api/ui";
 import { MathType } from "./math";
 
 
-
-// TODO: cursor in math on "correct" side for arrow entry
 // TODO: arrow up / arrow down (esp. w/ display math)
 
+// TODO: trigger decorationsForDoc when doc is replaced from source
 
 export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
@@ -94,7 +93,6 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
         return decorationsForDoc(instance);
       },
 
-
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
 
         // if one of the steps added or removed a mark of our type then rescan the doc.
@@ -125,10 +123,49 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
       },
     },
+
     props: {
       decorations(state: EditorState) {
         return key.getState(state);
       },
     },
+
+    appendTransaction: (_transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
+      // did we enter math view on the last transaction?
+      const mathRange = getMarkRange(newState.selection.$from, schema.marks.math);
+      if (mathRange) {
+        if (!getMarkRange(oldState.selection.$from, schema.marks.math)) {
+
+          // get math text
+          const mathText = newState.doc.textBetween(mathRange.from, mathRange.to);
+
+          // transaction to set the selection
+          const tr = newState.tr;
+
+          // old selection just to the left -- set selection at beginning of the math
+          if (mathRange.from === (oldState.selection.from + 1)) {
+
+            const match = mathText.match(/^[$\s]+/);
+            if (match) {
+              setTextSelection(mathRange.from + match[0].length)(tr);
+            }
+
+            // old selection just to the right -- set selection at the end of the math
+          } else if (mathRange.to === oldState.selection.from) {
+
+            const match = mathText.match(/[$\s]+$/);
+            if (match) {
+              setTextSelection(mathRange.to - match[0].length)(tr);
+            }
+
+          }
+
+
+          return tr;
+        }
+      }
+
+      return null;
+    }
   });
 }
