@@ -373,7 +373,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             ? activeEditor_.getId()
             : null;
 
-      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
+      display_.resetDocTabs(activeId, ids, icons, names, paths);
 
       manageChevronVisibility();
    }
