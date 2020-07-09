@@ -251,27 +251,15 @@ try {
 
         // prepare container for windows builder
         parallel_images["windows"] = {
-            pipeline {
-                agent {
-                    docker {
-                        label 'windows'
-                        image 'mcr.microsoft.com/windows/servercore:ltsc2019'
-                    }
-                }
-                stages {
-                    stage('prepare Windows container') {
-                        steps {
-                            script {
-                                prepareWorkspace()
-                                withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
-                                  def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                                  pullBuildPush(image_name: 'jenkins/ide', 
-                                    dockerfile: "docker/jenkins/Dockerfile.windows", 
-                                    image_tag: "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
-                                    build_args: github_args)
-                                }
-                            }
-                        }
+            node('windows') {
+                stage('prepare Windows container') {
+                    checkout scm
+                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                      def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                      pullBuildPush(image_name: 'jenkins/ide', 
+                        dockerfile: "docker/jenkins/Dockerfile.windows", 
+                        image_tag: "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                        build_args: github_args)
                     }
                 }
             }
@@ -313,84 +301,58 @@ try {
         }
 
         parallel_containers["windows"] = {
-          pipeline {
-            agent {
-              docker {
-                label 'windows'
-                image 'mcr.microsoft.com/windows/servercore:ltsc2019'
-              }
+          node('windows') {
+            stage('prepare container') {
+               checkout scm
+               docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                 def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                 windows_image = docker.image("jenkins/ide:" + image_tag)
+               }
             }
-            stages {
-              stage('prepare container') {
-                 prepareWorkspace()
-                 docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                   def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
-                   windows_image = docker.image("jenkins/ide:" + image_tag)
-                 }
+            windows_image.inside() {
+              stage('dependencies') {
+                  withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+                    bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+                }
               }
-              windows_image.inside() {
-                stage('dependencies') {
-                  steps {
-                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-                      bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+              stage('build'){
+                bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
+              }
+              stage('tests'){
+                try {
+                  bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+                }
+                catch(err){
+                  currentBuild.result = "UNSTABLE"
+                }
+              }
+              stage('sign') {
+                steps {
+                  script {
+                    withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
+                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
+                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" verify /v /kp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
                     }
                   }
                 }
-                stage('build'){
-                  steps {
-                    script {
-                      bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
-                    }
-                  }
+              }
+              stage('upload debug symbols') {
+                // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                bat '''
+                  cd package\\win32\\build
+                  FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                '''
+                
+                // upload the breakpad symbols
+                withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
                 }
-                stage('tests'){
-                  steps {
-                    script {
-                      try {
-                        bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
-                      }
-                      catch(err){
-                        currentBuild.result = "UNSTABLE"
-                      }
-                    }
-                  }
-                }
-                stage('sign') {
-                  steps {
-                    script {
-                      withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                        bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
-                        bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" verify /v /kp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
-                      }
-                    }
-                  }
-                }
-                stage('upload debug symbols') {
-                  steps {
-                    script {
-                      // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                      bat '''
-                        cd package\\win32\\build
-                        FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
-                      '''
-                      
-                      // upload the breakpad symbols
-                      withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                        bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
-                      }
-                    }
-                  }
-                }
-                stage('upload') {
-                  steps {
-                    script {
-                      // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                      withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                        bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe'
-                        bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.zip'
-                      }
-                    }
-                  }
+              }
+              stage('upload') {
+                // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                  bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe'
+                  bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.zip'
                 }
               }
             }
