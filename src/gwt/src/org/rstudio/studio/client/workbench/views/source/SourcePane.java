@@ -93,11 +93,12 @@ public class SourcePane extends LazyPanel implements Display,
       chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
       chevron_.setAltText("Switch to tab");
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
-      chevron_.addClickHandler(event -> {
-         tabOverflowPopup_.showRelativeTo(chevron_);
-         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
-         mgr.setActive(getAbsoluteLeft());
-      });
+      chevron_.addClickHandler(
+         event -> {
+            tabOverflowPopup_.showRelativeTo(chevron_);
+            SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+            mgr.setActive(getAbsoluteLeft());
+         });
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
