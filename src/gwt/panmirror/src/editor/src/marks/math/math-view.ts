@@ -45,7 +45,7 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
       const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
 
       // if the selection isn't in the mark, then show the preview
-      if (state.selection.from < range.from || state.selection.from >= range.to) {
+      if (state.selection.from < range.from || state.selection.from > range.to) {
         // get the math text
         const mathText = state.doc.textBetween(range.from, range.to);
 
@@ -113,8 +113,8 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
           return decorationsForDoc(newState);
 
-          // if the previous or current state has an active math mark, then rescan
-        } else if (getMarkRange(oldState.selection.$from, schema.marks.math) ||
+          // if the previous or current state is in or at the border of a math mark, then rescan
+        } else if (oldState.doc.rangeHasMark(oldState.selection.from - 2, oldState.selection.from + 1, schema.marks.math) ||
           getMarkRange(newState.selection.$from, schema.marks.math)) {
 
           return decorationsForDoc(newState);
@@ -152,18 +152,15 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
           // old selection just to the left -- set selection at beginning of the math
           if (mathRange.from === (oldState.selection.from + 1)) {
 
-            const match = mathText.match(/^[$\s]+/);
-            if (match) {
-              setTextSelection(mathRange.from + match[0].length)(tr);
-            }
+
+            setTextSelection(mathRange.from)(tr);
+
 
             // old selection just to the right -- set selection at the end of the math
-          } else if (mathRange.to === oldState.selection.from) {
+          } else if (mathRange.to === (oldState.selection.from - 2)) {
 
-            const match = mathText.match(/[$\s]+$/);
-            if (match) {
-              setTextSelection(mathRange.to - match[0].length)(tr);
-            }
+            setTextSelection(mathRange.to)(tr);
+
           }
 
           return tr;
