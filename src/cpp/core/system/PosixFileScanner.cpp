@@ -31,7 +31,7 @@ namespace system {
 
 namespace {
 
-bool s_stopRequested = false;
+std::atomic<bool> s_stopRequested(false);
 
 #if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
 int entryFilter(struct dirent *entry)

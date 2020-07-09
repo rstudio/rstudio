@@ -32,7 +32,7 @@ namespace system {
 namespace {
 
 // stop requested by user
-bool s_stopRequested = false;
+std::atomic<bool> s_stopRequested(false);
 
 FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 {
