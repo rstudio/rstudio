@@ -21,14 +21,30 @@
                                                          pixelRatio,
                                                          extraArgs)
 {
-   # form the arguments to the graphics device creator
    require(grDevices, quietly = TRUE)
+   
+   # if it looks like we're using AGG, delegate to that
+   if (grepl("type = \"ragg\"", extraArgs))
+   {
+      device <- ragg::agg_png(
+         filename = filename,
+         width    = width * pixelRatio,
+         height   = height * pixelRatio,
+         units    = units,
+         res      = 96 * pixelRatio
+      )
+      
+      return(device)
+   }
+   
+   # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
       width    = width * pixelRatio,
       height   = height * pixelRatio, 
       units    = units,
-      res      = 96 * pixelRatio)
+      res      = 96 * pixelRatio
+   )
    
    if (nchar(extraArgs) > 0)
    {
@@ -53,11 +69,15 @@
 })
 
 .rs.addFunction("setNotebookGraphicsOption", function(filename,
-                                                      height, width, units, pixelRatio, extraArgs)
+                                                      height,
+                                                      width,
+                                                      units,
+                                                      pixelRatio,
+                                                      extraArgs)
 {
-   options(device = function() {
-      .rs.createNotebookGraphicsDevice(filename, height, width, units, 
-                                       pixelRatio, extraArgs)
+   options(device = function()
+   {
+      .rs.createNotebookGraphicsDevice(filename, height, width, units,  pixelRatio, extraArgs)
       dev.control(displaylist = "enable")
       .rs.setNotebookMargins()
    })
