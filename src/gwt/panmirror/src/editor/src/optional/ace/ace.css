@@ -63,3 +63,7 @@
 .ProseMirror .pm-ace-editor .ace_editor {
   background-color: transparent;
 }
+
+.pm-ace-editor .pm-find-text {
+  position: absolute;
+}

@@ -248,11 +248,8 @@ class FindPlugin extends Plugin<DecorationSet> {
     // decorations to return
     const decorations: Decoration[] = [];
 
-    // perform search and populate results (don't search code blocks because
-    // we currently can't highlight results inside codemirror blocks)
-    const textNodes = mergedTextNodes(tr.doc, (node, parent) => {
-      return !node.type.spec.code && !parent.type.spec.code;
-    });
+    // merge text nodes
+    const textNodes = mergedTextNodes(tr.doc);
 
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
@@ -376,6 +373,10 @@ export function replaceAll(view: EditorView, text: string) {
 
 export function clear(view: EditorView): boolean {
   return findPlugin(view).clear()(view.state, view.dispatch);
+}
+
+export function findPluginState(state: EditorState): DecorationSet | null | undefined {
+  return key.getState(state);
 }
 
 function findPlugin(view: EditorView): FindPlugin {

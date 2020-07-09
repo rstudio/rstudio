@@ -44,6 +44,8 @@ import { AceChunkEditor } from "../ace/ace_editor";
 
 import './ace.css';
 
+import { findPluginState } from '../../behaviors/find';
+
 const plugin = new PluginKey('ace');
 
 export function acePlugins(
@@ -94,6 +96,7 @@ class CodeBlockNodeView implements NodeView {
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
+  private findMarkers: number[];
 
   constructor(
     node: ProsemirrorNode,
@@ -109,6 +112,7 @@ class CodeBlockNodeView implements NodeView {
     this.getPos = getPos;
     this.mode = "";
     this.escaping = false;
+    this.findMarkers = [];
 
     // options
     this.editorOptions = editorOptions;
@@ -184,46 +188,46 @@ class CodeBlockNodeView implements NodeView {
     this.chunk.editor.commands.addCommand({
       name: "leftEscape",
       bindKey: "Left",
-      exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); } 
+      exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); }
     });
     this.chunk.editor.commands.addCommand({
       name: "rightEscape",
       bindKey: "Right",
-      exec: () => { this.arrowMaybeEscape('char', 1, "gotoright" ); } 
+      exec: () => { this.arrowMaybeEscape('char', 1, "gotoright"); }
     });
     this.chunk.editor.commands.addCommand({
       name: "upEscape",
       bindKey: "Up",
-      exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); } 
+      exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); }
     });
     this.chunk.editor.commands.addCommand({
       name: "downEscape",
       bindKey: "Down",
-      exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); } 
+      exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); }
     });
 
     // Pressing Backspace in the editor when it's empty should delete it.
     this.chunk.editor.commands.addCommand({
       name: "backspaceDeleteNode",
       bindKey: "Backspace",
-      exec: () => { this.backspaceMaybeDeleteNode(); } 
+      exec: () => { this.backspaceMaybeDeleteNode(); }
     });
 
     // Handle undo/redo in ProseMirror
     this.chunk.editor.commands.addCommand({
       name: "undoProsemirror",
       bindKey: {
-          win: "Ctrl-Z", 
-          mac:"Command-Z"
-      }, 
+        win: "Ctrl-Z",
+        mac: "Command-Z"
+      },
       exec: () => { undo(view.state, view.dispatch); }
     });
     this.chunk.editor.commands.addCommand({
       name: "redoProsemirror",
       bindKey: {
-          win: "Ctrl-Shift-Z|Ctrl-Y", 
-          mac:"Command-Shift-Z|Command-Y"
-      }, 
+        win: "Ctrl-Shift-Z|Ctrl-Y",
+        mac: "Command-Shift-Z|Command-Y"
+      },
       exec: () => { redo(view.state, view.dispatch); }
     });
 
@@ -231,9 +235,9 @@ class CodeBlockNodeView implements NodeView {
     this.chunk.editor.commands.addCommand({
       name: "selectAllProsemirror",
       bindKey: {
-          win: "Ctrl-A", 
-          mac:"Command-A"
-      }, 
+        win: "Ctrl-A",
+        mac: "Command-A"
+      },
       exec: () => { selectAll(view.state, view.dispatch, view); }
     });
 
@@ -242,10 +246,10 @@ class CodeBlockNodeView implements NodeView {
     this.chunk.editor.commands.addCommand({
       name: "exitCodeBlock",
       bindKey: {
-          win: "Ctrl-Enter|Shift-Enter", 
-          mac:"Ctrl-Enter|Shift-Enter|Command-Enter"
-      }, 
-      exec: () => { 
+        win: "Ctrl-Enter|Shift-Enter",
+        mac: "Ctrl-Enter|Shift-Enter|Command-Enter"
+      },
+      exec: () => {
         if (exitCode(view.state, view.dispatch)) {
           view.focus();
         }
@@ -256,8 +260,8 @@ class CodeBlockNodeView implements NodeView {
     this.chunk.editor.commands.addCommand({
       name: "insertParagraph",
       bindKey: {
-        win: "Ctrl-\\", 
-        mac:"Command-\\"
+        win: "Ctrl-\\",
+        mac: "Command-\\"
       },
       exec: () => { insertParagraph(view.state, view.dispatch); }
     });
@@ -283,30 +287,59 @@ class CodeBlockNodeView implements NodeView {
     }
     this.node = node;
     this.updateMode();
-    
+
+    const AceRange = window.require("ace/range").Range;
+    const doc = this.editSession.getDocument();
+
     const change = computeChange(this.editSession.getValue(), node.textContent);
     if (change) {
       this.updating = true;
-      const doc = this.editSession.getDocument();
-      const AceRange = window.require("ace/range").Range;
       const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
-                                        doc.indexToPosition(change.to, 0));
+        doc.indexToPosition(change.to, 0));
       this.editSession.replace(range, change.text);
       this.updating = false;
     }
+
+    // Clear any previously rendered find markers
+    this.findMarkers.forEach(id => {
+      this.editSession.removeMarker(id);
+    });
+    this.findMarkers = [];
+
+    // Get all of the find results inside this node
+    const decorations = findPluginState(this.view.state);
+    if (decorations) {
+      const decos = decorations?.find(this.getPos(), (this.getPos() + node.nodeSize) - 1);
+
+      // If we got results, render them
+      if (decos) {
+        decos.forEach((deco: any) => {
+          // Calculate from/to position for result marker (adjust for zero based column)
+          const markerFrom = doc.indexToPosition(deco.from - this.getPos(), 0);
+          markerFrom.column--;
+          const markerTo = doc.indexToPosition(deco.to - this.getPos(), 0);
+          markerTo.column--;
+          const range = AceRange.fromPoints(markerFrom, markerTo);
+
+          // Create the search result marker and add it to the rendered set
+          const markerId = this.editSession.addMarker(range, deco.type.attrs.class, "result", true);
+          this.findMarkers.push(markerId);
+        });
+      }
+    }
+
     return true;
   }
 
   public setSelection(anchor: number, head: number) {
-    if (!this.escaping)
-    {
+    if (!this.escaping) {
       this.chunk.editor.focus();
     }
     this.updating = true;
     const doc = this.editSession.getDocument();
     const AceRange = window.require("ace/range").Range;
     const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
-                                      doc.indexToPosition(head, 0));
+      doc.indexToPosition(head, 0));
     this.editSession.getSelection().setSelectionRange(range);
     this.updating = false;
   }
@@ -323,7 +356,7 @@ class CodeBlockNodeView implements NodeView {
 
     // ignore if we don't have focus
     if (!this.chunk.element.contains(window.document.activeElement)) {
-        return;
+      return;
     }
 
     const state = this.view.state;
@@ -362,8 +395,8 @@ class CodeBlockNodeView implements NodeView {
     const lang = this.options.lang(this.node, this.getContents());
 
     if (lang !== null && this.mode !== lang) {
-        this.chunk.setMode(lang);
-        this.mode = lang;
+      this.chunk.setMode(lang);
+      this.mode = lang;
     }
 
     // if we have a language check whether execution should be enabled for this language
@@ -404,13 +437,12 @@ class CodeBlockNodeView implements NodeView {
     const pos = this.chunk.editor.getCursorPosition();
     const lastrow = this.editSession.getLength() - 1;
     if ((!this.chunk.editor.getSelection().isEmpty()) ||
-        pos.row !== (dir < 0 ? 0 : lastrow) ||
-        (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length)))
-    {
-        // this movement is happening inside the editor itself. don't escape
-        // the editor; just execute the underlying command
-        this.chunk.editor.execCommand(command);
-        return;
+      pos.row !== (dir < 0 ? 0 : lastrow) ||
+      (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
+      // this movement is happening inside the editor itself. don't escape
+      // the editor; just execute the underlying command
+      this.chunk.editor.execCommand(command);
+      return;
     }
 
     // the cursor is about to leave the editor region; flag this to avoid side
