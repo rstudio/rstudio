@@ -37,6 +37,7 @@ set (CORE_SOURCE_FILES
    CrashHandler.cpp
    Database.cpp
    DateTime.cpp
+   Debug.cpp
    ExponentialBackoff.cpp
    Exec.cpp
    FileInfo.cpp

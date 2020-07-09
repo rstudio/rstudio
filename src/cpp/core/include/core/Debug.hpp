@@ -48,6 +48,10 @@ void print(const ConvertibleToArray& object, std::ostream& os = std::cerr)
    os << std::endl;
 }
 
+// log messages to an open Notepad window
+// (useful when you just need to dump logs somewhere easily visible)
+void logToNotepad(const char* fmt, ...);
+
 } // namespace debug
 } // namespace core
 } // namespace rstudio

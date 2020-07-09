@@ -25,6 +25,7 @@
 
 #include <shared_core/FilePath.hpp>
 
+#include <core/Debug.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
 
@@ -40,6 +41,12 @@ namespace {
 
 // buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
+
+// set of currently active monitor handles
+std::set<Handle> s_monitorHandles;
+
+// stop requested for file monitor
+std::atomic<bool> s_stopRequested(false);
 
 class FileEventContext : boost::noncopyable
 {
@@ -91,7 +98,7 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
    {
       if (!::CloseHandle(hObject))
       {
-         LOG_ERROR(LAST_SYSTEM_ERROR());
+         log::logError(LAST_SYSTEM_ERROR(), location);
       }
    }
 }
@@ -235,8 +242,8 @@ void processFileChanges(FileEventContext* pContext,
    std::vector<FileChangeEvent> fileChanges;
 
    // cycle through the entries in the buffer
-   char* pBuffer = (char*)&pContext->handlingBuffer[0];
-   while(true)
+   char* pBuffer = (char*) &pContext->handlingBuffer[0];
+   while (true)
    {
       // check for buffer pointer which has overflowed the end (apparently this
       // can happen if the underlying directory is deleted)
@@ -409,7 +416,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    pContext->readDirChangesPending = false;
 
    // check for aborted
-   if (dwErrorCode == ERROR_OPERATION_ABORTED)
+   if (s_stopRequested || dwErrorCode == ERROR_OPERATION_ABORTED)
    {
       // decrement the active request counter
       ::InterlockedDecrement(&s_activeRequests);
@@ -444,7 +451,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // check for buffer overflow. this means there are too many file changes
    // for the systme to keep up with -- in this case try to restart monitoring
    // (after a 1 second delay) and repeat the restart up to 10 times
-   if(dwNumberOfBytesTransfered == 0)
+   if (dwNumberOfBytesTransfered == 0)
    {
       // attempt to restart monitoring
       enqueRestartMonitoring(pContext);
@@ -475,24 +482,22 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 Error readDirectoryChanges(FileEventContext* pContext)
 {
    DWORD dwBytes = 0;
-   if(!::ReadDirectoryChangesW(pContext->hDirectory,
-                               &(pContext->receiveBuffer[0]),
-                               static_cast<DWORD>(pContext->receiveBuffer.size()),
-                               pContext->recursive ? TRUE : FALSE,
-                               FILE_NOTIFY_CHANGE_FILE_NAME |
-                               FILE_NOTIFY_CHANGE_DIR_NAME |
-                               FILE_NOTIFY_CHANGE_LAST_WRITE,
-                               &dwBytes,
-                               &(pContext->overlapped),
-                               &FileChangeCompletionRoutine))
-   {
+
+   BOOL ok = ::ReadDirectoryChangesW(
+       pContext->hDirectory,
+       &(pContext->receiveBuffer[0]),
+       static_cast<DWORD>(pContext->receiveBuffer.size()),
+       pContext->recursive ? TRUE : FALSE,
+       FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+       &dwBytes,
+       &(pContext->overlapped),
+       &FileChangeCompletionRoutine);
+
+   if (!ok)
       return LAST_SYSTEM_ERROR();
-   }
-   else
-   {
-      pContext->readDirChangesPending = true;
-      return Success();
-   }
+
+   pContext->readDirChangesPending = true;
+   return Success();
 }
 
 } // anonymous namespace
@@ -582,6 +587,9 @@ Handle registerMonitor(const core::FilePath& filePath,
    // notify the caller that we have successfully registered
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
+   // register handle
+   s_monitorHandles.insert(pContext->handle);
+
    // return the handle
    return pContext->handle;
 }
@@ -589,6 +597,9 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle)
 {
+   // remove from registry
+   s_monitorHandles.erase(handle);
+
    // this will end up calling the completion routine with
    // ERROR_OPERATION_ABORTED at which point we'll delete the context
    cleanupContext((FileEventContext*)(handle.pData));
@@ -605,15 +616,21 @@ void run(const boost::function<void()>& checkForInput)
    while (true)
    {
       // look for changes and keep calling SleepEx as long as we have them
-      while (::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
+      while (::SleepEx(1, TRUE) == WAIT_IO_COMPLETION)
+      {
+      }
 
+      // execute callback
       checkForInput();
    }
 }
 
 void stop()
 {
-   // call ::SleepEx until all active requests hae terminated
+   // notify monitor we're about to stop
+   s_stopRequested = true;
+
+   // wait until we've cleaned up
    while (s_activeRequests > 0)
    {
       ::SleepEx(100, TRUE);

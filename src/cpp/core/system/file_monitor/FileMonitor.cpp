@@ -627,16 +627,16 @@ void initialize()
 
 void stop()
 {
+   // stop the file scanner
+   core::system::stopFileScanner();
+
    if (s_fileMonitorThread.joinable())
    {
       s_fileMonitorThread.interrupt();
-
-      // wait for for the thread to stop
       if (!s_fileMonitorThread.timed_join(boost::posix_time::seconds(3)))
       {
          LOG_WARNING_MESSAGE("file monitor thread didn't stop on its own");
       }
-
       s_fileMonitorThread.detach();
    }
 }

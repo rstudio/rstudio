@@ -18,6 +18,7 @@
 #include <boost/system/windows_error.hpp>
 
 #include <core/BoostThread.hpp>
+#include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
 
@@ -29,6 +30,9 @@ namespace core {
 namespace system {
 
 namespace {
+
+// stop requested by user
+bool s_stopRequested = false;
 
 FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 {
@@ -115,6 +119,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for (const FileInfo& childFileInfo : childrenFileInfo)
    {
+      // bail if we've requested a stop
+      if (s_stopRequested)
+         return Success();
+
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))
          continue;
@@ -141,6 +149,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    return Success();
 }
 
+void stopFileScanner()
+{
+   s_stopRequested = true;
+}
 
 } // namespace system
 } // namespace core

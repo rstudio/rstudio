@@ -31,6 +31,8 @@ namespace system {
 
 namespace {
 
+bool s_stopRequested = false;
+
 #if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
 int entryFilter(struct dirent *entry)
 #else
@@ -97,6 +99,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
+   // bail if requested
+   if (s_stopRequested)
+      return Success();
+
    // clear all existing
    pTree->erase_children(fromNode);
 
@@ -191,6 +197,11 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // return success
    return Success();
+}
+
+void stopFileScanner()
+{
+   s_stopRequested = true;
 }
 
 } // namespace system

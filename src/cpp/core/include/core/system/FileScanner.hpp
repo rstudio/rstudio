@@ -60,6 +60,7 @@ inline Error scanFiles(const FileInfo& fromRoot,
    return scanFiles(pTree->set_head(fromRoot), options, pTree);
 }
 
+void stopFileScanner();
 
 } // namespace system
 } // namespace core
