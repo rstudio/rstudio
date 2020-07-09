@@ -19,10 +19,9 @@ namespace rstudio {
 namespace core {
 namespace debug {
 
+#ifdef _WIN32
 void logToNotepad(const char* fmt, ...)
 {
-#ifdef _WIN32
-
    // try to find Notepad window
    HWND hNotepad = ::FindWindow("Notepad", NULL);
    if (hNotepad == NULL)
@@ -45,8 +44,8 @@ void logToNotepad(const char* fmt, ...)
 
    // send message
    ::SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM) buffer);
-#endif
 }
+#endif
 
 } // namespace debug
 } // namespace core
