@@ -27,15 +27,14 @@ import { kSetMarkdownTransaction } from "../../api/transaction";
 import { MathType } from "./math";
 import { keymap } from "prosemirror-keymap";
 
-// TODO: escaping from inline math with arrow
 
 export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath): Plugin[] {
 
   return [
     mathViewPlugin(schema, ui, math),
     keymap({
-      ArrowUp: mathViewArrowHandler('up'),
-      ArrowDown: mathViewArrowHandler('down'),
+      ArrowUp: verticalArrowHandler('up'),
+      ArrowDown: verticalArrowHandler('down')
     })
   ];
 
@@ -135,7 +134,6 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
           // adjust decoration positions to changes made by the transaction (decorations that apply
           // to removed chunks of content will be removed by this)
           return set.map(tr.mapping, tr.doc);
-
         }
 
       },
@@ -146,72 +144,12 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
         return key.getState(state);
       },
     },
-
-    appendTransaction: (_transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
-      // did we enter math view on the last transaction?
-      const mathRange = getMarkRange(newState.selection.$from, schema.marks.math);
-      if (mathRange) {
-        if (!getMarkRange(oldState.selection.$from, schema.marks.math)) {
-
-          // get math text
-          const mathText = newState.doc.textBetween(mathRange.from, mathRange.to);
-
-          // transaction to set the selection
-          const tr = newState.tr;
-
-          // old selection just to the left -- set selection at beginning of the math
-          if (mathRange.from === (oldState.selection.from + 1)) {
-
-
-            setTextSelection(mathRange.from)(tr);
-
-
-            // old selection just to the right -- set selection at the end of the math
-          } else if (mathRange.to === (oldState.selection.from - 2)) {
-
-            setTextSelection(mathRange.to)(tr);
-
-          }
-
-          return tr;
-        }
-
-        // not currently in a math mark
-      } else {
-
-        // did we end up just to the right of math? if so check for navigation from a distance
-        // (would imply an up/down arrow or perhaps a mouse click)
-        const prevMathRange = getMarkRange(newState.doc.resolve(newState.selection.from - 1), schema.marks.math);
-        if (prevMathRange) {
-          // if the selection came from afar then treat it as an actual selection
-          const delta = oldState.selection.from - newState.selection.from;
-
-          if (Math.abs(delta) > 2) {
-
-            const tr = newState.tr;
-
-            const mathText = newState.doc.textBetween(prevMathRange.from, prevMathRange.to);
-            const attrs = getMarkAttrs(newState.doc, prevMathRange, schema.marks.math);
-
-            if (attrs.type === MathType.Inline) {
-              setTextSelection(prevMathRange.from + (mathText.length / 2))(tr);
-            } else {
-              const match = mathText.match(/^[$\s]+/);
-              if (match) {
-                setTextSelection(prevMathRange.from + match[0].length)(tr);
-              }
-            }
-            return tr;
-          }
-        }
-      }
-
-      return null;
-    }
   });
+
 }
 
-function mathViewArrowHandler(dir: 'up' | 'down') {
+
+function verticalArrowHandler(dir: 'up' | 'down') {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
     if (state.selection.empty && view && view.endOfTextblock(dir)) {
