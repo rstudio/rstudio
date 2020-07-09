@@ -28,7 +28,9 @@ import { MathType } from "./math";
 import { keymap } from "prosemirror-keymap";
 
 
-// TODO: equations don't show selection (could just do node selection)
+// NOTE: rendered equations don't curently show selection background color when part
+// of a larger selection (in spite of a few failed attempts to get this to work) 
+// it would be nice to figure out how to do this
 
 export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath): Plugin[] {
 
