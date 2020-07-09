@@ -99,10 +99,6 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
-   // bail if requested
-   if (s_stopRequested)
-      return Success();
-
    // clear all existing
    pTree->erase_children(fromNode);
 
@@ -130,6 +126,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over the names
    for (const std::string& name : names)
    {
+      // bail if requested
+      if (s_stopRequested)
+         return Success();
+
       // compute the path
       std::string path = rootPath.completeChildPath(name).getAbsolutePath();
 
