@@ -38,6 +38,7 @@
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
+* Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
 * New `auth-proxy-sign-out-url` option specified an endpoint to take the user to when "Sign Out" is clicked in the IDE user interface (Pro #1745)
 * New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
@@ -66,3 +67,4 @@
 * Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
 * Added CSRF protection to sign-in pages (Pro #1469)
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
+* Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
