@@ -28,6 +28,12 @@ import { MathType } from "./math";
 import { keymap } from "prosemirror-keymap";
 
 
+// TODO: equations don't show selection (could just do node selection)
+
+// TODO: up and down arrow when within an inline question doesn't currently work.
+// I think this is because of the display: none which ends up getting applied 
+// we may need to manually implement the up/down keys
+
 export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath): Plugin[] {
 
   return [
@@ -175,10 +181,22 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 }
 
 
+
+
 function verticalArrowHandler(dir: 'up' | 'down') {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+
+
+    if (!view) {
+      return false;
+    }
+
     const schema = state.schema;
-    if (view && view.endOfTextblock(dir)) {
+
+    // TODO: here we need to check for an active inline mark and manually implement up/down
+
+    if (view.endOfTextblock(dir)) {
+
       const side = dir === 'up' ? -1 : 1;
       const $head = state.selection.$head;
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
