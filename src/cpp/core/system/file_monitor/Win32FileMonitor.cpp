@@ -42,9 +42,6 @@ namespace {
 // buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
 
-// set of currently active monitor handles
-std::set<Handle> s_monitorHandles;
-
 // stop requested for file monitor
 std::atomic<bool> s_stopRequested(false);
 
@@ -587,9 +584,6 @@ Handle registerMonitor(const core::FilePath& filePath,
    // notify the caller that we have successfully registered
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
-   // register handle
-   s_monitorHandles.insert(pContext->handle);
-
    // return the handle
    return pContext->handle;
 }
@@ -597,9 +591,6 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle)
 {
-   // remove from registry
-   s_monitorHandles.erase(handle);
-
    // this will end up calling the completion routine with
    // ERROR_OPERATION_ABORTED at which point we'll delete the context
    cleanupContext((FileEventContext*)(handle.pData));
