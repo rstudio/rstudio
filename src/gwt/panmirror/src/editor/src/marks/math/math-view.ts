@@ -139,6 +139,32 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
       },
     },
 
+    appendTransaction: (_transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
+
+      // not currently in math 
+      if (!getMarkRange(newState.selection.$from, schema.marks.math)) {
+
+        // did we end up just to the right of math? if so check for navigation from a distance
+        // (would imply an up/down arrow)
+        const prevMathRange = getMarkRange(newState.doc.resolve(newState.selection.from - 1), schema.marks.math);
+        if (prevMathRange) {
+          // if the selection came from afar then treat it as an actual selection
+          const delta = oldState.selection.from - newState.selection.from;
+          if (Math.abs(delta) > 3) {
+            const tr = newState.tr;
+            const mathText = newState.doc.textBetween(prevMathRange.from, prevMathRange.to);
+            const attrs = getMarkAttrs(newState.doc, prevMathRange, schema.marks.math);
+            if (attrs.type === MathType.Inline) {
+              setTextSelection(prevMathRange.from + (mathText.length / 2))(tr);
+            }
+            return tr;
+          }
+        }
+      }
+
+      return null;
+    },
+
     props: {
       decorations(state: EditorState) {
         return key.getState(state);
@@ -152,7 +178,7 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 function verticalArrowHandler(dir: 'up' | 'down') {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
-    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+    if (view && view.endOfTextblock(dir)) {
       const side = dir === 'up' ? -1 : 1;
       const $head = state.selection.$head;
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
