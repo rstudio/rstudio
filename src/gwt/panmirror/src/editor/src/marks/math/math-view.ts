@@ -13,7 +13,7 @@
  *
  */
 
-import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { Plugin, PluginKey, EditorState, Transaction, Selection } from "prosemirror-state";
 import { Schema } from "prosemirror-model";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
 
@@ -25,13 +25,23 @@ import { EditorUI } from "../../api/ui";
 import { kSetMarkdownTransaction } from "../../api/transaction";
 
 import { MathType } from "./math";
+import { keymap } from "prosemirror-keymap";
 
-// TODO: consider divs w/ inline-block for highlighting (then can set width to 0 and keep display)
-// TODO: arrow up / arrow down (esp. w/ display math)
-// TODO: need custom up/down arrow handlers for display math
-// TODO: why don't up/down arrow sometimes not work when editing math? (could be result of display: none)
+// TODO: escaping from inline math with arrow
 
-export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
+export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath): Plugin[] {
+
+  return [
+    mathViewPlugin(schema, ui, math),
+    keymap({
+      ArrowUp: mathViewArrowHandler('up'),
+      ArrowDown: mathViewArrowHandler('down'),
+    })
+  ];
+
+}
+
+function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
 
   const key = new PluginKey<DecorationSet>('math-view');
@@ -191,16 +201,41 @@ export function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
                 setTextSelection(prevMathRange.from + match[0].length)(tr);
               }
             }
-
             return tr;
           }
-
-
         }
-
       }
 
       return null;
     }
   });
+}
+
+function mathViewArrowHandler(dir: 'up' | 'down') {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    const schema = state.schema;
+    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+      const side = dir === 'up' ? -1 : 1;
+      const $head = state.selection.$head;
+      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
+      if (nextPos.$head &&
+        nextPos.$head.parent.childCount === 1 &&
+        schema.marks.math.isInSet(nextPos.$head.parent.firstChild!.marks)) {
+
+        if (dispatch) {
+          const mathText = nextPos.$head.parent.textContent;
+          const match = mathText.match(/^[$\s]+/);
+          if (match) {
+            const tr = state.tr;
+            const mathPos = nextPos.$head.start($head.depth);
+            setTextSelection(mathPos + match[0].length)(tr);
+            dispatch(tr);
+          }
+        }
+        return true;
+
+      }
+    }
+    return false;
+  };
 }

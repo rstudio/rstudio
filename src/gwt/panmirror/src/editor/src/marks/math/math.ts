@@ -29,7 +29,7 @@ import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from '.
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
 import { MathPopupPlugin } from './math-popup';
-import { mathViewPlugin } from './math-view';
+import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
@@ -257,7 +257,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
       if (math) {
         plugins.push(new MathPopupPlugin(ui, math, events, false));
-        plugins.push(mathViewPlugin(schema, ui, math));
+        plugins.push(...mathViewPlugins(schema, ui, math));
       }
       return plugins;
     },
