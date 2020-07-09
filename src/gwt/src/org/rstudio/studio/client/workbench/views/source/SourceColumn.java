@@ -849,7 +849,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageRMarkdownCommands(boolean active)
    {
-      // !!! reconsider this before PR
       boolean rmdCommandsAvailable = active &&
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       activeEditor_ != null &&
