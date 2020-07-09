@@ -2,7 +2,7 @@
 set "PATH=@LIBR_BIN_DIR@;%PATH%"
 
 IF "@RSTUDIO_PACKAGE_BUILD@"=="1" (
-set "SUBPATH=@CMAKE_BUILD_TYPE@/"
+REM temporarily disabled: set "SUBPATH=@CMAKE_BUILD_TYPE@/"
 )
 
 echo Running 'core' tests...
@@ -13,4 +13,3 @@ set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpa
 "@CMAKE_CURRENT_BINARY_DIR@/session/%SUBPATH%rsession.exe" ^
     --run-tests ^
     --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
-
