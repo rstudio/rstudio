@@ -136,11 +136,15 @@ core::Error isUserLicensed(const std::string& username,
                            bool* pLicensed);
 bool isUserListCookieValid(const std::string& cookieValue);
 bool shouldShowUserLicenseWarning();
+bool isUserAdmin(const std::string& username);
 std::string getUserListCookieValue();
 unsigned int getActiveUserCount();
 core::json::Array getLicensedUsers();
+core::json::Array getAllUsers();
 core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
 core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
+core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
+core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
 
 } // namespace overlay
 

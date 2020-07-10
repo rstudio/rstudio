@@ -298,6 +298,11 @@ bool shouldShowUserLicenseWarning()
    return false;
 }
 
+bool isUserAdmin()
+{
+   return false;
+}
+
 std::string getUserListCookieValue()
 {
    return "9c16856330a7400cbbbba228392a5d83";
@@ -313,6 +318,11 @@ json::Array getLicensedUsers()
    return json::Array();
 }
 
+json::Array getAllUsers()
+{
+   return json::Array();
+}
+
 Error lockUser(boost::asio::io_service& ioService,
                const std::string& username)
 {
@@ -321,6 +331,20 @@ Error lockUser(boost::asio::io_service& ioService,
 
 Error unlockUser(boost::asio::io_service& ioService,
                  const std::string& username)
+{
+   return Success();
+}
+
+Error setAdmin(rstudio_boost::asio::io_service& ioService,
+               const std::string& username,
+               bool isAdmin)
+{
+   return Success();
+}
+
+Error addUser(rstudio_boost::asio::io_service& ioService,
+              const std::string& username,
+              bool isAdmin)
 {
    return Success();
 }
