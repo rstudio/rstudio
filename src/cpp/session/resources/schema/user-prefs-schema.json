@@ -1274,7 +1274,7 @@
         "visual_markdown_code_editor": {
             "type": "string",
             "enum": ["ace", "codemirror"],
-            "default": "codemirror",
+            "default": "ace",
             "title": "Editor for code chunks in visual editing mode",
             "description": "The name of the editor to use to provide code editing in visual mode"
         },

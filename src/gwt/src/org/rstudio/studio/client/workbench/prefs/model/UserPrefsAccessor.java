@@ -509,7 +509,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_indent_guides",
-         "Show invisible characters in editor", 
+         "Show indentation guides", 
          "Whether to show indentation guides in the RStudio code editor.", 
          false);
    }
@@ -2734,7 +2734,7 @@ public class UserPrefsAccessor extends Prefs
             VISUAL_MARKDOWN_CODE_EDITOR_ACE,
             VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR
          },
-         "codemirror");
+         "ace");
    }
 
    public final static String VISUAL_MARKDOWN_CODE_EDITOR_ACE = "ace";
