@@ -36,7 +36,11 @@ download <- function(url, destfile, ...) {
 
 
 printf <- function(fmt, ...) {
-   cat(sprintf(fmt, ...))
+   tryCatch({
+     cat(sprintf(fmt, ...))
+   }, error = function(e) {
+     cat(fmt, ...)
+   })
 }
 
 PATH <- (function() {
@@ -80,7 +84,7 @@ exec <- function(command,
 {
    # construct path to logfile
    if (is.null(output)) {
-      prefix <- sprintf("%s-output-", basename(command))
+      prefix <- paste0(basename(command), "-output-")
       output <- paste(tempfile(prefix, dir), "txt", sep = ".")
    }
    
@@ -103,9 +107,9 @@ exec <- function(command,
    
    # report status
    if (status) {
-      msg <- sprintf("Command exited with status %i.", as.integer(status))
+      msg <- paste0("Command exited with status ", as.integer(status), ".")
       if (is.character(output) && file.exists(output)) {
-         logmsg <- sprintf("Logs written to %s.", output)
+         logmsg <- paste0("Logs written to ", output, ".")
          msg <- paste(msg, logmsg, sep = "\n")
       }
       fatal(msg)
