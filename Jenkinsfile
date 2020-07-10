@@ -222,6 +222,7 @@ try {
 
         // build each container image
         parallel_images = [:]
+        /* TODO (jmcphers) - disabled on branch 
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
@@ -247,6 +248,7 @@ try {
                 }
             }
         }
+        */
             
 
         // prepare container for windows builder
