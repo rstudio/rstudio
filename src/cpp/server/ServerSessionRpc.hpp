@@ -40,8 +40,11 @@ core::Error startup();
 // use to add session-rpc handler requiring RPC secret to be present; this is what
 // you should use unless there's a well-understood scenario where relaxed
 // security is acceptable (see addBrowserHttpProxyhandler)
+// allowUserAccess indicates whether or not regular users (without access to RPC secret)
+// are allowed to invoke the RPC - should be set to false for security-sensitive RPCs
 void addHandler(const std::string& prefix,
-                const auth::SecureAsyncUriHandlerFunction& handler);
+                const auth::SecureAsyncUriHandlerFunction& handler,
+                bool allowUserAccess = true);
 
 // use to add session-rpc handler that falls back to checking for regular
 // login cookie when RPC secret not found

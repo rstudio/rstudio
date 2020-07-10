@@ -190,8 +190,9 @@ void validationLoginHandler(
 
 } // anonymous namespace
 
-void addHandler(const std::string &prefix,
-                const auth::SecureAsyncUriHandlerFunction &handler)
+void addHandler(const std::string& prefix,
+                const auth::SecureAsyncUriHandlerFunction& handler,
+                bool allowUserAccess)
 {
    if (s_pSessionRpcServer)
    {
@@ -202,7 +203,10 @@ void addHandler(const std::string &prefix,
                                    false /*fallbackAllowed*/,
                                    _1));
 
-      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
+      // check if we allow user access - meaning users do not need special user-hidden RPC
+      // secret in order to call the RPC. some administrator protected RPCs should not be
+      // invokable by regular users
+      if (allowUserAccess && job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
       {
          // if we're using job launcher sessions, we need to handle RPCs
          // from within the regular http server since sessions will be
