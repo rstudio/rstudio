@@ -1,5 +1,9 @@
 print_progress <- function(fmt, ..., prefix) {
-   cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
+   tryCatch({
+     cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
+   }, error = function(e) {
+     cat(paste(prefix, fmt, ..., "\n"))
+   })
 }
 
 section  <- function(fmt, ...) print_progress(fmt, ..., prefix = "--> ")
