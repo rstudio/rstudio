@@ -27,10 +27,14 @@
 }
 
 .itemName {
+   position: relative;
+   top: -1px;
    margin-right: 7px;
 }
 
 .itemContext {
+   position: relative;
+   top: -1px;
    color: #888;
 }
 

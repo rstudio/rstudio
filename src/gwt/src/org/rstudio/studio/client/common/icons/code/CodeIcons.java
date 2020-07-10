@@ -73,6 +73,24 @@ public interface CodeIcons extends ClientBundle
    @Source("section_2x.png")
    ImageResource section2x();
    
+   @Source("section_h1_2x.png")
+   ImageResource sectionH12x();
+   
+   @Source("section_h2_2x.png")
+   ImageResource sectionH22x();
+   
+   @Source("section_h3_2x.png")
+   ImageResource sectionH32x();
+   
+   @Source("section_h4_2x.png")
+   ImageResource sectionH42x();
+   
+   @Source("section_h5_2x.png")
+   ImageResource sectionH52x();
+   
+   @Source("section_h6_2x.png")
+   ImageResource sectionH62x();
+   
    @Source("figure_2x.png")
    ImageResource figure2x();
    

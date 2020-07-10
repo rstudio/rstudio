@@ -1411,6 +1411,7 @@ public:
       Section   = 7,
       Figure    = 8,
       Table     = 9,
+      Math      = 10,
    };
 
    SourceItem()
@@ -1620,9 +1621,17 @@ void fillFromBookdownRefs(const std::string& term,
       {
          sourceType = SourceItem::Section;
       }
+      else if (type == "thm" || type == "lem" || type == "cor" ||
+               type == "prp" || type == "cnj" || type == "def" ||
+               type == "exr" || type == "eq")
+      {
+         sourceType = SourceItem::Math;
+      }
       
       // form appropriate text for display
       std::string displayText = title;
+      
+      // for 
       
       // check to see if this is a subsequence match of the
       // user-provided search term

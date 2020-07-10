@@ -28,16 +28,17 @@ public class SourceItem extends JavaScriptObject
    }
    
    // NOTE: synchronize with class in SessionCodeSearch.cpp
-   public static final int NONE       = 0;
-   public static final int FUNCTION   = 1;
-   public static final int METHOD     = 2;
-   public static final int CLASS      = 3;
-   public static final int ENUM       = 4;
-   public static final int ENUM_VALUE = 5;
-   public static final int NAMESPACE  = 6; 
-   public static final int SECTION    = 7;
-   public static final int FIGURE     = 8;
-   public static final int TABLE      = 9;
+   public static final int NONE       =  0;
+   public static final int FUNCTION   =  1;
+   public static final int METHOD     =  2;
+   public static final int CLASS      =  3;
+   public static final int ENUM       =  4;
+   public static final int ENUM_VALUE =  5;
+   public static final int NAMESPACE  =  6; 
+   public static final int SECTION    =  7;
+   public static final int FIGURE     =  8;
+   public static final int TABLE      =  9;
+   public static final int MATH       = 10;
 
    public final native int getType() /*-{
       return this.type;
@@ -72,25 +73,21 @@ public class SourceItem extends JavaScriptObject
       return this.metadata || {};
    }-*/;
    
-   public final boolean isBookdownXRef()
+   public final boolean hasXRef()
    {
-      switch (getType())
-      {
-      case SECTION:
-      case FIGURE:
-      case TABLE:
-         return true;
-      default:
-         return false;
-      }
+      return getMetadata().hasKey("xref");
+   }
+   
+   public XRef getXRef()
+   {
+      return getMetadata().getObject("xref").cast();
    }
 
    public final CodeNavigationTarget toCodeNavigationTarget()
    {
-      JsObject meta = getMetadata();
-      if (meta.hasKey("xref"))
+      if (hasXRef())
       {
-         XRef xref = meta.getObject("xref").cast();
+         XRef xref = getXRef();
          return new CodeNavigationTarget(
                getContext(),
                FilePosition.create(getLine(), getColumn()),
