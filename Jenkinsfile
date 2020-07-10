@@ -289,6 +289,7 @@ try {
 
         parallel parallel_images
 
+        /* TODO (jmcphers) - disabled on branch 
         // build each variant in parallel
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
@@ -321,6 +322,7 @@ try {
                 }
             }
         }
+        */
 
         parallel_containers["windows"] = {
           node('windows') {
