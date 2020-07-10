@@ -247,6 +247,11 @@ public class Source implements InsertSourceHandler,
                      FileIcon icon,
                      String value,
                      String tooltip);
+      void resetDocTabs(String activeId,
+                         String[] ids,
+                         FileIcon[] icons,
+                         String[] names,
+                         String[] paths);
 
       void setDirty(Widget widget, boolean dirty);
 

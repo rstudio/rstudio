@@ -551,6 +551,16 @@ public class VisualMode implements VisualModeEditorSync,
       panmirror_.execCommand(PanmirrorCommands.ExecutePreviousRmdChunks);
    }
    
+   public void goToNextSection()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToNextSection);
+   }
+   
+   public void goToPreviousSection()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToPreviousSection);
+   }
+   
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {

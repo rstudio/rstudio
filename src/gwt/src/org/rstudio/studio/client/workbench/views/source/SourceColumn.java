@@ -373,7 +373,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             ? activeEditor_.getId()
             : null;
 
-      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
+      display_.resetDocTabs(activeId, ids, icons, names, paths);
 
       manageChevronVisibility();
    }
@@ -849,7 +849,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageRMarkdownCommands(boolean active)
    {
-      // !!! reconsider this before PR
       boolean rmdCommandsAvailable = active &&
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       activeEditor_ != null &&

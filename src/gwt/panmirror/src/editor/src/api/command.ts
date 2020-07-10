@@ -125,6 +125,10 @@ export enum EditorCommandId {
   StanCodeChunk = '65D33344-CBE9-438C-B337-A538F8D7FCE5',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
+
+  // outline
+  GoToNextSection = 'AE827BDA-96F8-4E84-8030-298D98386765',
+  GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF'
 }
 
 export interface EditorCommand {

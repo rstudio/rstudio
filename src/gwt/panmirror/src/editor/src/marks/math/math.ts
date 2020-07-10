@@ -28,9 +28,11 @@ import { MarkInputRuleFilter } from '../../api/input_rule';
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
-import { MathPreviewPlugin } from './math-preview';
+import { MathPopupPlugin } from './math-popup';
+import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
+
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -47,7 +49,7 @@ const MATH_TYPE = 0;
 const MATH_CONTENT = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, ui, format, events } = context;
+  const { pandocExtensions, ui, format, math, events } = context;
 
   if (!pandocExtensions.tex_math_dollars) {
     return null;
@@ -83,7 +85,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
           toDOM(mark: Mark) {
             return [
-              'span',
+              'div',
               {
                 class: 'math pm-fixedwidth-font pm-light-text-color',
                 'data-type': mark.attrs.type,
@@ -134,39 +136,39 @@ const extension = (context: ExtensionContext): Extension | null => {
             priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect math content
-              let math = '';
-              parent.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
+              let mathText = '';
+              parent.forEach((node: ProsemirrorNode) => (mathText = mathText + node.textContent));
 
               // if this is blogdownMathInCode just write the content in a code mark
               if (blogdownMathInCode) {
                 output.writeToken(PandocTokenType.Code, () => {
                   output.writeAttr();
-                  output.write(math);
+                  output.write(mathText);
                 });
               } else {
                 // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
-                if (math.startsWith(delimiter) && math.endsWith(delimiter)) {
+                if (mathText.startsWith(delimiter) && mathText.endsWith(delimiter)) {
                   // remove delimiter
-                  math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
+                  mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
-                  if (math.trim().length === 0) {
-                    output.writeText(delimiter + math + delimiter);
+                  if (mathText.trim().length === 0) {
+                    output.writeText(delimiter + mathText + delimiter);
                   } else {
                     output.writeToken(PandocTokenType.Math, () => {
                       // write type
                       output.writeToken(
                         mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
                       );
-                      output.write(math);
+                      output.write(mathText);
                     });
                   }
                 } else {
                   // user removed the delimiter so write the content literally. when it round trips
                   // back into editor it will no longer be parsed by pandoc as math
-                  output.writeRawMarkdown(math);
+                  output.writeRawMarkdown(mathText);
                 }
               }
             },
@@ -253,8 +255,9 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
         mathHighlightPlugin(schema),
       ];
-      if (ui.math) {
-        plugins.push(new MathPreviewPlugin(ui, events));
+      if (math) {
+        plugins.push(new MathPopupPlugin(ui, math, events, false));
+        plugins.push(...mathViewPlugins(schema, ui, math));
       }
       return plugins;
     },

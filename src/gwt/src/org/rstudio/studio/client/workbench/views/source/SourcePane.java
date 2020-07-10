@@ -35,6 +35,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -92,7 +93,12 @@ public class SourcePane extends LazyPanel implements Display,
       chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
       chevron_.setAltText("Switch to tab");
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
-      chevron_.addClickHandler(event -> tabOverflowPopup_.showRelativeTo(chevron_));
+      chevron_.addClickHandler(
+         event -> {
+            tabOverflowPopup_.showRelativeTo(chevron_);
+            SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+            mgr.setActive(getAbsoluteLeft());
+         });
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
@@ -166,6 +172,12 @@ public class SourcePane extends LazyPanel implements Display,
                                icon,
                                value,
                                tooltip);
+   }
+
+   @Override
+   public void resetDocTabs(String activeId, String[] ids, FileIcon[] icons, String[] names, String[] paths)
+   {
+      tabOverflowPopup_.resetDocTabs(activeId, ids, icons, names, paths);
    }
 
    @Override
@@ -342,6 +354,6 @@ public class SourcePane extends LazyPanel implements Display,
    private HTML utilPanel_;
    private Image chevron_;
    private LayoutPanel panel_;
-   private PopupPanel tabOverflowPopup_;
+   private TabOverflowPopupPanel tabOverflowPopup_;
 
 }

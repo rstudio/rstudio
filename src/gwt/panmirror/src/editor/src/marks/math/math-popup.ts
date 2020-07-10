@@ -27,24 +27,28 @@ import { ScrollEvent, ResizeEvent } from '../../api/event-types';
 import { applyStyles } from '../../api/css';
 import { editingRootNodeClosestToPos, editingRootNode } from '../../api/node';
 import { createPopup } from '../../api/widgets/widgets';
+import { EditorMath } from '../../api/math';
 
 const kMathPopupVerticalOffset = 10;
 const kMathPopupInputDebuounceMs = 250;
 
 const key = new PluginKey('math-preview');
 
-export class MathPreviewPlugin extends Plugin {
+export class MathPopupPlugin extends Plugin {
   private readonly ui: EditorUI;
+  private readonly math: EditorMath;
 
   private view: EditorView | null = null;
 
   private popup: HTMLElement | null = null;
   private lastRenderedMath: string | null = null;
 
+  private readonly updatePopupTimer: number;
+
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
 
-  constructor(ui: EditorUI, events: EditorEvents) {
+  constructor(ui: EditorUI, math: EditorMath, events: EditorEvents, onHover: boolean) {
     super({
       key,
       view: () => {
@@ -58,6 +62,7 @@ export class MathPreviewPlugin extends Plugin {
             { leading: true, trailing: true },
           ),
           destroy: () => {
+            clearInterval(this.updatePopupTimer);
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
             this.closePopup();
@@ -66,23 +71,30 @@ export class MathPreviewPlugin extends Plugin {
       },
       props: {
         handleDOMEvents: {
-          mousemove: debounce((view: EditorView, event: Event) => {
-            const ev = event as MouseEvent;
-            const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
-            if (pos && pos.inside !== -1) {
-              this.updatePopup(view.state.doc.resolve(pos.pos));
-            }
-            return false;
-          }, kMathPopupInputDebuounceMs),
+          ...(onHover ? {
+            mousemove: debounce((view: EditorView, event: Event) => {
+              const ev = event as MouseEvent;
+              const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
+              if (pos && pos.inside !== -1) {
+                this.updatePopup(view.state.doc.resolve(pos.pos));
+              }
+              return false;
+            }, kMathPopupInputDebuounceMs),
+
+          } : {})
         },
       },
     });
 
-    // save reference to ui
+    // save reference to ui and math
     this.ui = ui;
+    this.math = math;
 
-    // update position on scroll
+    // update popup for resize, scrolling, as well as every 100ms to cover reflowing
+    // of the document as a result of latex math being shown/hidden (will effectively 
+    // be a no-op if the math text and  document layout / scroll position hasn't changed)
     this.updatePopup = this.updatePopup.bind(this);
+    this.updatePopupTimer = setInterval(this.updatePopup, 100);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
     this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
   }
@@ -145,7 +157,7 @@ export class MathPreviewPlugin extends Plugin {
 
     // typeset the math if we haven't already
     if (inlineMath !== this.lastRenderedMath && this.popup) {
-      this.ui.math.typeset!(this.popup, inlineMath).then(error => {
+      this.math.typeset!(this.popup, inlineMath, true).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath;
@@ -198,7 +210,9 @@ function popupPositionStyles(view: EditorView, range: { from: number; to: number
   let left = `calc(${Math.round(rangeStartCoords.left - editorBox.left)}px - 1ch)`;
 
   // if it flow across two lines then position at far left of editing root
-  if (rangeStartCoords.bottom !== rangeEndCoords.bottom) {
+  // (we give it the 5 pixels of wiggle room so that detection still works
+  // when a mathjax preview is shown in place of math text)
+  if (Math.abs(rangeStartCoords.bottom - rangeEndCoords.bottom) > 5) {
     const editingRoot = editingRootNodeClosestToPos(view.state.doc.resolve(range.from));
     if (editingRoot) {
       const editingEl = view.nodeDOM(editingRoot.pos) as HTMLElement;
