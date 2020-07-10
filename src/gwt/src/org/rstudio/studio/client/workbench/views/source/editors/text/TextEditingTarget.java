@@ -1074,28 +1074,43 @@ public class TextEditingTarget implements
    @Handler
    void onGoToNextSection()
    {
-      if (docDisplay_.getFileType().canGoNextPrevSection())
+      if (visualMode_.isActivated())
       {
-         if (!moveCursorToNextSectionOrChunk(true))
-            docDisplay_.gotoPageDown();
+         visualMode_.goToNextSection();
       }
       else
       {
-         docDisplay_.gotoPageDown();
+         if (docDisplay_.getFileType().canGoNextPrevSection())
+         {
+            if (!moveCursorToNextSectionOrChunk(true))
+               docDisplay_.gotoPageDown();
+         }
+         else
+         {
+            docDisplay_.gotoPageDown();
+         }
       }
+      
    }
 
    @Handler
    void onGoToPrevSection()
    {
-      if (docDisplay_.getFileType().canGoNextPrevSection())
+      if (visualMode_.isActivated())
       {
-         if (!moveCursorToPreviousSectionOrChunk(true))
-            docDisplay_.gotoPageUp();
+         visualMode_.goToPreviousSection();
       }
       else
       {
-         docDisplay_.gotoPageUp();
+         if (docDisplay_.getFileType().canGoNextPrevSection())
+         {
+            if (!moveCursorToPreviousSectionOrChunk(true))
+               docDisplay_.gotoPageUp();
+         }
+         else
+         {
+            docDisplay_.gotoPageUp();
+         }
       }
    }
 

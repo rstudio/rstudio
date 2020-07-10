@@ -15,13 +15,17 @@
 
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
+import { EditorView } from 'prosemirror-view';
+
 import { NodeWithPos } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { transactionsHaveChange, kSetMarkdownTransaction } from '../api/transaction';
 import { findTopLevelBodyNodes } from '../api/node';
 import { uuidv4 } from '../api/util';
-import { EditorOutlineItem, EditorOutlineItemType, EditorOutline, isOutlineNode } from '../api/outline';
+import { EditorOutlineItem, EditorOutlineItemType, EditorOutline, isOutlineNode, getEditingOutlineLocation, getDocumentOutline } from '../api/outline';
+import { navigateToPos } from '../api/navigation';
+import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 const kOutlineIdsTransaction = 'OutlineIds';
 
@@ -63,6 +67,13 @@ const extension: Extension = {
     ];
   },
 
+  commands: () => {
+    return [
+      new ProsemirrorCommand(EditorCommandId.GoToNextSection, ['Mod-PageDown'], goToSectionCommand('next')),
+      new ProsemirrorCommand(EditorCommandId.GoToPreviousSection, ['Mod-PageUp'], goToSectionCommand('previous')),
+    ];
+  },
+
   plugins: (schema: Schema) => {
     return [
       new Plugin<EditorOutline>({
@@ -85,6 +96,31 @@ const extension: Extension = {
     ];
   },
 };
+
+
+export function goToSectionCommand(dir: 'next' | 'previous') {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+    if (dispatch && view) {
+      let outline = getDocumentOutline(state);
+      if (dir === 'previous') {
+        outline = outline.reverse();
+      }
+      const target = outline.find(nodeWithPos => {
+        if (dir === 'next') {
+          return nodeWithPos.pos > state.selection.head;
+        } else {
+          return nodeWithPos.pos < (state.selection.head - 1);
+        }
+      });
+      if (target) {
+        navigateToPos(view, target.pos, false);
+      }
+    }
+    return true;
+  };
+}
+
+
 
 function editorOutline(state: EditorState): EditorOutline {
   // get all of the headings (bail if there are none)
