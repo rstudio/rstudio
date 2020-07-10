@@ -13,7 +13,11 @@ fatal <- function(fmt, ...) {
    if (interactive()) {
       stop(sprintf(fmt, ...), "\n", call. = FALSE)
    } else {
-      message("FATAL: ", sprintf(fmt, ...))
+      err <- paste(fmt, ...) 
+      err <- try({
+        sprintf(fmt, ...)
+      }, silent = TRUE)
+      message("FATAL: ", err)
       quit(save = "no", status = 1, runLast = TRUE)
    }  
 }
