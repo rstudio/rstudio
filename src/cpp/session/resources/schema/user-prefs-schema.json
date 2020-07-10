@@ -1271,6 +1271,12 @@
             "title": "Font size for visual editing mode",
             "description": "The default visual editing mode font size, in points"
         },
+        "zotero_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero API Key",
+            "description": "Key for making Zotero API calls"  
+        },
         "emoji_skintone" : {
           "type": "string",
           "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],

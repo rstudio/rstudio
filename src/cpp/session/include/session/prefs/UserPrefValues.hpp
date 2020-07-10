@@ -334,6 +334,7 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kZoteroApiKey "zotero_api_key"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1515,6 +1516,12 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * Key for making Zotero API calls
+    */
+   std::string zoteroApiKey();
+   core::Error setZoteroApiKey(std::string val);
 
    /**
     * Preferred emoji skintone

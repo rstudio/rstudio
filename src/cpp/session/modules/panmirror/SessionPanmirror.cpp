@@ -25,6 +25,7 @@
 #include "SessionPanmirrorBibliogrpahy.hpp"
 #include "SessionPanmirrorCrossref.hpp"
 #include "SessionPanmirrorDOI.hpp"
+#include "SessionPanmirrorZotero.hpp"
 
 using namespace rstudio::core;
 
@@ -41,6 +42,7 @@ Error initialize()
       (bibliography::initialize)
       (crossref::initialize)
       (doi::initialize)
+      (zotero::initialize)
     ;
    return initBlock.execute();
 }

@@ -2520,6 +2520,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 }
 
 /**
+ * Key for making Zotero API calls
+ */
+std::string UserPrefValues::zoteroApiKey()
+{
+   return readPref<std::string>("zotero_api_key");
+}
+
+core::Error UserPrefValues::setZoteroApiKey(std::string val)
+{
+   return writePref("zotero_api_key", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2818,6 +2831,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
+      kZoteroApiKey,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
