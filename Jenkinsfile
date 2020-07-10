@@ -276,10 +276,9 @@ try {
 
                   echo 'Building Windows container image'
                   container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
-                  if (push) {
-                    echo 'Pushing Container'
-                    container.push()
-                  }
+
+                  echo 'Pushing Windows container'
+                  container.push()
                 }
               }
             }
