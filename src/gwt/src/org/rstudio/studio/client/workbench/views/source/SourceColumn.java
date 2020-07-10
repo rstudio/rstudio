@@ -613,7 +613,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       if (activeEditor_ != null)
          return activeEditor_;
-      if (display_.getActiveTabIndex() > 0 &&
+      if (display_.getActiveTabIndex() > -1 &&
          editors_.size() > display_.getActiveTabIndex())
          return editors_.get(display_.getActiveTabIndex());
       return null;
@@ -698,7 +698,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       else
       {
          HashSet<AppCommand> commandsToEnable = new HashSet<>(newCommands);
-         commandsToEnable.removeAll(activeCommands_);
 
          for (AppCommand command : commandsToEnable)
          {
@@ -822,6 +821,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                      getNextActiveEditor().getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       boolean cmdEnabled = rsCommandsAvailable && active;
 
+      getSourceCommand(commands_.rsconnectConfigure()).setVisible(false);
+      getSourceCommand(commands_.rsconnectDeploy()).setVisible(false);
       getSourceCommand(commands_.rsconnectDeploy()).setVisible(active, cmdEnabled, rsCommandsAvailable);
       if (active)
       {
@@ -849,13 +850,15 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageRMarkdownCommands(boolean active)
    {
-      boolean rmdCommandsAvailable = active &&
+      boolean rmdCommandsAvailable =
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       activeEditor_ != null &&
                       activeEditor_.getExtendedFileType() != null &&
                       activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
-      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(rmdCommandsAvailable);
-      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(rmdCommandsAvailable);
+      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(false);
+      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(false);
+      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(active && rmdCommandsAvailable, rmdCommandsAvailable, rmdCommandsAvailable);
+      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(active && rmdCommandsAvailable, rmdCommandsAvailable,rmdCommandsAvailable);
    }
 
    private void manageSynctexCommands(boolean active)
@@ -877,6 +880,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean cmdEnabled = active && synctexAvailable;
+      getSourceCommand(commands_.synctexSearch()).setVisible(false);
+      getSourceCommand(commands_.synctexSearch()).setEnabled(false);
       getSourceCommand(commands_.synctexSearch()).setVisible(active, cmdEnabled, synctexAvailable);
       getSourceCommand(commands_.synctexSearch()).setEnabled(active, cmdEnabled, synctexAvailable);
    }

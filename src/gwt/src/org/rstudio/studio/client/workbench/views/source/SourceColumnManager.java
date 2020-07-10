@@ -141,10 +141,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                               Provider<FileMRUList> pMruList,
                               SourceWindowManager windowManager)
    {
-      SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnList_.add(column);
-
       commands_ = commands;
       binder.bind(commands_, this);
 
@@ -260,6 +256,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
+      SourceColumn column = GWT.create(SourceColumn.class);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      columnList_.add(column);
+
       setActive(column.getName());
    }
 
@@ -471,7 +471,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public int getPhysicalTabIndex()
    {
-      return activeColumn_.getPhysicalTabIndex();
+      if (getActive() != null)
+         return getActive().getPhysicalTabIndex();
+      else
+         return -1;
    }
 
    public ArrayList<String> getNames(boolean excludeMain)
@@ -602,6 +605,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       commands_.sourceNavigateBack().setEnabled(
          sourceNavigationHistory_.isBackEnabled());
    }
+
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
