@@ -99,7 +99,7 @@ const extension: Extension = {
 
 
 export function goToSectionCommand(dir: 'next' | 'previous') {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     if (dispatch && view) {
       let outline = getDocumentOutline(state);
       if (dir === 'previous') {
