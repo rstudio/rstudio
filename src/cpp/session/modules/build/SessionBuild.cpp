@@ -645,7 +645,7 @@ private:
                      const FilePath& packagePath,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
-   {      
+   {
 
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
@@ -670,11 +670,13 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      if (type == kTestFile) {
+      if (type == kTestFile)
+      {
          openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.getParent()));
       }
-      else if (type == kTestPackage) {
+      else if (type == kTestPackage)
+      {
          openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
       }
@@ -732,42 +734,47 @@ private:
       {
          // restart R after build is completed
          restartR_ = true;
-
-         // build command
-         module_context::RCommand rCmd(rBinDir);
-         rCmd << "INSTALL";
-
-         // get extra args
-         std::string extraArgs = projectConfig().packageInstallArgs;
-
-         // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || (type == kRebuildAll))
+         
+         // form path to soon-to-be-created tarball
+         FilePath tarballPath = packagePath
+               .getParent()
+               .completeChildPath(pkgInfo_.sourcePackageFilename());
+         
+         // set up new callbacks to install package after build
+         core::system::ProcessCallbacks buildCallbacks(cb);
+         
+         buildCallbacks.onExit = [=](int exitCode)
          {
-            if (!boost::algorithm::contains(extraArgs, "--preclean"))
-               rCmd << "--preclean";
-         }
-
-         // remove --with-keep.source if this is R < 2.14
-         if (!r::util::hasRequiredVersion("2.14"))
+            if (exitCode != EXIT_SUCCESS)
+            {
+               cb.onExit(exitCode);
+            }
+            else if (!tarballPath.exists())
+            {
+               terminateWithError("Error building package tarball.");
+            }
+            else
+            {
+               // no need to print success message following install here
+               successMessage_.clear();
+               
+               installPackage(rBinDir, type, tarballPath, pkgOptions, cb);
+            }
+         };
+               
+         if (useDevtools())
          {
-            using namespace boost::algorithm;
-            replace_all(extraArgs, "--with-keep.source", "");
-            replace_all(extraArgs, "--without-keep.source", "");
+            devtoolsBuildPackage(packagePath, false, pkgOptions, buildCallbacks);
          }
-
-         // add extra args if provided
-         rCmd << extraArgs;
-
-         // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.getFilename());
-
-         // show the user the command
-         enqueCommandString(rCmd.commandString());
-
-         // run R CMD INSTALL <package-dir>
-         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        pkgOptions,
-                                                        cb);
+         else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
+            
+            buildSourcePackage(rBinDir, packagePath, pkgOptions, buildCallbacks);
+         }
       }
 
       else if (type == kBuildSourcePackage)
@@ -820,7 +827,6 @@ private:
 
       else if (type == kTestPackage)
       {
-
          if (useDevtools())
             devtoolsTestPackage(packagePath, pkgOptions, cb);
          else
@@ -831,6 +837,50 @@ private:
       {
          testFile(packagePath, pkgOptions, cb);
       }
+   }
+   
+   void installPackage(const FilePath& rBinDir,
+                       const std::string& type,
+                       const FilePath& packagePath,
+                       const core::system::ProcessOptions& pkgOptions,
+                       const core::system::ProcessCallbacks& cb)
+   {
+      // build command
+      module_context::RCommand rCmd(rBinDir);
+      rCmd << "INSTALL";
+
+      // get extra args
+      std::string extraArgs = projectConfig().packageInstallArgs;
+
+      // add --preclean if this is a rebuild all
+      if (collectForcePackageRebuild() || (type == kRebuildAll))
+      {
+         if (!boost::algorithm::contains(extraArgs, "--preclean"))
+            rCmd << "--preclean";
+      }
+
+      // remove --with-keep.source if this is R < 2.14
+      if (!r::util::hasRequiredVersion("2.14"))
+      {
+         using namespace boost::algorithm;
+         replace_all(extraArgs, "--with-keep.source", "");
+         replace_all(extraArgs, "--without-keep.source", "");
+      }
+
+      // add extra args if provided
+      rCmd << extraArgs;
+
+      // add filename as a FilePath so it is escaped
+      rCmd << FilePath(packagePath.getFilename());
+
+      // show the user the command
+      enqueCommandString(rCmd.commandString());
+
+      // run R CMD INSTALL <package-dir>
+      module_context::processSupervisor().runCommand(
+               rCmd.shellCommand(),
+               pkgOptions,
+               cb);
    }
 
    void buildSourcePackage(const FilePath& rBinDir,
