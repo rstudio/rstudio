@@ -87,7 +87,7 @@ public class VisualModePanmirrorContext
       return new PanmirrorContext(
          uiContext(), 
          uiDisplay(showContextMenu), 
-         chunks_.uiChunkFactory(),
+         chunks_.uiChunks(),
          exec_.uiExecute()
       );
    }

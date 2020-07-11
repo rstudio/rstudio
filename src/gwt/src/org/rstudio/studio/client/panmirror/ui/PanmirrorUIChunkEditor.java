@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIChunkFactory.java
+ * PanmirrorUIRmdChunkEditor.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,17 +14,29 @@
  */
 package org.rstudio.studio.client.panmirror.ui;
 
+import com.google.gwt.dom.client.Element;
+
+import elemental2.core.JsObject;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorUIChunkFactory
+public class PanmirrorUIChunkEditor
 {
-   public ChunkEditorFactory createChunkEditor;
+   public JsObject editor;
+   public Element element;
+   public SetMode setMode;
+   public Destroy destroy;
    
    @JsFunction
-   public interface ChunkEditorFactory
+   public interface SetMode
    {
-      PanmirrorUIChunk createChunkEditor();
+      void setMode(String mode);
+   }
+   
+   @JsFunction
+   public interface Destroy
+   {
+      void destroy();
    }
 }

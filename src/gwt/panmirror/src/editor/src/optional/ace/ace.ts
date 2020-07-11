@@ -37,14 +37,12 @@ import { EditorUI } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
+import { ChunkEditor } from '../../api/chunk';
 
 import { selectAll } from '../../behaviors/select_all';
-
-import { AceChunkEditor } from "../ace/ace_editor";
+import { findPluginState } from '../../behaviors/find';
 
 import './ace.css';
-
-import { findPluginState } from '../../behaviors/find';
 
 const plugin = new PluginKey('ace');
 
@@ -85,7 +83,8 @@ class CodeBlockNodeView implements NodeView {
   public readonly dom: HTMLElement;
   private readonly view: EditorView;
   private readonly getPos: () => number;
-  private readonly chunk: AceChunkEditor;
+  private readonly chunk: ChunkEditor;
+  private readonly aceEditor: AceAjax.Editor;
   private readonly editSession: AceAjax.IEditSession;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
@@ -119,12 +118,13 @@ class CodeBlockNodeView implements NodeView {
     this.options = options;
 
     // call host factory to instantiate editor and populate with initial content
-    this.chunk = ui.chunks.createChunkEditor();
-    this.chunk.editor.setValue(node.textContent);
-    this.chunk.editor.clearSelection();
+    this.chunk = ui.chunks.createChunkEditor('ace');
+    this.aceEditor = this.chunk.editor as AceAjax.Editor;
+    this.aceEditor.setValue(node.textContent);
+    this.aceEditor.clearSelection();
 
     // cache edit session for convenience; most operations happen on the session
-    this.editSession = this.chunk.editor.getSession();
+    this.editSession = this.aceEditor.getSession();
 
     // The editor's outer node is our DOM representation
     this.dom = this.chunk.element;
@@ -153,12 +153,12 @@ class CodeBlockNodeView implements NodeView {
     this.updating = false;
 
     // Propagate updates from the code editor to ProseMirror
-    this.chunk.editor.on("changeCursor", () => {
+    this.aceEditor.on("changeCursor", () => {
       if (!this.updating) {
         this.forwardSelection();
       }
     });
-    this.chunk.editor.on('change', () => {
+    this.aceEditor.on('change', () => {
       if (!this.updating) {
         this.valueChanged();
         this.forwardSelection();
@@ -166,12 +166,12 @@ class CodeBlockNodeView implements NodeView {
     });
 
     // Forward selection we we receive it
-    this.chunk.editor.on('focus', () => {
+    this.aceEditor.on('focus', () => {
       this.dom.classList.remove("pm-ace-editor-inactive");
       this.forwardSelection();
     });
 
-    this.chunk.editor.on('blur', () => {
+    this.aceEditor.on('blur', () => {
       // Add a class to editor; this class contains CSS rules that hide editor
       // components that Ace cannot hide natively (such as the cursor and
       // matching bracket indicator)
@@ -185,36 +185,36 @@ class CodeBlockNodeView implements NodeView {
     // Add custom escape commands for movement keys (left/right/up/down); these
     // will check to see whether the movement should leave the editor, and if
     // so will do so instead of moving the cursor.
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "leftEscape",
       bindKey: "Left",
       exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); }
     });
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "rightEscape",
       bindKey: "Right",
       exec: () => { this.arrowMaybeEscape('char', 1, "gotoright"); }
     });
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "upEscape",
       bindKey: "Up",
       exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); }
     });
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "downEscape",
       bindKey: "Down",
       exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); }
     });
 
     // Pressing Backspace in the editor when it's empty should delete it.
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "backspaceDeleteNode",
       bindKey: "Backspace",
       exec: () => { this.backspaceMaybeDeleteNode(); }
     });
 
     // Handle undo/redo in ProseMirror
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "undoProsemirror",
       bindKey: {
         win: "Ctrl-Z",
@@ -222,7 +222,7 @@ class CodeBlockNodeView implements NodeView {
       },
       exec: () => { undo(view.state, view.dispatch); }
     });
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "redoProsemirror",
       bindKey: {
         win: "Ctrl-Shift-Z|Ctrl-Y",
@@ -232,7 +232,7 @@ class CodeBlockNodeView implements NodeView {
     });
 
     // Handle Select All in ProseMirror
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "selectAllProsemirror",
       bindKey: {
         win: "Ctrl-A",
@@ -243,7 +243,7 @@ class CodeBlockNodeView implements NodeView {
 
     // Handle shortcuts for moving focus out of the code editor and into
     // ProseMirror
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "exitCodeBlock",
       bindKey: {
         win: "Ctrl-Enter|Shift-Enter",
@@ -257,7 +257,7 @@ class CodeBlockNodeView implements NodeView {
     });
 
     // Create a command for inserting paragraphs from the code editor
-    this.chunk.editor.commands.addCommand({
+    this.aceEditor.commands.addCommand({
       name: "insertParagraph",
       bindKey: {
         win: "Ctrl-\\",
@@ -268,7 +268,7 @@ class CodeBlockNodeView implements NodeView {
 
     // If an attribute editor function was supplied, bind it to F4
     if (this.options.attrEditFn) {
-      this.chunk.editor.commands.addCommand({
+      this.aceEditor.commands.addCommand({
         name: "editAttributes",
         bindKey: "F4",
         exec: () => { this.options.attrEditFn!(view.state, view.dispatch, view); }
@@ -333,7 +333,7 @@ class CodeBlockNodeView implements NodeView {
 
   public setSelection(anchor: number, head: number) {
     if (!this.escaping) {
-      this.chunk.editor.focus();
+      this.aceEditor.focus();
     }
     this.updating = true;
     const doc = this.editSession.getDocument();
@@ -345,7 +345,7 @@ class CodeBlockNodeView implements NodeView {
   }
 
   public selectNode() {
-    this.chunk.editor.focus();
+    this.aceEditor.focus();
   }
 
   public stopEvent() {
@@ -425,7 +425,7 @@ class CodeBlockNodeView implements NodeView {
         this.view.focus();
       }
     } else {
-      this.chunk.editor.execCommand("backspace");
+      this.aceEditor.execCommand("backspace");
     }
   }
 
@@ -434,14 +434,14 @@ class CodeBlockNodeView implements NodeView {
   // sends the focus to the right node; if not, executes the given Ace command
   // (to perform the arrow key's usual action)
   private arrowMaybeEscape(unit: string, dir: number, command: string) {
-    const pos = this.chunk.editor.getCursorPosition();
+    const pos = this.aceEditor.getCursorPosition();
     const lastrow = this.editSession.getLength() - 1;
-    if ((!this.chunk.editor.getSelection().isEmpty()) ||
+    if ((!this.aceEditor.getSelection().isEmpty()) ||
       pos.row !== (dir < 0 ? 0 : lastrow) ||
       (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command
-      this.chunk.editor.execCommand(command);
+      this.aceEditor.execCommand(command);
       return;
     }
 

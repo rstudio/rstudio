@@ -1,5 +1,5 @@
 /*
- * ace_editor.ts
+ * PanmirrorUIChunkFactory.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,16 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.panmirror.ui;
 
-import "AceAjax";
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
 
-export interface ChunkEditorFactory {
-    createChunkEditor(): AceChunkEditor;
-}
-
-export interface AceChunkEditor {
-    editor: AceAjax.Editor;
-    setMode(mode: string): void;
-    element: HTMLElement;
-    destroy(): void;
+@JsType
+public class PanmirrorUIChunks
+{
+   public CreateChunkEditor createChunkEditor;
+   
+   @JsFunction
+   public interface CreateChunkEditor
+   {
+      PanmirrorUIChunkEditor create(String type);
+   }
 }

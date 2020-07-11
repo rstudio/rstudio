@@ -16,19 +16,23 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunk;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkFactory;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.shared.HandlerRegistration;
+
+import jsinterop.base.Js;
 
 public class VisualModeChunks
 {
@@ -38,19 +42,27 @@ public class VisualModeChunks
       sentinel_ = sentinel;
    }
 
-   public PanmirrorUIChunkFactory uiChunkFactory()
+   public PanmirrorUIChunks uiChunks()
    {
-      PanmirrorUIChunkFactory factory = new PanmirrorUIChunkFactory();
-      factory.createChunkEditor = () -> {
+      PanmirrorUIChunks chunks = new PanmirrorUIChunks();
+      chunks.createChunkEditor = (type) -> {
 
-         PanmirrorUIChunk chunk = new PanmirrorUIChunk();
+         // only know how to create ace instances right now
+         if (!type.equals("ace"))
+         {
+            Debug.logToConsole("Unknown chunk editor type: " + type);
+            return null;
+         }
+         
+         PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
          
          final ArrayList<HandlerRegistration> releaseOnDismiss = new ArrayList<HandlerRegistration>();
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
          final AceEditor editor = new AceEditor();
-         chunk.editor = editor.getWidget().getEditor();
+         final AceEditorNative chunkEditor = editor.getWidget().getEditor();
+         chunk.editor = Js.uncheckedCast(chunkEditor);
 
          // Forward the R completion context from the parent editing session
          editor.setRCompletionContext(rContext_);
@@ -58,7 +70,7 @@ public class VisualModeChunks
          // Provide the editor's container element; in the future this will be a
          // host element which hosts chunk output
          DivElement ele = Document.get().createDivElement();
-         ele.appendChild(chunk.editor.getContainer());
+         ele.appendChild(chunkEditor.getContainer());
          chunk.element = ele;
          
          // Provide a callback to set the file's mode; this needs to happen in
@@ -103,15 +115,15 @@ public class VisualModeChunks
          // Allow the editor's size to be determined by its content (these
          // settings trigger an auto-growing behavior), up to a max of 1000
          // lines.
-         chunk.editor.setMaxLines(1000);
-         chunk.editor.setMinLines(1);
+         chunkEditor.setMaxLines(1000);
+         chunkEditor.setMinLines(1);
 
          // Turn off line numbers as they're not helpful in chunks
-         chunk.editor.getRenderer().setShowGutter(false);
+         chunkEditor.getRenderer().setShowGutter(false);
          
          return chunk;
       };
-      return factory;
+      return chunks;
    }
    
    private void setMode(AceEditor editor, String mode)
