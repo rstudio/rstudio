@@ -25,7 +25,7 @@ import { OmniInsertGroup } from '../../api/omni_insert';
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacterGroup, SymbolCharacter } from './insert_symbol-dataprovider';
 
-import untypedSymbolData from './symbols.json';
+import symbolData from './symbols';
 
 const key = new PluginKey<boolean>('insert-symbol');
 
@@ -54,7 +54,7 @@ function symbolOmniInsert(ui: EditorUI) {
 
 class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {
-    this.symbolGroups = (untypedSymbolData as SymbolCharacterGroup[]).sort((a, b) => a.name.localeCompare(b.name));
+    this.symbolGroups = symbolData.sort((a, b) => a.name.localeCompare(b.name));
   }
   private readonly symbolGroups: SymbolCharacterGroup[];
 
