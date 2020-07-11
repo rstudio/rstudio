@@ -219,7 +219,11 @@ class CodeBlockNodeView implements NodeView {
         win: "Ctrl-Z",
         mac: "Command-Z"
       },
-      exec: () => { undo(view.state, view.dispatch); }
+      exec: () => {
+        if (undo(view.state, view.dispatch)) {
+          view.focus();
+        }
+      }
     });
     this.aceEditor.commands.addCommand({
       name: "redoProsemirror",
@@ -227,7 +231,12 @@ class CodeBlockNodeView implements NodeView {
         win: "Ctrl-Shift-Z|Ctrl-Y",
         mac: "Command-Shift-Z|Command-Y"
       },
-      exec: () => { redo(view.state, view.dispatch); }
+      exec: () => {
+        if (redo(view.state, view.dispatch)) {
+          view.focus();
+        }
+
+      }
     });
 
     // Handle Select All in ProseMirror
@@ -237,7 +246,11 @@ class CodeBlockNodeView implements NodeView {
         win: "Ctrl-A",
         mac: "Command-A"
       },
-      exec: () => { selectAll(view.state, view.dispatch, view); }
+      exec: () => {
+        if (selectAll(view.state, view.dispatch, view)) {
+          view.focus();
+        }
+      }
     });
 
     // Handle shortcuts for moving focus out of the code editor and into
@@ -262,7 +275,11 @@ class CodeBlockNodeView implements NodeView {
         win: "Ctrl-\\",
         mac: "Command-\\"
       },
-      exec: () => { insertParagraph(view.state, view.dispatch); }
+      exec: () => {
+        if (insertParagraph(view.state, view.dispatch)) {
+          view.focus();
+        }
+      }
     });
 
     // If an attribute editor function was supplied, bind it to F4
