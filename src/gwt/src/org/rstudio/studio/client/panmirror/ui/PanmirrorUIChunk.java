@@ -1,5 +1,5 @@
 /*
- * PanmirrorOptions.java
+ * PanmirrorUIChunk.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,21 +12,32 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.panmirror.ui;
 
-package org.rstudio.studio.client.panmirror;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
+import com.google.gwt.dom.client.Element;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorOptions
-{    
-   public boolean autoFocus;
-   public boolean spellCheck;
-   public String codeEditor;
-   public boolean rmdImagePreview;
-   public boolean rmdExampleHighlight;
-   public String[] rmdChunkExecution;
-   public boolean hideFormatComment;
-   public String className;
+public class PanmirrorUIChunk
+{
+   public AceEditorNative editor;
+   public Element element;
+   public SetMode setMode;
+   public Destroy destroy;
+   
+   @JsFunction
+   public interface SetMode
+   {
+      void setMode(String mode);
+   }
+   
+   @JsFunction
+   public interface Destroy
+   {
+      void destroy();
+   }
 }

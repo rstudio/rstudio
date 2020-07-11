@@ -100,7 +100,9 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeContext_ = new VisualModePanmirrorContext(docUpdateSentinel_, target_, visualModeExec_, visualModeFormat_);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
+      visualModeContext_ = new VisualModePanmirrorContext(
+            docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter();
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -1047,7 +1049,7 @@ public class VisualMode implements VisualModeEditorSync,
       PanmirrorOptions options = new PanmirrorOptions();
       
       // use embedded codemirror for code blocks
-      options.codemirror = true;
+      options.codeEditor = prefs_.visualMarkdownCodeEditor().getValue();
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
@@ -1098,6 +1100,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private final VisualModePanmirrorFormat visualModeFormat_;
    private final VisualModeChunkExec visualModeExec_;
+   private final VisualModeChunks visualModeChunks_;
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;

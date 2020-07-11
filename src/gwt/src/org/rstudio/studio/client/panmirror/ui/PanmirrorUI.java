@@ -26,7 +26,8 @@ public class PanmirrorUI
 {    
    public PanmirrorUI(PanmirrorUIContext context, 
                       PanmirrorUIDisplay display,
-                      PanmirrorUIExecute execute)
+                      PanmirrorUIExecute execute,
+                      PanmirrorUIChunkFactory chunks)
    {
       this.context = context;
       this.display = display;
@@ -34,6 +35,7 @@ public class PanmirrorUI
       this.math = new PanmirrorUIMath();
       this.prefs = new PanmirrorUIPrefs();
       this.dialogs = new PanmirrorDialogs(this.context);
+      this.chunks = chunks;
    }
    
    public PanmirrorDialogs dialogs;
@@ -42,5 +44,6 @@ public class PanmirrorUI
    public PanmirrorUIMath math;
    public PanmirrorUIPrefs prefs;
    public PanmirrorUIContext context;
+   public PanmirrorUIChunkFactory chunks;
    public JsObject images;
 }

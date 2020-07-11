@@ -334,6 +334,9 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
+#define kVisualMarkdownCodeEditorAce "ace"
+#define kVisualMarkdownCodeEditorCodemirror "codemirror"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1515,6 +1518,12 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   std::string visualMarkdownCodeEditor();
+   core::Error setVisualMarkdownCodeEditor(std::string val);
 
    /**
     * Preferred emoji skintone

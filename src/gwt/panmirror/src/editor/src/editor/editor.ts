@@ -260,7 +260,7 @@ export class Editor {
     options = {
       autoFocus: false,
       spellCheck: false,
-      codemirror: false,
+      codeEditor: "codemirror",
       rmdImagePreview: false,
       hideFormatComment: false,
       className: '',
