@@ -2073,16 +2073,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void onResponseReceived(SourceDocument document)
                {
+                  // apply (dynamic) doc property defaults
+                  SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
+                  
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode
                   if (openingForSourceNavigation_)
                   {
-                     document.getProperties()._setBoolean(
-                        TextEditingTarget.RMD_VISUAL_MODE,
-                        false
+                     document.getProperties().setString(
+                       TextEditingTarget.RMD_VISUAL_MODE,
+                       DocUpdateSentinel.PROPERTY_FALSE
                      );
                   }
-
+                  
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
                   EditingTarget target = getActive().addTab(document, Source.OPEN_INTERACTIVE);
@@ -2091,6 +2094,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
             });
    }
+   
 
    private boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)

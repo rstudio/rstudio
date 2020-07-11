@@ -122,11 +122,6 @@ public class VisualMode implements VisualModeEditorSync,
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
       }));
-      
-      // sync to user pref changed
-      releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
-         view_.manageCommandUI();
-      }));
    } 
    
    

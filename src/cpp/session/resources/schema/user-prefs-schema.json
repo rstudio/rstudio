@@ -1228,11 +1228,11 @@
             "title": "Show full path to project in RStudio Desktop windows",
             "description": "Whether to show the full path to project in desktop window title."
         },
-        "enable_visual_markdown_editing_mode": {
+        "visual_markdown_editing_is_default": {
             "type": "boolean",
             "default": false,
-            "title": "Enable visual markdown editing (experimental)",
-            "description": "Whether to enable experimental visual markdown editing"
+            "title": "Use visual editing by default for new markdown documents",
+            "description": "Whether to enable visual editing by default for new markdown documents"
         },
         "visual_markdown_editing_wrap_auto": {
             "type": "boolean",

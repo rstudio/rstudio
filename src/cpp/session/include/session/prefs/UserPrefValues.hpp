@@ -324,7 +324,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
-#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
@@ -1478,10 +1478,10 @@ public:
    core::Error setFullProjectPathInWindowTitle(bool val);
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   bool enableVisualMarkdownEditingMode();
-   core::Error setEnableVisualMarkdownEditingMode(bool val);
+   bool visualMarkdownEditingIsDefault();
+   core::Error setVisualMarkdownEditingIsDefault(bool val);
 
    /**
     * Whether to automatically wrap text when writing markdown

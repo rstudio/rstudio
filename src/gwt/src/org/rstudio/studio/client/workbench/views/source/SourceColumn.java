@@ -39,6 +39,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
@@ -49,6 +50,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -57,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -85,6 +88,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void initialize(Binder binder,
                           Commands commands,
                           EventBus events,
+                          UserPrefs userPrefs,
+                          FileTypeRegistry registry,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
                           SourceServerOperations sourceServerOperations)
@@ -93,6 +98,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       binder.bind(commands_, this);
 
       events_ = events;
+      userPrefs_ = userPrefs;
+      registry_ = registry;
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
@@ -962,6 +969,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                @Override
                public void onResponseReceived(SourceDocument newDoc)
                {
+                  // apply (dynamic) doc property defaults
+                  SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
+                  
                   EditingTarget target =
                      addTab(newDoc, Source.OPEN_INTERACTIVE);
 
@@ -1136,6 +1146,28 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       syncTabOrder();
       fireDocTabsChanged();
    }
+   
+   public static void applyDocPropertyDefaults(SourceDocument document, boolean newDoc, UserPrefs userPrefs)
+   {
+      // ensure this is a text file
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      FileType type = EditingTargetSource.getTypeFromDocument(registry, document);
+      if (type instanceof TextFileType)
+      {
+         TextFileType textFile = (TextFileType)type;
+         
+         // respect visual editing default for new markdown docs
+         if (textFile.isMarkdown() && 
+             newDoc && 
+             userPrefs.visualMarkdownEditingIsDefault().getValue())
+         {
+            document.getProperties().setString(
+                  TextEditingTarget.RMD_VISUAL_MODE,
+                  DocUpdateSentinel.PROPERTY_TRUE
+               );
+         }
+      }
+   }
 
    private void closeTabIndex(int idx, boolean closeDocument)
    {
@@ -1195,6 +1227,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private SourceServerOperations server_;
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
+   private UserPrefs userPrefs_;
+   private FileTypeRegistry registry_;
    private EditingTargetSource editingTargetSource_;
 
    private SourceColumnManager manager_;

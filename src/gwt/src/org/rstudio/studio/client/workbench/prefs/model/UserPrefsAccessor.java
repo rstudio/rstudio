@@ -2629,14 +2629,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   public PrefValue<Boolean> enableVisualMarkdownEditingMode()
+   public PrefValue<Boolean> visualMarkdownEditingIsDefault()
    {
       return bool(
-         "enable_visual_markdown_editing_mode",
-         "Enable visual markdown editing (experimental)", 
-         "Whether to enable experimental visual markdown editing", 
+         "visual_markdown_editing_is_default",
+         "Use visual editing by default for new markdown documents", 
+         "Whether to enable visual editing by default for new markdown documents", 
          false);
    }
 
@@ -3251,8 +3251,8 @@ public class UserPrefsAccessor extends Prefs
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
-      if (source.hasKey("enable_visual_markdown_editing_mode"))
-         enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
+      if (source.hasKey("visual_markdown_editing_is_default"))
+         visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
       if (source.hasKey("visual_markdown_editing_wrap_auto"))
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
@@ -3472,7 +3472,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(autoSaveOnBlur());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
-      prefs.add(enableVisualMarkdownEditingMode());
+      prefs.add(visualMarkdownEditingIsDefault());
       prefs.add(visualMarkdownEditingWrapAuto());
       prefs.add(visualMarkdownEditingWrapColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());
