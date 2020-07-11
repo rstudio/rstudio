@@ -33,11 +33,10 @@ import { undoInputRule } from 'prosemirror-inputrules';
 import { CodeViewOptions } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
-import { EditorUI } from '../../api/ui';
+import { EditorUI, ChunkEditor } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
-import { ChunkEditor } from '../../api/chunk';
 
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
