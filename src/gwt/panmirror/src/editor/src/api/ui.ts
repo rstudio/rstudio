@@ -23,6 +23,7 @@ import { CSL } from './csl';
 import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
+import { AceChunkEditor } from '../optional/ace/ace_editor';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -32,6 +33,12 @@ export interface EditorUI {
   context: EditorUIContext;
   prefs: EditorUIPrefs;
   images: EditorUIImages;
+  chunks: EditorUIChunks;
+}
+
+export interface EditorUIChunks {
+  // create a code chunk editor
+  createChunkEditor: () => AceChunkEditor;
 }
 
 export interface EditorDialogs {

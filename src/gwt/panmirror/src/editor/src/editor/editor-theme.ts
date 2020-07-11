@@ -291,6 +291,11 @@ export function applyTheme(theme: EditorTheme) {
     .cm-s-default .cm-hr {color: ${theme.code.hrColor};}
     .cm-s-default .cm-link {color:${theme.code.linkColor};}
     .cm-s-default .cm-error {color: ${theme.code.errorColor};}
+
+    .pm-ace-first-line-meta .ace_text-layer .ace_line:first-child,
+    .pm-ace-first-line-meta .ace_text-layer .ace_line:first-child span {
+      color: ${theme.lightTextColor} !important;
+    }
   `;
 
   // set style

@@ -261,7 +261,7 @@
         "show_indent_guides": {
             "type": "boolean",
             "default": false,
-            "title": "Show invisible characters in editor",
+            "title": "Show indentation guides",
             "description": "Whether to show indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
@@ -1270,6 +1270,13 @@
             "default": 0,
             "title": "Font size for visual editing mode",
             "description": "The default visual editing mode font size, in points"
+        },
+        "visual_markdown_code_editor": {
+            "type": "string",
+            "enum": ["ace", "codemirror"],
+            "default": "ace",
+            "title": "Editor for code chunks in visual editing mode",
+            "description": "The name of the editor to use to provide code editing in visual mode"
         },
         "emoji_skintone" : {
           "type": "string",

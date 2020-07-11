@@ -1,5 +1,5 @@
 /*
- * options.ts
+ * ace_editor.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,13 +13,15 @@
  *
  */
 
-export interface EditorOptions {
-  readonly autoFocus?: boolean;
-  readonly spellCheck?: boolean;
-  readonly codeEditor?: string;
-  readonly rmdImagePreview?: boolean;
-  readonly rmdExampleHighlight?: boolean;
-  readonly rmdChunkExecution?: string[];
-  readonly hideFormatComment?: boolean;
-  readonly className?: string;
+import "AceAjax";
+
+export interface ChunkEditorFactory {
+    createChunkEditor(): AceChunkEditor;
+}
+
+export interface AceChunkEditor {
+    editor: AceAjax.Editor;
+    setMode(mode: string): void;
+    element: HTMLElement;
+    destroy(): void;
 }
