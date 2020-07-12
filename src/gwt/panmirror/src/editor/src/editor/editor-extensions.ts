@@ -201,7 +201,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   if (context.options.codeEditor === "codemirror") {
     plugins.push(...codeMirrorPlugins(manager.codeViews(), context.ui, context.options));
   } else if (context.options.codeEditor === "ace") {
-    plugins.push(...acePlugins(manager.codeViews(), context.ui, context.options));
+    plugins.push(...acePlugins(manager.codeViews(), context));
   }
 
   // register plugins

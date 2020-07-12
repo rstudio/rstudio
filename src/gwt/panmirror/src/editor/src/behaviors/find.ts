@@ -267,7 +267,7 @@ class FindPlugin extends Plugin<DecorationSet> {
         const to = textNode.pos + m.index + m[0].length;
         const classes = ['pm-find-text'];
         if (from === tr.selection.from && to === tr.selection.to) {
-          classes.push('pm-find-text-selected');
+          classes.push('pm-selected-text');
         }
         decorations.push(Decoration.inline(from, to, { class: classes.join(' ') }));
       }

@@ -179,7 +179,7 @@ export function applyTheme(theme: EditorTheme) {
       box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
       border-radius: 3px;
     }
-    .pm-find-text-selected {
+    .pm-selected-text {
       background-color: ${theme.selectionColor} !important;
     }
     .pm-selected-list-item {

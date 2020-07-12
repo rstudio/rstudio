@@ -37,6 +37,8 @@ import { EditorUI, ChunkEditor } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
+import { ExtensionContext } from '../../api/extension';
+import { DispatchEvent } from '../../api/event-types';
 
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
@@ -47,8 +49,7 @@ const plugin = new PluginKey('ace');
 
 export function acePlugins(
   codeViews: { [key: string]: CodeViewOptions },
-  ui: EditorUI,
-  options: EditorOptions,
+  context: ExtensionContext
 ): Plugin[] {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
@@ -57,7 +58,7 @@ export function acePlugins(
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, ui, options, codeViews[name]);
+      return new CodeBlockNodeView(node, view, getPos as () => number, context, codeViews[name]);
     };
   });
 
@@ -95,15 +96,21 @@ class CodeBlockNodeView implements NodeView {
   private escaping: boolean;
   private mode: string;
   private findMarkers: number[];
+  private selectionMarker: number | null;
+
+  private dispatchUnsubscribe: VoidFunction;
 
   constructor(
     node: ProsemirrorNode,
     view: EditorView,
     getPos: () => number,
-    ui: EditorUI,
-    editorOptions: EditorOptions,
+    context: ExtensionContext,
     options: CodeViewOptions,
   ) {
+    // context
+    const ui = context.ui;
+    const events = context.events;
+    const editorOptions = context.options;
     // Store for later
     this.node = node;
     this.view = view;
@@ -111,6 +118,7 @@ class CodeBlockNodeView implements NodeView {
     this.mode = "";
     this.escaping = false;
     this.findMarkers = [];
+    this.selectionMarker = null;
 
     // options
     this.editorOptions = editorOptions;
@@ -146,6 +154,13 @@ class CodeBlockNodeView implements NodeView {
 
     // update mode
     this.updateMode();
+
+    // observe all editor dispatches
+    this.dispatchUnsubscribe = events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
+      if (tr) {
+        this.onEditorDispatch(tr);
+      }
+    });
 
     // This flag is used to avoid an update loop between the outer and
     // inner editor
@@ -293,6 +308,9 @@ class CodeBlockNodeView implements NodeView {
   }
 
   public destroy() {
+    // Unsubscribe from events
+    this.dispatchUnsubscribe();
+
     // Clean up attached editor instance when it's removed from the DOM
     this.chunk.destroy();
   }
@@ -368,6 +386,12 @@ class CodeBlockNodeView implements NodeView {
     return true;
   }
 
+  private onEditorDispatch(tr: Transaction) {
+    if (tr.selectionSet) {
+      this.highlightSelectionAcross(tr.selection);
+    }
+  }
+
   private forwardSelection() {
 
     // ignore if we don't have focus
@@ -389,6 +413,26 @@ class CodeBlockNodeView implements NodeView {
     const anchor = session.getDocument().positionToIndex(range.start, 0) + offset;
     const head = session.getDocument().positionToIndex(range.end, 0) + offset;
     return TextSelection.create(doc, anchor, head);
+  }
+
+  // detect the entire editor being selected across, in which case we add an ace marker 
+  // visually indicating that the text is selected
+  private highlightSelectionAcross(selection: Selection) {
+
+    // clear any existing selection marker
+    if (this.selectionMarker !== null) {
+      this.editSession.removeMarker(this.selectionMarker);
+      this.selectionMarker = null;
+    }
+
+    // check for selection spanning us
+    const pos = this.getPos();
+    if ((selection.from < pos) && (selection.to > pos + this.node.nodeSize)) {
+      const doc = this.editSession.getDocument();
+      const AceRange = window.require("ace/range").Range;
+      const range = AceRange.fromPoints(doc.indexToPosition(0, 0), doc.indexToPosition(this.node.nodeSize - 1, 0));
+      this.selectionMarker = this.editSession.addMarker(range, 'pm-selected-text', "selection", true);
+    }
   }
 
   private valueChanged() {
