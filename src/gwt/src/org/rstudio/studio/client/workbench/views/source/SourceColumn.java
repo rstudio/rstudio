@@ -89,7 +89,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                           Commands commands,
                           EventBus events,
                           UserPrefs userPrefs,
-                          FileTypeRegistry registry,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
                           SourceServerOperations sourceServerOperations)
@@ -99,7 +98,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       events_ = events;
       userPrefs_ = userPrefs;
-      registry_ = registry;
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
@@ -1228,7 +1226,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
    private UserPrefs userPrefs_;
-   private FileTypeRegistry registry_;
    private EditingTargetSource editingTargetSource_;
 
    private SourceColumnManager manager_;
