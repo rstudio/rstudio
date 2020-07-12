@@ -18,9 +18,10 @@
 
 #include <boost/date_time.hpp>
 
+#include <core/system/PosixSched.hpp>
 #include <core/system/System.hpp>
 
-#include <core/system/PosixSched.hpp>
+#include <shared_core/system/PosixSystem.hpp>
 
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
@@ -108,13 +109,8 @@ bool isProcessRunning(pid_t pid);
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
-struct IpAddress
-{
-   std::string name;
-   std::string addr;
-};
 
-core::Error ipAddresses(std::vector<IpAddress>* pAddresses, bool includeIPv6 = false);
+core::Error ipAddresses(std::vector<posix::IpAddress>* pAddresses, bool includeIPv6 = false);
 
 // core dump restriction
 core::Error restrictCoreDumps();
