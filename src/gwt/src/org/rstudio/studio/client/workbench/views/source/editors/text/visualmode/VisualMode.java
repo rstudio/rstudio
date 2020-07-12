@@ -55,11 +55,13 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -77,7 +79,8 @@ import jsinterop.base.Js;
 
 
 public class VisualMode implements VisualModeEditorSync,
-                                   CommandPaletteEntrySource
+                                   CommandPaletteEntrySource,
+                                   SourceDocAddedEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -109,6 +112,9 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
+      
+      // subscribe to source doc added
+      releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
              
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
@@ -621,6 +627,28 @@ public class VisualMode implements VisualModeEditorSync,
       withPanmirror(() -> {
          panmirror_.activateDevTools();
       });
+   }
+   
+   @Override
+   public void onSourceDocAdded(SourceDocAddedEvent e)
+   {
+      if (e.getDoc().getId() != docUpdateSentinel_.getId())
+         return;
+      
+      // when interactively adding a visual mode doc, make sure we set the focus
+      // (special handling required b/c initialization of visual mode docs is
+      // async so can miss the normal setting of focus)
+      if (e.getMode() == Source.OPEN_INTERACTIVE &&  isActivated() && target_.isActiveDocument())
+      {
+         if (panmirror_ != null) 
+         {
+            panmirror_.focus();
+         }
+         else if (isLoading_)
+         {
+            onReadyHandlers_.add(() -> panmirror_.focus());
+         }
+      }
    }
    
    public void onClosing()
