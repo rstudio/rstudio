@@ -111,6 +111,9 @@ public class VisualModeChunks
                reg.removeHandler();
             }
          };
+         
+         // Prevent tab from advancing into editor
+         chunkEditor.getTextInputElement().setTabIndex(-1);
 
          // Allow the editor's size to be determined by its content (these
          // settings trigger an auto-growing behavior), up to a max of 1000
