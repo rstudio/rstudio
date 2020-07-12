@@ -48,12 +48,17 @@ namespace posix {
  * Posix System Utilities.
  */
 
+/**
+ * @brief Represents an IP address.
+ */
 struct IpAddress
 {
+   /** The name of the IP address. */
    std::string Name;
+
+   /** The address of the IP address. */
    std::string Address;
 };
-
 
 /**
  * @brief Enables core dumps for this process.
