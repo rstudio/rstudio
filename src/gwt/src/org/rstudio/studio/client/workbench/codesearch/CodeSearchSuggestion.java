@@ -141,16 +141,26 @@ class CodeSearchSuggestion implements Suggestion
          name = sourceItem.getParentName() + "::" + name;
       
       // infer appropriate CSS styling based on image attributes
-      String style;
-      if (image.getWidth() == 16 && image.getHeight() == 16)
-      {
-         style = RES.styles().fileImage();
-      }
-      else
-      {
-         style = RES.styles().itemImage();
-      }
+      String style = (image.getWidth() == 16 && image.getHeight() == 16)
+            ? RES.styles().fileImage()
+            : RES.styles().itemImage();
       
+      // append id for certain xrefs (figures, tables, equations)
+      if (sourceItem.hasXRef())
+      {
+         XRef xref = sourceItem.getXRef();
+         String xrefType = xref.getType();
+         for (String type : new String[] { "tab", "fig", "eq" })
+         {
+            if (StringUtil.equals(xrefType, type))
+            {
+               name =
+                     "[" + xref.getXRefString() + "] " +
+                     StringUtil.truncate(name, 20, "...");
+               break;
+            }
+         }
+      }
       // create display string
       displayString_ = createDisplayString(
             image,

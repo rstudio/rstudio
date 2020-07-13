@@ -78,7 +78,7 @@ public class SourceItem extends JavaScriptObject
       return getMetadata().hasKey("xref");
    }
    
-   public XRef getXRef()
+   public final XRef getXRef()
    {
       return getMetadata().getObject("xref").cast();
    }
