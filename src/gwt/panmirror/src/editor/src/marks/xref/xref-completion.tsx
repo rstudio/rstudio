@@ -137,7 +137,7 @@ class FuseIndex {
 }
 
 function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
-  const kXRefCompletionRegEx = /(@ref\()([A-Za-z0-9:-]*)$/;
+  const kXRefCompletionRegEx = /(@ref\()([ A-Za-z0-9:-]*)$/;
   return (text: string, context: EditorState | Transaction): CompletionResult<XRef> | null => {
     const match = text.match(kXRefCompletionRegEx);
     if (match) {

@@ -14,14 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -42,7 +41,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
-      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
       
@@ -161,21 +159,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       
       VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);   
-      CheckBox enableVisualMarkdownEditor = checkboxPref(
-            "Enable visual markdown editing",
-            prefs_.enableVisualMarkdownEditingMode());
-      spaced(enableVisualMarkdownEditor);
-      visualMode.add(enableVisualMarkdownEditor);
+       
+      visualMode.add(headerLabel("General"));
       
-      Label visualMarkdownLabel = new Label(
-            "Visual markdown editing is an experimental feature of " +
-            "RStudio v1.4. Please click the link below for more details " +
-            "before enabling this feature.");
-           
-      visualMarkdownLabel.addStyleName(baseRes.styles().infoLabel());
-      nudgeRight(visualMarkdownLabel);
-      spaced(visualMarkdownLabel);
-      visualMode.add(visualMarkdownLabel);
+      CheckBox visualMarkdownIsDefault = checkboxPref(
+            "Use visual editing by default for new documents",
+            prefs_.visualMarkdownEditingIsDefault());
+      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      visualMode.add(visualMarkdownIsDefault);
       
       HelpLink visualModeHelpLink = new HelpLink(
             "Learn more about visual markdown editing",
@@ -270,17 +261,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       nudgeRight(markdownPerFileOptions); 
       mediumSpaced(markdownPerFileOptions);
       visualModeOptions.add(markdownPerFileOptions);
-      
-      
-      visualMode.add(visualModeOptions);
-      Runnable manageVisualModeUI = () -> {
-         visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
-      };
-      manageVisualModeUI.run();
-      enableVisualMarkdownEditor.addValueChangeHandler((value) -> {
-         manageVisualModeUI.run();
-      });
        
+      visualMode.add(visualModeOptions);
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "498px");

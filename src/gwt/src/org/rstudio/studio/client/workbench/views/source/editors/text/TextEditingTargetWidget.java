@@ -812,6 +812,7 @@ public class TextEditingTargetWidget
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_ != null && 
                              extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
+      boolean isMarkdown = editor_.getFileType().isMarkdown();
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
 
@@ -872,9 +873,9 @@ public class TextEditingTargetWidget
       rmdOptionsButton_.setEnabled(isRMarkdown2);
 
 
-      commands_.enableProsemirrorDevTools().setVisible(isVisualModeEnabled());
+      commands_.enableProsemirrorDevTools().setVisible(isMarkdown);
 
-      toggleRmdVisualModeButton_.setVisible(isVisualModeEnabled());
+      toggleRmdVisualModeButton_.setVisible(isMarkdown);
 
       if (isShinyFile() || isTestFile() || isPlumberFile())
       {
@@ -947,12 +948,6 @@ public class TextEditingTargetWidget
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
-   }
-
-   private boolean isVisualModeEnabled()
-   {
-      return editor_.getFileType().isMarkdown() &&
-             (isVisualMode() || userPrefs_.enableVisualMarkdownEditingMode().getValue());
    }
 
    private boolean isVisualMode()
@@ -1648,25 +1643,23 @@ public class TextEditingTargetWidget
       menu.clearItems();
 
       boolean visualMode = isVisualMode();
-      if (isVisualModeEnabled())
+      DocPropMenuItem visualModeMenu = new DocPropMenuItem(
+         "Use Visual Editor", true, docUpdateSentinel_,
+         visualMode,
+         TextEditingTarget.RMD_VISUAL_MODE,
+         DocUpdateSentinel.PROPERTY_TRUE
+      )
       {
-         DocPropMenuItem visualModeMenu = new DocPropMenuItem(
-            "Use Visual Editor", true, docUpdateSentinel_,
-            visualMode,
-            TextEditingTarget.RMD_VISUAL_MODE,
-            DocUpdateSentinel.PROPERTY_TRUE
-         )
+         @Override
+         public String getShortcut()
          {
-            @Override
-            public String getShortcut()
-            {
-               return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
-            }
+            return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
+         }
 
-         };
-         menu.addItem(visualModeMenu);
-         menu.addSeparator();
-      }
+      };
+      menu.addItem(visualModeMenu);
+      menu.addSeparator();
+      
 
 
       if (show)

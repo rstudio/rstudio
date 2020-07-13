@@ -39,10 +39,10 @@ export function doiFromSlice(context: EditorState | Transaction, slice: Slice): 
   const parsedCitation = parseCitation(context);
   if (parsedCitation) {
     // Concatenate all the text and search for a DOI
-    let text: string | null = null;
+    let text = '';
     slice.content.forEach(node => (text = text + node.textContent));
-    if (text !== null) {
-      const doi = findDOI(text);
+    if (text.length) {
+      const doi = findDOI(text.trim());
       if (doi) {
         return { ...parsedCitation, token: doi };
       }

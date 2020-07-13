@@ -1,4 +1,6 @@
-[
+import { EmojiRaw } from "./emoji";
+
+const emjois: EmojiRaw[] = [
   {
     "emojiRaw": "😀",
     "description": "grinning face",
@@ -16063,4 +16065,6 @@
     ],
     "hasMarkdownRepresentation": true
   }
-]
+];
+
+export default emjois;

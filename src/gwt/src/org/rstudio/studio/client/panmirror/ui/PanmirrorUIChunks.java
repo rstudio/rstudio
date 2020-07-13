@@ -1,5 +1,5 @@
 /*
- * options.ts
+ * PanmirrorUIChunkFactory.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,14 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.panmirror.ui;
 
-export interface EditorOptions {
-  readonly autoFocus?: boolean;
-  readonly spellCheck?: boolean;
-  readonly codeEditor?: string;
-  readonly rmdImagePreview?: boolean;
-  readonly rmdExampleHighlight?: boolean;
-  readonly rmdChunkExecution?: string[];
-  readonly hideFormatComment?: boolean;
-  readonly className?: string;
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorUIChunks
+{
+   public CreateChunkEditor createChunkEditor;
+   
+   @JsFunction
+   public interface CreateChunkEditor
+   {
+      PanmirrorUIChunkEditor create(String type);
+   }
 }

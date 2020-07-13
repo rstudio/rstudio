@@ -55,11 +55,13 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -77,7 +79,8 @@ import jsinterop.base.Js;
 
 
 public class VisualMode implements VisualModeEditorSync,
-                                   CommandPaletteEntrySource
+                                   CommandPaletteEntrySource,
+                                   SourceDocAddedEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -100,13 +103,18 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeContext_ = new VisualModePanmirrorContext(docUpdateSentinel_, target_, visualModeExec_, visualModeFormat_);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
+      visualModeContext_ = new VisualModePanmirrorContext(
+            docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter();
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
+      
+      // subscribe to source doc added
+      releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
              
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
@@ -119,11 +127,6 @@ public class VisualMode implements VisualModeEditorSync,
          withPanmirror(() -> {
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
-      }));
-      
-      // sync to user pref changed
-      releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
-         view_.manageCommandUI();
       }));
    } 
    
@@ -626,6 +629,28 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+   @Override
+   public void onSourceDocAdded(SourceDocAddedEvent e)
+   {
+      if (e.getDoc().getId() != docUpdateSentinel_.getId())
+         return;
+      
+      // when interactively adding a visual mode doc, make sure we set the focus
+      // (special handling required b/c initialization of visual mode docs is
+      // async so can miss the normal setting of focus)
+      if (e.getMode() == Source.OPEN_INTERACTIVE &&  isActivated() && target_.isActiveDocument())
+      {
+         if (panmirror_ != null) 
+         {
+            panmirror_.focus();
+         }
+         else if (isLoading_)
+         {
+            onReadyHandlers_.add(() -> panmirror_.focus());
+         }
+      }
+   }
+   
    public void onClosing()
    {
       if (syncOnIdle_ != null)
@@ -1047,7 +1072,7 @@ public class VisualMode implements VisualModeEditorSync,
       PanmirrorOptions options = new PanmirrorOptions();
       
       // use embedded codemirror for code blocks
-      options.codemirror = true;
+      options.codeEditor = prefs_.visualMarkdownCodeEditor().getValue();
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
@@ -1098,6 +1123,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private final VisualModePanmirrorFormat visualModeFormat_;
    private final VisualModeChunkExec visualModeExec_;
+   private final VisualModeChunks visualModeChunks_;
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
