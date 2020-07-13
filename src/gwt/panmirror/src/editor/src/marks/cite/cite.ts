@@ -23,7 +23,7 @@ import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocSe
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
-import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorUI, InsertCiteProps } from '../../api/ui';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
@@ -36,6 +36,8 @@ import { InsertCitationCommand } from './cite-commands';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
+import { bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
+import { join } from 'path';
 
 const kCiteCitationsIndex = 0;
 
@@ -76,7 +78,7 @@ interface Citation {
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
 
-  const mgr = new BibliographyManager(context.server.pandoc);
+  const mgr = new BibliographyManager(context.server.pandoc, context.server.zotero);
 
   if (!pandocExtensions.citations) {
     return null;
@@ -611,13 +613,13 @@ export async function insertCitationForDOI(
     // (even creating a bibliography if necessary)
 
     // Read bibliographies out of the document and pass those alone
-    const bibliographies = bibliographyPaths(ui, view.state.doc);
+    const bibliographies = bibliographyPaths(view.state.doc);
     const existingIds = bibliography.sources.map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
+      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies),
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
@@ -632,7 +634,7 @@ export async function insertCitationForDOI(
       const project = bibliography.project_biblios.length > 0;
       const bibliographyFile = project
         ? result.bibliographyFile
-        : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
+        : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
       // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
       const cslToWrite = sanitizeForCiteproc(result.csl);
