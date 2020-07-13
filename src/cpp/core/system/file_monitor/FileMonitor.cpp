@@ -21,8 +21,10 @@
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Debug.hpp>
+#include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/PeriodicCommand.hpp>
 
@@ -544,7 +546,7 @@ void fileMonitorThreadMain()
       running = true;
       file_monitor::detail::run(boost::bind(checkForInput));
    }
-   catch(const boost::thread_interrupted&)
+   catch (const boost::thread_interrupted&)
    {
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -564,7 +566,9 @@ void fileMonitorThreadMain()
       // allow the implementation a chance to stop completely (e.g. may
       // need to wait for pending async operations to complete)
       if (running)
+      {
          detail::stop();
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
@@ -627,9 +631,6 @@ void initialize()
 
 void stop()
 {
-   // stop the file scanner
-   core::system::stopFileScanner();
-
    if (s_fileMonitorThread.joinable())
    {
       s_fileMonitorThread.interrupt();

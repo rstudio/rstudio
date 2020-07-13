@@ -19,8 +19,9 @@
 #include <sys/stat.h>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/BoostThread.hpp>
 
 #include "config.h"
@@ -30,8 +31,6 @@ namespace core {
 namespace system {
 
 namespace {
-
-std::atomic<bool> s_stopRequested(false);
 
 #if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
 int entryFilter(struct dirent *entry)
@@ -126,9 +125,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over the names
    for (const std::string& name : names)
    {
-      // bail if requested
-      if (s_stopRequested)
-         return Success();
+      // check for interrupts
+      boost::this_thread::interruption_point();
 
       // compute the path
       std::string path = rootPath.completeChildPath(name).getAbsolutePath();
@@ -197,11 +195,6 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // return success
    return Success();
-}
-
-void stopFileScanner()
-{
-   s_stopRequested = true;
 }
 
 } // namespace system

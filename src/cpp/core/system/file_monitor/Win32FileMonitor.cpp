@@ -26,6 +26,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/Debug.hpp>
+#include <core/Thread.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
 
@@ -42,8 +43,8 @@ namespace {
 // buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
 
-// stop requested for file monitor
-std::atomic<bool> s_stopRequested(false);
+// currently-registered handles
+std::set<Handle> s_handleRegistry;
 
 class FileEventContext : boost::noncopyable
 {
@@ -95,7 +96,7 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
    {
       if (!::CloseHandle(hObject))
       {
-         log::logError(LAST_SYSTEM_ERROR(), location);
+         core::log::logError(LAST_SYSTEM_ERROR(), location);
       }
    }
 }
@@ -402,6 +403,21 @@ void enqueRestartMonitoring(FileEventContext* pContext)
 // performed full cleanup for all monitoring contexts before exiting.
 volatile LONG s_activeRequests = 0;
 
+void onAborted(FileEventContext* pContext)
+{
+   // decrement the active request counter
+   ::InterlockedDecrement(&s_activeRequests);
+
+   // let the client know we are unregistered (note this call should always
+   // be prior to delete pContext below!)
+   pContext->callbacks.onUnregistered(pContext->handle);
+
+   // we wait to delete the pContext until here because it owns the
+   // OVERLAPPED structure and buffers, and so if we deleted it earlier
+   // and the OS tried to access those memory regions we would crash
+   delete pContext;
+}
+
 VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completion code
                                           DWORD dwNumberOfBytesTransfered,
                                           LPOVERLAPPED lpOverlapped)
@@ -413,22 +429,8 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    pContext->readDirChangesPending = false;
 
    // check for aborted
-   if (s_stopRequested || dwErrorCode == ERROR_OPERATION_ABORTED)
-   {
-      // decrement the active request counter
-      ::InterlockedDecrement(&s_activeRequests);
-
-      // let the client know we are unregistered (note this call should always
-      // be prior to delete pContext below!)
-      pContext->callbacks.onUnregistered(pContext->handle);
-
-      // we wait to delete the pContext until here because it owns the
-      // OVERLAPPED structure and buffers, and so if we deleted it earlier
-      // and the OS tried to access those memory regions we would crash
-      delete pContext;
-
-      return;
-   }
+   if (dwErrorCode == ERROR_OPERATION_ABORTED)
+      return onAborted(pContext);
 
    // bail if we don't have callbacks installed yet (could have occurred
    // if we encountered an error during file scanning which caused us to
@@ -479,13 +481,14 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 Error readDirectoryChanges(FileEventContext* pContext)
 {
    DWORD dwBytes = 0;
-
    BOOL ok = ::ReadDirectoryChangesW(
        pContext->hDirectory,
        &(pContext->receiveBuffer[0]),
        static_cast<DWORD>(pContext->receiveBuffer.size()),
        pContext->recursive ? TRUE : FALSE,
-       FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+       FILE_NOTIFY_CHANGE_FILE_NAME |
+           FILE_NOTIFY_CHANGE_DIR_NAME |
+           FILE_NOTIFY_CHANGE_LAST_WRITE,
        &dwBytes,
        &(pContext->overlapped),
        &FileChangeCompletionRoutine);
@@ -584,6 +587,9 @@ Handle registerMonitor(const core::FilePath& filePath,
    // notify the caller that we have successfully registered
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
+   // save handle
+   s_handleRegistry.insert(pContext->handle);
+
    // return the handle
    return pContext->handle;
 }
@@ -591,6 +597,9 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle)
 {
+   // remove handle
+   s_handleRegistry.erase(handle);
+
    // this will end up calling the completion routine with
    // ERROR_OPERATION_ABORTED at which point we'll delete the context
    cleanupContext((FileEventContext*)(handle.pData));
@@ -618,23 +627,21 @@ void run(const boost::function<void()>& checkForInput)
 
 void stop()
 {
-   // notify monitor we're about to stop
-   s_stopRequested = true;
-
-   // wait until we've cleaned up
-   while (s_activeRequests > 0)
+   // release any existing contexts
+   for (Handle handle : s_handleRegistry)
    {
-      ::SleepEx(100, TRUE);
+      FileEventContext* pContext = (FileEventContext*) handle.pData;
+      onAborted(pContext);
    }
 }
 
 } // namespace detail
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
-   
+
 
 
 

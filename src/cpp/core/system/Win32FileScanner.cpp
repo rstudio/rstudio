@@ -31,9 +31,6 @@ namespace system {
 
 namespace {
 
-// stop requested by user
-std::atomic<bool> s_stopRequested(false);
-
 FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 {
    // yield every 10 files (defend against pegging the cpu for directories
@@ -119,9 +116,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for (const FileInfo& childFileInfo : childrenFileInfo)
    {
-      // bail if we've requested a stop
-      if (s_stopRequested)
-         return Success();
+      // check for interrupts
+      boost::this_thread::interruption_point();
 
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))
@@ -147,11 +143,6 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // return success
    return Success();
-}
-
-void stopFileScanner()
-{
-   s_stopRequested = true;
 }
 
 } // namespace system
