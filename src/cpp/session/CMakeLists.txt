@@ -196,7 +196,6 @@ set (SESSION_SOURCE_FILES
    modules/panmirror/SessionPanmirror.cpp
    modules/panmirror/SessionPanmirrorBibliography.cpp
    modules/panmirror/SessionPanmirrorCrossref.cpp
-   modules/panmirror/SessionPanmirrorZotero.cpp
    modules/panmirror/SessionPanmirrorDOI.cpp
    modules/panmirror/SessionPanmirrorPandoc.cpp
    modules/overlay/SessionOverlay.cpp
@@ -253,6 +252,8 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
    modules/viewer/ViewerHistory.cpp
+   modules/zotero/ZoteroWebAPI.cpp
+   modules/zotero/SessionZotero.cpp
    prefs/PrefLayer.cpp
    prefs/Preferences.cpp
    prefs/UserPrefValues.cpp

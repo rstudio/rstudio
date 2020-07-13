@@ -1,7 +1,7 @@
 /*
- * SessionPanmirrorZotero.hpp
+ * SessionZotero.hpp
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,29 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef SESSION_MODULES_PANMIRROR_ZOTERO_HPP
-#define SESSION_MODULES_PANMIRROR_ZOTERO_HPP
+
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_HPP
 
 namespace rstudio {
 namespace core {
-   class Error;
-   class FilePath;
+class Error;
 }
 }
 
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace panmirror {
 namespace zotero {
-
 
 core::Error initialize();
 
-} // namespace zotero
-} // namespace panmirror
-} // namespace modules
-} // namespace session
-} // namespace rstudio
+} // end namespace zotero
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
 
-#endif /* SESSION_MODULES_PANMIRROR_ZOTERO_HPP */
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_HPP */
