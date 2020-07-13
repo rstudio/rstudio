@@ -69,7 +69,7 @@ export interface CSLName {
 }
 
 export interface CSLDate {
-  'date-parts'?: [number, number?, number?][];
+  'date-parts'?: Array<[number, number?, number?]>;
   'raw'?: string;
 }
 

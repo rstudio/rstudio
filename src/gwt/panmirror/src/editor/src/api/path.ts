@@ -13,12 +13,9 @@
  *
  */
 
+import { join } from "path";
+
 export function expandPaths(rootPath: string, paths: string[]): string[] {
-  return paths.map(path => join([rootPath, path]));
+  return paths.map(path => join(rootPath, path));
 }
 
-const kPathReplaceRegex = new RegExp('//', 'g');
-export function join(paths: string[]) {
-  const joinedPath = paths.reduce((prev, current) => prev + '/' + current);
-  return joinedPath.replace(kPathReplaceRegex, '/');
-}
