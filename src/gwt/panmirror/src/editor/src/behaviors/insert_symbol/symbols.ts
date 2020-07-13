@@ -1,4 +1,6 @@
-[
+import { SymbolCharacterGroup } from "./insert_symbol-dataprovider";
+
+const symbols: SymbolCharacterGroup[] = [
   {
     "name": "Miscellaneous",
     "symbols": [
@@ -17749,4 +17751,6 @@
       }
     ]
   }
-]
+];
+
+export default symbols;

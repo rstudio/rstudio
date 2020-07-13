@@ -40,6 +40,18 @@ public interface EditingTargetSource
                                   SourceDocument document,
                                   RemoteFileSystemContext fileContext,
                                   EditingTargetNameProvider defaultNameProvider);
+   
+   public static FileType getTypeFromDocument(FileTypeRegistry registry, SourceDocument document)
+   {
+      FileType type = registry.getTypeByTypeName(document.getType());
+      if (type == null)
+      {
+         Debug.log("Unknown document type: " + document.getType());
+         type = FileTypeRegistry.TEXT;
+      }
+      
+      return type;
+   }
 
    public static class Impl implements EditingTargetSource
    {
@@ -84,7 +96,7 @@ public interface EditingTargetSource
                                             final RemoteFileSystemContext fileContext,
                                             final EditingTargetNameProvider defaultNameProvider)
       {
-         final FileType type = getTypeFromDocument(document);
+         final FileType type = getTypeFromDocument(registry_, document);
          EditingTarget target = getEditingTarget(type);
          target.initialize(column,
                            document,
@@ -93,18 +105,7 @@ public interface EditingTargetSource
                            defaultNameProvider);
          return target;
       }
-
-      private FileType getTypeFromDocument(SourceDocument document)
-      {
-         FileType type = registry_.getTypeByTypeName(document.getType());
-         if (type == null)
-         {
-            Debug.log("Unknown document type: " + document.getType());
-            type = FileTypeRegistry.TEXT;
-         }
-         
-         return type;
-      }
+      
 
       private final FileTypeRegistry registry_;
       private final Provider<TextEditingTarget> pTextEditingTarget_;

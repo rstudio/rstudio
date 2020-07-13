@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -97,18 +98,19 @@ public class ViewFilePanel extends Composite implements TextDisplay
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
       
-      TextEditingTarget.registerPrefs(releaseOnDismiss_, 
+      TextEditingTargetPrefsHelper.registerPrefs(releaseOnDismiss_, 
             uiPrefs,
             null,
             docDisplay_,
-            new TextEditingTarget.PrefsContext()
+            new TextEditingTargetPrefsHelper.PrefsContext()
             {
                @Override
                public FileSystemItem getActiveFile()
                {
                   return targetFile_;
                }
-            });
+            },
+            TextEditingTargetPrefsHelper.PrefsSet.Full);
 
       TextEditingTarget.syncFontSize(releaseOnDismiss_, 
            events, 

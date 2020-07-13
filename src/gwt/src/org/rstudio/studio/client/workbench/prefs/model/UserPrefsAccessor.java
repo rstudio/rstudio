@@ -509,7 +509,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_indent_guides",
-         "Show invisible characters in editor", 
+         "Show indentation guides", 
          "Whether to show indentation guides in the RStudio code editor.", 
          false);
    }
@@ -2629,14 +2629,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   public PrefValue<Boolean> enableVisualMarkdownEditingMode()
+   public PrefValue<Boolean> visualMarkdownEditingIsDefault()
    {
       return bool(
-         "enable_visual_markdown_editing_mode",
-         "Enable visual markdown editing (experimental)", 
-         "Whether to enable experimental visual markdown editing", 
+         "visual_markdown_editing_is_default",
+         "Use visual editing by default for new markdown documents", 
+         "Whether to enable visual editing by default for new markdown documents", 
          false);
    }
 
@@ -2720,6 +2720,25 @@ public class UserPrefsAccessor extends Prefs
          "The default visual editing mode font size, in points", 
          0);
    }
+
+   /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   public PrefValue<String> visualMarkdownCodeEditor()
+   {
+      return enumeration(
+         "visual_markdown_code_editor",
+         "Editor for code chunks in visual editing mode", 
+         "The name of the editor to use to provide code editing in visual mode", 
+         new String[] {
+            VISUAL_MARKDOWN_CODE_EDITOR_ACE,
+            VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR
+         },
+         "ace");
+   }
+
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_ACE = "ace";
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR = "codemirror";
 
    /**
     * Preferred emoji skintone
@@ -3232,8 +3251,8 @@ public class UserPrefsAccessor extends Prefs
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
-      if (source.hasKey("enable_visual_markdown_editing_mode"))
-         enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
+      if (source.hasKey("visual_markdown_editing_is_default"))
+         visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
       if (source.hasKey("visual_markdown_editing_wrap_auto"))
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
@@ -3246,6 +3265,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
+      if (source.hasKey("visual_markdown_code_editor"))
+         visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3451,13 +3472,14 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(autoSaveOnBlur());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
-      prefs.add(enableVisualMarkdownEditingMode());
+      prefs.add(visualMarkdownEditingIsDefault());
       prefs.add(visualMarkdownEditingWrapAuto());
       prefs.add(visualMarkdownEditingWrapColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingFontSizePoints());
+      prefs.add(visualMarkdownCodeEditor());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());
