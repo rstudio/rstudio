@@ -206,6 +206,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                updateTable(displayColumnCount_ + 1);
             }
          });
+      if (!userPrefs.allowSourceColumns().getGlobalValue())
+         addButton.setEnabled(false);
       columnToolbar.addLeftWidget(addButton);
       columnToolbar.addLeftSeparator();
 

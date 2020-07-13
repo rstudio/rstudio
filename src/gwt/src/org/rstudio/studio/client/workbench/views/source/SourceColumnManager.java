@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -215,11 +216,30 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          @Override
          protected void onInit(JsObject value)
          {
+            if (!userPrefs_.allowSourceColumns().getGlobalValue())
+            {
+               if (columnList_.size() > 1)
+               {
+                  PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+                  userPrefs_.panes().setGlobalValue(PaneConfig.create(
+                     JsArrayUtil.copy(paneConfig.getQuadrants()),
+                     paneConfig.getTabSet1(),
+                     paneConfig.getTabSet2(),
+                     paneConfig.getHiddenTabSet(),
+                     paneConfig.getConsoleLeftOnTop(),
+                     paneConfig.getConsoleRightOnTop(),
+                     0).cast());
+                  consolidateColumns(1);
+               }
+               return;
+            }
+
             if (value == null)
             {
                columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
                return;
             }
+
             columnState_ = value.cast();
             for (int i = 0; i < columnState_.getNames().length; i++)
             {

@@ -284,6 +284,19 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
+ * Whether to enable the ability to add source columns to display.
+ */
+bool UserPrefValues::allowSourceColumns()
+{
+   return readPref<bool>("allow_source_columns");
+}
+
+core::Error UserPrefValues::setAllowSourceColumns(bool val)
+{
+   return writePref("allow_source_columns", val);
+}
+
+/**
  * Whether to insert spaces when pressing the Tab key.
  */
 bool UserPrefValues::useSpacesForTab()
@@ -2646,6 +2659,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
+      kAllowSourceColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,

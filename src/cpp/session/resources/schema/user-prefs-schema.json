@@ -210,6 +210,12 @@
             },
             "description": "Layout of panes in the RStudio workbench."
         },
+        "allow_source_columns": {
+            "type": "boolean",
+            "default": true,
+            "title": "Allow source columns",
+            "description": "Whether to enable the ability to add source columns to display."
+        },
         "use_spaces_for_tab": {
             "type": "boolean",
             "default": true,
