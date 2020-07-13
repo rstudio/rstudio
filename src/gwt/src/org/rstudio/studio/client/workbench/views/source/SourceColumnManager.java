@@ -1200,7 +1200,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // When dragging between columns/windows, we need to be specific about which column we're
    // removing the document from as it may exist in more than one column. If the column is null,
-   // it is assumed that we are a satellite window and do now have multiple displays.
+   // it is assumed that we are a satellite window and do not have multiple displays.
    public void disownDocOnDrag(String docId, SourceColumn column)
    {
       if (column == null)
@@ -1379,6 +1379,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       // if we could not remove empty columns to get to the desired amount, consolidate editors
       ArrayList<SourceDocument> moveEditors = new ArrayList<>();
+      SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
       if (num < columnList_.size())
       {
          CPSEditingTargetCommand moveCommand = new CPSEditingTargetCommand()
@@ -1386,27 +1387,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void execute(EditingTarget editingTarget, Command continuation)
             {
-               server_.getSourceDocument(editingTarget.getId(),
-                  new ServerRequestCallback<SourceDocument>()
-                  {
-                     @Override
-                     public void onResponseReceived(final SourceDocument doc)
-                     {
-                        getByName(MAIN_SOURCE_NAME).addTab(doc, Source.OPEN_INTERACTIVE);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
-                           "Couln't move the tab to this window: \n" +
-                              error.getMessage());
-                     }
-                  });
             }
          };
          ArrayList<SourceColumn> moveColumns = new ArrayList<>(columnList_);
-         moveColumns.remove(getByName(MAIN_SOURCE_NAME));
+         moveColumns.remove(mainColumn);
          int additionalColumnCount = num - 1;
          if (num > 1 &&
              moveColumns.size() != additionalColumnCount)
@@ -1416,12 +1400,30 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          for (SourceColumn column : moveColumns)
          {
             ArrayList<EditingTarget> editors = column.getEditors();
-            cpsExecuteForEachEditor(
-               editors,
-               moveCommand);
+            for (EditingTarget target : editors)
+            {
+               server_.getSourceDocument(target.getId(),
+                  new ServerRequestCallback<SourceDocument>()
+                  {
+                     @Override
+                     public void onResponseReceived(final SourceDocument doc)
+                     {
+                        mainColumn.addTab(doc, Source.OPEN_INTERACTIVE);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
+                           "Couldn't move the tab to this window: \n" +
+                              error.getMessage());
+                     }
+                  });
+            }
             closeColumn(column, true);
          }
       }
+
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
@@ -1439,8 +1441,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void closeColumn(SourceColumn column, boolean force)
    {
-      if (!force && column.getTabCount() > 0)
-         return;
+      if (column.getTabCount() > 0)
+      {
+         if (!force)
+            return;
+         else
+         {
+            for (EditingTarget target : column.getEditors())
+               column.closeDoc(target.getId());
+         }
+      }
 
       if (column == activeColumn_)
          setActive("");
