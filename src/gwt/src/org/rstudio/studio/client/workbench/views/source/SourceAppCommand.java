@@ -41,6 +41,7 @@ public class SourceAppCommand
                                               String buttonTitle,
                                               ImageResourceProvider imageResourceProvider,
                                               ClickHandler clickHandler,
+                                              /* false when button is managed elsewhere */
                                               boolean synced)
       {
          super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler);
@@ -147,22 +148,9 @@ public class SourceAppCommand
       return createToolbarButton(true);
    }
 
-   public ToolbarButton createToolbarButton(boolean synced)
+   public ToolbarButton createUnsyncedToolbarButton()
    {
-      CommandSourceColumnToolbarButton button =
-         new CommandSourceColumnToolbarButton(
-            this,
-            command_.getButtonLabel(),
-            command_.getDesc(),
-            command_,
-            event -> {
-               columnManager_.setActive(column_);
-               command_.execute();
-            },
-            synced);
-      if (command_.getTooltip() != null)
-         button.setTitle(command_.getTooltip());
-      return button;
+      return createToolbarButton(false);
    }
 
    public MenuItem createMenuItem()
@@ -198,6 +186,24 @@ public class SourceAppCommand
       if (setCommand)
          command_.setEnabled(commandEnabled);
       handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonVisible)));
+   }
+
+   private ToolbarButton createToolbarButton(boolean synced)
+   {
+      CommandSourceColumnToolbarButton button =
+         new CommandSourceColumnToolbarButton(
+            this,
+            command_.getButtonLabel(),
+            command_.getDesc(),
+            command_,
+            event -> {
+               columnManager_.setActive(column_);
+               command_.execute();
+            },
+            synced);
+      if (command_.getTooltip() != null)
+         button.setTitle(command_.getTooltip());
+      return button;
    }
 
    private boolean buttonVisible_ = false;
