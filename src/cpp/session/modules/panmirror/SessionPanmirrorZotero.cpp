@@ -340,6 +340,7 @@ void zoteroDeleted(int userID, int since, const ZoteroJsonResponseHandler& handl
 
 void onDeferredInit(bool)
 {
+   /*
    zoteroKeyInfo([](const Error& error,int status,json::Value jsonValue) {
 
 
@@ -368,7 +369,7 @@ void onDeferredInit(bool)
           jsonValue.writeFormatted(std::cerr);
         });
 
-/*     zoteroItems(userID, [](const Error& error,int status,json::Value jsonValue) {
+      zoteroItems(userID, [](const Error& error,int status,json::Value jsonValue) {
        if (error)
        {
           LOG_ERROR(error);
@@ -389,9 +390,10 @@ void onDeferredInit(bool)
 
       });
 
-         */
+
 
    });
+   */
 }
 
 
