@@ -378,6 +378,11 @@ public class ProfilerEditingTarget implements EditingTarget,
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
    }
+   
+   @Override
+   public void onEdit()
+   {
+   }
 
    @Override
    public void onInitiallyLoaded()

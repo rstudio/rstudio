@@ -93,6 +93,11 @@ public class ObjectExplorerEditingTarget
    }
    
    @Override
+   public void onEdit()
+   {
+   }
+
+   @Override
    public void onDismiss(int dismissType)
    {
       // explicitly avoid calling super method as we don't

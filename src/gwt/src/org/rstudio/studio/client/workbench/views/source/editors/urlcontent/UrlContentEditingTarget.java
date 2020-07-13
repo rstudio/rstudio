@@ -258,6 +258,11 @@ public class UrlContentEditingTarget implements EditingTarget
       recordCurrentNavigationPosition();
 
    }
+   
+   @Override
+   public void onEdit()
+   {
+   }
 
    @Override
    public void onInitiallyLoaded()

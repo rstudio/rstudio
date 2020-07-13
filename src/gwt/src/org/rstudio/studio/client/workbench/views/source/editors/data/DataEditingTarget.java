@@ -130,6 +130,11 @@ public class DataEditingTarget extends UrlContentEditingTarget
       view_.onDeactivate();
       isActive_ = false;
    }
+   
+   @Override
+   public void onEdit()
+   {
+   }
 
    @Override
    public void onDismiss(int dismissType)

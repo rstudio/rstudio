@@ -294,8 +294,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
        // set and active editor
        activeEditor_ = target;
-       if (activeEditor_ != null)
+       if (activeEditor_ != null) 
+       {
           activeEditor_.onActivate();
+          activeEditor_.onEdit();
+       }
    }
 
    void setActiveEditor()
@@ -1008,6 +1011,12 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          // were already new tabs about to be created!)
          newDoc(FileTypeRegistry.R, null);
       }
+      
+      // during document restoration we called onActivate but didn't 
+      // call onEdit -- now that restoration is complete we call onEdit
+      // for the active editor
+      if (activeEditor_ != null)
+         activeEditor_.onEdit();
    }
 
    public void onSelection(SelectionEvent<Integer> event)
@@ -1021,6 +1030,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
+         // only call onEdit if this selection isn't happening during document restoration
+         if (manager_.getDocsRestored())
+           activeEditor_.onEdit();
          manager_.setActive(name_);
 
          // let any listeners know this tab was activated

@@ -549,6 +549,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
          Debug.log("Exception recording nav position: " + e.toString());
       }
    }
+   
+   @Override
+   public void onEdit()
+   {
+   }
 
    @Override
    public void onInitiallyLoaded()

@@ -2549,6 +2549,11 @@ public class TextEditingTarget implements
 
       visualMode_.unmanageCommands();
    }
+   
+   @Override
+   public void onEdit()
+   {
+   }
 
    @Override
    public void onInitiallyLoaded()
