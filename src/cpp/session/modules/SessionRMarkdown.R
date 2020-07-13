@@ -490,18 +490,6 @@
    }
 })
 
-.rs.addFunction("bookdown.bibliographies", function(input_dir) {
-   .rs.bookdown.frontMatterValue(input_dir, "bibliography")
-})
-
-.rs.addFunction("bookdown.csl", function(input_dir) {
-   csl <- .rs.bookdown.frontMatterValue(input_dir, "csl")
-   if (length(csl) > 0)
-     csl[[1]]
-   else
-     ""
-})
-
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
    
    index <- .rs.inputDirToIndexFile(input_dir)
