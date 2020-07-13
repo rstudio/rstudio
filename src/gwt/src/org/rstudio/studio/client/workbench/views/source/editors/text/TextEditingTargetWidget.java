@@ -351,7 +351,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(previewHTMLButton_ =
          mgr.getSourceCommand(commands_.previewHTML(), column_).createToolbarButton());
       knitDocumentButton_ =
-         mgr.getSourceCommand(commands_.knitDocument(), column_).createToolbarButton();
+         mgr.getSourceCommand(commands_.knitDocument(), column_).createUnsyncedToolbarButton();
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
 
@@ -429,18 +429,18 @@ public class TextEditingTargetWidget
 
       // create button that just runs default chunk insertion
       insertChunkButton_ = 
-         mgr.getSourceCommand(commands_.insertChunk(), column_).createToolbarButton();
+         mgr.getSourceCommand(commands_.insertChunk(), column_).createUnsyncedToolbarButton();
       toolbar.addRightWidget(insertChunkButton_);
 
       toolbar.addRightWidget(runButton_ = 
-         mgr.getSourceCommand(commands_.executeCode(), column_).createToolbarButton());
+         mgr.getSourceCommand(commands_.executeCode(), column_).createUnsyncedToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = 
-         mgr.getSourceCommand(commands_.executeLastCode(), column_).createToolbarButton());
+         mgr.getSourceCommand(commands_.executeLastCode(), column_).createUnsyncedToolbarButton());
       toolbar.addRightWidget(goToPrevButton_ = 
-         mgr.getSourceCommand(commands_.goToPrevSection(), column_).createToolbarButton());
+         mgr.getSourceCommand(commands_.goToPrevSection(), column_).createUnsyncedToolbarButton());
       toolbar.addRightWidget(goToNextButton_ = 
-         mgr.getSourceCommand(commands_.goToNextSection(), column_).createToolbarButton());
+         mgr.getSourceCommand(commands_.goToNextSection(), column_).createUnsyncedToolbarButton());
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document";
 
@@ -457,11 +457,11 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(sourceButton_);
 
       previewJsButton_ = 
-         mgr.getSourceCommand(commands_.previewJS(), column_).createToolbarButton();
+         mgr.getSourceCommand(commands_.previewJS(), column_).createUnsyncedToolbarButton();
       toolbar.addRightWidget(previewJsButton_);
 
       previewSqlButton_ = 
-         mgr.getSourceCommand(commands_.previewSql(), column_).createToolbarButton();
+         mgr.getSourceCommand(commands_.previewSql(), column_).createUnsyncedToolbarButton();
       toolbar.addRightWidget(previewSqlButton_);
 
       createTestToolbarButtons(toolbar);
