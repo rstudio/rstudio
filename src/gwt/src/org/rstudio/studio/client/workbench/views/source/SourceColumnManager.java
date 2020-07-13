@@ -62,7 +62,6 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -229,28 +228,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             for (int i = 0; i < columnState_.getNames().length; i++)
             {
                String name = columnState_.getNames()[i];
-
                if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
-               {
-                  if (userPrefs_.enableAdditionalColumns().getGlobalValue())
-                  {
-                     add(name, false);
-                  }
-                  else
-                  {
-                     PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
-                     userPrefs_.panes().setGlobalValue(PaneConfig.create(
-                        JsArrayUtil.copy(paneConfig.getQuadrants()),
-                        paneConfig.getTabSet1(),
-                        paneConfig.getTabSet2(),
-                        paneConfig.getHiddenTabSet(),
-                        paneConfig.getConsoleLeftOnTop(),
-                        paneConfig.getConsoleRightOnTop(),
-                        0).cast());
-                     consolidateColumns(1);
-                     return;
-                  }
-               }
+                  add(name, false);
             }
          }
 
@@ -408,7 +387,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                doActivateSource(afterActivation);
             }
          });
-      } else
+      }
+      else
       {
          doActivateSource(afterActivation);
       }
@@ -602,6 +582,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       commands_.sourceNavigateBack().setEnabled(
          sourceNavigationHistory_.isBackEnabled());
    }
+
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
@@ -968,7 +949,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             targetIndex = 0;
          else
             return;
-      } else if (targetIndex < 0)
+      }
+      else if (targetIndex < 0)
       {
          if (wrap)
             targetIndex = activeColumn_.getTabCount() - 1;
@@ -1013,7 +995,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                {
                   // No document chosen, just create an empty one
                   newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
-               } else if (result.isNewDocument())
+               }
+               else if (result.isNewDocument())
                {
                   NewRMarkdownDialog.RmdNewDocument doc =
                      result.getNewDocument();
@@ -1024,7 +1007,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      userPrefs_.writeUserPrefs();
                   }
                   newRMarkdownV2Doc(doc);
-               } else
+               }
+               else
                {
                   newDocFromRmdTemplate(result);
                }
@@ -1078,7 +1062,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      template = "shiny_presentation.Rmd";
                   else
                      template = "shiny.Rmd";
-               } else
+               }
+               else
                   template = "document.Rmd";
                newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
                   "",
@@ -1305,7 +1290,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
              if (editingTarget.dirtyState().getValue())
              {
                 editingTarget.save(continuation);
-             } else
+             }
+             else
              {
                 continuation.execute();
              }
@@ -1330,7 +1316,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
              {
                 // file backed document -- revert it
                 saveTarget.revertChanges(continuation);
-             } else
+             }
+             else
              {
                 // untitled document -- just close the tab non-interactively
                 closeTab(saveTarget, false, continuation);
@@ -1381,8 +1368,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          if (!column.hasDoc())
          {
-            if (column == activeColumn_)
-               setActive(MAIN_SOURCE_NAME);
             closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
                break;
@@ -1390,34 +1375,50 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      ArrayList<EditingTarget> moveEditors = new ArrayList<>();
-      if (num >= columnList_.size())
+      ArrayList<SourceDocument> moveEditors = new ArrayList<>();
+      if (num < columnList_.size())
       {
-         for (SourceColumn column : columnList_)
+         CPSEditingTargetCommand moveCommand = new CPSEditingTargetCommand()
          {
-            if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            @Override
+            public void execute(EditingTarget editingTarget, Command continuation)
             {
-               moveEditors.addAll(column.getEditors());
-               closeAllLocalSourceDocs("Close All", column, null, false);
-               if (columnList_.size() >= num || num == 1)
-                  break;
+               server_.getSourceDocument(editingTarget.getId(),
+                  new ServerRequestCallback<SourceDocument>()
+                  {
+                     @Override
+                     public void onResponseReceived(final SourceDocument doc)
+                     {
+                        getByName(MAIN_SOURCE_NAME).addTab(doc, Source.OPEN_INTERACTIVE);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
+                           "Couln't move the tab to this window: \n" +
+                              error.getMessage());
+                     }
+                  });
             }
+         };
+         ArrayList<SourceColumn> moveColumns = new ArrayList<>(columnList_);
+         moveColumns.remove(getByName(MAIN_SOURCE_NAME));
+         int additionalColumnCount = num - 1;
+         if (num > 1 &&
+             moveColumns.size() != additionalColumnCount)
+            moveColumns = new ArrayList<>(moveColumns.subList(0,
+               moveColumns.size() - additionalColumnCount));
+
+         for (SourceColumn column : moveColumns)
+         {
+            ArrayList<EditingTarget> editors = column.getEditors();
+            cpsExecuteForEachEditor(
+               editors,
+               moveCommand);
+            closeColumn(column, true);
          }
       }
-
-      SourceColumn column = getByName(MAIN_SOURCE_NAME);
-      for (EditingTarget target : moveEditors)
-      {
-         column.addTab(
-            target.asWidget(),
-            target.getIcon(),
-            target.getId(),
-            target.getName().getValue(),
-            target.getTabTooltip(), // used as tooltip, if non-null
-            null,
-            true);
-      }
-
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
@@ -1429,6 +1430,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column == activeColumn_)
          setActive(MAIN_SOURCE_NAME);
 
+      columnList_.remove(column);
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+   }
+
+   public void closeColumn(SourceColumn column, boolean force)
+   {
+      if (!force && column.getTabCount() > 0)
+         return;
+
+      if (column == activeColumn_)
+         setActive("");
       columnList_.remove(column);
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
@@ -1698,7 +1710,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                   resultCallback.onCancelled();
             }
          });
-      } else
+      }
+      else
       {
          openFileFromServer(file, fileType, resultCallback);
       }
@@ -2075,7 +2088,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                {
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
-                  
+
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode
                   if (openingForSourceNavigation_)
@@ -2085,7 +2098,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                        DocUpdateSentinel.PROPERTY_FALSE
                      );
                   }
-                  
+
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
                   EditingTarget target = getActive().addTab(document, Source.OPEN_INTERACTIVE);
@@ -2094,7 +2107,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
             });
    }
-   
 
    private boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)

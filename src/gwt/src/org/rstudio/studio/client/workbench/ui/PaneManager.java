@@ -1145,29 +1145,27 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public void syncAdditionalColumnCount(int count)
+   public int syncAdditionalColumnCount(int count)
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return;
+    	  return additionalSourceCount_;
 
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;
          for (int i = 0; i < difference; i++)
-         {
             addSourceWindow();
-         }
       }
       else
       {
-         int difference = additionalSourceCount_ - count;
-         sourceColumnManager_.consolidateColumns(difference);
+         sourceColumnManager_.consolidateColumns(count + 1);
          panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
-         additionalSourceCount_ = sourceColumnManager_.getSize();
+         additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
       }
+      return additionalSourceCount_;
    }
 
    public int addSourceWindow()
@@ -1216,7 +1214,8 @@ public class PaneManager
 
          if (column.getTabCount() == 0)
          {
-            sourceColumnManager_.closeColumn(name);
+            panel_.removeLeftWidget(column.asWidget());
+            sourceColumnManager_.closeColumn(column, true);
             panesByName_.remove(name);
 
             additionalSourceCount_ = sourceColumnManager_.getSize() - 1;

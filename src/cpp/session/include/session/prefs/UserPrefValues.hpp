@@ -80,7 +80,6 @@ namespace prefs {
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kPanesAdditionalSourceColumns "additional_source_columns"
-#define kEnableAdditionalColumns "enable_additional_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -486,12 +485,6 @@ public:
     */
    core::json::Object panes();
    core::Error setPanes(core::json::Object val);
-
-   /**
-    * Temporary flag to enable additional source columns.
-    */
-   bool enableAdditionalColumns();
-   core::Error setEnableAdditionalColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
