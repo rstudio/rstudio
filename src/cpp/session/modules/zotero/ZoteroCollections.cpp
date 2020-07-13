@@ -1,7 +1,7 @@
 /*
- * ZoteroCollections.hpp
+ * ZoteroCollections.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,20 +13,18 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_HPP
-#define RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_HPP
+#include "SessionZotero.hpp"
 
-#include <string>
-
-#include <boost/function.hpp>
-
+#include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
-namespace rstudio {
-namespace core {
-class Error;
-}
-}
+
+#include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
+
+#include "ZoteroWebAPI.hpp"
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -34,19 +32,11 @@ namespace modules {
 namespace zotero {
 namespace collections {
 
-struct ZoteroCollectionSpec
-{
-   std::string name;
-   std::string version;
-};
+namespace {
 
-struct ZoteroCollection : ZoteroCollectionSpec
-{
-   core::json::Value items;
-};
 
-void getCollections(const std::vector<ZoteroCollectionSpec> collections,
-                    boost::function<void(core::Error,std::vector<ZoteroCollection>)> handler);
+
+} // end anonymous namespace
 
 
 } // end namespace collections
@@ -54,5 +44,3 @@ void getCollections(const std::vector<ZoteroCollectionSpec> collections,
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
-
-#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_HPP */
