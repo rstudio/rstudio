@@ -184,6 +184,28 @@ const char * const kItemSchema = R"(
   }
 })";
 
+const char * const kDeletedSchema = R"(
+{
+  "$id": "http://rstudio.org/schemas/zotero-deleted.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Deleted Metadata Schema",
+  "type": "object",
+   "properties" : {
+      "collections" : {
+         "type": "array",
+         "items": {
+            "type": "string"
+         }
+      },
+      "items" : {
+         "type": "array",
+         "items": {
+            "type": "string"
+         }
+      }
+   }
+})";
+
 std::string zoteroApiKey()
 {
    return prefs::userPrefs().zoteroApiKey();
@@ -303,7 +325,7 @@ void zoteroItemsForCollection(int userID, const std::string& collectionID, const
                      handler);
 }
 
-void zoteroDeletedData(int userID, int since, const ZoteroJsonResponseHandler& handler)
+void zoteroDeleted(int userID, int since, const ZoteroJsonResponseHandler& handler)
 {
    http::Fields params;
    params.push_back(std::make_pair("since", std::to_string(since)));
@@ -312,7 +334,7 @@ void zoteroDeletedData(int userID, int since, const ZoteroJsonResponseHandler& h
    zoteroJsonRequest(boost::str(fmt % userID),
                      params,
                      true,
-                     "", // TODO: deleted schema
+                     kDeletedSchema,
                      handler);
 }
 
