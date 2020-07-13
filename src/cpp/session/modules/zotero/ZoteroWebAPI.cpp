@@ -108,9 +108,9 @@ void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler&
 
    const char * const kItemSchema = R"(
    {
-     "$id": "http://rstudio.org/schemas/zotero-collections.json",
+     "$id": "http://rstudio.org/schemas/zotero-items.json",
      "$schema": "http://json-schema.org/schema#",
-     "title": "Zotero Collections Metadata Schema",
+     "title": "Zotero Items Metadata Schema",
      "type": "array",
      "items": {
        "type": "object",
@@ -135,20 +135,9 @@ void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler&
                    }
              }
            },
-           "data": {
-             "type": "object",
-             "properties": {
-               "key" : {
-                 "type": "string"
-               },
-               "version": {
-                 "type": "number"
-               },
-               "name": {
-                 "type": "string"
-               }
-             }
-           }
+           "csljson": {
+             "type": "object"
+            }
        }
      }
    })";
@@ -156,6 +145,7 @@ void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler&
 
    http::Fields params;
    params.push_back(std::make_pair("format", "json"));
+   params.push_back(std::make_pair("include", "csljson"));
    params.push_back(std::make_pair("itemType", "-attachment"));
 
    zoteroJsonRequest(path,

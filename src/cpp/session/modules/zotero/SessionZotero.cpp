@@ -141,7 +141,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
                   zoteroCollectionJSON["version"] = version;
                   json::Array itemsJson;
                   std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
-                     return resultItemJson.getObject()["data"];
+                     return resultItemJson.getObject()["csljson"];
                   });
                   zoteroCollectionJSON["items"] = itemsJson;
 
