@@ -147,7 +147,7 @@ export class BibliographyManager {
         limit,
         keys: kFields,
       };
-      const results: Fuse.FuseResult<BibliographySource>[] = this.fuse.search(query, options);
+      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
       return results.map((result: { item: any }) => result.item);
     } else {
       return [];
