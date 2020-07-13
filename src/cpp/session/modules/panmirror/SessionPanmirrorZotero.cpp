@@ -39,6 +39,151 @@ namespace {
 
 const char * const kZoteroApiHost = "https://api.zotero.org";
 
+const char * const kKeySchema = R"(
+{
+  "$id": "http://rstudio.org/schemas/zotero-key.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Key Metadata Schema",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "userID": {
+      "type": "number"
+    },
+    "username": {
+      "type": "string"
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "object",
+          "properties": {
+            "library": {
+              "type": "boolean"
+            },
+            "files": {
+              "type": "boolean"
+            }
+          }
+        },
+        "groups": {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "object",
+              "properties": {
+                "library": {
+                  "type": "boolean"
+                },
+                "write": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+})";
+
+const char * const kCollectionSchema = R"(
+{
+  "$id": "http://rstudio.org/schemas/zotero-collections.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Collections Metadata Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties" : {
+      	"key" : {
+          	"type": "string"
+        },
+        "version": {
+          	"type": "number"
+        },
+        "library": {
+          "type": "object",
+          "properties": {
+            	"type": {
+                  	"type": "string"
+                },
+                "id": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                }
+          }
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "key" : {
+              "type": "string"
+            },
+            "version": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+    }
+  }
+})";
+
+const char * const kItemSchema = R"(
+{
+  "$id": "http://rstudio.org/schemas/zotero-collections.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Collections Metadata Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties" : {
+      	"key" : {
+          	"type": "string"
+        },
+        "version": {
+          	"type": "number"
+        },
+        "library": {
+          "type": "object",
+          "properties": {
+            	"type": {
+                  	"type": "string"
+                },
+                "id": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                }
+          }
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "key" : {
+              "type": "string"
+            },
+            "version": {
+              "type": "number"
+            },
+            "itemType": {
+              "type": "string"
+            }
+          }
+        }
+    }
+  }
+})";
+
 std::string zoteroApiKey()
 {
    return prefs::userPrefs().zoteroApiKey();
@@ -49,6 +194,7 @@ typedef boost::function<void(const Error&,int,json::Value)> ZoteroJsonResponseHa
 void zoteroJsonRequest(const std::string& resource,
                        http::Fields queryParams,
                        bool authenticated,
+                       const std::string& schema,
                        const ZoteroJsonResponseHandler& handler)
 {
    // authorize using header or url param as required
@@ -76,15 +222,26 @@ void zoteroJsonRequest(const std::string& resource,
    // build the url and make the request
    boost::format fmt("%s/%s%s");
    const std::string url = boost::str(fmt % kZoteroApiHost % resource % queryString);
-   asyncDownloadFile(url, headers, [handler](const core::system::ProcessResult& result) {
+   asyncDownloadFile(url, headers, [handler, schema](const core::system::ProcessResult& result) {
       if (result.exitStatus == EXIT_SUCCESS)
       {
          json::Value resultJson;
-         Error error = resultJson.parse(result.stdOut);
+         Error error;
+         if (schema.length() > 0)
+         {
+            error = resultJson.parseAndValidate(result.stdOut, schema);
+         } else {
+            error = resultJson.parse(result.stdOut);
+         }
+
          if (error)
+         {
             handler(error, 500, json::Value());
+         }
          else
+         {
             handler(Success(), 200, resultJson);
+         }
       }
       else
       {
@@ -98,7 +255,7 @@ void zoteroJsonRequest(const std::string& resource,
                       http::Fields queryParams,
                       const ZoteroJsonResponseHandler& handler)
 {
-   zoteroJsonRequest(resource, queryParams, true, handler);
+   zoteroJsonRequest(resource, queryParams, true, "", handler);
 }
 
 
@@ -109,6 +266,7 @@ void zoteroKeyInfo(const ZoteroJsonResponseHandler& handler)
    zoteroJsonRequest(boost::str(fmt % zoteroApiKey()),
                      http::Fields(),
                      false,
+                     kKeySchema,
                      handler);
 }
 
@@ -120,10 +278,43 @@ void zoteroCollections(int userID, const ZoteroJsonResponseHandler& handler)
    boost::format fmt("users/%d/collections");
    zoteroJsonRequest(boost::str(fmt % userID),
                      params,
+                     true,
+                     kCollectionSchema,
                      handler);
 }
 
+void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler& handler) {
 
+   http::Fields params;
+   params.push_back(std::make_pair("format", "json"));
+   params.push_back(std::make_pair("itemType", "-attachment"));
+
+   zoteroJsonRequest(path,
+                     params,
+                     true,
+                     kItemSchema,
+                     handler);
+}
+
+void zoteroItemsForCollection(int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
+{
+   boost::format fmt("users/%d/collections/%s/items");
+   zoteroItemRequest(boost::str(fmt % userID % collectionID),
+                     handler);
+}
+
+void zoteroDeletedData(int userID, int since, const ZoteroJsonResponseHandler& handler)
+{
+   http::Fields params;
+   params.push_back(std::make_pair("since", std::to_string(since)));
+
+   boost::format fmt("users/%d/deleted");
+   zoteroJsonRequest(boost::str(fmt % userID),
+                     params,
+                     true,
+                     "", // TODO: deleted schema
+                     handler);
+}
 
 void onDeferredInit(bool)
 {
@@ -145,22 +336,40 @@ void onDeferredInit(bool)
          return;
       }
 
+
+      zoteroItemsForCollection(userID, "HFB52FJF", [](const Error& error,int status,json::Value jsonValue) {
+          if (error)
+          {
+             LOG_ERROR(error);
+             return;
+          }
+          jsonValue.writeFormatted(std::cerr);
+        });
+
+/*     zoteroItems(userID, [](const Error& error,int status,json::Value jsonValue) {
+       if (error)
+       {
+          LOG_ERROR(error);
+          return;
+       }
+
+       jsonValue.writeFormatted(std::cerr);
+     });
+
+
       zoteroCollections(userID, [](const Error& error,int status,json::Value jsonValue) {
          if (error)
          {
             LOG_ERROR(error);
             return;
          }
-
-          jsonValue.writeFormatted(std::cerr);
+         jsonValue.writeFormatted(std::cerr);
 
       });
 
+         */
+
    });
-
-
-
-
 }
 
 
