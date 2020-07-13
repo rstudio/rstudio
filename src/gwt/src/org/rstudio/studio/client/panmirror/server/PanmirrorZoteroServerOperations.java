@@ -1,5 +1,5 @@
 /*
- * PanmirroServerOperations.java
+ * PanmirrorCrossrefServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -15,16 +15,16 @@
 
 package org.rstudio.studio.client.panmirror.server;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 
-
-public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
-                                                   PanmirrorCrossrefServerOperations,
-                                                   PanmirrorZoteroServerOperations,
-                                                   PanmirrorXRefServerOperations,
-                                                   PanmirrorDOIServerOperations
+public interface PanmirrorZoteroServerOperations 
 {
- 
+   void zoteroGetCollections(String file,
+                             JsArray<PanmirrorZoteroCollectionSpec> collections, 
+                             ServerRequestCallback<JavaScriptObject> callback);
 }

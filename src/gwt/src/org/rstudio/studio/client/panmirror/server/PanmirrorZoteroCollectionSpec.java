@@ -1,5 +1,5 @@
 /*
- * PanmirroServerOperations.java
+ * PanmirrorZoteroCollectionSpec.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,18 +13,27 @@
  *
  */
 
+
 package org.rstudio.studio.client.panmirror.server;
 
+import com.google.gwt.core.client.JavaScriptObject;
 
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
-
-
-public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
-                                                   PanmirrorCrossrefServerOperations,
-                                                   PanmirrorZoteroServerOperations,
-                                                   PanmirrorXRefServerOperations,
-                                                   PanmirrorDOIServerOperations
+public class PanmirrorZoteroCollectionSpec extends JavaScriptObject
 {
- 
+   protected PanmirrorZoteroCollectionSpec() {}
+   
+   public static native PanmirrorZoteroCollectionSpec create(String name, int version) /*-{
+      return {name: name, version: version};
+   }-*/;
+
+   public native final String getName() /*-{
+      return this.name;
+   }-*/;
+   
+   public native final int getVersion() /*-{
+      return this.version;
+   }-*/;
+
 }
+

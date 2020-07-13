@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * zotero.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,18 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { ZoteroServer } from './zotero';
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
+import { CSL } from "./csl";
 
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly zotero: ZoteroServer;
-  readonly xref: XRefServer;
+export interface ZoteroCollectionSpec {
+  name: string;
+  version: number;
 }
+
+export interface ZoteroCollection extends ZoteroCollectionSpec {
+  items: CSL[] | null;
+}
+
+export interface ZoteroServer {
+  getCollections: (file: string | null, collections: ZoteroCollectionSpec[]) => Promise<ZoteroCollection[]>;
+}
+

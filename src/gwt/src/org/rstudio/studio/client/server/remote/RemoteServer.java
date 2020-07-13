@@ -84,6 +84,7 @@ import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroCollectionSpec;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -6204,6 +6205,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
    }
    
+   @Override
+   public void zoteroGetCollections(String file,
+                                    JsArray<PanmirrorZoteroCollectionSpec> collections,
+                                    ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(file)));
+      params.set(1, new JSONArray(collections));
+      sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
+   }
+   
    
    @Override
    public void doiFetchCSL(String doi, ServerRequestCallback<JavaScriptObject> callback)
@@ -6728,8 +6740,11 @@ public class RemoteServer implements Server
    
    private static final String CROSSREF_WORKS = "crossref_works";
    
+   private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
+   
    private static final String DOI_FETCH_CSL = "doi_fetch_csl";
    
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
+  
 }
