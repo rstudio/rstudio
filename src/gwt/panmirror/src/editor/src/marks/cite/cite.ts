@@ -590,7 +590,7 @@ export async function insertCitation(
   csl?: CSL
 ) {
 
-  const loadedBibMgr = await bibManager.loadBibliography(ui, view.state.doc);
+  const loadedBibMgr = await bibManager.load(ui, view.state.doc);
 
   // We try not call this function if the entry for this DOI is already in the bibliography,
   // but it can happen. So we need to check here if it is already in the bibliography and 
@@ -614,7 +614,7 @@ export async function insertCitation(
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(view.state.doc);
-    const existingIds = loadedBibMgr.local().map(source => source.id);
+    const existingIds = loadedBibMgr.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
@@ -640,7 +640,7 @@ export async function insertCitation(
       const cslToWrite = sanitizeForCiteproc(result.csl);
 
       // Write entry to a bibliography file if it isn't already present
-      await bibManager.loadBibliography(ui, view.state.doc);
+      await bibManager.load(ui, view.state.doc);
       if (!bibManager.findIdInLocalBibliography(result.id)) {
         await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
       }

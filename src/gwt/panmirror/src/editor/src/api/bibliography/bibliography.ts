@@ -12,6 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+/*
+
+
+Bibliography
+  List All Entries
+  Find Entry By Id
+  Find Entry By DOI
+  Add Entry
+
+  List Local Files
+  List Project Files
+
+
+
+*/
+
+
+
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import Fuse from 'fuse.js';
@@ -26,7 +45,6 @@ import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-pr
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 
 
-// TODO: Add a type distinction so the UI can differentiate (e.g. an overlay would be nice)
 export interface BibliographyDataProvider {
   load(docPath: string, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
   items(): BibliographySource[];
@@ -66,7 +84,7 @@ export class BibliographyManager {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
-  public async loadBibliography(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyManager> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyManager> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -96,16 +114,15 @@ export class BibliographyManager {
     return this;
   }
 
-
-  public all(): BibliographySource[] {
+  public allSources(): BibliographySource[] {
     if (this.sources) {
       return this.sources;
     }
     return [];
   }
 
-  public local(): BibliographySource[] {
-    return this.all().filter(source => source.provider === kLocalItemType);
+  public localSources(): BibliographySource[] {
+    return this.allSources().filter(source => source.provider === kLocalItemType);
   }
 
   public projectBiblios(): string[] {
@@ -121,7 +138,7 @@ export class BibliographyManager {
     // Please be sure to use loadBibliography before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
-    return this.local().find(source => source.DOI === doi);
+    return this.localSources().find(source => source.DOI === doi);
   }
 
   public findIdInLocalBibliography(id: string): BibliographySource | undefined {
@@ -129,7 +146,7 @@ export class BibliographyManager {
     // Please be sure to use loadBibliography before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
-    return this.local().find(source => source.id === id);
+    return this.localSources().find(source => source.id === id);
   }
 
   public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {

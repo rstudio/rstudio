@@ -117,10 +117,10 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         pos: parsed.pos,
         offset: parsed.offset,
         completions: (_state: EditorState) =>
-          manager.loadBibliography(ui, context.doc).then((loadedBibMgr) => {
+          manager.load(ui, context.doc).then((loadedBibMgr) => {
 
             // Filter duplicate sources
-            const dedupedSources = uniqby(loadedBibMgr.all(), (source: BibliographySource) => source.id);
+            const dedupedSources = uniqby(loadedBibMgr.allSources(), (source: BibliographySource) => source.id);
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
