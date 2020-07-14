@@ -233,6 +233,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
       }
       else if (frame_ != null &&
+          frame_.getIFrame().getCurrentUrl() != null &&
           !StringUtil.equals(frame_.getIFrame().getCurrentUrl(), getUrl()))
       {
          // Typically we navigate to the unmodified URL (i.e. without the
