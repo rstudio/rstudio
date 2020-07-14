@@ -279,44 +279,6 @@ void zoteroItemsForCollection(const std::string& key, int userID, const std::str
    zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
 }
 
-/*
-void zoteroDeleted(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
-{
-   const char * const kDeletedSchema = R"(
-   {
-     "$id": "http://rstudio.org/schemas/zotero-deleted.json",
-     "$schema": "http://json-schema.org/schema#",
-     "title": "Zotero Deleted Metadata Schema",
-     "type": "object",
-      "properties" : {
-         "collections" : {
-            "type": "array",
-            "items": {
-               "type": "string"
-            }
-         },
-         "items" : {
-            "type": "array",
-            "items": {
-               "type": "string"
-            }
-         }
-      }
-   })";
-
-   http::Fields params;
-   params.push_back(std::make_pair("since", std::to_string(since)));
-
-   boost::format fmt("users/%d/deleted");
-   zoteroJsonRequest(key,
-                     boost::str(fmt % userID),
-                     params,
-                     kDeletedSchema,
-                     handler);
-}
-*/
-
-
 // keep a persistent mapping of apiKey to userId so we don't need to do the lookup each time
 core::Settings s_userIdMap;
 
