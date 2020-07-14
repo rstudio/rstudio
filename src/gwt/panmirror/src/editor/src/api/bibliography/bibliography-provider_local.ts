@@ -20,7 +20,8 @@ import { PandocServer } from "../pandoc";
 import { expandPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, ParsedYaml, Bibliography, parseYamlNodes } from "./bibliography";
+import { BibliographyDataProvider, Bibliography } from "./bibliography";
+import { ParsedYaml, parseYamlNodes } from '../yaml';
 
 export interface BibliographyResult {
   etag: string;

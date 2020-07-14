@@ -14,7 +14,8 @@
  */
 import { ZoteroCollection, ZoteroServer } from "../zotero";
 
-import { BibliographyDataProvider, ParsedYaml, BibliographySource, Bibliography } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bibliography";
+import { ParsedYaml } from "../yaml";
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 

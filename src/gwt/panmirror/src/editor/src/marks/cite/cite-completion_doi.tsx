@@ -24,7 +24,7 @@ import { CompletionHandler, CompletionResult, performCompletionReplacement, Comp
 import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
 import { CSL } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
-import { BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
 import { DOIServer } from '../../api/doi';
 

@@ -13,7 +13,7 @@
  *
  */
 
-import { BibliographySource } from '../../api/bibliography';
+import { BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
 import { CSLDate, CSLName } from '../../api/csl';
 import { formatAuthors, formatIssuedDate, imageForType } from '../../api/cite';

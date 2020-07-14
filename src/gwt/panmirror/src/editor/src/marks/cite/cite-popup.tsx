@@ -24,10 +24,12 @@ import { EditorUI } from "../../api/ui";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
-import { BibliographyManager, cslFromDoc } from "../../api/bibliography/bibliography";
+import { BibliographyManager } from "../../api/bibliography/bibliography";
 import { PandocServer } from "../../api/pandoc";
 
 import './cite-popup.css';
+import { urlForCitation } from "../../api/cite";
+import { cslFromDoc } from "../../api/csl";
 
 const kMaxWidth = 400; // also in cite-popup.css
 
@@ -48,7 +50,7 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
       if (source) {
         const previewHtml = await server.citationHTML(ui.context.getDocumentPath(), JSON.stringify([source]), csl || null);
         const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
-          const url = bibMgr.urlForSource(source);
+          const url = urlForCitation(source);
           if (url) {
             return {
               text: ui.context.translateText("[Link]"),

@@ -13,16 +13,14 @@
  *
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { NodeWithPos } from 'prosemirror-utils';
 
 import Fuse from 'fuse.js';
 import { PandocServer } from '../pandoc';
 import uniqby from 'lodash.uniqby';
 
 import { EditorUI } from '../ui';
-import { yamlMetadataNodes, stripYamlDelimeters, parseYaml } from '../yaml';
+import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
-import { urlForDOI } from '../doi';
 import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
@@ -158,14 +156,6 @@ export class BibliographyManager {
     }
   }
 
-  public urlForSource(source: BibliographySource): string | undefined {
-    if (source.URL) {
-      return source.URL;
-    } else if (source.DOI) {
-      return urlForDOI(source.DOI);
-    }
-  }
-
   private updateIndex(bibSources: BibliographySource[]) {
     // build search index
     const options = {
@@ -176,45 +166,4 @@ export class BibliographyManager {
   }
 
 }
-
-// TODO: This should probably be moved to yaml.ts
-export interface ParsedYaml {
-  yamlCode: string;
-  yaml: any;
-  node: NodeWithPos;
-}
-
-export function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
-  const yamlNodes = yamlMetadataNodes(doc);
-
-  const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
-    const yamlText = node.node.textContent;
-    const yamlCode = stripYamlDelimeters(yamlText);
-    return { yamlCode, yaml: parseYaml(yamlCode), node };
-  });
-  return parsedYamlNodes;
-}
-
-export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
-
-  // read the Yaml blocks from the document
-  const parsedYamlNodes = parseYamlNodes(doc);
-
-  const cslParsedYamls = parsedYamlNodes.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.csl,
-  );
-
-  // Look through any yaml nodes to see whether any contain csl information
-  if (cslParsedYamls.length > 0) {
-
-    // Pandoc uses the last csl block (whether or not it shares a yaml block with the
-    // bibliographies element that pandoc will ultimately use) so just pick the last csl
-    // block.
-    const cslParsedYaml = cslParsedYamls[cslParsedYamls.length - 1];
-    const cslFile = cslParsedYaml.yaml.csl;
-    return cslFile;
-  }
-  return undefined;
-}
-
 

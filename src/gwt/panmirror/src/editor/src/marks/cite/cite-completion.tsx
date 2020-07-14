@@ -20,7 +20,7 @@ import { DecorationSet } from 'prosemirror-view';
 import React from 'react';
 import uniqby from 'lodash.uniqby';
 
-import { BibliographyManager, BibliographySource } from '../../api/bibliography';
+import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
