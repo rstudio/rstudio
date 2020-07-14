@@ -109,7 +109,8 @@ exec <- function(command,
    if (status) {
       msg <- paste0("Command exited with status ", as.integer(status), ".")
       if (is.character(output) && file.exists(output)) {
-         logmsg <- paste0("Logs written to ", output, ".")
+         logmsg <- paste0("Logs written to ", output, ":\n")
+         logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
          msg <- paste(msg, logmsg, sep = "\n")
       }
       fatal(msg)
