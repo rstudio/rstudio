@@ -68,3 +68,5 @@
 * Added CSRF protection to sign-in pages (Pro #1469)
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
 * Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
+* Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
+
