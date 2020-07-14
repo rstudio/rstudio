@@ -2741,18 +2741,6 @@ public class UserPrefsAccessor extends Prefs
    public final static String VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR = "codemirror";
 
    /**
-    * Key for making Zotero API calls
-    */
-   public PrefValue<String> zoteroApiKey()
-   {
-      return string(
-         "zotero_api_key",
-         "Zotero API Key", 
-         "Key for making Zotero API calls", 
-         "");
-   }
-
-   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -3279,8 +3267,6 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
-      if (source.hasKey("zotero_api_key"))
-         zoteroApiKey().setValue(layer, source.getString("zotero_api_key"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3494,7 +3480,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
-      prefs.add(zoteroApiKey());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

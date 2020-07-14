@@ -1278,12 +1278,6 @@
             "title": "Editor for code chunks in visual editing mode",
             "description": "The name of the editor to use to provide code editing in visual mode"
         },
-        "zotero_api_key": {
-            "type": "string",
-            "default": "",
-            "title": "Zotero API Key",
-            "description": "Key for making Zotero API calls"  
-        },
         "emoji_skintone" : {
           "type": "string",
           "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],

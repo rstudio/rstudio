@@ -20,7 +20,7 @@
 
 #include <core/FileSerializer.hpp>
 
-#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -172,7 +172,7 @@ void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler
 {
    // we only support the web api right now so hard-code to using that. the code below however
    // will work with other methods (e.g. local sqllite) once we implement them
-   std::string apiKey = prefs::userPrefs().zoteroApiKey();
+   std::string apiKey = prefs::userState().zoteroApiKey();
 
    // if we have an api key then request collections from the web
    if (!apiKey.empty())

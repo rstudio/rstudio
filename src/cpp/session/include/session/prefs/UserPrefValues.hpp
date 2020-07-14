@@ -337,7 +337,6 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
-#define kZoteroApiKey "zotero_api_key"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1525,12 +1524,6 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
-
-   /**
-    * Key for making Zotero API calls
-    */
-   std::string zoteroApiKey();
-   core::Error setZoteroApiKey(std::string val);
 
    /**
     * Preferred emoji skintone
