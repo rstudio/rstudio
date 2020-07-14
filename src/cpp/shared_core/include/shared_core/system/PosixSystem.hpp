@@ -72,7 +72,7 @@ Error enableCoreDumps();
  *
  * @param in_name   The name of the environment variable.
  *
- * @return The value of the environment variable.
+ * @return The value of the environment variable, if it exists; empty string otherwise.
  */
 std::string getEnvironmentVariable(const std::string& in_name);
 
