@@ -1,5 +1,5 @@
 /*
- * ZoteroWebAPI.cpp
+ * ZoteroCollectionsWeb.cpp
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,14 +13,12 @@
  *
  */
 
-#include "ZoteroWebAPI.hpp"
+#include "ZoteroCollectionsWeb.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/system/Process.hpp>
-
-#include <session/prefs/UserPrefs.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
@@ -31,35 +29,32 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace zotero {
-namespace web_api {
+namespace collections {
 
 namespace {
 
 const char * const kZoteroApiHost = "https://api.zotero.org";
 
-std::string zoteroApiKey()
-{
-   return prefs::userPrefs().zoteroApiKey();
-}
+typedef boost::function<void(const core::Error&,int,core::json::Value)> ZoteroJsonResponseHandler;
 
-void zoteroJsonRequest(const std::string& resource,
+void zoteroJsonRequest(const std::string& key,
+                       const std::string& resource,
                        http::Fields queryParams,
-                       bool authenticated,
                        const std::string& schema,
                        const ZoteroJsonResponseHandler& handler)
 {
    // authorize using header or url param as required
    http::Fields headers;
-   if (authenticated)
+   if (!key.empty())
    {
       if (module_context::hasMinimumRVersion("3.6"))
       {
          boost::format fmt("Bearer %s");
-         headers.push_back(std::make_pair("Authorization", "Bearer " + zoteroApiKey()));
+         headers.push_back(std::make_pair("Authorization", "Bearer " + key));
       }
       else
       {
-         queryParams.push_back(std::make_pair("key", zoteroApiKey()));
+         queryParams.push_back(std::make_pair("key", key));
       }
    }
 
@@ -103,7 +98,7 @@ void zoteroJsonRequest(const std::string& resource,
 }
 
 
-void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler& handler)
+void zoteroItemRequest(const std::string& key, const std::string& path, const ZoteroJsonResponseHandler& handler)
 {
 
    const char * const kItemSchema = R"(
@@ -148,16 +143,14 @@ void zoteroItemRequest(const std::string& path, const ZoteroJsonResponseHandler&
    params.push_back(std::make_pair("include", "csljson"));
    params.push_back(std::make_pair("itemType", "-attachment"));
 
-   zoteroJsonRequest(path,
+   zoteroJsonRequest(key,
+                     path,
                      params,
-                     true,
                      kItemSchema,
                      handler);
 }
 
-} // end anonymous namespace
-
-void zoteroKeyInfo(const ZoteroJsonResponseHandler& handler)
+void zoteroKeyInfo(const std::string& key, const ZoteroJsonResponseHandler& handler)
 {
    const char * const kKeySchema = R"(
    {
@@ -211,15 +204,15 @@ void zoteroKeyInfo(const ZoteroJsonResponseHandler& handler)
    })";
 
    boost::format fmt("keys/%s");
-   zoteroJsonRequest(boost::str(fmt % zoteroApiKey()),
+   zoteroJsonRequest("",
+                     boost::str(fmt % key),
                      http::Fields(),
-                     false,
                      kKeySchema,
                      handler);
 }
 
 
-void zoteroCollections(int userID, const ZoteroJsonResponseHandler& handler)
+void zoteroCollections(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
 {
    const char * const kCollectionsSchema = R"(
    {
@@ -272,23 +265,22 @@ void zoteroCollections(int userID, const ZoteroJsonResponseHandler& handler)
    params.push_back(std::make_pair("format", "json"));
 
    boost::format fmt("users/%d/collections");
-   zoteroJsonRequest(boost::str(fmt % userID),
+   zoteroJsonRequest(key,
+                     boost::str(fmt % userID),
                      params,
-                     true,
                      kCollectionsSchema,
                      handler);
 }
 
 
-void zoteroItemsForCollection(int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
+void zoteroItemsForCollection(const std::string& key, int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
 {
    boost::format fmt("users/%d/collections/%s/items");
-   zoteroItemRequest(boost::str(fmt % userID % collectionID),
-                     handler);
+   zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
 }
 
 
-void zoteroDeleted(int userID, int since, const ZoteroJsonResponseHandler& handler)
+void zoteroDeleted(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
 {
    const char * const kDeletedSchema = R"(
    {
@@ -316,14 +308,106 @@ void zoteroDeleted(int userID, int since, const ZoteroJsonResponseHandler& handl
    params.push_back(std::make_pair("since", std::to_string(since)));
 
    boost::format fmt("users/%d/deleted");
-   zoteroJsonRequest(boost::str(fmt % userID),
+   zoteroJsonRequest(key,
+                     boost::str(fmt % userID),
                      params,
-                     true,
                      kDeletedSchema,
                      handler);
 }
 
-} // end namespace web_api
+
+void getWebCollections(const std::string& key, const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
+{
+   // short circuit for no collection specs
+   if (specs.size() == 0)
+   {
+      handler(Success(), std::vector<ZoteroCollection>());
+      return;
+   }
+
+
+   // get the requested collection(s)
+   zoteroKeyInfo(key, [key, handler, specs](const Error& error,int,json::Value jsonValue) {
+
+      if (error)
+      {
+         handler(error, std::vector<ZoteroCollection>());
+         return;
+      }
+
+      int userID = jsonValue.getObject()["userID"].getInt();
+
+      zoteroCollections(key, userID, [key, userID, handler, specs](const Error& error,int,json::Value jsonValue) {
+
+         if (error)
+         {
+            handler(error, std::vector<ZoteroCollection>());
+            return;
+         }
+
+         // TODO: support multiple collections
+         std::string targetCollection = specs[0].name;
+         json::Array jsonCollections = jsonValue.getArray();
+         bool foundCollection = false;
+         for (std::size_t i = 0; i<jsonCollections.getSize(); i++)
+         {
+            json::Object collectionJson = jsonCollections[i].getObject()["data"].getObject();
+            std::string name = collectionJson["name"].getString();
+            if (name == targetCollection)
+            {
+               std::string collectionID = collectionJson["key"].getString();
+               int version = collectionJson["version"].getInt();
+               zoteroItemsForCollection(key, userID, collectionID, [name, version, handler](const Error& error,int,json::Value jsonValue) {
+
+                  if (error)
+                  {
+                     handler(error, std::vector<ZoteroCollection>());
+                     return;
+                  }
+
+                  // create response object
+                  ZoteroCollection collection;
+                  collection.name = name;
+                  collection.version = version;
+                  json::Array itemsJson;
+                  json::Array resultItemsJson = jsonValue.getArray();
+                  std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
+                     return resultItemJson.getObject()["csljson"];
+                  });
+                  collection.items = itemsJson;
+
+                  // satisfy continutation
+                  handler(Success(), std::vector<ZoteroCollection>{ collection });
+
+               });
+
+               foundCollection = true;
+               break;
+            }
+
+         }
+
+         // didn't find a target, so return empty array
+         if (!foundCollection)
+         {
+            handler(Success(), std::vector<ZoteroCollection>());
+         }
+      });
+
+   });
+
+}
+
+} // end anonymous namespace
+
+ZoteroCollectionSource webCollections()
+{
+   ZoteroCollectionSource source;
+   source.getCollections = getWebCollections;
+   return source;
+}
+
+} // end namespace collections
 } // end namespace zotero
 } // end namespace modules
 } // end namespace session

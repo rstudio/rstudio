@@ -13,16 +13,16 @@
  *
  */
 
-#include "SessionZotero.hpp"
+#include "ZoteroCollections.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
-
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "ZoteroWebAPI.hpp"
+#include "ZoteroCollectionsWeb.hpp"
 
 using namespace rstudio::core;
 
@@ -38,6 +38,24 @@ namespace {
 
 } // end anonymous namespace
 
+void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
+{
+   // get the api key
+   std::string apiKey = prefs::userPrefs().zoteroApiKey();
+
+   // if we have an api key then request collections from the web
+   if (!apiKey.empty())
+   {
+      // get collections
+      ZoteroCollectionSource source = collections::webCollections();
+      source.getCollections(apiKey, specs, handler);
+   }
+   else
+   {
+      handler(Success(), std::vector<ZoteroCollection>());
+   }
+
+}
 
 } // end namespace collections
 } // end namespace zotero

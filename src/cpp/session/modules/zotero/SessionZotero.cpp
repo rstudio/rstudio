@@ -23,7 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "ZoteroWebAPI.hpp"
+#include "ZoteroCollections.hpp"
 
 using namespace rstudio::core;
 
@@ -32,15 +32,9 @@ namespace session {
 namespace modules {
 namespace zotero {
 
+using namespace collections;
+
 namespace {
-
-void continuationError(const json::JsonRpcFunctionContinuation& cont, const Error& error)
-{
-   json::JsonRpcResponse response;
-   LOG_ERROR(error);
-   cont(error, &response);
-}
-
 
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
@@ -94,80 +88,37 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // get the requested collection(s)
-   web_api::zoteroKeyInfo([cont, collections](const Error& error,int,json::Value jsonValue) {
+   // collection specs
+   ZoteroCollectionSpecs specs;
+   std::transform(collections.begin(), collections.end(), std::back_inserter(specs), [](const std::string& collection) {
+      return ZoteroCollectionSpec(collection);
+   });
 
-      if (error)
+   // get the collections
+   getCollections(specs, [cont](Error error, ZoteroCollections collections) {
+
+      // response
+      json::JsonRpcResponse response;
+
+      if (!error)
       {
-         continuationError(cont, error);
-         return;
+         json::Array collectionsJson;
+         for (auto collection : collections)
+         {
+            json::Object collectionJson;
+            collectionJson["name"] = collection.name;
+            collectionJson["version"] = collection.version;
+            collectionJson["items"] = collection.items;
+            collectionsJson.push_back(collectionJson);
+         }
+         response.setResult(collectionsJson);
+      }
+      else
+      {
+         LOG_ERROR(error);
       }
 
-      int userID = jsonValue.getObject()["userID"].getInt();
-
-      web_api::zoteroCollections(userID, [userID, cont, collections](const Error& error,int,json::Value jsonValue) {
-         if (error)
-         {
-            continuationError(cont, error);
-            return;
-         }
-
-         // TODO: support multiple collections
-         std::string targetCollection = collections[0];
-         json::Array jsonCollections = jsonValue.getArray();
-         bool foundCollection = false;
-         for (std::size_t i = 0; i<jsonCollections.getSize(); i++)
-         {
-            json::Object collectionJson = jsonCollections[i].getObject()["data"].getObject();
-            std::string name = collectionJson["name"].getString();
-            if (name == targetCollection)
-            {
-               std::string key = collectionJson["key"].getString();
-               int version = collectionJson["version"].getInt();
-               web_api::zoteroItemsForCollection(userID, key, [name, version, cont](const Error& error,int,json::Value jsonValue) {
-
-                  if (error)
-                  {
-                     continuationError(cont, error);
-                     return;
-                  }
-
-                  // array of items
-                  json::Array resultItemsJson = jsonValue.getArray();
-
-                  // create response object
-                  json::Object zoteroCollectionJSON;
-                  zoteroCollectionJSON["name"] = name;
-                  zoteroCollectionJSON["version"] = version;
-                  json::Array itemsJson;
-                  std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
-                     return resultItemJson.getObject()["csljson"];
-                  });
-                  zoteroCollectionJSON["items"] = itemsJson;
-
-                  // satisfy continutation
-                  json::JsonRpcResponse response;
-                  json::Array responseJson;
-                  responseJson.push_back(zoteroCollectionJSON);
-                  response.setResult(responseJson);
-                  cont(Success(), &response);
-
-               });
-
-               foundCollection = true;
-               break;
-            }
-
-         }
-
-         // didn't find a target, so return empty array
-         if (!foundCollection)
-         {
-            json::JsonRpcResponse response;
-            response.setResult(json::Array());
-            cont(Success(), &response);
-         }
-      });
+      cont(error, &response);
 
    });
 

@@ -1,5 +1,5 @@
 /*
- * zotero.ts
+ * ZoteroCollectionsWeb.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,18 +13,23 @@
  *
  */
 
-import { CSL } from "./csl";
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP
 
-export interface ZoteroCollectionSpec {
-  name: string;
-  version: number;
-}
+#include "ZoteroCollections.hpp"
 
-export interface ZoteroCollection extends ZoteroCollectionSpec {
-  items: CSL[];
-}
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace zotero {
+namespace collections {
 
-export interface ZoteroServer {
-  getCollections: (file: string | null, collections: ZoteroCollectionSpec[]) => Promise<ZoteroCollection[]>;
-}
+ZoteroCollectionSource webCollections();
 
+} // end namespace collections
+} // end namespace zotero
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
+
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP */
