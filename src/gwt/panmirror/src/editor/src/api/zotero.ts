@@ -34,6 +34,7 @@ export interface ZoteroCollection extends ZoteroCollectionSpec {
 }
 
 export interface ZoteroServer {
+  validateWebAPIKey: (key: string) => Promise<boolean>;
   getCollections: (file: string | null, collections: string[], cached: ZoteroCollectionSpec[]) => Promise<ZoteroResult>;
 }
 

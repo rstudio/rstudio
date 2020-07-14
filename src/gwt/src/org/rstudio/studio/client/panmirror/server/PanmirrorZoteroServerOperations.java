@@ -25,6 +25,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 public interface PanmirrorZoteroServerOperations 
 {
+   void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback);
    void zoteroGetCollections(String file,
                              JsArrayString collections,
                              JsArray<PanmirrorZoteroCollectionSpec> cached, 

@@ -24,6 +24,8 @@ namespace modules {
 namespace zotero {
 namespace collections {
 
+void validateWebApiKey(const std::string& key, boost::function<void(bool)> handler);
+
 ZoteroCollectionSource webCollections();
 
 } // end namespace collections

@@ -498,6 +498,24 @@ void getWebCollections(const std::string& key, const ZoteroCollectionSpecs& spec
 
 } // end anonymous namespace
 
+
+void validateWebApiKey(const std::string& key, boost::function<void(bool)> handler)
+{
+   zoteroKeyInfo(key, [handler](const Error& error,int,json::Value) {
+      if (error)
+      {
+         std::string err = core::errorDescription(error);
+         if (!is404Error(err))
+            LOG_ERROR(error);
+         handler(false);
+      }
+      else
+      {
+         handler(true);
+      }
+   });
+}
+
 ZoteroCollectionSource webCollections()
 {
    // one time initialization of user id map

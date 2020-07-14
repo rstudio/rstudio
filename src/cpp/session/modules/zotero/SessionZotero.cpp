@@ -25,6 +25,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "ZoteroCollections.hpp"
+#include "ZoteroCollectionsWeb.hpp"
 
 // TODO: user pref for setting api key
 //   - UI
@@ -50,6 +51,29 @@ const char * const kStatusOK = "ok";
 const char * const kStatusNoHost = "nohost";
 const char * const kStatusNotFound = "notfound";
 const char * const kStatusError = "error";
+
+
+void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
+                             const json::JsonRpcFunctionContinuation& cont)
+{
+   // extract params
+   std::string key;
+   Error error = json::readParams(request.params, &key);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      json::setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   validateWebApiKey(key, [cont](bool valid) {
+      json::JsonRpcResponse response;
+      response.setResult(valid);
+      cont(Success(), &response);
+   });
+}
+
 
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
@@ -179,6 +203,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
        (boost::bind(module_context::registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
+       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
    ;
    return initBlock.execute();
 }
