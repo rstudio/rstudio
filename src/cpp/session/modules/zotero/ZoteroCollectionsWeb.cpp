@@ -430,7 +430,7 @@ void getWebCollectionsForUser(const std::string& key, int userID, const ZoteroCo
 
          // see if we need to do a download for this collection
          ZoteroCollectionSpecs::const_iterator it = std::find_if(
-           specs.begin(), specs.end(), [name](ZoteroCollectionSpec spec) { return spec.name == name; }
+           specs.begin(), specs.end(), [name](ZoteroCollectionSpec spec) { return boost::algorithm::iequals(spec.name,name); }
          );
          if (it != specs.end())
          {

@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer } from "../zotero";
+import { ZoteroCollection, ZoteroServer, ZoteroResult } from "../zotero";
 
 import { BibliographyDataProvider, ParsedYaml, BibliographySource, Bibliography } from "./bibliography";
 
@@ -32,14 +32,24 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       const collections = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
-      const result = await this.server.getCollections(docPath, collections, []);
-      if (!this.collections && result) {
-        this.collections = result;
-
-        const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
-        const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
-        this.biblio = { sources: zoteroEntries, project_biblios: [] };
+      try {
+        const result = await this.server.getCollections(docPath, collections, []);
+        if (result.status === "ok") {
+          if (!this.collections && result.message) {
+            this.collections = result.message as ZoteroCollection[];
+            const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
+            const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
+            this.biblio = { sources: zoteroEntries, project_biblios: [] };
+          }
+        } else {
+          // console.log(result.status);
+        }
       }
+      catch (err) {
+        // console.log(err);
+      }
+
+
     } else {
       // Zotero is disabled, clear any already loaded bibliography
       this.biblio = undefined;

@@ -15,6 +15,15 @@
 
 import { CSL } from "./csl";
 
+export interface ZoteroResult {
+  status: "ok" |    // ok (results in 'message')
+  "notfound" |      // invalid api key
+  "nohost" |        // no internet connectivity
+  "error";          // unexpected error (details in 'error')
+  message: any | null;
+  error: string;
+}
+
 export interface ZoteroCollectionSpec {
   name: string;
   version: number;
@@ -25,6 +34,6 @@ export interface ZoteroCollection extends ZoteroCollectionSpec {
 }
 
 export interface ZoteroServer {
-  getCollections: (file: string | null, collections: string[], cached: ZoteroCollectionSpec[]) => Promise<ZoteroCollection[]>;
+  getCollections: (file: string | null, collections: string[], cached: ZoteroCollectionSpec[]) => Promise<ZoteroResult>;
 }
 

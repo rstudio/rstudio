@@ -54,6 +54,9 @@ void asyncJsonRpcRequest(const std::string& url,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont);
 
+bool is404Error(const std::string& stdErr);
+bool isHostError(const std::string& stdErr);
+
 
 } // namespace session
 } // namespace rstudio

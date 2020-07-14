@@ -21,15 +21,10 @@
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionAsyncDownloadFile.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "ZoteroCollections.hpp"
-
-// TODO: how are various error states handled:
-//   - offline
-//   - invalid key or userID
-//   - collection not found
-//   - others?
 
 // TODO: user pref for setting api key
 //   - UI
@@ -46,6 +41,15 @@ namespace zotero {
 using namespace collections;
 
 namespace {
+
+const char * const kStatus = "status";
+const char * const kMessage = "message";
+const char * const kError = "error";
+
+const char * const kStatusOK = "ok";
+const char * const kStatusNoHost = "nohost";
+const char * const kStatusNotFound = "notfound";
+const char * const kStatusError = "error";
 
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
@@ -121,28 +125,47 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // get the collections
    getCollections(collections, [cont](Error error, ZoteroCollections collections) {
 
-      // response
-      json::JsonRpcResponse response;
+      // result defaults
+      json::Object resultJson;
+      resultJson[kMessage] = json::Value();
+      resultJson[kError] = "";
 
+      // handle success & error
       if (!error)
       {
          json::Array collectionsJson;
          for (auto collection : collections)
          {
             json::Object collectionJson;
-            collectionJson["name"] = collection.name;
-            collectionJson["version"] = collection.version;
-            collectionJson["items"] = collection.items;
+            collectionJson[kName] = collection.name;
+            collectionJson[kVersion] = collection.version;
+            collectionJson[kItems] = collection.items;
             collectionsJson.push_back(collectionJson);
          }
-         response.setResult(collectionsJson);
+         resultJson[kStatus] = kStatusOK;
+         resultJson[kMessage] = collectionsJson;
       }
       else
       {
-         LOG_ERROR(error);
+         std::string err = core::errorDescription(error);
+         if (is404Error(err))
+         {
+            resultJson[kStatus] = kStatusNotFound;
+         }
+         else if (isHostError(err))
+         {
+            resultJson[kStatus] = kStatusNoHost;
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE(err);
+            resultJson[kStatus] = kStatusError;
+         }
       }
 
-      cont(error, &response);
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      cont(Success(), &response);
 
    });
 
