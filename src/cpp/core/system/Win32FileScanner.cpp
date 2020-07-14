@@ -115,6 +115,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for (const FileInfo& childFileInfo : childrenFileInfo)
    {
+      // check for interrupts
+      boost::this_thread::interruption_point();
+
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))
          continue;

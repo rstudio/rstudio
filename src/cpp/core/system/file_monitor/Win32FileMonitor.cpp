@@ -41,13 +41,15 @@ namespace {
 // buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
 
+// handle registry
+std::set<Handle> s_handleRegistry;
+
 class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext()
       : recursive(false),
         hDirectory(nullptr),
-        readDirChangesPending(false),
         hRestartTimer(nullptr),
         restartCount(0)
    {
@@ -70,7 +72,6 @@ public:
    OVERLAPPED overlapped;
    std::vector<BYTE> receiveBuffer;
    std::vector<BYTE> handlingBuffer;
-   bool readDirChangesPending;
 
    // our own snapshot of the file tree
    tree<FileInfo> fileTree;
@@ -123,11 +124,11 @@ void cleanupContext(FileEventContext* pContext)
       pContext->hRestartTimer = nullptr;
    }
 
-   // delete pContext only if there are no read dir changes operations
-   // pending -- if there are then we wait to delete pContext until
-   // the completion routine gets ERROR_OPERATION_ABORTED
-   if (!pContext->readDirChangesPending)
-      delete pContext;
+   // let the client know we are unregistered
+   pContext->callbacks.onUnregistered(pContext->handle);
+
+   // delete context
+   delete pContext;
 }
 
 void removeTrailingSlash(std::wstring* pPath)
@@ -393,38 +394,16 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    }
 }
 
-// track number of active requests (we wait for this to get to zero before
-// allowing the exit of the monitoring thread -- this ensures that we have
-// performed full cleanup for all monitoring contexts before exiting.
-volatile LONG s_activeRequests = 0;
-
-VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completion code
+VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,
                                           DWORD dwNumberOfBytesTransfered,
                                           LPOVERLAPPED lpOverlapped)
 {
+   // check for abort (needs to be done first as context may have been deleted)
+   if (dwErrorCode == ERROR_OPERATION_ABORTED)
+      return;
+
    // get the context
    FileEventContext* pContext = (FileEventContext*)(lpOverlapped->hEvent);
-
-   // note that read changes is no longer pending
-   pContext->readDirChangesPending = false;
-
-   // check for aborted
-   if (dwErrorCode == ERROR_OPERATION_ABORTED)
-   {
-      // decrement the active request counter
-      ::InterlockedDecrement(&s_activeRequests);
-
-      // let the client know we are unregistered (note this call should always
-      // be prior to delete pContext below!)
-      pContext->callbacks.onUnregistered(pContext->handle);
-
-      // we wait to delete the pContext until here because it owns the
-      // OVERLAPPED structure and buffers, and so if we deleted it earlier
-      // and the OS tried to access those memory regions we would crash
-      delete pContext; 
-
-      return;
-   }
 
    // bail if we don't have callbacks installed yet (could have occurred
    // if we encountered an error during file scanning which caused us to
@@ -475,24 +454,22 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 Error readDirectoryChanges(FileEventContext* pContext)
 {
    DWORD dwBytes = 0;
-   if(!::ReadDirectoryChangesW(pContext->hDirectory,
-                               &(pContext->receiveBuffer[0]),
-                               static_cast<DWORD>(pContext->receiveBuffer.size()),
-                               pContext->recursive ? TRUE : FALSE,
-                               FILE_NOTIFY_CHANGE_FILE_NAME |
-                               FILE_NOTIFY_CHANGE_DIR_NAME |
-                               FILE_NOTIFY_CHANGE_LAST_WRITE,
-                               &dwBytes,
-                               &(pContext->overlapped),
-                               &FileChangeCompletionRoutine))
-   {
+   BOOL ok = ::ReadDirectoryChangesW(
+       pContext->hDirectory,
+       &(pContext->receiveBuffer[0]),
+       static_cast<DWORD>(pContext->receiveBuffer.size()),
+       pContext->recursive ? TRUE : FALSE,
+       FILE_NOTIFY_CHANGE_FILE_NAME |
+           FILE_NOTIFY_CHANGE_DIR_NAME |
+           FILE_NOTIFY_CHANGE_LAST_WRITE,
+       &dwBytes,
+       &(pContext->overlapped),
+       &FileChangeCompletionRoutine);
+
+   if (!ok)
       return LAST_SYSTEM_ERROR();
-   }
-   else
-   {
-      pContext->readDirChangesPending = true;
-      return Success();
-   }
+
+   return Success();
 }
 
 } // anonymous namespace
@@ -554,9 +531,6 @@ Handle registerMonitor(const core::FilePath& filePath,
    // the completion callback
    autoPtrContext.release();
 
-   // increment the number of active requests
-   ::InterlockedIncrement(&s_activeRequests);
-
    // scan the files
    core::system::FileScannerOptions options;
    options.recursive = recursive;
@@ -582,6 +556,9 @@ Handle registerMonitor(const core::FilePath& filePath,
    // notify the caller that we have successfully registered
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
+   // register handle
+   s_handleRegistry.insert(pContext->handle);
+
    // return the handle
    return pContext->handle;
 }
@@ -589,23 +566,24 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle)
 {
-   // this will end up calling the completion routine with
-   // ERROR_OPERATION_ABORTED at which point we'll delete the context
+   // unregister handle
+   s_handleRegistry.erase(handle);
+
+   // clean up context
    cleanupContext((FileEventContext*)(handle.pData));
 }
 
 void run(const boost::function<void()>& checkForInput)
 {
-   // initialize active requests to zero
-   s_activeRequests = 0;
-
    // loop waiting for:
    //   - completion routine callbacks (occur during SleepEx); or
    //   - inbound commands (occur during checkForInput)
    while (true)
    {
       // look for changes and keep calling SleepEx as long as we have them
-      while(::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
+      while (::SleepEx(1, TRUE) == WAIT_IO_COMPLETION)
+      {
+      }
 
       checkForInput();
    }
@@ -613,10 +591,11 @@ void run(const boost::function<void()>& checkForInput)
 
 void stop()
 {
-   // call ::SleepEx until all active requests hae terminated
-   while (s_activeRequests > 0)
+   // stop any active requests
+   for (Handle handle : s_handleRegistry)
    {
-      ::SleepEx(100, TRUE);
+      FileEventContext* pContext = (FileEventContext*) handle.pData;
+      cleanupContext(pContext);
    }
 }
 
