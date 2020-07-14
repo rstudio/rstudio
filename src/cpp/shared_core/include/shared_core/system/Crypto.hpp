@@ -159,6 +159,11 @@ Error encryptAndBase64Encode(
 /**
  * @brief Generates random bytes of the specified length.
  *
+ * This function uses openSSL to generate random data. Summarized from the openSSL documentation:
+ * The bytes are generated using a cryptographically secure pseudo random generator. The quality of the randomness is
+ * determined by the operating system's entropy source. If an entropy source fails or isn't available, an error will be
+ * returned.
+ *
  * @param in_length         The number of bytes of random data to generate.
  * @param out_randomData    The random data.
  *
