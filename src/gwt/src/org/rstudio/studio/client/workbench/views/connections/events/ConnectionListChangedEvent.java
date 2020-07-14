@@ -21,17 +21,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConnectionListChangedEvent extends GwtEvent<ConnectionListChangedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onConnectionListChanged(ConnectionListChangedEvent event);
    }
-   
+
    public ConnectionListChangedEvent(JsArray<Connection> connectionList)
    {
       connectionList_ = connectionList;
    }
-   
+
    public JsArray<Connection> getConnectionList()
    {
       return connectionList_;
@@ -48,8 +48,8 @@ public class ConnectionListChangedEvent extends GwtEvent<ConnectionListChangedEv
    {
       handler.onConnectionListChanged(this);
    }
-   
+
    private final JsArray<Connection> connectionList_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

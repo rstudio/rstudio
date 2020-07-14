@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class PerformConnectionEvent extends GwtEvent<PerformConnectionEvent.Handler>
-{  
+{
    public static class Data
    {
       public Data(String connectVia, String connectCode)
@@ -27,41 +27,41 @@ public class PerformConnectionEvent extends GwtEvent<PerformConnectionEvent.Hand
          connectVia_ = connectVia;
          connectCode_ = connectCode;
       }
-      
+
       public String getConnectVia()
       {
          return connectVia_;
       }
-      
+
       public String getConnectCode()
       {
          return connectCode_;
       }
-      
+
       private final String connectVia_;
       private final String connectCode_;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onPerformConnection(PerformConnectionEvent event);
    }
-   
+
    public PerformConnectionEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public PerformConnectionEvent(String connectVia, String connectCode)
    {
       this(new Data(connectVia, connectCode));
    }
-   
+
    public String getConnectVia()
    {
       return data_.getConnectVia();
    }
-   
+
    public String getConnectCode()
    {
       return data_.getConnectCode();
@@ -78,8 +78,8 @@ public class PerformConnectionEvent extends GwtEvent<PerformConnectionEvent.Hand
    {
       handler.onPerformConnection(this);
    }
-   
+
    private final Data data_;
- 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

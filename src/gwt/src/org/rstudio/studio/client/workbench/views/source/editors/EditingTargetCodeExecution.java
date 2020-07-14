@@ -163,18 +163,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         if (DocumentMode.isCursorInPythonMode(docDisplay_))
-         {
-            // don't skip empty / blank lines when executing Python line-by-line
-            Position nextPos = Position.create(
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  0);
-            docDisplay_.setCursorPosition(nextPos);
-         }
-         else
-         {
-            moveCursorAfterExecution(selectionRange, true);
-         }
+         moveCursorAfterExecution(selectionRange, true);
       }
    }
    
@@ -310,7 +299,7 @@ public class EditingTargetCodeExecution
       // if we're in a chunk with in-line output, execute it there instead
       if (!onlyUseConsole && docDisplay_.showChunkOutputInline())
       {
-         Scope scope = docDisplay_.getCurrentChunk(range.getStart());
+         Scope scope = docDisplay_.getChunkAtPosition(range.getStart());
          if (scope != null)
          {
             events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
@@ -409,7 +398,7 @@ public class EditingTargetCodeExecution
             Scope scope = null;
             if (docDisplay_.showChunkOutputInline())
             {
-               scope = docDisplay_.getCurrentChunk(
+               scope = docDisplay_.getChunkAtPosition(
                   lastExecutedCode_.getRange().getStart());
             }
 

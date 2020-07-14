@@ -13,12 +13,12 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, DOMOutputSpec, ParseRule } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
-import { Extension } from '../../api/extension';
+import { ExtensionContext, Extension } from '../../api/extension';
 import { PandocOutput, PandocTokenType } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -27,54 +27,59 @@ import { codeNodeSpec } from '../../api/code';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 import { yamlMetadataBlockCapsuleFilter } from './yaml_metadata-capsule';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'yaml_metadata',
+const extension = (context: ExtensionContext): Extension => {
+  const { ui } = context;
 
-      spec: {
-        ...codeNodeSpec(),
-        attrs: {
-          navigation_id: { default: null },
-        },
-        parseDOM: [
-          {
-            tag: "div[class*='yaml-block']",
-            preserveWhitespace: 'full',
+  return {
+    nodes: [
+      {
+        name: 'yaml_metadata',
+
+        spec: {
+          ...codeNodeSpec(),
+          attrs: {
+            navigation_id: { default: null },
           },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return ['div', { class: 'yaml-block pm-code-block' }, 0];
+          parseDOM: [
+            {
+              tag: "div[class*='yaml-block']",
+              preserveWhitespace: 'full',
+            } as ParseRule,
+          ],
+          toDOM(node: ProsemirrorNode): DOMOutputSpec {
+            return ['div', { class: 'yaml-block pm-code-block' }, 0];
+          },
+        },
+
+        code_view: {
+          lang: () => 'yaml-frontmatter',
+          classes: ['pm-metadata-background-color', 'pm-yaml-metadata-block'],
+        },
+
+        pandoc: {
+          blockCapsuleFilter: yamlMetadataBlockCapsuleFilter(),
+
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeToken(PandocTokenType.Para, () => {
+              output.writeRawMarkdown(node.content);
+            });
+          },
         },
       },
+    ],
 
-      code_view: {
-        lang: () => 'yaml-frontmatter',
-        classes: ['pm-metadata-background-color', 'pm-yaml-metadata-block'],
-      },
-
-      pandoc: {
-        blockCapsuleFilter: yamlMetadataBlockCapsuleFilter(),
-
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeToken(PandocTokenType.Para, () => {
-            output.writeRawMarkdown(node.content);
-          });
-        },
-      },
+    commands: () => {
+      return [new YamlMetadataCommand(ui)];
     },
-  ],
 
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new YamlMetadataCommand()];
-  },
-
-  plugins: () => [yamlMetadataTitlePlugin()],
+    plugins: () => [yamlMetadataTitlePlugin()],
+  };
 };
 
 class YamlMetadataCommand extends ProsemirrorCommand {
-  constructor() {
+  constructor(ui: EditorUI) {
     super(
       EditorCommandId.YamlMetadata,
       [],
@@ -103,6 +108,15 @@ class YamlMetadataCommand extends ProsemirrorCommand {
         }
 
         return true;
+      },
+      {
+        name: ui.context.translateText('YAML'),
+        description: ui.context.translateText('YAML metadata block'),
+        group: OmniInsertGroup.Blocks,
+        priority: 3,
+        selectionOffset: 4,
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.yaml_block_dark! : ui.images.omni_insert?.yaml_block!,
       },
     );
   }

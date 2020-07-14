@@ -42,6 +42,8 @@ int verifyInstallation();
 void initMonitorClient(boost::asio::io_service& ioService);
 
 core::Error initialize();
+
+std::string sessionNode();
    
 } // namespace overlay
 } // namespace modules

@@ -20,7 +20,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
 }
 }
 

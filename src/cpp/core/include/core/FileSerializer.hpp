@@ -44,7 +44,7 @@ Error writeCollectionToFile(
                                  const typename CollectionType::value_type&)>
                          stringifyFunction)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
    
    // open the file stream
    std::shared_ptr<std::ostream> pOfs;
@@ -60,7 +60,7 @@ Error writeCollectionToFile(
             it != collection.end();
             ++it)
       {
-         *pOfs << stringifyFunction(*it) << std::endl ;
+         *pOfs << stringifyFunction(*it) << std::endl;
 
         if (pOfs->fail())
              return systemError(io_error, ERROR_LOCATION);
@@ -75,7 +75,7 @@ Error writeCollectionToFile(
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 enum ReadCollectionAction
@@ -94,7 +94,7 @@ Error readCollectionFromFile(
                          parseFunction,
                          bool trimAndIgnoreBlankLines=true)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
    
    // open the file stream
    std::shared_ptr<std::istream> pIfs;
@@ -109,11 +109,11 @@ Error readCollectionFromFile(
    try
    {
       // read each line
-      std::string nextLine ;
+      std::string nextLine;
       while (true)
       {
          // read the next line
-         std::getline(*pIfs, nextLine) ;
+         std::getline(*pIfs, nextLine);
 
          if (pIfs->eof())
          {
@@ -128,17 +128,17 @@ Error readCollectionFromFile(
          // trim whitespace then ignore it if it is a blank line
          if (trimAndIgnoreBlankLines)
          {
-            boost::algorithm::trim(nextLine) ;
+            boost::algorithm::trim(nextLine);
             if (nextLine.empty())
-               continue ;
+               continue;
          }
 
          // parse it and add it to the collection
-         typename CollectionType::value_type value ;
+         typename CollectionType::value_type value;
          ReadCollectionAction action = parseFunction(nextLine, &value);
          if (action == ReadCollectionAddLine)
          {
-            *insertIterator++ = value ;
+            *insertIterator++ = value;
          }
          else if (action == ReadCollectionIgnoreLine)
          {
@@ -163,14 +163,14 @@ Error readCollectionFromFile(
       return error;
    }
    
-   return Success() ;
+   return Success();
 }
 
 template <typename ContentType>
 Error appendToFile(const core::FilePath& filePath,
                        const ContentType& content)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
    
    // open the file stream
    std::shared_ptr<std::ostream> pOfs;
@@ -183,7 +183,7 @@ Error appendToFile(const core::FilePath& filePath,
       pOfs->seekp(0, std::ios_base::end);
 
       // append the content
-      *pOfs << content  ;
+      *pOfs << content;
       if (pOfs->fail())
          return systemError(io_error, ERROR_LOCATION);
    }
@@ -196,14 +196,14 @@ Error appendToFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 template <typename T>
 Error appendStructToFile(const core::FilePath& filePath,
                          const T& data)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
 
    // open the file stream
    std::shared_ptr<std::ostream> pOfs;
@@ -229,14 +229,14 @@ Error appendStructToFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 template <typename T>
 Error readStructVectorFromFile(const core::FilePath& filePath,
                                std::vector<T>* pVector)
 {
-   using namespace boost::system::errc ;
+   using namespace boost::system::errc;
 
    // open the file stream
    std::shared_ptr<std::istream> pIfs;
@@ -267,7 +267,7 @@ Error readStructVectorFromFile(const core::FilePath& filePath,
       return error;
    }
 
-   return Success() ;
+   return Success();
 }
 
 
@@ -278,10 +278,10 @@ std::string stringifyString(const std::string& str);
 
       
 Error writeStringMapToFile(const core::FilePath& filePath,
-                           const std::map<std::string,std::string>& map) ;
+                           const std::map<std::string,std::string>& map);
 
 Error readStringMapFromFile(const core::FilePath& filePath,
-                            std::map<std::string,std::string>* pMap) ;
+                            std::map<std::string,std::string>* pMap);
    
 Error writeStringVectorToFile(const core::FilePath& filePath,
                               const std::vector<std::string>& vector);
@@ -327,7 +327,7 @@ Error readStringFromFile(
       ostr.exceptions(std::ostream::failbit | std::ostream::badbit);
 
       // do the copy
-      boost::iostreams::filtering_ostream filteringOStream ;
+      boost::iostreams::filtering_ostream filteringOStream;
       filteringOStream.push(filter);
       filteringOStream.push(ostr);
       boost::iostreams::copy(*pIfs, filteringOStream, 128);

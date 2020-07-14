@@ -18,12 +18,31 @@ import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prose
 import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
+import { BibliographyResult } from './bibliography';
 
-export interface PandocEngine {
+export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
   listExtensions(format: string): Promise<string>;
+  getBibliography(
+    file: string | null,
+    bibliography: string[],
+    refBlock: string | null,
+    etag: string | null,
+  ): Promise<BibliographyResult>;
+  addToBibliography(
+    bibliography: string,
+    project: boolean,
+    id: string,
+    sourceAsJson: string
+  ): Promise<boolean>;
+  citationHTML(
+    file: string | null,
+    sourceAsJson: string,
+    csl: string | null
+  ): Promise<string>;
+
 }
 
 export interface PandocWriterOptions {
@@ -363,4 +382,20 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
+}
+
+
+// sort marks by priority (in descending order)
+export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {
+  return marks.sort((a: Mark, b: Mark) => {
+    const aPriority = markWriters[a.type.name].priority;
+    const bPriority = markWriters[b.type.name].priority;
+    if (aPriority < bPriority) {
+      return 1;
+    } else if (bPriority < aPriority) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
 }

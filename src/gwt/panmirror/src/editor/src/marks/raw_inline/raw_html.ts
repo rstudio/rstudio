@@ -20,19 +20,16 @@ import { EditorState } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
-import { Extension } from '../../api/extension';
-import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
-import { EditorCommandId } from '../../api/command';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { isRawHTMLFormat } from '../../api/raw';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
 
-import { InsertHTMLCommentCommand } from './raw_html_comment';
 import { fancyQuotesToSimple } from '../../api/quote';
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { pandocExtensions } = context;
   return {
     marks: [
       {
@@ -78,15 +75,15 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           ],
 
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
-            // always write single line html as inline
-            if (writer) {
+            // read single tags as inline html
+            const isSingleTag = tagStartLoc(html, html.length - 2) === 0;
+            if (isSingleTag && writer) {
               writeInlneHTML(schema, html, writer);
             }
-
-            return true;
+            return isSingleTag;
           },
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },
@@ -94,17 +91,6 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
       },
     ],
-
-    // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
-      const commands = [new InsertHTMLCommentCommand(schema)];
-      if (pandocExtensions.raw_html) {
-        commands.push(
-          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        );
-      }
-      return commands;
-    },
 
     // input rules
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {

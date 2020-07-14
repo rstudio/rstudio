@@ -37,8 +37,15 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
     props.onClick();
   };
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.keyCode === 32) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+
   return (
-    <a href={props.text} onClick={onClick} title={props.title || props.text} className={className} style={style}>
+    <a href={props.text} tabIndex={0} onClick={onClick} onKeyDown={onKeyDown} title={props.title || props.text} className={className} style={style}>
       {props.text}
     </a>
   );
@@ -61,6 +68,34 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
   return (
     <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref}>
       <img src={props.image} alt={props.title} />
+    </button>
+  );
+});
+
+export interface TextButtonProps extends WidgetProps {
+  title: string;
+  onClick?: () => void;
+  tabIndex?: number;
+}
+
+export const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>((props: TextButtonProps, ref) => {
+  const className = ['pm-text-button', 'pm-input-button'].concat(props.classes || []).join(' ');
+  const onClick = (e: React.MouseEvent) => {
+    if (props.onClick) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={className}
+      style={props.style}
+      ref={ref}
+      tabIndex={props.tabIndex}
+    >
+      {props.title}
     </button>
   );
 });

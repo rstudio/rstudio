@@ -22,7 +22,7 @@ import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } f
 import { findChildrenByType } from 'prosemirror-utils';
 
 import { EditorUI } from '../../api/ui';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
@@ -42,6 +42,7 @@ import {
   TableToggleHeaderCommand,
   TableToggleCaptionCommand,
   CssAlignment,
+  insertTableOmniInsert,
 } from './table-commands';
 
 import {
@@ -54,14 +55,15 @@ import {
 } from './table-nodes';
 
 import { fixupTableWidths } from './table-columns';
-
+import { TableContextMenuPlugin } from './table-contextmenu';
 import { tablePaste } from './table-paste';
 
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
 
-import { TableContextMenuPlugin } from './table-contextmenu';
-const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { pandocExtensions, ui } = context;
+
   // not enabled if there are no tables enabled
   if (
     !pandocExtensions.grid_tables &&
@@ -91,7 +93,12 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
 
     commands: (_schema: Schema) => {
       const commands = [
-        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui)),
+        new ProsemirrorCommand(
+          EditorCommandId.TableInsertTable,
+          ['Alt-Mod-t'],
+          insertTable(capabilities, ui),
+          insertTableOmniInsert(ui),
+        ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
         new TableColumnCommand(EditorCommandId.TableAddColumnAfter, [], addColumns(true)),

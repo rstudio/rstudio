@@ -99,7 +99,27 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
 
 function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
   return [
-    { command: EditorCommandId.RmdChunk },
+    { command: EditorCommandId.OmniInsert },
+    ...(haveAnyOf(commands, EditorCommandId.RCodeChunk, EditorCommandId.PythonCodeChunk)
+      ? [
+          { separator: true },
+          {
+            subMenu: {
+              text: ui.context.translateText('Code Chunk'),
+              items: [
+                { command: EditorCommandId.RCodeChunk },
+                { separator: true },
+                { command: EditorCommandId.PythonCodeChunk },
+                { command: EditorCommandId.BashCodeChunk },
+                { command: EditorCommandId.RcppCodeChunk },
+                { command: EditorCommandId.SQLCodeChunk },
+                { command: EditorCommandId.D3CodeChunk },
+                { command: EditorCommandId.StanCodeChunk },
+              ],
+            },
+          },
+        ]
+      : []),
     { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
@@ -123,8 +143,17 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { separator: true },
     { command: EditorCommandId.InlineMath },
     { command: EditorCommandId.DisplayMath },
-    { separator: true },
-    { command: EditorCommandId.Symbol },
+    ...(haveAnyOf(commands, EditorCommandId.Symbol, EditorCommandId.Emoji)
+      ? [
+          { separator: true },
+          {
+            subMenu: {
+              text: ui.context.translateText('Emoji & Symbol'),
+              items: [{ command: EditorCommandId.Emoji }, { command: EditorCommandId.Symbol }],
+            },
+          },
+        ]
+      : []),
     { separator: true },
     { command: EditorCommandId.Footnote },
     { command: EditorCommandId.Citation },

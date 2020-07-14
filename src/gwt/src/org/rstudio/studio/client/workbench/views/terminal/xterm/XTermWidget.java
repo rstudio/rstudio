@@ -15,10 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import jsinterop.base.Js;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalStyleSheetLoader;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
@@ -39,15 +41,14 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 /**
  * Xterm-compatible terminal emulator widget. This widget does no network
  * communication.
  *
- * To receive input (user typing), subscribe to TerminalDataInputEvent, or
- * use addDataEventHandler, which stops TerminalDataInputEvent from being
- * fired and makes a direct callback.
+ * To receive input (user typing), subscribe to TerminalDataInputEvent.
  *
  * To send output to the terminal, use write() or writeln().
  *
@@ -90,7 +91,11 @@ public class XTermWidget extends Widget
       load(() -> {
          Scheduler.get().scheduleDeferred(() -> {
             // Create and attach the native terminal object to this Widget
-            terminal_ = XTermNative.createTerminal(getElement(), options_, tabMovesFocus_);
+            terminal_ = new XTermTerminal(options_);
+            fit_ = new XTermFitAddon();
+            terminal_.loadAddon(fit_);
+            terminal_.open(getElement());
+            terminal_.focus();
             terminal_.addClass("ace_editor");
             terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
@@ -108,8 +113,14 @@ public class XTermWidget extends Widget
             // Handle title events from the xterm and dispatch them
             addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
 
+            // Allow tab key to move focus out of terminal?
+            terminal_.attachCustomKeyEventHandler(keyboardEvent ->
+            {
+               return !(tabMovesFocus_ && StringUtil.equals(keyboardEvent.key, "Tab"));
+            });
+
             initialized_ = true;
-            terminal_.fit();
+            fit_.fit();
             terminal_.focus();
             callback.execute();
          });
@@ -131,7 +142,7 @@ public class XTermWidget extends Widget
    public void writeln(String str)
    {
       terminal_.scrollToBottom();
-      terminal_.writeln(str);
+      terminal_.writeln(str, null);
    }
 
    /**
@@ -142,7 +153,7 @@ public class XTermWidget extends Widget
    public void accept(String str)
    {
       terminal_.scrollToBottom();
-      terminal_.write(str);
+      terminal_.write(str, null);
    }
 
    /**
@@ -160,6 +171,11 @@ public class XTermWidget extends Widget
       if (initialized_)
       {
          initialized_ = false;
+
+         for (XTermDisposable unsubscribe : xtermEventUnsubscribe_)
+            unsubscribe.dispose();
+         xtermEventUnsubscribe_.clear();
+
          Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
@@ -203,7 +219,7 @@ public class XTermWidget extends Widget
             return;
          }
 
-         terminal_.fit();
+         fit_.fit();
 
          // Notify the remote pseudo-terminal that it has resized; this is quite
          // expensive so debounce again; e.g. dragging the pane splitters or
@@ -221,32 +237,29 @@ public class XTermWidget extends Widget
       {
          XTermDimensions size = getTerminalSize();
 
-         int cols = size.getCols();
-         int rows = size.getRows();
-
          // ignore if a reasonable size couldn't be computed
-         if (cols < 1 || rows < 1)
+         if (size.getCols() < 1 || size.getRows() < 1)
          {
             return;
          }
 
-         resizePTY(cols, rows);
+         resizePTY(size.getCols(), size.getRows());
       }
    };
 
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
-      terminal_.onTerminalData(handler);
+      xtermEventUnsubscribe_.add(terminal_.onData(data -> handler.execute(data)));
    }
 
    private void addTitleEventHandler(CommandWithArg<String> handler)
    {
-      terminal_.onTitleData(handler);
+      xtermEventUnsubscribe_.add(terminal_.onTitleChange(data -> handler.execute(data)));
    }
 
    private XTermDimensions getTerminalSize()
    {
-      return terminal_.proposeGeometry();
+      return fit_.proposeDimensions();
    }
 
    public void setFocus(boolean focused)
@@ -262,7 +275,7 @@ public class XTermWidget extends Widget
     */
    public int getCursorX()
    {
-      return terminal_.cursorX();
+      return terminal_.getBuffer().getActive().getCursorX();
    }
 
    /**
@@ -270,7 +283,7 @@ public class XTermWidget extends Widget
     */
    public int getCursorY()
    {
-      return terminal_.cursorY();
+      return terminal_.getBuffer().getActive().getCursorY();
    }
 
    /**
@@ -280,7 +293,7 @@ public class XTermWidget extends Widget
     */
    public void setTabMovesFocus(boolean movesFocus)
    {
-      terminal_.setTabMovesFocus(movesFocus);
+      tabMovesFocus_ = movesFocus;
    }
 
    /**
@@ -315,7 +328,11 @@ public class XTermWidget extends Widget
     */
    public String currentLine()
    {
-      return terminal_.currentLine();
+      XTermBuffer buffer = terminal_.getBuffer().getActive();
+      XTermBufferLine line = buffer.getLine(buffer.getCursorY() + buffer.getBaseY());
+      if (line == null) // resize may be in progress
+         return null;
+      return line.translateToString();
    }
 
    /**
@@ -324,7 +341,8 @@ public class XTermWidget extends Widget
     */
    public boolean xtermAltBufferActive()
    {
-      return terminalEmulatorLoaded() && terminal_.altBufferActive();
+      return terminalEmulatorLoaded() &&
+         StringUtil.equals(terminal_.getBuffer().getActive().getType(), ALT_BUFFER);
    }
 
    /**
@@ -332,7 +350,9 @@ public class XTermWidget extends Widget
     */
    public void showPrimaryBuffer()
    {
-      terminal_.showPrimaryBuffer();
+      terminal_.write("\u001b[?1047l", null); // show primary buffer
+      terminal_.write("\u001b[m", null); // reset all visual attributes
+      terminal_.write("\u001b[?9l", null); // reset mouse mode
    }
 
    /**
@@ -340,7 +360,7 @@ public class XTermWidget extends Widget
     */
    public void showAltBuffer()
    {
-      terminal_.showAltBuffer();
+      terminal_.write("\u001b[?1047h", null); // show alt buffer
    }
 
    /**
@@ -385,43 +405,28 @@ public class XTermWidget extends Widget
       return addHandler(handler, XTermTitleEvent.TYPE);
    }
 
-   public String getStringOption(String option)
-   {
-      return terminal_.getStringOption(option);
-   }
-
-   public boolean getBoolOption(String option)
-   {
-      return terminal_.getBoolOption(option);
-   }
-
-   public double getNumberOption(String option)
-   {
-      return terminal_.getNumberOption(option);
-   }
-
    public void updateTheme(XTermTheme theme)
    {
       if (terminalEmulatorLoaded())
-         terminal_.updateTheme(theme);
+         terminal_.setOption("theme", Js.cast(theme));
    }
 
-   public void updateBooleanOption(String option, boolean value)
+   public void updateOption(String option, boolean value)
    {
       if (terminalEmulatorLoaded())
-         terminal_.updateBooleanOption(option, value);
+         terminal_.setOption(option, Js.cast(value));
    }
 
-   public void updateStringOption(String option, String value)
+   public void updateOption(String option, double value)
    {
       if (terminalEmulatorLoaded())
-         terminal_.updateStringOption(option, value);
+         terminal_.setOption(option, Js.cast(value));
    }
 
-   public void updateDoubleOption(String option, double value)
+   public void updateOption(String option, String value)
    {
       if (terminalEmulatorLoaded())
-         terminal_.updateDoubleOption(option, value);
+         terminal_.setOption(option, Js.cast(value));
    }
 
    /**
@@ -432,20 +437,29 @@ public class XTermWidget extends Widget
    public static void load(final Command command)
    {
       xtermCssLoader_.addCallback(() ->
-            xtermLoader_.addCallback(() ->
-                  xtermFitLoader_.addCallback(() -> {
-         if (command != null)
-            command.execute();
-      })));
+      {
+         xtermLoader_.addCallback(() ->
+         {
+            xtermFitLoader_.addCallback(() ->
+            {
+               if (command != null)
+                  command.execute();
+            });
+         });
+      });
    }
 
    public void refresh()
    {
       if (terminalEmulatorLoaded())
-         terminal_.refresh();
+         terminal_.refresh(0, terminal_.getRows() - 1);
    }
 
-   private static int RESIZE_DELAY = 50;
+   // XTerm.js buffer modes
+   public static final String NORMAL_BUFFER = "normal";
+   public static final String ALT_BUFFER = "alternate";
+
+   private static final int RESIZE_DELAY = 50;
 
    private static final ExternalStyleSheetLoader xtermCssLoader_ =
          new ExternalStyleSheetLoader(XTermThemeResources.INSTANCE.xtermcss().getSafeUri().asString());
@@ -456,10 +470,12 @@ public class XTermWidget extends Widget
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
 
-   private XTermNative terminal_;
+   private XTermTerminal terminal_;
+   private XTermFitAddon fit_;
    private boolean initialized_ = false;
-   private XTermOptions options_;
+   private final XTermOptions options_;
    private boolean tabMovesFocus_;
+   private final ArrayList<XTermDisposable> xtermEventUnsubscribe_ = new ArrayList<>();
 
    private final static String XTERM_CLASS = "xterm-rstudio";
 }

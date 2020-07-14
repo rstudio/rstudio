@@ -21,6 +21,18 @@ public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandle
    public static final Type<LastSourceDocClosedHandler> TYPE =
       new Type<LastSourceDocClosedHandler>();
 
+   public LastSourceDocClosedEvent() {}
+
+   public LastSourceDocClosedEvent(String name)
+   {
+      name_ = name;
+   }
+
+   public String getName()
+   {
+      return name_;
+   }
+
    @Override
    protected void dispatch(LastSourceDocClosedHandler handler)
    {
@@ -32,4 +44,6 @@ public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandle
    {
       return TYPE;
    }
+
+   String name_;
 }

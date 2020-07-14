@@ -14,7 +14,7 @@
  */
 
 import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState, Selection } from 'prosemirror-state';
+import { EditorState, Selection, Transaction } from 'prosemirror-state';
 
 import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn } from './pandoc';
 import { mergedTextNodes } from './text';
@@ -35,14 +35,14 @@ export interface PandocMark {
   };
 }
 
-export function markIsActive(state: EditorState, type: MarkType) {
-  const { from, $from, to, empty } = state.selection;
+export function markIsActive(context: EditorState | Transaction, type: MarkType) {
+  const { from, $from, to, empty } = context.selection;
 
   if (empty) {
-    return !!type.isInSet(state.storedMarks || $from.marks());
+    return !!type.isInSet(context.storedMarks || $from.marks());
   }
 
-  return !!state.doc.rangeHasMark(from, to, type);
+  return !!context.doc.rangeHasMark(from, to, type);
 }
 
 export function getMarkAttrs(doc: ProsemirrorNode, range: { from: number; to: number }, type: MarkType) {
@@ -135,6 +135,7 @@ export function splitInvalidatedMarks(
   pos: number,
   validLength: (text: string) => number,
   markType: MarkType,
+  removeMark?: (from: number, to: number) => void,
 ) {
   const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
   const markedNodes = findChildrenByMark(node, markType, true);
@@ -147,7 +148,11 @@ export function splitInvalidatedMarks(
         const text = tr.doc.textBetween(markRange.from, markRange.to);
         const length = validLength(text);
         if (length > -1 && length !== text.length) {
-          tr.removeMark(markRange.from + length, markRange.to, markType);
+          if (removeMark) {
+            removeMark(markRange.from + length, markRange.to);
+          } else {
+            tr.removeMark(markRange.from + length, markRange.to, markType);
+          }
         }
       }
     }

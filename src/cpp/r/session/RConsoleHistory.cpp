@@ -35,8 +35,8 @@ namespace session {
    
 ConsoleHistory& consoleHistory()
 {
-   static ConsoleHistory instance ;
-   return instance ;
+   static ConsoleHistory instance;
+   return instance;
 }
    
 ConsoleHistory::ConsoleHistory()
@@ -72,7 +72,7 @@ void ConsoleHistory::add(const std::string& command)
       boost::char_separator<char> lineSep("\n");
       boost::tokenizer<boost::char_separator<char> > lines(command, lineSep);
       for (boost::tokenizer<boost::char_separator<char> >::iterator 
-           lineIter = lines.begin(); 
+           lineIter = lines.begin();
            lineIter != lines.end();
            ++lineIter)
       {

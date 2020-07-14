@@ -178,6 +178,7 @@
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
+#include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -459,7 +460,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using boost::bind;
    using namespace rstudio::core::system;
    using namespace rsession::module_context;
-   ExecBlock initialize ;
+   ExecBlock initialize;
    initialize.addFunctions()
    
       // client event service
@@ -541,6 +542,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)
+      (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
@@ -640,10 +642,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    }
    
    // register all of the json rpc methods implemented in R
-   json::JsonRpcMethods rMethods ;
+   json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
-      return error ;
+      return error;
    for (const json::JsonRpcMethod& method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
@@ -788,7 +790,7 @@ int rEditFile(const std::string& file)
    rsession::clientEventQueue().add(editEvent);
 
    // wait for edit_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
@@ -825,7 +827,7 @@ int rEditFile(const std::string& file)
       }
       
       // success!
-      return 0 ;
+      return 0;
    }
 }
    
@@ -837,7 +839,7 @@ FilePath rChooseFile(bool newFile)
    rsession::clientEventQueue().add(chooseFileEvent);
    
    // wait for choose_file_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
@@ -917,7 +919,7 @@ bool rLocator(double* x, double* y)
    rsession::clientEventQueue().add(locatorEvent);
    
    // wait for locator_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
@@ -1003,7 +1005,7 @@ void rBrowseURL(const std::string& url)
 {
    // first see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseUrlHandler>::const_iterator 
-            it = s_rBrowseUrlHandlers.begin(); 
+            it = s_rBrowseUrlHandlers.begin();
             it != s_rBrowseUrlHandlers.end();
             ++it)
    {
@@ -1019,7 +1021,7 @@ void rBrowseFile(const core::FilePath& filePath)
 {
    // see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseFileHandler>::const_iterator 
-            it = s_rBrowseFileHandlers.begin(); 
+            it = s_rBrowseFileHandlers.begin();
             it != s_rBrowseFileHandlers.end();
             ++it)
    {
@@ -1252,7 +1254,7 @@ void rCleanup(bool terminatedNormally)
    
 void rSerialization(int action, const FilePath& targetPath)
 {
-   json::Object serializationActionObject ;
+   json::Object serializationActionObject;
    serializationActionObject["type"] = action;
    if (!targetPath.isEmpty())
    {
@@ -1506,7 +1508,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    rsession::clientEventQueue().add(userPromptEvent);
 
    // wait for user_prompt_completed
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
@@ -1762,14 +1764,14 @@ int main (int argc, char * const argv[])
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
-      ProgramStatus status = options.read(argc, argv, osWarnings) ;
+      ProgramStatus status = options.read(argc, argv, osWarnings);
       std::string optionsWarnings = osWarnings.str();
 
       if (!optionsWarnings.empty())
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       if (status.exit())
-         return status.exitCode() ;
+         return status.exitCode();
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -1909,53 +1911,56 @@ int main (int argc, char * const argv[])
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
 
-      // determine if this is a new user and get the first project path if so
       std::string firstProjectPath = "";
-      bool newUser = false;
-
-      FilePath userScratchPath = options.userScratchPath();
-      if (userScratchPath.exists())
+      if (!options.verifyInstallation())
       {
-         // if the lists directory has not yet been created,
-         // this is a new user
-         FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
-         if (!listsPath.exists())
-            newUser = true;
-      }
-      else
-      {
-         // create the scratch path
-         error = userScratchPath.ensureDirectory();
-         if (error)
-            return sessionExitFailure(error, ERROR_LOCATION);
+         // determine if this is a new user and get the first project path if so
+         bool newUser = false;
 
-         newUser = true;
-      }
-
-      if (newUser)
-      {
-         // this is a brand new user
-         // check to see if there is a first project template
-         if (!options.firstProjectTemplatePath().empty())
+         FilePath userScratchPath = options.userScratchPath();
+         if (userScratchPath.exists())
          {
-            // copy the project template to the user's home dir
-            FilePath templatePath = FilePath(options.firstProjectTemplatePath());
-            if (templatePath.exists())
+            // if the lists directory has not yet been created,
+            // this is a new user
+            FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+            if (!listsPath.exists())
+               newUser = true;
+         }
+         else
+         {
+            // create the scratch path
+            error = userScratchPath.ensureDirectory();
+            if (error)
+               return sessionExitFailure(error, ERROR_LOCATION);
+
+            newUser = true;
+         }
+
+         if (newUser)
+         {
+            // this is a brand new user
+            // check to see if there is a first project template
+            if (!options.firstProjectTemplatePath().empty())
             {
-               error = templatePath.copyDirectoryRecursive(
-                  options.userHomePath().completeChildPath(
-                     templatePath.getFilename()));
-               if (error)
-                  LOG_ERROR(error);
-               else
+               // copy the project template to the user's home dir
+               FilePath templatePath = FilePath(options.firstProjectTemplatePath());
+               if (templatePath.exists())
                {
-                  FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
-                                                  .completeChildPath(templatePath.getFilename() + ".Rproj");
-                  if (firstProjPath.exists())
-                     firstProjectPath = firstProjPath.getAbsolutePath();
+                  error = templatePath.copyDirectoryRecursive(
+                     options.userHomePath().completeChildPath(
+                        templatePath.getFilename()));
+                  if (error)
+                     LOG_ERROR(error);
                   else
-                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
-                                         ". Please ensure the template contains an Rproj file.");
+                  {
+                     FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
+                                                     .completeChildPath(templatePath.getFilename() + ".Rproj");
+                     if (firstProjPath.exists())
+                        firstProjectPath = firstProjPath.getAbsolutePath();
+                     else
+                        LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
+                                            ". Please ensure the template contains an Rproj file.");
+                  }
                }
             }
          }
@@ -1976,7 +1981,7 @@ int main (int argc, char * const argv[])
       // initialize persistent state
       error = rsession::persistentState().initialize();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
@@ -2030,9 +2035,9 @@ int main (int argc, char * const argv[])
       modules::console::syncConsoleColorEnv();
 
       // r options
-      rstudio::r::session::ROptions rOptions ;
+      rstudio::r::session::ROptions rOptions;
       rOptions.userHomePath = options.userHomePath();
-      rOptions.userScratchPath = userScratchPath;
+      rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
@@ -2142,7 +2147,7 @@ int main (int argc, char * const argv[])
       rCallbacks.handleUnsavedChanges = rHandleUnsavedChanges;
       rCallbacks.quit = rQuit;
       rCallbacks.suicide = rSuicide;
-      rCallbacks.cleanup = rCleanup ;
+      rCallbacks.cleanup = rCleanup;
       rCallbacks.browseURL = rBrowseURL;
       rCallbacks.browseFile = rBrowseFile;
       rCallbacks.showHelp = rShowHelp;
@@ -2150,7 +2155,7 @@ int main (int argc, char * const argv[])
       rCallbacks.serialization = rSerialization;
 
       // run r (does not return, terminates process using exit)
-      error = rstudio::r::session::run(rOptions, rCallbacks) ;
+      error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
           // this is logically equivilant to R_Suicide
@@ -2166,7 +2171,7 @@ int main (int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 

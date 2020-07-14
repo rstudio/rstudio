@@ -67,34 +67,34 @@ void parseFields(const std::string& fields,
                  FieldDecodeType fieldDecode)
 {
    // enable straightforward references to tokenizer class & helpers
-   using namespace boost ;
+   using namespace boost;
 
    // delimiters
    char_separator<char> fieldSeparator(fieldDelim);
-   char_separator<char> valueSeparator(valueDelim) ;
+   char_separator<char> valueSeparator(valueDelim);
 
    // iterate over the fields
-   tokenizer<char_separator<char> > fieldTokens(fields, fieldSeparator) ;
+   tokenizer<char_separator<char> > fieldTokens(fields, fieldSeparator);
    for (tokenizer<char_separator<char> >::iterator 
-         fieldIter = fieldTokens.begin(); 
+         fieldIter = fieldTokens.begin();
          fieldIter != fieldTokens.end();
          ++fieldIter)
    {
       // split into name and value
-      std::string name ;
-      std::string value ;
+      std::string name;
+      std::string value;
       tokenizer<char_separator<char> > valTokens(*fieldIter, valueSeparator);
       tokenizer<char_separator<char> >::iterator valIter = valTokens.begin();
 
       if ( valIter != valTokens.end() )
-         name = *valIter++ ;
+         name = *valIter++;
       if ( valIter != valTokens.end() )
-         value = *valIter ;
+         value = *valIter;
 
       if ( fieldDecode != FieldDecodeNone )
       {
          name = util::urlDecode(name);
-         value = util::urlDecode(value) ;
+         value = util::urlDecode(value);
       }
 
       if ( !name.empty() )
@@ -106,7 +106,7 @@ void buildQueryString(const Fields& fields, std::string* pQueryString)
 {
    pQueryString->clear();
    
-   for (Fields::const_iterator it = fields.begin(); 
+   for (Fields::const_iterator it = fields.begin();
         it != fields.end();
         ++it)
    {
@@ -160,11 +160,11 @@ void parseMultipartForm(const std::string& contentType,
       // extract the part into a string stream
       size_t beginPart = beginBoundaryLoc + boundary.size();
       size_t partLength = endBoundaryLoc - beginPart;
-      std::istringstream partStream(body.substr(beginPart, partLength)); 
+      std::istringstream partStream(body.substr(beginPart, partLength));
       partStream.unsetf(std::ios::skipws);
     
       // read the headers
-      Headers headers ;
+      Headers headers;
       http::parseHeaders(partStream, &headers);
       
       // check for content-disposition
@@ -177,7 +177,7 @@ void parseMultipartForm(const std::string& contentType,
          if (regex_utils::match(cDisp, nameMatch, boost::regex(nameRegex)))
          {
             // read the rest of the stream
-            std::ostringstream valueStream ;
+            std::ostringstream valueStream;
             std::copy(std::istream_iterator<char>(partStream),
                       std::istream_iterator<char>(),
                       std::ostream_iterator<char>(valueStream));
@@ -221,7 +221,7 @@ void parseMultipartForm(const std::string& contentType,
 
 std::string urlEncode(const std::string& in, bool queryStringSpaces)
 {
-   std::string encodedURL ;
+   std::string encodedURL;
       
    size_t inputLength = in.length();
    for (size_t i=0; i<inputLength; i++)
@@ -234,7 +234,7 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
            (ch=='~' || ch=='!' || ch=='*' || ch=='(' || ch==')' || ch=='\'' ||
             ch=='.' || ch=='-' || ch=='_') )
       {
-         encodedURL += ch ;
+         encodedURL += ch;
       }
       else if ((ch == ' ') && queryStringSpaces)
       {
@@ -242,10 +242,10 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
       }
       else
       {
-         std::ostringstream ostr ;
-         ostr << "%" ;
+         std::ostringstream ostr;
+         ostr << "%";
          ostr << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
-              << (int)(boost::uint8_t)ch ;
+              << (int)(boost::uint8_t)ch;
          std::string charAsHex = ostr.str();
          encodedURL += charAsHex;
       }
@@ -313,15 +313,15 @@ boost::posix_time::ptime parseDate(const std::string& date, const char* format)
    using namespace boost::posix_time;
    
    // facet for date (construct w/ a_ref == 1 so we manage memory)
-   time_input_facet dateFacet(1); 
+   time_input_facet dateFacet(1);
    dateFacet.format(format);
    
    // parse from string
    std::stringstream dateStream;
    dateStream.str(date);
    dateStream.imbue(std::locale(dateStream.getloc(), &dateFacet));
-   ptime posixDate(not_a_date_time) ;
-   dateStream >> posixDate ;
+   ptime posixDate(not_a_date_time);
+   dateStream >> posixDate;
    return posixDate;
 }   
 
@@ -491,7 +491,6 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    }
 
    // return requested file
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 

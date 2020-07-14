@@ -515,8 +515,11 @@ private:
          {
             // log the error if it wasn't connection terminated
             Error error(e, ERROR_LOCATION);
-            if (!http::isConnectionTerminatedError(error))
+            if (!http::isConnectionTerminatedError(error) &&
+                !http::isWrongProtocolTypeError((error)))
+            {
                LOG_ERROR(error);
+            }
          }
          
          // close the socket
@@ -590,8 +593,8 @@ private:
    FormHandler formHandler_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
-   boost::array<char, 8192> buffer_ ;
-   RequestParser requestParser_ ;
+   boost::array<char, 8192> buffer_;
+   RequestParser requestParser_;
    std::string absoluteUri_;
    http::Request request_;
    http::Response response_;

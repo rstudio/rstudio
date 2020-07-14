@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasEnsureHeightHandlers
 {
-   HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler);
+   HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler);
 }

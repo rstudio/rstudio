@@ -35,6 +35,7 @@
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
+#include <core/YamlUtil.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -274,6 +275,7 @@ std::string assignOutputUrl(const std::string& outputFile)
    {
       std::string renderedPath;
       Error error = r::exec::RFunction(".rs.bookdown.renderedOutputPath")
+            .addParam(websiteDir.getAbsolutePath())
             .addParam(outputPath.getAbsolutePath())
             .callUtf8(&renderedPath);
       if (error)
@@ -928,7 +930,17 @@ std::string onDetectRmdSourceType(
                                        "<!-- rmarkdown v1 -->") &&
           rmarkdownPackageAvailable())
       {
-         return "rmarkdown";
+         // if we find html_notebook in the YAML header, presume that this is an R Markdown notebook
+         // (this isn't 100% foolproof but this check runs frequently so needs to be fast; more
+         // thorough type introspection is done on the client)
+         std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
+         if (boost::algorithm::contains(yamlHeader, "html_notebook"))
+         {
+            return "rmarkdown-notebook";
+         }
+
+         // otherwise, it's a regular R Markdown document
+         return "rmarkdown-document";
       }
    }
    return std::string();
@@ -1011,7 +1023,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    if (type == kRenderTypeNotebook)
    {
       // if this is a notebook, it's pre-rendered
-      FilePath inputFile = module_context::resolveAliasedPath(file); 
+      FilePath inputFile = module_context::resolveAliasedPath(file);
       FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() + 
                                                         kNotebookExt);
 
@@ -1134,7 +1146,7 @@ void handleRmdOutputRequest(const http::Request& request,
    catch (boost::bad_lexical_cast const&)
    {
       pResponse->setNotFoundError(request);
-      return ;
+      return;
    }
 
    // make sure the output identifier refers to a valid file
@@ -1530,14 +1542,23 @@ bool isWebsiteProject()
            r_util::kBuildTypeWebsite);
 }
 
+// used to determine if this is both a website build target AND a bookdown target
 bool isBookdownWebsite()
 {
-   if (!isWebsiteProject())
+   return isWebsiteProject() && isBookdownProject();
+}
+
+// used to determine whether the current project directory has a bookdown project
+// (distinct from isBookdownWebsite b/c includes scenarios where the book is
+// built by a makefile rather than "Build Website"
+bool isBookdownProject()
+{
+   if (!projects::projectContext().hasProject())
       return false;
 
    bool isBookdown = false;
    std::string encoding = projects::projectContext().defaultEncoding();
-   Error error = r::exec::RFunction(".rs.isBookdownWebsite",
+   Error error = r::exec::RFunction(".rs.isBookdownDir",
                               projectBuildDir(), encoding).call(&isBookdown);
    if (error)
       LOG_ERROR(error);

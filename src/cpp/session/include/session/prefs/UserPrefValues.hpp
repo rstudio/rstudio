@@ -79,6 +79,8 @@ namespace prefs {
 #define kPanesHiddenTabSet "hiddenTabSet"
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
+#define kPanesAdditionalSourceColumns "additional_source_columns"
+#define kEnableAdditionalColumns "enable_additional_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -143,8 +145,10 @@ namespace prefs {
 #define kFoldStyleBeginAndEnd "begin-and-end"
 #define kSaveBeforeSourcing "save_before_sourcing"
 #define kSyntaxColorConsole "syntax_color_console"
+#define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kRainbowParentheses "rainbow_parentheses"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -320,7 +324,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
-#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
@@ -330,6 +334,17 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
+#define kVisualMarkdownCodeEditorAce "ace"
+#define kVisualMarkdownCodeEditorCodemirror "codemirror"
+#define kEmojiSkintone "emoji_skintone"
+#define kEmojiSkintoneNone_ "(None)"
+#define kEmojiSkintoneDefault_ "(Default)"
+#define kEmojiSkintoneLight "Light"
+#define kEmojiSkintoneMediumLight "Medium-Light"
+#define kEmojiSkintoneMedium "Medium"
+#define kEmojiSkintoneMediumDark "Medium-Dark"
+#define kEmojiSkintoneDark "Dark"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
@@ -359,7 +374,7 @@ public:
    core::Error setRunRprofileOnResume(bool val);
 
    /**
-    * Whether to save the workspace after the R session ends.
+    * Whether to save the workspace to an .Rdata file after the R session ends.
     */
    std::string saveWorkspace();
    core::Error setSaveWorkspace(std::string val);
@@ -471,6 +486,12 @@ public:
     */
    core::json::Object panes();
    core::Error setPanes(core::json::Object val);
+
+   /**
+    * Temporary flag to enable additional source columns.
+    */
+   bool enableAdditionalColumns();
+   core::Error setEnableAdditionalColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
@@ -707,7 +728,7 @@ public:
    core::Error setStripTrailingWhitespace(bool val);
 
    /**
-    * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+    * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
     */
    bool restoreSourceDocumentCursorPosition();
    core::Error setRestoreSourceDocumentCursorPosition(bool val);
@@ -761,6 +782,12 @@ public:
    core::Error setSyntaxColorConsole(bool val);
 
    /**
+    * Whether to display error, warning, and message output in a different color.
+    */
+   bool highlightConsoleErrors();
+   core::Error setHighlightConsoleErrors(bool val);
+
+   /**
     * Whether to allow scrolling past the end of a file.
     */
    bool scrollPastEndOfDocument();
@@ -771,6 +798,12 @@ public:
     */
    bool highlightRFunctionCalls();
    core::Error setHighlightRFunctionCalls(bool val);
+
+   /**
+    * Whether to highlight parentheses in a variety of colors.
+    */
+   bool rainbowParentheses();
+   core::Error setRainbowParentheses(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.
@@ -1445,10 +1478,10 @@ public:
    core::Error setFullProjectPathInWindowTitle(bool val);
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   bool enableVisualMarkdownEditingMode();
-   core::Error setEnableVisualMarkdownEditingMode(bool val);
+   bool visualMarkdownEditingIsDefault();
+   core::Error setVisualMarkdownEditingIsDefault(bool val);
 
    /**
     * Whether to automatically wrap text when writing markdown
@@ -1485,6 +1518,18 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   std::string visualMarkdownCodeEditor();
+   core::Error setVisualMarkdownCodeEditor(std::string val);
+
+   /**
+    * Preferred emoji skintone
+    */
+   std::string emojiSkintone();
+   core::Error setEmojiSkintone(std::string val);
 
    /**
     * List of aria-live announcements to disable.

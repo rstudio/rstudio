@@ -69,7 +69,8 @@ function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
 function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);
   if (editingRoot) {
-    return !isParagraphNode(editingRoot.node.lastChild);
+    return !isParagraphNode(editingRoot.node.lastChild) ||
+      isDisplayMathNode(editingRoot.node.lastChild);
   } else {
     return false;
   }
@@ -79,6 +80,14 @@ function isParagraphNode(node: ProsemirrorNode | null | undefined) {
   if (node) {
     const schema = node.type.schema;
     return node.type === schema.nodes.paragraph;
+  } else {
+    return false;
+  }
+}
+
+function isDisplayMathNode(node: ProsemirrorNode | null | undefined) {
+  if (node && node.firstChild) {
+    return node.childCount === 1 && node.type.schema.marks.math.isInSet(node.firstChild.marks);
   } else {
     return false;
   }

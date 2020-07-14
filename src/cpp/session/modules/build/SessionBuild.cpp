@@ -2188,7 +2188,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))

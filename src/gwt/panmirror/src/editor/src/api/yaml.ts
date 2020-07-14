@@ -19,6 +19,9 @@ import { findTopLevelBodyNodes } from './node';
 
 import yaml from 'js-yaml';
 
+export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
+export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
 }
@@ -27,7 +30,18 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
 }
 
-export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+export function titleFromYamlMetadataNode(node: ProsemirrorNode) {
+  const titleMatch = node.textContent.match(kYamlMetadataTitleRegex);
+  if (titleMatch) {
+    let title = titleMatch[1].trim();
+    title = title.replace(/^["']|["']$/g, '');
+    title = title.replace(/\\"/g, '"');
+    title = title.replace(/''/g, "'");
+    return title;
+  } else {
+    return null;
+  }
+}
 
 const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
 
@@ -35,22 +49,41 @@ export function firstYamlBlock(code: string): { [key: string]: any } | null {
   const match = code.match(kFirstYamlBlockRegex);
   if (match && match.index === 0) {
     const yamlCode = match[1];
-    try {
-      const yamlParsed = yaml.safeLoad(yamlCode, {
-        onWarning: logException,
-      });
-      if (typeof yamlParsed === 'object') {
-        return yamlParsed;
-      } else {
-        return null;
-      }
-    } catch (e) {
-      logException(e);
+    const yamlParsed = parseYaml(yamlCode);
+    if (typeof yamlParsed === 'object') {
+      return yamlParsed;
+    } else {
       return null;
     }
   } else {
     return null;
   }
+}
+
+export function parseYaml(yamlCode: string) {
+  try {
+    const yamlParsed = yaml.safeLoad(yamlCode, {
+      onWarning: logException,
+    });
+    return yamlParsed;
+  } catch (e) {
+    logException(e);
+    return null;
+  }
+}
+
+export function toYamlCode(obj: any): string | null {
+  try {
+    const yamlCode = yaml.safeDump(obj);
+    return yamlCode;
+  } catch (e) {
+    logException(e);
+    return null;
+  }
+}
+
+export function stripYamlDelimeters(yamlCode: string) {
+  return yamlCode.replace(/^\s*---/, '').replace(/(?:---|\.\.\.)([ \t]*)$/, '');
 }
 
 function logException(e: Error) {

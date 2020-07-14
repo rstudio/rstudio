@@ -57,7 +57,7 @@ bool packratModeEnabled(const core::FilePath& statePath);
 bool restore(const core::FilePath& statePath, 
              bool serverMode,
              boost::function<core::Error()>* pDeferredRestoreAction,
-             std::string* pErrorMessages); 
+             std::string* pErrorMessages);
    
 bool destroy(const core::FilePath& statePath);
 

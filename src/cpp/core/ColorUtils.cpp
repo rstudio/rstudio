@@ -83,7 +83,7 @@ rgb hsvToRGB(const hsv& in)
       out.b = q;
       break;
    }
-   return out;     
+   return out;
 }
 
 // given RGB values, convert to an HTML color string

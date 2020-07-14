@@ -24,6 +24,7 @@ public class PanmirrorEvent
    public static String Layout = "panmirrorLayout";
    public static String Scroll = "panmirrorScroll";
    public static String Focus = "panmirrorFocus";
+   public static String Navigate = "panmirrorNavigate";
 }
 
 

@@ -429,7 +429,7 @@ Error initialize()
    // register rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))

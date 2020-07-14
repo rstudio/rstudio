@@ -28,7 +28,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
 }
 }
 
@@ -36,7 +36,7 @@ namespace rstudio {
 namespace r {
 
 // singleton
-class SourceManager ;
+class SourceManager;
 SourceManager& sourceManager();
 
 class SourceManager : boost::noncopyable
@@ -70,7 +70,7 @@ private:
       }
       time_t lastWriteTime;
       bool local;
-   };   
+   };
    typedef boost::unordered_map<std::string, SourcedFileInfo> SourcedFileMap;
    
    // helper functions
@@ -80,8 +80,8 @@ private:
    void reloadSourceIfNecessary(const SourcedFileMap::value_type& value);
    
    // members
-   bool autoReload_ ;
-   SourcedFileMap sourcedFiles_ ;
+   bool autoReload_;
+   SourcedFileMap sourcedFiles_;
    std::vector<core::FilePath> toolsFilePaths_;
 };
    

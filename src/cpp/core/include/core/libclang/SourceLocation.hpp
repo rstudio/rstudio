@@ -98,8 +98,8 @@ public:
 
    void printSpellingLocation(std::ostream& ostr);
 
-   bool operator==(const SourceLocation& other) const ;
-   bool operator!=(const SourceLocation& other) const ;
+   bool operator==(const SourceLocation& other) const;
+   bool operator!=(const SourceLocation& other) const;
 
 private:
    CXSourceLocation location_;

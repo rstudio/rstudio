@@ -29,9 +29,9 @@ namespace core {
 class PerformanceTimer : boost::noncopyable
 {
 public:
-   PerformanceTimer() ;
+   PerformanceTimer();
    explicit PerformanceTimer(const std::string& step);
-   virtual ~PerformanceTimer() ;
+   virtual ~PerformanceTimer();
    // COPYING: boost::noncopyable
    
 public:
@@ -49,13 +49,13 @@ private:
    typedef std::vector<Step> Steps;
    
    boost::posix_time::ptime startTime_;
-   Steps steps_ ;
+   Steps steps_;
    
    friend std::ostream& operator << (std::ostream& stream, 
                                      const PerformanceTimer& t);
 };
 
-std::ostream& operator << (std::ostream& os, const PerformanceTimer& t) ;
+std::ostream& operator << (std::ostream& os, const PerformanceTimer& t);
 
 } // namespace core 
 } // namespace rstudio

@@ -16,15 +16,22 @@
 package org.rstudio.studio.client.panmirror.ui;
 
 
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
+
+import elemental2.promise.Promise;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorUIContext
 {
+   public BooleanGetter isActiveTab;
+   public Getter getDocumentPath;
+   public WithSavedDocument withSavedDocument;
    public Getter getDefaultResourceDir;
    public Mapper mapPathToResource;
    public Mapper mapResourceToURL;
+   public WatchResource watchResource;
    public Mapper translateText;
 
    
@@ -35,9 +42,27 @@ public class PanmirrorUIContext
    }
    
    @JsFunction
+   public interface BooleanGetter
+   {
+      Boolean get();
+   }
+   
+   @JsFunction
    public interface Mapper
    {
       String map(String path);
+   }
+   
+   @JsFunction
+   public interface WatchResource
+   {
+      JsVoidFunction watchResource(String path, JsVoidFunction notify);
+   }
+   
+   @JsFunction
+   public interface WithSavedDocument
+   {
+      Promise<Boolean> withSavedDocument();
    }
 }
 

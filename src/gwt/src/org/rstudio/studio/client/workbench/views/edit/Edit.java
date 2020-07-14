@@ -20,19 +20,18 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
-import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorHandler;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 
 
-public class Edit implements ShowEditorHandler
+public class Edit implements ShowEditorEvent.Handler
 {
    public abstract static class Shim extends AsyncShim<Edit>
-         implements ShowEditorHandler
+         implements ShowEditorEvent.Handler
    {
       public abstract void onShowEditor(ShowEditorEvent event);
    }
 
-   public static interface Display
+   public interface Display
    {
       void show(String text,
                 boolean isRCode,
@@ -77,5 +76,4 @@ public class Edit implements ShowEditorHandler
 
    private final Display view_;
    private final EditServerOperations server_;
-
 }

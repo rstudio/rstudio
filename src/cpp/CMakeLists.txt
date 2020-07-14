@@ -35,6 +35,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 # explicitly do not use new c++ 11 features for websocketpp
 # they currently do not work with our source

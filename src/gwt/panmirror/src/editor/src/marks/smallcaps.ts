@@ -42,7 +42,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 7,
+          priority: 8,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.SmallCaps, parent);
           },

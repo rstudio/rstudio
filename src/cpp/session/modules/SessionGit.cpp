@@ -672,7 +672,7 @@ public:
 
       ShellArgs args = gitArgs();
       if (exitCode == 0)
-         args << "reset" << "HEAD" << "--" ;
+         args << "reset" << "HEAD" << "--";
       else
          args << "rm" << "--cached" << "--";
 
@@ -1634,7 +1634,7 @@ Error vcsAdd(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    return s_git_.add(resolveAliasedPaths(paths));
 }
@@ -1647,7 +1647,7 @@ Error vcsRemove(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    return s_git_.remove(resolveAliasedPaths(paths));
 }
@@ -1660,7 +1660,7 @@ Error vcsDiscard(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    return s_git_.discard(resolveAliasedPaths(paths));
 }
@@ -1673,7 +1673,7 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    error = s_git_.unstage(resolveAliasedPaths(paths, true, true));
    if (error)
@@ -1693,7 +1693,7 @@ Error vcsStage(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    return s_git_.stage(resolveAliasedPaths(paths));
 }
@@ -1706,7 +1706,7 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
-      return error ;
+      return error;
 
    return s_git_.unstage(resolveAliasedPaths(paths, true, true));
 }
@@ -3376,7 +3376,7 @@ core::Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "git_add", vcsAdd))
       (bind(registerRpcMethod, "git_remove", vcsRemove))

@@ -46,7 +46,7 @@ class Success;
  */
 class ErrorLock
 {
-   friend class Error ;
+   friend class Error;
    friend class Success;
 
    /**
@@ -732,6 +732,12 @@ Error unknownError(const std::string& in_message, const ErrorLocation& in_locati
  * @return An unknown error.
  */
 Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
+
+
+// return a printable error message from an error (depending on the error this
+// might require consulting the message, category, or name)
+std::string errorMessage(const core::Error& error);
+
 
 } // namespace core
 } // namespace rstudio

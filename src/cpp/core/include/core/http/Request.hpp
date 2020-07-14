@@ -27,8 +27,8 @@ namespace http {
 class Request : public Message
 {
 public:
-   Request() ; 
-   virtual ~Request() ;
+   Request();
+   virtual ~Request();
    // COPYING: boost::noncopyable
 
    void assign(const Request& request, const Headers& extraHeaders = Headers())
@@ -124,7 +124,7 @@ public:
 
 private:
    virtual void appendFirstLineBuffers(
-         std::vector<boost::asio::const_buffer>& buffers) const ;
+         std::vector<boost::asio::const_buffer>& buffers) const;
    
    virtual void resetMembers();
 
@@ -144,20 +144,20 @@ private:
    int remoteUid_;
    
    // cookies, form fields, and query string are parsed on demand
-   mutable bool parsedCookies_ ;
-   mutable Fields cookies_ ;
-   mutable bool parsedFormFields_ ;
+   mutable bool parsedCookies_;
+   mutable Fields cookies_;
+   mutable bool parsedFormFields_;
    mutable Fields formFields_;
    mutable Files files_;
    File emptyFile_;
    mutable bool parsedQueryParams_;
    mutable Fields queryParams_;
 
-   friend class RequestParser ;
+   friend class RequestParser;
    friend class LocalStreamAsyncServer;
 };
 
-std::ostream& operator << (std::ostream& stream, const Request& r) ;
+std::ostream& operator << (std::ostream& stream, const Request& r);
 
 } // namespace http
 } // namespace core

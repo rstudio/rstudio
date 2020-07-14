@@ -186,7 +186,9 @@ void handleFontFileRequest(const http::Request& request,
       fontFile = systemFontFolder().completeChildPath(fileName);
    }
 
-   pResponse->setCacheableFile(fontFile, request);
+   // Allow the browser to cache these (implies that a reload may be required when replacing font
+   // files with new files that have the same name)
+   pResponse->setIndefiniteCacheableFile(fontFile, request);
    return;
 }
 

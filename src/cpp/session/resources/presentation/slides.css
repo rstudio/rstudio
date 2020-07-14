@@ -1,6 +1,6 @@
 
 .reveal h1 { 
-  font-size: 2.5em; 
+  font-size: 2.5em;
 }
 
 .reveal h1,
@@ -9,12 +9,12 @@
 .reveal h4,
 .reveal h5,
 .reveal h6 { 
-   margin-bottom: .6em;    
+   margin-bottom: .6em;
 }
 
 .reveal p,
 .reveal table {
-   margin-bottom: 1em; 
+   margin-bottom: 1em;
 }
 
 .reveal li {
@@ -41,7 +41,7 @@
   max-width: 95%;
   border: 1px solid #ccc;
   white-space: pre-wrap;
-  margin-bottom: 1em; 
+  margin-bottom: 1em;
 }
 
 .reveal pre code {
@@ -114,7 +114,7 @@
 }
 
 .quiz-multichoice .reveal .quizFeedback span {
-  font-size: 1.4em; 
+  font-size: 1.4em;
   margin-left: 12px;
 }
 

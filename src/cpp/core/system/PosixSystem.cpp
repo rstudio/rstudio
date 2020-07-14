@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
+#include <boost/bind.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -330,7 +331,7 @@ struct SignalBlocker::Impl
          return systemError(result, ERROR_LOCATION);
       
       // set restore bit and return success
-      blocked = true; 
+      blocked = true;
       return Success();
    }
 };

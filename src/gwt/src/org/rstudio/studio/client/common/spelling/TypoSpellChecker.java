@@ -215,6 +215,7 @@ public class TypoSpellChecker
    @Inject
    void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
+      spellingService_ = spellingService;
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       userPrefs_ = uiPrefs;
 
@@ -274,6 +275,16 @@ public class TypoSpellChecker
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
    {
+      // If realtime is turned off call the backend spellchecker because we haven't loaded a
+      // dictionary on the frontend. Ideally we DO load the frontend dictionary but currently
+      // Typo.js isn't compatible with some of our dictionaries (see: TypoSpellChecker.realtimeBlacklist)
+      // so we need to keep the legacy call for now.
+      if (!userPrefs_.realTimeSpellchecking().getValue())
+      {
+         spellingService_.checkSpelling(words, callback);
+         return;
+      }
+
       // allocate results
       final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
 
@@ -292,7 +303,7 @@ public class TypoSpellChecker
          }
          else
          {
-            if (typoNative_.check(word))
+            if (typoNative_.check(word) || checkCustomDicts(word))
             {
                spellCheckerResult.getCorrect().add(word);
             }
@@ -317,6 +328,13 @@ public class TypoSpellChecker
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
       context_.invalidateWord(word);
+   }
+
+   /* Support old style async suggestion calls for blacklisted dictionaries */
+   public void legacySuggestionList(String word,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      spellingService_.suggestionList(word, callback);
    }
 
    public String[] suggestionList(String word)
@@ -372,7 +390,8 @@ public class TypoSpellChecker
    {
       final String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
-      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
+      if (!userPrefs_.realTimeSpellchecking().getValue() ||
+           typoLoaded_ && loadedDict_.equals(language))
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap
@@ -499,6 +518,7 @@ public class TypoSpellChecker
    private final ExternalJavaScriptLoader typoLoader_ =
          new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString());
 
+   private SpellingService spellingService_;
    private UserPrefs userPrefs_;
 }
 

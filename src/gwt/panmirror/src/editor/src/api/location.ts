@@ -1,35 +1,22 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
-import { EditorState } from 'prosemirror-state';
+import { NodeWithPos } from 'prosemirror-utils';
 
 import { bodyElement } from './dom';
-import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 import {
-  EditorOutlineItemType,
-  kYamlMetadataOutlineItenItem,
+  kYamlMetadataOutlineItemType,
   kHeadingOutlineItemType,
   kRmdchunkOutlineItemType,
+  EditingOutlineLocation,
+  getDocumentOutline,
+  EditingOutlineLocationItem,
 } from './outline';
-import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition } from './navigation';
 import { restoreSelection } from './selection';
 import { scrollToPos } from './scroll';
 
 export interface EditingLocation {
   pos: number;
   scrollTop: number;
-}
-
-export interface EditingOutlineLocationItem {
-  type: EditorOutlineItemType;
-  level: number;
-  title: string;
-  active: boolean;
-}
-
-export interface EditingOutlineLocation {
-  items: EditingOutlineLocationItem[];
 }
 
 export function getEditingLocation(view: EditorView): EditingLocation {
@@ -44,7 +31,6 @@ export function setEditingLocation(
   outlineLocation?: EditingOutlineLocation,
   previousLocation?: EditingLocation,
 ) {
- 
   // get the current document outline
   const documentOutline = getDocumentOutline(view.state);
 
@@ -89,63 +75,17 @@ export function setEditingLocation(
 
   // do the restore
   if (docOutlineLocationNode) {
-
     restoreSelection(view, docOutlineLocationNode.pos);
     scrollToPos(view, docOutlineLocationNode.pos);
-  
   } else if (previousLocation) {
-
     restoreSelection(view, previousLocation.pos);
     bodyElement(view).scrollTop = previousLocation.scrollTop;
-
   }
-}
-
-// get a document outline that matches the scheme provided in EditingOutlineLocation:
-//  - yaml metadata blocks
-//  - top-level headings
-//  - rmd chunks at the top level or within a top-level list
-function getDocumentOutline(state: EditorState) {
-  // get top level body nodes
-  const schema = state.schema;
-  const bodyNodes = findTopLevelBodyNodes(state.doc, node => {
-    return [
-      schema.nodes.yaml_metadata,
-      schema.nodes.rmd_chunk,
-      schema.nodes.heading,
-      schema.nodes.bullet_list,
-      schema.nodes.ordered_list,
-    ].includes(node.type);
-  });
-
-  // reduce (explode lists into contained rmd chunks)
-  const outlineNodes: NodeWithPos[] = [];
-  bodyNodes.forEach(bodyNode => {
-    // explode lists
-    if ([schema.nodes.bullet_list, schema.nodes.ordered_list].includes(bodyNode.node.type)) {
-      // look for rmd chunks within list items (non-recursive, only want top level)
-      findChildrenByType(bodyNode.node, schema.nodes.list_item, false).forEach(listItemNode => {
-        findChildrenByType(listItemNode.node, schema.nodes.rmd_chunk, false).forEach(rmdChunkNode => {
-          outlineNodes.push({
-            node: rmdChunkNode.node,
-            pos: bodyNode.pos + 1 + listItemNode.pos + 1 + rmdChunkNode.pos,
-          });
-        });
-      });
-
-      // other nodes go straight through
-    } else {
-      outlineNodes.push(bodyNode);
-    }
-  });
-
-  // return outline nodes
-  return outlineNodes;
 }
 
 function outlineItemSimillarToNode(outlineItem: EditingOutlineLocationItem, docOutlneNode: ProsemirrorNode) {
   const schema = docOutlneNode.type.schema;
-  if (outlineItem.type === kYamlMetadataOutlineItenItem) {
+  if (outlineItem.type === kYamlMetadataOutlineItemType) {
     return docOutlneNode.type === schema.nodes.yaml_metadata;
   } else if (outlineItem.type === kRmdchunkOutlineItemType) {
     return docOutlneNode.type === schema.nodes.rmd_chunk;

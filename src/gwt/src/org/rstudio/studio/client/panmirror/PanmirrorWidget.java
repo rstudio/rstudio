@@ -33,8 +33,8 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEve
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
@@ -85,6 +86,7 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
+import jsinterop.base.Js;
 
 
 public class PanmirrorWidget extends DockLayoutPanel implements 
@@ -96,6 +98,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
    PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers,
+   PanmirrorNavigationEvent.HasPanmirrorNavigationHandlers,
    PanmirrorFocusEvent.HasPanmirrorFocusHandlers
    
 {
@@ -250,12 +253,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
-            editor_.navigate(event.getId());
+            editor_.navigate(PanmirrorNavigationType.Id, event.getId(), true);
             editor_.focus();
          }
       });
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, (data) -> {
          fireEvent(new PanmirrorUpdatedEvent());
       }));
       
@@ -269,7 +272,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       };
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, (data) -> {
          
          // sync toolbar commands
          if (toolbar_ != null)
@@ -282,14 +285,20 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          fireEvent(new PanmirrorStateChangeEvent());
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, (data) -> {
          
          // sync outline
          updateOutineOnIdle.nudge();
          
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Navigate, (data) -> {
+         
+         PanmirrorNavigation nav = Js.uncheckedCast(data);
+         fireEvent(new PanmirrorNavigationEvent(nav));  
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, (data) -> {
          fireEvent(new PanmirrorFocusEvent());
       }));
       
@@ -448,22 +457,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       setWidgetHidden(toolbar_, !show);
    }
+   
+   public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
+   {
+      editor_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
+   }
   
    public boolean execCommand(String id)
    {
       return commands_.exec(id);
    }
    
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   public void navigate(String type, String location, boolean recordCurrent)
    {
-      return commands_.getCommandPaletteEntries();
-   }
-   
-   
-   public void navigate(String id)
-   {
-      editor_.navigate(id);
+      // perform navigation
+      editor_.navigate(type, location, recordCurrent);
    }
    
    public void setKeybindings(PanmirrorKeybindings keybindings) 
@@ -577,6 +585,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
+   public HandlerRegistration addPanmirrorNavigationHandler(PanmirrorNavigationEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorNavigationEvent.getType(), handler);
+   }
+   
+   @Override
    public HandlerRegistration addPanmirrorFocusHandler(org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent.Handler handler)
    {
       return handlers_.addHandler(PanmirrorFocusEvent.getType(), handler);
@@ -603,6 +617,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          resizeEditor();
       }
    }
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return commands_.getCommandPaletteItems();
+   } 
    
    private void updateOutline()
    {
@@ -653,7 +673,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
-
 }
 
 

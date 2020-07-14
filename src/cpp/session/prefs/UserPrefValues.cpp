@@ -37,7 +37,7 @@ core::Error UserPrefValues::setRunRprofileOnResume(bool val)
 }
 
 /**
- * Whether to save the workspace after the R session ends.
+ * Whether to save the workspace to an .Rdata file after the R session ends.
  */
 std::string UserPrefValues::saveWorkspace()
 {
@@ -281,6 +281,19 @@ core::json::Object UserPrefValues::panes()
 core::Error UserPrefValues::setPanes(core::json::Object val)
 {
    return writePref("panes", val);
+}
+
+/**
+ * Temporary flag to enable additional source columns.
+ */
+bool UserPrefValues::enableAdditionalColumns()
+{
+   return readPref<bool>("enable_additional_columns");
+}
+
+core::Error UserPrefValues::setEnableAdditionalColumns(bool val)
+{
+   return writePref("enable_additional_columns", val);
 }
 
 /**
@@ -791,7 +804,7 @@ core::Error UserPrefValues::setStripTrailingWhitespace(bool val)
 }
 
 /**
- * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+ * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
  */
 bool UserPrefValues::restoreSourceDocumentCursorPosition()
 {
@@ -908,6 +921,19 @@ core::Error UserPrefValues::setSyntaxColorConsole(bool val)
 }
 
 /**
+ * Whether to display error, warning, and message output in a different color.
+ */
+bool UserPrefValues::highlightConsoleErrors()
+{
+   return readPref<bool>("highlight_console_errors");
+}
+
+core::Error UserPrefValues::setHighlightConsoleErrors(bool val)
+{
+   return writePref("highlight_console_errors", val);
+}
+
+/**
  * Whether to allow scrolling past the end of a file.
  */
 bool UserPrefValues::scrollPastEndOfDocument()
@@ -931,6 +957,19 @@ bool UserPrefValues::highlightRFunctionCalls()
 core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 {
    return writePref("highlight_r_function_calls", val);
+}
+
+/**
+ * Whether to highlight parentheses in a variety of colors.
+ */
+bool UserPrefValues::rainbowParentheses()
+{
+   return readPref<bool>("rainbow_parentheses");
+}
+
+core::Error UserPrefValues::setRainbowParentheses(bool val)
+{
+   return writePref("rainbow_parentheses", val);
 }
 
 /**
@@ -2390,16 +2429,16 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
- * Whether to enable experimental visual markdown editing
+ * Whether to enable visual editing by default for new markdown documents
  */
-bool UserPrefValues::enableVisualMarkdownEditingMode()
+bool UserPrefValues::visualMarkdownEditingIsDefault()
 {
-   return readPref<bool>("enable_visual_markdown_editing_mode");
+   return readPref<bool>("visual_markdown_editing_is_default");
 }
 
-core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 {
-   return writePref("enable_visual_markdown_editing_mode", val);
+   return writePref("visual_markdown_editing_is_default", val);
 }
 
 /**
@@ -2478,6 +2517,32 @@ int UserPrefValues::visualMarkdownEditingFontSizePoints()
 core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 {
    return writePref("visual_markdown_editing_font_size_points", val);
+}
+
+/**
+ * The name of the editor to use to provide code editing in visual mode
+ */
+std::string UserPrefValues::visualMarkdownCodeEditor()
+{
+   return readPref<std::string>("visual_markdown_code_editor");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
+{
+   return writePref("visual_markdown_code_editor", val);
+}
+
+/**
+ * Preferred emoji skintone
+ */
+std::string UserPrefValues::emojiSkintone()
+{
+   return readPref<std::string>("emoji_skintone");
+}
+
+core::Error UserPrefValues::setEmojiSkintone(std::string val)
+{
+   return writePref("emoji_skintone", val);
 }
 
 /**
@@ -2594,6 +2659,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
+      kEnableAdditionalColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
@@ -2642,8 +2708,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFoldStyle,
       kSaveBeforeSourcing,
       kSyntaxColorConsole,
+      kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
@@ -2756,13 +2824,15 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
-      kEnableVisualMarkdownEditingMode,
+      kVisualMarkdownEditingIsDefault,
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
       kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
+      kVisualMarkdownCodeEditor,
+      kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,

@@ -542,7 +542,7 @@ void fileMonitorThreadMain()
 
       // now run the monitoring thread
       running = true;
-      file_monitor::detail::run(boost::bind(checkForInput));   
+      file_monitor::detail::run(boost::bind(checkForInput));
    }
    catch(const boost::thread_interrupted&)
    {

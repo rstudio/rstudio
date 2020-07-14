@@ -194,7 +194,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
-   
+   void setRainbowParentheses(boolean rainbow);
+   boolean getRainbowParentheses();
+
    void setScrollLeft(int x);
    void setScrollTop(int y);
    void scrollTo(int x, int y);
@@ -289,9 +291,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Scope getCurrentScope();
    Scope getCurrentChunk();
-   Scope getCurrentChunk(Position position);
-   ScopeFunction getCurrentFunction(boolean allowAnonymous);
    Scope getCurrentSection();
+   ScopeFunction getCurrentFunction(boolean allowAnonymous);
+   
+   Scope getScopeAtPosition(Position position);
+   Scope getChunkAtPosition(Position position);
    ScopeFunction getFunctionAtPosition(Position position, boolean allowAnonymous);
    Scope getSectionAtPosition(Position position);
    boolean hasCodeModelScopeTree();

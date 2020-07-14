@@ -71,7 +71,7 @@
 
 // dynamically built function to get slide specific commands
 function commandsForSlide(indexh) {
-  var cmds = []; 
+  var cmds = [];
   switch(indexh) {
 #!slide_commands#
     default:
@@ -114,7 +114,7 @@ function commandsForSlide(indexh) {
      
       // allow mathjax to re-render
       if (window.MathJax)
-        window.MathJax.Hub.Rerender(event.currentSlide);  
+        window.MathJax.Hub.Rerender(event.currentSlide);
     });
     
     // forward command key events to the rstudio frame
@@ -122,11 +122,11 @@ function commandsForSlide(indexh) {
 
       // allow 'o' to toggle overview mode
       switch( e.keyCode ) {
-         case 79: case 42: window.Reveal.toggleOverview(); break;  
+         case 79: case 42: window.Reveal.toggleOverview(); break;
       }
    
       if (window.parent.presentationKeydown)
-         window.parent.presentationKeydown(e);   
+         window.parent.presentationKeydown(e);
    }
    
    window.onresize = function() { 
@@ -139,7 +139,7 @@ function commandsForSlide(indexh) {
        clearTimeout(window.activeTimer);
        
      window.activeTimer = setTimeout(function() { 
-       window.location.reload(true); 
+       window.location.reload(true);
      }, 300);
    }
 

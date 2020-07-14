@@ -1,0 +1,77 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPalette.Styles">
+		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+		@external editor_dark, .gwt-Label;
+
+		.popup {
+			width: 600px;
+			border: 1px solid;
+			border-radius: 4px;
+			overflow: hidden;
+			box-shadow: 0 1px 3px;
+			display: flex;
+			flex-direction: column;
+		}
+		
+		.popup td {
+			font-family: proportionalFont;
+		}
+		
+		.searchBox {
+			width: 100%;
+			box-sizing: border-box;
+			padding: 3px;
+			border: 1px solid;
+			font-size: 13px;
+		}
+		
+		.searchBar {
+			padding: 10px;
+		}
+		
+		.editor_dark .searchBox {
+			background-color: #000000;
+			color: #FFFFFF;
+		}
+		
+		.commandList {
+			height: 100%;
+			width: 100%;
+			padding-bottom: 10px;
+		}
+		
+		.commandPanel, .noResults {
+			width: 100%;
+			max-height: 375px;
+		}
+		
+		.noResults {
+			display: flex;
+			text-align: center;
+			align-items: center;
+			justify-content: center;
+			font-size: 10pt;
+			padding-bottom: 10px;
+		}
+		
+		.noResults .gwt-Label {
+			font-family: proportionalFont;
+		}
+	</ui:style>
+	<g:HTMLPanel styleName="rstudio-themes-border ace_editor {styles_.popup}">
+		<g:HTMLPanel styleName="{styles_.searchBar} rstudio-themes-border">
+			<g:TextBox styleName="{styles_.searchBox} rstudio-themes-border" ui:field="searchBox_">
+			</g:TextBox>
+		</g:HTMLPanel>
+		<g:ScrollPanel ui:field="scroller_" styleName="{styles_.commandPanel}">
+			<g:HTMLPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:HTMLPanel>
+		</g:ScrollPanel>
+		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">
+			<g:Label text="No results found."></g:Label>
+		</g:HTMLPanel>
+		<rw:AriaLiveStatusWidget ui:field="resultsCount_"></rw:AriaLiveStatusWidget>
+	</g:HTMLPanel>
+</ui:UiBinder> 

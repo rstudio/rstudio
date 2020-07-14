@@ -75,9 +75,9 @@ inline std::ostream& operator << (std::ostream& ostr,
                                   const FileChangeEvent& event)
 {
    if (event.type() == FileChangeEvent::FileAdded)
-      ostr << "FileAdded: " ;
+      ostr << "FileAdded: ";
    else if (event.type() == FileChangeEvent::FileRemoved)
-      ostr << "FileRemoved: " ;
+      ostr << "FileRemoved: ";
    else if (event.type() == FileChangeEvent::FileModified)
       ostr << "FileModified: ";
       

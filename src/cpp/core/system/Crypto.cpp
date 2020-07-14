@@ -69,7 +69,7 @@ Error HMAC_SHA2(const std::string& data,
 {
    // copy data into vector
    std::vector<unsigned char> keyVector;
-   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));  
+   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));
    
    // call core
    return HMAC_SHA2(data, keyVector, pHMAC);

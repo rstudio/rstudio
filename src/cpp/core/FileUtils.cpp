@@ -131,7 +131,7 @@ Error copyDirectory(const FilePath& sourceDirectory,
    // create the target directory
    Error error = targetDirectory.ensureDirectory();
    if (error)
-      return error ;
+      return error;
 
    // iterate over the source
    return sourceDirectory.getChildrenRecursive(

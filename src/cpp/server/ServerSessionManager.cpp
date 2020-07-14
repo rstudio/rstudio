@@ -77,7 +77,7 @@ core::system::ProcessConfig sessionProcessConfig(
 {
    // prepare command line arguments
    server::Options& options = server::options();
-   core::system::Options args ;
+   core::system::Options args;
 
    // check for options-specified config file and add to command
    // line if specified
@@ -386,11 +386,32 @@ Error launchSession(const r_util::SessionContext& context,
                     PidType* pPid)
 {
    // launch the session
+   // we use a modified configured home directory to provide a reliable temp dir that can be written to
+   // as the server (service) user most likely does not have a home directory configured
    std::string username = context.username;
    std::string rsessionPath = server::options().rsessionPath();
    std::string runAsUser = core::system::realUserIsRoot() ? username : "";
    core::system::ProcessConfig config = sessionProcessConfig(context,
                                                              extraArgs);
+
+   FilePath tmpDir;
+   Error error = FilePath::tempFilePath(tmpDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      error = tmpDir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         core::system::setenv(&config.environment, "XDG_CONFIG_HOME", tmpDir.getAbsolutePath());
+      }
+   }
 
    *pPid = -1;
    return core::system::launchChildProcess(rsessionPath,
@@ -402,4 +423,3 @@ Error launchSession(const r_util::SessionContext& context,
 
 } // namespace server
 } // namespace rstudio
-

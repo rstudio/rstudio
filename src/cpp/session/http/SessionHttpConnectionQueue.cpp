@@ -21,7 +21,7 @@
 
 #include <core/http/Request.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -119,9 +119,9 @@ bool HttpConnectionQueue::waitForConnection(
    }
    catch(const thread_resource_error& e)
    {
-      Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION) ;
+      Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
       LOG_ERROR(waitError);
-      return false ;
+      return false;
    }
 }
 

@@ -72,7 +72,7 @@ public:
       // remove any existing stream
       Error error = removeLocalStream();
       if (error)
-         return error ;
+         return error;
       
       // initialize stream dir
       error = initializeStreamDir(localStreamPath_.getParent());

@@ -1848,7 +1848,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "svn_add", svnAdd))
       (bind(registerRpcMethod, "svn_delete", svnDelete))

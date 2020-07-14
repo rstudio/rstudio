@@ -22,6 +22,7 @@
 #include "modules/SessionAuthoring.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionBlogdown.hpp"
+#include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
@@ -192,7 +193,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    // prepare session info 
-   json::Object sessionInfo ;
+   json::Object sessionInfo;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
 
@@ -257,7 +258,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    // resumed
-   sessionInfo["resumed"] = resumed; 
+   sessionInfo["resumed"] = resumed;
    if (resumed)
    {
       // console actions
@@ -308,7 +309,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["default_working_dir"] = defaultWorkingDir;
 
    // default project dir
-   sessionInfo["default_project_dir"] = options.defaultProjectDir();
+   sessionInfo["default_project_dir"] = options.deprecatedDefaultProjectDir();
 
    // active project file
    if (projects::projectContext().hasProject())
@@ -399,7 +400,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
-
+   sessionInfo["bookdown_has_renumber_footnotes"] = modules::rmarkdown::bookdown::hasRenumberFootnotes();
+   sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
@@ -413,9 +415,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
-
-   sessionInfo["have_srcref_attribute"] =
-         modules::breakpoints::haveSrcrefAttribute();
 
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
@@ -460,6 +459,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
+   sessionInfo["project_sharing_enumerate_server_users"] = true;
    sessionInfo["launcher_session"] = false;
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
@@ -549,6 +549,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
             "There are more concurrent users of RStudio Server Pro than your license supports. "
             "Please obtain an updated license to continue using the product.";
    }
+
+   // session route for load balanced sessions
+   sessionInfo["session_node"] = session::modules::overlay::sessionNode();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

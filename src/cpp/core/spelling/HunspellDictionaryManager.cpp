@@ -31,7 +31,7 @@ struct KnownDictionary
 {
    const char* id;
    const char* name;
-} ;
+};
 
 KnownDictionary s_knownDictionaries[] =
 {

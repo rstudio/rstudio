@@ -117,7 +117,7 @@ std::ostream& operator << (std::ostream& os, const PerformanceTimer& t)
          it = t.steps_.begin(); it != t.steps_.end(); ++it)
    {
       double ms = it->second.total_microseconds() * 0.001;
-      os << std::setprecision(ms < 10 ? 1 : 0);      
+      os << std::setprecision(ms < 10 ? 1 : 0);
       os << " " << ms << " ms (" << it->first << ")" << std::endl;
    }
    

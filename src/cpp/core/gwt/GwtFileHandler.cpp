@@ -89,7 +89,7 @@ void handleFileRequest(const FileRequestOptions& options,
       {
          // if the filter returns false it means we should stop processing
          if (!options.mainPageFilter(request, pResponse))
-            return ;
+            return;
       }
 
       // apply browser compatibility headers
@@ -169,8 +169,8 @@ void handleFileRequest(const FileRequestOptions& options,
    // case: normal cacheable file
    else
    {
-      // since these are application components we force revalidation
-      pResponse->setCacheWithRevalidationHeaders();
+      // since these are application components we force revalidation (default behavior of
+      // setCacheableFile)
       pResponse->setCacheableFile(filePath, request);
    }
 }

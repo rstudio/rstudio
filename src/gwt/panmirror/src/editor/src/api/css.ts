@@ -74,7 +74,6 @@ export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined
   return newKeyvalues;
 }
 
-
 export function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
   if (classes) {
     if (classes) {
@@ -85,5 +84,22 @@ export function applyStyles(el: HTMLElement, classes?: string[], style?: { [key:
     Object.keys(style).forEach(name => {
       el.style.setProperty(name, style[name]);
     });
+  }
+}
+
+export function replaceClassWithStyle(el: HTMLElement, className: string, style: { [key: string]: string }) {
+  if (el.classList.contains(className)) {
+    el.classList.remove(className);
+    if (el.classList.length === 0) {
+      el.removeAttribute('class');
+    }
+
+    Object.keys(style).forEach(name => {
+      el.style.setProperty(name, style[name]);
+    });
+  }
+  const children: any = el.children;
+  for (const child of children) {
+    replaceClassWithStyle(child, className, style);
   }
 }

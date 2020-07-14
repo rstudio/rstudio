@@ -56,10 +56,14 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
-public class SignatureToolTipManager
+public abstract class SignatureToolTipManager
 {
+   // Sub-classes should override this to indicate
+   // when the tooltip monitor is enabled / disabled.
+   protected abstract boolean isEnabled(Position position);
+   
    // Subclasses should override this for their own
-   // argument-retrieving behaviors
+   // argument-retrieving behaviors.
    protected void getFunctionArguments(final String name,
                                        final String source,
                                        final String helpHandler,
@@ -96,6 +100,16 @@ public class SignatureToolTipManager
          @Override
          public void run()
          {
+            // Bail if we don't have a lookup position
+            Position position = getLookupPosition();
+            if (position == null)
+               return;
+            
+            // Bail if this signature tooltip manager isn't relevant
+            // for this particular cursor position
+            if (!isEnabled(position))
+               return;
+            
             // Bail if we don't ever show tooltips
             if (!userPrefs_.showFunctionSignatureTooltips().getGlobalValue())
                return;

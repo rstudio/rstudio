@@ -210,7 +210,7 @@ std::string shinyRunCmd(const std::string& targetPath,
 
    // resolve the file path we were passed; if this .R file belongs to a 
    // Shiny directory, use the parent
-   FilePath shinyPath = module_context::resolveAliasedPath(targetPath); 
+   FilePath shinyPath = module_context::resolveAliasedPath(targetPath);
    if (shinyType == modules::shiny::ShinyDirectory)
       shinyPath = shinyPath.getParent();
 
@@ -225,7 +225,7 @@ std::string shinyRunCmd(const std::string& targetPath,
    // for brevity, specify the app path as relative to the working directory
    std::string runPath = module_context::pathRelativeTo(workingDir, shinyPath);
 
-   std::string runCmd; 
+   std::string runCmd;
 
    if (shinyType == modules::shiny::ShinyDirectory)
    {

@@ -73,7 +73,7 @@
 
 #include <server/ServerConstants.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {
@@ -171,10 +171,11 @@ void invokeRequestFilter(http::Request* pRequest)
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler())
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, context);
+      return s_proxyFilter(ptrConnection, context, clientHandler);
    else
       return false;
 }
@@ -529,7 +530,7 @@ void handleRpcError(
                error.getProperty("state"));
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
-      json::JsonRpcResponse jsonRpcResponse ;
+      json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
@@ -548,7 +549,7 @@ void handleRpcError(
    else if (!handleLicenseError(ptrConnection, error))
    {
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
@@ -589,7 +590,7 @@ void handleEventsError(
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
@@ -618,8 +619,6 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
-
-
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
@@ -629,7 +628,7 @@ void proxyRequest(
       const ClientHandler& clientHandler = ClientHandler())
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context))
+   if (applyProxyFilter(ptrConnection, context, clientHandler))
       return;
 
    // modify request

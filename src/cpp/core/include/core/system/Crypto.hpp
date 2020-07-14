@@ -28,7 +28,7 @@ namespace core {
 namespace system {
 namespace crypto {
       
-void initialize();   
+void initialize();
 
 core::Error HMAC_SHA2(const std::string& data,
                       const std::string& key,

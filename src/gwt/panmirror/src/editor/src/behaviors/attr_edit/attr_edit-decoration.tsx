@@ -85,7 +85,6 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
-         
           // node types
           const schema = newState.schema;
           const nodeTypes = editors.map(ed => ed.type(schema));
@@ -103,7 +102,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           if (editor.noDecorator) {
             return DecorationSet.empty;
           }
-      
+
           // provide some editor defaults
           editor.tags =
             editor.tags ||
@@ -184,7 +183,6 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
 
           // return decorations
           return DecorationSet.create(tr.doc, [attrEditDecoration]);
-         
         },
       },
       props: {

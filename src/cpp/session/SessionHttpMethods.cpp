@@ -621,7 +621,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                            &saveWorkspace,
                                            &switchToProject,
                                            &switchToVersionJson,
-                                           &hostPageUrl) ;
+                                           &hostPageUrl);
             if (error)
                LOG_ERROR(error);
             

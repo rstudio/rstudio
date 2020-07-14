@@ -18,7 +18,9 @@ import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
-
+import { CiteField } from './cite';
+import { CSL } from './csl';
+import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
 
@@ -30,6 +32,19 @@ export interface EditorUI {
   context: EditorUIContext;
   prefs: EditorUIPrefs;
   images: EditorUIImages;
+  chunks: EditorUIChunks;
+}
+
+export interface EditorUIChunks {
+  // create a code chunk editor
+  createChunkEditor: (type: string) => ChunkEditor;
+}
+
+export interface ChunkEditor {
+  editor: unknown;
+  setMode(mode: string): void;
+  element: HTMLElement;
+  destroy(): void;
 }
 
 export interface EditorDialogs {
@@ -44,10 +59,21 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
-  insertCitation: InsertCitationFn;
+  insertCite: InsertCiteFn;
 }
 
 export interface EditorUIContext {
+  // check if we are the active tab
+  isActiveTab: () => boolean;
+
+  // get the path to the current document
+  getDocumentPath: () => string | null;
+
+  // ensure the edited document is saved on the server before proceeding
+  // (note this just means that the server has a copy of it for e.g. 
+  // indexing xrefs, from the user's standpoint the doc is still dirty)
+  withSavedDocument: () => Promise<boolean>;
+
   // get the default directory for resources (e.g. where relative links point to)
   getDefaultResourceDir: () => string;
 
@@ -56,6 +82,9 @@ export interface EditorUIContext {
 
   // map from a resource reference (e.g. images/foo.png) to a URL we can use in the document
   mapResourceToURL: (path: string) => string;
+
+  // watch a resource for changes (returns an unsubscribe function)
+  watchResource: (path: string, notify: VoidFunction) => VoidFunction;
 
   // translate a string
   translateText: (text: string) => string;
@@ -75,16 +104,21 @@ export interface EditorUIExecute {
 }
 
 export interface EditorUIMath {
-  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+  typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
 }
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
+  navigateToXRef: (file: string, xref: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
 export interface EditorUIPrefs {
+  darkMode: () => boolean;
   equationPreview: () => boolean;
+  tabKeyMoveFocus: () => boolean;
+  emojiSkinTone: () => SkinTone;
+  setEmojiSkinTone: (skinTone: SkinTone) => void;
 }
 
 export enum AlertType {
@@ -95,7 +129,7 @@ export enum AlertType {
 
 export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<boolean>;
 
-export type AttrEditorFn = (attr: AttrProps) => Promise<AttrEditResult | null>;
+export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 
 export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
 
@@ -117,16 +151,13 @@ export type CodeBlockEditorFn = (
   languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
-export type ListEditorFn = (
-  list: ListProps,
-  capabilities: ListCapabilities,
-) => Promise<ListEditResult | null>;
+export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
-export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
+export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
 
 export interface AttrProps {
   readonly id?: string;
@@ -178,7 +209,7 @@ export type CodeBlockEditResult = CodeBlockProps;
 
 export enum ListType {
   Ordered = 'OrderedList',
-  Bullet = 'BulletList'
+  Bullet = 'BulletList',
 }
 
 export interface ListProps {
@@ -198,9 +229,23 @@ export interface InsertTableResult {
   caption?: string;
 }
 
-export interface InsertCitationResult {
+export interface InsertCiteProps {
+  doi: string;
+  existingIds: string[];
+  bibliographyFiles: string[];
+  csl?: CSL;
+  citeUI?: InsertCiteUI;
+}
+
+export interface InsertCiteUI {
+  suggestedId: string;
+  previewFields: CiteField[];
+}
+
+export interface InsertCiteResult {
   id: string;
-  locator: string;
+  bibliographyFile: string;
+  csl: CSL;
 }
 
 export interface RawFormatProps {

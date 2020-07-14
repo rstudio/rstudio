@@ -17,21 +17,31 @@ import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
-import { Extension } from '../../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
 import { pandocAttrReadAST } from '../../api/pandoc_attr';
 import { fragmentText } from '../../api/fragment';
 
 import { FixupContext } from '../../api/fixup';
 import { MarkTransaction } from '../../api/transaction';
 import { mergedTextNodes } from '../../api/text';
-import { emojis, emojiFromAlias, emojiFromChar } from '../../api/emoji';
-import { emojiCompletionHandler } from './emoji-completion';
+import {
+  emojis,
+  emojiFromAlias,
+  emojiFromChar,
+  emojiForAllSkinTones,
+  Emoji,
+  emojiWithSkinTonePreference,
+} from '../../api/emoji';
+import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
+import { getMarkAttrs } from '../../api/mark';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
-const extension = (): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { ui } = context;
+
   return {
     marks: [
       {
@@ -41,6 +51,7 @@ const extension = (): Extension | null => {
           noInputRules: true,
           attrs: {
             emojihint: {},
+            prompt: { default: true },
           },
           parseDOM: [
             {
@@ -49,6 +60,7 @@ const extension = (): Extension | null => {
                 const el = dom as Element;
                 return {
                   emojihint: el.getAttribute('data-emojihint'),
+                  prompt: el.getAttribute('data-emojiprompt') || false,
                 };
               },
             },
@@ -60,6 +72,7 @@ const extension = (): Extension | null => {
                 class: 'emoji',
                 title: ':' + mark.attrs.emojihint + ':',
                 'data-emojihint': mark.attrs.emojihint,
+                'data-emojiprompt': mark.attrs.prompt,
               },
             ];
           },
@@ -84,9 +97,9 @@ const extension = (): Extension | null => {
             },
           ],
           writer: {
-            priority: 16,
+            priority: 2,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              // look for a matching emjoi
+              // look for a matching emoji
               const char = fragmentText(parent);
               const emoji = emojiFromChar(char);
               if (emoji) {
@@ -100,7 +113,7 @@ const extension = (): Extension | null => {
                   }
                   output.writeAttr('', ['emoji'], [['data-emoji', alias]]);
                   output.writeArray(() => {
-                    output.writeInlines(parent);
+                    output.writeText(emoji.emojiRaw);
                   });
                 });
               } else {
@@ -115,15 +128,14 @@ const extension = (): Extension | null => {
     inputRules: () => {
       return [
         new InputRule(/(^|[^`]):(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const emjoiName = match[2];
-          const emoji = emojiFromAlias(emjoiName);
+          const emojiName = match[2];
+          const emoji = emojiFromAlias(emojiName.toLowerCase());
           if (emoji) {
+            const emojiWithSkinTone = emojiWithSkinTonePreference(emoji, ui.prefs.emojiSkinTone());
             const schema = state.schema;
             const tr = state.tr;
             tr.delete(start + match[1].length, end);
-            const mark = schema.marks.emoji.create({ emojihint: emjoiName });
-            const text = schema.text(emoji.emoji, [mark]);
-            tr.replaceSelectionWith(text);
+            tr.replaceSelectionWith(nodeForEmoji(schema, emojiWithSkinTone, emojiName), false);
             return tr;
           } else {
             return null;
@@ -132,13 +144,13 @@ const extension = (): Extension | null => {
       ];
     },
 
-    completionHandlers: () => [emojiCompletionHandler()],
+    completionHandlers: () => [emojiCompletionHandler(ui), emojiSkintonePreferenceCompletionHandler(ui)],
 
     fixups: (schema: Schema) => {
       return [
-        (tr: Transaction, context: FixupContext) => {
-          // only apply on save
-          if (context !== FixupContext.Save) {
+        (tr: Transaction, fixupContext: FixupContext) => {
+          // only apply on save and load
+          if (![FixupContext.Save, FixupContext.Load].includes(fixupContext)) {
             return tr;
           }
 
@@ -150,17 +162,51 @@ const extension = (): Extension | null => {
           );
 
           textNodes.forEach(textNode => {
-            for (const emoji of emojis()) {
-              const charLoc = textNode.text.indexOf(emoji.emoji);
-              if (charLoc !== -1) {
-                const from = textNode.pos + charLoc;
-                const to = from + emoji.emoji.length;
-                if (!markTr.doc.rangeHasMark(from, to, schema.marks.emoji)) {
-                  const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-                  markTr.addMark(from, to, mark);
+            // Since emoji can be composed of multiple characters (including
+            // other emoji), we always need to prefer the longest match when inserting
+            // a mark for any given starting position.
+
+            // Find the possible emoji at each position in this text node
+            const possibleMarks = new Map<number, Array<{ to: number; emoji: Emoji }>>();
+            for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
+              emojiForAllSkinTones(emoji).forEach(skinToneEmoji => {
+                const charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
+                if (charLoc !== -1) {
+                  const from = textNode.pos + charLoc;
+                  const to = from + skinToneEmoji.emoji.length;
+                  possibleMarks.set(from, (possibleMarks.get(from) || []).concat({ to, emoji: skinToneEmoji }));
                 }
-              }
+              });
             }
+
+            // For each position that has emoji, use the longest emoji match as the
+            // emoji to be marked.
+            possibleMarks.forEach((possibleEmojis, markFrom) => {
+              const orderedEmojis = possibleEmojis.sort((a, b) => b.to - a.to);
+              const to = orderedEmojis[0].to;
+              const emoji = orderedEmojis[0].emoji;
+
+              // remove any existing mark (preserving attribues if we do )
+              let existingAttrs: { [key: string]: any } | null = null;
+              if (markTr.doc.rangeHasMark(markFrom, to, schema.marks.emoji)) {
+                existingAttrs = getMarkAttrs(markTr.doc, { from: markFrom, to }, schema.marks.emoji);
+                markTr.removeMark(markFrom, to, schema.marks.emoji);
+              }
+
+              // create a new mark
+              const mark = schema.marks.emoji.create({
+                emojihint: emoji.aliases[0],
+                ...existingAttrs,
+              });
+
+              // on load we want to cover the entire span
+              if (fixupContext === FixupContext.Load) {
+                markTr.addMark(markFrom, to, mark);
+                // on save we just want the raw emjoi character(s)
+              } else if (fixupContext === FixupContext.Save) {
+                markTr.addMark(markFrom, markFrom + emoji.emoji.length, mark);
+              }
+            });
           });
 
           return tr;
@@ -169,5 +215,10 @@ const extension = (): Extension | null => {
     },
   };
 };
+
+export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string, prompt?: boolean): ProsemirrorNode {
+  const mark = schema.marks.emoji.create({ emojihint: hint, prompt });
+  return schema.text(emoji.emoji, [mark]);
+}
 
 export default extension;

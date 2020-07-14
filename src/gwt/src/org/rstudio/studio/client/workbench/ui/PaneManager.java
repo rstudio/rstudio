@@ -60,12 +60,16 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -113,7 +117,7 @@ public class PaneManager
 
       private final WorkbenchTabPanel tabPanel_;
    }
-   
+
    private class ZoomedTabStateValue extends JSObjectStateValue
    {
       public ZoomedTabStateValue()
@@ -122,16 +126,16 @@ public class PaneManager
                session_.getSessionInfo().getClientState(), true);
          finishInit(session_.getSessionInfo().getClientState());
       }
-      
+
       @Override
       protected void onInit(final JsObject value)
       {
          if (value == null)
             return;
-         
+
          if (!value.hasKey(MAXIMIZED_TAB_KEY) || !value.hasKey(WIDGET_SIZE_KEY))
             return;
-         
+
          // Time-out action just to ensure all client state is ready
          new Timer()
          {
@@ -140,7 +144,7 @@ public class PaneManager
             {
                String tabString = value.getString(MAXIMIZED_TAB_KEY);
                double widgetSize = value.getDouble(WIDGET_SIZE_KEY);
-               
+
                maximizedTab_ = Tab.valueOf(tabString);
                maximizedWindow_ = getWindowForTab(maximizedTab_);
                widgetSizePriorToZoom_ = widgetSize;
@@ -149,47 +153,47 @@ public class PaneManager
             }
          }.schedule(200);
       }
-      
+
       @Override
       protected boolean hasChanged()
       {
          if (lastValue_ == null)
             return true;
-         
+
          JsObject oldValue = lastValue_;
          JsObject newValue = getValue();
-         
+
          boolean oldHasKey = oldValue.hasKey(MAXIMIZED_TAB_KEY);
          boolean newHasKey = newValue.hasKey(MAXIMIZED_TAB_KEY);
-         
+
          if (oldHasKey && newHasKey)
-            return oldValue.getString(MAXIMIZED_TAB_KEY) != 
+            return oldValue.getString(MAXIMIZED_TAB_KEY) !=
                    newValue.getString(MAXIMIZED_TAB_KEY);
-         
+
          return oldHasKey != newHasKey;
       }
-      
+
       @Override
       protected JsObject getValue()
       {
          final JsObject object = JsObject.createJsObject();
          if (maximizedTab_ != null)
             object.setString(MAXIMIZED_TAB_KEY, maximizedTab_.toString());
-         
+
          if (widgetSizePriorToZoom_ >= 0)
             object.setDouble(WIDGET_SIZE_KEY, widgetSizePriorToZoom_);
-         
+
          lastValue_ = object;
          return object;
       }
-      
+
       private static final String MAXIMIZED_TAB_KEY = "MaximizedTab";
       private static final String WIDGET_SIZE_KEY = "WidgetSize";
-      
+
       private JsObject lastValue_ = null;
-      
+
    }
-   
+
    private LogicalWindow getWindowForTab(Tab tab)
    {
       switch (tab)
@@ -210,6 +214,7 @@ public class PaneManager
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
                       Source source,
+                      SourceColumnManager sourceColumnManager,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -241,6 +246,7 @@ public class PaneManager
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
+      sourceColumnManager_ = sourceColumnManager;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -265,10 +271,12 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
-      
+
       binder.bind(commands, this);
+
       source_.load();
-      
+      loadAdditionalSourceColumns();
+
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
 
@@ -277,12 +285,18 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-
       panel_ = pSplitPanel.get();
-      panel_.initialize(left_, right_);
-      
+
+      // get the widgets for the extra source columns to be displayed
+      ArrayList<Widget> sourceColumns;
+      if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
+         sourceColumns = new ArrayList<>(sourceColumnManager_.getWidgets(true));
+      else
+         sourceColumns =  new ArrayList<>();
+      panel_.initialize(sourceColumns, left_, right_);
+
       // count the number of source docs assigned to this window
-      JsArray<SourceDocument> docs = 
+      JsArray<SourceDocument> docs =
             session_.getSessionInfo().getSourceDocuments();
       String windowId = SourceWindowManager.getSourceWindowId();
       int numDocs = 0;
@@ -294,19 +308,22 @@ public class PaneManager
             numDocs++;
          }
       }
-      
-      if (numDocs == 0 && sourceLogicalWindow_.getState() != WindowState.HIDE)
+
+      for (LogicalWindow window : sourceLogicalWindows_)
       {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.HIDE));
-      }
-      else if (numDocs > 0
-               && sourceLogicalWindow_.getState() == WindowState.HIDE)
-      {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.NORMAL));
+         if (numDocs == 0 && window.getState() != WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.HIDE));
+         }
+         else if (numDocs > 0 && window.getState() == WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL));
+         }
       }
 
+      source_.loadDisplay();
       userPrefs.panes().addValueChangeHandler(evt ->
       {
          ArrayList<LogicalWindow> newPanes = createPanes(
@@ -327,7 +344,7 @@ public class PaneManager
 
          manageLayoutCommands();
       });
-      
+
       eventBus_.addHandler(ZoomPaneEvent.TYPE, event ->
       {
          String pane = event.getPane();
@@ -337,7 +354,7 @@ public class PaneManager
 
          toggleWindowZoom(window, tabForName(event.getTab()));
       });
-      
+
       eventBus_.addHandler(WindowEnsureVisibleEvent.TYPE, event ->
       {
          final LogicalWindow window = getLogicalWindow(event.getWindowFrame());
@@ -365,7 +382,7 @@ public class PaneManager
          int newWidth = computeAppropriateWidth();
          resizeHorizontally(0, newWidth, afterAnimation);
       });
-      
+
       eventBus_.addHandler(
             ManageLayoutCommandsEvent.TYPE,
             event -> manageLayoutCommands());
@@ -385,31 +402,43 @@ public class PaneManager
 
          activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
       });
-      
+
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
+      {
+         @Override
+         public void onUserPrefsChanged(UserPrefsChangedEvent e)
+         {
+            if (additionalSourceCount_ != userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns())
+            {
+               syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
+            }
+         }
+      });
+
       manageLayoutCommands();
       new ZoomedTabStateValue();
    }
-   
+
    int computeAppropriateWidth()
    {
       double windowWidth = Window.getClientWidth();
       double candidateWidth = 2.0 * windowWidth / 5.0;
       return (int) candidateWidth;
    }
-   
+
    LogicalWindow getLogicalWindow(WindowFrame frame)
    {
       for (LogicalWindow window : panes_)
          if (window.getNormal() == frame)
             return window;
-      
+
       return null;
    }
-   
+
    LogicalWindow getParentLogicalWindow(Element el)
    {
       LogicalWindow targetWindow = null;
-      
+
       while (el != null && targetWindow == null)
       {
          el = el.getParentElement();
@@ -418,7 +447,7 @@ public class PaneManager
             Widget activeWidget = window.getActiveWidget();
             if (activeWidget == null)
                continue;
-            
+
             Element activeEl = activeWidget.getElement();
             if (el.equals(activeEl))
             {
@@ -429,13 +458,13 @@ public class PaneManager
       }
       return targetWindow;
    }
-   
+
    public LogicalWindow getActiveLogicalWindow()
    {
       Element activeEl = DomUtils.getActiveElement();
       return getParentLogicalWindow(activeEl);
    }
-   
+
    @Handler
    public void onActivateConsolePane()
    {
@@ -447,7 +476,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL);
          consoleWindow.onWindowStateChange(event);
       }
-            
+
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
       // be constructed once a neighbor (e.g. the Terminal) has been
@@ -469,7 +498,7 @@ public class PaneManager
          }
       }
    }
-   
+
    @Handler
    public void onLayoutZoomConsolePane()
    {
@@ -477,10 +506,10 @@ public class PaneManager
          consolePane_.focus();
       else
          consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
-      
+
       eventBus_.fireEvent(new ZoomPaneEvent("Console"));
    }
-   
+
    @Handler
    public void onLayoutZoomCurrentPane()
    {
@@ -489,13 +518,13 @@ public class PaneManager
          return;
       toggleWindowZoom(activeWindow, null);
    }
-   
+
    @Handler
    public void onLayoutEndZoom()
    {
       restoreLayout();
    }
-   
+
    @Handler
    public void onLayoutConsoleOnLeft()
    {
@@ -506,7 +535,7 @@ public class PaneManager
          swapConsolePane(paneConfig, consoleTargetIndex);
       }
    }
-   
+
    @Handler
    public void onLayoutConsoleOnRight()
    {
@@ -517,25 +546,25 @@ public class PaneManager
          swapConsolePane(paneConfig, consoleTargetIndex);
       }
    }
-   
+
    @Handler
    public void onFocusLeftSeparator()
    {
       left_.focusSplitter();
    }
-   
+
    @Handler
    public void onFocusRightSeparator()
    {
       right_.focusSplitter();
    }
-   
+
    @Handler
    public void onFocusCenterSeparator()
    {
       panel_.focusSplitter();
    }
-   
+
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
@@ -545,37 +574,38 @@ public class PaneManager
          panes.set(consoleCurrentIndex, panes.get(consoleTargetIndex));
          panes.set(consoleTargetIndex, "Console");
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
-            panes, 
-            paneConfig.getTabSet1(), 
+            panes,
+            paneConfig.getTabSet1(),
             paneConfig.getTabSet2(),
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
-            paneConfig.getConsoleRightOnTop()).cast());
+            paneConfig.getConsoleRightOnTop(),
+            sourceColumnManager_.getSize() - 1).cast());
          userPrefs_.writeUserPrefs();
       }
    }
-   
+
    @Handler
    public void onPaneLayout()
    {
-      optionsLoader_.showOptions(PaneLayoutPreferencesPane.class);
+      optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
-   
+
    private <T> boolean equals(T lhs, T rhs)
    {
       if (lhs == null)
          return rhs == null;
-      
+
       return lhs.equals(rhs);
    }
-   
+
    public void toggleWindowZoom(LogicalWindow window, Tab tab)
    {
       if (isAnimating_)
          return;
-      
+
       boolean hasZoom = maximizedWindow_ != null;
-      
+
       if (hasZoom)
       {
          if (equals(window, maximizedWindow_))
@@ -588,7 +618,7 @@ public class PaneManager
                manageLayoutCommands();
                activateTab(tab);
             }
-            
+
             // Otherwise, we're trying to maximize the same tab
             // and the same window. Interpret this as a toggle off.
             else
@@ -609,7 +639,7 @@ public class PaneManager
          fullyMaximizeWindow(window, tab);
       }
    }
-   
+
    private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
    {
       if (window.equals(getSourceLogicalWindow()))
@@ -619,48 +649,48 @@ public class PaneManager
       else
          maximizedTab_ = tab;
       maximizedWindow_ = window;
-      
+
       manageLayoutCommands();
       panel_.setSplitterEnabled(false);
-         
+
       if (widgetSizePriorToZoom_ < 0)
          widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
-      
+
       // Put all of the panes in NORMAL mode, just to ensure an appropriate
       // transfer to EXCLUSIVE mode works. (It seems that 'exclusive' -> 'exclusive'
       // transfers don't always propagate as expected)
       for (LogicalWindow pane : panes_)
          pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
-      
+
       boolean isLeftWidget =
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
-      
+
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
-      
+
       final double initialSize = panel_.getWidgetSize(right_);
-      
+
       double targetSize = isLeftWidget ? 0 : panel_.getOffsetWidth();
-      
+
       if (targetSize < 0)
          targetSize = 0;
-      
+
       // Ensure focus is sent to Help iframe on activation.
       Command onActivation = null;
       if (maximizedTab_.equals(Tab.Help))
       {
          onActivation = () -> commands_.activateHelp().execute();
       }
-      
+
       resizeHorizontally(initialSize, targetSize, onActivation);
-      
+
    }
-   
+
    private void resizeHorizontally(final double start,
                                    final double end)
    {
       resizeHorizontally(start, end, null);
    }
-   
+
    private void resizeHorizontally(final double start,
                                    final double end,
                                    final Command afterComplete)
@@ -668,7 +698,7 @@ public class PaneManager
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       horizontalResizeAnimation(start, end, afterComplete).run(duration);
    }
-   
+
    private Animation horizontalResizeAnimation(final double start,
                                                final double end,
                                                final Command afterComplete)
@@ -681,7 +711,7 @@ public class PaneManager
             double size =
                   (1 - progress) * start +
                   progress * end;
-            
+
             panel_.setWidgetSize(right_, size);
          }
 
@@ -703,7 +733,7 @@ public class PaneManager
          }
       };
    }
-   
+
    private void restoreLayout()
    {
       // If we're currently zoomed, then use that to provide the previous
@@ -713,7 +743,7 @@ public class PaneManager
       else
          restoreFourPaneLayout();
    }
-   
+
    private void invalidateSavedLayoutState(boolean enableSplitter)
    {
       maximizedWindow_ = null;
@@ -722,7 +752,7 @@ public class PaneManager
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
    }
-   
+
    private void restoreFourPaneLayout()
    {
       // Ensure that all windows are in the 'normal' state. This allows
@@ -757,12 +787,12 @@ public class PaneManager
       // hidden windows to display themselves, and so on.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      
+
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
       invalidateSavedLayoutState(true);
    }
-   
+
    @Handler
    public void onMaximizeConsole()
    {
@@ -778,19 +808,37 @@ public class PaneManager
    {
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
+      // Do not include hiddenTabSet in panes since it should never be displayed
       JsArrayString panes = config.getQuadrants();
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < panes.length(); i++)
       {
+         if (StringUtil.equals(panes.get(i), "HiddenTabSet"))
+            continue;
          results.add(panesByName_.get(panes.get(i)));
       }
       return results;
+   }
+
+   private void loadAdditionalSourceColumns()
+   {
+      additionalSourceCount_ = userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns();
+
+      // determine the desired number of source columns (add one for the main source)
+      // and add any missing
+      while (sourceColumnManager_.getSize() <= additionalSourceCount_)
+         sourceColumnManager_.add();
    }
 
    private void initPanes(PaneConfig config)
    {
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
-      panesByName_.put("Source", createSource());
+
+      ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
+      for (SourceColumn column : columns)
+      {
+         panesByName_.put(column.getName(), createSource(column.getName(), column.asWidget()));
+      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -814,7 +862,7 @@ public class PaneManager
       hiddenTabSetTabPanel_.setNeverVisible(true);
       hiddenTabSetMinPanel_ = tsHide.third;
    }
-   
+
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
       ArrayList<Tab> tabList = new ArrayList<>();
@@ -843,7 +891,7 @@ public class PaneManager
    {
       return panel_;
    }
-   
+
    public WorkbenchTab getTab(Tab tab)
    {
       switch (tab)
@@ -919,7 +967,7 @@ public class PaneManager
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
-      
+
       if (tabToIndex_.containsKey(tab))
       {
          int index = tabToIndex_.get(tab);
@@ -932,14 +980,14 @@ public class PaneManager
                           "tab '" + tab.name() + "')");
       }
    }
-   
+
    public void activateTab(String tabName)
    {
       Tab tab = tabForName(tabName);
       if (tab != null)
          activateTab(tab);
    }
-   
+
    public void zoomTab(Tab tab)
    {
       activateTab(tab);
@@ -947,7 +995,7 @@ public class PaneManager
       LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)
          return;
-      
+
       toggleWindowZoom(parentWindow, tab);
    }
 
@@ -984,7 +1032,8 @@ public class PaneManager
          paneConfig.getTabSet2(),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnManager_.getSize() - 1).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1000,7 +1049,8 @@ public class PaneManager
          tabListToJsArrayString(tabs),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnManager_.getSize() - 1).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1087,12 +1137,102 @@ public class PaneManager
 
    public LogicalWindow getSourceLogicalWindow()
    {
-      return sourceLogicalWindow_;
+      return sourceLogicalWindows_.get(0);
    }
-   
+
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get("Console");
+   }
+
+   public void syncAdditionalColumnCount(int count)
+   {
+      // make sure additionalSourceCount_ is up to date
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+
+      if (count == additionalSourceCount_)
+    	  return;
+
+      if (count > additionalSourceCount_)
+      {
+         int difference = count - additionalSourceCount_;
+         for (int i = 0; i < difference; i++)
+         {
+            addSourceWindow();
+         }
+      }
+      else
+      {
+         int difference = additionalSourceCount_ - count;
+         sourceColumnManager_.consolidateColumns(difference);
+         panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
+         additionalSourceCount_ = sourceColumnManager_.getSize();
+      }
+   }
+
+   public int addSourceWindow()
+   {
+      int id = sourceColumnManager_.getSize();
+      PaneConfig.addSourcePane();
+      String columnName = sourceColumnManager_.add();
+      panesByName_.put(columnName,
+                       createSource(columnName,
+                                    sourceColumnManager_.getWidget(columnName)));
+      panel_.addLeftWidget(sourceColumnManager_.getWidget(columnName));
+      additionalSourceCount_ = id;
+      sourceColumnManager_.beforeShow(columnName);
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         id).cast());
+      userPrefs_.writeUserPrefs();
+      return id;
+   }
+
+   public int closeAllAdditionalColumns()
+   {
+      ArrayList<String> columnNames = sourceColumnManager_.getNames(true);
+      for (String name : columnNames)
+         closeSourceWindow(name);
+
+      return additionalSourceCount_;
+   }
+
+   public void closeSourceWindow(String name)
+   {
+      // hide the original source window
+      if (StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
+         getSourceLogicalWindow().onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.HIDE));
+      else
+      {
+         SourceColumn column = sourceColumnManager_.getByName(name);
+
+         if (column.getTabCount() == 0)
+         {
+            sourceColumnManager_.closeColumn(name);
+            panesByName_.remove(name);
+
+            additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+            panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
+            PaneConfig paneConfig = getCurrentConfig();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               additionalSourceCount_).cast());
+            userPrefs_.writeUserPrefs();
+         }
+      }
    }
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
@@ -1116,12 +1256,12 @@ public class PaneManager
    {
       String frameName = "Console";
       PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
-      
+
       ToolbarButton goToWorkingDirButton =
             commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
             ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
-      
+
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
 
@@ -1142,21 +1282,21 @@ public class PaneManager
             dataTab_,
             jobsTab_,
             launcherJobsTab_);
-      
+
       consoleTabPanel_.addLayoutStyles(frame.getElement());
-      
+
       return logicalWindow;
    }
 
-   private LogicalWindow createSource()
+   private LogicalWindow createSource(String frameName, Widget display)
    {
-      String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(source_.asWidget());
-      source_.forceLoad();
-      return sourceLogicalWindow_ = new LogicalWindow(
+      sourceFrame.setFillWidget(display);
+      LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
+      sourceLogicalWindows_.add(sourceWindow);
+      return sourceWindow;
    }
 
    private
@@ -1202,7 +1342,7 @@ public class PaneManager
          tabPanel,
          minimized);
    }
-   
+
    private Tab workbenchTabToTab(WorkbenchTab tab)
    {
       return wbTabToTab_.get(tab);
@@ -1251,7 +1391,7 @@ public class PaneManager
             return tab.toString();
       }
    }
-   
+
    private Tab tabForName(String name)
    {
       if (name.equalsIgnoreCase("history"))
@@ -1282,15 +1422,15 @@ public class PaneManager
          return Tab.Source;
       if (name.equalsIgnoreCase("console"))
          return Tab.Console;
-      
+
       return null;
    }
-   
+
    private AppCommand getLayoutCommandForTab(Tab tab)
    {
       if (tab == null)
          return commands_.layoutEndZoom();
-      
+
       switch (tab)
       {
       case Build:        return commands_.layoutZoomBuild();
@@ -1310,19 +1450,19 @@ public class PaneManager
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }
    }
-   
+
    private void manageLayoutCommands()
    {
       List<AppCommand> layoutCommands = getLayoutCommands();
       AppCommand activeCommand = getLayoutCommandForTab(maximizedTab_);
-      
+
       for (AppCommand command : layoutCommands)
          command.setChecked(activeCommand.equals(command));
-      
+
       // manage console left/right commands
       boolean maximized = maximizedTab_ != null;
       commands_.layoutConsoleOnLeft().setVisible(!maximized);
-      commands_.layoutConsoleOnRight().setVisible(!maximized); 
+      commands_.layoutConsoleOnRight().setVisible(!maximized);
       if (!maximized)
       {
          PaneConfig config = getCurrentConfig();
@@ -1356,7 +1496,7 @@ public class PaneManager
    private List<AppCommand> getLayoutCommands()
    {
       List<AppCommand> commands = new ArrayList<>();
-      
+
       commands.add(commands_.layoutEndZoom());
       commands.add(commands_.layoutZoomBuild());
       commands.add(commands_.layoutZoomConsole());
@@ -1371,10 +1511,10 @@ public class PaneManager
       commands.add(commands_.layoutZoomTutorial());
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
-      
+
       return commands;
    }
-   
+
    private PaneConfig getCurrentConfig()
    {
       PaneConfig config = userPrefs_.panes().getValue().cast();
@@ -1395,6 +1535,7 @@ public class PaneManager
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
    private final Source source_;
+   private final SourceColumnManager sourceColumnManager_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;
@@ -1417,7 +1558,7 @@ public class PaneManager
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final MainSplitPanel panel_;
-   private LogicalWindow sourceLogicalWindow_;
+   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
@@ -1432,15 +1573,17 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
-   
+
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
    private LogicalWindow maximizedWindow_ = null;
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
-   
+
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
    private ArrayList<Tab> hiddenTabs_;
+
+   private int additionalSourceCount_; // this does not include the main source
 }

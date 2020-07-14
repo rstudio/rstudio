@@ -461,7 +461,7 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 // Common error creation functions =====================================================================================
 Error systemError(int in_code, const ErrorLocation& in_location)
 {
-   using namespace boost::system ;
+   using namespace boost::system;
    return Error(error_code(in_code, system_category()), in_location);
 }
 
@@ -479,7 +479,7 @@ Error systemError(int in_code,
                   const Error& in_cause,
                   const ErrorLocation& in_location)
 {
-   using namespace boost::system ;
+   using namespace boost::system;
    return Error(error_code(in_code, system_category()), in_cause, in_location);
 }
 
@@ -573,6 +573,23 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
       in_cause,
       in_location);
 }
+
+// return a printable error message from an error (depending on the error this
+// might require consulting the message, category, or name)
+std::string errorMessage(const core::Error& error)
+{
+   std::string msg = error.getMessage();
+   if (msg.length() == 0)
+   {
+      msg = error.getProperty("category");
+   }
+   if (msg.length() == 0)
+   {
+      msg = error.getName();
+   }
+   return msg;
+}
+
 
 } // namespace core 
 } // namespace rstudio

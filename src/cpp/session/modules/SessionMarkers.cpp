@@ -28,7 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -483,7 +483,7 @@ Error initialize()
 
    // complete initialization
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "markers_tab_closed", markersTabClosed))
       (bind(registerRpcMethod, "update_active_marker_set", updateActiveMarkerSet))

@@ -18,18 +18,19 @@ import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.inject.Provider;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -132,10 +133,11 @@ public interface EditingTarget extends IsWidget,
     */
    void revertChanges(Command onCompleted);
 
-   void initialize(SourceDocument document,
+   void initialize(SourceColumn column,
+                   SourceDocument document,
                    FileSystemContext fileContext,
                    FileType type,
-                   Provider<String> defaultNameProvider);
+                   EditingTargetNameProvider defaultNameProvider);
 
    /**
     * Any bigger than this, and the file should NOT be allowed to open

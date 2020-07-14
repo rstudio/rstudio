@@ -14,13 +14,13 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.layout.WindowState;
 
-public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
+public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeEvent.Handler>
 {
-   public static final Type<WindowStateChangeHandler> TYPE =
-         new Type<WindowStateChangeHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public WindowStateChangeEvent(WindowState newState)
    {
@@ -34,27 +34,32 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeHandler>
       newState_ = newState;
       skipFocusChange_ = keepFocus;
    }
-   
+
    public WindowState getNewState()
    {
       return newState_;
    }
-   
+
    public boolean skipFocusChange()
    {
       return skipFocusChange_;
    }
 
    @Override
-   public Type<WindowStateChangeHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(WindowStateChangeHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onWindowStateChange(this);
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onWindowStateChange(WindowStateChangeEvent event);
    }
 
    private final WindowState newState_;

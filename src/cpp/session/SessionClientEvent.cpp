@@ -24,14 +24,14 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
 
 namespace client_events {
    
-const int kBusy = 1;  
+const int kBusy = 1;
 const int kConsolePrompt = 2;
 const int kConsoleWriteOutput = 3;
 const int kConsoleWriteError = 4;
@@ -216,7 +216,7 @@ void ClientEvent::asJsonObject(int id, json::Object* pObject) const
 {
    json::Object& object = *pObject;
    object["id"] = id;
-   object["type"] = typeName(); 
+   object["type"] = typeName();
    object["data"] = data();
 }
    
@@ -225,7 +225,7 @@ std::string ClientEvent::typeName() const
    switch(type_)
    {
       case client_events::kBusy:
-         return "busy";  
+         return "busy";
       case client_events::kConsolePrompt:
          return "console_prompt";
       case client_events::kConsoleWriteOutput:
@@ -351,7 +351,7 @@ std::string ClientEvent::typeName() const
       case client_events::kShowPresentationPane:
          return "show_presentation_pane";
       case client_events::kEnvironmentRefresh:
-         return "environment_refresh";   
+         return "environment_refresh";
       case client_events::kContextDepthChanged:
          return "context_depth_changed";
       case client_events::kEnvironmentAssigned:
@@ -594,7 +594,7 @@ ClientEvent browseUrlEvent(const std::string& url, const std::string& window)
 ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message)
 {
-   json::Object errorMessage ;
+   json::Object errorMessage;
    errorMessage["title"] = title;
    errorMessage["message"] = message;
    return ClientEvent(client_events::kShowErrorMessage, errorMessage);

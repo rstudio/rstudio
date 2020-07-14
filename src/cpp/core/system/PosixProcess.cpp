@@ -58,7 +58,7 @@ struct AsioProcessSupervisor::Impl
          }
          END_LOCK_MUTEX
 
-         return error;      
+         return error;
       }
 
       // success

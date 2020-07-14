@@ -25,7 +25,7 @@ namespace r {
 namespace session {
 
 // singleton
-class RestartContext ;
+class RestartContext;
 RestartContext& restartContext();
 
 class RestartContext : boost::noncopyable

@@ -52,7 +52,7 @@ export interface EditorEvents {
  * type of data, if any, that event handlers can expect.
  */
 export function makeEventType<TDetail = void>(eventName: string) {
-  return {eventName: `panmirror${eventName}`} as EventType<TDetail>;
+  return { eventName: `panmirror${eventName}` } as EventType<TDetail>;
 }
 
 /**
@@ -68,7 +68,7 @@ export class DOMEditorEvents implements EditorEvents {
   public emit<TDetail>(eventType: EventType<TDetail>, detail?: TDetail) {
     // Note: CustomEvent requires polyfill for IE, see
     // https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
-    const event = new CustomEvent(eventType.eventName, {detail});
+    const event = new CustomEvent(eventType.eventName, { detail });
     return this.el.dispatchEvent(event);
   }
 
@@ -83,4 +83,3 @@ export class DOMEditorEvents implements EditorEvents {
     };
   }
 }
-

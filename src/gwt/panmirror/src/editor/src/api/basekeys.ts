@@ -26,11 +26,18 @@ import {
 } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
-import { EditorState, Transaction, Plugin } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, Selection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+
+import { setTextSelection } from 'prosemirror-utils';
 
 import { CommandFn } from './command';
+import { editingRootNodeClosestToPos, editingRootNode } from './node';
+import { selectionIsBodyTopLevel } from './selection';
 
 export enum BaseKey {
+  Home = 'Home',
+  End = 'End',
   Enter = 'Enter',
   ModEnter = 'Mod-Enter',
   ShiftEnter = 'Shift-Enter',
@@ -42,6 +49,18 @@ export enum BaseKey {
   ArrowDown = 'Down|ArrowDown',
   ArrowLeft = 'Left|ArrowLeft',
   ArrowRight = 'Right|ArrowRight',
+  ModArrowUp = 'Mod-Up|Mod-ArrowUp',
+  ModArrowDown = 'Mod-Down|Mod-ArrowDown',
+  CtrlHome = 'Ctrl-Home',
+  CtrlEnd = 'Ctrl-End',
+  ShiftArrowLeft = "Shift-Left|Shift-ArrowLeft",
+  ShiftArrowRight = "Shift-Right|Shift-ArrowRight",
+  AltArrowLeft = "Alt-Left|Alt-ArrowLeft",
+  AltArrowRight = "Alt-Right|Alt-ArrowRight",
+  CtrlArrowLeft = "Ctrl-Left|Ctrl-ArrowLeft",
+  CtrlArrowRight = "Ctrl-Right|Ctrl-ArrowRight",
+  CtrlShiftArrowLeft = "Ctrl-Shift-Left|Ctrl-Shift-ArrowLeft",
+  CtrlShiftArrowRight = "Ctrl-Shift-Right|Ctrl-Shift-ArrowRight",
 }
 
 export interface BaseKeyBinding {
@@ -67,9 +86,18 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Delete, command: joinForward },
     { key: BaseKey.Delete, command: deleteSelection },
 
-    // base tab key behavior (ignore)
-    { key: BaseKey.Tab, command: ignoreKey },
-    { key: BaseKey.ShiftTab, command: ignoreKey },
+    // base home/end key behaviors (Mac desktop default behavior advances to beginning/end of
+    // document, so we provide our own implementation rather than relying on contentEditable)
+    { key: BaseKey.Home, command: homeKey },
+    { key: BaseKey.End, command: endKey },
+
+    // base arrow key behavior (prevent traversing top-level body notes)
+    { key: BaseKey.ArrowLeft, command: arrowBodyNodeBoundary('left') },
+    { key: BaseKey.ArrowUp, command: arrowBodyNodeBoundary('up') },
+    { key: BaseKey.ArrowRight, command: arrowBodyNodeBoundary('right') },
+    { key: BaseKey.ArrowDown, command: arrowBodyNodeBoundary('down') },
+    { key: BaseKey.ModArrowDown, command: endTopLevelBodyNodeBoundary() },
+    { key: BaseKey.CtrlEnd, command: endTopLevelBodyNodeBoundary() },
 
     // merge keys provided by extensions
     ...keys,
@@ -102,4 +130,74 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
+}
+
+function homeKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+  const selection = state.selection;
+  const editingNode = editingRootNode(selection);
+  if (editingNode && dispatch && view) {
+    const selectionY = view.coordsAtPos(selection.from).top;
+    const beginDocPos = editingNode.start;
+    for (let pos = (selection.from - 1); pos >= beginDocPos; pos--) {
+      const posY = view.coordsAtPos(pos).top;
+      if (posY < selectionY) {
+        const tr = state.tr;
+        setTextSelection(pos + 1)(tr);
+        dispatch(tr);
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+  const selection = state.selection;
+  const editingNode = editingRootNode(selection);
+  if (editingNode && dispatch && view) {
+    const selectionY = view.coordsAtPos(selection.from).top;
+    const endDocPos = editingNode.start + editingNode.node.nodeSize;
+    for (let pos = (selection.from + 1); pos < endDocPos; pos++) {
+      const posY = view.coordsAtPos(pos).top;
+      if (posY > selectionY) {
+        const tr = state.tr;
+        setTextSelection(pos - 1)(tr);
+        dispatch(tr);
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+
+function arrowBodyNodeBoundary(dir: 'up' | 'down' | 'left' | 'right') {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    if (view && view.endOfTextblock(dir) && selectionIsBodyTopLevel(state.selection)) {
+      const side = dir === 'left' || dir === 'up' ? -1 : 1;
+      const $head = state.selection.$head;
+      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
+      const currentRootNode = editingRootNodeClosestToPos($head);
+      const nextRootNode = editingRootNodeClosestToPos(nextPos.$head);
+      return currentRootNode?.node?.type !== nextRootNode?.node?.type;
+    } else {
+      return false;
+    }
+  };
+}
+
+function endTopLevelBodyNodeBoundary() {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    const editingNode = editingRootNode(state.selection);
+    if (editingNode && selectionIsBodyTopLevel(state.selection)) {
+      if (dispatch) {
+        const tr = state.tr;
+        setTextSelection(editingNode.pos + editingNode.node.nodeSize - 2)(tr).scrollIntoView();
+        dispatch(tr);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  };
 }

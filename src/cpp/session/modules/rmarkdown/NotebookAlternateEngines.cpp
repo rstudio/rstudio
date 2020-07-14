@@ -247,7 +247,7 @@ Error executeStanEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        targetPath)); 
+                        targetPath));
    
    // write code to file
    FilePath tempFile = module_context::tempFile("stan-", "stan");
@@ -399,7 +399,7 @@ Error executeSqlEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        consolePath)); 
+                        consolePath));
 
    FilePath parentPath = notebook::chunkOutputPath(
        docId, chunkId, nbCtxId, ContextSaved);
@@ -628,7 +628,8 @@ Error runUserDefinedEngine(const std::string& docId,
    // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
-      emitText(asString(outputSEXP), kChunkConsoleOutput);
+      std::string text = asUtf8String(outputSEXP);
+      emitText(text, kChunkConsoleOutput);
    }
    else if (inherits(outputSEXP, "htmlwidget"))
    {
@@ -665,7 +666,8 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (inherits(elSEXP, "knit_image_paths"))
          {
             // handle a plot provided by e.g. knitr::include_graphics()
-            Error error = emitImage(r::sexp::asString(elSEXP));
+            std::string path = asUtf8String(elSEXP);
+            Error error = emitImage(path);
             if (error)
             {
                LOG_ERROR(error);
@@ -694,7 +696,8 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (isString(elSEXP) || isNumeric(elSEXP))
          {
             // plain old console text output -- emit as-is
-            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
+            std::string text = asUtf8String(elSEXP);
+            Error error = emitText(text, kChunkConsoleOutput);
             if (error)
             {
                LOG_ERROR(error);

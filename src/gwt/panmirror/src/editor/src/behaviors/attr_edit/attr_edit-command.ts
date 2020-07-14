@@ -26,6 +26,7 @@ import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { AttrEditOptions } from '../../api/attr_edit';
+import { pandocAutoIdentifier } from '../../api/pandoc_id';
 
 export class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, editors: AttrEditOptions[]) {
@@ -64,7 +65,7 @@ export function attrEditCommandFn(ui: EditorUI, editors: AttrEditOptions[]) {
     if (node) {
       const editor = editors.find(ed => ed.type(state.schema) === node!.type)!;
       if (editor && editor.editFn) {
-        return editor.editFn(ui)(state, dispatch, view);
+        return editor.editFn()(state, dispatch, view);
       }
     }
 
@@ -121,7 +122,7 @@ async function editNodeAttrs(
   ui: EditorUI,
 ): Promise<void> {
   const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs });
+  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node));
   if (result) {
     dispatch(
       state.tr.setNodeMarkup(pos, node.type, {
@@ -131,3 +132,18 @@ async function editNodeAttrs(
     );
   }
 }
+
+
+function idHint(node: ProsemirrorNode) {
+
+  if (node.type === node.type.schema.nodes.heading) {
+
+    return pandocAutoIdentifier(node.textContent);
+
+  } else {
+
+    return undefined;
+
+  }
+}
+

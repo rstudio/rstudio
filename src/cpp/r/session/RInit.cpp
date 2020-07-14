@@ -230,7 +230,7 @@ Error initialize()
    FilePath toolsFilePath = utils::rSourcePath().completePath("Tools.R");
    Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
-      return error ;
+      return error;
 
    // install RStudio API
    FilePath apiFilePath = utils::rSourcePath().completePath("Api.R");
@@ -271,7 +271,7 @@ Error initialize()
    if (restartContext().hasSessionState())
    {
       // restore session
-      std::string errorMessages ;
+      std::string errorMessages;
       restoreSession(restartContext().sessionStatePath(), &errorMessages);
 
       // show any error messages
@@ -284,7 +284,7 @@ Error initialize()
    else if (suspendedSessionPath().exists())
    {  
       // restore session
-      std::string errorMessages ;
+      std::string errorMessages;
       restoreSession(suspendedSessionPath(), &errorMessages);
       
       // show any error messages

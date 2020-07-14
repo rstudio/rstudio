@@ -112,6 +112,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void onActivate()
    {
       super.onActivate();
+      isActive_ = true;
       if (view_ != null)
       {
          // the data change while the window wasn't active, so refresh it,
@@ -154,7 +155,8 @@ public class DataEditingTarget extends UrlContentEditingTarget
             "Data Browser",
             commands_,
             events_,
-            getDataItem());
+            getDataItem(),
+            column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }
@@ -191,7 +193,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void popoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), null));
+      events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
 
    @Override

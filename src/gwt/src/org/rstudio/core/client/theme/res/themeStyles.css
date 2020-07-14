@@ -120,6 +120,14 @@
 
 @external avoid-move-cursor;
 
+@external ace_paren_color_0,
+        ace_paren_color_1,
+        ace_paren_color_2,
+        ace_paren_color_3,
+        ace_paren_color_4,
+        ace_paren_color_5,
+        ace_paren_color_6;
+
 @url DIALOGTOPLEFT dialogTopLeft;
 @url DIALOGTOP dialogTop;
 @url DIALOGTOPRIGHT dialogTopRight;
@@ -2744,3 +2752,20 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-animating.rstudio-themes-flat .rstudio-themes-alternate {
    z-index: -10;
 }
+
+/* Rainbow parentheses colors */
+.ace_paren_color_0 {color: rgb(255, 124, 124);}
+.ace_paren_color_1 {color: rgb(255, 187, 0);}
+.ace_paren_color_2 {color: #00ff1f;}
+.ace_paren_color_3 {color: #2bcf2b;}
+.ace_paren_color_4 {color: lightskyblue;}
+.ace_paren_color_5 {color: rgb(150, 94, 255);}
+.ace_paren_color_6 {color: violet;}
+
+.editor_dark .ace_paren_color_0 {color: rgb(255, 124, 124);}
+.editor_dark .ace_paren_color_1 {color: rgb(255, 187, 0);}
+.editor_dark .ace_paren_color_2 {color: yellow;}
+.editor_dark .ace_paren_color_3 {color: #2bcf2b;}
+.editor_dark .ace_paren_color_4 {color: lightskyblue;}
+.editor_dark .ace_paren_color_5 {color: rgb(150, 94, 255);}
+.editor_dark .ace_paren_color_6 {color: violet;}

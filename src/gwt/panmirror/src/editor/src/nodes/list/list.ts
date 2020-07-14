@@ -19,13 +19,14 @@ import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-li
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
 import { EditorUI } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocTokenType } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
@@ -63,7 +64,9 @@ export enum ListNumberDelim {
 
 const plugin = new PluginKey('list');
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui } = context;
+
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,
@@ -154,7 +157,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: writePandocBulletList(capabilities),
         },
 
-        attr_edit: listAttrEdit('bullet_list', capabilities)
+        attr_edit: listAttrEdit('bullet_list', capabilities, ui),
       },
       {
         name: 'ordered_list',
@@ -235,7 +238,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: writePandocOrderedList(capabilities),
         },
 
-        attr_edit: listAttrEdit('ordered_list', capabilities)
+        attr_edit: listAttrEdit('ordered_list', capabilities, ui),
       },
     ],
 
@@ -258,19 +261,21 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
           kPlatformMac ? ['Shift-Mod-7'] : [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
+          bulletListOmniInsert(ui),
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
           kPlatformMac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
+          orderedListOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -315,12 +320,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
   };
 };
 
-function listAttrEdit(type: string, capabilities: ListCapabilities) {
+function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI) {
   return () => {
     return {
       type: (schema: Schema) => schema.nodes[type],
       noDecorator: true,
-      editFn: (ui: EditorUI) => editListPropertiesCommandFn(ui, capabilities)
+      editFn: () => editListPropertiesCommandFn(ui, capabilities),
     };
   };
 }
@@ -359,6 +364,27 @@ function typeToNumberStyle(type: string | null): ListNumberStyle {
     default:
       return ListNumberStyle.Decimal;
   }
+}
+
+function bulletListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Bullet List'),
+    description: ui.context.translateText('List using bullets for items'),
+    group: OmniInsertGroup.Lists,
+    priority: 5,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
+  };
+}
+
+function orderedListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Numbered List'),
+    description: ui.context.translateText('List using numbers for items'),
+    group: OmniInsertGroup.Lists,
+    priority: 4,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
+  };
 }
 
 export default extension;

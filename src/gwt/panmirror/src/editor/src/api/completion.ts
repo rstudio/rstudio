@@ -13,40 +13,161 @@
  *
  */
 
-import { Selection } from "prosemirror-state";
-import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
+import { Selection, EditorState, Transaction, TextSelection } from 'prosemirror-state';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { EditorView, DecorationSet } from 'prosemirror-view';
+
+import { canInsertNode } from './node';
+import { EditorUI } from './ui';
+import { kInsertCompletionTransaction } from './transaction';
+
+export const kCompletionDefaultItemHeight = 22;
+export const kCompletionDefaultMaxVisible = 10;
+export const kCompletionDefaultWidth = 180;
+
+
+export interface CompletionContext {
+  isPaste: boolean;
+}
 
 export interface CompletionResult<T = any> {
   pos: number;
-  completions: T[] | Promise<T[]>;
+  offset?: number;
+  token: string;
+  completions: (state: EditorState, context: CompletionContext) => Promise<T[]>;
+  decorations?: DecorationSet;
+}
+
+export interface CompletionHeaderProps {
+  ui: EditorUI;
 }
 
 export interface CompletionHandler<T = any> {
+  // unique id
+  id: string;
+
+  // An optional scope for this completion handler. Completions
+  // triggered by a transaction will filter completion handlers
+  // that share a scope with the completion handler that originated
+  // a transaction.
+  scope?: string;
+
+  // filter for determing whether we can call this handler from a given context (default is to
+  // never offer completions if a mark with noInputRules is active). set to null to
+  // allow completion anywhere
+  enabled?: ((context: EditorState | Transaction) => boolean) | null;
 
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
-  completions(text: string, selection: Selection): CompletionResult | null;
-  
-  // provide a completion replacement as a string or node
-  replacement(schema: Schema, completion: T) : string | ProsemirrorNode;
+  completions(text: string, context: EditorState | Transaction): CompletionResult | null;
+
+  // filter a previously returned set of completions
+  filter?: (completions: T[], state: EditorState, token: string, prevToken?: string) => T[] | null;
+
+  // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
+  replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;
+
+  // lower level replacement handler (can be passed null if the popup was dismissed)
+  replace?(view: EditorView, pos: number, completion: T | null): void;
 
   // completion view
   view: {
+    // optional header component (will go inside a <th>)
+    header?: {
+      component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>;
+      height: number;
+    };
+
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 
     key: (completion: T) => any;
 
-    // width of completion popup (defaults to 180)
+    // width of completion item (defaults to 180).
     width?: number;
 
-    // height for completion items (defaults to 22px)
-    itemHeight?: number;
- 
-    // maximum number of visible items (defaults to 10)
+    // height of completion item (defaults to 22px)
+    height?: number;
+
+    // use horizontal orientation (defaults to false)
+    // (optionally provide a set of item widths)
+    horizontal?: boolean;
+    horizontalItemWidths?: number[];
+
+    // maximum number of visible items (defaults to 10). note that
+    // this only applies to completion poupups w/ vertical orientation
+    // (scrolling is not supported for horizontal orientation)
     maxVisible?: number;
+
+    // hide 'no results' (default false)
+    hideNoResults?: boolean;
   };
 }
 
+export function selectionAllowsCompletions(selection: Selection) {
+  const schema = selection.$head.parent.type.schema;
 
+  // non empty selections don't have completions
+  if (!selection.empty) {
+    return false;
+  }
 
+  // must be able to insert text
+  if (!canInsertNode(selection, schema.nodes.text)) {
+    return false;
+  }
+
+  // must not be in a code mark
+  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+    return false;
+  }
+
+  // must not be in a code node
+  if (selection.$head.parent.type.spec.code) {
+    return false;
+  }
+
+  return true;
+}
+
+// Determine whether two completionHandlers share the same scope. By default
+// completion handlers will share scope only if they share an id, but handlers
+// can provide a scope if they'd like to coordinate.
+export function completionsShareScope(handler: CompletionHandler, prevHandler?: CompletionHandler) {
+  // There is no previous handler, not shared
+  if (!prevHandler) {
+    return false;
+  }
+
+  // Previous handler with the same scope as the current handler
+  if (prevHandler.scope && prevHandler.scope === handler.scope) {
+    return true;
+  } else {
+    // Previous handler has the same id as the current handler
+    return prevHandler.id === handler.id;
+  }
+}
+
+export function performCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
+
+  // set selection to area we will be replacing
+  tr.setSelection(new TextSelection(tr.doc.resolve(pos), tr.selection.$head));
+
+  // ensure we have a node
+  if (replacement instanceof ProsemirrorNode) {
+    // combine it's marks w/ whatever is active at the selection
+    const marks = tr.selection.$head.marks();
+
+    // set selection and replace it
+    tr.replaceSelectionWith(replacement, false);
+
+    // propapate marks
+    marks.forEach(mark => tr.addMark(pos, tr.selection.to, mark));
+  } else {
+    tr.insertText(replacement);
+  }
+
+  // mark the transaction as an completion insertion
+  tr.setMeta(kInsertCompletionTransaction, true);
+
+}

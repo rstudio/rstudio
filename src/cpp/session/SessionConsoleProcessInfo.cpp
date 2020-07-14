@@ -208,7 +208,7 @@ core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) cons
    result["allow_restart"] = allowRestart_;
    result["title"] = title_;
    result["child_procs"] = childProcs_;
-   result["shell_type"] = TerminalShell::getShellId(shellType_); 
+   result["shell_type"] = TerminalShell::getShellId(shellType_);
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;

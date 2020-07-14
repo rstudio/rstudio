@@ -2,6 +2,8 @@
 
 ### Python
 
+* Python indentation rules are now applied to Python code within R Markdown documents. (#5945)
+* Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
 
@@ -27,10 +29,17 @@
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
+* Colorize parentheses, braces, and brackets in assorted colors (#7027)
+* Option to display Console error and message output in same color as regular output (#7029)
+* Moved console options to a new pane in Global Options (#7047)
+* The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 
 ### RStudio Server Pro
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
+* OpenID Connect is now support as an authentication mechanism (Pro #1747)
+* Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
+* New `auth-proxy-sign-out-url` option specified an endpoint to take the user to when "Sign Out" is clicked in the IDE user interface (Pro #1745)
 * New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
@@ -38,11 +47,13 @@
 * New `load-balancer` option `verify-ssl-certs` for testing nodes with self-signed certificates when using SSL. (Pro #1504)
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
 * R sessions can now be renamed from within the session or the home page. (Pro #1572)
+* Project Sharing now works on Launcher sessions.
 
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
+* Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
 * Git integration now works properly for project names containing the '!' character. (#6160)
 * Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
 * Fixed header resizing in Data Viewer (#1665)
@@ -56,3 +67,6 @@
 * Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
 * Added CSRF protection to sign-in pages (Pro #1469)
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
+* Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
+* Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
+

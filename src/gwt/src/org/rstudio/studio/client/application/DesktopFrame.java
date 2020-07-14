@@ -110,7 +110,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                        String buttons,
                        int defaultButton,
                        int cancelButton,
-                       CommandWithArg<String> callback);
+                       CommandWithArg<Double> callback);
 
    void promptForText(String title,
                       String label,
@@ -226,7 +226,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void controlLauncherJob(String jobId, String operation);
    void getJobContainerUser();
    void validateJobsConfig();
-   void getProxyPortNumber(CommandWithArg<Integer> callback);
+   void getProxyPortNumber(CommandWithArg<Double> callback);
 
    void signOut();
 }

@@ -27,4 +27,5 @@ public class BlogdownConfig
    public String[] static_dirs;
    public String markdown_engine;
    public String markdown_extensions;
+   public String rmd_extensions;
 }

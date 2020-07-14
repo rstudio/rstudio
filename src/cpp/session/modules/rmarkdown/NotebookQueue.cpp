@@ -279,7 +279,7 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode); 
+      std::string code = execUnit_->popExecRange(&range, mode);
       if (code.empty())
       {
          // no code to evaluate--skip this unit
@@ -499,7 +499,7 @@ private:
             {
                std::stringstream oss;
                oss << "Received unexpected response when submitting console input: "
-                   << response; 
+                   << response;
                LOG_WARNING_MESSAGE(oss.str());
             }
          }

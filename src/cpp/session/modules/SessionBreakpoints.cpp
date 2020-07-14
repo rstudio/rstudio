@@ -601,11 +601,6 @@ Error removeAllBreakpoints(const json::JsonRpcRequest&,
 
 } // anonymous namespace
 
-bool haveSrcrefAttribute()
-{
-   return true;
-}
-
 bool haveAdvancedStepCommands()
 {
    bool haveCommands = false;
@@ -621,7 +616,7 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
