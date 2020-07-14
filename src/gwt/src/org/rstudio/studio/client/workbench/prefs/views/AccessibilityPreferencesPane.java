@@ -156,7 +156,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox checkBox = new CheckBox(entry.getValue());
          checkBox.setFormValue(entry.getKey());
          announcements_.addItem(checkBox);
-         
+
          // The preference tracks disabled announcements, but the UI shows enabled announcements.
          // Having the UI show disabled announcements is counter-intuitive, but tracking
          // disabled items in the preferences causes newly added announcements to be enabled
@@ -178,7 +178,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox chk = announcements_.getItemAtIdx(i);
          if (!chk.getValue()) // preference tracks disabled, UI tracks enabled
             settings.push(chk.getFormValue());
-         
+
          if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_LOG) &&
                origConsoleLog == chk.getValue())
          {
@@ -190,7 +190,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             restartNeeded = true;
          }
       }
-      
+
       prefs.disabledAriaLiveAnnouncements().setGlobalValue(settings);
       return restartNeeded;
    }
