@@ -57,6 +57,8 @@ Error getLastCryptoError(const ErrorLocation& in_location);
 /**
  * @brief AES decrypts the specified data using the specified initialization vector.
  *
+ * This function is the inverse of aesEncrypt.
+ *
  * @param in_data           The data to be decrypted.
  * @param in_key            The key with which to decrypt the data.
  * @param in_iv             The initialization vector that was used during encryption.
@@ -72,6 +74,8 @@ Error aesDecrypt(
 
 /**
  * @brief AES encrypts the specified data using the specified initialization vector.
+ *
+ * This function is the inverse of aesDecrypt.
  *
  * @param in_data           The data to be encrypted.
  * @param in_key            The key with which to encrypt the data.
@@ -89,6 +93,8 @@ Error aesEncrypt(
 /**
  * @brief Base-64 decodes a string.
  *
+ * This function is the inverse of base64Encode.
+ *
  * @param in_data       The base-64 encoded data to be decoded.
  * @param out_decoded   The decoded data.
  *
@@ -98,6 +104,8 @@ Error base64Decode(const std::string& in_data, std::vector<unsigned char>& out_d
 
 /**
  * @brief Base-64 decodes a string.
+ *
+ * This function is the inverse of base64Encode.
  *
  * @param in_data       The base-64 encoded data to be decoded.
  * @param out_decoded   The decoded data.
@@ -109,6 +117,8 @@ Error base64Decode(const std::string& in_data, std::string& out_decoded);
 /**
  * @brief Base-64 encodes a string.
  *
+ * This function is the inverse of base64Decode.
+ *
  * @param in_data       The string data to be encoded.
  * @param out_encoded   The base-64 encoded string.
  *
@@ -118,6 +128,8 @@ Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_e
 
 /**
  * @brief Base-64 encodes a string.
+ *
+ * This function is the inverse of base64Decode.
  *
  * @param in_data       The string data to be encoded.
  * @param in_length     The length of in_data.
@@ -130,6 +142,8 @@ Error base64Encode(const unsigned char* in_data, int in_length, std::string& out
 /**
  * @brief Base-64 decodes and then decrypts an AES encrypted string with the specified initialization vector, which is
  *        also base-64 encoded.
+ *
+ * This function is the inverse of encryptAndBase64Encode.
  *
  * @param in_input          The base-64 encoded AES encrypted string.
  * @param in_key            The key with which to decrypt the string.
@@ -148,6 +162,8 @@ Error decryptAndBase64Decode(
  * @brief AES encrypts and then base-64 encodes the specified string using the given key. Also generates and base-64
  *        encodes an initialization vector which is used in the encryption of the input.
  *
+ * This function is the inverse of decryptAndBase64Decode.
+ * 
  * @param in_input          The string to encrypt and base-64 encode.
  * @param in_key            The key with which to encrypt the string.
  * @param out_iv            The generated base-64 encoded initialization vector.
