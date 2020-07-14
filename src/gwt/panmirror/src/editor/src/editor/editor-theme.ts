@@ -179,7 +179,7 @@ export function applyTheme(theme: EditorTheme) {
       box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
       border-radius: 3px;
     }
-    .pm-find-text-selected {
+    .pm-selected-text {
       background-color: ${theme.selectionColor} !important;
     }
     .pm-selected-list-item {
@@ -291,6 +291,11 @@ export function applyTheme(theme: EditorTheme) {
     .cm-s-default .cm-hr {color: ${theme.code.hrColor};}
     .cm-s-default .cm-link {color:${theme.code.linkColor};}
     .cm-s-default .cm-error {color: ${theme.code.errorColor};}
+
+    .pm-ace-first-line-meta .ace_text-layer .ace_line:first-child,
+    .pm-ace-first-line-meta .ace_text-layer .ace_line:first-child span {
+      color: ${theme.lightTextColor} !important;
+    }
   `;
 
   // set style

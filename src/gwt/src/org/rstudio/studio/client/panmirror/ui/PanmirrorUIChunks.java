@@ -1,5 +1,5 @@
 /*
- * DocTabsChangedHandler.java
+ * PanmirrorUIChunkFactory.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.events;
+package org.rstudio.studio.client.panmirror.ui;
 
-import com.google.gwt.event.shared.EventHandler;
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
 
-public interface DocTabsChangedHandler extends EventHandler
+@JsType
+public class PanmirrorUIChunks
 {
-   void onDocTabsChanged(DocTabsChangedEvent event);
+   public CreateChunkEditor createChunkEditor;
+   
+   @JsFunction
+   public interface CreateChunkEditor
+   {
+      PanmirrorUIChunkEditor create(String type);
+   }
 }

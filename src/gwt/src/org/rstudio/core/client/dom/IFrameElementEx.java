@@ -28,6 +28,31 @@ public class IFrameElementEx extends IFrameElement
       return this.contentWindow;
    }-*/;
    
+   /**
+    * Gets the URL currently displayed in the IFrame, or null if the URL cannot
+    * be determined.
+    * 
+    * @return The current URL displayed in the IFrame.
+    */
+   public final String getCurrentUrl()
+   {
+      String url = null;
+      try 
+      {
+         if (getContentWindow() != null)
+         {
+            url = getContentWindow().getLocationHref();
+         }
+      }
+      catch (Exception e)
+      {
+         // attempting to get the URL can throw with a DOM security exception if
+         // the current URL is on another domain--in this case we'll just want 
+         // to return null, so eat the exception.
+      }
+      return url;
+   }
+   
    public final void setFocus()
    {
       if (BrowseCap.isInternetExplorer())

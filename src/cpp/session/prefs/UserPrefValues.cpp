@@ -2429,16 +2429,16 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
- * Whether to enable experimental visual markdown editing
+ * Whether to enable visual editing by default for new markdown documents
  */
-bool UserPrefValues::enableVisualMarkdownEditingMode()
+bool UserPrefValues::visualMarkdownEditingIsDefault()
 {
-   return readPref<bool>("enable_visual_markdown_editing_mode");
+   return readPref<bool>("visual_markdown_editing_is_default");
 }
 
-core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 {
-   return writePref("enable_visual_markdown_editing_mode", val);
+   return writePref("visual_markdown_editing_is_default", val);
 }
 
 /**
@@ -2517,6 +2517,19 @@ int UserPrefValues::visualMarkdownEditingFontSizePoints()
 core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 {
    return writePref("visual_markdown_editing_font_size_points", val);
+}
+
+/**
+ * The name of the editor to use to provide code editing in visual mode
+ */
+std::string UserPrefValues::visualMarkdownCodeEditor()
+{
+   return readPref<std::string>("visual_markdown_code_editor");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
+{
+   return writePref("visual_markdown_code_editor", val);
 }
 
 /**
@@ -2811,13 +2824,14 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
-      kEnableVisualMarkdownEditingMode,
+      kVisualMarkdownEditingIsDefault,
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
       kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
+      kVisualMarkdownCodeEditor,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

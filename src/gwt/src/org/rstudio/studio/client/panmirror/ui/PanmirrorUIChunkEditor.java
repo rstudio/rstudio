@@ -1,5 +1,5 @@
 /*
- * options.ts
+ * PanmirrorUIRmdChunkEditor.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,14 +12,31 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.panmirror.ui;
 
-export interface EditorOptions {
-  readonly autoFocus?: boolean;
-  readonly spellCheck?: boolean;
-  readonly codeEditor?: string;
-  readonly rmdImagePreview?: boolean;
-  readonly rmdExampleHighlight?: boolean;
-  readonly rmdChunkExecution?: string[];
-  readonly hideFormatComment?: boolean;
-  readonly className?: string;
+import com.google.gwt.dom.client.Element;
+
+import elemental2.core.JsObject;
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorUIChunkEditor
+{
+   public JsObject editor;
+   public Element element;
+   public SetMode setMode;
+   public Destroy destroy;
+   
+   @JsFunction
+   public interface SetMode
+   {
+      void setMode(String mode);
+   }
+   
+   @JsFunction
+   public interface Destroy
+   {
+      void destroy();
+   }
 }

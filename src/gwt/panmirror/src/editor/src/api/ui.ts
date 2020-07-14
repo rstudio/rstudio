@@ -32,6 +32,19 @@ export interface EditorUI {
   context: EditorUIContext;
   prefs: EditorUIPrefs;
   images: EditorUIImages;
+  chunks: EditorUIChunks;
+}
+
+export interface EditorUIChunks {
+  // create a code chunk editor
+  createChunkEditor: (type: string) => ChunkEditor;
+}
+
+export interface ChunkEditor {
+  editor: unknown;
+  setMode(mode: string): void;
+  element: HTMLElement;
+  destroy(): void;
 }
 
 export interface EditorDialogs {

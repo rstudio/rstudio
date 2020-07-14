@@ -132,6 +132,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.CrossReference, "Cross Reference");
       add(PanmirrorCommands.InsertSymbol, "Insert:::Symbol...");
       add(PanmirrorCommands.InsertEmoji, "Insert:::Emoji...");
+      
+      // outline
+      add(PanmirrorCommands.GoToNextSection, "Go to Next Section");
+      add(PanmirrorCommands.GoToPreviousSection, "Go to Previous Section");
    }
    
    public PanmirrorCommandUI get(String id)

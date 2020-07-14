@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.VisibleChangedEvent;
 import org.rstudio.core.client.command.VisibleChangedHandler;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 
 public class SourceAppCommand
@@ -34,12 +36,17 @@ public class SourceAppCommand
    private class CommandSourceColumnToolbarButton extends ToolbarButton implements
                                                                         EnabledChangedHandler, VisibleChangedHandler
    {
-      public CommandSourceColumnToolbarButton(String buttonLabel,
+      public CommandSourceColumnToolbarButton(SourceAppCommand sourceCmd,
+                                              String buttonLabel,
                                               String buttonTitle,
                                               ImageResourceProvider imageResourceProvider,
-                                              ClickHandler clickHandler)
+                                              ClickHandler clickHandler,
+                                              /* false when button is managed elsewhere */
+                                              boolean synced)
       {
          super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler);
+         sourceCmd_ = sourceCmd;
+         synced_ = synced;
       }
 
       @Override
@@ -47,9 +54,19 @@ public class SourceAppCommand
       {
          super.onAttach();
 
-         assert command_ != null;
-         handlers_.add(command_.addEnabledChangedHandler(this));
-         handlers_.add(command_.addVisibleChangedHandler(this));
+         if (synced_)
+         {
+            setEnabled(buttonVisible_);
+            setVisible(buttonVisible_);
+         }
+
+         parentToolbar_ = getParentToolbar();
+         assert sourceCmd_ != null;
+         if (synced_)
+         {
+            handlers_.add(sourceCmd_.addEnabledChangedHandler(this));
+            handlers_.add(sourceCmd_.addVisibleChangedHandler(this));
+         }
 
          if (isVisible())
             setEnabled(true);
@@ -59,7 +76,8 @@ public class SourceAppCommand
       protected void onDetach()
       {
          super.onDetach();
-         handlers_.removeHandler();
+         if (synced_)
+            handlers_.removeHandler();
       }
 
       @Override
@@ -73,10 +91,16 @@ public class SourceAppCommand
       public void onVisibleChanged(VisibleChangedEvent event)
       {
          if (StringUtil.equals(column_, event.getColumnName()))
+         {
             setVisible(event.getButtonVisible());
+            parentToolbar_.invalidateSeparators();
+         }
       }
 
+      private final boolean synced_;
+      private final SourceAppCommand sourceCmd_;
       private final HandlerRegistrations handlers_ = new HandlerRegistrations();
+      private Toolbar parentToolbar_;
    }
 
    private class CommandSourceColumnMenuItem extends AppMenuItem
@@ -107,20 +131,26 @@ public class SourceAppCommand
       return column_;
    }
 
+   public HandlerRegistration addEnabledChangedHandler(
+      EnabledChangedHandler handler)
+   {
+      return handlers_.addHandler(EnabledChangedEvent.TYPE, handler);
+   }
+
+   public HandlerRegistration addVisibleChangedHandler(
+      VisibleChangedHandler handler)
+   {
+      return handlers_.addHandler(VisibleChangedEvent.TYPE, handler);
+   }
+
    public ToolbarButton createToolbarButton()
    {
-      CommandSourceColumnToolbarButton button =
-         new CommandSourceColumnToolbarButton(
-            command_.getButtonLabel(),
-            command_.getDesc(),
-            command_,
-            event -> {
-               columnManager_.setActive(column_);
-               command_.execute();
-            });
-      if (command_.getTooltip() != null)
-         button.setTitle(command_.getTooltip());
-      return button;
+      return createToolbarButton(true);
+   }
+
+   public ToolbarButton createUnsyncedToolbarButton()
+   {
+      return createToolbarButton(false);
    }
 
    public MenuItem createMenuItem()
@@ -139,6 +169,7 @@ public class SourceAppCommand
 
    public void setVisible(boolean setCommand, boolean commandVisible, boolean buttonVisible)
    {
+      buttonVisible_ = buttonVisible;
       if (setCommand)
          command_.setVisible(commandVisible);
       handlers_.fireEvent(new VisibleChangedEvent(command_, column_, buttonVisible));
@@ -151,11 +182,31 @@ public class SourceAppCommand
 
    public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonVisible)
    {
+      buttonVisible_ = buttonVisible;
       if (setCommand)
          command_.setEnabled(commandEnabled);
       handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonVisible)));
    }
 
+   private ToolbarButton createToolbarButton(boolean synced)
+   {
+      CommandSourceColumnToolbarButton button =
+         new CommandSourceColumnToolbarButton(
+            this,
+            command_.getButtonLabel(),
+            command_.getDesc(),
+            command_,
+            event -> {
+               columnManager_.setActive(column_);
+               command_.execute();
+            },
+            synced);
+      if (command_.getTooltip() != null)
+         button.setTitle(command_.getTooltip());
+      return button;
+   }
+
+   private boolean buttonVisible_ = false;
    private final AppCommand command_;
    private final String column_;
    private final SourceColumnManager columnManager_;

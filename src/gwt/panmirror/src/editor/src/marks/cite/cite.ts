@@ -546,20 +546,30 @@ export interface ParsedCitation {
   offset: number;
 }
 
+// completions allow spaces in the cite id (multiple search terms)
+const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace(/^\[/, '[\\s');
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`);
+
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
-  // return completions only if we are inside a cite id mark
-  const markType = context.doc.type.schema.marks.cite_id;
+
+  // return completions only if we are inside a cite (this allows for completions across
+  // cite_id marks and spaces after them (necesary to allow spaces in completion queries)
+  const markType = context.doc.type.schema.marks.cite;
   if (!markIsActive(context, markType)) {
     return null;
   }
 
+  // get the range of the full cite mark
   const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
   if (range) {
-    const citeText = context.doc.textBetween(range.from, range.to);
-    const match = citeText.match(kEditingCiteIdRegEx);
+    // examine text up to the cursor
+    const citeText = context.doc.textBetween(range.from, context.selection.head);
+    // look for a cite id that terminates at the cursor (including spaces/text after the id,
+    // but before any semicolon delimiter)
+    const match = citeText.match(kCompletionCiteIdRegEx);
     if (match) {
       const token = match[2];
-      const pos = range.from + match[1].length;
+      const pos = range.from + match.index! + match[1].length;
       return { token, pos, offset: -match[1].length };
     }
   }

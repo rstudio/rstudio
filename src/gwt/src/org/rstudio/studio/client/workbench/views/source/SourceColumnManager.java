@@ -141,10 +141,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                               Provider<FileMRUList> pMruList,
                               SourceWindowManager windowManager)
    {
-      SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnList_.add(column);
-
       commands_ = commands;
       binder.bind(commands_, this);
 
@@ -260,6 +256,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
+      SourceColumn column = GWT.create(SourceColumn.class);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      columnList_.add(column);
+
       setActive(column.getName());
    }
 
@@ -318,6 +318,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void initialSelect(int index)
    {
       getActive().initialSelect(index);
+   }
+
+   public void setActive(int xpos)
+   {
+      SourceColumn column = findByPosition(xpos);
+      if (column == null)
+         return;
+      setActive(column);
    }
 
    public void setActive(String name)
@@ -463,7 +471,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public int getPhysicalTabIndex()
    {
-      return activeColumn_.getPhysicalTabIndex();
+      if (getActive() != null)
+         return getActive().getPhysicalTabIndex();
+      else
+         return -1;
    }
 
    public ArrayList<String> getNames(boolean excludeMain)
@@ -594,6 +605,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       commands_.sourceNavigateBack().setEnabled(
          sourceNavigationHistory_.isBackEnabled());
    }
+
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
@@ -653,7 +665,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          int left = w.getAbsoluteLeft();
          int right = w.getAbsoluteLeft() + w.getOffsetWidth();
 
-         if (x > left && x < right)
+         if (x >= left && x <= right)
             return column;
       }
       return null;
@@ -2065,16 +2077,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void onResponseReceived(SourceDocument document)
                {
+                  // apply (dynamic) doc property defaults
+                  SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
+                  
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode
                   if (openingForSourceNavigation_)
                   {
-                     document.getProperties()._setBoolean(
-                        TextEditingTarget.RMD_VISUAL_MODE,
-                        false
+                     document.getProperties().setString(
+                       TextEditingTarget.RMD_VISUAL_MODE,
+                       DocUpdateSentinel.PROPERTY_FALSE
                      );
                   }
-
+                  
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
                   EditingTarget target = getActive().addTab(document, Source.OPEN_INTERACTIVE);
@@ -2083,6 +2098,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
             });
    }
+   
 
    private boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)

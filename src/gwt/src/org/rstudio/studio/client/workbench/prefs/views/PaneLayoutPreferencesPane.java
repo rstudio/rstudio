@@ -346,7 +346,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       return new ImageResource2x(res_.iconPanes2x());
    }
-   
+
    @Override
    protected void initialize(UserPrefs prefs)
    {
@@ -376,10 +376,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          JsArrayString hiddenTabSet = JsArrayString.createArray().cast();
          for (String tab : hiddenTabSetModuleList_.getValue())
             hiddenTabSet.push(tab);
-         
+
          // Determine implicit preference for console top/bottom location
-         // This needs to be saved so that when the user executes the 
-         // Console on Left/Right commands we know whether to position 
+         // This needs to be saved so that when the user executes the
+         // Console on Left/Right commands we know whether to position
          // the Console on the Top or Bottom
          PaneConfig prevConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
@@ -393,7 +393,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             consoleRightOnTop = true;
          else if (panes.get(3) == kConsole)
             consoleRightOnTop = false;
-         
+
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,
                consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_));
@@ -425,11 +425,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private void updateTabSetLabels()
    {
       // If no tabs are values in a tabset pane, give the pane a generic name,
-      // otherwise the name is created from the selected values 
+      // otherwise the name is created from the selected values
       String itemText1 = tabSet1ModuleList_.getValue().isEmpty() ?
-         "TabSet" : StringUtil.join(tabSet1ModuleList_.getValue(), ", "); 
+         "TabSet" : StringUtil.join(tabSet1ModuleList_.getValue(), ", ");
       String itemText2 = tabSet2ModuleList_.getValue().isEmpty() ?
-         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", "); 
+         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", ");
       if (StringUtil.equals(itemText1, "Presentation") && !tabSet1ModuleList_.presentationVisible())
          itemText1 = "TabSet";
 

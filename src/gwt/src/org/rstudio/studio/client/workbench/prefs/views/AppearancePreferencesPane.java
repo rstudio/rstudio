@@ -59,7 +59,7 @@ import java.util.TreeSet;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
-   
+
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,
@@ -77,9 +77,9 @@ public class AppearancePreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       server_ = server;
-      
+
       VerticalPanel leftPanel = new VerticalPanel();
-      
+
       relaunchRequired_ = false;
 
       // dark-grey theme used to be derived from default, now also applies to sky
@@ -92,7 +92,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                                 new String[]{"Classic", "Modern", "Sky"},
                                 new String[]{
                                       UserPrefs.GLOBAL_THEME_CLASSIC,
-                                      UserPrefs.GLOBAL_THEME_DEFAULT, 
+                                      UserPrefs.GLOBAL_THEME_DEFAULT,
                                       UserPrefs.GLOBAL_THEME_ALTERNATE
                                     },
                                 false);
@@ -121,38 +121,38 @@ public class AppearancePreferencesPane extends PreferencesPane
          for (int i = 0; i < zoomValues.length; i++)
          {
             double zoomValue = Double.parseDouble(zoomValues[i]);
-            
+
             if (zoomValue == 1.0)
                normalIndex = i;
-            
+
             if (zoomValue == currentZoomLevel)
                initialIndex = i;
-            
+
             zoomLabels[i] = StringUtil.formatPercent(zoomValue);
          }
-         
+
          if (initialIndex == -1)
             initialIndex = normalIndex;
-         
+
          zoomLevel_ = new SelectWidget("Zoom:",
                                        zoomLabels,
                                        zoomValues,
                                        false);
          zoomLevel_.getListBox().setSelectedIndex(initialIndex);
          initialZoomLevel_ = zoomValues[initialIndex];
-         
+
          leftPanel.add(zoomLevel_);
-         
+
          zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
       }
-      
+
       String[] fonts = new String[] {};
-      
+
       if (Desktop.isDesktop())
       {
          // In desktop mode, get the list of installed fonts from Qt
          String fontList = DesktopInfo.getFixedWidthFontList();
-         
+
          if (fontList.isEmpty())
             registerFontListReadyCallback();
          else
@@ -164,13 +164,13 @@ public class AppearancePreferencesPane extends PreferencesPane
          getInstalledFontList();
       }
 
-      String fontFaceLabel = fonts.length == 0 
+      String fontFaceLabel = fonts.length == 0
             ? "Editor font (loading...):"
             : "Editor font:";
 
       fontFace_ = new SelectWidget(fontFaceLabel, fonts, fonts, false, false, false);
       fontFace_.getListBox().setWidth("95%");
-      
+
       if (Desktop.isDesktop())
       {
          // Get the fixed width font set in desktop mode
@@ -228,7 +228,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
-   
+
       theme_ = new SelectWidget("Editor theme:",
                                 new String[0],
                                 new String[0],
@@ -246,7 +246,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       theme_.addStyleName(res.styles().themeChooser());
-   
+
       AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       addThemeButton_ = new ThemedButton("Add...", event ->
          fileDialogs.openFile(
@@ -258,7 +258,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             {
                if (input == null)
                   return;
-               
+
                String inputStem = input.getStem();
                String inputPath = input.getPath();
                boolean isTmTheme = StringUtil.equalsIgnoreCase(".tmTheme", input.getExtension());
@@ -273,12 +273,12 @@ public class AppearancePreferencesPane extends PreferencesPane
                      break;
                   }
                }
-               
+
                if (!found)
                {
                   addTheme(inputPath, themes, isTmTheme);
                }
-               
+
                indicator.onCompleted();
             }));
       addThemeButton_.setLeftAligned(true);
@@ -289,17 +289,17 @@ public class AppearancePreferencesPane extends PreferencesPane
             () -> removeTheme(theme_.getValue(), themes)));
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
-      
+
       HorizontalPanel buttonPanel = new HorizontalPanel();
       buttonPanel.add(addThemeButton_);
       buttonPanel.add(removeThemeButton_);
-      
+
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
       leftPanel.add(buttonPanel);
 
       FlowPanel previewPanel = new FlowPanel();
-      
+
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight(previewDefaultHeight_);
@@ -316,13 +316,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(previewPanel);
 
       add(hpanel);
-      
+
       // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
-   
+
    @Override
    protected void setPaneVisible(boolean visible)
    {
@@ -334,25 +334,25 @@ public class AppearancePreferencesPane extends PreferencesPane
          // gross but necessary to work around a QtWebEngine bug which causes
          // the region to not paint at all (literally showing the previous
          // contents of the screen buffer) until invalidated in some way.
-         // 
+         //
          // Known to be an issue with Qt 5.12.8/Chromium 69; could be removed if
          // the bug is fixed in later releases.
          //
          // See https://github.com/rstudio/rstudio/issues/6268
-        
+
          Scheduler.get().scheduleDeferred(() ->
          {
             Style style = preview_.getElement().getStyle();
             String translate = "translate(0px, 0px)";
             String transform = style.getProperty("transform");
-            style.setProperty("transform", 
-                    StringUtil.isNullOrEmpty(transform) || !StringUtil.equals(translate, transform) ? 
-                        translate : 
+            style.setProperty("transform",
+                    StringUtil.isNullOrEmpty(transform) || !StringUtil.equals(translate, transform) ?
+                        translate :
                         "");
          });
       }
    }
-   
+
    private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
       AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
@@ -372,13 +372,13 @@ public class AppearancePreferencesPane extends PreferencesPane
             });
       }
    }
-   
+
    private void removeTheme(String themeName, AceThemes themes)
    {
       // No after operation necessary.
       removeTheme(themeName, themes, () -> {});
    }
-   
+
    private void doAddTheme(String inputPath, AceThemes themes, boolean isTmTheme)
    {
       if (isTmTheme)
@@ -393,9 +393,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             inputPath,
             result -> updateThemes(result, themes),
             error -> showCantAddThemeDialog(inputPath, error));
-      
+
    }
-   
+
    private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
    {
       // Get the theme name and check if it's in the current list of themes.
@@ -428,14 +428,14 @@ public class AppearancePreferencesPane extends PreferencesPane
          },
          error -> showCantAddThemeDialog(inputPath, error));
    }
-   
+
    private void setThemes(AceThemes themes)
    {
       themes.getThemes(
          themeList ->
          {
             themeList_ = themeList;
-         
+
             // It's possible the current theme was removed outside the context of
             // RStudio, so choose a default if it can't be found.
             AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
@@ -447,30 +447,30 @@ public class AppearancePreferencesPane extends PreferencesPane
                   .append("\" could not be found. It's possible it was removed outside the context of RStudio. Switching to the ")
                   .append(currentTheme.isDark() ? "dark " : "light ")
                   .append("default theme: \"");
-               
+
                currentTheme = AceTheme.createDefault(currentTheme.isDark());
                userState_.theme().setGlobalValue(currentTheme);
                preview_.setTheme(currentTheme.getUrl());
-               
+
                warningMsg.append(currentTheme.getName())
                   .append("\".");
                Debug.logWarning(warningMsg.toString());
             }
-            
+
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(currentTheme.getName());
             removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
          },
          getProgressIndicator());
    }
-   
+
    private void updateThemes(String focusedThemeName, AceThemes themes)
    {
       themes.getThemes(
          themeList->
          {
             themeList_ = themeList;
-            
+
             String themeName = focusedThemeName;
             if (!themeList.containsKey(themeName))
             {
@@ -478,7 +478,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                themeName = AceTheme.createDefault().getName();
             }
             AceTheme focusedTheme = themeList.get(themeName);
-            
+
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(focusedTheme.getName());
             preview_.setTheme(focusedTheme.getUrl());
@@ -486,7 +486,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          },
          getProgressIndicator());
    }
-   
+
    private void updatePreviewZoomLevel()
    {
       // no zoom preview on desktop
@@ -511,7 +511,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          continueOperation,
          false);
    }
-   
+
    private void showCantAddThemeDialog(String themePath, String errorMessage)
    {
       StringBuilder msg = new StringBuilder();
@@ -519,10 +519,10 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(themePath)
          .append("'. The following error occurred: ")
          .append(errorMessage);
-      
+
       globalDisplay_.showErrorMessage("Failed to Add Theme", msg.toString());
    }
-   
+
    private void showCantRemoveThemeDialog(String themeName, String errorMessage)
    {
       StringBuilder msg = new StringBuilder();
@@ -530,10 +530,10 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(themeName)
          .append("': ")
          .append(errorMessage);
-      
+
       globalDisplay_.showErrorMessage("Failed to Remove Theme", msg.toString());
    }
-   
+
    private void showCantRemoveActiveThemeDialog(String themeName)
    {
       StringBuilder msg = new StringBuilder();
@@ -541,17 +541,17 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(themeName)
          .append("\" cannot be removed because it is currently in use. To delete this theme,")
          .append(" please change the active theme and retry.");
-      
+
       globalDisplay_.showErrorMessage("Cannot Remove Active Theme", msg.toString());
    }
-   
+
    private void showRemoveThemeWarning(String themeName, Operation continueOperation)
    {
       StringBuilder msg = new StringBuilder();
       msg.append("Taking this action will delete the theme \"")
          .append(themeName)
          .append("\" and cannot be undone. Are you sure you wish to continue?");
-      
+
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_WARNING,
          "Remove Theme",
@@ -559,7 +559,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          continueOperation,
          false);
    }
-   
+
    private void showDuplicateThemeError(String themeName, Operation continueOperation)
    {
       StringBuilder msg = new StringBuilder();
@@ -567,7 +567,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(" location. Would you like remove the existing theme, \"")
          .append(themeName)
          .append("\", and add the new theme?");
-      
+
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_ERROR,
          "Duplicate Theme In Same Location",
@@ -575,7 +575,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          continueOperation,
          false);
    }
-   
+
    private void showDuplicateThemeWarning(String themeName, Operation continueOperation)
    {
       StringBuilder msg = new StringBuilder();
@@ -584,7 +584,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append("\" in another location. The existing theme will be hidden but not removed.")
          .append(" Removing the new theme later will un-hide the existing theme. Would you")
          .append(" like to continue?");
-      
+
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_WARNING,
          "Duplicate Theme In Another Location",
@@ -592,16 +592,16 @@ public class AppearancePreferencesPane extends PreferencesPane
          continueOperation,
          true);
    }
-   
+
    @Override
    public ImageResource getIcon()
    {
       return new ImageResource2x(res_.iconAppearance2x());
    }
-   
+
    @Override
    protected void initialize(UserPrefs prefs)
-   { 
+   {
    }
 
    @Override
@@ -617,7 +617,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          userPrefs_.globalTheme().setGlobalValue(themeName, false);
       }
-      
+
       double fontSize = Double.parseDouble(fontSize_.getValue());
       userPrefs_.fontSizePoints().setGlobalValue(fontSize);
       if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
@@ -625,7 +625,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
       }
-      
+
      if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
      {
         String fontFace = fontFace_.getValue();
@@ -652,7 +652,7 @@ public class AppearancePreferencesPane extends PreferencesPane
         }
         restartRequirement.setUiReloadRequired(true);
      }
-         
+
       if (Desktop.hasDesktopFrame())
       {
          if (!StringUtil.equals(initialZoomLevel_, zoomLevel_.getValue()))
@@ -671,17 +671,17 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       return "Appearance";
    }
-   
+
    private final native void registerFontListReadyCallback()
    /*-{
-   
+
       var self = this;
       $wnd.onFontListReady = $entry(function() {
          self.@org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane::onFontListReady()();
       });
-   
+
    }-*/;
-   
+
    private void onFontListReady()
    {
       // NOTE: we use a short poll as we might receive this notification
@@ -690,25 +690,25 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
          private int retryCount_ = 0;
-         
+
          @Override
          public boolean execute()
          {
             if (retryCount_++ > 20)
                return false;
-            
+
             String fonts = DesktopInfo.getFixedWidthFontList();
             if (fonts.isEmpty())
                return true;
-         
+
             String[] fontList = fonts.split("\\n");
             populateFontList(fontList);
             return false;
          }
-         
+
       }, 100);
    }
-   
+
    private void getInstalledFontList()
    {
       // Search for installed fixed-width fonts on this web browser.
@@ -721,7 +721,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             browserFonts.add(candidate);
          }
       }
-      
+
       server_.getInstalledFonts(new ServerRequestCallback<JsArrayString>()
       {
          @Override
@@ -737,7 +737,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                // Use the user's supplied font
                font = userPrefs_.serverEditorFont().getValue();
             }
-            
+
             if (StringUtil.isNullOrEmpty(font))
             {
                // No font selected
@@ -763,7 +763,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
    }
-   
+
    private void populateFontList(String[] fontList)
    {
       String value = fontFace_.getValue();
@@ -795,10 +795,10 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final DependencyManager dependencyManager_;
    private final ThemeServerOperations server_;
    private int renderPass_ = 1;
-   
+
    private final static String DEFAULT_FONT_NAME = "(Default)";
    private final static String DEFAULT_FONT_VALUE = "__default__";
-   
+
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
          "plot <- function (x, y, ...)\n" +
@@ -823,7 +823,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          "        x, y, \n" +
          "        ylab = paste(\n" +
          "          deparse(substitute(x)),\n" +
-         "          \"(x)\"), \n" + 
+         "          \"(x)\"), \n" +
          "        ...)\n" +
          "  }\n" +
          "  else \n" +

@@ -324,7 +324,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
-#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
@@ -334,6 +334,9 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
+#define kVisualMarkdownCodeEditorAce "ace"
+#define kVisualMarkdownCodeEditorCodemirror "codemirror"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1475,10 +1478,10 @@ public:
    core::Error setFullProjectPathInWindowTitle(bool val);
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   bool enableVisualMarkdownEditingMode();
-   core::Error setEnableVisualMarkdownEditingMode(bool val);
+   bool visualMarkdownEditingIsDefault();
+   core::Error setVisualMarkdownEditingIsDefault(bool val);
 
    /**
     * Whether to automatically wrap text when writing markdown
@@ -1515,6 +1518,12 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   std::string visualMarkdownCodeEditor();
+   core::Error setVisualMarkdownCodeEditor(std::string val);
 
    /**
     * Preferred emoji skintone
