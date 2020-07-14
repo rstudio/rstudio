@@ -93,7 +93,8 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
    {
       if (!::CloseHandle(hObject))
       {
-         LOG_ERROR(LAST_SYSTEM_ERROR());
+         auto error = LAST_SYSTEM_ERROR();
+         core::log::logError(error, location);
       }
    }
 }
@@ -238,7 +239,7 @@ void processFileChanges(FileEventContext* pContext,
 
    // cycle through the entries in the buffer
    char* pBuffer = (char*)&pContext->handlingBuffer[0];
-   while(true)
+   while (true)
    {
       // check for buffer pointer which has overflowed the end (apparently this
       // can happen if the underlying directory is deleted)
@@ -424,7 +425,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,
    // check for buffer overflow. this means there are too many file changes
    // for the systme to keep up with -- in this case try to restart monitoring
    // (after a 1 second delay) and repeat the restart up to 10 times
-   if(dwNumberOfBytesTransfered == 0)
+   if (dwNumberOfBytesTransfered == 0)
    {
       // attempt to restart monitoring
       enqueRestartMonitoring(pContext);
