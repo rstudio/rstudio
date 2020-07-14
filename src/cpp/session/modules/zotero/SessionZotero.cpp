@@ -25,6 +25,17 @@
 
 #include "ZoteroCollections.hpp"
 
+// TODO: how are various error states handled:
+//   - offline
+//   - invalid key or userID
+//   - collection not found
+//   - others?
+
+// TODO: user pref for setting api key
+//   - UI
+//   - Storage
+//   - OAuth
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -44,17 +55,14 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
    // extract params
    std::string file;
-   json::Array collectionsJson;
-   Error error = json::readParams(request.params, &file, &collectionsJson);
+   json::Array collectionsJson, cachedJson;
+   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson);
    if (error)
    {
       json::setErrorResponse(error, &response);
       cont(Success(), &response);
       return;
    }
-
-   // determine collections
-   ZoteroCollectionSpecs collections;
 
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
@@ -67,15 +75,19 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
+
+   // determine collections to request
+   ZoteroCollectionSpecs collections;
+
+   // explicit request
    if (collectionsJson.getSize() > 0)
    {
-      std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& collection) {
-         return ZoteroCollectionSpec(collection.getObject()["name"].getString(),
-                                     collection.getObject()["version"].getInt());
+      std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& json) {
+         return ZoteroCollectionSpec(json.getString());
       });
-
    }
-   else
+   // based on project
+   else if (isProjectFile)
    {
       std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
       std::transform(bookdownCollections.begin(),bookdownCollections.end(), std::back_inserter(collections), [](std::string collection) {
@@ -90,6 +102,20 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       response.setResult(json::Array());
       cont(Success(), &response);
       return;
+   }
+
+
+   // note versions already cached on the client
+   for (ZoteroCollectionSpec& collection : collections)
+   {
+      std::string name = collection.name;
+      auto it = std::find_if(cachedJson.begin(), cachedJson.end(), [name](json::Value json) {
+         return json.getObject()["name"].getString() == name;
+      });
+      if (it != cachedJson.end())
+      {
+         collection.version = (*it).getObject()["version"].getInt();
+      }
    }
 
    // get the collections

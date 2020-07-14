@@ -34,6 +34,11 @@ namespace modules {
 namespace zotero {
 namespace collections {
 
+
+extern const char * const kName;
+extern const char * const kVersion;
+extern const char * const kItems;
+
 // collection spec
 struct ZoteroCollectionSpec
 {

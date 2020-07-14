@@ -279,7 +279,7 @@ void zoteroItemsForCollection(const std::string& key, int userID, const std::str
    zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
 }
 
-
+/*
 void zoteroDeleted(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
 {
    const char * const kDeletedSchema = R"(
@@ -314,6 +314,7 @@ void zoteroDeleted(const std::string& key, int userID, int since, const ZoteroJs
                      kDeletedSchema,
                      handler);
 }
+*/
 
 
 // keep a persistent mapping of apiKey to userId so we don't need to do the lookup each time
@@ -424,8 +425,8 @@ void getWebCollectionsForUser(const std::string& key, int userID, const ZoteroCo
       {
          json::Object collectionJson = json.getObject()["data"].getObject();
          std::string collectionID = collectionJson["key"].getString();
-         std::string name = collectionJson["name"].getString();
-         int version = collectionJson["version"].getInt();
+         std::string name = collectionJson[kName].getString();
+         int version = collectionJson[kVersion].getInt();
 
          // see if we need to do a download for this collection
          ZoteroCollectionSpecs::const_iterator it = std::find_if(

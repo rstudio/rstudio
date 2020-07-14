@@ -25,6 +25,6 @@ export interface ZoteroCollection extends ZoteroCollectionSpec {
 }
 
 export interface ZoteroServer {
-  getCollections: (file: string | null, collections: ZoteroCollectionSpec[]) => Promise<ZoteroCollection[]>;
+  getCollections: (file: string | null, collections: string[], cached: ZoteroCollectionSpec[]) => Promise<ZoteroCollection[]>;
 }
 

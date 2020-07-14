@@ -21,6 +21,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -42,12 +43,14 @@ public class PanmirrorZoteroServer
    }
    
    public Promise<JavaScriptObject> getCollections(String file, 
-                                                   JsArray<PanmirrorZoteroCollectionSpec> collections)
+                                                   JsArrayString collections,
+                                                   JsArray<PanmirrorZoteroCollectionSpec> cached)
    {
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.zoteroGetCollections(
             file,
             collections,
+            cached,
             new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
          );
       });

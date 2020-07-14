@@ -119,9 +119,9 @@ ZoteroCollection cachedCollection(const std::string& type, const std::string& co
          if (!error)
          {
             ZoteroCollection collection;
-            collection.name = collectionJson["name"].getString();
-            collection.version = collectionJson["version"].getInt();
-            collection.items = collectionJson["items"].getArray();
+            collection.name = collectionJson[kName].getString();
+            collection.version = collectionJson[kVersion].getInt();
+            collection.items = collectionJson[kItems].getArray();
             return collection;
          }
       }
@@ -151,9 +151,9 @@ void updateCachedCollection(const std::string& type, const std::string& context,
 
    // write the collection
    json::Object collectionJson;
-   collectionJson["name"] = collection.name;
-   collectionJson["version"] = collection.version;
-   collectionJson["items"] = collection.items;
+   collectionJson[kName] = collection.name;
+   collectionJson[kVersion] = collection.version;
+   collectionJson[kItems] = collection.items;
    Error error = core::writeStringToFile(cacheDir.completeChildPath(file), collectionJson.writeFormatted());
    if (error)
       LOG_ERROR(error);
@@ -162,6 +162,11 @@ void updateCachedCollection(const std::string& type, const std::string& context,
 
 
 } // end anonymous namespace
+
+const char * const kName = "name";
+const char * const kVersion = "version";
+const char * const kItems = "items";
+
 
 void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
 {

@@ -32,7 +32,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       const collections = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
-      const result = await this.server.getCollections(docPath, collections.map(name => ({ name, version: this.collectionVersion(name) })));
+      const result = await this.server.getCollections(docPath, collections, []);
       if (!this.collections && result) {
         this.collections = result;
 
