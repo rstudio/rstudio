@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer, ZoteroResult } from "../zotero";
+import { ZoteroCollection, ZoteroServer, ZoteroCollectionSpec } from "../zotero";
 
 import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bibliography";
 import { ParsedYaml } from "../yaml";
@@ -29,19 +29,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     this.server = server;
   }
 
+  // TODO: with JJA investigate streaming as way to improve responsiveness of initial load
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     if (zoteroEnabled(yamlBlocks)) {
       const collections = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
       try {
-        const result = await this.server.getCollections(docPath, collections, []);
+        const result = await this.server.getCollections(docPath, collections, this.collections as ZoteroCollectionSpec[] || []);
         if (result.status === "ok") {
           if (!this.collections && result.message) {
             this.collections = result.message as ZoteroCollection[];
-            const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
-            const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
-            this.biblio = { sources: zoteroEntries, project_biblios: [] };
           }
         } else {
           // console.log(result.status);
