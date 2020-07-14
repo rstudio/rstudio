@@ -12,34 +12,34 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer, ZoteroResult } from "../zotero";
+import { ZoteroCollection, ZoteroServer, ZoteroCollectionSpec } from "../zotero";
 
-import { BibliographyDataProvider, ParsedYaml, BibliographySource, Bibliography } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bibliography";
+import { ParsedYaml } from "../yaml";
+import { suggestCiteId } from "../cite";
+
+const kZoteroItemProvider = 'Zotero';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
   private collections?: ZoteroCollection[];
   private server: ZoteroServer;
-  private biblio?: Bibliography;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
   }
 
-
+  // TODO: with JJA investigate streaming as way to improve responsiveness of initial load
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     if (zoteroEnabled(yamlBlocks)) {
       const collections = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
       try {
-        const result = await this.server.getCollections(docPath, collections, []);
+        const result = await this.server.getCollections(docPath, collections, this.collections as ZoteroCollectionSpec[] || []);
         if (result.status === "ok") {
           if (!this.collections && result.message) {
             this.collections = result.message as ZoteroCollection[];
-            const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
-            const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
-            this.biblio = { sources: zoteroEntries, project_biblios: [] };
           }
         } else {
           // console.log(result.status);
@@ -52,22 +52,35 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
     } else {
       // Zotero is disabled, clear any already loaded bibliography
-      this.biblio = undefined;
+      this.collections = undefined;
     }
     return true;
   }
 
-  public bibliography(): Bibliography {
-    return this.biblio || { sources: [], project_biblios: [] };
+  public items(): BibliographySource[] {
+    const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
+    const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
+    return zoteroEntries;
+  }
+
+  public projectBibios(): string[] {
+    return [];
+  }
+
+  private hasCollections(collectionsNamed: string[]) {
+    if (!this.collections) {
+      return false;
+    }
+    return collectionsNamed.every(collectionName => (this.collections as ZoteroCollectionSpec[]).find(collection => collection.name === collectionName));
   }
 
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
 
     const items = collection.items?.map(item => {
       return {
-        id: item.id || '',
-        type: item.type || '',
-        ...item
+        ...item,
+        id: suggestCiteId([], item.author, item.issued),
+        provider: kZoteroItemProvider,
       };
     });
     return items || [];
@@ -82,6 +95,16 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 }
 
+
+// The Zotero header allows the following:
+// zotero: true | false                           Globally enables or disables the zotero integration
+//                                                If true, uses all collections. If false uses none.
+//
+// zotero: <collectionname> | [<collectionname>]  A single collection name or an array of collection
+//                                                names that will be used when searching for citation
+// 
+// Be default, zotero integration is disabled. Add this header to enable integration
+//
 function zoteroEnabled(parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
@@ -96,10 +119,14 @@ function zoteroEnabled(parsedYamls: ParsedYaml[]): boolean | undefined {
     if (typeof zoteroConfig === 'boolean') {
       return zoteroConfig;
     }
+
+    // There is a zotero header that isn't boolean, 
+    // It is enabled
+    return true;
   }
 
-  // TODO: Should we default this on or off
-  return true;
+  // There is no zotero header. Disabled
+  return false;
 }
 
 function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] {

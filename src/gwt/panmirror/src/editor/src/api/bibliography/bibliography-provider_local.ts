@@ -20,7 +20,10 @@ import { PandocServer } from "../pandoc";
 import { expandPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, ParsedYaml, Bibliography, parseYamlNodes } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource } from "./bibliography";
+import { ParsedYaml, parseYamlNodes } from '../yaml';
+
+export const kLocalItemType = 'Local';
 
 export interface BibliographyResult {
   etag: string;
@@ -30,7 +33,7 @@ export interface BibliographyResult {
 export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
   private etag: string;
-  private biblio?: Bibliography;
+  private bibliography?: Bibliography;
   private readonly server: PandocServer;
 
   public constructor(server: PandocServer) {
@@ -53,7 +56,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
       // Read bibliography data from files (via server)
       if (!this.bibliography || result.etag !== this.etag) {
-        this.biblio = result.bibliography;
+        this.bibliography = result.bibliography;
         updateIndex = true;
       }
 
@@ -63,9 +66,22 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public bibliography(): Bibliography {
-    return this.biblio || { sources: [], project_biblios: [] };
+  public items(): BibliographySource[] {
+    if (!this.bibliography) {
+      return [];
+    }
+
+    return this.bibliography?.sources.map(source => ({
+      ...source,
+      id: source.id!, // Local CSL always has an id
+      provider: kLocalItemType
+    }));
   }
+
+  public projectBibios(): string[] {
+    return this.bibliography?.project_biblios || [];
+  }
+
 }
 
 export function bibliographyPaths(doc: ProsemirrorNode): string[] | undefined {

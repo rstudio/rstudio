@@ -15,20 +15,21 @@
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { DecorationSet } from 'prosemirror-view';
+import { DecorationSet, EditorView } from 'prosemirror-view';
 
 import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation } from './cite';
+import { parseCitation, insertCitation } from './cite';
+import { PandocServer } from '../../api/pandoc';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -41,6 +42,7 @@ export const kCitationCompleteScope = 'CitationScope';
 export function citationCompletionHandler(
   ui: EditorUI,
   bibManager: BibliographyManager,
+  server: PandocServer
 ): CompletionHandler<BibliographyEntry> {
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
@@ -51,6 +53,18 @@ export function citationCompletionHandler(
 
     filter: (_completions: BibliographyEntry[], _state: EditorState, token: string) => {
       return filterCitations(token, bibManager, ui);
+    },
+
+    replace(view: EditorView, pos: number, entry: BibliographyEntry | null) {
+      if (entry && bibManager.findIdInLocalBibliography(entry.source.id)) {
+        // It's already in the bibliography, just write the id
+        const tr = view.state.tr;
+        performCompletionReplacement(tr, pos, entry.source.id);
+        view.dispatch(tr);
+      } else if (entry && entry.source.DOI) {
+        // It isn't in the bibliography, show the insert cite dialog
+        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source);
+      }
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -103,10 +117,10 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         pos: parsed.pos,
         offset: parsed.offset,
         completions: (_state: EditorState) =>
-          manager.loadBibliography(ui, context.doc).then((bibliography) => {
+          manager.load(ui, context.doc).then((loadedBibMgr) => {
 
             // Filter duplicate sources
-            const dedupedSources = uniqby(bibliography.sources, (source: BibliographySource) => source.id);
+            const dedupedSources = uniqby(loadedBibMgr.allSources(), (source: BibliographySource) => source.id);
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
@@ -140,7 +154,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
-      title={`@${entry.source.id}`}
+      title={`(${entry.source.provider.substr(0, 1)})@${entry.source.id}`}
       subTitle={entry.source.title || ''}
       detail={detail}
       htmlTitle={true}

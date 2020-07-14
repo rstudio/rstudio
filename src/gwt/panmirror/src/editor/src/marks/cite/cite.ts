@@ -218,7 +218,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     completionHandlers: () => [
       citationDoiCompletionHandler(context.ui, mgr, context.server),
-      citationCompletionHandler(context.ui, mgr),
+      citationCompletionHandler(context.ui, mgr, context.server.pandoc),
     ],
 
     plugins: (schema: Schema) => {
@@ -247,7 +247,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
         // First check the local bibliography- if we already have this DOI
         // we can just paste the DOI and allow the completion to handle it
-        const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
+        const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
 
         // Insert the DOI text as a placeholder
         const tr = view.state.tr;
@@ -259,7 +259,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         view.dispatch(tr);
 
         if (!source) {
-          insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
+          insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
 
@@ -580,7 +580,7 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 }
 
 // Replaces the current selection with a resolved citation id
-export async function insertCitationForDOI(
+export async function insertCitation(
   view: EditorView,
   doi: string,
   bibManager: BibliographyManager,
@@ -590,12 +590,12 @@ export async function insertCitationForDOI(
   csl?: CSL
 ) {
 
-  const bibliography = await bibManager.loadBibliography(ui, view.state.doc);
+  const loadedBibMgr = await bibManager.load(ui, view.state.doc);
 
   // We try not call this function if the entry for this DOI is already in the bibliography,
   // but it can happen. So we need to check here if it is already in the bibliography and 
   // if it is, deal with it appropriately.
-  const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
+  const existingEntry = loadedBibMgr.findDoiInLocalBibliography(doi);
   if (existingEntry) {
     // Now that we have loaded the bibliography, there is an entry
     // Just write it. Not an ideal experience, but something that
@@ -614,12 +614,12 @@ export async function insertCitationForDOI(
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(view.state.doc);
-    const existingIds = bibliography.sources.map(source => source.id);
+    const existingIds = loadedBibMgr.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies),
+      bibliographyFiles: bibliographyFiles(loadedBibMgr.projectBiblios(), bibliographies),
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
@@ -631,7 +631,7 @@ export async function insertCitationForDOI(
     if (result && result.id.length) {
 
       // Figure out whether this is a project or document level bibliography
-      const project = bibliography.project_biblios.length > 0;
+      const project = loadedBibMgr.projectBiblios().length > 0;
       const bibliographyFile = project
         ? result.bibliographyFile
         : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
@@ -640,8 +640,9 @@ export async function insertCitationForDOI(
       const cslToWrite = sanitizeForCiteproc(result.csl);
 
       // Write entry to a bibliography file if it isn't already present
-      await bibManager.loadBibliography(ui, view.state.doc);
-      if (!bibManager.findIdInLoadedBibliography(result.id)) {
+      // TODO: this seems like it is making things very slow
+      await bibManager.load(ui, view.state.doc);
+      if (!bibManager.findIdInLocalBibliography(result.id)) {
         await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
       }
 
