@@ -125,7 +125,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    for (const std::string& name : names)
    {
       // check for interrupt
-      boost::this_thread::interruption_point();
+      if (boost::this_thread::interruption_requested())
+         return core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
 
       // compute the path
       std::string path = rootPath.completeChildPath(name).getAbsolutePath();

@@ -25,6 +25,7 @@
 
 #include <shared_core/FilePath.hpp>
 
+#include <core/BoostThread.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
 
@@ -537,15 +538,17 @@ Handle registerMonitor(const core::FilePath& filePath,
    options.yield = true;
    options.filter = filter;
    error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
+
    if (error)
    {
-       // cleanup
-       cleanupContext(pContext);
+      // cleanup
+      cleanupContext(pContext);
 
-       // return error
-       callbacks.onRegistrationError(error);
+      // return error
+      callbacks.onRegistrationError(error);
 
-       return Handle();
+      // otherwise just return empty handle
+      return Handle();
    }
 
    // now that we have finished the file listing we know we have a valid
