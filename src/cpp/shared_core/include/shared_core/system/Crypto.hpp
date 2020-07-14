@@ -47,6 +47,11 @@ namespace core {
 namespace system {
 namespace crypto {
 
+/**
+ * @file
+ * Cryptographic Utilities.
+ */
+
 Error getLastCryptoError(const ErrorLocation& in_location);
 
 /**
