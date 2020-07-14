@@ -100,43 +100,7 @@ void zoteroJsonRequest(const std::string& key,
 
 void zoteroItemRequest(const std::string& key, const std::string& path, const ZoteroJsonResponseHandler& handler)
 {
-
-   const char * const kItemSchema = R"(
-   {
-     "$id": "http://rstudio.org/schemas/zotero-items.json",
-     "$schema": "http://json-schema.org/schema#",
-     "title": "Zotero Items Metadata Schema",
-     "type": "array",
-     "items": {
-       "type": "object",
-       "properties" : {
-           "key" : {
-               "type": "string"
-           },
-           "version": {
-               "type": "number"
-           },
-           "library": {
-             "type": "object",
-             "properties": {
-                  "type": {
-                        "type": "string"
-                   },
-                   "id": {
-                     "type": "number"
-                   },
-                   "name": {
-                     "type": "string"
-                   }
-             }
-           },
-           "csljson": {
-             "type": "object"
-            }
-       }
-     }
-   })";
-
+   std::string schema = module_context::resourceFileAsString("schema/zotero-items.json");
 
    http::Fields params;
    params.push_back(std::make_pair("format", "json"));
@@ -146,120 +110,26 @@ void zoteroItemRequest(const std::string& key, const std::string& path, const Zo
    zoteroJsonRequest(key,
                      path,
                      params,
-                     kItemSchema,
+                     schema,
                      handler);
 }
 
 void zoteroKeyInfo(const std::string& key, const ZoteroJsonResponseHandler& handler)
 {
-   const char * const kKeySchema = R"(
-   {
-     "$id": "http://rstudio.org/schemas/zotero-key.json",
-     "$schema": "http://json-schema.org/schema#",
-     "title": "Zotero Key Metadata Schema",
-     "type": "object",
-     "properties": {
-       "key": {
-         "type": "string"
-       },
-       "userID": {
-         "type": "number"
-       },
-       "username": {
-         "type": "string"
-       },
-       "access": {
-         "type": "object",
-         "properties": {
-           "user": {
-             "type": "object",
-             "properties": {
-               "library": {
-                 "type": "boolean"
-               },
-               "files": {
-                 "type": "boolean"
-               }
-             }
-           },
-           "groups": {
-             "type": "object",
-             "properties": {
-               "all": {
-                 "type": "object",
-                 "properties": {
-                   "library": {
-                     "type": "boolean"
-                   },
-                   "write": {
-                     "type": "boolean"
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   })";
+   std::string schema = module_context::resourceFileAsString("schema/zotero-key.json");
 
    boost::format fmt("keys/%s");
    zoteroJsonRequest("",
                      boost::str(fmt % key),
                      http::Fields(),
-                     kKeySchema,
+                     schema,
                      handler);
 }
 
 
 void zoteroCollections(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
 {
-   const char * const kCollectionsSchema = R"(
-   {
-     "$id": "http://rstudio.org/schemas/zotero-collections.json",
-     "$schema": "http://json-schema.org/schema#",
-     "title": "Zotero Collections Metadata Schema",
-     "type": "array",
-     "items": {
-       "type": "object",
-       "properties" : {
-            "key" : {
-               "type": "string"
-           },
-           "version": {
-               "type": "number"
-           },
-           "library": {
-             "type": "object",
-             "properties": {
-                  "type": {
-                        "type": "string"
-                   },
-                   "id": {
-                     "type": "number"
-                   },
-                   "name": {
-                     "type": "string"
-                   }
-             }
-           },
-           "data": {
-             "type": "object",
-             "properties": {
-               "key" : {
-                 "type": "string"
-               },
-               "version": {
-                 "type": "number"
-               },
-               "name": {
-                 "type": "string"
-               }
-             }
-           }
-       }
-     }
-   })";
+   std::string schema = module_context::resourceFileAsString("schema/zotero-collections.json");
 
    http::Fields params;
    params.push_back(std::make_pair("format", "json"));
@@ -268,7 +138,7 @@ void zoteroCollections(const std::string& key, int userID, const ZoteroJsonRespo
    zoteroJsonRequest(key,
                      boost::str(fmt % userID),
                      params,
-                     kCollectionsSchema,
+                     schema,
                      handler);
 }
 

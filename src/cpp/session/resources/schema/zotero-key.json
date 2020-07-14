@@ -1,0 +1,49 @@
+{
+  "$id": "http://rstudio.org/schemas/zotero-key.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Key Metadata Schema",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "userID": {
+      "type": "number"
+    },
+    "username": {
+      "type": "string"
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "object",
+          "properties": {
+            "library": {
+              "type": "boolean"
+            },
+            "files": {
+              "type": "boolean"
+            }
+          }
+        },
+        "groups": {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "object",
+              "properties": {
+                "library": {
+                  "type": "boolean"
+                },
+                "write": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
