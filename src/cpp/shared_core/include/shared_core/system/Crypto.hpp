@@ -102,12 +102,12 @@ Error base64Decode(const std::string& in_data, std::vector<unsigned char>& out_d
 Error base64Decode(const std::string& in_data, std::string& out_decoded);
 
 /**
- * @brief Base 64 encodes a string.
+ * @brief Base-64 encodes a string.
  *
  * @param in_data       The string data to be encoded.
- * @param out_encoded   The base 64 encoded string.
+ * @param out_encoded   The base-64 encoded string.
  *
- * @return Success if the data could be base 64 encoded; Error otherwise.
+ * @return Success if the data could be base-64 encoded; Error otherwise.
  */
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded);
 
