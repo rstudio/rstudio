@@ -640,6 +640,7 @@ export async function insertCitation(
       const cslToWrite = sanitizeForCiteproc(result.csl);
 
       // Write entry to a bibliography file if it isn't already present
+      // TODO: this seems like it is making things very slow
       await bibManager.load(ui, view.state.doc);
       if (!bibManager.findIdInLocalBibliography(result.id)) {
         await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
