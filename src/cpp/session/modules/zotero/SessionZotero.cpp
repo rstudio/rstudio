@@ -54,7 +54,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    }
 
    // determine collections
-   std::vector<std::string> collections;
+   ZoteroCollectionSpecs collections;
 
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
@@ -70,13 +70,17 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    if (collectionsJson.getSize() > 0)
    {
       std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& collection) {
-         return collection.getObject()["name"].getString();
+         return ZoteroCollectionSpec(collection.getObject()["name"].getString(),
+                                     collection.getObject()["version"].getInt());
       });
 
    }
    else
    {
-      collections = module_context::bookdownZoteroCollections();
+      std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+      std::transform(bookdownCollections.begin(),bookdownCollections.end(), std::back_inserter(collections), [](std::string collection) {
+         return ZoteroCollectionSpec(collection);
+      });
    }
 
    // return empty array if no collections were requested
@@ -88,14 +92,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // collection specs
-   ZoteroCollectionSpecs specs;
-   std::transform(collections.begin(), collections.end(), std::back_inserter(specs), [](const std::string& collection) {
-      return ZoteroCollectionSpec(collection);
-   });
-
    // get the collections
-   getCollections(specs, [cont](Error error, ZoteroCollections collections) {
+   getCollections(collections, [cont](Error error, ZoteroCollections collections) {
 
       // response
       json::JsonRpcResponse response;

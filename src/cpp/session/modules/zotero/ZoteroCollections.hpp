@@ -41,6 +41,7 @@ struct ZoteroCollectionSpec
       : name(name), version(version)
    {
    }
+   bool empty() const { return name.empty(); }
    std::string name;
    int version;
 };
@@ -50,6 +51,10 @@ typedef boost::function<void(core::Error,ZoteroCollectionSpecs)> ZoteroCollectio
 // collection
 struct ZoteroCollection : ZoteroCollectionSpec
 {
+   ZoteroCollection(ZoteroCollectionSpec spec = ZoteroCollectionSpec())
+      : ZoteroCollectionSpec(spec.name, spec.version)
+   {
+   }
    core::json::Array items;
 };
 typedef std::vector<ZoteroCollection> ZoteroCollections;
