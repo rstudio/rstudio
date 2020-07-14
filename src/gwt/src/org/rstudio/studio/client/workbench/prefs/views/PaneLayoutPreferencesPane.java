@@ -188,6 +188,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       userPrefs_ = userPrefs;
       paneManager_ = pPaneManager.get();
 
+      PaneConfig paneConfig = userPrefs.panes().getGlobalValue().cast();
+      additionalColumnCount_ = paneConfig.getAdditionalSourceColumns();
+
       add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
 
       Toolbar columnToolbar = new Toolbar("Manage Column Display");
@@ -196,33 +199,41 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       ToolbarButton addButton = new ToolbarButton(
          "Add Column",
          "Add column",
-         res_.iconAddSourcePane(),
-         event ->
-         {
-            // limiting to 3 additional columns for now because it looks nice
-            if (displayColumnCount_ < 3)
-            {
-               dirty_ = true;
-               updateTable(displayColumnCount_ + 1);
-            }
-         });
-      if (!userPrefs.allowSourceColumns().getGlobalValue())
+         res_.iconAddSourcePane());
+      if (displayColumnCount_ > MAX_COLUMN_COUNT - 1 ||
+         !userPrefs.allowSourceColumns().getGlobalValue())
          addButton.setEnabled(false);
-      columnToolbar.addLeftWidget(addButton);
-      columnToolbar.addLeftSeparator();
 
       ToolbarButton removeButton = new ToolbarButton(
          "Remove Column",
          "Remove column",
-         res_.iconRemoveSourcePane(),
-         event ->
-         {
-            if (displayColumnCount_ > 0)
-            {
-               dirty_ = true;
-               updateTable(displayColumnCount_ - 1);
-            }
-         });
+         res_.iconRemoveSourcePane());
+      removeButton.setEnabled(additionalColumnCount_ > 0);
+
+      addButton.addClickHandler(event ->
+      {
+         dirty_ = true;
+         updateTable(displayColumnCount_ + 1);
+
+         if (displayColumnCount_ > MAX_COLUMN_COUNT - 1)
+            addButton.setEnabled(false);
+         if (!removeButton.isEnabled())
+            removeButton.setEnabled(true);
+      });
+
+      removeButton.addClickHandler(event ->
+      {
+         dirty_ = true;
+         updateTable(displayColumnCount_ - 1);
+
+         if (displayColumnCount_ < 1)
+            removeButton.setEnabled(false);
+         if (!addButton.isEnabled())
+            addButton.setEnabled(true);
+      });
+
+      columnToolbar.addLeftWidget(addButton);
+      columnToolbar.addLeftSeparator();
       columnToolbar.addLeftWidget(removeButton);
       columnToolbar.addLeftSeparator();
       add(columnToolbar);
@@ -244,8 +255,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             lb.addItem(value);
       }
 
-      PaneConfig value = userPrefs.panes().getGlobalValue().cast();
-      if (value == null || !value.validateAndAutoCorrect())
+      if (paneConfig == null || !paneConfig.validateAndAutoCorrect())
          userPrefs.panes().setGlobalValue(PaneConfig.createDefault(), false);
 
       JsArrayString origPanes = userPrefs.panes().getGlobalValue().getQuadrants();
@@ -268,7 +278,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       for (ListBox lb : visiblePanes_)
          lb.addChangeHandler(event -> dirty_ = true);
 
-      additionalColumnCount_ = value.getAdditionalSourceColumns();
       String paneWidth = updateTable(additionalColumnCount_);
 
       visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
@@ -354,10 +363,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       final String columnWidth = columnWidthValue + "px";
       final String cellWidth = cellWidthValue + "px";
-      leftTop_.setWidth(cellWidth);
-      leftBottom_.setWidth(cellWidth);
-      rightTop_.setWidth(cellWidth);
-      rightBottom_.setWidth(cellWidth);
+      final String selectWidth = (cellWidthValue - GRID_SELECT_PADDING) + "px";
+      leftTop_.setWidth(selectWidth);
+      leftBottom_.setWidth(selectWidth);
+      rightTop_.setWidth(selectWidth);
+      rightBottom_.setWidth(selectWidth);
 
       // create grid
       if (grid_ == null)
@@ -599,4 +609,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int MAX_COLUMN_WIDTH = 50 + GRID_CELL_PADDING + GRID_CELL_SPACING;
    private final static int TABLE_WIDTH = 435;
    private final static int GRID_PANE_COUNT = 2;
+   private final static int GRID_SELECT_PADDING = 10; // must match CSS file
+   private final static int MAX_COLUMN_COUNT = 3; // limiting to 3 for now it looks nice
 }

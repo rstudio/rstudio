@@ -42,11 +42,7 @@
 }
 
 .paneLayoutTable .label {
-   display: inherit !important;
-   vertical-align: bottom;
-   height: 170px;
-   padding-left: 5px;
-   padding-right: 2px;
+   padding: 5px 5px 0px 5px;
 }
 
 .paneLayoutTable .gwt-CheckBox {
@@ -57,7 +53,7 @@
 }
 
 .paneLayoutTable select {
-   margin: 2px 2px 5px 2px;
+   margin: 5px 5px 5px 5px;
 }
 
 .themeChooser select {
