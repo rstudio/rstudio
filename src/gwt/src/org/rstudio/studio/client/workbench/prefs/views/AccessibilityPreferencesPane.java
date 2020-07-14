@@ -33,7 +33,6 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -126,10 +125,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       {
          initialScreenReaderEnabled_ = screenReaderEnabledSetting;
          prefs.setScreenReaderEnabled(screenReaderEnabledSetting);
-         if (Desktop.isDesktop())
-            restartRequirement.setDesktopRestartRequired(true);
-         else
-            restartRequirement.setUiReloadRequired(true);
+         restartRequirement.setRestartRequired();
       }
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
