@@ -92,7 +92,8 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
                         "-DSQLITE3_INCLUDE_DIR=\"", sqlite_header_dir, "\" ",
                         "-DSQLITE3_LIBRARY=\"", file.path(sqlite_dir, "sqlite3-debug-x86.lib"), "\" ",
                         "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
-                        "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\"")
+                        "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ", 
+                        "..\\..")
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
    
