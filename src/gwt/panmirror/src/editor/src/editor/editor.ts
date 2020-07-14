@@ -313,9 +313,6 @@ export class Editor {
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
-    const result = await context.server.zotero.getCollections(null, ["Research"], []);
-    console.log(result.message);
-
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
 
