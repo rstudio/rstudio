@@ -265,7 +265,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualMode.add(visualModeOptions);
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
       tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());

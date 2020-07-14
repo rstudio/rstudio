@@ -368,7 +368,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       restoreLastProject_.setEnabled(false);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(graphics, "Graphics", graphics.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());

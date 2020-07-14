@@ -789,7 +789,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialZoomLevel_;
    private final SelectWidget flatTheme_;
    private Boolean relaunchRequired_;
-   private static String previewDefaultHeight_ = "498px";
+   private static String previewDefaultHeight_ = "533px";
    private HashMap<String, AceTheme> themeList_;
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;

@@ -88,7 +88,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Accessibility");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(generalPanel, "General", generalPanel.getBasePanelId());
       tabPanel.add(announcementsPanel, "Announcements", announcementsPanel.getBasePanelId());
       tabPanel.selectTab(0);
