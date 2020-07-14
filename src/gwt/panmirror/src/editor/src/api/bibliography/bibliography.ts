@@ -22,47 +22,51 @@ import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
-import { BibliographyDataProviderLocal } from './bibliography-provider_local';
+import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 
 
 // TODO: Add a type distinction so the UI can differentiate (e.g. an overlay would be nice)
 export interface BibliographyDataProvider {
   load(docPath: string, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  bibliography(): Bibliography;
+  items(): BibliographySource[];
+  projectBibios(): string[];
 }
 
 export interface Bibliography {
-  sources: BibliographySource[];
+  sources: CSL[];
   project_biblios: string[];
 }
 
 // The individual bibliographic source
 export interface BibliographySource extends CSL {
-  id: string; // TODO: Should we just figure out how to make id required and get rid of this interface
+  id: string;
+  provider: string;
 }
 
 // The fields and weights that will indexed and searched
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: 20 },
-  { name: 'author.family', weight: 10 },
-  { name: 'author.literal', weight: 10 },
-  { name: 'author.given', weight: 1 },
-  { name: 'title', weight: 1 },
-  { name: 'issued', weight: 1 },
+  { name: 'id', weight: .35 },
+  { name: 'author.family', weight: .25 },
+  { name: 'author.literal', weight: .25 },
+  { name: 'title', weight: .1 },
+  { name: 'author.given', weight: .025 },
+  { name: 'issued', weight: .025 },
 ];
 
 export class BibliographyManager {
 
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
+  private sources?: BibliographySource[];
+  private projectBibs?: string[];
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
-  public async loadBibliography(ui: EditorUI, doc: ProsemirrorNode): Promise<Bibliography> {
+  public async loadBibliography(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyManager> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -71,65 +75,61 @@ export class BibliographyManager {
     const docPath = ui.context.getDocumentPath() || '';
 
     // Load each provider
-    const needsIndexUpdates = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
+    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
 
     // Once loaded, see if any of the providers required an index update
-    const needsIndexUpdate = needsIndexUpdates.reduce((prev, curr) => prev || curr);
-
-    // Get the entries
-    const providersEntries = this.providers.map(provider => provider.bibliography().sources);
-    const providerEntries = ([] as BibliographySource[]).concat(...providersEntries);
-
-    // Get the project biblios
-    const providersProjectBibs = this.providers.map(provider => provider.bibliography().project_biblios);
-    const providerProjectBibs = ([] as string[]).concat(...providersProjectBibs);
+    const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
 
     // Update the index if anything requires that we do so
     if (needsIndexUpdate) {
+      // Get the entries
+      const providersEntries = this.providers.map(provider => provider.items());
+      this.sources = ([] as BibliographySource[]).concat(...providersEntries);
 
-      this.updateIndex(providerEntries);
+      // Get the project biblios
+      const providersProjectBibs = this.providers.map(provider => provider.projectBibios());
+      this.projectBibs = ([] as string[]).concat(...providersProjectBibs);
+
+      this.updateIndex(this.sources);
     }
 
-    // return sources
-    return { sources: providerEntries, project_biblios: providerProjectBibs };
+    return this;
   }
 
 
-  public findDoiInLoadedBibliography(doi: string): BibliographySource | undefined {
+  public all(): BibliographySource[] {
+    if (this.sources) {
+      return this.sources;
+    }
+    return [];
+  }
+
+  public local(): BibliographySource[] {
+    return this.all().filter(source => source.provider === kLocalItemType);
+  }
+
+  public projectBiblios(): string[] {
+    if (this.projectBibs) {
+      return this.projectBibs;
+    }
+    return [];
+  }
+
+  public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {
 
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use loadBibliography before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
-    return this.findPerfectMatch('doi', doi);
+    return this.local().find(source => source.DOI === doi);
   }
 
-  public findIdInLoadedBibliography(id: string): BibliographySource | undefined {
+  public findIdInLocalBibliography(id: string): BibliographySource | undefined {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use loadBibliography before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
-    return this.findPerfectMatch('id', id);
-  }
-
-  private findPerfectMatch(name: string, value: string): BibliographySource | undefined {
-    if (this.fuse) {
-      const options = {
-        isCaseSensitive: false,
-        shouldSort: true,
-        includeMatches: false,
-        includeScore: false,
-        findAllMatches: false,
-        limit: 1,
-        threshold: 0.0, // Perfect match
-        keys: { name },
-      };
-      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(value, options);
-      const items = results.map((result: { item: any }) => result.item);
-      if (items.length > 0) {
-        return items[0];
-      }
-    }
+    return this.local().find(source => source.id === id);
   }
 
   public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {

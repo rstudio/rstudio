@@ -46,7 +46,7 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
 
       const csl = cslFromDoc(view.state.doc);
       const citeId = target.text.replace(/^-@|^@/, '');
-      const source = bibMgr.findIdInLoadedBibliography(citeId);
+      const source = bibMgr.findIdInLocalBibliography(citeId);
       if (source) {
         const previewHtml = await server.citationHTML(ui.context.getDocumentPath(), JSON.stringify([source]), csl || null);
         const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
