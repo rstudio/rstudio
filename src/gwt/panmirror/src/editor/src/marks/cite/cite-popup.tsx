@@ -24,7 +24,7 @@ import { EditorUI } from "../../api/ui";
 import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from "../../api/widgets/popup";
-import { BibliographyManager, cslFromDoc } from "../../api/bibliography";
+import { BibliographyManager, cslFromDoc } from "../../api/bibliography/bibliography";
 import { PandocServer } from "../../api/pandoc";
 
 import './cite-popup.css';
@@ -44,7 +44,7 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
 
       const csl = cslFromDoc(view.state.doc);
       const citeId = target.text.replace(/^-@|^@/, '');
-      const source = bibMgr.findCiteId(citeId);
+      const source = bibMgr.findIdInLoadedBibliography(citeId);
       if (source) {
         const previewHtml = await server.citationHTML(ui.context.getDocumentPath(), JSON.stringify([source]), csl || null);
         const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {

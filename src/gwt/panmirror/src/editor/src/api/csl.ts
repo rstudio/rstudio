@@ -15,6 +15,10 @@
 
 export interface CSL {
 
+  // The id. This is technically required, but some providers (like crossref) don't provide
+  // one
+  id?: string;
+
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
 
@@ -69,7 +73,7 @@ export interface CSLName {
 }
 
 export interface CSLDate {
-  'date-parts'?: [number, number?, number?][];
+  'date-parts'?: Array<[number, number?, number?]>;
   'raw'?: string;
 }
 
