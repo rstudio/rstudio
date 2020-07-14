@@ -21,9 +21,15 @@
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionAsyncDownloadFile.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "ZoteroWebAPI.hpp"
+#include "ZoteroCollections.hpp"
+
+// TODO: user pref for setting api key
+//   - UI
+//   - Storage
+//   - OAuth
 
 using namespace rstudio::core;
 
@@ -32,15 +38,18 @@ namespace session {
 namespace modules {
 namespace zotero {
 
+using namespace collections;
+
 namespace {
 
-void continuationError(const json::JsonRpcFunctionContinuation& cont, const Error& error)
-{
-   json::JsonRpcResponse response;
-   LOG_ERROR(error);
-   cont(error, &response);
-}
+const char * const kStatus = "status";
+const char * const kMessage = "message";
+const char * const kError = "error";
 
+const char * const kStatusOK = "ok";
+const char * const kStatusNoHost = "nohost";
+const char * const kStatusNotFound = "notfound";
+const char * const kStatusError = "error";
 
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
@@ -50,17 +59,14 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
    // extract params
    std::string file;
-   json::Array collectionsJson;
-   Error error = json::readParams(request.params, &file, &collectionsJson);
+   json::Array collectionsJson, cachedJson;
+   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson);
    if (error)
    {
       json::setErrorResponse(error, &response);
       cont(Success(), &response);
       return;
    }
-
-   // determine collections
-   std::vector<std::string> collections;
 
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
@@ -73,16 +79,24 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
+
+   // determine collections to request
+   ZoteroCollectionSpecs collections;
+
+   // explicit request
    if (collectionsJson.getSize() > 0)
    {
-      std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& collection) {
-         return collection.getObject()["name"].getString();
+      std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& json) {
+         return ZoteroCollectionSpec(json.getString());
       });
-
    }
-   else
+   // based on project
+   else if (isProjectFile)
    {
-      collections = module_context::bookdownZoteroCollections();
+      std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+      std::transform(bookdownCollections.begin(),bookdownCollections.end(), std::back_inserter(collections), [](std::string collection) {
+         return ZoteroCollectionSpec(collection);
+      });
    }
 
    // return empty array if no collections were requested
@@ -94,80 +108,64 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // get the requested collection(s)
-   web_api::zoteroKeyInfo([cont, collections](const Error& error,int,json::Value jsonValue) {
 
-      if (error)
+   // note versions already cached on the client
+   for (ZoteroCollectionSpec& collection : collections)
+   {
+      std::string name = collection.name;
+      auto it = std::find_if(cachedJson.begin(), cachedJson.end(), [name](json::Value json) {
+         return json.getObject()["name"].getString() == name;
+      });
+      if (it != cachedJson.end())
       {
-         continuationError(cont, error);
-         return;
+         collection.version = (*it).getObject()["version"].getInt();
+      }
+   }
+
+   // get the collections
+   getCollections(collections, [cont](Error error, ZoteroCollections collections) {
+
+      // result defaults
+      json::Object resultJson;
+      resultJson[kMessage] = json::Value();
+      resultJson[kError] = "";
+
+      // handle success & error
+      if (!error)
+      {
+         json::Array collectionsJson;
+         for (auto collection : collections)
+         {
+            json::Object collectionJson;
+            collectionJson[kName] = collection.name;
+            collectionJson[kVersion] = collection.version;
+            collectionJson[kItems] = collection.items;
+            collectionsJson.push_back(collectionJson);
+         }
+         resultJson[kStatus] = kStatusOK;
+         resultJson[kMessage] = collectionsJson;
+      }
+      else
+      {
+         std::string err = core::errorDescription(error);
+         if (is404Error(err))
+         {
+            resultJson[kStatus] = kStatusNotFound;
+         }
+         else if (isHostError(err))
+         {
+            resultJson[kStatus] = kStatusNoHost;
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE(err);
+            resultJson[kStatus] = kStatusError;
+         }
       }
 
-      int userID = jsonValue.getObject()["userID"].getInt();
-
-      web_api::zoteroCollections(userID, [userID, cont, collections](const Error& error,int,json::Value jsonValue) {
-         if (error)
-         {
-            continuationError(cont, error);
-            return;
-         }
-
-         // TODO: support multiple collections
-         std::string targetCollection = collections[0];
-         json::Array jsonCollections = jsonValue.getArray();
-         bool foundCollection = false;
-         for (std::size_t i = 0; i<jsonCollections.getSize(); i++)
-         {
-            json::Object collectionJson = jsonCollections[i].getObject()["data"].getObject();
-            std::string name = collectionJson["name"].getString();
-            if (name == targetCollection)
-            {
-               std::string key = collectionJson["key"].getString();
-               int version = collectionJson["version"].getInt();
-               web_api::zoteroItemsForCollection(userID, key, [name, version, cont](const Error& error,int,json::Value jsonValue) {
-
-                  if (error)
-                  {
-                     continuationError(cont, error);
-                     return;
-                  }
-
-                  // array of items
-                  json::Array resultItemsJson = jsonValue.getArray();
-
-                  // create response object
-                  json::Object zoteroCollectionJSON;
-                  zoteroCollectionJSON["name"] = name;
-                  zoteroCollectionJSON["version"] = version;
-                  json::Array itemsJson;
-                  std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
-                     return resultItemJson.getObject()["csljson"];
-                  });
-                  zoteroCollectionJSON["items"] = itemsJson;
-
-                  // satisfy continutation
-                  json::JsonRpcResponse response;
-                  json::Array responseJson;
-                  responseJson.push_back(zoteroCollectionJSON);
-                  response.setResult(responseJson);
-                  cont(Success(), &response);
-
-               });
-
-               foundCollection = true;
-               break;
-            }
-
-         }
-
-         // didn't find a target, so return empty array
-         if (!foundCollection)
-         {
-            json::JsonRpcResponse response;
-            response.setResult(json::Array());
-            cont(Success(), &response);
-         }
-      });
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      cont(Success(), &response);
 
    });
 

@@ -19,12 +19,14 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 
 
 public interface PanmirrorZoteroServerOperations 
 {
    void zoteroGetCollections(String file,
-                             JsArray<PanmirrorZoteroCollectionSpec> collections, 
+                             JsArrayString collections,
+                             JsArray<PanmirrorZoteroCollectionSpec> cached, 
                              ServerRequestCallback<JavaScriptObject> callback);
 }

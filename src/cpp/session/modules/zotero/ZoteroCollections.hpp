@@ -34,19 +34,47 @@ namespace modules {
 namespace zotero {
 namespace collections {
 
+
+extern const char * const kName;
+extern const char * const kVersion;
+extern const char * const kItems;
+
+// collection spec
 struct ZoteroCollectionSpec
 {
+   ZoteroCollectionSpec(const std::string& name = "", int version = 0)
+      : name(name), version(version)
+   {
+   }
+   bool empty() const { return name.empty(); }
    std::string name;
-   std::string version;
+   int version;
 };
+typedef std::vector<ZoteroCollectionSpec> ZoteroCollectionSpecs;
+typedef boost::function<void(core::Error,ZoteroCollectionSpecs)> ZoteroCollectionSpecsHandler;
 
+// collection
 struct ZoteroCollection : ZoteroCollectionSpec
 {
-   core::json::Value items;
+   ZoteroCollection(ZoteroCollectionSpec spec = ZoteroCollectionSpec())
+      : ZoteroCollectionSpec(spec.name, spec.version)
+   {
+   }
+   core::json::Array items;
+};
+typedef std::vector<ZoteroCollection> ZoteroCollections;
+typedef boost::function<void(core::Error,ZoteroCollections)> ZoteroCollectionsHandler;
+
+
+// requirements for implementing a collection source
+struct ZoteroCollectionSource
+{
+   boost::function<void(const std::string&, const ZoteroCollectionSpecs&, ZoteroCollectionsHandler)> getUpdates;
+   boost::function<void(const std::string&, const ZoteroCollectionSpecs&, ZoteroCollectionsHandler)> getCollections;
 };
 
-void getCollections(const std::vector<ZoteroCollectionSpec> collections,
-                    boost::function<void(core::Error,std::vector<ZoteroCollection>)> handler);
+// get collections using the currently configured source
+void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler);
 
 
 } // end namespace collections

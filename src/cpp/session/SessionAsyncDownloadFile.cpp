@@ -152,6 +152,17 @@ void asyncJsonRpcRequest(const std::string& url,
    asyncDownloadFile(url, headers, boost::bind(endJsonRpcRequest, cont, handler, _1));
 }
 
+bool is404Error(const std::string& stdErr)
+{
+   return boost::algorithm::contains(stdErr, "404 Not Found");
+}
+
+bool isHostError(const std::string& stdErr)
+{
+   return boost::algorithm::contains(stdErr, "resolve host name");
+}
+
+
 } // namespace session
 } // namespace rstudio
 
