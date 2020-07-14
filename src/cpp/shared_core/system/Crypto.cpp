@@ -83,10 +83,10 @@ Error getLastCryptoError(const ErrorLocation& in_location)
    unsigned long ec = ::ERR_get_error();
    if (ec == 0)
    {
-      log::logWarningMessage("getLastCrytpoError called with no pending error");
+      log::logWarningMessage("getLastCryptoError called with no pending error");
       return systemError(
          boost::system::errc::not_supported,
-         "lastCrytpoError called with no pending error",
+         "getLastCryptoError called with no pending error",
          in_location);
    }
 
