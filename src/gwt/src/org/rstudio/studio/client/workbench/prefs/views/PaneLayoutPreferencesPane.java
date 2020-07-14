@@ -366,6 +366,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.addStyleName(res_.styles().paneLayoutTable());
          grid_.setCellSpacing(GRID_CELL_SPACING);
          grid_.setCellPadding(GRID_CELL_PADDING);
+         Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), "Columns and Panes Layout");
 
          // the two rows have a different number of columns
          // because the source columns only use one
