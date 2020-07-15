@@ -103,7 +103,7 @@ void zoteroJsonRequest(const std::string& key,
 }
 
 
-void zoteroItemRequest(const std::string& key, const std::string& path, const ZoteroJsonResponseHandler& handler)
+void zoteroItemRequest(const std::string& key, const std::string& path, int start, const ZoteroJsonResponseHandler& handler)
 {
    std::string schema = module_context::resourceFileAsString("schema/zotero-items.json");
 
@@ -111,6 +111,8 @@ void zoteroItemRequest(const std::string& key, const std::string& path, const Zo
    params.push_back(std::make_pair("format", "json"));
    params.push_back(std::make_pair("include", "csljson"));
    params.push_back(std::make_pair("itemType", "-attachment"));
+   params.push_back(std::make_pair("start", safe_convert::numberToString(start)));
+   params.push_back(std::make_pair("limit", "100"));
 
    zoteroJsonRequest(key,
                      path,
@@ -147,11 +149,22 @@ void zoteroCollections(const std::string& key, int userID, const ZoteroJsonRespo
                      handler);
 }
 
+void zoteroItems(const std::string& key, int userID, int start, const ZoteroJsonResponseHandler& handler)
+{
+   // this might need to inherently be a sync operation via
+   // https://api.zotero.org/users/6739564/items?format=versions
+
+   // so it's a separate codepath keyed off of "My Library" request
+
+   boost::format fmt("users/%d/items");
+   zoteroItemRequest(key, boost::str(fmt % userID), start, handler);
+}
+
 
 void zoteroItemsForCollection(const std::string& key, int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
 {
    boost::format fmt("users/%d/collections/%s/items");
-   zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
+   zoteroItemRequest(key, boost::str(fmt % userID % collectionID), 0, handler);
 }
 
 // keep a persistent mapping of apiKey to userId so we don't need to do the lookup each time
