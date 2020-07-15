@@ -132,7 +132,7 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
   }
 }
 
-function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] {
+function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] | null {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
   );
@@ -148,8 +148,11 @@ function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] {
       Array.isArray(zoteroCollections) &&
       zoteroCollections.every(collection => typeof collection === 'string')) {
       return zoteroCollections;
-    } else {
+    } else if (typeof zoteroCollections === 'string') {
       return [zoteroCollections];
+      // zotero: true means request all collections (signified by null)
+    } else if (typeof zoteroCollections === 'boolean' && zoteroCollections === true) {
+      return null;
     }
   }
   return [];

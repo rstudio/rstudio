@@ -15,6 +15,8 @@
 
 #include "ZoteroCollectionsWeb.hpp"
 
+#include <boost/bind.hpp>
+#include <boost/algorithm/algorithm.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/Error.hpp>
@@ -235,10 +237,14 @@ private:
 };
 
 
-void getWebCollectionsForUser(const std::string& key, int userID, const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
+void getWebCollectionsForUser(const std::string& key,
+                              int userID,
+                              const std::vector<std::string>& collections,
+                              const ZoteroCollectionSpecs& cacheSpecs,
+                              ZoteroCollectionsHandler handler)
 {
    // lookup all collections for the user
-   zoteroCollections(key, userID, [key, userID, specs, handler](const Error& error,int,json::Value jsonValue) {
+   zoteroCollections(key, userID, [key, userID, collections, cacheSpecs, handler](const Error& error,int,json::Value jsonValue) {
 
       if (error)
       {
@@ -260,17 +266,31 @@ void getWebCollectionsForUser(const std::string& key, int userID, const ZoteroCo
          std::string name = collectionJson[kName].getString();
          int version = collectionJson[kVersion].getInt();
 
-         // see if we need to do a download for this collection
-         ZoteroCollectionSpecs::const_iterator it = std::find_if(
-           specs.begin(), specs.end(), [name](ZoteroCollectionSpec spec) { return boost::algorithm::iequals(spec.name,name); }
-         );
-         if (it != specs.end())
+         // see if this is a requested collection
+         bool requested =
+           collections.size() == 0 || // all collections requested
+           std::count_if(collections.begin(),
+                         collections.end(),
+                         [name](const std::string& str) { return boost::algorithm::iequals(name, str); }) > 0 ;
+
+         if (requested)
          {
-            ZoteroCollectionSpec collectionSpec(name, version);
-            if (it->version < version)
-               downloadCollections.push_back(std::make_pair(collectionID, collectionSpec));
+            // see if we need to do a download for this collection
+            ZoteroCollectionSpecs::const_iterator it = std::find_if(
+              cacheSpecs.begin(), cacheSpecs.end(), [name](ZoteroCollectionSpec spec) { return boost::algorithm::iequals(spec.name,name); }
+            );
+            if (it != cacheSpecs.end())
+            {
+               ZoteroCollectionSpec collectionSpec(name, version);
+               if (it->version < version)
+                  downloadCollections.push_back(std::make_pair(collectionID, collectionSpec));
+               else
+                  upToDateCollections.push_back(collectionSpec);
+            }
             else
-               upToDateCollections.push_back(collectionSpec);
+            {
+               downloadCollections.push_back(std::make_pair(collectionID, ZoteroCollectionSpec(name, version)));
+            }
          }
       }
 
@@ -293,24 +313,20 @@ void getWebCollectionsForUser(const std::string& key, int userID, const ZoteroCo
 }
 
 
-void getWebCollections(const std::string& key, const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
+void getWebCollections(const std::string& key,
+                       const std::vector<std::string>& collections,
+                       const ZoteroCollectionSpecs& cacheSpecs,
+                       ZoteroCollectionsHandler handler)
 {
-   // short circuit for no collection specs
-   if (specs.size() == 0)
-   {
-      handler(Success(), std::vector<ZoteroCollection>());
-      return;
-   }
-
    // see if we already have the user id
    if (s_userIdMap.contains(key))
    {
-      getWebCollectionsForUser(key, s_userIdMap.getInt(key), specs, handler);
+      getWebCollectionsForUser(key, s_userIdMap.getInt(key), collections, cacheSpecs, handler);
    }
    else
    {
       // get the user id for this key
-      zoteroKeyInfo(key, [key, handler, specs](const Error& error,int,json::Value jsonValue) {
+      zoteroKeyInfo(key, [key, handler, collections, cacheSpecs](const Error& error,int,json::Value jsonValue) {
 
          if (error)
          {
@@ -323,7 +339,7 @@ void getWebCollections(const std::string& key, const ZoteroCollectionSpecs& spec
          s_userIdMap.set(key, userID);
 
          // get the collections
-         getWebCollectionsForUser(key, userID, specs, handler);
+         getWebCollectionsForUser(key, userID, collections, cacheSpecs, handler);
       });
    }
 }

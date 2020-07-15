@@ -69,11 +69,16 @@ typedef boost::function<void(core::Error,ZoteroCollections)> ZoteroCollectionsHa
 // requirements for implementing a collection source
 struct ZoteroCollectionSource
 {
-   boost::function<void(const std::string&, const ZoteroCollectionSpecs&, ZoteroCollectionsHandler)> getCollections;
+   boost::function<void(const std::string&,
+                        const std::vector<std::string>&,
+                        const ZoteroCollectionSpecs&,
+                        ZoteroCollectionsHandler)> getCollections;
 };
 
 // get collections using the currently configured source
-void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler);
+void getCollections(const std::vector<std::string>& collections,
+                    const ZoteroCollectionSpecs& cacheSpecs,
+                    ZoteroCollectionsHandler handler);
 
 
 } // end namespace collections
