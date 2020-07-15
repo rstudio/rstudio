@@ -341,7 +341,8 @@ try {
                 }
               }
               stage('build'){
-                bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
+                def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\""
+                bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean && cd ../.."
               }
               stage('tests'){
                 try {
