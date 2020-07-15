@@ -127,17 +127,51 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         token: parsed.token,
         pos: parsed.pos,
         offset: parsed.offset,
-        completions: (_state: EditorState) =>
-          manager.load(ui, context.doc).then((loadedBibMgr) => {
+        completions: async (_state: EditorState) => {
+
+          // function to retreive entries from the bib manager
+          const managerEntries = () => {
+            // Filter duplicate sources
+            const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
+
+            // Sort by id by default
+            const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
+            return sortedSources.map(source => entryForSource(source, ui));
+          };
+
+          // if we already have some completions from a previous load, then
+          // return them and kick off a refresh (new results will stream in)
+          if (manager.hasSources()) {
+
+            // entries we'll return both now and later/streamed after load resets them
+            let entries = managerEntries();
+
+            // kick off another load which we'll stream in by setting entries
+            manager.load(ui, context.doc).then(() => {
+              entries = managerEntries();
+            });
+
+            // return function (will be called back for streaming)
+            return () => entries;
+
+            // no previous load, just perform the load and return the entries
+          } else {
+            return manager.load(ui, context.doc).then(() => {
+              return managerEntries();
+            });
+          }
+
+          return manager.load(ui, context.doc).then(() => {
 
             // Filter duplicate sources
-            const dedupedSources = uniqby(loadedBibMgr.allSources(), (source: BibliographySource) => source.id);
+            const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
             return sortedSources.map(source => entryForSource(source, ui));
           }
-          ),
+          );
+        },
         decorations:
           parsed.token.length === 0
             ? DecorationSet.create(

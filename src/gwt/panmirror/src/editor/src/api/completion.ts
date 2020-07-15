@@ -34,7 +34,7 @@ export interface CompletionResult<T = any> {
   pos: number;
   offset?: number;
   token: string;
-  completions: (state: EditorState, context: CompletionContext) => Promise<T[]>;
+  completions: (state: EditorState, context: CompletionContext) => Promise<T[] | (() => T[])>;
   decorations?: DecorationSet;
 }
 

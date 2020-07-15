@@ -590,12 +590,13 @@ export async function insertCitation(
   csl?: CSL
 ) {
 
-  const loadedBibMgr = await bibManager.load(ui, view.state.doc);
+  // ensure the bib manager is loaded before proceeding
+  await bibManager.load(ui, view.state.doc);
 
   // We try not call this function if the entry for this DOI is already in the bibliography,
   // but it can happen. So we need to check here if it is already in the bibliography and 
   // if it is, deal with it appropriately.
-  const existingEntry = loadedBibMgr.findDoiInLocalBibliography(doi);
+  const existingEntry = bibManager.findDoiInLocalBibliography(doi);
   if (existingEntry) {
     // Now that we have loaded the bibliography, there is an entry
     // Just write it. Not an ideal experience, but something that
@@ -614,12 +615,12 @@ export async function insertCitation(
 
     // Read bibliographies out of the document and pass those alone
     const bibliographies = bibliographyPaths(view.state.doc);
-    const existingIds = loadedBibMgr.localSources().map(source => source.id);
+    const existingIds = bibManager.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(loadedBibMgr.projectBiblios(), bibliographies),
+      bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
@@ -631,7 +632,7 @@ export async function insertCitation(
     if (result && result.id.length) {
 
       // Figure out whether this is a project or document level bibliography
-      const project = loadedBibMgr.projectBiblios().length > 0;
+      const project = bibManager.projectBiblios().length > 0;
       const bibliographyFile = project
         ? result.bibliographyFile
         : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);

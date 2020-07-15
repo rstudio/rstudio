@@ -84,7 +84,7 @@ export class BibliographyManager {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyManager> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -110,8 +110,10 @@ export class BibliographyManager {
 
       this.updateIndex(this.sources);
     }
+  }
 
-    return this;
+  public hasSources() {
+    return this.allSources().length > 0;
   }
 
   public allSources(): BibliographySource[] {
