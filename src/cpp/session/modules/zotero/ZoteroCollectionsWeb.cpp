@@ -38,6 +38,7 @@ namespace collections {
 namespace {
 
 const char * const kZoteroApiHost = "https://api.zotero.org";
+const char * const kZoteroApiVersion = "3";
 
 typedef boost::function<void(const core::Error&,int,core::json::Value)> ZoteroJsonResponseHandler;
 
@@ -55,10 +56,12 @@ void zoteroJsonRequest(const std::string& key,
       {
          boost::format fmt("Bearer %s");
          headers.push_back(std::make_pair("Authorization", "Bearer " + key));
+         headers.push_back(std::make_pair("Zotero-API-Version", kZoteroApiVersion));
       }
       else
       {
          queryParams.push_back(std::make_pair("key", key));
+         queryParams.push_back(std::make_pair("v", kZoteroApiVersion));
       }
    }
 
