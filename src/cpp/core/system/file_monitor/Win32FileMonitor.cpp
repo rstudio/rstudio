@@ -25,7 +25,7 @@
 
 #include <shared_core/FilePath.hpp>
 
-#include <core/BoostThread.hpp>
+#include <core/Thread.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
 
@@ -42,7 +42,9 @@ namespace {
 // buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
 
-// handle registry
+// handle registry (use a mutex to protect access as we might attempt
+// to register and de-register from main vs. monitor thread)
+boost::mutex s_handleMutex;
 std::set<Handle> s_handleRegistry;
 
 class FileEventContext : boost::noncopyable
@@ -561,7 +563,11 @@ Handle registerMonitor(const core::FilePath& filePath,
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
    // register handle
-   s_handleRegistry.insert(pContext->handle);
+   LOCK_MUTEX(s_handleMutex)
+   {
+      s_handleRegistry.insert(pContext->handle);
+   }
+   END_LOCK_MUTEX
 
    // return the handle
    return pContext->handle;
@@ -571,7 +577,11 @@ Handle registerMonitor(const core::FilePath& filePath,
 void unregisterMonitor(Handle handle)
 {
    // unregister handle
-   s_handleRegistry.erase(handle);
+   LOCK_MUTEX(s_handleMutex)
+   {
+      s_handleRegistry.erase(handle);
+   }
+   END_LOCK_MUTEX
 
    // clean up context
    cleanupContext((FileEventContext*)(handle.pData));
