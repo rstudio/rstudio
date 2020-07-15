@@ -117,6 +117,63 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
    return username;
 }
 
+void removeAuthCookie(const http::Request& request,
+                      http::Response* pResponse)
+{
+   core::http::secure_cookie::remove(request,
+                                     kUserIdCookie,
+                                     server::options().wwwUrlPathPrefix(),
+                                     pResponse,
+                                     boost::algorithm::starts_with(request.absoluteUri(), "https"));
+
+   if (options().authTimeoutMinutes() > 0)
+   {
+      core::http::secure_cookie::remove(request,
+                                        kPersistAuthCookie,
+                                        server::options().wwwUrlPathPrefix(),
+                                        pResponse,
+                                        boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   }
+}
+
+bool mainPageFilter(const http::Request& request,
+                    http::Response* pResponse)
+{
+   // check for user identity, if we have one then allow the request to proceed
+   std::string userIdentifier = getUserIdentifier(request);
+   if (userIdentifier.empty())
+   {
+      // otherwise redirect to sign-in
+      removeAuthCookie(request, pResponse);
+      pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+void signInThenContinue(const core::http::Request& request,
+                        core::http::Response* pResponse)
+{
+   // clear cookies - they are invalid if we got here
+   removeAuthCookie(request, pResponse);
+
+   pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
+}
+
+void refreshCredentialsThenContinue(
+            boost::shared_ptr<core::http::AsyncConnection> pConnection)
+{
+   // no silent refresh possible so delegate to sign-in and continue
+   signInThenContinue(pConnection->request(),
+                      &(pConnection->response()));
+
+   // write response
+   pConnection->writeResponse();
+}
+
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
