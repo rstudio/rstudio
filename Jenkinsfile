@@ -222,7 +222,6 @@ try {
 
         // build each container image
         parallel_images = [:]
-        /* TODO (jmcphers) - disabled on branch 
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
@@ -248,8 +247,6 @@ try {
                 }
             }
         }
-        */
-            
 
         // prepare container for windows builder
         parallel_images["windows"] = {
@@ -291,7 +288,6 @@ try {
 
         def parallel_containers = [:]
 
-        /* TODO (jmcphers) - disabled on branch 
         // build each variant in parallel
         for (int i = 0; i < containers.size(); i++) {
             def index = i
@@ -323,7 +319,6 @@ try {
                 }
             }
         }
-        */
 
         parallel_containers["windows"] = {
           node('windows') {
