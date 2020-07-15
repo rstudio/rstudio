@@ -330,7 +330,7 @@ try {
             stage('prepare container') {
                checkout scm
                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                 def image_tag = "windows-${rstudioVersionMajor}.${rstudioVersionMinor}"
                  windows_image = docker.image("jenkins/ide:" + image_tag)
                }
             }
@@ -353,8 +353,8 @@ try {
               }
               stage('sign') {
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                  bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
-                  bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" verify /v /kp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /kp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
                 }
               }
               stage('upload debug symbols') {
@@ -372,8 +372,8 @@ try {
               stage('upload') {
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe'
-                  bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.zip'
+                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.exe"
+                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.zip"
                 }
               }
             }
