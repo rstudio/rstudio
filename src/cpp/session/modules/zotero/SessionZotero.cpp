@@ -27,13 +27,6 @@
 #include "ZoteroCollections.hpp"
 #include "ZoteroCollectionsWeb.hpp"
 
-// TODO: documentation link and stub for "using zotero"
-
-// TODO: pagination for large bibliographies (set limit to 100)
-
-// TODO: prime on first focus for bibliography and zotero
-// TODO: streaming results for completions
-
 using namespace rstudio::core;
 
 namespace rstudio {
