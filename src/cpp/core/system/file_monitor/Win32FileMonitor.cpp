@@ -606,11 +606,15 @@ void run(const boost::function<void()>& checkForInput)
 void stop()
 {
    // stop any active requests
-   for (Handle handle : s_handleRegistry)
+   LOCK_MUTEX(s_handleMutex)
    {
-      FileEventContext* pContext = (FileEventContext*) handle.pData;
-      cleanupContext(pContext);
+      for (Handle handle : s_handleRegistry)
+      {
+         FileEventContext* pContext = (FileEventContext*)handle.pData;
+         cleanupContext(pContext);
+      }
    }
+   END_LOCK_MUTEX
 }
 
 } // namespace detail
