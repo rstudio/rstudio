@@ -60,8 +60,7 @@ public class ZoteroApiKeyWidget extends Composite
 
       HorizontalPanel linkPanel = new HorizontalPanel();
       helpLink_ = new HelpLink("Using Zotero", 
-                               "https://www.zotero.org/settings/keys/new",
-                               false,
+                               "visual_markdown_editing-zotero",
                                false);
       helpLink_.addStyleName(RES.styles().helpLink());
    
