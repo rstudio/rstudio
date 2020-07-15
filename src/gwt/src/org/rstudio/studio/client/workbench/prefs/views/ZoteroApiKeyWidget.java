@@ -46,6 +46,7 @@ public class ZoteroApiKeyWidget extends Composite
 
       // text box
       txtApiKey_ = new TextBox();
+      txtApiKey_.getElement().setAttribute("spellcheck", "false");
       txtApiKey_.addStyleName(RES.styles().apiKey());
       txtApiKey_.setWidth(textWidth);
 
