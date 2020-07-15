@@ -393,7 +393,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       openingForSourceNavigation_ = value;
    }
 
-   public void activateColumns(final Command afterActivation)
+   public void activateColumn(final Command afterActivation)
    {
       if (!hasActiveEditor())
       {
@@ -408,7 +408,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                doActivateSource(afterActivation);
             }
          });
-      } else
+      }
+      else
       {
          doActivateSource(afterActivation);
       }

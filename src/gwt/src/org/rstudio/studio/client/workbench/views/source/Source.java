@@ -1340,7 +1340,7 @@ public class Source implements InsertSourceHandler,
       // give the window manager a chance to activate the last source pane
       if (pWindowManager_.get().activateLastFocusedSource())
          return;
-      columnManager_.activateColumns(afterActivation);
+      columnManager_.activateColumn(afterActivation);
    }
    
    @Handler

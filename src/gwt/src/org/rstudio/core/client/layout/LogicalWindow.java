@@ -125,6 +125,13 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       return state_;
    }
 
+   public boolean equals(LogicalWindow window)
+   {
+      if(normal_.equals(window.normal_))
+         return true;
+      return false;
+   }
+
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {
