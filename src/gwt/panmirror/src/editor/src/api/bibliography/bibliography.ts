@@ -46,7 +46,7 @@ import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 
 
 export interface BibliographyDataProvider {
-  load(docPath: string, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
   items(): BibliographySource[];
   projectBibios(): string[];
 }
@@ -90,7 +90,7 @@ export class BibliographyManager {
     const parsedYamlNodes = parseYamlNodes(doc);
 
     // Currently edited doc
-    const docPath = ui.context.getDocumentPath() || '';
+    const docPath = ui.context.getDocumentPath();
 
     // Load each provider
     const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));

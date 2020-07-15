@@ -218,7 +218,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     completionHandlers: () => [
       citationDoiCompletionHandler(context.ui, mgr, context.server),
-      citationCompletionHandler(context.ui, mgr, context.server.pandoc),
+      citationCompletionHandler(context.ui, context.events, mgr, context.server.pandoc),
     ],
 
     plugins: (schema: Schema) => {

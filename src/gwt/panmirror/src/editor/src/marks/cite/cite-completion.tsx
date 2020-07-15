@@ -27,9 +27,12 @@ import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
+import { PandocServer } from '../../api/pandoc';
+import { EditorEvents } from '../../api/events';
+import { FocusEvent } from '../../api/event-types';
+
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation, insertCitation } from './cite';
-import { PandocServer } from '../../api/pandoc';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -41,9 +44,17 @@ export const kCitationCompleteScope = 'CitationScope';
 
 export function citationCompletionHandler(
   ui: EditorUI,
+  events: EditorEvents,
   bibManager: BibliographyManager,
   server: PandocServer
 ): CompletionHandler<BibliographyEntry> {
+
+  // prime bibliography on initial focus
+  const focusUnsubscribe = events.subscribe(FocusEvent, (doc) => {
+    bibManager.load(ui, doc!);
+    focusUnsubscribe();
+  });
+
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 

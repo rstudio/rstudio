@@ -807,7 +807,7 @@ export class Editor {
       props: {
         handleDOMEvents: {
           focus: (view: EditorView, event: Event) => {
-            this.emitEvent(FocusEvent);
+            this.emitEvent(FocusEvent, view.state.doc);
             return false;
           },
           keydown: (view: EditorView, event: Event) => {
