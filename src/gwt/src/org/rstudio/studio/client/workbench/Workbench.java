@@ -105,9 +105,9 @@ public class Workbench implements BusyHandler,
                                   ReportShortcutBindingEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
-   
+
    @Inject
-   public Workbench(WorkbenchMainView view, 
+   public Workbench(WorkbenchMainView view,
                     WorkbenchContext workbenchContext,
                     GlobalDisplay globalDisplay,
                     Commands commands,
@@ -132,7 +132,7 @@ public class Workbench implements BusyHandler,
                     PlumberAPI sAPI,                            // force gin to create
                     DependencyManager dm,                       // force gin to create
                     ApplicationVisibility av,                   // force gin to create
-                    RmdOutput rmdOutput,                        // force gin to create    
+                    RmdOutput rmdOutput,                        // force gin to create
                     ProjectTemplateRegistryProvider provider,   // force gin to create
                     WorkbenchServerOperations serverOperations, // force gin to create
                     AskSecretManager askSecret)                 // force gin to create
@@ -153,9 +153,9 @@ public class Workbench implements BusyHandler,
       pGitState_ = pGitState;
       newSession_ = newSession;
       serverOperations_ = serverOperations;
-      
+
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
-      
+
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
@@ -182,7 +182,7 @@ public class Workbench implements BusyHandler,
          protected void performAction(boolean shouldSchedulePassive)
          {
             assert !shouldSchedulePassive;
-            
+
             server_.setWorkbenchMetrics(lastWorkbenchMetrics_,
                                         new VoidServerRequestCallback());
          }
@@ -202,15 +202,15 @@ public class Workbench implements BusyHandler,
             session_.getSessionInfo().getActiveProjectDir();
       if (defaultDialogDir != null)
          workbenchContext_.setDefaultFileDialogDir(defaultDialogDir);
-      
+
       checkForInitMessages();
       checkForLicenseMessage();
-      
-      if (Desktop.isDesktop() && 
+
+      if (Desktop.isDesktop() &&
           StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
       {
          pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
-   
+
             @Override
             public void onVcsRefresh(VcsRefreshEvent event)
             {
@@ -221,20 +221,20 @@ public class Workbench implements BusyHandler,
          });
       }
    }
-   
+
    public void onTutorialLaunch(final TutorialLaunchEvent event)
    {
       commands_.activateTutorial().execute();
-      
+
       Tutorial tutorial = event.getTutorial();
       Scheduler.get().scheduleDeferred(() -> {
-         
+
          TutorialCommandEvent commandEvent = new TutorialCommandEvent(
                TutorialCommandEvent.TYPE_LAUNCH_DEFAULT_TUTORIAL,
                tutorial.toJsObject());
-         
+
          eventBus_.fireEvent(commandEvent);
-         
+
       });
    }
 
@@ -242,25 +242,25 @@ public class Workbench implements BusyHandler,
    {
       checkForCrashHandlerPermission();
    }
-   
+
    public void onBusy(BusyEvent event)
-   {  
+   {
    }
 
    public void onShowErrorMessage(ShowErrorMessageEvent event)
    {
       ErrorMessage errorMessage = event.getErrorMessage();
-      globalDisplay_.showErrorMessage(errorMessage.getTitle(), 
+      globalDisplay_.showErrorMessage(errorMessage.getTitle(),
                                       errorMessage.getMessage());
-     
+
    }
-   
+
    @Override
    public void onShowWarningBar(ShowWarningBarEvent event)
    {
       globalDisplay_.showWarningBar(event.isSevere(), event.getMessage());
-   } 
-   
+   }
+
    public void onBrowseUrl(BrowseUrlEvent event)
    {
       BrowseUrlInfo urlInfo = event.getUrlInfo();
@@ -268,17 +268,17 @@ public class Workbench implements BusyHandler,
       newWindowOptions.setName(urlInfo.getWindow());
       globalDisplay_.openWindow(urlInfo.getUrl(), newWindowOptions);
    }
-     
+
    public void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent event)
    {
       lastWorkbenchMetrics_ = event.getWorkbenchMetrics();
       metricsChangedCommand_.nudge();
    }
-   
+
    public void onQuotaStatus(QuotaStatusEvent event)
    {
       QuotaStatus quotaStatus = event.getQuotaStatus();
-      
+
       // always show warning if the user is over quota
       if (quotaStatus.isOverQuota())
       {
@@ -292,7 +292,7 @@ public class Workbench implements BusyHandler,
          msg.append("continue working.");
          globalDisplay_.showWarningBar(false, msg.toString());
       }
-      
+
       // show a warning if the user is near their quota (but no more
       // than one time per instantiation of the application)
       else if (quotaStatus.isNearQuota() && !nearQuotaWarningShown_)
@@ -302,20 +302,20 @@ public class Workbench implements BusyHandler,
          msg.append(StringUtil.formatFileSize(quotaStatus.getQuota()));
          msg.append(" file storage limit.");
          globalDisplay_.showWarningBar(false, msg.toString());
-         
+
          nearQuotaWarningShown_ = true;
       }
    }
-   
+
    @Override
    public void onShinyGadgetDialog(ShinyGadgetDialogEvent event)
    {
-      new ShinyGadgetDialog(event.getCaption(), 
+      new ShinyGadgetDialog(event.getCaption(),
                             event.getUrl(),
                             new Size(event.getPreferredWidth(),
                                      event.getPreferredHeight())).showModal();
    }
-  
+
    @Handler
    public void onSetWorkingDir()
    {
@@ -332,16 +332,16 @@ public class Workbench implements BusyHandler,
                      return;
 
                   // set console
-                  consoleDispatcher_.executeSetWd(input, true); 
-                  
+                  consoleDispatcher_.executeSetWd(input, true);
+
                   // set files pane
                   eventBus_.fireEvent(new DirectoryNavigateEvent(input));
-                  
+
                   indicator.onCompleted();
                }
             });
    }
-   
+
    @Handler
    void onSetWorkingDirToProjectDir()
    {
@@ -353,17 +353,17 @@ public class Workbench implements BusyHandler,
          eventBus_.fireEvent(new DirectoryNavigateEvent(projectDir, true));
       }
    }
-   
+
    @Handler
    void onNewSession()
    {
-      newSession_.openNewSession(globalDisplay_, 
-                                 workbenchContext_, 
+      newSession_.openNewSession(globalDisplay_,
+                                 workbenchContext_,
                                  serverOperations_,
                                  projectOpener_,
                                  server_);
    }
-   
+
    @Handler
    public void onSourceFile()
    {
@@ -393,27 +393,27 @@ public class Workbench implements BusyHandler,
                }
             });
    }
-   
+
    @Handler
    public void onVersionControlShowRsaKey()
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Reading RSA public key...").getIndicator();
-     
+
       // compute path to public key
       String sshDir = session_.getSessionInfo().getDefaultSSHKeyDir();
       final String keyPath = FileSystemItem.createDir(sshDir).completePath(
                                                                "id_rsa.pub");
-              
+
       // read it
       server_.gitSshPublicKey(keyPath, new ServerRequestCallback<String> () {
-         
+
          @Override
          public void onResponseReceived(String publicKeyContents)
          {
             indicator.onCompleted();
-            
-            new ShowPublicKeyDialog("RSA Public Key", 
+
+            new ShowPublicKeyDialog("RSA Public Key",
                                     publicKeyContents).showModal();
          }
 
@@ -423,10 +423,10 @@ public class Workbench implements BusyHandler,
             String msg = "Error attempting to read key '" + keyPath + "' (" +
                          error.getUserMessage() + ")";
             indicator.onError(msg);
-         } 
-      }); 
+         }
+      });
    }
-   
+
    @Handler
    public void onShowShellDialog()
    {
@@ -450,7 +450,7 @@ public class Workbench implements BusyHandler,
          eventBus_.fireEvent(new ActivateNamedTerminalEvent());
       }
    }
-   
+
    @Handler
    public void onBrowseAddins()
    {
@@ -465,13 +465,13 @@ public class Workbench implements BusyHandler,
       });
       dialog.showModal();
    }
-   
+
    @Handler
    public void onModifyKeyboardShortcuts()
    {
       new ModifyKeyboardShortcutsWidget().showModal();
    }
-   
+
    @Handler
    public void onToggleFullScreen()
    {
@@ -551,12 +551,12 @@ public class Workbench implements BusyHandler,
       {
          server_.getInitMessages(new ServerRequestCallback<String>() {
             @Override
-            public void onResponseReceived(String message) 
+            public void onResponseReceived(String message)
             {
                if (message != null)
                   globalDisplay_.showWarningBar(false, message);
             }
-            
+
             @Override
             public void onError(ServerError error)
             {
@@ -614,12 +614,12 @@ public class Workbench implements BusyHandler,
                true);
       }
    }
-    
+
    public void onUserPrompt(UserPromptEvent event)
    {
       // is cancel supported?
       UserPrompt userPrompt = event.getUserPrompt();
-                
+
       // resolve labels
       String yesLabel = userPrompt.getYesLabel();
       if (StringUtil.isNullOrEmpty(yesLabel))
@@ -627,7 +627,7 @@ public class Workbench implements BusyHandler,
       String noLabel = userPrompt.getNoLabel();
       if (StringUtil.isNullOrEmpty(noLabel))
          noLabel = "No";
-         
+
       // show dialog
       globalDisplay_.showYesNoMessage(
                  userPrompt.getType(),
@@ -638,34 +638,34 @@ public class Workbench implements BusyHandler,
                  userPromptResponse(UserPrompt.RESPONSE_NO),
                  userPrompt.getIncludeCancel() ?
                        userPromptResponse(UserPrompt.RESPONSE_CANCEL) : null,
-                 yesLabel, 
-                 noLabel, 
+                 yesLabel,
+                 noLabel,
                  userPrompt.getYesIsDefault());
    }
-   
+
    private Operation userPromptResponse(final int response)
    {
       return new Operation() {
          public void execute()
          {
-            server_.userPromptCompleted(response, 
+            server_.userPromptCompleted(response,
                                         new SimpleRequestCallback<Void>());
-            
+
          }
       };
    }
-   
+
    public void onAdminNotification(AdminNotificationEvent event)
    {
       AdminNotification notification = event.getAdminNotification();
-      
+
       // show dialog
-      globalDisplay_.showMessage(notification.getType(), 
-                                 "Admin Notification", 
+      globalDisplay_.showMessage(notification.getType(),
+                                 "Admin Notification",
                                  notification.getMessage(),
                                  adminNotificationAcknowledged(notification.getId()));
    }
-   
+
    @Override
    public void onOpenFileDialog(OpenFileDialogEvent event)
    {
@@ -677,20 +677,20 @@ public class Workbench implements BusyHandler,
                              ProgressIndicator indicator)
          {
             indicator.onCompleted();
-            
+
             server_.openFileDialogCompleted(
                   input == null ? "" : input.getPath(),
                   new VoidServerRequestCallback());
          }
       };
-      
+
       String caption = event.getCaption();
       String label = event.getLabel();
       int type = event.getType();
       FileSystemItem initialFilePath = event.getFile();
       String filter = event.getFilter();
       boolean selectExisting = event.selectExisting();
-      
+
       if (type == OpenFileDialogEvent.TYPE_SELECT_FILE)
       {
          if (selectExisting)
@@ -734,7 +734,7 @@ public class Workbench implements BusyHandler,
          server_.openFileDialogCompleted(null, new VoidServerRequestCallback());
       }
    }
-   
+
    private Operation adminNotificationAcknowledged(final String id)
    {
       return new Operation() {
@@ -744,27 +744,27 @@ public class Workbench implements BusyHandler,
          }
       };
    }
-   
+
    @Override
    public void onInstallRtools(final InstallRtoolsEvent event)
    {
       if (BrowseCap.isWindowsDesktop())
       {
          Desktop.getFrame().installRtools(StringUtil.notNull(event.getVersion()),
-                                          StringUtil.notNull(event.getInstallerPath())); 
+                                          StringUtil.notNull(event.getInstallerPath()));
       }
    }
-   
+
    @Override
-   public void onShowPageViewer(ShowPageViewerEvent event) 
-   {   
+   public void onShowPageViewer(ShowPageViewerEvent event)
+   {
       // show the page viewer window
       HTMLPreviewParams params = event.getParams();
-      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
-      
+      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params));
+
       // server will now take care of sending the html_preview_completed event
    }
-   
+
    @Override
    public void onExecuteUserCommand(ExecuteUserCommandEvent event)
    {
@@ -799,5 +799,5 @@ public class Workbench implements BusyHandler,
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
-   private boolean nearQuotaWarningShown_ = false; 
+   private boolean nearQuotaWarningShown_ = false;
 }

@@ -87,7 +87,7 @@ function isParagraphNode(node: ProsemirrorNode | null | undefined) {
 
 function isDisplayMathNode(node: ProsemirrorNode | null | undefined) {
   if (node && node.firstChild) {
-    return node.childCount === 1 && node.type.schema.marks.math.isInSet(node.firstChild.marks);
+    return node.childCount === 1 && node.type.schema.marks.math?.isInSet(node.firstChild.marks);
   } else {
     return false;
   }

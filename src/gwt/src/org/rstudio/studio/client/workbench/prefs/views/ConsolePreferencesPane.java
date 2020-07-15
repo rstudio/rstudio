@@ -21,7 +21,6 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -102,10 +101,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
-         if (Desktop.isDesktop())
-            restartRequirement.setDesktopRestartRequired(true);
-         else
-            restartRequirement.setUiReloadRequired(true);
+         restartRequirement.setRestartRequired();
       }
       return restartRequirement;
    }
