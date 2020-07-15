@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
@@ -205,6 +206,8 @@ public class Workbench implements BusyHandler,
 
       checkForInitMessages();
       checkForLicenseMessage();
+
+      RStudioGinjector.INSTANCE.getFocusVisiblePolyfill().load(null);
 
       if (Desktop.isDesktop() &&
           StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
