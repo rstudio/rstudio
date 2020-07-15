@@ -115,6 +115,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for (const FileInfo& childFileInfo : childrenFileInfo)
    {
+      // check for interrupts
+      if (boost::this_thread::interruption_requested())
+         return core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
+
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))
          continue;
