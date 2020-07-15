@@ -232,6 +232,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
       }
+      else if (frame_ != null &&
+          frame_.getIFrame().getCurrentUrl() != null &&
+          !StringUtil.equals(frame_.getIFrame().getCurrentUrl(), getUrl()))
+      {
+         // Typically we navigate to the unmodified URL (i.e. without the
+         // viewer_pane=1 query params, etc.) However, if the URL currently
+         // loaded in the frame is different, the user probably navigated away
+         // from original URL, so load that URL as-is.
+         globalDisplay_.openWindow(frame_.getIFrame().getCurrentUrl());
+      }
       else if (unmodifiedUrl_ != null)
       {
          globalDisplay_.openWindow(unmodifiedUrl_);
