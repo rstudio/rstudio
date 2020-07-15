@@ -28,20 +28,25 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
    @Inject
    public RMarkdownPreferencesPane(UserPrefs prefs,
+                                   UserState state,
                                    PreferencesDialogResources res,
-                                   Session session)
+                                   Session session,
+                                   PanmirrorZoteroServerOperations zoteroServer)
    {
       prefs_ = prefs;
+      state_ = state;
       res_ = res;
-      
+    
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
       
       basic.add(headerLabel("R Markdown"));
@@ -261,6 +266,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       nudgeRight(markdownPerFileOptions); 
       mediumSpaced(markdownPerFileOptions);
       visualModeOptions.add(markdownPerFileOptions);
+      
+      visualModeOptions.add(headerLabel("Citations"));
+      
+      zoteroApiKey_ = new ZoteroApiKeyWidget(zoteroServer, "330px");
+      zoteroApiKey_.setKey(state_.zoteroApiKey().getValue());
+      visualModeOptions.add(zoteroApiKey_);
+   
        
       visualMode.add(visualModeOptions);
       
@@ -300,6 +312,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       latexPreviewWidget_.setValue(prefs_.latexPreviewOnCursorIdle().getValue());
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
+      
+      zoteroApiKey_.setProgressIndicator(getProgressIndicator());
    }
    
    @Override
@@ -328,10 +342,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                knitWorkingDir_.getValue());
       }
       
+      state_.zoteroApiKey().setGlobalValue(zoteroApiKey_.getKey());
+      
       return restartRequirement;
    }
 
    private final UserPrefs prefs_;
+   private final UserState state_;
    
    private final PreferencesDialogResources res_;
    
@@ -344,4 +361,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
    private final SelectWidget visualModeReferences_;   
+   
+   private final ZoteroApiKeyWidget zoteroApiKey_;
 }
