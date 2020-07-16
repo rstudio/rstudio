@@ -102,24 +102,79 @@ void zoteroJsonRequest(const std::string& key,
    });
 }
 
-
-void zoteroItemRequest(const std::string& key, const std::string& path, int start, const ZoteroJsonResponseHandler& handler)
+http::Fields zoteroItemRequestParams(int start, int limit)
 {
-   std::string schema = module_context::resourceFileAsString("schema/zotero-items.json");
-
    http::Fields params;
    params.push_back(std::make_pair("format", "json"));
    params.push_back(std::make_pair("include", "csljson"));
    params.push_back(std::make_pair("itemType", "-attachment"));
    params.push_back(std::make_pair("start", safe_convert::numberToString(start)));
-   params.push_back(std::make_pair("limit", "100"));
-
-   zoteroJsonRequest(key,
-                     path,
-                     params,
-                     schema,
-                     handler);
+   params.push_back(std::make_pair("limit", safe_convert::numberToString(limit)));
+   return params;
 }
+
+void zoteroItemRequest(const std::string& key,
+                       const std::string& path,
+                       int start,
+                       int limit,
+                       json::Array accumulatedItems,
+                       const ZoteroJsonResponseHandler& handler);
+
+void zoteroItemRequestHandler(const std::string& key,
+                              const std::string& path,
+                              int start,
+                              int limit,
+                              json::Array accumulatedItems,
+                              const ZoteroJsonResponseHandler& handler,
+                              const core::Error& error,
+                              int status,
+                              core::json::Value json)
+{
+   if (error)
+   {
+      handler(error, status, json::Value());
+   }
+   else
+   {
+      // get the items and accumulate them
+      json::Array itemsJson = json.getArray();
+      std::copy(itemsJson.begin(), itemsJson.end(), std::back_inserter(accumulatedItems));
+
+      // if the number of items returned is less than the limit then we are done
+      if (itemsJson.getSize() < static_cast<size_t>(limit))
+      {
+         handler(Success(), 200, accumulatedItems);
+      }
+      // otherwise we need to make another request
+      else
+      {
+         zoteroItemRequest(key, path, start + limit, limit, accumulatedItems, handler);
+      }
+   }
+}
+
+void zoteroItemRequest(const std::string& key,
+                       const std::string& path,
+                       int start,
+                       int limit,
+                       json::Array accumulatedItems,
+                       const ZoteroJsonResponseHandler& handler)
+{
+   std::string schema = module_context::resourceFileAsString("schema/zotero-items.json");
+   http::Fields params = zoteroItemRequestParams(start, limit);
+   zoteroJsonRequest(key, path, params, schema,
+                     boost::bind(zoteroItemRequestHandler,
+                        key, path, start, limit, accumulatedItems, handler, _1, _2, _3
+                     ));
+}
+
+void zoteroItemRequest(const std::string& key,
+                       const std::string& path,
+                       const ZoteroJsonResponseHandler& handler)
+{
+   zoteroItemRequest(key, path, 0, 100, json::Array(), handler);
+}
+
 
 void zoteroKeyInfo(const std::string& key, const ZoteroJsonResponseHandler& handler)
 {
@@ -149,7 +204,7 @@ void zoteroCollections(const std::string& key, int userID, const ZoteroJsonRespo
                      handler);
 }
 
-void zoteroItems(const std::string& key, int userID, int start, const ZoteroJsonResponseHandler& handler)
+void zoteroItems(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
 {
    // this might need to inherently be a sync operation via
    // https://api.zotero.org/users/6739564/items?format=versions
@@ -157,14 +212,14 @@ void zoteroItems(const std::string& key, int userID, int start, const ZoteroJson
    // so it's a separate codepath keyed off of "My Library" request
 
    boost::format fmt("users/%d/items");
-   zoteroItemRequest(key, boost::str(fmt % userID), start, handler);
+   zoteroItemRequest(key, boost::str(fmt % userID), handler);
 }
 
 
 void zoteroItemsForCollection(const std::string& key, int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
 {
    boost::format fmt("users/%d/collections/%s/items");
-   zoteroItemRequest(key, boost::str(fmt % userID % collectionID), 0, handler);
+   zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
 }
 
 // keep a persistent mapping of apiKey to userId so we don't need to do the lookup each time
