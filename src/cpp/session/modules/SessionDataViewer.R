@@ -50,7 +50,12 @@
    if (is.null(formatter))
       return(NULL)
    
-   formatter(col, trim = TRUE, justify = "none", ...)
+   formatted <- formatter(col, trim = TRUE, justify = "none", ...)
+   
+   if (is.character(formatted) && length(formatted) == length(col))
+      formatted[is.na(col)] <- NA
+   
+   formatted
    
 })
 
@@ -174,6 +179,11 @@
                col_type <- "numeric"
                col_search_type <- "numeric"
             }
+         }
+         else if (inherits(x[[idx]], "integer64"))
+         {
+            col_type <- "numeric"
+            col_search_type <- "character"
          }
          else if (is.character(val))
          {
