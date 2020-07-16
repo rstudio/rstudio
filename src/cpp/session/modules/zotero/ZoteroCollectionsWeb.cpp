@@ -206,13 +206,17 @@ void zoteroCollections(const std::string& key, int userID, const ZoteroJsonRespo
 
 void zoteroItems(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
 {
-   // this might need to inherently be a sync operation via
-   // https://api.zotero.org/users/6739564/items?format=versions
-
-   // so it's a separate codepath keyed off of "My Library" request
-
    boost::format fmt("users/%d/items");
    zoteroItemRequest(key, boost::str(fmt % userID), handler);
+}
+
+void zoteroItemVersions(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
+{
+   http::Fields params;
+   params.push_back(std::make_pair("format", "versions"));
+   params.push_back(std::make_pair("since", safe_convert::numberToString(since)));
+   boost::format fmt("users/%d/items");
+   zoteroJsonRequest(key, boost::str(fmt % userID), params, "", handler);
 }
 
 
@@ -220,6 +224,19 @@ void zoteroItemsForCollection(const std::string& key, int userID, const std::str
 {
    boost::format fmt("users/%d/collections/%s/items");
    zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
+}
+
+
+ZoteroCollection collectionFromItemsDownload(const ZoteroCollectionSpec& spec, const json::Value& json)
+{
+   ZoteroCollection collection(spec);
+   json::Array itemsJson;
+   json::Array resultItemsJson = json.getArray();
+   std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
+      return resultItemJson.getObject()["csljson"];
+   });
+   collection.items = itemsJson;
+   return collection;
 }
 
 // keep a persistent mapping of apiKey to userId so we don't need to do the lookup each time
@@ -281,15 +298,7 @@ private:
       else
       {
          // create collection
-         ZoteroCollection collection;
-         collection.name = spec.name;
-         collection.version = spec.version;
-         json::Array itemsJson;
-         json::Array resultItemsJson = jsonValue.getArray();
-         std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
-            return resultItemJson.getObject()["csljson"];
-         });
-         collection.items = itemsJson;
+         ZoteroCollection collection = collectionFromItemsDownload(spec, jsonValue);
 
          // append to our collections
          collections_.push_back(collection);
@@ -306,6 +315,56 @@ private:
    std::queue<std::pair<std::string,ZoteroCollectionSpec> > collectionQueue_;
    ZoteroCollections collections_;
 };
+
+void getWebLibraryForUser(const std::string& key,
+                          int userID,
+                          const ZoteroCollectionSpec& cacheSpec,
+                          ZoteroCollectionsHandler handler)
+{
+   // first query for versions
+   zoteroItemVersions(key, userID, cacheSpec.version, [key, userID, cacheSpec, handler](core::Error error, int, json::Value json) {
+      if (error)
+      {
+         handler(error, std::vector<ZoteroCollection>());
+      }
+      else if (json.isObject() && json.getObject().getSize() == 0)
+      {
+         handler(Success(), std::vector<ZoteroCollection>{ cacheSpec });
+      }
+      else
+      {
+         zoteroItems(key, userID, [handler](Error error,int, json::Value json) {
+
+            if (error)
+            {
+               handler(error, std::vector<ZoteroCollection>());
+            }
+            else
+            {
+               // calculate library version based on max version of downloded items
+               int version = 0;
+               json::Array itemsJson = json.getArray();
+               std::for_each(itemsJson.begin(), itemsJson.end(), [&version](const json::Value& item) {
+                  int itemVersion = item.getObject()[kVersion].getInt();
+                  if (itemVersion > version)
+                     version = itemVersion;
+               });
+
+               // create collection
+               ZoteroCollectionSpec spec(kMyLibrary, version);
+               ZoteroCollection collection = collectionFromItemsDownload(spec, json);
+
+               // return it
+               handler(Success(), std::vector<ZoteroCollection>{ collection });
+            }
+         });
+      }
+   });
+
+
+
+
+}
 
 
 void getWebCollectionsForUser(const std::string& key,
@@ -384,24 +443,22 @@ void getWebCollectionsForUser(const std::string& key,
 }
 
 
-void getWebCollections(const std::string& key,
-                       const std::vector<std::string>& collections,
-                       const ZoteroCollectionSpecs& cacheSpecs,
-                       ZoteroCollectionsHandler handler)
+void withUserId(const std::string& key, boost::function<void(const Error&,int)> handler)
 {
    // see if we already have the user id
    if (s_userIdMap.contains(key))
    {
-      getWebCollectionsForUser(key, s_userIdMap.getInt(key), collections, cacheSpecs, handler);
+      // execute the handler
+      handler(Success(), s_userIdMap.getInt(key));
    }
    else
    {
       // get the user id for this key
-      zoteroKeyInfo(key, [key, handler, collections, cacheSpecs](const Error& error,int,json::Value jsonValue) {
+      zoteroKeyInfo(key, [key, handler](const Error& error,int,json::Value jsonValue) {
 
          if (error)
          {
-            handler(error, std::vector<ZoteroCollection>());
+            handler(error, 0);
             return;
          }
 
@@ -409,10 +466,47 @@ void getWebCollections(const std::string& key,
          int userID = jsonValue.getObject()["userID"].getInt();
          s_userIdMap.set(key, userID);
 
-         // get the collections
-         getWebCollectionsForUser(key, userID, collections, cacheSpecs, handler);
+         // execute the handler
+         handler(Success(), userID);
       });
    }
+}
+
+
+void getWebLibrary(const std::string& key,
+                   const ZoteroCollectionSpec& cacheSpec,
+                   ZoteroCollectionsHandler handler)
+{
+   withUserId(key, [key, cacheSpec, handler](Error error, int userID) {
+      if (error)
+      {
+         handler(error, std::vector<ZoteroCollection>());
+         return;
+      }
+      else
+      {
+         getWebLibraryForUser(key, userID, cacheSpec, handler);
+      }
+   });
+}
+
+
+void getWebCollections(const std::string& key,
+                       const std::vector<std::string>& collections,
+                       const ZoteroCollectionSpecs& cacheSpecs,
+                       ZoteroCollectionsHandler handler)
+{
+   withUserId(key, [key, collections, cacheSpecs, handler](Error error, int userID) {
+      if (error)
+      {
+         handler(error, std::vector<ZoteroCollection>());
+         return;
+      }
+      else
+      {
+         getWebCollectionsForUser(key, userID, collections, cacheSpecs, handler);
+      }
+   });
 }
 
 } // end anonymous namespace
@@ -447,6 +541,7 @@ ZoteroCollectionSource webCollections()
    }
 
    ZoteroCollectionSource source;
+   source.getLibrary = getWebLibrary;
    source.getCollections = getWebCollections;
    return source;
 }
