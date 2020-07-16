@@ -70,6 +70,52 @@ void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
 }
 
 
+void handleGetCollections(Error error, ZoteroCollections collections, const json::JsonRpcFunctionContinuation& cont)
+{
+   // result defaults
+   json::Object resultJson;
+   resultJson[kMessage] = json::Value();
+   resultJson[kError] = "";
+
+   // handle success & error
+   if (!error)
+   {
+      json::Array collectionsJson;
+      for (auto collection : collections)
+      {
+         json::Object collectionJson;
+         collectionJson[kName] = collection.name;
+         collectionJson[kVersion] = collection.version;
+         collectionJson[kItems] = collection.items;
+         collectionsJson.push_back(collectionJson);
+      }
+      resultJson[kStatus] = kStatusOK;
+      resultJson[kMessage] = collectionsJson;
+   }
+   else
+   {
+      std::string err = core::errorDescription(error);
+      if (is404Error(err))
+      {
+         resultJson[kStatus] = kStatusNotFound;
+      }
+      else if (isHostError(err))
+      {
+         resultJson[kStatus] = kStatusNoHost;
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE(err);
+         resultJson[kStatus] = kStatusError;
+      }
+   }
+
+   json::JsonRpcResponse response;
+   response.setResult(resultJson);
+   cont(Success(), &response);
+
+}
+
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
 {
@@ -140,7 +186,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // provide client cache specs
+   // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;
    std::transform(cachedJson.begin(), cachedJson.end(), std::back_inserter(cacheSpecs), [](const json::Value json) {
       auto jsonSpec = json.getObject();
@@ -150,54 +196,30 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return cacheSpec;
    });
 
+   // create handler for request
+   auto handler =  boost::bind(handleGetCollections, _1, _2, cont);
 
-   // get the collections
-   getCollections(collections, cacheSpecs, [cont](Error error, ZoteroCollections collections) {
+   // allCollections is a request for the library
+   if (allCollections)
+   {
+      // we just need the kMyLibrary cache spec
+      ZoteroCollectionSpec librarySpec(kMyLibrary, 0);
+      ZoteroCollectionSpecs::iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [](const ZoteroCollectionSpec& spec) {
+         return spec.name == kMyLibrary;
+      });
+      if (it != cacheSpecs.end())
+         librarySpec = *it;
 
-      // result defaults
-      json::Object resultJson;
-      resultJson[kMessage] = json::Value();
-      resultJson[kError] = "";
+      // get the library
+      getLibrary(librarySpec, handler);
 
-      // handle success & error
-      if (!error)
-      {
-         json::Array collectionsJson;
-         for (auto collection : collections)
-         {
-            json::Object collectionJson;
-            collectionJson[kName] = collection.name;
-            collectionJson[kVersion] = collection.version;
-            collectionJson[kItems] = collection.items;
-            collectionsJson.push_back(collectionJson);
-         }
-         resultJson[kStatus] = kStatusOK;
-         resultJson[kMessage] = collectionsJson;
-      }
-      else
-      {
-         std::string err = core::errorDescription(error);
-         if (is404Error(err))
-         {
-            resultJson[kStatus] = kStatusNotFound;
-         }
-         else if (isHostError(err))
-         {
-            resultJson[kStatus] = kStatusNoHost;
-         }
-         else
-         {
-            LOG_ERROR_MESSAGE(err);
-            resultJson[kStatus] = kStatusError;
-         }
-      }
+   }
 
-      json::JsonRpcResponse response;
-      response.setResult(resultJson);
-      cont(Success(), &response);
-
-   });
-
+   // otherwise get the requested collections
+   else
+   {
+      getCollections(collections, cacheSpecs, handler);
+   }
 }
 
 
