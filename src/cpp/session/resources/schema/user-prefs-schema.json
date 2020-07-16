@@ -1199,7 +1199,7 @@
         "show_focus_rectangles": {
             "type": "boolean",
             "default": true,
-            "title": "Show focus rectangles",
+            "title": "Always show focus outlines",
             "description": "Control with keyboard focus displays a visual focus indicator."
         },
         "auto_save_on_idle": {

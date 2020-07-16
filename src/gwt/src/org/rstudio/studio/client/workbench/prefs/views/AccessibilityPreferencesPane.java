@@ -67,7 +67,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
       chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
       generalPanel.add(lessSpaced(chkTabMovesFocus_));
-      chkShowFocusRectangles_ = new CheckBox("Show focus rectangles (requires restart)");
+      chkShowFocusRectangles_ = new CheckBox("Always show focus outlines (requires restart)");
       generalPanel.add(chkShowFocusRectangles_);
 
       HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
