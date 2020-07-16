@@ -135,9 +135,8 @@ export class BibliographyManager {
   }
 
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {
-
     // NOTE: This will only search sources that have already been loaded.
-    // Please be sure to use loadBibliography before calling this or
+    // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
     return this.localSources().find(source => source.DOI === doi);
@@ -145,15 +144,15 @@ export class BibliographyManager {
 
   public findIdInLocalBibliography(id: string): BibliographySource | undefined {
     // NOTE: This will only search sources that have already been loaded.
-    // Please be sure to use loadBibliography before calling this or
+    // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
     return this.localSources().find(source => source.id === id);
   }
 
-  public searchInLoadedBibliography(query: string, limit: number): BibliographySource[] {
+  public searchAllSources(query: string, limit: number): BibliographySource[] {
     // NOTE: This will only search sources that have already been loaded.
-    // Please be sure to use loadBibliography before calling this or
+    // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a source if the
     // bibliography hasn't already been loaded.
     if (this.fuse) {

@@ -22,24 +22,39 @@ const kZoteroItemProvider = 'Zotero';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
-  private collections?: ZoteroCollection[];
+  private collections: ZoteroCollection[] = [];
   private server: ZoteroServer;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
   }
 
-  // TODO: with JJA investigate streaming as way to improve responsiveness of initial load
-  public async load(docPath: string | null, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+
+    let hasUpdates = false;
     if (zoteroEnabled(docPath, yamlBlocks)) {
-      const collections = zoteroCollectionsForDoc(yamlBlocks);
+      const collectionNames = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
       try {
-        const result = await this.server.getCollections(docPath, collections, this.collections as ZoteroCollectionSpec[] || []);
+
+        const result = await this.server.getCollections(docPath, collectionNames, this.collections as ZoteroCollectionSpec[] || []);
         if (result.status === "ok") {
-          if (!this.collections && result.message) {
-            this.collections = result.message as ZoteroCollection[];
+
+          if (result.message) {
+
+            const newCollections = (result.message as ZoteroCollection[]).map(collection => {
+              const existingCollection = this.collections.find(col => col.name === collection.name);
+              if (existingCollection && existingCollection.version === collection.version) {
+                collection.items = existingCollection.items;
+              } else {
+                hasUpdates = true;
+              }
+              return collection;
+
+            });
+            hasUpdates = hasUpdates || newCollections.length !== this.collections.length;
+            this.collections = newCollections;
           }
         } else {
           // console.log(result.status);
@@ -48,13 +63,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       catch (err) {
         // console.log(err);
       }
-
-
     } else {
       // Zotero is disabled, clear any already loaded bibliography
-      this.collections = undefined;
+      this.collections = [];
     }
-    return true;
+    return hasUpdates;
   }
 
   public items(): BibliographySource[] {
@@ -67,11 +80,18 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return [];
   }
 
-  private hasCollections(collectionsNamed: string[]) {
-    if (!this.collections) {
-      return false;
+  private isUpdated(collectionSpec: ZoteroCollectionSpec) {
+    const localCollection = this.collections?.find(collection => collection.name === collectionSpec.name);
+    return !(localCollection && localCollection.version === collectionSpec.version);
+  }
+
+  private indexForName(name: string) {
+    const localCollection = this.collections?.find(collection => collection.name === name);
+    if (localCollection) {
+      return this.collections?.indexOf(localCollection) || -1;
+    } else {
+      return -1;
     }
-    return collectionsNamed.every(collectionName => (this.collections as ZoteroCollectionSpec[]).find(collection => collection.name === collectionName));
   }
 
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
