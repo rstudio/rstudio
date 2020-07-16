@@ -407,15 +407,15 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Temporary flag to enable additional source columns.
+    * Whether to enable the ability to add source columns to display.
     */
-   public PrefValue<Boolean> enableAdditionalColumns()
+   public PrefValue<Boolean> allowSourceColumns()
    {
       return bool(
-         "enable_additional_columns",
-         "Enable Additional Columns", 
-         "Temporary flag to enable additional source columns.", 
-         false);
+         "allow_source_columns",
+         "Allow source columns", 
+         "Whether to enable the ability to add source columns to display.", 
+         true);
    }
 
    /**
@@ -2933,8 +2933,8 @@ public class UserPrefsAccessor extends Prefs
          highlightSelectedLine().setValue(layer, source.getBool("highlight_selected_line"));
       if (source.hasKey("panes"))
          panes().setValue(layer, source.getObject("panes"));
-      if (source.hasKey("enable_additional_columns"))
-         enableAdditionalColumns().setValue(layer, source.getBool("enable_additional_columns"));
+      if (source.hasKey("allow_source_columns"))
+         allowSourceColumns().setValue(layer, source.getBool("allow_source_columns"));
       if (source.hasKey("use_spaces_for_tab"))
          useSpacesForTab().setValue(layer, source.getBool("use_spaces_for_tab"));
       if (source.hasKey("num_spaces_for_tab"))
@@ -3321,7 +3321,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
-      prefs.add(enableAdditionalColumns());
+      prefs.add(allowSourceColumns());
       prefs.add(useSpacesForTab());
       prefs.add(numSpacesForTab());
       prefs.add(autoDetectIndentation());

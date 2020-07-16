@@ -527,17 +527,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return target;
    }
 
-   public void addTab(Widget widget,
-                      FileIcon icon,
-                      String id,
-                      String value,
-                      String tabTooltip,
-                      Integer position,
-                      boolean switchToTab)
-   {
-      display_.addTab(widget, icon, id, value, tabTooltip, position, switchToTab);
-   }
-
    public void closeDoc(String docId)
    {
       suspendDocumentClose_ = true;

@@ -284,16 +284,16 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
- * Temporary flag to enable additional source columns.
+ * Whether to enable the ability to add source columns to display.
  */
-bool UserPrefValues::enableAdditionalColumns()
+bool UserPrefValues::allowSourceColumns()
 {
-   return readPref<bool>("enable_additional_columns");
+   return readPref<bool>("allow_source_columns");
 }
 
-core::Error UserPrefValues::setEnableAdditionalColumns(bool val)
+core::Error UserPrefValues::setAllowSourceColumns(bool val)
 {
-   return writePref("enable_additional_columns", val);
+   return writePref("allow_source_columns", val);
 }
 
 /**
@@ -2672,7 +2672,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
-      kEnableAdditionalColumns,
+      kAllowSourceColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
