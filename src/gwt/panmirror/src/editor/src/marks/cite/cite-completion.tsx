@@ -161,17 +161,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
               return managerEntries();
             });
           }
-
-          return manager.load(ui, context.doc).then(() => {
-
-            // Filter duplicate sources
-            const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
-
-            // Sort by id by default
-            const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
-            return sortedSources.map(source => entryForSource(source, ui));
-          }
-          );
         },
         decorations:
           parsed.token.length === 0
