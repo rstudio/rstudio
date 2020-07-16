@@ -13,24 +13,6 @@
  *
  */
 
-/*
-
-
-Bibliography
-  List All Entries
-  Find Entry By Id
-  Find Entry By DOI
-  Add Entry
-
-  List Local Files
-  List Project Files
-
-
-
-*/
-
-
-
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import Fuse from 'fuse.js';

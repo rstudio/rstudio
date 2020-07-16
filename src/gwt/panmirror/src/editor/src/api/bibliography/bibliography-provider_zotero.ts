@@ -12,11 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer, ZoteroCollectionSpec } from "../zotero";
+import { ZoteroCollection, ZoteroServer } from "../zotero";
 
-import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bibliography";
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
+
+import { BibliographyDataProvider, BibliographySource } from "./bibliography";
 
 export const kZoteroItemProvider = 'Zotero';
 
@@ -40,7 +41,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // Don't send the items back through to the server
         const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
 
-        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs as ZoteroCollectionSpec[] || []);
+        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || []);
         if (result.status === "ok") {
 
           if (result.message) {
@@ -82,20 +83,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return [];
   }
 
-  private isUpdated(collectionSpec: ZoteroCollectionSpec) {
-    const localCollection = this.collections?.find(collection => collection.name === collectionSpec.name);
-    return !(localCollection && localCollection.version === collectionSpec.version);
-  }
-
-  private indexForName(name: string) {
-    const localCollection = this.collections?.find(collection => collection.name === name);
-    if (localCollection) {
-      return this.collections?.indexOf(localCollection) || -1;
-    } else {
-      return -1;
-    }
-  }
-
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
 
     const items = collection.items?.map(item => {
@@ -108,13 +95,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return items || [];
   }
 
-  private collectionVersion(collectionName: string): number {
-    const match = this.collections?.find(collection => collection.name === collectionName);
-    if (match) {
-      return match.version;
-    }
-    return 0;
-  }
 }
 
 
