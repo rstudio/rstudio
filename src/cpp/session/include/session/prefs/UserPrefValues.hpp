@@ -313,6 +313,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kShowFocusRectangles "show_focus_rectangles"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -1446,6 +1447,12 @@ public:
     */
    bool tabKeyMoveFocus();
    core::Error setTabKeyMoveFocus(bool val);
+
+   /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   bool showFocusRectangles();
+   core::Error setShowFocusRectangles(bool val);
 
    /**
     * How to deal with changes to documents on idle.

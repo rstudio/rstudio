@@ -1196,6 +1196,12 @@
             "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
+        "show_focus_rectangles": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show focus rectangles",
+            "description": "Control with keyboard focus displays a visual focus indicator."
+        },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],

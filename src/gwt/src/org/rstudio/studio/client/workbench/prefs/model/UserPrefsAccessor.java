@@ -2551,6 +2551,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   public PrefValue<Boolean> showFocusRectangles()
+   {
+      return bool(
+         "show_focus_rectangles",
+         "Show focus rectangles", 
+         "Control with keyboard focus displays a visual focus indicator.", 
+         true);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -3241,6 +3253,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("show_focus_rectangles"))
+         showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
@@ -3467,6 +3481,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(showFocusRectangles());
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
