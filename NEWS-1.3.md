@@ -6,3 +6,4 @@
 - Fix issue where the Crash Handler notification prompt would never go away (#7243)
 - Fix issue with slow shutdown on Windows (#7117)
 - Fix issue where Launcher debug logs could contain user's plain text password (Pro #1687)
+- Fix issue where some log entries could not be displayed on the admin logs page (Pro #1783)
