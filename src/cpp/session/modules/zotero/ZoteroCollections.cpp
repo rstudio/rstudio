@@ -49,6 +49,7 @@ void LOG(const std::string&)
 
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
+   // ~/.local/share/rstudio/zotero-collections
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero-collections")
       .completeChildPath(type)
