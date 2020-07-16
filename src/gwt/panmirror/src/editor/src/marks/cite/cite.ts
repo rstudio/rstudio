@@ -51,10 +51,10 @@ const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPat
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
-const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
+const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`, 'u');
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern, 'u');
-const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
+const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`, 'u');
 
 export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`, 'u');
 
@@ -550,7 +550,7 @@ export interface ParsedCitation {
 
 // completions allow spaces in the cite id (multiple search terms)
 const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace(/^\[/, '[\\s');
-const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`);
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`, 'u');
 
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
 
