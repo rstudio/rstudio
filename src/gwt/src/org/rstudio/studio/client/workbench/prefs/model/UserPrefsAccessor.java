@@ -2557,7 +2557,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_focus_rectangles",
-         "Show focus rectangles", 
+         "Always show focus outlines", 
          "Control with keyboard focus displays a visual focus indicator.", 
          true);
    }
