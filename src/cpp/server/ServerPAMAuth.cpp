@@ -13,6 +13,7 @@
  *
  */
 #include "ServerPAMAuth.hpp"
+#include "ServerPAMAuthOverlay.hpp"
 
 #include <shared_core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
@@ -49,13 +50,6 @@ namespace server {
 namespace pam_auth {
 
 using namespace rstudio::core;
-
-bool canSetSignInCookies();
-bool canStaySignedIn();
-void onUserAuthenticated(const std::string& username,
-                         const std::string& password);
-void onUserUnauthenticated(const std::string& username,
-                           bool signedOut = false);
 
 namespace {
 
@@ -278,7 +272,7 @@ void signIn(const http::Request& request,
    variables[kErrorMessage] = errorMessage(static_cast<ErrorType>(
             safe_convert::stringTo<unsigned>(error, kErrorNone)));
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
-   variables[kStaySignedInDisplay] = canStaySignedIn() ? "block" : "none";
+   variables[kStaySignedInDisplay] = overlay::canStaySignedIn() ? "block" : "none";
    int timeoutMinutes = server::options().authTimeoutMinutes();
    variables[kAuthTimeoutMinutesDisplay] = timeoutMinutes > 0 ? "block" : "none";
    variables[kAuthTimeoutMinutes] = safe_convert::numberToString(timeoutMinutes);
@@ -341,7 +335,7 @@ void setSignInCookies(const core::http::Request& request,
       // and stay signed in for multiple days
       // not very secure, but maintained for those users that want this
       boost::optional<boost::gregorian::days> expiry;
-      if (persist && canStaySignedIn())
+      if (persist && overlay::canStaySignedIn())
          expiry = boost::gregorian::days(staySignedInDays);
       else
          expiry = boost::none;
@@ -476,7 +470,7 @@ void doSignIn(const http::Request& request,
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
-   onUserUnauthenticated(username);
+   overlay::onUserPasswordUnavailable(username);
 
    // ensure user is not throttled from logging in
    if (auth::handler::isUserSignInThrottled(username))
@@ -530,7 +524,7 @@ void doSignIn(const http::Request& request,
                               "",
                               username));
 
-      onUserAuthenticated(username, password);
+      overlay::onUserPasswordAvailable(username, password);
    }
    else
    {
@@ -568,7 +562,7 @@ void signOut(const http::Request& request,
                               "",
                               username));
 
-      onUserUnauthenticated(username, true);
+      overlay::onUserPasswordUnavailable(username, true);
    }
 
    // clear cookies
@@ -640,7 +634,7 @@ Error initialize()
    pamHandler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
-   if (canSetSignInCookies())
+   if (overlay::canSetSignInCookies())
       pamHandler.setSignInCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    pamHandler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    auth::handler::registerHandler(pamHandler);

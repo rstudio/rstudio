@@ -1,7 +1,7 @@
 /*
- * ServerPAMAuthOverlay.cpp
+ * ServerPAMAuthOverlay.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,42 +13,27 @@
  *
  */
 
-#include "ServerPAMAuth.hpp"
+#ifndef SERVER_PAM_AUTH_OVERLAY_HPP
+#define SERVER_PAM_AUTH_OVERLAY_HPP
 
-#include <shared_core/Error.hpp>
+#include <string>
 
 namespace rstudio {
 namespace server {
 namespace pam_auth {
-
 namespace overlay {
 
-bool canSetSignInCookies()
-{
-   return true;
-}
-
-bool canStaySignedIn()
-{
-   return true;
-}
-
+void intialize();
+bool canStaySignedIn();
+bool canSetSignInCookies();
 void onUserPasswordAvailable(const std::string& username,
-                             const std::string& password)
-{
-}
-
+                         const std::string& password);
 void onUserPasswordUnavailable(const std::string& username,
-                               bool signedOut)
-{
-}
-
-core::Error initialize()
-{
-   return core::Success();
-}
+                           bool signedOut = false);
 
 } // namespace overlay
 } // namespace pam_auth
 } // namespace server
 } // namespace rstudio
+
+#endif // SERVER_PAM_AUTH_OVERLAY_HPP
