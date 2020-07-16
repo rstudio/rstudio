@@ -43,8 +43,8 @@ const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
 
-const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
+const kCiteIdFirstCharPattern = '[\\p{L}\\p{N}]';
+const kCiteIdOptionalCharsPattern = '[\\p{L}\\p{N}:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
 
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
@@ -53,10 +53,10 @@ const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`
 
 const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
 
-const kCiteIdRegEx = new RegExp(kCiteIdPattern);
+const kCiteIdRegEx = new RegExp(kCiteIdPattern, 'u');
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`, 'u');
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -502,7 +502,7 @@ function findCiteEndBracket(selection: Selection) {
   }
 }
 
-const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'gu');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   const schema = tr.doc.type.schema;
