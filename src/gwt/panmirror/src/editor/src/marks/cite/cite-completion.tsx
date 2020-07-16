@@ -74,7 +74,7 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry && entry.source.DOI) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source);
+        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
     },
 

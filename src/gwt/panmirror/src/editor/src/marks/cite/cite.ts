@@ -587,7 +587,8 @@ export async function insertCitation(
   pos: number,
   ui: EditorUI,
   server: PandocServer,
-  csl?: CSL
+  csl?: CSL,
+  provider?: string
 ) {
 
   // ensure the bib manager is loaded before proceeding
@@ -621,10 +622,11 @@ export async function insertCitation(
       doi,
       existingIds,
       bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
+      provider,
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
-        previewFields: formatForPreview(csl)
+        previewFields: formatForPreview(csl),
       } : undefined
     };
 

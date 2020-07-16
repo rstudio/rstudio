@@ -233,6 +233,7 @@ export interface InsertCiteProps {
   doi: string;
   existingIds: string[];
   bibliographyFiles: string[];
+  provider?: string;
   csl?: CSL;
   citeUI?: InsertCiteUI;
 }

@@ -42,7 +42,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    public PanmirrorInsertCiteDialog(PanmirrorInsertCiteProps citeProps,
          OperationWithInput<PanmirrorInsertCiteResult> operation)
    {
-      super(title(citeProps.doi), Roles.getDialogRole(), operation, () -> {
+      super(title(citeProps.doi, citeProps.provider), Roles.getDialogRole(), operation, () -> {
          operation.execute(null);
       });
 
@@ -353,13 +353,17 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    {
    }
 
-   private static String title(String doi) {
+   private static String title(String doi, String provider) {
       String title = "Citation from DOI";
-      String doiTitle = title + ": " + doi;
-      if (DomMetrics.measureHTML(doiTitle).width < 350)
-         return doiTitle;
-      else
-         return title;      
+      if (provider != null && provider.length() > 0) {
+         return "Citation from " + provider;
+      } else {
+         String doiTitle = title + ": " + doi;
+         if (DomMetrics.measureHTML(doiTitle).width < 350)
+            return doiTitle;
+         else
+            return title;
+      }
    }
    
    private static String kUnknownError = "An error occurred while loading citation data for this DOI.";
