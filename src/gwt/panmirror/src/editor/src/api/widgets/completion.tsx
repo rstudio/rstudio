@@ -22,6 +22,7 @@ import './completion.css';
 export interface CompletionItemViewProps extends WidgetProps {
   width: number;
   image?: string;
+  adornmentImage?: string;
   title: string;
   detail?: string;
   subTitle: string;
@@ -38,7 +39,8 @@ export const CompletionItemView: React.FC<CompletionItemViewProps> = props => {
   return (
     <div className={className} style={style}>
       <div className={'pm-completion-item-type'}>
-        <img className={'pm-block-border-color'} src={props.image} />
+        {props.adornmentImage ? <img className={'pm-completion-image-adorn pm-block-border-color pm-background-color'} src={props.adornmentImage} /> : undefined}
+        <img className={'pm-completion-item-icon pm-block-border-color'} src={props.image} />
       </div>
       <div className={'pm-completion-item-summary'} style={{ width: props.width - 40 - 36 + 'px' }}>
         <div className={'pm-completion-item-id'}>
@@ -48,8 +50,8 @@ export const CompletionItemView: React.FC<CompletionItemViewProps> = props => {
         {props.htmlTitle ? (
           <div className={'pm-completion-item-subTitle'} dangerouslySetInnerHTML={{ __html: props.subTitle || '' }} />
         ) : (
-          <div className={'pm-completion-item-subTitle'}>{props.subTitle}</div>
-        )}
+            <div className={'pm-completion-item-subTitle'}>{props.subTitle}</div>
+          )}
       </div>
     </div>
   );

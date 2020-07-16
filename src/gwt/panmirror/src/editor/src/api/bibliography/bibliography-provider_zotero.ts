@@ -18,7 +18,7 @@ import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bi
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-const kZoteroItemProvider = 'Zotero';
+export const kZoteroItemProvider = 'Zotero';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
@@ -35,10 +35,12 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     if (zoteroEnabled(docPath, yamlBlocks)) {
       const collectionNames = zoteroCollectionsForDoc(yamlBlocks);
 
-      // TODO: Need to deal with version and cache and so on
       try {
 
-        const result = await this.server.getCollections(docPath, collectionNames, this.collections as ZoteroCollectionSpec[] || []);
+        // Don't send the items back through to the server
+        const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
+
+        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs as ZoteroCollectionSpec[] || []);
         if (result.status === "ok") {
 
           if (result.message) {

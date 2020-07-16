@@ -74,7 +74,7 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry && entry.source.DOI) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source);
+        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
     },
 
@@ -189,7 +189,8 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
-      title={`(${entry.source.provider.substr(0, 1)})@${entry.source.id}`}
+      adornmentImage={entry.adornmentImage}
+      title={`@${entry.source.id}`}
       subTitle={entry.source.title || ''}
       detail={detail}
       htmlTitle={true}

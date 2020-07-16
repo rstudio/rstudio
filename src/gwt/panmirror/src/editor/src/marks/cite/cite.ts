@@ -43,20 +43,20 @@ const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
 
-const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
+const kCiteIdFirstCharPattern = '[\\p{L}\\p{N}]';
+const kCiteIdOptionalCharsPattern = '[\\p{L}\\p{N}:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
 
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
-const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
+const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`, 'u');
 
-const kCiteIdRegEx = new RegExp(kCiteIdPattern);
-const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
+const kCiteIdRegEx = new RegExp(kCiteIdPattern, 'u');
+const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`, 'u');
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`, 'u');
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -502,7 +502,7 @@ function findCiteEndBracket(selection: Selection) {
   }
 }
 
-const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'gu');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   const schema = tr.doc.type.schema;
@@ -550,7 +550,7 @@ export interface ParsedCitation {
 
 // completions allow spaces in the cite id (multiple search terms)
 const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace(/^\[/, '[\\s');
-const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`);
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`, 'u');
 
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
 
@@ -587,7 +587,8 @@ export async function insertCitation(
   pos: number,
   ui: EditorUI,
   server: PandocServer,
-  csl?: CSL
+  csl?: CSL,
+  provider?: string
 ) {
 
   // ensure the bib manager is loaded before proceeding
@@ -621,10 +622,11 @@ export async function insertCitation(
       doi,
       existingIds,
       bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
+      provider,
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
-        previewFields: formatForPreview(csl)
+        previewFields: formatForPreview(csl),
       } : undefined
     };
 
