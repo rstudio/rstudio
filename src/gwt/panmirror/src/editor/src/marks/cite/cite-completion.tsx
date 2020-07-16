@@ -51,8 +51,8 @@ export function citationCompletionHandler(
 
     completions: citationCompletions(ui, bibManager),
 
-    filter: (_completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(token, bibManager, ui);
+    filter: (entries: BibliographyEntry[], _state: EditorState, token: string) => {
+      return filterCitations(token, bibManager, entries, ui);
     },
 
     replace(view: EditorView, pos: number, entry: BibliographyEntry | null) {
@@ -89,15 +89,16 @@ export function citationCompletionHandler(
 function filterCitations(
   token: string,
   manager: BibliographyManager,
+  entries: BibliographyEntry[],
   ui: EditorUI,
 ) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
-    return [];
+    return entries;
   }
 
   // String for a search
-  const searchResults = manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+  const searchResults = manager.searchAllSources(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
   const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
 
   // If we hav an exact match, no need for completions
