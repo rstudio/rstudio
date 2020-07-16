@@ -210,10 +210,11 @@ void zoteroItems(const std::string& key, int userID, const ZoteroJsonResponseHan
    zoteroItemRequest(key, boost::str(fmt % userID), handler);
 }
 
-void zoteroItemVersions(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
+void zoteroItemVersions(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
 {
    http::Fields params;
    params.push_back(std::make_pair("format", "versions"));
+   params.push_back(std::make_pair("since", safe_convert::numberToString(since)));
    boost::format fmt("users/%d/items");
    zoteroJsonRequest(key, boost::str(fmt % userID), params, "", handler);
 }
@@ -321,60 +322,43 @@ void getWebLibraryForUser(const std::string& key,
                           ZoteroCollectionsHandler handler)
 {
    // first query for versions
-   zoteroItemVersions(key, userID, [key, userID, cacheSpec, handler](core::Error error, int, json::Value json) {
-
+   zoteroItemVersions(key, userID, cacheSpec.version, [key, userID, cacheSpec, handler](core::Error error, int, json::Value json) {
       if (error)
       {
          handler(error, std::vector<ZoteroCollection>());
-         return;
       }
-
-      // check for maximum item version
-      int libraryVersion = 1; // ensure it's greater than "no cache" which is 0
-      if (json.isObject())
-      {
-         json::Object versionsJson = json.getObject();
-         for (auto member : versionsJson)
-         {
-            json::Value jsonVersion = member.getValue();
-            if (jsonVersion.isInt() && jsonVersion.getInt() > libraryVersion)
-               libraryVersion = jsonVersion.getInt();
-         }
-      }
-
-      // if our cache is up to date then return w/ no item query
-      if (cacheSpec.version >= libraryVersion)
+      else if (json.isObject() && json.getObject().getSize() == 0)
       {
          handler(Success(), std::vector<ZoteroCollection>{ cacheSpec });
-         return;
       }
+      else
+      {
+         zoteroItems(key, userID, [handler](Error error,int, json::Value json) {
 
-      zoteroItems(key, userID, [handler](Error error,int, json::Value json) {
+            if (error)
+            {
+               handler(error, std::vector<ZoteroCollection>());
+            }
+            else
+            {
+               // calculate library version based on max version of downloded items
+               int version = 0;
+               json::Array itemsJson = json.getArray();
+               std::for_each(itemsJson.begin(), itemsJson.end(), [&version](const json::Value& item) {
+                  int itemVersion = item.getObject()[kVersion].getInt();
+                  if (itemVersion > version)
+                     version = itemVersion;
+               });
 
-         if (error)
-         {
-            handler(error, std::vector<ZoteroCollection>());
-            return;
-         }
+               // create collection
+               ZoteroCollectionSpec spec(kMyLibrary, version);
+               ZoteroCollection collection = collectionFromItemsDownload(spec, json);
 
-         // calculate library version based on max version of downloded items
-         int version = 0;
-         json::Array itemsJson = json.getArray();
-         std::for_each(itemsJson.begin(), itemsJson.end(), [&version](const json::Value& item) {
-            int itemVersion = item.getObject()[kVersion].getInt();
-            if (itemVersion > version)
-               version = itemVersion;
+               // return it
+               handler(Success(), std::vector<ZoteroCollection>{ collection });
+            }
          });
-
-         // create collection
-         ZoteroCollectionSpec spec(kMyLibrary, version);
-         ZoteroCollection collection = collectionFromItemsDownload(spec, json);
-
-         // return it
-         handler(Success(), std::vector<ZoteroCollection>{ collection });
-
-      });
-
+      }
    });
 
 
