@@ -18,7 +18,7 @@ import { BibliographyDataProvider, BibliographySource, Bibliography } from "./bi
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-const kZoteroItemProvider = 'Zotero';
+export const kZoteroItemProvider = 'Zotero';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 

@@ -24,9 +24,10 @@
   margin-right: 6px;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
-.pm-completion-item-type img {
+.pm-completion-item-icon {
   border: solid 1px;
   border-radius: 2px;
   padding: 4px;
@@ -35,6 +36,19 @@
   margin-top: 1px;
   margin-right: 6px;
   filter: opacity(0.8);
+}
+
+.pm-completion-image-adorn {
+  border: solid 1px;
+  border-radius: 2px;
+  height: 6px;
+  width: 6px;
+  padding: 2px;
+  position: absolute;
+  bottom: -3px;
+  right: 1px;
+  filter: opacity(1.0) !important;
+  z-index: 1000;
 }
 
 .pm-completion-item-summary {
