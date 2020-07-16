@@ -4,3 +4,6 @@ CMakeLists.txt.user*
 .vs/
 compile_commands.json
 
+# Visual Studio
+out/
+CMakeSettings.json

@@ -20,7 +20,7 @@
 
 #include <core/FileSerializer.hpp>
 
-#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -36,17 +36,20 @@ namespace collections {
 
 namespace {
 
-const char * const kWebAPIType = "web-api";
+const char * const kWebAPIType = "web";
 
 const char * const kIndexFile = "INDEX";
 
-void LOG(const std::string& text)
+const char * const kFile = "file";
+
+void LOG(const std::string&)
 {
    // std::cerr << text << std::endl;
 }
 
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
+   // ~/.local/share/rstudio/zotero-collections
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero-collections")
       .completeChildPath(type)
@@ -57,9 +60,16 @@ FilePath collectionsCacheDir(const std::string& type, const std::string& context
    return cachePath;
 }
 
-std::map<std::string,std::string> collectionsCacheIndex(const FilePath& cacheDir)
+struct IndexedCollection
 {
-   std::map<std::string,std::string> index;
+   bool empty() const { return file.empty(); }
+   int version;
+   std::string file;
+};
+
+std::map<std::string,IndexedCollection> collectionsCacheIndex(const FilePath& cacheDir)
+{
+   std::map<std::string,IndexedCollection> index;
 
    FilePath indexFile = cacheDir.completeChildPath(kIndexFile);
    if (indexFile.exists())
@@ -73,7 +83,12 @@ std::map<std::string,std::string> collectionsCacheIndex(const FilePath& cacheDir
          if (!error)
          {
             std::for_each(indexJson.begin(), indexJson.end(), [&index](json::Object::Member member) {
-              index.insert(std::make_pair(member.getName(), member.getValue().getString()));
+
+               json::Object entryJson = member.getValue().getObject();
+               IndexedCollection coll;
+               coll.version = entryJson[kVersion].getInt();
+               coll.file = entryJson[kFile].getString();
+               index.insert(std::make_pair(member.getName(),coll));
             });
          }
       }
@@ -85,12 +100,17 @@ std::map<std::string,std::string> collectionsCacheIndex(const FilePath& cacheDir
    return index;
 }
 
-void updateCollectionsCacheIndex(const FilePath& cacheDir, const std::map<std::string,std::string>& index)
+void updateCollectionsCacheIndex(const FilePath& cacheDir, const std::map<std::string,IndexedCollection>& index)
 {
    // create json for index
    json::Object indexJson;
    for (auto item : index)
-      indexJson[item.first] = item.second;
+   {
+      json::Object collJson;
+      collJson[kVersion] = item.second.version;
+      collJson[kFile] = item.second.file;
+      indexJson[item.first] = collJson;
+   }
 
    // write index
    FilePath indexFile = cacheDir.completeChildPath(kIndexFile);
@@ -99,41 +119,67 @@ void updateCollectionsCacheIndex(const FilePath& cacheDir, const std::map<std::s
       LOG_ERROR(error);
 }
 
+Error readCollection(const FilePath& filePath, ZoteroCollection* pCollection)
+{
+   std::string cacheContents;
+   Error error = core::readStringFromFile(filePath, &cacheContents);
+   if (error)
+      return error;
+
+   json::Object collectionJson;
+   error = collectionJson.parse(cacheContents);
+   if (error)
+      return error;
+
+   pCollection->name = collectionJson[kName].getString();
+   pCollection->version = collectionJson[kVersion].getInt();
+   pCollection->items = collectionJson[kItems].getArray();
+
+   return Success();
+}
+
 
 ZoteroCollection cachedCollection(const std::string& type, const std::string& context, const std::string& name)
 {
-   // see if we have the collection in our index
-   Error error;
+   ZoteroCollection collection;
    FilePath cacheDir = collectionsCacheDir(type, context);
    auto index = collectionsCacheIndex(cacheDir);
-   auto file = index[name];
-   if (!file.empty())
+   auto coll = index[name];
+   if (!coll.empty())
    {
-      FilePath cachePath = cacheDir.completeChildPath(file);
-      std::string cacheContents;
-      error = core::readStringFromFile(cachePath, &cacheContents);
-      if (!error)
-      {
-         json::Object collectionJson;
-         error = collectionJson.parse(cacheContents);
-         if (!error)
-         {
-            ZoteroCollection collection;
-            collection.name = collectionJson[kName].getString();
-            collection.version = collectionJson[kVersion].getInt();
-            collection.items = collectionJson[kItems].getArray();
-            return collection;
-         }
-      }
+      FilePath cachePath = cacheDir.completeChildPath(coll.file);
+      Error error = readCollection(cachePath, &collection);
+      if (error)
+         LOG_ERROR(error);
    }
+   return collection;
+}
 
-   if (error)
-      LOG_ERROR(error);
+ZoteroCollectionSpec cachedCollectionSpec(const std::string& type, const std::string& context, const std::string& name)
+{
+   ZoteroCollectionSpec spec;
+   FilePath cacheDir = collectionsCacheDir(type, context);
+   auto index = collectionsCacheIndex(cacheDir);
+   auto coll = index[name];
+   if (!coll.empty())
+   {
+      spec.name = name;
+      spec.version = coll.version;
+   }
+   return spec;
+}
 
-
-   // return empty collection if we failed for any reason
-   return ZoteroCollection();
-
+ZoteroCollectionSpecs cachedCollectionsSpecs(const std::string& type, const std::string& context)
+{
+   ZoteroCollectionSpecs specs;
+   FilePath cacheDir = collectionsCacheDir(type, context);
+   auto index = collectionsCacheIndex(cacheDir);
+   for (auto entry : index)
+   {
+      ZoteroCollectionSpec spec(entry.first, entry.second.version);
+      specs.push_back(spec);
+   }
+   return specs;
 }
 
 void updateCachedCollection(const std::string& type, const std::string& context, const std::string& name, const ZoteroCollection& collection)
@@ -141,11 +187,12 @@ void updateCachedCollection(const std::string& type, const std::string& context,
    // see if we have the collection in our index (create an index entry if we don't)
    FilePath cacheDir = collectionsCacheDir(type, context);
    auto index = collectionsCacheIndex(cacheDir);
-   auto file = index[name];
-   if (file.empty())
+   auto coll = index[name];
+   if (coll.empty())
    {
-      file = core::system::generateShortenedUuid();
-      index[name] = file;
+      coll.version = collection.version;
+      coll.file = core::system::generateShortenedUuid();
+      index[name] = coll;
       updateCollectionsCacheIndex(cacheDir, index);
    }
 
@@ -154,7 +201,7 @@ void updateCachedCollection(const std::string& type, const std::string& context,
    collectionJson[kName] = collection.name;
    collectionJson[kVersion] = collection.version;
    collectionJson[kItems] = collection.items;
-   Error error = core::writeStringToFile(cacheDir.completeChildPath(file), collectionJson.writeFormatted());
+   Error error = core::writeStringToFile(cacheDir.completeChildPath(coll.file), collectionJson.writeFormatted());
    if (error)
       LOG_ERROR(error);
 }
@@ -168,28 +215,41 @@ const char * const kVersion = "version";
 const char * const kItems = "items";
 
 
-void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler handler)
+void getCollections(const std::vector<std::string>& collections,
+                    const ZoteroCollectionSpecs& cacheSpecs,
+                    ZoteroCollectionsHandler handler)
 {
    // we only support the web api right now so hard-code to using that. the code below however
    // will work with other methods (e.g. local sqllite) once we implement them
-   std::string apiKey = prefs::userPrefs().zoteroApiKey();
+   std::string apiKey = prefs::userState().zoteroApiKey();
 
    // if we have an api key then request collections from the web
    if (!apiKey.empty())
    {
-      // create a set of specs based on what we have in our cache (as we always want to keep our cache up to date)
-      ZoteroCollectionSpecs cacheSpecs;
-      std::transform(specs.begin(), specs.end(), std::back_inserter(cacheSpecs), [apiKey](ZoteroCollectionSpec spec) {
-         ZoteroCollectionSpec cacheSpec(spec.name, 0);
-         ZoteroCollection cached = cachedCollection(kWebAPIType, apiKey, spec.name);
-         if (!cached.empty())
-            cacheSpec.version = cached.version;
-         return cacheSpec;
-      });
+      // create a set of specs based on what we have in our server cache (as we always want to keep our cache up to date)
+      ZoteroCollectionSpecs serverCacheSpecs;
+
+      // request for explicit list of collections, provide specs for matching collections from the server cache
+      if (!collections.empty())
+      {
+         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [apiKey](std::string name) {
+            ZoteroCollectionSpec cacheSpec(name, 0);
+            ZoteroCollectionSpec cached = cachedCollectionSpec(kWebAPIType, apiKey, name);
+            if (!cached.empty())
+               cacheSpec.version = cached.version;
+            return cacheSpec;
+         });
+      }
+
+      // request for all collections, provide specs for all collections in the server cache
+      else
+      {
+         serverCacheSpecs = cachedCollectionsSpecs(kWebAPIType, apiKey);
+      }
 
       // get collections
       ZoteroCollectionSource source = collections::webCollections();
-      source.getCollections(apiKey, cacheSpecs, [apiKey, specs, cacheSpecs, handler](Error error, ZoteroCollections webCollections) {
+      source.getCollections(apiKey, collections, serverCacheSpecs, [apiKey, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
 
          // process response -- for any collection returned w/ a version higher than that in the
          // cache, update the cache. for any collection available (from cache or web) with a version
@@ -200,11 +260,11 @@ void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler
             for (auto webCollection : webCollections)
             {
                // see if the server side cache needs updating
-               ZoteroCollectionSpecs::const_iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [webCollection](ZoteroCollectionSpec cacheSpec) {
+               ZoteroCollectionSpecs::const_iterator it = std::find_if(serverCacheSpecs.begin(), serverCacheSpecs.end(), [webCollection](ZoteroCollectionSpec cacheSpec) {
                   return cacheSpec.name == webCollection.name && cacheSpec.version >= webCollection.version;
                });
                // need to update the cache -- do so and then return the just cached copy to the client
-               if (it == cacheSpecs.end())
+               if (it == serverCacheSpecs.end())
                {
                   LOG("Updating and returning cache for " + webCollection.name);
                   updateCachedCollection(kWebAPIType, apiKey, webCollection.name, webCollection);
@@ -220,10 +280,10 @@ void getCollections(const ZoteroCollectionSpecs& specs, ZoteroCollectionsHandler
                   if (!cached.empty() )
                   {
                      // see if the client specs already indicate an up to date version
-                     ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(specs.begin(), specs.end(), [cached](ZoteroCollectionSpec spec) {
+                     ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [cached](ZoteroCollectionSpec spec) {
                         return spec.name == cached.name && spec.version >= cached.version;
                      });
-                     if (clientIt == specs.end())
+                     if (clientIt == cacheSpecs.end())
                      {
                         // client spec didn't match, return cached collection
                         LOG("Returning existing cache for " + webCollection.name);

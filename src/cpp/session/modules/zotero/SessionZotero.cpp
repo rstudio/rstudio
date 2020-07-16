@@ -25,11 +25,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "ZoteroCollections.hpp"
-
-// TODO: user pref for setting api key
-//   - UI
-//   - Storage
-//   - OAuth
+#include "ZoteroCollectionsWeb.hpp"
 
 using namespace rstudio::core;
 
@@ -51,6 +47,29 @@ const char * const kStatusNoHost = "nohost";
 const char * const kStatusNotFound = "notfound";
 const char * const kStatusError = "error";
 
+
+void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
+                             const json::JsonRpcFunctionContinuation& cont)
+{
+   // extract params
+   std::string key;
+   Error error = json::readParams(request.params, &key);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      json::setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   validateWebApiKey(key, [cont](bool valid) {
+      json::JsonRpcResponse response;
+      response.setResult(valid);
+      cont(Success(), &response);
+   });
+}
+
+
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
 {
@@ -59,14 +78,22 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
    // extract params
    std::string file;
+   json::Value collectionsJsonValue;
    json::Array collectionsJson, cachedJson;
-   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson);
+   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson);
    if (error)
    {
       json::setErrorResponse(error, &response);
       cont(Success(), &response);
       return;
    }
+
+   // determine whether this is a request for all collections.
+   bool allCollections = collectionsJsonValue.isNull();
+
+   // if it isn't then cast to collectionsJson
+   if (!allCollections)
+      collectionsJson = collectionsJsonValue.getArray();
 
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
@@ -79,28 +106,33 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
-
-   // determine collections to request
-   ZoteroCollectionSpecs collections;
+    // determine collections to request
+   std::vector<std::string> collections;
 
    // explicit request
    if (collectionsJson.getSize() > 0)
    {
-      std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](const json::Value& json) {
-         return ZoteroCollectionSpec(json.getString());
-      });
+      collectionsJson.toVectorString(collections);
    }
    // based on project
-   else if (isProjectFile)
+   else if (!allCollections && isProjectFile)
    {
+      // look for special logical values
+      const std::string kLogicalPrefix = "LOGICAL:";
       std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
-      std::transform(bookdownCollections.begin(),bookdownCollections.end(), std::back_inserter(collections), [](std::string collection) {
-         return ZoteroCollectionSpec(collection);
-      });
+      if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
+      {
+         std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
+         allCollections = value == "TRUE";
+      }
+      else
+      {
+         collections = bookdownCollections;
+      }
    }
 
-   // return empty array if no collections were requested
-   if (collections.size() == 0)
+   // return empty array if no collections were requested and we aren't getting allCollections
+   if (collections.size() == 0 && !allCollections)
    {
       json::JsonRpcResponse response;
       response.setResult(json::Array());
@@ -108,22 +140,19 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
+   // provide client cache specs
+   ZoteroCollectionSpecs cacheSpecs;
+   std::transform(cachedJson.begin(), cachedJson.end(), std::back_inserter(cacheSpecs), [](const json::Value json) {
+      auto jsonSpec = json.getObject();
+      ZoteroCollectionSpec cacheSpec;
+      cacheSpec.name = jsonSpec[kName].getString();
+      cacheSpec.version = jsonSpec[kVersion].getInt();
+      return cacheSpec;
+   });
 
-   // note versions already cached on the client
-   for (ZoteroCollectionSpec& collection : collections)
-   {
-      std::string name = collection.name;
-      auto it = std::find_if(cachedJson.begin(), cachedJson.end(), [name](json::Value json) {
-         return json.getObject()["name"].getString() == name;
-      });
-      if (it != cachedJson.end())
-      {
-         collection.version = (*it).getObject()["version"].getInt();
-      }
-   }
 
    // get the collections
-   getCollections(collections, [cont](Error error, ZoteroCollections collections) {
+   getCollections(collections, cacheSpecs, [cont](Error error, ZoteroCollections collections) {
 
       // result defaults
       json::Object resultJson;
@@ -179,6 +208,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
        (boost::bind(module_context::registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
+       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
    ;
    return initBlock.execute();
 }

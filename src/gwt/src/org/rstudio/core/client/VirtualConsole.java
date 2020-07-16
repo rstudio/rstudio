@@ -295,17 +295,27 @@ public class VirtualConsole
                // extend the original range
                overlap.appendLeft(range.text(), delta);
 
-               // If we previously inserted the new range (i.e. overlapped a prior
-               // range that had a different clazz) then undo that and use the one
-               // we found with the same clazz.
-               range.clearText();
-               if (haveInsertedRange)
+               // if the original range becomes empty, then delete it
+               if (overlap.length == 0)
                {
-                  insertions.remove(range);
-                  haveInsertedRange = false;
+                  deletions.add(l);
+                  if (parent_ != null)
+                     parent_.removeChild(overlap.element);
                }
+               else
+               {
+                  // If we previously inserted the new range (i.e. overlapped a prior
+                  // range that had a different clazz) then undo that and use the one
+                  // we found with the same clazz.
+                  range.clearText();
+                  if (haveInsertedRange)
+                  {
+                     insertions.remove(range);
+                     haveInsertedRange = false;
+                  }
 
-               moves.put(l, start);
+                  moves.put(l, start);
+               }
             }
             else
             {

@@ -33,7 +33,6 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -88,7 +87,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Accessibility");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(generalPanel, "General", generalPanel.getBasePanelId());
       tabPanel.add(announcementsPanel, "Announcements", announcementsPanel.getBasePanelId());
       tabPanel.selectTab(0);
@@ -126,10 +125,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       {
          initialScreenReaderEnabled_ = screenReaderEnabledSetting;
          prefs.setScreenReaderEnabled(screenReaderEnabledSetting);
-         if (Desktop.isDesktop())
-            restartRequirement.setDesktopRestartRequired(true);
-         else
-            restartRequirement.setUiReloadRequired(true);
+         restartRequirement.setRestartRequired();
       }
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
@@ -156,7 +152,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox checkBox = new CheckBox(entry.getValue());
          checkBox.setFormValue(entry.getKey());
          announcements_.addItem(checkBox);
-         
+
          // The preference tracks disabled announcements, but the UI shows enabled announcements.
          // Having the UI show disabled announcements is counter-intuitive, but tracking
          // disabled items in the preferences causes newly added announcements to be enabled
@@ -178,7 +174,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox chk = announcements_.getItemAtIdx(i);
          if (!chk.getValue()) // preference tracks disabled, UI tracks enabled
             settings.push(chk.getFormValue());
-         
+
          if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_LOG) &&
                origConsoleLog == chk.getValue())
          {
@@ -190,7 +186,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             restartNeeded = true;
          }
       }
-      
+
       prefs.disabledAriaLiveAnnouncements().setGlobalValue(settings);
       return restartNeeded;
    }

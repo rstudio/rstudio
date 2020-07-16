@@ -755,11 +755,11 @@ std::string errorMessage(const core::Error& error);
    catch(const std::exception& e)                                                   \
    {                                                                                \
       rstudio::core::log::logErrorMessage(std::string("Unexpected exception: ") +   \
-                        e.what(), "") ;                                             \
+                        e.what(), ERROR_LOCATION);                                  \
    }                                                                                \
    catch(...)                                                                       \
    {                                                                                \
-      rstudio::core::log::logErrorMessage("Unknown exception", "");                 \
+      rstudio::core::log::logErrorMessage("Unknown exception", ERROR_LOCATION);     \
    }
 
 #endif

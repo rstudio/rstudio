@@ -436,6 +436,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_open_shared_projects;
    }-*/;
 
+   public final native boolean getProjectSharingEnumerateServerUsers() /*-{
+      return this.project_sharing_enumerate_server_users;
+   }-*/;
+
    public final native boolean getLauncherSession() /*-{
       return this.launcher_session;
    }-*/;

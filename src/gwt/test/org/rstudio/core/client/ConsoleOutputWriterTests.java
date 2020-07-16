@@ -670,4 +670,15 @@ public class ConsoleOutputWriterTests extends GWTTestCase
          "<span class=\"myClass\"> zzz\n</span>",
          getInnerHTML(output));
    }
+
+   public void test18()
+   {
+      // https://github.com/rstudio/rstudio/issues/7278
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("B\033[31mx\033[39mA", myClass, notError, ignoreLineCount, false);
+      output.outputToConsole("\r   ", myClass, notError, ignoreLineCount, false);
+      output.outputToConsole("\rMessage\n", myClass, notError, ignoreLineCount, false);
+      Assert.assertEquals(1, output.getCurrentLines());
+      Assert.assertEquals("<span class=\"myClass\">Message\n</span>", getInnerHTML(output));
+   }
 }

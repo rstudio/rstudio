@@ -13,8 +13,8 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
+
+import { Plugin, PluginKey, Transaction, Selection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import {
@@ -72,7 +72,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
   private version = 0;
-  private allCompletions: any[] = [];
+  private allCompletions: any[] | (() => any[]) = [];
   private completions: any[] = [];
   private horizontal = false;
   private selectedIndex = 0;
@@ -161,7 +161,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.view = view;
 
           // update completions
-          this.updateCompletions(view);
+          this.updateCompletions(view, true);
         },
 
         destroy: () => {
@@ -253,16 +253,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
     // capture reference to ui
     this.ui = ui;
 
+    // handle streamed completions
+    this.handleStreamedCompletions();
+
     // hide completions when we scroll or the focus changes
     this.clearCompletions = this.clearCompletions.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.clearCompletions);
     window.document.addEventListener('focusin', this.clearCompletions);
   }
 
-  private updateCompletions(view: EditorView) {
+  private updateCompletions(view: EditorView, resetSelection: boolean) {
     const state = key.getState(view.state);
 
     if (state?.handler && state?.result) {
+
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
@@ -281,16 +285,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
         }
 
         // save completions
-        this.setAllCompletions(completions, state.handler.view.horizontal);
+        this.setAllCompletions(completions, !!state.handler.view.horizontal, resetSelection);
 
         // display if the request still maps to the current state
         if (this.version === requestVersion) {
           // if there is a filter then call it and update displayed completions
           const displayedCompletions = state.handler.filter
-            ? state.handler.filter(completions, view.state, state.result.token)
+            ? state.handler.filter(this.resolveAllCompletions(), view.state, state.result.token)
             : null;
           if (displayedCompletions) {
-            this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+            this.setDisplayedCompletions(displayedCompletions, !!state.handler.view.horizontal, resetSelection);
           }
 
           this.renderCompletions(view);
@@ -306,7 +310,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // display if the request still maps to the current state
           if (state.handler && state.result && this.version === requestVersion) {
             const filteredCompletions = state.handler.filter!(
-              this.allCompletions,
+              this.resolveAllCompletions(),
               view.state,
               state.result.token,
               state.prevToken,
@@ -314,7 +318,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             // got a hit from the filter!
             if (filteredCompletions) {
-              this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+              this.setDisplayedCompletions(filteredCompletions, !!state.handler.view.horizontal, resetSelection);
               this.renderCompletions(view);
 
               // couldn't use the filter, do a full request for all completions
@@ -420,7 +424,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private clearCompletions() {
-    this.setAllCompletions([]);
+    this.setAllCompletions([], false, true);
     this.hideCompletionPopup();
   }
 
@@ -435,15 +439,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setAllCompletions(completions: any[], horizontal = false) {
+  private setAllCompletions(completions: any[] | (() => any[]), horizontal: boolean, resetSelection: boolean) {
     this.allCompletions = completions;
-    this.setDisplayedCompletions(completions, horizontal);
+    const displayed = typeof completions === 'function' ? completions() : completions;
+    this.setDisplayedCompletions(displayed, horizontal, resetSelection);
   }
 
-  private setDisplayedCompletions(completions: any[], horizontal = false) {
+  private setDisplayedCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.completions = completions;
     this.horizontal = !!horizontal;
-    this.selectedIndex = 0;
+
+    // reset selection if requested or if the current index exceeds the # of completions
+    if (resetSelection || this.selectedIndex > (this.completions.length - 1)) {
+      this.selectedIndex = 0;
+    }
   }
 
   private completionPageSize() {
@@ -453,6 +462,25 @@ class CompletionPlugin extends Plugin<CompletionState> {
     } else {
       return kCompletionDefaultMaxVisible;
     }
+  }
+
+  private resolveAllCompletions(): any[] {
+    if (typeof this.allCompletions === 'function') {
+      return this.allCompletions();
+    } else {
+      return this.allCompletions;
+    }
+  }
+
+  private handleStreamedCompletions() {
+    // if the completion handler returned a function then call 
+    // that function back every 300ms to see if there are 
+    // streaming results
+    setInterval(() => {
+      if (this.view && typeof this.allCompletions === 'function') {
+        this.updateCompletions(this.view, false);
+      }
+    }, 300);
   }
 }
 

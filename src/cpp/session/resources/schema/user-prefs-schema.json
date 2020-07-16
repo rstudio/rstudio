@@ -111,42 +111,42 @@
         "windows_terminal_shell": {
             "type": "string",
             "enum": ["default", "win-git-bash", "win-wsl-bash", "win-cmd", "win-ps", "ps-core", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on Windows."
         },
         "posix_terminal_shell": {
             "type": "string",
             "enum": ["default", "bash", "zsh", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
         },
         "custom_shell_command": {
             "type": "string",
             "default": "",
-            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."  
+            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."
         },
         "custom_shell_options": {
             "type": "string",
             "default": "",
-            "description": "The command-line options to pass to the custom shell command."  
+            "description": "The command-line options to pass to the custom shell command."
         },
         "show_line_numbers": {
             "type": "boolean",
             "default": true,
             "title": "Show line numbers in editor",
-            "description": "Show line numbers in RStudio's code editor."  
+            "description": "Show line numbers in RStudio's code editor."
         },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
             "title": "Highlight selected word in editor",
-            "description": "Highlight the selected word in RStudio's code editor."  
+            "description": "Highlight the selected word in RStudio's code editor."
         },
         "highlight_selected_line": {
             "type": "boolean",
             "default": false,
             "title": "Highlight selected line in editor",
-            "description": "Highlight the selected line in RStudio's code editor."  
+            "description": "Highlight the selected line in RStudio's code editor."
         },
         "panes": {
             "type": "object",
@@ -196,8 +196,8 @@
             },
             "default": {
                 "quadrants": [
-                    "Source", 
-                    "Console", 
+                    "Source",
+                    "Console",
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
@@ -1278,12 +1278,6 @@
             "title": "Editor for code chunks in visual editing mode",
             "description": "The name of the editor to use to provide code editing in visual mode"
         },
-        "zotero_api_key": {
-            "type": "string",
-            "default": "",
-            "title": "Zotero API Key",
-            "description": "Key for making Zotero API calls"  
-        },
         "emoji_skintone" : {
           "type": "string",
           "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
@@ -1342,30 +1336,30 @@
                 "type": "string"
             },
             "default": [
-                "Andale Mono", 
-                "Bitstream Vera Sans Mono", 
-                "Cascadia Code", 
-                "Consolas", 
-                "Courier New", 
-                "Courier", 
+                "Andale Mono",
+                "Bitstream Vera Sans Mono",
+                "Cascadia Code",
+                "Consolas",
+                "Courier New",
+                "Courier",
                 "DejaVu Sans Mono",
                 "Droid Sans Mono",
-                "Fira Code", 
-                "Hack", 
+                "Fira Code",
+                "Hack",
                 "IBM Plex Mono",
-                "Inconsolata", 
-                "JetBrains Mono", 
+                "Inconsolata",
+                "JetBrains Mono",
                 "Lucida Console",
                 "Lucida Sans Typewriter",
-                "Menlo", 
-                "Monaco", 
+                "Menlo",
+                "Monaco",
                 "Monoid",
                 "Operator Mono",
-                "Pragmata", 
+                "Pragmata",
                 "SF Mono",
                 "Source Code Pro",
-                "Vera Sans Mono", 
-                "Victor Mono", 
+                "Vera Sans Mono",
+                "Victor Mono",
                 "Ubuntu Mono"
             ]
         }

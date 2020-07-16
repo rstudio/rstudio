@@ -31,7 +31,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import java.util.ArrayList;
 
 public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPrefs>
-{ 
+{
    @Override
    public RestartRequirement onApply(UserPrefs rPrefs)
    {
@@ -39,7 +39,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
          cmd.execute();
       return new RestartRequirement();
    }
-   
+
    /**
     * Create a checkbox bound to a user preference with `lessSpaced` margin style.
     * @param label checkbox label
@@ -66,7 +66,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    {
       return checkboxPref(label, prefValue, null /*title*/, defaultSpaced);
    }
-    
+
    /**
     * Create a checkbox bound to a user preference with `lessSpaced` margin style.
     * @param label checkbox label
@@ -80,7 +80,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    {
       return checkboxPref(label, prefValue, title, true /*defaultSpaced*/);
    }
-  
+
    /**
     * Create a checkbox bound to a user preference.
     * @param label checkbox label
@@ -121,7 +121,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
             NumericValueWidget.NoMaximum,
             prefValue);
    }
-   
+
    protected NumericValueWidget numericPref(String label,
                                             Integer minValue,
                                             Integer maxValue,
@@ -132,7 +132,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
 
    /**
     * Prompt for integer preference value in range [min, max]
-    * 
+    *
     * @param label
     * @param minValue minimum value or NumericValueWidget.ZeroMinimum
     * @param maxValue maximum value or NumericValueWidget.NoMaximum
@@ -168,8 +168,8 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       });
       return widget;
    }
-   
-   protected Label headerLabel(String caption) 
+
+   protected Label headerLabel(String caption)
    {
       Label headerLabel = new Label(caption);
       headerLabel.addStyleName(res().styles().headerLabel());

@@ -42,6 +42,16 @@ public class PanmirrorZoteroServer
       server_ = server;
    }
    
+   public Promise<Boolean> validateWebAPIKey(String key)
+   {
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         server_.zoteroValidateWebAPIKey(
+            key,
+            new PromiseServerRequestCallback<Boolean>(resolve, reject)
+         );
+      });
+   }
+   
    public Promise<JavaScriptObject> getCollections(String file, 
                                                    JsArrayString collections,
                                                    JsArray<PanmirrorZoteroCollectionSpec> cached)

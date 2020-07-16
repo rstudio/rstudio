@@ -29,11 +29,10 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     this.server = server;
   }
 
-  // TODO: with JJA investigate streaming as way to improve responsiveness of initial load
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
     let hasUpdates = false;
-    if (zoteroEnabled(yamlBlocks)) {
+    if (zoteroEnabled(docPath, yamlBlocks)) {
       const collectionNames = zoteroCollectionsForDoc(yamlBlocks);
 
       // TODO: Need to deal with version and cache and so on
@@ -126,7 +125,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 // 
 // Be default, zotero integration is disabled. Add this header to enable integration
 //
-function zoteroEnabled(parsedYamls: ParsedYaml[]): boolean | undefined {
+function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
   );
@@ -144,13 +143,16 @@ function zoteroEnabled(parsedYamls: ParsedYaml[]): boolean | undefined {
     // There is a zotero header that isn't boolean, 
     // It is enabled
     return true;
-  }
 
-  // There is no zotero header. Disabled
-  return false;
+    // any doc with a path could have project level zotero
+  } else if (docPath !== null) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
-function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] {
+function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] | null {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
   );
@@ -166,8 +168,11 @@ function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] {
       Array.isArray(zoteroCollections) &&
       zoteroCollections.every(collection => typeof collection === 'string')) {
       return zoteroCollections;
-    } else {
+    } else if (typeof zoteroCollections === 'string') {
       return [zoteroCollections];
+      // zotero: true means request all collections (signified by null)
+    } else if (typeof zoteroCollections === 'boolean' && zoteroCollections === true) {
+      return null;
     }
   }
   return [];

@@ -335,14 +335,14 @@ Error unlockUser(boost::asio::io_service& ioService,
    return Success();
 }
 
-Error setAdmin(rstudio_boost::asio::io_service& ioService,
+Error setAdmin(boost::asio::io_service& ioService,
                const std::string& username,
                bool isAdmin)
 {
    return Success();
 }
 
-Error addUser(rstudio_boost::asio::io_service& ioService,
+Error addUser(boost::asio::io_service& ioService,
               const std::string& username,
               bool isAdmin)
 {

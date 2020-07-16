@@ -46,7 +46,7 @@ import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 
 
 export interface BibliographyDataProvider {
-  load(docPath: string, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
   items(): BibliographySource[];
   projectBibios(): string[];
 }
@@ -84,13 +84,13 @@ export class BibliographyManager {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<BibliographyManager> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
 
     // Currently edited doc
-    const docPath = ui.context.getDocumentPath() || '';
+    const docPath = ui.context.getDocumentPath();
 
     // Load each provider
     const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
@@ -110,8 +110,10 @@ export class BibliographyManager {
 
       this.updateIndex(this.sources);
     }
+  }
 
-    return this;
+  public hasSources() {
+    return this.allSources().length > 0;
   }
 
   public allSources(): BibliographySource[] {
