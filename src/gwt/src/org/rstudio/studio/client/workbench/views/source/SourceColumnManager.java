@@ -562,6 +562,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return columnList_.size();
    }
 
+   public SourceColumn get(int index)
+   {
+      if (index >= columnList_.size())
+         return null;
+      return columnList_.get(index);
+   }
+
    public int getUntitledNum(String prefix)
    {
       AtomicInteger max = new AtomicInteger();
@@ -1405,7 +1412,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       for (SourceColumn column : columnList_)
       {
-         if (!column.hasDoc())
+         if (!column.hasDoc() && column.getName() != MAIN_SOURCE_NAME)
          {
             closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
