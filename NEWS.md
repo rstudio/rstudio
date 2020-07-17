@@ -15,6 +15,8 @@
 ### Workbench
 
 * Any tab can be hidden from view through Global Options. (#6428)
+* Accessibility preference to reduce focus rectangle display (#7242)
+* Multiple source panes can be opened in the main window via Global Options. (#2854)
 
 ### Miscellaneous
 

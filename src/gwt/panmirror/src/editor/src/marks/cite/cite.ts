@@ -393,17 +393,24 @@ function citeIdInputRule(schema: Schema) {
   return new InputRule(new RegExp(`(-|@)$`), (state: EditorState, match: string[], start: number, end: number) => {
     // only operate within a cite mark
     if (markIsActive(state, schema.marks.cite)) {
-      const tr = state.tr;
-      tr.insertText(match[1]);
-      const beginCite = findCiteBeginBracket(tr.selection);
-      const endCite = findCiteEndBracket(tr.selection);
-      if (beginCite >= 0 && endCite >= 0) {
-        const citeText = tr.doc.textBetween(beginCite, endCite + 1);
-        if (editingCiteLength(citeText) > 0) {
-          encloseInCiteMark(tr, beginCite, endCite + 1);
+      // if we already have an @ 1 character before then this is a backspace
+      // (in that case don't insert the match)
+      const prefixChar = state.doc.textBetween(state.selection.from - 2, state.selection.from - 1);
+      if (prefixChar !== "@") {
+        const tr = state.tr;
+        tr.insertText(match[1]);
+        const beginCite = findCiteBeginBracket(tr.selection);
+        const endCite = findCiteEndBracket(tr.selection);
+        if (beginCite >= 0 && endCite >= 0) {
+          const citeText = tr.doc.textBetween(beginCite, endCite + 1);
+          if (editingCiteLength(citeText) > 0) {
+            encloseInCiteMark(tr, beginCite, endCite + 1);
+          }
         }
+        return tr;
+      } else {
+        return null;
       }
-      return tr;
     } else {
       return null;
     }
