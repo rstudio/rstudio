@@ -206,6 +206,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
+      SourceColumn column = GWT.create(SourceColumn.class);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      columnList_.add(column);
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -255,9 +258,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
-      SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnList_.add(column);
 
       setActive(column.getName());
    }
@@ -418,7 +418,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public String getLeftColumnName()
    {
-     return columnList_.get(0).getName();
+     return columnList_.get(columnList_.size() - 1).getName();
    }
 
    public String getNextColumnName()
