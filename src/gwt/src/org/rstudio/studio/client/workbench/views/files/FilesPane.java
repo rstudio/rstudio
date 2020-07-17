@@ -118,7 +118,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      filePathToolbar_.focus();
    }
 
    @Override

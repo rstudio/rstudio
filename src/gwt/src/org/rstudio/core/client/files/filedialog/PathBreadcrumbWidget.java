@@ -57,8 +57,7 @@ public class PathBreadcrumbWidget
       panel_.setSize("100%", "100%");
       panel_.add(pathPanel_);
 
-      outer_ = new SimplePanel();
-      outer_.setWidget(panel_);
+      outer_ = new FocusPanel(panel_);
       outer_.setStylePrimaryName(RES.styles().breadcrumb());
       Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), "Selected path breadcrumb");
 
@@ -148,6 +147,11 @@ public class PathBreadcrumbWidget
       }
 
       onWidthsChanged();
+   }
+
+   public void focus()
+   {
+      outer_.setFocus(true);
    }
 
    private void onWidthsChanged()
@@ -264,7 +268,7 @@ public class PathBreadcrumbWidget
    private final FileSystemContext context_;
    private FileDialogResources RES = FileDialogResources.INSTANCE;
    private FileDialogStyles STYLES = RES.styles();
-   private SimplePanel outer_;
+   private FocusPanel outer_;
    private FlowPanel eastFrame_;
    private boolean projectIconsAdded_ = false;
    private final DockLayoutPanel frame_;

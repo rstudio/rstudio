@@ -73,7 +73,7 @@ public class Files
    interface Binder extends CommandBinder<Commands, Files> {}
  
    public interface Display extends WorkbenchView
-   {   
+   {
       public interface NavigationObserver
       {
          void onFileNavigation(FileSystemItem file);
@@ -632,6 +632,12 @@ public class Files
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
+   }
+
+   @Override
+   public void setFocus()
+   {
+      view_.setFocus();
    }
 
    private void navigateToDirectory(FileSystemItem directoryEntry)
