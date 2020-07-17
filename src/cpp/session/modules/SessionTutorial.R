@@ -249,7 +249,9 @@
    contents <- readLines(tutorialFile, encoding = "UTF-8", warn = FALSE)
    
    # find YAML header (if any). note that we avoid using rmarkdown here
-   # just because we want to avoid 
+   # just because we want to avoid loading the package and all its
+   # recursive dependencies, as this could introduce issues for users
+   # who need to update packages
    reYamlSeparator <- "^\\s*(?:---|[.][.][.])\\s*$"
    yamlSeparators <- grep(reYamlSeparator, contents)
    yamlRange <- seq.int(
