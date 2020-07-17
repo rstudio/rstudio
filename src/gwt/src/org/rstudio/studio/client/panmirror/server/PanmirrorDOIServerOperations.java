@@ -1,5 +1,5 @@
 /*
- * DocTabsChangedHandler.java
+ * PanmirrorDOIServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.events;
 
-import com.google.gwt.event.shared.EventHandler;
+package org.rstudio.studio.client.panmirror.server;
 
-public interface DocTabsChangedHandler extends EventHandler
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import com.google.gwt.core.client.JavaScriptObject;
+
+public interface PanmirrorDOIServerOperations 
 {
-   void onDocTabsChanged(DocTabsChangedEvent event);
+   void doiFetchCSL(String doi, ServerRequestCallback<JavaScriptObject> callback);
 }

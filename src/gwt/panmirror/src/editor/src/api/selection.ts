@@ -44,8 +44,10 @@ export function selectionIsEmptyParagraph(schema: Schema, selection: Selection) 
 
 export function restoreSelection(view: EditorView, pos: number) {
   const tr = view.state.tr;
-  setTextSelection(pos)(tr);
-  tr.setMeta(kAddToHistoryTransaction, false);
-  tr.setMeta(kRestoreLocationTransaction, true);
-  view.dispatch(tr);
+  if (pos < view.state.doc.nodeSize) {
+    setTextSelection(pos)(tr);
+    tr.setMeta(kAddToHistoryTransaction, false);
+    tr.setMeta(kRestoreLocationTransaction, true);
+    view.dispatch(tr);
+  }
 }

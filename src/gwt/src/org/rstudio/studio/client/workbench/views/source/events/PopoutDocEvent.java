@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
@@ -45,7 +44,6 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
       originator_ = originator;
       sourcePosition_ = sourcePosition;
       column_ = column;
-      Debug.logToConsole("new PopoutDocEvent for: " + originator_.getDocId());
    }
    
    public PopoutDocInitiatedEvent getOriginator()

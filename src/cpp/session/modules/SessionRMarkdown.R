@@ -470,17 +470,19 @@
 })
 
 
-.rs.addFunction("bookdown.bibliographies", function(input_dir) {
+.rs.addFunction("bookdown.frontMatterValue", function(input_dir, value) {
    wd <- getwd()
    on.exit(setwd(wd), add = TRUE)
    setwd(input_dir)
    files <- bookdown:::source_files()
-   if (length(files) > 0) 
+   if (length(files) > 0)
    {
       index <- files[[1]]
       front_matter <- rmarkdown::yaml_front_matter(index)
-      if (is.character(front_matter$bibliography))
-         front_matter$bibliography
+      if (is.character(front_matter[[value]]))
+         front_matter[[value]]
+      else if (is.logical(front_matter[[value]]))
+         paste0("LOGICAL:",front_matter[[value]])
       else
          character()
    }
@@ -489,7 +491,6 @@
       character()
    }
 })
-
 
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
    

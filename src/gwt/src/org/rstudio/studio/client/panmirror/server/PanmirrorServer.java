@@ -27,10 +27,14 @@ public class PanmirrorServer
    {
       this.pandoc = new PanmirrorPandocServer();
       this.crossref = new PanmirrorCrossrefServer();
+      this.zotero = new PanmirrorZoteroServer();
       this.xref = new PanmirrorXRefServer();
+      this.doi = new PanmirrorDOIServer();
    }
    
    public PanmirrorPandocServer pandoc;
    public PanmirrorCrossrefServer crossref;
+   public PanmirrorZoteroServer zotero;
    public PanmirrorXRefServer xref;
+   public PanmirrorDOIServer doi;
 }

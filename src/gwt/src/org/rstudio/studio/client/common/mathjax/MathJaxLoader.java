@@ -116,7 +116,8 @@ public class MathJaxLoader
          skipStartupTypeset: true,
          menuSettings: {
             zoom: "None",
-            context: "Browser"
+            context: "Browser",
+            inTabOrder: false,
          }
       };
 

@@ -4,6 +4,7 @@
   "private": true,
   "license": "agpl-3.0",
   "dependencies": {
+    "@types/ace": "^0.0.43",
     "@types/clipboard": "^2.0.1",
     "@types/codemirror": "^0.0.87",
     "@types/diff-match-patch": "^1.0.32",

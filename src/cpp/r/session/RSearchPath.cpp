@@ -262,7 +262,7 @@ Error save(const FilePath& statePath)
       // screen out UserDefinedDatabase elements (attempting to perisist
       // a UserDefinedDatabase caused mischief in at least one case (e.g. see
       // RProtoBuf:DescriptorPool) so we exclude it globally.
-      if (r::sexp::classOf(envSEXP) == "UserDefinedDatabase")
+      if (r::sexp::inherits(envSEXP, "UserDefinedDatabase"))
          continue;
 
       // get the name of the search path element and add it to our list

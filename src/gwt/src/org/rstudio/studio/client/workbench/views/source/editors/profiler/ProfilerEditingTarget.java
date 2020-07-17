@@ -64,6 +64,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
@@ -527,12 +528,14 @@ public class ProfilerEditingTarget implements EditingTarget,
       }
    }
 
-   public void initialize(SourceDocument document,
+   public void initialize(SourceColumn column,
+                          SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           EditingTargetNameProvider defaultNameProvider)
    {
       // initialize doc, view, and presenter
+      column_ = column;
       doc_ = document;
 
       PublishHtmlSource publishHtmlSource = new PublishHtmlSource() {
@@ -550,7 +553,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       };
 
-      view_ = new ProfilerEditingTargetWidget("Profiler", commands_, publishHtmlSource);
+      view_ = new ProfilerEditingTargetWidget("Profiler", commands_, publishHtmlSource, column_);
       defaultNameProvider_ = defaultNameProvider;
 
       getName().setValue(getAndSetInitialName());
@@ -869,6 +872,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    }-*/;
 
    private SourceDocument doc_;
+   private SourceColumn column_;
    private ProfilerEditingTargetWidget view_;
    private final ProfilerPresenter presenter_;
 

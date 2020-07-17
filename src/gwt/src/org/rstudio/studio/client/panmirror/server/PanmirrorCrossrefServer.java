@@ -50,6 +50,5 @@ public class PanmirrorCrossrefServer
       });
    }
 
-
    PanmirrorCrossrefServerOperations server_;
 }

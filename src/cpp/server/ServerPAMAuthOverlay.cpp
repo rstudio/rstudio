@@ -21,24 +21,22 @@ namespace rstudio {
 namespace server {
 namespace pam_auth {
 
+namespace overlay {
+
 bool canSetSignInCookies()
 {
    return true;
 }
 
-void onUserAuthenticated(const std::string& username,
-                         const std::string& password)
+void onUserPasswordAvailable(const std::string& username,
+                             const std::string& password)
 {
-
 }
 
-void onUserUnauthenticated(const std::string& username,
-                           bool signedOut)
+void onUserPasswordUnavailable(const std::string& username,
+                               bool signedOut)
 {
-
 }
-
-namespace overlay {
 
 core::Error initialize()
 {

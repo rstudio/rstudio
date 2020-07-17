@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -60,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
@@ -154,7 +156,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public void initialize(SourceDocument document,
+   public void initialize(SourceColumn column,
+                          SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           EditingTargetNameProvider defaultNameProvider)
@@ -162,12 +165,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
       doc_ = document;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId());
       view_ = new CodeBrowserEditingTargetWidget(commands_,
+                                                 column,
                                                  globalDisplay_,
                                                  events_,
                                                  server_,
                                                  docDisplay_);
 
-      TextEditingTarget.registerPrefs(releaseOnDismiss_,
+      TextEditingTargetPrefsHelper.registerPrefs(releaseOnDismiss_,
                                       prefs_,
                                       document.getProjectConfig(),
                                       docDisplay_,

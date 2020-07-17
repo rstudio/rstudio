@@ -288,11 +288,25 @@ public class PaneManager
       panel_ = pSplitPanel.get();
 
       // get the widgets for the extra source columns to be displayed
-      ArrayList<Widget> sourceColumns;
+      ArrayList<Widget> sourceColumns = new ArrayList<>();
       if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
-         sourceColumns = new ArrayList<Widget>(sourceColumnManager_.getWidgets(true));
-      else
-         sourceColumns =  new ArrayList<Widget>();
+      {
+         if (userPrefs_.allowSourceColumns().getGlobalValue())
+            sourceColumns.addAll(sourceColumnManager_.getWidgets(true));
+         else
+         {
+            sourceColumnManager_.consolidateColumns(0);
+            PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               0).cast());
+         }
+      }
       panel_.initialize(sourceColumns, left_, right_);
 
       // count the number of source docs assigned to this window
@@ -1145,28 +1159,27 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public void syncAdditionalColumnCount(int count)
+   public int syncAdditionalColumnCount(int count)
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return;
+    	  return additionalSourceCount_;
 
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;
          for (int i = 0; i < difference; i++)
-         {
             addSourceWindow();
-         }
       }
       else
       {
-         int difference = additionalSourceCount_ - count;
-         sourceColumnManager_.consolidateColumns(difference);
-         additionalSourceCount_ = sourceColumnManager_.getSize();
+         sourceColumnManager_.consolidateColumns(count + 1);
+         panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
+         additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
       }
+      return additionalSourceCount_;
    }
 
    public int addSourceWindow()
@@ -1196,21 +1209,9 @@ public class PaneManager
 
    public int closeAllAdditionalColumns()
    {
-      sourceColumnManager_.closeAllColumns();
-      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-      if (additionalSourceCount_ > 0)
-         Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
-
-      PaneConfig paneConfig = getCurrentConfig();
-      userPrefs_.panes().setGlobalValue(PaneConfig.create(
-         JsArrayUtil.copy(paneConfig.getQuadrants()),
-         paneConfig.getTabSet1(),
-         paneConfig.getTabSet2(),
-         paneConfig.getHiddenTabSet(),
-         paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
-      userPrefs_.writeUserPrefs();
+      ArrayList<String> columnNames = sourceColumnManager_.getNames(true);
+      for (String name : columnNames)
+         closeSourceWindow(name);
 
       return additionalSourceCount_;
    }
@@ -1228,7 +1229,7 @@ public class PaneManager
          if (column.getTabCount() == 0)
          {
             panel_.removeLeftWidget(column.asWidget());
-            sourceColumnManager_.closeColumn(name);
+            sourceColumnManager_.closeColumn(column, true);
             panesByName_.remove(name);
 
             additionalSourceCount_ = sourceColumnManager_.getSize() - 1;

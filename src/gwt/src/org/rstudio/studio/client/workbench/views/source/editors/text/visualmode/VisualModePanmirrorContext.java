@@ -52,12 +52,14 @@ public class VisualModePanmirrorContext
    public VisualModePanmirrorContext(DocUpdateSentinel docUpdateSentinel,
                                      TextEditingTarget target,
                                      VisualModeChunkExec exec,
+                                     VisualModeChunks chunks,
                                      VisualModePanmirrorFormat format)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
       target_ = target;
       exec_ = exec;
+      chunks_ = chunks;
       format_ = format;
    }
    
@@ -85,6 +87,7 @@ public class VisualModePanmirrorContext
       return new PanmirrorContext(
          uiContext(), 
          uiDisplay(showContextMenu), 
+         chunks_.uiChunks(),
          exec_.uiExecute()
       );
    }
@@ -92,6 +95,10 @@ public class VisualModePanmirrorContext
    private PanmirrorUIContext uiContext()
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
+      
+      uiContext.isActiveTab = () -> {
+         return target_.isActivated();
+      };
       
       uiContext.getDocumentPath = () -> {
         return docUpdateSentinel_.getPath(); 
@@ -254,6 +261,7 @@ public class VisualModePanmirrorContext
    
    private final VisualModeChunkExec exec_;
    private final VisualModePanmirrorFormat format_;
+   private final VisualModeChunks chunks_;
    
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;

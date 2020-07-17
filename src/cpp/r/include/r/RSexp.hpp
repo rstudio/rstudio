@@ -51,7 +51,6 @@ class Protect;
 // environments and namespaces
 SEXP asEnvironment(std::string name);
 core::Error asPrimitiveEnvironment(SEXP envirSEXP, SEXP* pTargetSEXP, Protect* pProtect);
-std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
 
@@ -101,6 +100,7 @@ bool isNumeric(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);
+std::string asUtf8String(SEXP object);
 std::string safeAsString(SEXP object, 
                          const std::string& defValue = std::string());
 int asInteger(SEXP object);

@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -138,12 +139,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                               UserPrefs userPrefs,
                               UserState userState,
                               Provider<FileMRUList> pMruList,
-                              Provider<SourceWindowManager> pWindowManager)
+                              SourceWindowManager windowManager)
    {
-      SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnList_.add(column);
-
       commands_ = commands;
       binder.bind(commands_, this);
 
@@ -158,7 +155,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       userPrefs_ = userPrefs;
       userState_ = userState;
       pMruList_ = pMruList;
-      pWindowManager_ = pWindowManager;
+      windowManager_ = windowManager;
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
@@ -194,8 +191,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      sourceNavigationHistory_.addChangeHandler(event -> columnList_.forEach((col) ->
-         col.manageSourceNavigationCommands()));
+      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
+      {
+         public void onSwitchToDoc(SwitchToDocEvent event)
+         {
+            ensureVisible(false);
+            activeColumn_.setPhysicalTabIndex(event.getSelectedIndex());
+
+            // Fire an activation event just to ensure the activated
+            // tab gets focus
+            commands_.activateSource().execute();
+         }
+      });
+
+      sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
+
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -206,11 +216,30 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          @Override
          protected void onInit(JsObject value)
          {
+            if (!userPrefs_.allowSourceColumns().getGlobalValue())
+            {
+               if (columnList_.size() > 1)
+               {
+                  PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+                  userPrefs_.panes().setGlobalValue(PaneConfig.create(
+                     JsArrayUtil.copy(paneConfig.getQuadrants()),
+                     paneConfig.getTabSet1(),
+                     paneConfig.getTabSet2(),
+                     paneConfig.getHiddenTabSet(),
+                     paneConfig.getConsoleLeftOnTop(),
+                     paneConfig.getConsoleRightOnTop(),
+                     0).cast());
+                  consolidateColumns(1);
+               }
+               return;
+            }
+
             if (value == null)
             {
                columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
                return;
             }
+
             columnState_ = value.cast();
             for (int i = 0; i < columnState_.getNames().length; i++)
             {
@@ -226,6 +255,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
+      SourceColumn column = GWT.create(SourceColumn.class);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      columnList_.add(column);
+
       setActive(column.getName());
    }
 
@@ -286,15 +319,22 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().initialSelect(index);
    }
 
+   public void setActive(int xpos)
+   {
+      SourceColumn column = findByPosition(xpos);
+      if (column == null)
+         return;
+      setActive(column);
+   }
+
    public void setActive(String name)
    {
-      if (StringUtil.isNullOrEmpty(name))
+      if (StringUtil.isNullOrEmpty(name) &&
+          activeColumn_ != null)
       {
-         if (activeColumn_ != null)
-         {
+         if (hasActiveEditor())
             activeColumn_.setActiveEditor("");
-            activeColumn_ = null;
-         }
+         activeColumn_ = null;
          return;
       }
 
@@ -328,6 +368,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void setActiveDocId(String docId)
    {
+      if (StringUtil.isNullOrEmpty(docId))
+         return;
+
       for (SourceColumn column : columnList_)
       {
          EditingTarget target = column.setActiveEditor(docId);
@@ -337,7 +380,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return;
          }
       }
-      Debug.logWarning("Attempted to set unknown doc to active " + docId);
    }
 
    public void setDocsRestored()
@@ -365,7 +407,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                doActivateSource(afterActivation);
             }
          });
-      } else
+      }
+      else
       {
          doActivateSource(afterActivation);
       }
@@ -428,7 +471,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public int getPhysicalTabIndex()
    {
-      return activeColumn_.getPhysicalTabIndex();
+      if (getActive() != null)
+         return getActive().getPhysicalTabIndex();
+      else
+         return -1;
    }
 
    public ArrayList<String> getNames(boolean excludeMain)
@@ -523,10 +569,41 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void manageCommands(boolean forceSync)
    {
-      columnList_.forEach((column) -> {
-         if (column.isInitialized())
-            column.manageCommands(forceSync);
-      });
+      boolean saveAllEnabled = false;
+
+      for (SourceColumn column : columnList_)
+      {
+         if (column.isInitialized() &&
+            !StringUtil.equals(activeColumn_.getName(), column.getName()))
+            column.manageCommands(forceSync, activeColumn_);
+
+         // if one document is dirty then we are enabled
+         if (!saveAllEnabled && column.isSaveCommandActive())
+           saveAllEnabled = true;
+      }
+
+      // the active column is always managed last because any column can disable a command, but
+      // only the active one can enable a command
+      if (activeColumn_.isInitialized())
+         activeColumn_.manageCommands(forceSync, activeColumn_);
+
+      if (!session_.getSessionInfo().getAllowShell())
+         commands_.sendToTerminal().setVisible(false);
+
+      // if source windows are open, managing state of the command becomes
+      // complicated, so leave it enabled
+      if (windowManager_.areSourceWindowsOpen())
+         commands_.saveAllSourceDocs().setEnabled(saveAllEnabled);
+
+      manageSourceNavigationCommands();
+   }
+
+   private void manageSourceNavigationCommands()
+   {
+      commands_.sourceNavigateBack().setEnabled(
+         sourceNavigationHistory_.isBackEnabled());
+      commands_.sourceNavigateBack().setEnabled(
+         sourceNavigationHistory_.isBackEnabled());
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
@@ -588,7 +665,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          int left = w.getAbsoluteLeft();
          int right = w.getAbsoluteLeft() + w.getOffsetWidth();
 
-         if (x > left && x < right)
+         if (x >= left && x <= right)
             return column;
       }
       return null;
@@ -597,11 +674,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public boolean isEmpty(String name)
    {
       return getByName(name) == null || getByName(name).getTabCount() == 0;
-   }
-
-   public boolean areSourceWindowsOpen()
-   {
-      return pWindowManager_.get().areSourceWindowsOpen();
    }
 
    public boolean attemptTextEditorActivate()
@@ -620,7 +692,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
       return true;
    }
-
 
    public void activateCodeBrowser(
       final String codeBrowserPath,
@@ -901,7 +972,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             targetIndex = 0;
          else
             return;
-      } else if (targetIndex < 0)
+      }
+      else if (targetIndex < 0)
       {
          if (wrap)
             targetIndex = activeColumn_.getTabCount() - 1;
@@ -946,7 +1018,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                {
                   // No document chosen, just create an empty one
                   newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
-               } else if (result.isNewDocument())
+               }
+               else if (result.isNewDocument())
                {
                   NewRMarkdownDialog.RmdNewDocument doc =
                      result.getNewDocument();
@@ -957,7 +1030,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      userPrefs_.writeUserPrefs();
                   }
                   newRMarkdownV2Doc(doc);
-               } else
+               }
+               else
                {
                   newDocFromRmdTemplate(result);
                }
@@ -1011,7 +1085,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      template = "shiny_presentation.Rmd";
                   else
                      template = "shiny.Rmd";
-               } else
+               }
+               else
                   template = "document.Rmd";
                newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
                   "",
@@ -1145,7 +1220,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // When dragging between columns/windows, we need to be specific about which column we're
    // removing the document from as it may exist in more than one column. If the column is null,
-   // it is assumed that we are a satellite window and do now have multiple displays.
+   // it is assumed that we are a satellite window and do not have multiple displays.
    public void disownDocOnDrag(String docId, SourceColumn column)
    {
       if (column == null)
@@ -1238,7 +1313,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
              if (editingTarget.dirtyState().getValue())
              {
                 editingTarget.save(continuation);
-             } else
+             }
+             else
              {
                 continuation.execute();
              }
@@ -1263,7 +1339,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
              {
                 // file backed document -- revert it
                 saveTarget.revertChanges(continuation);
-             } else
+             }
+             else
              {
                 // untitled document -- just close the tab non-interactively
                 closeTab(saveTarget, false, continuation);
@@ -1305,61 +1382,69 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          null);
    }
 
-   public ArrayList<Widget> consolidateColumns(int num)
+   public void consolidateColumns(int num)
    {
-      // We are only removing the column from the column manager's knowledge.
-      // Its widget still needs to be removed from the display so we return the widgets to be removed.
-      ArrayList<Widget> result = new ArrayList<>();
       if (num >= columnList_.size() || num < 1)
-         return result;
+         return;
 
       for (SourceColumn column : columnList_)
       {
          if (!column.hasDoc())
          {
-            if (column == activeColumn_)
-               setActive(MAIN_SOURCE_NAME);
-            result.add(column.asWidget());
-            columnList_.remove(column);
+            closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
                break;
          }
       }
 
-      ArrayList<EditingTarget> moveEditors = new ArrayList<>();
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      for (SourceColumn column : columnList_)
+      ArrayList<SourceDocument> moveEditors = new ArrayList<>();
+      SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
+      if (num < columnList_.size())
       {
-         if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+         CPSEditingTargetCommand moveCommand = new CPSEditingTargetCommand()
          {
-            moveEditors.addAll(column.getEditors());
-            closeAllLocalSourceDocs("Close All", column, null, false);
-            if (columnList_.size() >= num || num == 1)
-               break;
+            @Override
+            public void execute(EditingTarget editingTarget, Command continuation)
+            {
+            }
+         };
+         ArrayList<SourceColumn> moveColumns = new ArrayList<>(columnList_);
+         moveColumns.remove(mainColumn);
+         int additionalColumnCount = num - 1;
+         if (num > 1 &&
+             moveColumns.size() != additionalColumnCount)
+            moveColumns = new ArrayList<>(moveColumns.subList(0,
+               moveColumns.size() - additionalColumnCount));
+
+         for (SourceColumn column : moveColumns)
+         {
+            ArrayList<EditingTarget> editors = column.getEditors();
+            for (EditingTarget target : editors)
+            {
+               server_.getSourceDocument(target.getId(),
+                  new ServerRequestCallback<SourceDocument>()
+                  {
+                     @Override
+                     public void onResponseReceived(final SourceDocument doc)
+                     {
+                        mainColumn.addTab(doc, Source.OPEN_INTERACTIVE);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
+                           "Couldn't move the tab to this window: \n" +
+                              error.getMessage());
+                     }
+                  });
+            }
+            closeColumn(column, true);
          }
       }
 
-      SourceColumn column = getByName(MAIN_SOURCE_NAME);
-      assert(column != null);
-      for (EditingTarget target : moveEditors)
-      {
-         column.addTab(
-            target.asWidget(),
-            target.getIcon(),
-            target.getId(),
-            target.getName().getValue(),
-            target.getTabTooltip(), // used as tooltip, if non-null
-            null,
-            true);
-      }
-
-      return result;
-   }
-
-   public void closeAllColumns()
-   {
-      columnList_.forEach((column) -> closeColumn(column.getName()));
-      assert getSize() == 0;
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
    public void closeColumn(String name)
@@ -1370,7 +1455,26 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column == activeColumn_)
          setActive(MAIN_SOURCE_NAME);
 
-      columnList_.remove(getByName(name));
+      columnList_.remove(column);
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+   }
+
+   public void closeColumn(SourceColumn column, boolean force)
+   {
+      if (column.getTabCount() > 0)
+      {
+         if (!force)
+            return;
+         else
+         {
+            for (EditingTarget target : column.getEditors())
+               column.closeDoc(target.getId());
+         }
+      }
+
+      if (column == activeColumn_)
+         setActive("");
+      columnList_.remove(column);
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
    }
 
@@ -1580,6 +1684,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          });
    }
 
+   public void openFile(FileSystemItem file,
+                        final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      openFile(file, fileTypeRegistry_.getTextTypeForFile(file), resultCallback);
+   }
+
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
    //  - checking whether it is already open and re-selecting its tab
@@ -1595,7 +1705,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       if (fileType.isRNotebook())
       {
-         openNotebook(file, fileType, resultCallback);
+         openNotebook(file, resultCallback);
          return;
       }
 
@@ -1615,7 +1725,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          if (resultCallback != null)
             resultCallback.onCancelled();
          showFileTooLargeWarning(file, target.getFileSizeLimit());
-      } else if (file.getLength() > target.getLargeFileSize())
+      }
+      else if (file.getLength() > target.getLargeFileSize())
       {
          confirmOpenLargeFile(file, new Operation()
          {
@@ -1632,7 +1743,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                   resultCallback.onCancelled();
             }
          });
-      } else
+      }
+      else
       {
          openFileFromServer(file, fileType, resultCallback);
       }
@@ -1649,7 +1761,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          // file on disk matched the one inside the notebook
          openFileFromServer(rmdFile,
             FileTypeRegistry.RMARKDOWN, resultCallback);
-      } else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
+      }
+      else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
       {
          // this happens when we have to open an untitled buffer for the the
          // notebook (usually because the of a conflict between the Rmd on disk
@@ -1796,7 +1909,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void initDynamicCommands()
    {
-      dynamicCommands_ = new HashSet<AppCommand>();
+      dynamicCommands_ = new HashSet<>();
       dynamicCommands_.add(commands_.saveSourceDoc());
       dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
       dynamicCommands_.add(commands_.saveSourceDocAs());
@@ -1921,8 +2034,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       vimCommands_.addStarRegister();
    }
 
+   public SourceAppCommand getSourceCommand(AppCommand command, SourceColumn column)
+   {
+      // check if we've already create a SourceAppCommand for this command
+      String key = command.getId() + column.getName();
+       if (sourceAppCommands_.get(key) != null)
+         return sourceAppCommands_.get(key);
+
+      // if not found, create it
+      SourceAppCommand sourceCommand =
+         new SourceAppCommand(command, column.getName(), this);
+      sourceAppCommands_.put(key, sourceCommand);
+      return sourceCommand;
+   }
+
    private void openNotebook(final FileSystemItem rnbFile,
-                             final TextFileType fileType,
                              final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       // construct path to .Rmd
@@ -1993,13 +2119,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void onResponseReceived(SourceDocument document)
                {
+                  // apply (dynamic) doc property defaults
+                  SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
+
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode
                   if (openingForSourceNavigation_)
                   {
-                     document.getProperties()._setBoolean(
-                        TextEditingTarget.RMD_VISUAL_MODE,
-                        false
+                     document.getProperties().setString(
+                       TextEditingTarget.RMD_VISUAL_MODE,
+                       DocUpdateSentinel.PROPERTY_FALSE
                      );
                   }
 
@@ -2360,12 +2489,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
+   private HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
 
    private Commands commands_;
    private EventBus events_;
    private Provider<FileMRUList> pMruList_;
-   private Provider<SourceWindowManager> pWindowManager_;
+   private SourceWindowManager windowManager_;
    private Session session_;
    private Synctex synctex_;
    private UserPrefs userPrefs_;

@@ -33,7 +33,7 @@ import { OmniInsertGroup } from '../../api/omni_insert';
 import { xrefCompletionHandler } from './xref-completion';
 import { xrefPopupPlugin } from './xref-popup';
 
-const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
+const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([ A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, format, ui, navigation, server } = context;

@@ -26,10 +26,12 @@ public interface PanmirrorDialogsResources extends ClientBundle
    public interface Styles extends CssResource
    {
       String dialog();
+      String dialogWide();
       String spaced();
       String textArea();
       String checkBox();
       String fullWidth();
+      String fullWidthSelect();
       String infoLabel();
       String imageDialogTabs();
       String linkDialogTabs();
@@ -42,6 +44,10 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String lockRatioCheckbox();
       String heightAuto();
       String langSuggestionDisplay();
+      String flexTablePreview();
+      String flexTablePreviewName();
+      String flexTablePreviewValue();
+      String disabled();
    }
 
    @Source("PanmirrorDialogsStyles.css")

@@ -649,6 +649,14 @@ public class AceEditorNative extends JavaScriptObject
       this.setOption("indentedSoftWrap", softWrap);
    }-*/;
 
+   public final native void setMaxLines(int max) /*-{
+      this.setOption("maxLines", max);
+   }-*/;
+
+   public final native void setMinLines(int min) /*-{
+      this.setOption("minLines", min);
+   }-*/;
+
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
       if (movesFocus) {
          this.commands.bindKey("Tab", null);

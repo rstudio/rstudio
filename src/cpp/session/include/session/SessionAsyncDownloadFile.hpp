@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <core/http/Util.hpp>
 #include <core/json/JsonRpc.hpp>
 
 namespace rstudio {
@@ -30,14 +31,32 @@ namespace core {
 namespace session {
 
 // use R download.file in an async subprocess (contents of file are in result.stdOut on success)
-void asyncDownloadFile(const std::string& url, const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
+void asyncDownloadFile(const std::string& url,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
+void asyncDownloadFile(const std::string& url,
+                       const core::http::Fields& headers,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
 // wrapper for asyncDownloadFile that parses it's payload as JSON and satisfies a JsonRpcFunctionContinuation
 // (including checking for and reporting errors on the continuation)
+
 typedef boost::function<void(const core::json::Value&, core::json::JsonRpcResponse*)> JsonRpcResponseHandler;
+
 void asyncJsonRpcRequest(const std::string& url,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont);
+
+
+void asyncJsonRpcRequest(const std::string& url,
+                         const core::http::Fields& headers,
+                         const JsonRpcResponseHandler& handler,
+                         const core::json::JsonRpcFunctionContinuation& cont);
+
+bool is404Error(const std::string& stdErr);
+bool isHostError(const std::string& stdErr);
+
 
 } // namespace session
 } // namespace rstudio

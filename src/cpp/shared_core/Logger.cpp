@@ -23,13 +23,14 @@
 
 #include <shared_core/Logger.hpp>
 
+#include <cassert>
+#include <sstream>
+
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 
-#include <sstream>
-
-#include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
+#include <shared_core/Error.hpp>
 #include <shared_core/ILogDestination.hpp>
 #include <shared_core/ReaderWriterMutex.hpp>
 

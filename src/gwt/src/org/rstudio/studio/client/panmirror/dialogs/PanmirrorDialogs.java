@@ -24,6 +24,8 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
@@ -206,7 +208,18 @@ public class PanmirrorDialogs {
          }
       );
    }
-
+   
+   public Promise<PanmirrorInsertCiteResult> insertCite(PanmirrorInsertCiteProps citeProps)
+   {
+      return new Promise<PanmirrorInsertCiteResult>(
+         (ResolveCallbackFn<PanmirrorInsertCiteResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorInsertCiteDialog dialog = new PanmirrorInsertCiteDialog(citeProps, (result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal(false);
+         }
+      );
+   }
    
    private GlobalDisplay globalDisplay_; 
    private PanmirrorUIContext uiContext_;

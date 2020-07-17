@@ -18,10 +18,11 @@ import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
-
+import { CiteField } from './cite';
+import { CSL } from './csl';
+import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
-import { SkinTone } from './emoji';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -31,6 +32,19 @@ export interface EditorUI {
   context: EditorUIContext;
   prefs: EditorUIPrefs;
   images: EditorUIImages;
+  chunks: EditorUIChunks;
+}
+
+export interface EditorUIChunks {
+  // create a code chunk editor
+  createChunkEditor: (type: string) => ChunkEditor;
+}
+
+export interface ChunkEditor {
+  editor: unknown;
+  setMode(mode: string): void;
+  element: HTMLElement;
+  destroy(): void;
 }
 
 export interface EditorDialogs {
@@ -45,9 +59,13 @@ export interface EditorDialogs {
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
+  insertCite: InsertCiteFn;
 }
 
 export interface EditorUIContext {
+  // check if we are the active tab
+  isActiveTab: () => boolean;
+
   // get the path to the current document
   getDocumentPath: () => string | null;
 
@@ -86,7 +104,7 @@ export interface EditorUIExecute {
 }
 
 export interface EditorUIMath {
-  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+  typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
 }
 
 export interface EditorDisplay {
@@ -138,6 +156,8 @@ export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
+
+export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
 
 export interface AttrProps {
   readonly id?: string;
@@ -207,6 +227,26 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
+}
+
+export interface InsertCiteProps {
+  doi: string;
+  existingIds: string[];
+  bibliographyFiles: string[];
+  provider?: string;
+  csl?: CSL;
+  citeUI?: InsertCiteUI;
+}
+
+export interface InsertCiteUI {
+  suggestedId: string;
+  previewFields: CiteField[];
+}
+
+export interface InsertCiteResult {
+  id: string;
+  bibliographyFile: string;
+  csl: CSL;
 }
 
 export interface RawFormatProps {

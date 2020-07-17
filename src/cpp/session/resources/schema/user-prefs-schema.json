@@ -111,42 +111,42 @@
         "windows_terminal_shell": {
             "type": "string",
             "enum": ["default", "win-git-bash", "win-wsl-bash", "win-cmd", "win-ps", "ps-core", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on Windows."
         },
         "posix_terminal_shell": {
             "type": "string",
             "enum": ["default", "bash", "zsh", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
         },
         "custom_shell_command": {
             "type": "string",
             "default": "",
-            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."  
+            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."
         },
         "custom_shell_options": {
             "type": "string",
             "default": "",
-            "description": "The command-line options to pass to the custom shell command."  
+            "description": "The command-line options to pass to the custom shell command."
         },
         "show_line_numbers": {
             "type": "boolean",
             "default": true,
             "title": "Show line numbers in editor",
-            "description": "Show line numbers in RStudio's code editor."  
+            "description": "Show line numbers in RStudio's code editor."
         },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
             "title": "Highlight selected word in editor",
-            "description": "Highlight the selected word in RStudio's code editor."  
+            "description": "Highlight the selected word in RStudio's code editor."
         },
         "highlight_selected_line": {
             "type": "boolean",
             "default": false,
             "title": "Highlight selected line in editor",
-            "description": "Highlight the selected line in RStudio's code editor."  
+            "description": "Highlight the selected line in RStudio's code editor."
         },
         "panes": {
             "type": "object",
@@ -196,8 +196,8 @@
             },
             "default": {
                 "quadrants": [
-                    "Source", 
-                    "Console", 
+                    "Source",
+                    "Console",
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
@@ -210,11 +210,11 @@
             },
             "description": "Layout of panes in the RStudio workbench."
         },
-        "enable_additional_columns": {
-           "type": "boolean",
-           "default": false,
-           "title": "Enable Additional Columns",
-           "description": "Temporary flag to enable additional source columns."
+        "allow_source_columns": {
+            "type": "boolean",
+            "default": true,
+            "title": "Allow source columns",
+            "description": "Whether to enable the ability to add source columns to display."
         },
         "use_spaces_for_tab": {
             "type": "boolean",
@@ -261,7 +261,7 @@
         "show_indent_guides": {
             "type": "boolean",
             "default": false,
-            "title": "Show invisible characters in editor",
+            "title": "Show indentation guides",
             "description": "Whether to show indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
@@ -1196,6 +1196,12 @@
             "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
+        "show_focus_rectangles": {
+            "type": "boolean",
+            "default": true,
+            "title": "Always show focus outlines",
+            "description": "Control with keyboard focus displays a visual focus indicator."
+        },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
@@ -1228,11 +1234,11 @@
             "title": "Show full path to project in RStudio Desktop windows",
             "description": "Whether to show the full path to project in desktop window title."
         },
-        "enable_visual_markdown_editing_mode": {
+        "visual_markdown_editing_is_default": {
             "type": "boolean",
             "default": false,
-            "title": "Enable visual markdown editing (experimental)",
-            "description": "Whether to enable experimental visual markdown editing"
+            "title": "Use visual editing by default for new markdown documents",
+            "description": "Whether to enable visual editing by default for new markdown documents"
         },
         "visual_markdown_editing_wrap_auto": {
             "type": "boolean",
@@ -1270,6 +1276,13 @@
             "default": 0,
             "title": "Font size for visual editing mode",
             "description": "The default visual editing mode font size, in points"
+        },
+        "visual_markdown_code_editor": {
+            "type": "string",
+            "enum": ["ace", "codemirror"],
+            "default": "ace",
+            "title": "Editor for code chunks in visual editing mode",
+            "description": "The name of the editor to use to provide code editing in visual mode"
         },
         "emoji_skintone" : {
           "type": "string",
@@ -1329,30 +1342,30 @@
                 "type": "string"
             },
             "default": [
-                "Andale Mono", 
-                "Bitstream Vera Sans Mono", 
-                "Cascadia Code", 
-                "Consolas", 
-                "Courier New", 
-                "Courier", 
+                "Andale Mono",
+                "Bitstream Vera Sans Mono",
+                "Cascadia Code",
+                "Consolas",
+                "Courier New",
+                "Courier",
                 "DejaVu Sans Mono",
                 "Droid Sans Mono",
-                "Fira Code", 
-                "Hack", 
+                "Fira Code",
+                "Hack",
                 "IBM Plex Mono",
-                "Inconsolata", 
-                "JetBrains Mono", 
+                "Inconsolata",
+                "JetBrains Mono",
                 "Lucida Console",
                 "Lucida Sans Typewriter",
-                "Menlo", 
-                "Monaco", 
+                "Menlo",
+                "Monaco",
                 "Monoid",
                 "Operator Mono",
-                "Pragmata", 
+                "Pragmata",
                 "SF Mono",
                 "Source Code Pro",
-                "Vera Sans Mono", 
-                "Victor Mono", 
+                "Vera Sans Mono",
+                "Victor Mono",
                 "Ubuntu Mono"
             ]
         }

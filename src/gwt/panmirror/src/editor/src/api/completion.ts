@@ -13,22 +13,35 @@
  *
  */
 
-import { Selection, EditorState, Transaction } from 'prosemirror-state';
+import { Selection, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorView, DecorationSet } from 'prosemirror-view';
 
 import { canInsertNode } from './node';
 import { EditorUI } from './ui';
+import { kInsertCompletionTransaction } from './transaction';
 
 export const kCompletionDefaultItemHeight = 22;
 export const kCompletionDefaultMaxVisible = 10;
 export const kCompletionDefaultWidth = 180;
 
+
+export interface CompletionContext {
+  isPaste: boolean;
+}
+
+export interface CompletionsStream<T = any> {
+  items: T[];
+  stream: () => T[] | null;
+}
+
+export type Completions<T = any> = T[] | CompletionsStream<T>;
+
 export interface CompletionResult<T = any> {
   pos: number;
   offset?: number;
   token: string;
-  completions: (state: EditorState) => Promise<T[]>;
+  completions: (state: EditorState, context: CompletionContext) => Promise<Completions>;
   decorations?: DecorationSet;
 }
 
@@ -39,6 +52,12 @@ export interface CompletionHeaderProps {
 export interface CompletionHandler<T = any> {
   // unique id
   id: string;
+
+  // An optional scope for this completion handler. Completions
+  // triggered by a transaction will filter completion handlers
+  // that share a scope with the completion handler that originated
+  // a transaction.
+  scope?: string;
 
   // filter for determing whether we can call this handler from a given context (default is to
   // never offer completions if a mark with noInputRules is active). set to null to
@@ -116,4 +135,46 @@ export function selectionAllowsCompletions(selection: Selection) {
   }
 
   return true;
+}
+
+// Determine whether two completionHandlers share the same scope. By default
+// completion handlers will share scope only if they share an id, but handlers
+// can provide a scope if they'd like to coordinate.
+export function completionsShareScope(handler: CompletionHandler, prevHandler?: CompletionHandler) {
+  // There is no previous handler, not shared
+  if (!prevHandler) {
+    return false;
+  }
+
+  // Previous handler with the same scope as the current handler
+  if (prevHandler.scope && prevHandler.scope === handler.scope) {
+    return true;
+  } else {
+    // Previous handler has the same id as the current handler
+    return prevHandler.id === handler.id;
+  }
+}
+
+export function performCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
+
+  // set selection to area we will be replacing
+  tr.setSelection(new TextSelection(tr.doc.resolve(pos), tr.selection.$head));
+
+  // ensure we have a node
+  if (replacement instanceof ProsemirrorNode) {
+    // combine it's marks w/ whatever is active at the selection
+    const marks = tr.selection.$head.marks();
+
+    // set selection and replace it
+    tr.replaceSelectionWith(replacement, false);
+
+    // propapate marks
+    marks.forEach(mark => tr.addMark(pos, tr.selection.to, mark));
+  } else {
+    tr.insertText(replacement);
+  }
+
+  // mark the transaction as an completion insertion
+  tr.setMeta(kInsertCompletionTransaction, true);
+
 }

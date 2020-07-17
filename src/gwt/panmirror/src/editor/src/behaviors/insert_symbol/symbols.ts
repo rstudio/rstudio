@@ -1,4 +1,6 @@
-[
+import { SymbolCharacterGroup } from "./insert_symbol-dataprovider";
+
+const symbols: SymbolCharacterGroup[] = [
   {
     "name": "Miscellaneous",
     "symbols": [
@@ -11418,6 +11420,361 @@
     "name": "Punctuation",
     "symbols": [
       {
+        "name": "HYPHEN",
+        "value": "‐",
+        "codepoint": 8208
+      },
+      {
+        "name": "NON-BREAKING HYPHEN",
+        "value": "‑",
+        "codepoint": 8209
+      },
+      {
+        "name": "FIGURE DASH",
+        "value": "‒",
+        "codepoint": 8210
+      },
+      {
+        "name": "EN DASH",
+        "value": "–",
+        "codepoint": 8211
+      },
+      {
+        "name": "EM DASH",
+        "value": "—",
+        "codepoint": 8212
+      },
+      {
+        "name": "HORIZONTAL BAR",
+        "value": "―",
+        "codepoint": 8213
+      },
+      {
+        "name": "DOUBLE VERTICAL LINE",
+        "value": "‖",
+        "codepoint": 8214
+      },
+      {
+        "name": "DOUBLE LOW LINE",
+        "value": "‗",
+        "codepoint": 8215
+      },
+      {
+        "name": "LEFT SINGLE QUOTATION MARK",
+        "value": "‘",
+        "codepoint": 8216
+      },
+      {
+        "name": "RIGHT SINGLE QUOTATION MARK",
+        "value": "’",
+        "codepoint": 8217
+      },
+      {
+        "name": "SINGLE LOW-9 QUOTATION MARK",
+        "value": "‚",
+        "codepoint": 8218
+      },
+      {
+        "name": "SINGLE HIGH-REVERSED-9 QUOTATION MARK",
+        "value": "‛",
+        "codepoint": 8219
+      },
+      {
+        "name": "LEFT DOUBLE QUOTATION MARK",
+        "value": "“",
+        "codepoint": 8220
+      },
+      {
+        "name": "RIGHT DOUBLE QUOTATION MARK",
+        "value": "”",
+        "codepoint": 8221
+      },
+      {
+        "name": "DOUBLE LOW-9 QUOTATION MARK",
+        "value": "„",
+        "codepoint": 8222
+      },
+      {
+        "name": "DOUBLE HIGH-REVERSED-9 QUOTATION MARK",
+        "value": "‟",
+        "codepoint": 8223
+      },
+      {
+        "name": "DAGGER",
+        "value": "†",
+        "codepoint": 8224
+      },
+      {
+        "name": "DOUBLE DAGGER",
+        "value": "‡",
+        "codepoint": 8225
+      },
+      {
+        "name": "BULLET",
+        "value": "•",
+        "codepoint": 8226
+      },
+      {
+        "name": "TRIANGULAR BULLET",
+        "value": "‣",
+        "codepoint": 8227
+      },
+      {
+        "name": "ONE DOT LEADER",
+        "value": "․",
+        "codepoint": 8228
+      },
+      {
+        "name": "TWO DOT LEADER",
+        "value": "‥",
+        "codepoint": 8229
+      },
+      {
+        "name": "HORIZONTAL ELLIPSIS",
+        "value": "…",
+        "codepoint": 8230
+      },
+      {
+        "name": "HYPHENATION POINT",
+        "value": "‧",
+        "codepoint": 8231
+      },
+      {
+        "name": "NARROW NO-BREAK SPACE",
+        "value": " ",
+        "codepoint": 8239
+      },
+      {
+        "name": "PER MILLE SIGN",
+        "value": "‰",
+        "codepoint": 8240
+      },
+      {
+        "name": "PER TEN THOUSAND SIGN",
+        "value": "‱",
+        "codepoint": 8241
+      },
+      {
+        "name": "PRIME",
+        "value": "′",
+        "codepoint": 8242
+      },
+      {
+        "name": "DOUBLE PRIME",
+        "value": "″",
+        "codepoint": 8243
+      },
+      {
+        "name": "TRIPLE PRIME",
+        "value": "‴",
+        "codepoint": 8244
+      },
+      {
+        "name": "REVERSED PRIME",
+        "value": "‵",
+        "codepoint": 8245
+      },
+      {
+        "name": "REVERSED DOUBLE PRIME",
+        "value": "‶",
+        "codepoint": 8246
+      },
+      {
+        "name": "REVERSED TRIPLE PRIME",
+        "value": "‷",
+        "codepoint": 8247
+      },
+      {
+        "name": "CARET",
+        "value": "‸",
+        "codepoint": 8248
+      },
+      {
+        "name": "SINGLE LEFT-POINTING ANGLE QUOTATION MARK",
+        "value": "‹",
+        "codepoint": 8249
+      },
+      {
+        "name": "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK",
+        "value": "›",
+        "codepoint": 8250
+      },
+      {
+        "name": "REFERENCE MARK",
+        "value": "※",
+        "codepoint": 8251
+      },
+      {
+        "name": "INTERROBANG",
+        "value": "‽",
+        "codepoint": 8253
+      },
+      {
+        "name": "OVERLINE",
+        "value": "‾",
+        "codepoint": 8254
+      },
+      {
+        "name": "UNDERTIE",
+        "value": "‿",
+        "codepoint": 8255
+      },
+      {
+        "name": "CHARACTER TIE",
+        "value": "⁀",
+        "codepoint": 8256
+      },
+      {
+        "name": "CARET INSERTION POINT",
+        "value": "⁁",
+        "codepoint": 8257
+      },
+      {
+        "name": "ASTERISM",
+        "value": "⁂",
+        "codepoint": 8258
+      },
+      {
+        "name": "HYPHEN BULLET",
+        "value": "⁃",
+        "codepoint": 8259
+      },
+      {
+        "name": "FRACTION SLASH",
+        "value": "⁄",
+        "codepoint": 8260
+      },
+      {
+        "name": "LEFT SQUARE BRACKET WITH QUILL",
+        "value": "⁅",
+        "codepoint": 8261
+      },
+      {
+        "name": "RIGHT SQUARE BRACKET WITH QUILL",
+        "value": "⁆",
+        "codepoint": 8262
+      },
+      {
+        "name": "DOUBLE QUESTION MARK",
+        "value": "⁇",
+        "codepoint": 8263
+      },
+      {
+        "name": "QUESTION EXCLAMATION MARK",
+        "value": "⁈",
+        "codepoint": 8264
+      },
+      {
+        "name": "TIRONIAN SIGN ET",
+        "value": "⁊",
+        "codepoint": 8266
+      },
+      {
+        "name": "REVERSED PILCROW SIGN",
+        "value": "⁋",
+        "codepoint": 8267
+      },
+      {
+        "name": "BLACK LEFTWARDS BULLET",
+        "value": "⁌",
+        "codepoint": 8268
+      },
+      {
+        "name": "BLACK RIGHTWARDS BULLET",
+        "value": "⁍",
+        "codepoint": 8269
+      },
+      {
+        "name": "LOW ASTERISK",
+        "value": "⁎",
+        "codepoint": 8270
+      },
+      {
+        "name": "REVERSED SEMICOLON",
+        "value": "⁏",
+        "codepoint": 8271
+      },
+      {
+        "name": "CLOSE UP",
+        "value": "⁐",
+        "codepoint": 8272
+      },
+      {
+        "name": "TWO ASTERISKS ALIGNED VERTICALLY",
+        "value": "⁑",
+        "codepoint": 8273
+      },
+      {
+        "name": "COMMERCIAL MINUS SIGN",
+        "value": "⁒",
+        "codepoint": 8274
+      },
+      {
+        "name": "SWUNG DASH",
+        "value": "⁓",
+        "codepoint": 8275
+      },
+      {
+        "name": "INVERTED UNDERTIE",
+        "value": "⁔",
+        "codepoint": 8276
+      },
+      {
+        "name": "FLOWER PUNCTUATION MARK",
+        "value": "⁕",
+        "codepoint": 8277
+      },
+      {
+        "name": "THREE DOT PUNCTUATION",
+        "value": "⁖",
+        "codepoint": 8278
+      },
+      {
+        "name": "QUADRUPLE PRIME",
+        "value": "⁗",
+        "codepoint": 8279
+      },
+      {
+        "name": "FOUR DOT PUNCTUATION",
+        "value": "⁘",
+        "codepoint": 8280
+      },
+      {
+        "name": "FIVE DOT PUNCTUATION",
+        "value": "⁙",
+        "codepoint": 8281
+      },
+      {
+        "name": "TWO DOT PUNCTUATION",
+        "value": "⁚",
+        "codepoint": 8282
+      },
+      {
+        "name": "FOUR DOT MARK",
+        "value": "⁛",
+        "codepoint": 8283
+      },
+      {
+        "name": "DOTTED CROSS",
+        "value": "⁜",
+        "codepoint": 8284
+      },
+      {
+        "name": "TRICOLON",
+        "value": "⁝",
+        "codepoint": 8285
+      },
+      {
+        "name": "VERTICAL FOUR DOTS",
+        "value": "⁞",
+        "codepoint": 8286
+      },
+      {
+        "name": "MEDIUM MATHEMATICAL SPACE",
+        "value": " ",
+        "codepoint": 8287
+      },
+      {
         "name": "RIGHT ANGLE SUBSTITUTION MARKER",
         "value": "⸀",
         "codepoint": 11776
@@ -17394,4 +17751,6 @@
       }
     ]
   }
-]
+];
+
+export default symbols;

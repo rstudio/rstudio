@@ -51,15 +51,15 @@ runWatchdogProcess()
    # centos6 doesn't support the --foreground option for timeout
    if [ "$OPERATING_SYSTEM" = "centos_6" ]; then
       if [ "$privileged" = true ]; then
-         sudo /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       else
-         /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       fi
    else
       if [ "$privileged" = true ]; then
-         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       else
-         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       fi
    fi
 

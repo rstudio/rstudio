@@ -13,6 +13,25 @@
  *
  */
 
+.ProseMirror .math {
+  display: inline-block;
+}
+
 .ProseMirror .math[data-type='DisplayMath'] {
   white-space: pre-wrap;  
+  margin: 0.5em;
+}
+
+.ProseMirror .math[data-type='DisplayMath'],
+.ProseMirror .math[data-type='DisplayMath'] .pm-math-mathjax  {
+  width: 100%; 
+}
+
+.pm-math-mathjax {
+  display: inline-block;
+  cursor: text;
+}
+
+.pm-math-mathjax .MJXc-display {
+  margin: 0;
 }

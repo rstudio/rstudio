@@ -22,12 +22,12 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
+import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { findTopLevelBodyNodes } from '../api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui';
 import { Extension } from '../api/extension';
-import { PandocServer, PandocWriterOptions } from '../api/pandoc';
+import { PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
@@ -66,13 +66,12 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { editorMath } from '../api/math';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
-import { CrossrefServer } from '../api/crossref';
-import { XRefServer } from '../api/xref';
+import { EditorServer } from '../api/server';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
-
 import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,
@@ -120,12 +119,6 @@ export interface EditorContext {
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
-}
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly crossref: CrossrefServer;
-  readonly xref: XRefServer;
 }
 
 export interface EditorHooks {
@@ -177,11 +170,16 @@ export interface UIToolsSource {
   diffChars(from: string, to: string, timeout: number): EditorChange[];
 }
 
+export interface UIToolsCitation {
+  citeUI(citeProps: InsertCiteProps): InsertCiteUI;
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
   public readonly source: UIToolsSource;
+  public readonly citation: UIToolsCitation;
 
   constructor() {
     this.attr = {
@@ -203,6 +201,10 @@ export class UITools {
 
     this.source = {
       diffChars,
+    };
+
+    this.citation = {
+      citeUI,
     };
   }
 }
@@ -258,7 +260,7 @@ export class Editor {
     options = {
       autoFocus: false,
       spellCheck: false,
-      codemirror: false,
+      codeEditor: "codemirror",
       rmdImagePreview: false,
       hideFormatComment: false,
       className: '',
@@ -726,6 +728,7 @@ export class Editor {
         format: this.format,
         options: this.options,
         ui: this.context.ui,
+        math: this.context.ui.math.typeset ? editorMath(this.context.ui) : undefined,
         events: {
           subscribe: this.subscribe.bind(this),
           emit: this.emitEvent.bind(this)
@@ -804,7 +807,7 @@ export class Editor {
       props: {
         handleDOMEvents: {
           focus: (view: EditorView, event: Event) => {
-            this.emitEvent(FocusEvent);
+            this.emitEvent(FocusEvent, view.state.doc);
             return false;
           },
           keydown: (view: EditorView, event: Event) => {

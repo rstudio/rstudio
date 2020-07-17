@@ -36,6 +36,8 @@ import { editingRootNodeClosestToPos, editingRootNode } from './node';
 import { selectionIsBodyTopLevel } from './selection';
 
 export enum BaseKey {
+  Home = 'Home',
+  End = 'End',
   Enter = 'Enter',
   ModEnter = 'Mod-Enter',
   ShiftEnter = 'Shift-Enter',
@@ -84,9 +86,10 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Delete, command: joinForward },
     { key: BaseKey.Delete, command: deleteSelection },
 
-    // base tab key behavior (ignore)
-    { key: BaseKey.Tab, command: ignoreKey },
-    { key: BaseKey.ShiftTab, command: ignoreKey },
+    // base home/end key behaviors (Mac desktop default behavior advances to beginning/end of
+    // document, so we provide our own implementation rather than relying on contentEditable)
+    { key: BaseKey.Home, command: homeKey },
+    { key: BaseKey.End, command: endKey },
 
     // base arrow key behavior (prevent traversing top-level body notes)
     { key: BaseKey.ArrowLeft, command: arrowBodyNodeBoundary('left') },
@@ -128,6 +131,45 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
 }
+
+function homeKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+  const selection = state.selection;
+  const editingNode = editingRootNode(selection);
+  if (editingNode && dispatch && view) {
+    const selectionY = view.coordsAtPos(selection.from).top;
+    const beginDocPos = editingNode.start;
+    for (let pos = (selection.from - 1); pos >= beginDocPos; pos--) {
+      const posY = view.coordsAtPos(pos).top;
+      if (posY < selectionY) {
+        const tr = state.tr;
+        setTextSelection(pos + 1)(tr);
+        dispatch(tr);
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
+  const selection = state.selection;
+  const editingNode = editingRootNode(selection);
+  if (editingNode && dispatch && view) {
+    const selectionY = view.coordsAtPos(selection.from).top;
+    const endDocPos = editingNode.start + editingNode.node.nodeSize;
+    for (let pos = (selection.from + 1); pos < endDocPos; pos++) {
+      const posY = view.coordsAtPos(pos).top;
+      if (posY > selectionY) {
+        const tr = state.tr;
+        setTextSelection(pos - 1)(tr);
+        dispatch(tr);
+        break;
+      }
+    }
+  }
+  return true;
+}
+
 
 function arrowBodyNodeBoundary(dir: 'up' | 'down' | 'left' | 'right') {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {

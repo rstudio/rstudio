@@ -86,7 +86,9 @@ import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
@@ -462,6 +464,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PanmirrorPandocServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorCrossrefServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorXRefServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorDOIServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorZoteroServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
       bind(RenvServerOperations.class).to(RemoteServer.class);

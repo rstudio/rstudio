@@ -38,6 +38,7 @@ export interface TextPopupDecoration<AttrsType = any> {
   maxWidth: number;
   createPopup: (view: EditorView, target: TextPopupTarget<AttrsType>, style: React.CSSProperties) => Promise<JSX.Element | null>;
   dismissOnEdit?: boolean;
+  makeLinksAccessible?: boolean;
   specKey?: (target: TextPopupTarget<AttrsType>) => string;
   filter?: (selection: Selection) => boolean;
   onCmdClick?: (target: TextPopupTarget<AttrsType>) => void;
@@ -45,7 +46,7 @@ export interface TextPopupDecoration<AttrsType = any> {
 
 export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<DecorationSet> {
 
-  const { key, markType, maxWidth, createPopup, specKey, dismissOnEdit, filter, onCmdClick } = deco;
+  const { key, markType, maxWidth, createPopup, specKey, dismissOnEdit, makeLinksAccessible, filter, onCmdClick } = deco;
 
   let editorView: EditorView;
 
@@ -73,6 +74,10 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
 
         // if the selection is contained within the mark then show the popup
         const selection = newState.selection;
+
+        // TODO JJA: The mark range is undefined when the the selection is 'after' the mark
+        // e.g.  [@allaire2012|] 
+        // which means that the preview doesn't show
         const range = getMarkRange(selection.$from, markType);
 
         if (range) {
@@ -103,10 +108,14 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
           const decorationPosition = textRangePopupDecorationPosition(editorView, range, maxWidth);
 
           // key if one was provided
-          let decoratorSpec: { key: string } | undefined;
+          let decoratorSpec: { [key: string]: any } | undefined;
           if (specKey) {
             decoratorSpec = {
-              key: decorationPosition.key + specKey(target)
+              key: decorationPosition.key + specKey(target),
+              ignoreSelection: true,
+              stopEvent: () => {
+                return true;
+              },
             };
           }
 
@@ -125,6 +134,22 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
               createPopup(view, target, decorationPosition.style).then(popup => {
                 if (popup) {
                   reactRenderForEditorView(popup, decorationEl, view);
+
+                  // make sure links responsd to spacebar
+                  if (makeLinksAccessible) {
+                    const links = decorationEl.getElementsByTagName('a');
+                    // tslint:disable-next-line: prefer-for-of
+                    for (let i = 0; i < links.length; i++) {
+                      const link = links[0];
+                      link.onkeydown = (e: KeyboardEvent) => {
+                        if (e.keyCode === 32) {
+                          e.preventDefault();
+                          link.click();
+                        }
+                      };
+                    }
+                  }
+
                   decorationEl.style.visibility = 'visible';
                 }
               });

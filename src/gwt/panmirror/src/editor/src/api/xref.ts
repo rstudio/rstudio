@@ -15,6 +15,9 @@
 
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { findChildrenByMark } from 'prosemirror-utils';
+
 import { pandocAutoIdentifier } from './pandoc_id';
 import { rmdChunkEngineAndLabel } from './rmd';
 
@@ -53,24 +56,45 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
   if (xrefInfo) {
 
     const { type, id } = xrefInfo;
+    const locator = xrefPositionLocators[type];
+    if (locator) {
+      // if this locator finds by mark then look at doc for marks
+      if (locator.markType) {
+        const schema = doc.type.schema;
+        const markType = schema.marks[locator.markType];
+        const markedNodes = findChildrenByMark(doc, markType, true);
+        markedNodes.forEach(markedNode => {
+          // bail if we already found it
+          if (xrefPos !== -1) {
+            return false;
+          }
+          // see if we can locate the xref
+          if (locator.hasXRef(markedNode.node, id)) {
+            xrefPos = markedNode.pos;
+          }
+        });
 
-    // search all descendents recursively for the xref
-    doc.descendants((node, pos) => {
-
-      // bail if we already found it
-      if (xrefPos !== -1) {
-        return false;
+      } else if (locator.nodeTypes) {
+        // otherwise recursively examine nodes to find the xref
+        doc.descendants((node, pos) => {
+          // bail if we already found it
+          if (xrefPos !== -1) {
+            return false;
+          }
+          // see if we can locate the xref
+          if (locator.nodeTypes!.includes(node.type.name) &&
+            locator.hasXRef(node, id)) {
+            xrefPos = pos;
+            return false;
+          }
+        });
       }
 
-      // see if we have a locator for this type that can handle this node type
-      const locator = xrefPositionLocators[type];
-      if (locator && locator.nodeTypes.includes(node.type.name)) {
-        if (locator.hasXRef(node, id)) {
-          xrefPos = pos;
-          return false;
-        }
-      }
-    });
+
+
+
+    }
+
   }
 
   // return the position
@@ -92,7 +116,8 @@ function xrefTypeAndId(xref: string) {
 }
 
 interface XRefPositionLocator {
-  nodeTypes: string[];
+  markType?: string;
+  nodeTypes?: string[];
   hasXRef: (node: ProsemirrorNode, id: string) => boolean;
 }
 
@@ -119,6 +144,13 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
       } else {
         return false;
       }
+    }
+  },
+  'eq': {
+    markType: 'math',
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      const match = node.textContent.match(/^.*\(\\#eq:([a-zA-Z0-9\/-]+)\).*$/m);
+      return !!match && match[1].localeCompare(id, undefined, { sensitivity: 'accent' }) === 0;
     }
   },
   'thm': thereomLocator('theorem'),

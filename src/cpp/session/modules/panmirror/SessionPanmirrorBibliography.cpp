@@ -507,7 +507,10 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       // build args
       std::vector<std::string> args;
       for (auto biblioFile : biblioFiles)
-         args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+      {
+         if (FilePath::exists(biblioFile.absolutePath()))
+            args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+      }
       args.push_back("--bib2json");
 
       // run pandoc-citeproc
@@ -529,6 +532,154 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       cont(Success(), &response);
    }
 }
+
+
+Error pandocGenerateBibliography(const std::string& biblioJson,
+                                const FilePath& cslPath,
+                                const std::vector<std::string>& extraArgs,
+                                std::string* pBiblio)
+{
+   // write the json to a temp file
+   FilePath jsonBiblioPath = module_context::tempFile("biblio", "json");
+   Error error = core::writeStringToFile(jsonBiblioPath, biblioJson);
+   if (error)
+      return error;
+
+   // optional csl
+   std::string csl;
+   if (!cslPath.isEmpty())
+   {
+      boost::format fmt("\ncsl: \"%1%\"");
+      csl = boost::str(fmt % string_utils::utf8ToSystem(cslPath.getAbsolutePath()));
+   }
+
+   // create a document
+   boost::format fmt("---\nbibliography: \"%1%\"%2%\nnocite: |\n  @*\n---\n");
+   std::string doc = boost::str(fmt %
+     string_utils::utf8ToSystem(jsonBiblioPath.getAbsolutePath()) %
+     csl
+   );
+
+   // run pandoc with citeproc
+   std::vector<std::string> args;
+   args.push_back("--from");
+   args.push_back("markdown");
+   args.push_back("--filter");
+   args.push_back(module_context::pandocCiteprocPath());
+   std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
+
+   core::system::ProcessResult result;
+   error = module_context::runPandoc(args, doc, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
+      error.addProperty("biblio-json", biblioJson);
+      LOG_ERROR(error);
+      return error;
+   }
+   else
+   {
+      *pBiblio = result.stdOut;
+      return Success();
+   }
+}
+
+Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+{
+   // extract params
+   std::string bibliography, id, sourceAsJson;
+   bool project;
+   Error error = json::readParams(request.params, &bibliography, &project, &id, &sourceAsJson);
+   if (error)
+      return error;
+
+   // resolve the bibliography path
+   FilePath bibliographyPath = project && projects::projectContext().hasProject()
+      ? projects::projectContext().buildTargetPath().completeChildPath(bibliography)
+      : module_context::resolveAliasedPath(bibliography);
+
+   // get the path to the bibtex csl
+   FilePath cslPath = session::options().rResourcesPath().completePath("bibtex.csl");
+
+   std::vector<std::string> args;
+   args.push_back("--to");
+   args.push_back("plain");
+   args.push_back("--wrap");
+   args.push_back("none");
+   std::string biblio;
+   error = pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
+   if (error)
+      return error;
+
+   // substitute the id
+   const char * const kIdToken = "F3CCCD24-5C50-412A-AE47-549C9D147498";
+   std::string entry = biblio;
+   boost::algorithm::trim(entry);
+   boost::replace_all(entry, kIdToken, id);
+
+   // apply indentation
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\r\n"));
+   std::vector<std::string> indentedLines;
+   for (std::size_t i = 0; i<lines.size(); i++)
+   {
+      bool firstLine = i == 0;
+      bool lastLine = i == lines.size() - 1;
+      if (firstLine || lastLine)
+         indentedLines.push_back(lines[i]);
+      else
+         indentedLines.push_back("  " + lines[i]);
+   }
+   entry = boost::algorithm::join(indentedLines, "\n");
+
+   // append the bibliography to the file
+   error = core::writeStringToFile(bibliographyPath, "\n" + entry + "\n", string_utils::LineEndingPosix, false);
+   if (error)
+      return error;
+
+   pResponse->setResult(true);
+   return Success();
+}
+
+
+Error pandocCitationHTML(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+{
+   // extract params
+   std::string file, sourceAsJson, csl;
+   Error error = json::readParams(request.params, &file, &sourceAsJson, &csl);
+   if (error)
+      return error;
+
+   // resolve the file and csl paths (if any)
+   FilePath filePath = !file.empty() ? module_context::resolveAliasedPath(file): FilePath();
+   FilePath cslPath = (!csl.empty() && !filePath.isEmpty()) ? filePath.getParent().completePath(csl) : FilePath();
+
+   // if there is no csl specified and a file is specified, see if we can resolve csl from the project
+   if (cslPath.isEmpty() && !filePath.isEmpty() &&
+       projects::projectContext().hasProject() &&
+       filePath.isWithin(projects::projectContext().buildTargetPath()))
+   {
+      cslPath = module_context::bookdownCSL();
+   }
+
+   std::vector<std::string> args;
+   args.push_back("--to");
+   args.push_back("html");
+   std::string biblio;
+   error = pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
+   if (error)
+      return error;
+
+   pResponse->setResult(biblio);
+
+   return Success();
+}
+
 
 
 void updateProjectBibliography()
@@ -604,6 +755,8 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
         (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_get_bibliography", pandocGetBibliography))
+        (boost::bind(module_context::registerRpcMethod, "pandoc_add_to_bibliography", pandocAddToBibliography))
+        (boost::bind(module_context::registerRpcMethod, "pandoc_citation_html", pandocCitationHTML))
    ;
    return initBlock.execute();
 }
