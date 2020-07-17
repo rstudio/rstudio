@@ -80,7 +80,7 @@ namespace prefs {
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kPanesAdditionalSourceColumns "additional_source_columns"
-#define kEnableAdditionalColumns "enable_additional_columns"
+#define kAllowSourceColumns "allow_source_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -313,6 +313,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kShowFocusRectangles "show_focus_rectangles"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -488,10 +489,10 @@ public:
    core::Error setPanes(core::json::Object val);
 
    /**
-    * Temporary flag to enable additional source columns.
+    * Whether to enable the ability to add source columns to display.
     */
-   bool enableAdditionalColumns();
-   core::Error setEnableAdditionalColumns(bool val);
+   bool allowSourceColumns();
+   core::Error setAllowSourceColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
@@ -1446,6 +1447,12 @@ public:
     */
    bool tabKeyMoveFocus();
    core::Error setTabKeyMoveFocus(bool val);
+
+   /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   bool showFocusRectangles();
+   core::Error setShowFocusRectangles(bool val);
 
    /**
     * How to deal with changes to documents on idle.
