@@ -23,6 +23,7 @@
 #include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAsyncDownloadFile.hpp>
 
 #include "ZoteroCollectionsWeb.hpp"
 
@@ -205,6 +206,40 @@ void updateCachedCollection(const std::string& type, const std::string& context,
 }
 
 
+// repsond with either a collection from the server cache or just name/version if the client
+// already has a more up to date verison
+ZoteroCollection responseFromServerCache(const std::string& type,
+                                         const std::string& apiKey,
+                                         const std::string& collection,
+                                         const ZoteroCollectionSpecs& clientCacheSpecs)
+{
+   ZoteroCollection cached = cachedCollection(type, apiKey, collection);
+   if (!cached.empty() )
+   {
+      // see if the client specs already indicate an up to date version
+      ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(clientCacheSpecs.begin(), clientCacheSpecs.end(), [cached](ZoteroCollectionSpec spec) {
+         return spec.name == cached.name && spec.version >= cached.version;
+      });
+      if (clientIt == clientCacheSpecs.end())
+      {
+         // client spec didn't match, return cached collection
+         LOG("Returning server cache for " + collection);
+         return cached;
+      }
+      else
+      {
+         // client had up to date version, just return the spec w/ no items
+         LOG("Using client cache for " + collection);
+         return *clientIt;
+      }
+   }
+   else
+   {
+      return ZoteroCollection();
+   }
+
+}
+
 
 } // end anonymous namespace
 
@@ -219,29 +254,47 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
 {
    // we only support the web api right now so hard-code to using that. the code below however
    // will work with other methods (e.g. local sqllite) once we implement them
+   std::string type = kWebAPIType;
    std::string apiKey = prefs::userState().zoteroApiKey();
 
    // if we have an api key then request collections from the web
    if (!apiKey.empty())
    {
-      ZoteroCollectionSpec serverCacheSpec = cachedCollectionSpec(kWebAPIType, apiKey, kMyLibrary);
+      ZoteroCollectionSpec serverCacheSpec = cachedCollectionSpec(type, apiKey, kMyLibrary);
       ZoteroCollectionSource source = collections::webCollections();
-      source.getLibrary(apiKey, serverCacheSpec, [apiKey, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
+      source.getLibrary(apiKey, serverCacheSpec, [type, apiKey, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
 
+         ZoteroCollection collection;
          if (error)
          {
-            handler(error, std::vector<ZoteroCollection>());
-            return;
+            // if it's a host error then see if we can use a cached version
+            if (isHostError(core::errorDescription(error)))
+            {
+               collection = cachedCollection(type, apiKey, kMyLibrary);
+               if (collection.empty())
+               {
+                  handler(error, std::vector<ZoteroCollection>());
+               }
+            }
+            else
+            {
+               handler(error, std::vector<ZoteroCollection>());
+            }
+         }
+         else
+         {
+            collection = webLibrary[0];
          }
 
-         // always a single library
-         ZoteroCollection collection = webLibrary[0];
+         // if we don't have a collection then we are done (handler has already been called w/ the error)
+         if (collection.empty())
+            return;
 
          // see if we need to update our server side cache. if we do then just return that version
          if (serverCacheSpec.empty() || serverCacheSpec.version < collection.version)
          {
             LOG("Updating server cache for <library>");
-            updateCachedCollection(kWebAPIType, apiKey, collection.name, collection);
+            updateCachedCollection(type, apiKey, collection.name, collection);
             LOG("Returning server cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ collection });
          }
@@ -250,7 +303,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
          // just return w/o items
          else if (cacheSpec.version >= collection.version)
          {
-            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.version);
+            ZoteroCollectionSpec spec(type, cacheSpec.version);
             LOG("Using client cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ spec });
          }
@@ -259,7 +312,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
          // the returned collection based on the first conditional)
          else
          {
-            ZoteroCollection serverCache = cachedCollection(kWebAPIType, apiKey, kMyLibrary);
+            ZoteroCollection serverCache = cachedCollection(type, apiKey, kMyLibrary);
             collection.items = serverCache.items;
             LOG("Returning server cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ collection });
@@ -275,9 +328,10 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
 void getCollections(const std::vector<std::string>& collections,
                     const ZoteroCollectionSpecs& cacheSpecs,
                     ZoteroCollectionsHandler handler)
-{
+{   
    // we only support the web api right now so hard-code to using that. the code below however
    // will work with other methods (e.g. local sqllite) once we implement them
+   std::string type = kWebAPIType;
    std::string apiKey = prefs::userState().zoteroApiKey();
 
    // if we have an api key then request collections from the web
@@ -289,9 +343,9 @@ void getCollections(const std::vector<std::string>& collections,
       // request for explicit list of collections, provide specs for matching collections from the server cache
       if (!collections.empty())
       {
-         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [apiKey](std::string name) {
+         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [type, apiKey](std::string name) {
             ZoteroCollectionSpec cacheSpec(name, 0);
-            ZoteroCollectionSpec cached = cachedCollectionSpec(kWebAPIType, apiKey, name);
+            ZoteroCollectionSpec cached = cachedCollectionSpec(type, apiKey, name);
             if (!cached.empty())
                cacheSpec.version = cached.version;
             return cacheSpec;
@@ -301,19 +355,19 @@ void getCollections(const std::vector<std::string>& collections,
       // request for all collections, provide specs for all collections in the server cache
       else
       {
-         serverCacheSpecs = cachedCollectionsSpecs(kWebAPIType, apiKey);
+         serverCacheSpecs = cachedCollectionsSpecs(type, apiKey);
       }
 
       // get collections
       ZoteroCollectionSource source = collections::webCollections();
-      source.getCollections(apiKey, collections, serverCacheSpecs, [apiKey, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
+      source.getCollections(apiKey, collections, serverCacheSpecs, [type, apiKey, collections, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
 
          // process response -- for any collection returned w/ a version higher than that in the
          // cache, update the cache. for any collection available (from cache or web) with a version
-         // higher than that of the client request, return the updated items (else return no items)
-         ZoteroCollections collections;
+         // higher than that of the client request, return the updated items (else return no items) 
          if (!error)
          {
+            ZoteroCollections responseCollections;
             for (auto webCollection : webCollections)
             {
                // see if the server side cache needs updating
@@ -324,9 +378,9 @@ void getCollections(const std::vector<std::string>& collections,
                if (it == serverCacheSpecs.end())
                {
                   LOG("Updating server cache for " + webCollection.name);
-                  updateCachedCollection(kWebAPIType, apiKey, webCollection.name, webCollection);
+                  updateCachedCollection(type, apiKey, webCollection.name, webCollection);
                   LOG("Returning server cache for " + webCollection.name);
-                  collections.push_back(webCollection);
+                  responseCollections.push_back(webCollection);
                }
 
                // we have a cache for this collection, check to see if it is recent enough (and in that
@@ -334,39 +388,39 @@ void getCollections(const std::vector<std::string>& collections,
                else
                {
                   // see we can satisfy the request from our cache
-                  ZoteroCollection cached = cachedCollection(kWebAPIType, apiKey, webCollection.name);
-                  if (!cached.empty() )
+                  ZoteroCollection cached = responseFromServerCache(type, apiKey, webCollection.name, cacheSpecs);
+                  if (!cached.empty())
                   {
-                     // see if the client specs already indicate an up to date version
-                     ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [cached](ZoteroCollectionSpec spec) {
-                        return spec.name == cached.name && spec.version >= cached.version;
-                     });
-                     if (clientIt == cacheSpecs.end())
-                     {
-                        // client spec didn't match, return cached collection
-                        LOG("Returning server cache for " + webCollection.name);
-                        collections.push_back(cached);
-                     }
-                     else
-                     {
-                        // client had up to date version, just return the spec w/ no items
-                        LOG("Using client cache for " + webCollection.name);
-                        collections.push_back(*clientIt);
-                     }
+                     responseCollections.push_back(cached);
                   }
-                  // shouldn't be possible to get here (as the initial condition tested in the loop ensures
-                  // that we have a cached) but put this in just to never return incomplete results
                   else
-                  {
+                  {  
+                     // shouldn't be possible to get here (as the initial condition tested in the loop ensures
+                     // that we have a cached collection)
                      LOG("Unexpected failure to find cache for " + webCollection.name);
-                     updateCachedCollection(kWebAPIType, apiKey, webCollection.name, webCollection);
-                     collections.push_back(webCollection);
                   }
                }
             }
+
+            handler(Success(), responseCollections);
+
+         // for host errors try to serve from the cache
+         } else if (isHostError(core::errorDescription(error))) {
+
+            ZoteroCollections responseCollections;
+            for (auto collection : collections)
+            {
+               ZoteroCollection cached = responseFromServerCache(type, apiKey, collection, cacheSpecs);
+               if (!cached.empty())
+                  responseCollections.push_back(cached);
+            }
+            handler(Success(),responseCollections);
+
+         // report error
+         } else {
+            handler(error, std::vector<ZoteroCollection>());
          }
 
-         handler(error, collections);
 
       });
    }
