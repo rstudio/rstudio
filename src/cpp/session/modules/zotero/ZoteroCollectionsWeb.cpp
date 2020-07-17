@@ -15,7 +15,6 @@
 
 #include "ZoteroCollectionsWeb.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
