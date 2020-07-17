@@ -201,7 +201,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      focusSearchHelp();
    }
 
    @Override
