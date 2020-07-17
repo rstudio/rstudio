@@ -452,13 +452,19 @@ public class PaneManager
    LogicalWindow getParentLogicalWindow(Element el)
    {
       LogicalWindow targetWindow = null;
+      ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
+      windowList.addAll(sourceLogicalWindows_);
 
       while (el != null && targetWindow == null)
       {
          el = el.getParentElement();
-         for (LogicalWindow window : panes_)
+         for (LogicalWindow window : windowList)
          {
-            Widget activeWidget = window.getActiveWidget();
+            Widget activeWidget = null;
+            if (window.getState() != null)
+               activeWidget = window.getActiveWidget();
+            else
+               activeWidget = window.getNormal();
             if (activeWidget == null)
                continue;
 
@@ -587,11 +593,21 @@ public class PaneManager
       String nextFocusName = null;
       if (currentFocus != null)
       {
-         for (int i = 0; i < panes_.size(); i++)
+         String currentName = currentFocus.getNormal().getName();
+         if (currentFocus.getNormal().getName() == "TabSet2")
+            nextFocusName = sourceColumnManager_.getLeftColumnName();
+         else if (sourceColumnManager_.getByName(currentName) != null &&
+                  !StringUtil.equals(currentName, SourceColumnManager.MAIN_SOURCE_NAME))
          {
-            if (currentFocus.equals(panes_.get(i)))
+            nextFocusName = sourceColumnManager_.getNextColumnName();
+            if (StringUtil.isNullOrEmpty(nextFocusName))
+               nextFocusName = panes_.get(0).getNormal().getName();
+         }
+         else
+         {
+            for (int i = 0; i < panes_.size() - 1; i++)
             {
-               if ((i + 1) < panes_.size())
+               if (currentFocus.equals(panes_.get(i)))
                   nextFocusName = panes_.get(i + 1).getNormal().getName();
             }
          }
@@ -599,7 +615,12 @@ public class PaneManager
 
       // if null, default to the top left pane
       if (StringUtil.isNullOrEmpty(nextFocusName))
-         nextFocusName = panes_.get(0).getNormal().getName();
+      {
+         if (sourceColumnManager_.getSize() > 1)
+            nextFocusName = sourceColumnManager_.getLeftColumnName();
+         else
+            nextFocusName = panes_.get(0).getNormal().getName();
+      }
 
       // activate next pane
       if (StringUtil.equals("Source", nextFocusName))

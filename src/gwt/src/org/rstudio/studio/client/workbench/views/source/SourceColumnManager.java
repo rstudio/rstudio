@@ -416,6 +416,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
+   public String getLeftColumnName()
+   {
+     return columnList_.get(0).getName();
+   }
+
+   public String getNextColumnName()
+   {
+      int index = columnList_.indexOf(getActive());
+      if (index == getSize() - 1)
+         return null;
+      else
+         return columnList_.get(1 + index).getName();
+   }
+
    // This method sets activeColumn_ to the main column if it is null. It should be used in cases
    // where it is better for the column to be the main column than null.
    public SourceColumn getActive()
