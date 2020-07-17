@@ -35,9 +35,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <ifaddrs.h>
 #include <sys/socket.h>
-#include <netdb.h>
 
 #include <uuid/uuid.h>
 
@@ -1877,46 +1875,10 @@ std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
    return os;
 }
 
-Error ipAddresses(std::vector<IpAddress>* pAddresses,
+Error ipAddresses(std::vector<posix::IpAddress>* pAddresses,
                   bool includeIPv6)
 {
-   // get addrs
-   struct ifaddrs* pAddrs;
-   if (::getifaddrs(&pAddrs) == -1)
-      return systemError(errno, ERROR_LOCATION);
-
-   // iterate through the linked list
-   for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
-   {
-      if (pAddr->ifa_addr == nullptr)
-         continue;
-
-      // filter out non-ip addresses
-      sa_family_t family = pAddr->ifa_addr->sa_family;
-      bool filterAddr = includeIPv6 ? (family != AF_INET && family != AF_INET6) : (family != AF_INET);
-      if (filterAddr)
-         continue;
-
-      char host[NI_MAXHOST];
-      if (::getnameinfo(pAddr->ifa_addr,
-                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                              sizeof(struct sockaddr_in6),
-                        host, NI_MAXHOST,
-                        nullptr, 0, NI_NUMERICHOST) != 0)
-      {
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-         continue;
-      }
-
-      struct IpAddress addr;
-      addr.name = pAddr->ifa_name;
-      addr.addr = host;
-      pAddresses->push_back(addr);
-   }
-
-   // free them and return success
-   ::freeifaddrs(pAddrs);
-   return Success();
+    return posix::getIpAddresses(*pAddresses, includeIPv6);
 }
 
 

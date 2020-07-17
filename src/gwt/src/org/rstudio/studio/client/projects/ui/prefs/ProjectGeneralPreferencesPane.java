@@ -64,7 +64,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       // disable execute .Rprofile
       grid.setWidget(4, 0, disableExecuteRprofile_ = new CheckBox("Disable .Rprofile execution on session start/resume"));
-      
+
       // quit child processes
       grid.setWidget(5, 0, quitChildProcessesOnExit_ = new CheckBox("Quit child processes on exit"));
 
@@ -93,7 +93,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       alwaysSaveHistory_.setSelectedIndex(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
       rVersion_ = config.getRVersion();
-      
+
       // if we are in packrat mode, disable the ability to set the disable execute Rprofile setting
       // the Rprofile always executes on session start in this case as it is required by packrat
       if (context != null && context.isModeOn())
@@ -103,13 +103,13 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
       else
          disableExecuteRprofile_.setValue(config.getDisableExecuteRprofile());
-      
+
       // check or uncheck the checkbox for child processes based on the configuration value
       // if default is specified, we need to use the current session setting
       // otherwise, yes or no indicate the check state exactly
       int quitChildProcessesOnExit = config.getQuitChildProcessesOnExit();
       boolean quitChildProcessesChecked = sessionInfo_.quitChildProcessesOnExit();
-      
+
       switch (quitChildProcessesOnExit)
       {
       case YES_VALUE:
@@ -119,9 +119,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
          quitChildProcessesChecked = false;
          break;
       }
-      
+
       quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
-      
+
    }
 
    @Override
@@ -134,8 +134,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setTutorialPath(tutorialPath_);
       config.setRVersion(rVersion_);
       config.setDisableExecuteRprofile(disableExecuteRprofile_.getValue());
-      
-      // turn the quit child processes checkbox from a boolean into the 
+
+      // turn the quit child processes checkbox from a boolean into the
       // YesNoAsk value that it should be in the configuration
       boolean quitChildProcessesChecked = quitChildProcessesOnExit_.getValue();
       int quitChildProcessesOnExit = 0;
@@ -143,25 +143,25 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       {
          quitChildProcessesOnExit = (quitChildProcessesChecked ? YES_VALUE : NO_VALUE);
       }
-      
+
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       return new RestartRequirement();
    }
-   
+
    private class YesNoAskDefault extends ListBox
    {
       public YesNoAskDefault(boolean includeAsk)
       {
          super();
          setMultipleSelect(false);
-         
+
          String[] items = includeAsk ? new String[] {USE_DEFAULT, YES, NO, ASK}:
                                        new String[] {USE_DEFAULT, YES, NO};
-         
+
          for (int i=0; i<items.length; i++)
             addItem(items[i]);
       }
-      
+
       @Override
       public void setSelectedIndex(int value)
       {
@@ -171,22 +171,22 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
             super.setSelectedIndex(0);
       }
    }
-   
+
    private static final String USE_DEFAULT = "(Default)";
    private static final String YES = "Yes";
    private static final int YES_VALUE = 1;
    private static final String NO = "No";
    private static final int NO_VALUE = 2;
    private static final String ASK ="Ask";
-   
+
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
    private CheckBox disableExecuteRprofile_;
    private CheckBox quitChildProcessesOnExit_;
    private SessionInfo sessionInfo_;
-   
+
    private String tutorialPath_;
-   
+
    private RProjectRVersion rVersion_;
 }

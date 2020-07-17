@@ -459,6 +459,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
+   sessionInfo["project_sharing_enumerate_server_users"] = true;
    sessionInfo["launcher_session"] = false;
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();

@@ -15,6 +15,8 @@
 ### Workbench
 
 * Any tab can be hidden from view through Global Options. (#6428)
+* Accessibility preference to reduce focus rectangle display (#7242)
+* Multiple source panes can be opened in the main window via Global Options. (#2854)
 
 ### Miscellaneous
 
@@ -68,3 +70,5 @@
 * Added CSRF protection to sign-in pages (Pro #1469)
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
 * Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
+* Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
+

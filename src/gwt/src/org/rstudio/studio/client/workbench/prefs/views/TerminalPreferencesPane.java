@@ -111,7 +111,7 @@ public class TerminalPreferencesPane extends PreferencesPane
                {
                   String message = "The program '" + shellExePath + "'" +
                      " is unlikely to be a valid shell executable.";
-                  
+
                   globalDisplay.showMessage(
                         GlobalDisplay.MSG_WARNING,
                         "Invalid Shell Executable",
@@ -148,7 +148,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (haveLocalEchoPref())
       {
          CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
-               prefs_.terminalLocalEcho(), 
+               prefs_.terminalLocalEcho(),
                "Local echo is more responsive but may get out of sync with some line-editing modes or custom shells.");
          general.add(chkTerminalLocalEcho);
          showPerfLabel = true;
@@ -156,7 +156,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (haveWebsocketPref())
       {
          CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
-               prefs_.terminalWebsockets(), 
+               prefs_.terminalWebsockets(),
                "WebSockets are generally more responsive; try turning off if terminal won't connect.");
          general.add(chkTerminalWebsocket);
          showPerfLabel = true;
@@ -304,7 +304,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyMode_.addChoice("Never", UserPrefs.BUSY_DETECTION_NEVER);
          busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
          busyMode_.setEnabled(true);
-         
+
          prefs_.busyDetection().getValue();
          for (int i = 0; i < busyMode_.getListBox().getItemCount(); i++)
          {
@@ -313,10 +313,10 @@ public class TerminalPreferencesPane extends PreferencesPane
                busyMode_.getListBox().setSelectedIndex(i);
             }
          }
-         
+
          List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
                prefs_.busyWhitelist().getValue());
-         
+
          StringBuilder whitelist = new StringBuilder();
          for (String entry: whitelistArray)
          {
@@ -351,13 +351,13 @@ public class TerminalPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs rPrefs)
    {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
-     
+
       if (haveBusyDetectionPref())
       {
          prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
          prefs_.busyDetection().setGlobalValue(selectedBusyMode());
-      } 
-      
+      }
+
       if (BrowseCap.isWindowsDesktop())
          prefs_.windowsTerminalShell().setGlobalValue(selectedShellType());
       else
@@ -423,7 +423,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       busyWhitelistLabel_.setVisible(whitelistEnabled);
       busyWhitelist_.setVisible(whitelistEnabled);
    }
-   
+
    private void addTextBoxChooser(Panel panel, String textWidth, FormLabel captionLabel, TextBoxWithButton chooser)
    {
       HorizontalPanel captionPanel = new HorizontalPanel();
