@@ -257,6 +257,19 @@ core::Error UserStateValues::setZoteroApiKey(std::string val)
    return writePref("zotero_api_key", val);
 }
 
+/**
+ * Directory containing Zotero data files
+ */
+std::string UserStateValues::zoteroDataDir()
+{
+   return readPref<std::string>("zotero_data_dir");
+}
+
+core::Error UserStateValues::setZoteroDataDir(std::string val)
+{
+   return writePref("zotero_data_dir", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
@@ -278,6 +291,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kErrorHandlerType,
       kUsingMingwGcc49,
       kZoteroApiKey,
+      kZoteroDataDir,
    });
 }
    

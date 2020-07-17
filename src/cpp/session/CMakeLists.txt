@@ -254,6 +254,7 @@ set (SESSION_SOURCE_FILES
    modules/viewer/ViewerHistory.cpp
    modules/zotero/ZoteroCollections.cpp
    modules/zotero/ZoteroCollectionsWeb.cpp
+   modules/zotero/ZoteroCollectionsLocal.cpp
    modules/zotero/SessionZotero.cpp
    prefs/PrefLayer.cpp
    prefs/Preferences.cpp

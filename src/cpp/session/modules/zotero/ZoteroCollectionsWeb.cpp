@@ -39,13 +39,13 @@ namespace {
 const char * const kZoteroApiHost = "https://api.zotero.org";
 const char * const kZoteroApiVersion = "3";
 
-typedef boost::function<void(const core::Error&,int,core::json::Value)> ZoteroJsonResponseHandler;
+typedef boost::function<void(core::Error,int,core::json::Value)> ZoteroJsonResponseHandler;
 
-void zoteroJsonRequest(const std::string& key,
-                       const std::string& resource,
+void zoteroJsonRequest(std::string key,
+                       std::string resource,
                        http::Fields queryParams,
-                       const std::string& schema,
-                       const ZoteroJsonResponseHandler& handler)
+                       std::string schema,
+                       ZoteroJsonResponseHandler handler)
 {
    // authorize using header or url param as required
    http::Fields headers;
@@ -112,20 +112,20 @@ http::Fields zoteroItemRequestParams(int start, int limit)
    return params;
 }
 
-void zoteroItemRequest(const std::string& key,
-                       const std::string& path,
+void zoteroItemRequest(std::string key,
+                       std::string path,
                        int start,
                        int limit,
                        json::Array accumulatedItems,
-                       const ZoteroJsonResponseHandler& handler);
+                       ZoteroJsonResponseHandler handler);
 
-void zoteroItemRequestHandler(const std::string& key,
-                              const std::string& path,
+void zoteroItemRequestHandler(std::string key,
+                              std::string path,
                               int start,
                               int limit,
                               json::Array accumulatedItems,
-                              const ZoteroJsonResponseHandler& handler,
-                              const core::Error& error,
+                              ZoteroJsonResponseHandler handler,
+                              core::Error error,
                               int status,
                               core::json::Value json)
 {
@@ -152,12 +152,12 @@ void zoteroItemRequestHandler(const std::string& key,
    }
 }
 
-void zoteroItemRequest(const std::string& key,
-                       const std::string& path,
+void zoteroItemRequest(std::string key,
+                       std::string path,
                        int start,
                        int limit,
                        json::Array accumulatedItems,
-                       const ZoteroJsonResponseHandler& handler)
+                       ZoteroJsonResponseHandler handler)
 {
    std::string schema = module_context::resourceFileAsString("schema/zotero-items.json");
    http::Fields params = zoteroItemRequestParams(start, limit);
@@ -167,15 +167,15 @@ void zoteroItemRequest(const std::string& key,
                      ));
 }
 
-void zoteroItemRequest(const std::string& key,
-                       const std::string& path,
-                       const ZoteroJsonResponseHandler& handler)
+void zoteroItemRequest(std::string key,
+                       std::string path,
+                       ZoteroJsonResponseHandler handler)
 {
    zoteroItemRequest(key, path, 0, 100, json::Array(), handler);
 }
 
 
-void zoteroKeyInfo(const std::string& key, const ZoteroJsonResponseHandler& handler)
+void zoteroKeyInfo(std::string key, ZoteroJsonResponseHandler handler)
 {
    std::string schema = module_context::resourceFileAsString("schema/zotero-key.json");
 
@@ -188,7 +188,7 @@ void zoteroKeyInfo(const std::string& key, const ZoteroJsonResponseHandler& hand
 }
 
 
-void zoteroCollections(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
+void zoteroCollections(std::string key, int userID, ZoteroJsonResponseHandler handler)
 {
    std::string schema = module_context::resourceFileAsString("schema/zotero-collections.json");
 
@@ -203,13 +203,13 @@ void zoteroCollections(const std::string& key, int userID, const ZoteroJsonRespo
                      handler);
 }
 
-void zoteroItems(const std::string& key, int userID, const ZoteroJsonResponseHandler& handler)
+void zoteroItems(std::string key, int userID, ZoteroJsonResponseHandler handler)
 {
    boost::format fmt("users/%d/items");
    zoteroItemRequest(key, boost::str(fmt % userID), handler);
 }
 
-void zoteroItemVersions(const std::string& key, int userID, int since, const ZoteroJsonResponseHandler& handler)
+void zoteroItemVersions(std::string key, int userID, int since, ZoteroJsonResponseHandler handler)
 {
    http::Fields params;
    params.push_back(std::make_pair("format", "versions"));
@@ -219,14 +219,14 @@ void zoteroItemVersions(const std::string& key, int userID, int since, const Zot
 }
 
 
-void zoteroItemsForCollection(const std::string& key, int userID, const std::string& collectionID, const ZoteroJsonResponseHandler& handler)
+void zoteroItemsForCollection(std::string key, int userID, std::string collectionID, ZoteroJsonResponseHandler handler)
 {
    boost::format fmt("users/%d/collections/%s/items");
    zoteroItemRequest(key, boost::str(fmt % userID % collectionID), handler);
 }
 
 
-ZoteroCollection collectionFromItemsDownload(const ZoteroCollectionSpec& spec, const json::Value& json)
+ZoteroCollection collectionFromItemsDownload(ZoteroCollectionSpec spec, const json::Value& json)
 {
    ZoteroCollection collection(spec);
    json::Array itemsJson;
@@ -249,8 +249,8 @@ typedef boost::shared_ptr<ZoteroCollectionsDownloader> ZoteroCollectionsDownload
 class ZoteroCollectionsDownloader : public boost::enable_shared_from_this<ZoteroCollectionsDownloader>
 {
 public:
-   static ZoteroCollectionsDownloaderPtr create(const std::string& key, int userID,
-                                                const std::vector<std::pair<std::string,ZoteroCollectionSpec> >& collections,
+   static ZoteroCollectionsDownloaderPtr create(std::string key, int userID,
+                                                std::vector<std::pair<std::string,ZoteroCollectionSpec> > collections,
                                                 ZoteroCollectionsHandler handler)
    {
        ZoteroCollectionsDownloaderPtr pDownloader(new ZoteroCollectionsDownloader(key, userID, collections, handler));
@@ -261,8 +261,9 @@ public:
 public:
 
 private:
-   ZoteroCollectionsDownloader(const std::string& key, int userID,
-                               const std::vector<std::pair<std::string,ZoteroCollectionSpec> >& collections, ZoteroCollectionsHandler handler)
+   ZoteroCollectionsDownloader(std::string key, int userID,
+                               std::vector<std::pair<std::string,ZoteroCollectionSpec> > collections,
+                               ZoteroCollectionsHandler handler)
       : key_(key), userID_(userID), handler_(handler)
    {
       for (auto collection : collections)
@@ -315,9 +316,9 @@ private:
    ZoteroCollections collections_;
 };
 
-void getWebLibraryForUser(const std::string& key,
+void getWebLibraryForUser(std::string key,
                           int userID,
-                          const ZoteroCollectionSpec& cacheSpec,
+                          ZoteroCollectionSpec cacheSpec,
                           ZoteroCollectionsHandler handler)
 {
    // first query for versions
@@ -366,14 +367,14 @@ void getWebLibraryForUser(const std::string& key,
 }
 
 
-void getWebCollectionsForUser(const std::string& key,
+void getWebCollectionsForUser(std::string key,
                               int userID,
-                              const std::vector<std::string>& collections,
-                              const ZoteroCollectionSpecs& cacheSpecs,
+                              std::vector<std::string> collections,
+                              ZoteroCollectionSpecs cacheSpecs,
                               ZoteroCollectionsHandler handler)
 {
    // lookup all collections for the user
-   zoteroCollections(key, userID, [key, userID, collections, cacheSpecs, handler](const Error& error,int,json::Value jsonValue) {
+   zoteroCollections(key, userID, [key, userID, collections, cacheSpecs, handler](Error error,int,json::Value jsonValue) {
 
       if (error)
       {
@@ -472,8 +473,8 @@ void withUserId(const std::string& key, boost::function<void(const Error&,int)> 
 }
 
 
-void getWebLibrary(const std::string& key,
-                   const ZoteroCollectionSpec& cacheSpec,
+void getWebLibrary(std::string key,
+                   ZoteroCollectionSpec cacheSpec,
                    ZoteroCollectionsHandler handler)
 {
    withUserId(key, [key, cacheSpec, handler](Error error, int userID) {
@@ -490,9 +491,9 @@ void getWebLibrary(const std::string& key,
 }
 
 
-void getWebCollections(const std::string& key,
-                       const std::vector<std::string>& collections,
-                       const ZoteroCollectionSpecs& cacheSpecs,
+void getWebCollections(std::string key,
+                       std::vector<std::string> collections,
+                       ZoteroCollectionSpecs cacheSpecs,
                        ZoteroCollectionsHandler handler)
 {
    withUserId(key, [key, collections, cacheSpecs, handler](Error error, int userID) {
@@ -511,7 +512,7 @@ void getWebCollections(const std::string& key,
 } // end anonymous namespace
 
 
-void validateWebApiKey(const std::string& key, boost::function<void(bool)> handler)
+void validateWebApiKey(std::string key, boost::function<void(bool)> handler)
 {
    zoteroKeyInfo(key, [handler](const Error& error,int,json::Value) {
       if (error)

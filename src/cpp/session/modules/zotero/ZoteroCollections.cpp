@@ -18,13 +18,17 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/Hash.hpp>
+
 #include <core/FileSerializer.hpp>
 
 #include <session/prefs/UserState.hpp>
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include "ZoteroCollectionsLocal.hpp"
 #include "ZoteroCollectionsWeb.hpp"
 
 using namespace rstudio::core;
@@ -37,10 +41,7 @@ namespace collections {
 
 namespace {
 
-const char * const kWebAPIType = "web";
-
 const char * const kIndexFile = "INDEX";
-
 const char * const kFile = "file";
 
 void LOG(const std::string&)
@@ -240,6 +241,77 @@ ZoteroCollection responseFromServerCache(const std::string& type,
 
 }
 
+FilePath defaultZoteroDataDirectory()
+{
+   std::string homeEnv;
+#ifdef _WIN32
+   homeEnv = "USERPROFILE";
+#else
+   homeEnv = "HOME";
+#endif
+   FilePath homeDir = FilePath(string_utils::systemToUtf8(core::system::getenv(homeEnv)));
+   return homeDir.completeChildPath("Zotero");
+}
+
+FilePath localZoteroDataDirectory()
+{
+   std::string dataDir = prefs::userState().zoteroDataDir();
+   if (!dataDir.empty())
+      return module_context::resolveAliasedPath(dataDir);
+   else
+      return defaultZoteroDataDirectory();
+}
+
+struct Connection
+{
+   bool empty() const { return type.length() == 0; }
+   std::string type;
+   std::string context;
+   std::string cacheContext;
+   ZoteroCollectionSource source;
+};
+
+Connection zoteroConnection()
+{
+   // determine the zotero connection type (deafult to local)
+   std::string type = prefs::userPrefs().zoteroConnectionType();
+   if (type.empty())
+       type = kZoteroConnectionTypeLocal;
+
+   // initialize context
+   std::string context;
+   if (type == kZoteroConnectionTypeLocal)
+   {
+      FilePath localDataDir = localZoteroDataDirectory();
+      if (localDataDir.exists())
+         context = string_utils::utf8ToSystem(localDataDir.getAbsolutePath());
+   }
+   else
+   {
+      context = prefs::userState().zoteroApiKey();
+   }
+
+   // if we have a context then proceed to fill out the connection, otherwise
+   // just return an empty connection. we wouldn't have a context if we were
+   // configured for a local connection (the default) but there was no zotero
+   // data directory. we also woudln't have a context if we were configured
+   // for a web connection and there was no zotero API key
+   if (!context.empty())
+   {
+      Connection connection;
+      connection.type = type;
+      connection.context = context;
+      // use a hash of the context for the cacheContext (as it might not be a valid directory name)
+      connection.cacheContext = core::hash::crc32HexHash(context);
+      connection.source = type == kZoteroConnectionTypeLocal ? collections::localCollections() : collections::webCollections();
+      return connection;
+   }
+   else
+   {
+      return Connection();
+   }
+}
+
 
 } // end anonymous namespace
 
@@ -250,19 +322,14 @@ const char * const kItems = "items";
 const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
 
 
-void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler handler)
+void getLibrary(ZoteroCollectionSpec cacheSpec, ZoteroCollectionsHandler handler)
 {
-   // we only support the web api right now so hard-code to using that. the code below however
-   // will work with other methods (e.g. local sqllite) once we implement them
-   std::string type = kWebAPIType;
-   std::string apiKey = prefs::userState().zoteroApiKey();
-
-   // if we have an api key then request collections from the web
-   if (!apiKey.empty())
-   {
-      ZoteroCollectionSpec serverCacheSpec = cachedCollectionSpec(type, apiKey, kMyLibrary);
-      ZoteroCollectionSource source = collections::webCollections();
-      source.getLibrary(apiKey, serverCacheSpec, [type, apiKey, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
+   // get connection if we have one
+   Connection conn = zoteroConnection();
+   if (!conn.empty())
+   {    
+      ZoteroCollectionSpec serverCacheSpec = cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary);
+      conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
 
          ZoteroCollection collection;
          if (error)
@@ -270,7 +337,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
             // if it's a host error then see if we can use a cached version
             if (isHostError(core::errorDescription(error)))
             {
-               collection = cachedCollection(type, apiKey, kMyLibrary);
+               collection = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
                if (collection.empty())
                {
                   handler(error, std::vector<ZoteroCollection>());
@@ -294,7 +361,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
          if (serverCacheSpec.empty() || serverCacheSpec.version < collection.version)
          {
             LOG("Updating server cache for <library>");
-            updateCachedCollection(type, apiKey, collection.name, collection);
+            updateCachedCollection(conn.type, conn.cacheContext, collection.name, collection);
             LOG("Returning server cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ collection });
          }
@@ -303,7 +370,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
          // just return w/o items
          else if (cacheSpec.version >= collection.version)
          {
-            ZoteroCollectionSpec spec(type, cacheSpec.version);
+            ZoteroCollectionSpec spec(conn.type, cacheSpec.version);
             LOG("Using client cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ spec });
          }
@@ -312,7 +379,7 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
          // the returned collection based on the first conditional)
          else
          {
-            ZoteroCollection serverCache = cachedCollection(type, apiKey, kMyLibrary);
+            ZoteroCollection serverCache = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
             collection.items = serverCache.items;
             LOG("Returning server cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ collection });
@@ -325,17 +392,13 @@ void getLibrary(const ZoteroCollectionSpec& cacheSpec, ZoteroCollectionsHandler 
    }
 }
 
-void getCollections(const std::vector<std::string>& collections,
-                    const ZoteroCollectionSpecs& cacheSpecs,
+void getCollections(std::vector<std::string> collections,
+                    ZoteroCollectionSpecs cacheSpecs,
                     ZoteroCollectionsHandler handler)
 {   
-   // we only support the web api right now so hard-code to using that. the code below however
-   // will work with other methods (e.g. local sqllite) once we implement them
-   std::string type = kWebAPIType;
-   std::string apiKey = prefs::userState().zoteroApiKey();
-
-   // if we have an api key then request collections from the web
-   if (!apiKey.empty())
+   // get connection if we have o ne
+   Connection conn = zoteroConnection();
+   if (!conn.empty())
    {
       // create a set of specs based on what we have in our server cache (as we always want to keep our cache up to date)
       ZoteroCollectionSpecs serverCacheSpecs;
@@ -343,9 +406,9 @@ void getCollections(const std::vector<std::string>& collections,
       // request for explicit list of collections, provide specs for matching collections from the server cache
       if (!collections.empty())
       {
-         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [type, apiKey](std::string name) {
+         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [conn](std::string name) {
             ZoteroCollectionSpec cacheSpec(name, 0);
-            ZoteroCollectionSpec cached = cachedCollectionSpec(type, apiKey, name);
+            ZoteroCollectionSpec cached = cachedCollectionSpec(conn.type, conn.cacheContext, name);
             if (!cached.empty())
                cacheSpec.version = cached.version;
             return cacheSpec;
@@ -355,12 +418,11 @@ void getCollections(const std::vector<std::string>& collections,
       // request for all collections, provide specs for all collections in the server cache
       else
       {
-         serverCacheSpecs = cachedCollectionsSpecs(type, apiKey);
+         serverCacheSpecs = cachedCollectionsSpecs(conn.type, conn.cacheContext);
       }
 
       // get collections
-      ZoteroCollectionSource source = collections::webCollections();
-      source.getCollections(apiKey, collections, serverCacheSpecs, [type, apiKey, collections, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
+      conn.source.getCollections(conn.context, collections, serverCacheSpecs, [conn, collections, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
 
          // process response -- for any collection returned w/ a version higher than that in the
          // cache, update the cache. for any collection available (from cache or web) with a version
@@ -378,7 +440,7 @@ void getCollections(const std::vector<std::string>& collections,
                if (it == serverCacheSpecs.end())
                {
                   LOG("Updating server cache for " + webCollection.name);
-                  updateCachedCollection(type, apiKey, webCollection.name, webCollection);
+                  updateCachedCollection(conn.type, conn.cacheContext, webCollection.name, webCollection);
                   LOG("Returning server cache for " + webCollection.name);
                   responseCollections.push_back(webCollection);
                }
@@ -388,7 +450,7 @@ void getCollections(const std::vector<std::string>& collections,
                else
                {
                   // see we can satisfy the request from our cache
-                  ZoteroCollection cached = responseFromServerCache(type, apiKey, webCollection.name, cacheSpecs);
+                  ZoteroCollection cached = responseFromServerCache(conn.type, conn.cacheContext, webCollection.name, cacheSpecs);
                   if (!cached.empty())
                   {
                      responseCollections.push_back(cached);
@@ -410,7 +472,7 @@ void getCollections(const std::vector<std::string>& collections,
             ZoteroCollections responseCollections;
             for (auto collection : collections)
             {
-               ZoteroCollection cached = responseFromServerCache(type, apiKey, collection, cacheSpecs);
+               ZoteroCollection cached = responseFromServerCache(conn.type, conn.cacheContext, collection, cacheSpecs);
                if (!cached.empty())
                   responseCollections.push_back(cached);
             }

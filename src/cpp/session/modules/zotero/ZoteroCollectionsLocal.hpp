@@ -1,5 +1,5 @@
 /*
- * ZoteroCollectionsWeb.hpp
+ * ZoteroCollectionsLocal.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP
-#define RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP
 
 #include "ZoteroCollections.hpp"
 
@@ -24,9 +24,7 @@ namespace modules {
 namespace zotero {
 namespace collections {
 
-void validateWebApiKey(std::string key, boost::function<void(bool)> handler);
-
-ZoteroCollectionSource webCollections();
+ZoteroCollectionSource localCollections();
 
 } // end namespace collections
 } // end namespace zotero
@@ -34,4 +32,4 @@ ZoteroCollectionSource webCollections();
 } // end namespace session
 } // end namespace rstudio
 
-#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_WEB_HPP */
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP */
