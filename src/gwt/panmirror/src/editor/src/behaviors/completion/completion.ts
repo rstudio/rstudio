@@ -13,6 +13,9 @@
  *
  */
 
+// TODO: it may be that we need to not do full re-requests from the filter 
+// when we have streamed results (as they can cause reset of the allCompletions)
+
 
 import { Plugin, PluginKey, Transaction, Selection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
@@ -24,6 +27,8 @@ import {
   completionsShareScope,
   performCompletionReplacement,
   CompletionResult,
+  Completions,
+  CompletionsStream
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -72,7 +77,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
   private version = 0;
-  private allCompletions: any[] | (() => any[]) = [];
+  private allCompletions: any[] = [];
   private completions: any[] = [];
   private horizontal = false;
   private selectedIndex = 0;
@@ -253,9 +258,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
     // capture reference to ui
     this.ui = ui;
 
-    // handle streamed completions
-    this.handleStreamedCompletions();
-
     // hide completions when we scroll or the focus changes
     this.clearCompletions = this.clearCompletions.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.clearCompletions);
@@ -284,33 +286,57 @@ class CompletionPlugin extends Plugin<CompletionState> {
           return;
         }
 
-        // save completions
-        this.setAllCompletions(completions, !!state.handler.view.horizontal, resetSelection);
+        // function to update completions
+        const updateCompletions = (updatedCompletions: any[]) => {
 
-        // display if the request still maps to the current state
-        if (this.version === requestVersion) {
-          // if there is a filter then call it and update displayed completions
-          const displayedCompletions = state.handler.filter
-            ? state.handler.filter(this.resolveAllCompletions(), view.state, state.result.token)
-            : null;
-          if (displayedCompletions) {
-            this.setDisplayedCompletions(displayedCompletions, !!state.handler.view.horizontal, resetSelection);
+          // save completions
+          this.setAllCompletions(updatedCompletions, !!state.handler?.view.horizontal, resetSelection);
+
+          // display if the request still maps to the current state
+          if (state.handler && state.result && this.version === requestVersion) {
+            // if there is a filter then call it and update displayed completions
+            const displayedCompletions = state.handler.filter
+              ? state.handler.filter(this.allCompletions, view.state, state.result.token)
+              : null;
+            if (displayedCompletions) {
+              this.setDisplayedCompletions(displayedCompletions, !!state.handler.view.horizontal, resetSelection);
+            }
+
+            this.renderCompletions(view);
           }
 
-          this.renderCompletions(view);
-        }
+        };
 
+        // if we got an array, just set it. if we got a stream then poll it for it's update
+        if (Array.isArray(completions)) {
+          updateCompletions(completions);
+        } else {
+          const completionStream = completions as CompletionsStream;
+          updateCompletions(completionStream.items);
+          const pollingInterval = setInterval(() => {
+            // if the document has been updated then invalidate
+            if (this.version !== requestVersion) {
+              clearInterval(pollingInterval);
+            } else {
+              // otherwise check the stream
+              const result = completionStream.stream();
+              if (result) {
+                clearInterval(pollingInterval);
+                updateCompletions(result);
+              }
+            }
+          }, 300);
+        }
       };
 
       // first see if we can do this exclusively via filter
-
       if (state.prevToken && state.handler.filter) {
         this.completionQueue.enqueue(async () => {
 
           // display if the request still maps to the current state
           if (state.handler && state.result && this.version === requestVersion) {
             const filteredCompletions = state.handler.filter!(
-              this.resolveAllCompletions(),
+              this.allCompletions,
               view.state,
               state.result.token,
               state.prevToken,
@@ -321,7 +347,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
               this.setDisplayedCompletions(filteredCompletions, !!state.handler.view.horizontal, resetSelection);
               this.renderCompletions(view);
 
-              // couldn't use the filter, do a full request for all completions
+              // couldn't use the filter, do a full request for all completions (so long as we aren't
+              // already waiting on a strea,)
             } else {
               await requestAllCompletions();
             }
@@ -439,10 +466,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setAllCompletions(completions: any[] | (() => any[]), horizontal: boolean, resetSelection: boolean) {
+  private setAllCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.allCompletions = completions;
-    const displayed = typeof completions === 'function' ? completions() : completions;
-    this.setDisplayedCompletions(displayed, horizontal, resetSelection);
+    this.setDisplayedCompletions(completions, horizontal, resetSelection);
   }
 
   private setDisplayedCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
@@ -463,26 +489,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
       return kCompletionDefaultMaxVisible;
     }
   }
-
-  private resolveAllCompletions(): any[] {
-    if (typeof this.allCompletions === 'function') {
-      return this.allCompletions();
-    } else {
-      return this.allCompletions;
-    }
-  }
-
-  private handleStreamedCompletions() {
-    // if the completion handler returned a function then call 
-    // that function back every 300ms to see if there are 
-    // streaming results
-    setInterval(() => {
-      if (this.view && typeof this.allCompletions === 'function') {
-        this.updateCompletions(this.view, false);
-      }
-    }, 300);
-  }
 }
+
+
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

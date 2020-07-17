@@ -144,16 +144,17 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           // return them and kick off a refresh (new results will stream in)
           if (manager.hasSources()) {
 
-            // entries we'll return both now and later/streamed after load resets them
-            let entries = managerEntries();
-
             // kick off another load which we'll stream in by setting entries
+            let loadedEntries: BibliographyEntry[] | null = null;
             manager.load(ui, context.doc).then(() => {
-              entries = managerEntries();
+              loadedEntries = managerEntries();
             });
 
-            // return function (will be called back for streaming)
-            return () => entries;
+            // return stream
+            return {
+              items: managerEntries(),
+              stream: () => loadedEntries
+            };
 
             // no previous load, just perform the load and return the entries
           } else {

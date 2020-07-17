@@ -30,11 +30,18 @@ export interface CompletionContext {
   isPaste: boolean;
 }
 
+export interface CompletionsStream<T = any> {
+  items: T[];
+  stream: () => T[] | null;
+}
+
+export type Completions<T = any> = T[] | CompletionsStream<T>;
+
 export interface CompletionResult<T = any> {
   pos: number;
   offset?: number;
   token: string;
-  completions: (state: EditorState, context: CompletionContext) => Promise<T[] | (() => T[])>;
+  completions: (state: EditorState, context: CompletionContext) => Promise<Completions>;
   decorations?: DecorationSet;
 }
 
