@@ -23,10 +23,15 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.TextResource;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerNative;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerResources;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -80,10 +85,23 @@ public class VirtualConsole
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
+//      Debug.log("!!! virtual console injected loader !!!");
+//      Debug.log("Parent is: " + (parent == null ? "null" : "not null"));
+
       prefs_ = prefs;
       parent_ = parent;
+
+      if (!VirtualConsole.virtualScrollerInitialized_)
+      {
+         virtualScrollerLoader_.addCallback(() -> {
+            VirtualScrollerNative vs = new VirtualScrollerNative();
+            vs.setup(parent);
+            virtualScrollerNative_ = vs;
+            VirtualConsole.virtualScrollerInitialized_ = true;
+         });
+      }
    }
-    
+
    public void clear()
    {
       formfeed();
@@ -203,19 +221,34 @@ public class VirtualConsole
     */
    private void appendText(String text, String clazz, boolean forceNewRange)
    {
-      Entry <Integer, ClassRange> last = class_.lastEntry();
-      ClassRange range = last.getValue();
-      if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
+      if (virtualScrollerInitialized_)
       {
-         // just append to the existing output stream
-         range.appendRight(text, 0);
-      }
-      else
-      {
-         // create a new output range with this class
-         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
-         parent_.appendChild(newRange.element);
-         class_.put(cursor_, newRange);
+         // always just append elements for now
+         // later lets allow the virtualconsole to still have
+         // a reference to the dom element that we pass in to do
+         // micromanagement and the VirtualScroller only controls
+         // what is actually shown in the DOM
+         Element ele = Document.get().createSpanElement();
+
+         if (clazz != null && clazz.length() > 0)
+            ele.addClassName(clazz);
+
+         ele.setInnerText(text);
+         virtualScrollerNative_.append(ele);
+
+//         Entry<Integer, ClassRange> last = class_.lastEntry();
+//         ClassRange range = last.getValue();
+//         if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
+//         {
+//            // just append to the existing output stream
+//            range.appendRight(text, 0);
+//         } else
+//         {
+//            // create a new output range with this class
+//            final ClassRange newRange = new ClassRange(cursor_, clazz, text);
+//            parent_.appendChild(newRange.element);
+//            class_.put(cursor_, newRange);
+//         }
       }
    }
 
@@ -226,6 +259,8 @@ public class VirtualConsole
     */
    private void insertText(ClassRange range)
    {
+      Debug.log("insertText: " + range.text());
+
       int start = range.start;
       int end = start + range.length;
       
@@ -687,6 +722,19 @@ public class VirtualConsole
       public int start;
       public final SpanElement element;
    }
+
+   interface Resources extends ClientBundle
+   {
+      @Source("./virtualscroller/virtualscroller.js")
+      TextResource virtualScrollerCode();
+   }
+
+   private static final Resources RES = GWT.create(Resources.class);
+
+   private static final ExternalJavaScriptLoader virtualScrollerLoader_ =
+      new ExternalJavaScriptLoader(VirtualScrollerResources.INSTANCE.virtualscrollerjs().getSafeUri().asString());
+   private static VirtualScrollerNative virtualScrollerNative_;
+   private static boolean virtualScrollerInitialized_ = false;
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
    
