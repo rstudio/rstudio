@@ -68,6 +68,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       }
     } else {
       // Zotero is disabled, clear any already loaded bibliography
+      if (this.collections.length > 0) {
+        hasUpdates = true;
+      }
       this.collections = [];
     }
     return hasUpdates;
