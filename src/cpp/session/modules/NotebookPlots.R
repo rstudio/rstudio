@@ -21,22 +21,6 @@
                                                          pixelRatio,
                                                          extraArgs)
 {
-   require(grDevices, quietly = TRUE)
-   
-   # if it looks like we're using AGG, delegate to that
-   if (grepl("type = \"ragg\"", extraArgs))
-   {
-      device <- ragg::agg_png(
-         filename = filename,
-         width    = width * pixelRatio,
-         height   = height * pixelRatio,
-         units    = units,
-         res      = 96 * pixelRatio
-      )
-      
-      return(device)
-   }
-   
    # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
@@ -64,7 +48,23 @@
          args <- c(args, extraList)
    }
    
+   # if it looks like we're using AGG, delegate to that
+   if (identical(args$type, "ragg"))
+   {
+      device <- ragg::agg_png(
+         filename = filename,
+         width    = width * pixelRatio,
+         height   = height * pixelRatio,
+         units    = units,
+         res      = 96 * pixelRatio
+      )
+      
+      return(device)
+   }
+   
+   
    # create the device
+   require(grDevices, quietly = TRUE)
    do.call(what = png, args = args)
 })
 
