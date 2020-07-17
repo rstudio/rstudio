@@ -24,61 +24,94 @@
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(
-   {
-      is.scalarOrVector <- function (x) {
-         if (is.null(attributes(x)))
-         {
-            !is.na(c(NULL=TRUE,
-                     logical=TRUE,
-                     double=TRUE,
-                     integer=TRUE,
-                     complex=TRUE,
-                     character=TRUE)[typeof(x)])
-         }
-         else
-         {
-            FALSE
-         }
-      }
+      .rs.valueAsStringImpl(val),
+      error = function(e) "NO_VALUE"
+   )
+})
 
-      if (is.scalarOrVector(val))
+.rs.addFunction("valueAsStringImpl", function(val)
+{
+   if (is.null(val))
+   {
+      "NULL"
+   }
+   else if (is.character(val) && !is.object(val))
+   {
+      # for plain character variables, we 'mock' the behavior of str()
+      # while avoiding the potential for re-encoding (as this could mangle
+      # UTF-8 characters on Windows)
+      n <- length(val)
+      if (n == 0)
       {
-         if (length(val) == 0)
-            return (paste(.rs.getSingleClass(val), " (empty)"))
-         if (length(val) == 1)
-         {
-            quotedVal <- deparse(val)
-            if (nchar(quotedVal) < 1024)
-                return (quotedVal)
-            else
-                return (paste(substr(quotedVal, 1, 1024), " ..."))
-         }
-         else if (length(val) > 1)
-            return (.rs.valueFromStr(val))
-         else
-            return ("NO_VALUE")
+         "character (empty)"
       }
-      else if (is(val, "python.builtin.object")) {
-         return (.rs.valueFromStr(val))
-      }
-      else if (.rs.isFunction(val))
-         return (.rs.getSignature(val))
-      else if (is(val, "Date") || is(val, "POSIXct") || is(val, "POSIXlt")) {
-         if (length(val) == 1)
-           return (format(val))
-         else
-           return (.rs.valueFromStr(val))
+      else if (n == 1)
+      {
+         encodeString(val, quote = "\"", na.encode = FALSE)
       }
       else
-         return ("NO_VALUE")
-   },
-   error = function(e) 
-   { 
-      # Don't print errors--they'll appear in the R console. Instead, let the
-      # client deal with errors by handling the special value NO_VALUE.
-   })
-
-   return ("NO_VALUE")
+      {
+         encoded <- encodeString(
+            head(val, n = 128L),
+            quote = "\"",
+            na.encode = FALSE
+         )
+         
+         fmt <- "chr [1:%i] %s"
+         txt <- sprintf(fmt, n, paste(encoded, collapse = " "))
+         .rs.truncate(txt)
+      }
+   }
+   else if (is.raw(val))
+   {
+      if (length(val) == 0)
+      {
+         "raw (empty)"
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else if (is.atomic(val) && is.null(attributes(val)))
+   {
+      n <- length(val)
+      if (n == 0)
+      {
+         paste(.rs.getSingleClass(val), " (empty)")
+      }
+      else if (n == 1)
+      {
+         .rs.truncate(.rs.deparse(val), 1024L)
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else if (inherits(val, "python.builtin.object"))
+   {
+      .rs.valueFromStr(val)
+   }
+   else if (.rs.isFunction(val))
+   {
+      .rs.getSignature(val)
+   }
+   else if (inherits(val, c("Date", "POSIXct", "POSIXlt")))
+   {
+      if (length(val) == 1)
+      {
+         format(val, usetz = TRUE)
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else
+   {
+      "NO_VALUE"
+   }
 })
 
 .rs.addFunction("valueContents", function(val)
