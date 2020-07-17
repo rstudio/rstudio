@@ -155,6 +155,13 @@ public class SVNPane extends WorkbenchPane implements Display
    @Override
    public void onSelected()
    {
+      setFocus();
+   }
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
    }
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;

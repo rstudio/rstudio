@@ -120,7 +120,13 @@ public class MarkersOutputPane extends WorkbenchPane
       markerList_.focus();
       markerList_.ensureSelection();
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+     // !!! TODO
+   }
+
    private SourceMarkerList markerList_;
    private MarkerSetsToolbarButton markerSetsToolbarButton_;
    private ToolbarButton clearButton_;

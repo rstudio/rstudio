@@ -195,8 +195,15 @@ public class HelpPane extends WorkbenchPane
          return;
       
       windowEl.setScrollPosition(scrollPos_);
+      setFocus();
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
+   }
+
    @Override
    public void onResize()
    {

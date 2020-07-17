@@ -270,7 +270,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       publishButton_.setShowCaption(width > 500);
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
+   }
+
    private native static String getOrigin() /*-{
      return $wnd.location.origin;
    }-*/;

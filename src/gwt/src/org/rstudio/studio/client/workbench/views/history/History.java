@@ -112,7 +112,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
       SearchBoxDisplay getSearchBox();
       Mode getMode();
       void scrollToBottom();
-      void focusSearch();
+      void setFocus();
 
       void dismissSearchResults();
       void showSearchResults(String query,
@@ -412,7 +412,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    public void onSelected()
    {
       super.onSelected();
-      view_.focusSearch();
+      view_.setFocus();
    }
 
    private String getSelectedCommands()

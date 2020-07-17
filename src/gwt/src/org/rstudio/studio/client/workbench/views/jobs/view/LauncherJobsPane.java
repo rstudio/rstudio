@@ -116,4 +116,10 @@ public class LauncherJobsPane extends WorkbenchPane
    // injected
    private final UserPrefs uiPrefs_;
    private final LauncherJobsPaneWidgets widgets_;
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TODO
+   }
 }

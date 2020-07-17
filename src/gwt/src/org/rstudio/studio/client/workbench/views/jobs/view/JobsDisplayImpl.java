@@ -217,6 +217,11 @@ public class JobsDisplayImpl implements JobsDisplay
    {
    }
    
+   @Override
+   public void setFocus()
+   {
+   }
+
    // private state
    private final WorkbenchPane pane_;
    private final JobsPaneOperations widgets_;

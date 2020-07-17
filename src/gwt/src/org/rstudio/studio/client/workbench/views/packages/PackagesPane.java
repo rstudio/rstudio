@@ -327,6 +327,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // selected.
       if (packagesTable_ != null)
          packagesTable_.onResize();
+      setFocus();
+   }
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
    }
    
    private void createPackagesTable()

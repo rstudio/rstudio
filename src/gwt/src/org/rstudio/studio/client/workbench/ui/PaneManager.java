@@ -568,99 +568,44 @@ public class PaneManager
    @Handler
    public void onFocusNextPane()
    {
-
+      // get the name of the currently focused pane
       LogicalWindow currentFocus = getActiveLogicalWindow();
       String nextFocusName = null;
       if (currentFocus != null)
       {
-         Debug.logToConsole("currentFocus: " + currentFocus.getNormal().getName());
          for (int i = 0; i < panes_.size(); i++)
          {
             if (currentFocus.equals(panes_.get(i)))
             {
-               Debug.logToConsole("Found focus: " + panes_.get(i).getNormal().getName());
                if ((i + 1) < panes_.size())
                   nextFocusName = panes_.get(i + 1).getNormal().getName();
             }
          }
       }
-      else
-         Debug.logToConsole("currentFocus is null");
+
+      // if null, default to the top left pane
       if (StringUtil.isNullOrEmpty(nextFocusName))
-      {
          nextFocusName = panes_.get(0).getNormal().getName();
-      }
-      Debug.logToConsole("next focus: " + nextFocusName);
+
+      // activate next pane
       if (StringUtil.equals("Source", nextFocusName))
-         sourceColumnManager_.setActive(SourceColumnManager.MAIN_SOURCE_NAME);
+         sourceColumnManager_.activateColumn(SourceColumnManager.MAIN_SOURCE_NAME, null);
       else if (StringUtil.equals("Console", nextFocusName))
          commands_.activateConsole().execute();
       else if (StringUtil.equals("TabSet1", nextFocusName) ||
                StringUtil.equals("TabSet2", nextFocusName))
       {
-         // Ensure that the window is activated
-         LogicalWindow window = panesByName_.get(nextFocusName);
-         if (window.getState().equals(WindowState.MINIMIZE))
-         {
-            WindowStateChangeEvent event =
-               new WindowStateChangeEvent(WindowState.NORMAL);
-            window.onWindowStateChange(event);
-         }
-         window.focus();
+         WorkbenchTab selected;
          if (StringUtil.equals("TabSet1", nextFocusName))
-         {
-            tabSet1TabPanel_.selectTab(tabSet1TabPanel_.getSelectedIndex());
-            //tabSet1TabPanel_.getTab(tabSet1TabPanel_.getSelectedIndex()).asWidget().getElement
-            // ().setFocus(true);
-         }
-      }
-      else
-      {
-         if (sourceColumnManager_.getByName(nextFocusName) == null)
-            Debug.logToConsole("Error unknown next focus pane: " + nextFocusName);
-         sourceColumnManager_.setActive(nextFocusName);
-      }
-      /*
-      String currentFocus = getActiveLogicalWindow().getNormal().getName();
-      if (StringUtil.isNullOrEmpty(currentFocus) ||
-          panesByName_.get(currentFocus) == null)
-      {
-         if (!StringUtil.isNullOrEmpty(currentFocus))
-            Debug.logToConsole("ERROR: Could not locate window in panesByName_ " + currentFocus);
+            selected = tabSet1TabPanel_.getSelectedTab();
          else
-            Debug.logToConsole("currentFocus is null");
+            selected = tabSet2TabPanel_.getSelectedTab();
 
-
-         Debug.logToConsole("Focus: " + panes_.get(0).getNormal().getName());
-         panesByName_.get(panes_.get(0).getNormal().getName()).focus();
+         activateTab(wbTabToTab_.get(selected));
+         selected.setFocus();
       }
-      else
-      {
-         Debug.logToConsole("iterating through panes_");
-         for (int i = 0; i < panes_.size(); i ++)
-         {
-            Debug.logToConsole("iterate: " + panes_.get(i).getNormal().getName());
-            if (StringUtil.equals(currentFocus, panes_.get(i).getNormal().getName()))
-            {
-               Debug.logToConsole("found current focus");
-               String nextFocus;
-               if ((i + 1) < panes_.size())
-               {
-                  nextFocus = panes_.get(i + 1).getNormal().getName();
-                  Debug.logToConsole("focus on " + nextFocus);
-               }
-               else
-               {
-                  panes_.get(0).focus();
-                  nextFocus = panes_.get(0).getNormal().getName();
-                  Debug.logToConsole("focus on " + nextFocus);
-               }
-               panesByName_.get(nextFocus).focus();
-               return;
-            }
-         }
-      }
-       */
+      else // unknown names are source columns
+         sourceColumnManager_.activateColumn(nextFocusName, null);
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)

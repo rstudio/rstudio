@@ -217,7 +217,7 @@ public class EnvironmentPane extends WorkbenchPane
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
-      SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Search environment", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -228,8 +228,8 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
       
-      ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
-      searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
+      ElementIds.assignElementId(searchWidget_, ElementIds.SW_ENVIRONMENT);
+      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
@@ -238,10 +238,10 @@ public class EnvironmentPane extends WorkbenchPane
       });
 
       if (!RStudioThemes.isFlat(prefs_)) {
-         searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
+         searchWidget_.getElement().getStyle().setMarginTop(1, Unit.PX);
       }
 
-      toolbar.addRightWidget(searchWidget);
+      toolbar.addRightWidget(searchWidget_);
 
       secondaryToolbar_ = toolbar;
    }
@@ -408,6 +408,12 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      searchWidget_.focus();
+   }
+
+   @Override
    public void setBrowserRange(DebugFilePosition range)
    {
       objects_.updateLineNumber(range.getLine());
@@ -488,7 +494,7 @@ public class EnvironmentPane extends WorkbenchPane
       prefs_.showInternalFunctions().setProjectValue(show);
    }
 
-   public void fillObjectContents(final RObject object, 
+   public void fillObjectContents(final RObject object,
                                   final Operation onCompleted)
    {
       server_.getObjectContents(object.getName(), 
@@ -864,6 +870,7 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
+   private SearchWidget searchWidget_;
    
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;

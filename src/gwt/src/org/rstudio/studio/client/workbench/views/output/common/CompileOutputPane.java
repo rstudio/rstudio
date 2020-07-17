@@ -186,4 +186,10 @@ public class CompileOutputPane extends WorkbenchPane
    private CompilePanel compilePanel_;
    private String logTitle_;
    private boolean hasLogs_ = true;
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TODO
+   }
 }

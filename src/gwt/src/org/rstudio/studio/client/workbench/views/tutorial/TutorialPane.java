@@ -527,7 +527,13 @@ public class TutorialPane
    {
       globalDisplay_.bringWindowToFront(name);
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+     // !!! TO DO
+   }
+
    // Resources ---- 
    public interface Resources extends ClientBundle
    {

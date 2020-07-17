@@ -102,4 +102,10 @@ public class DataOutputPane extends WorkbenchPane
    
    GridViewerFrame gridViewer_;
    Label dataOutputFile_;
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TODO
+   }
 }

@@ -84,6 +84,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       shimmed_.onSelected();
    }
 
+   public final void setFocus()
+   {
+      shimmed_.setFocus();
+   }
+
    public boolean isSuppressed()
    {
       return false;

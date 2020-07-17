@@ -114,7 +114,13 @@ public class FilesPane extends WorkbenchPane implements Files.Display
             observer_.onColumnSortOrderChanaged(sortOrder);
       }
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
+   }
+
    @Override
    public void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder)
    {

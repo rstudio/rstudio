@@ -203,6 +203,12 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       }
    }
 
+   @Override
+   public void setFocus()
+   {
+      // !!! TO DO
+   }
+
    public HandlerRegistration addResizeHandler(ResizeHandler resizeHandler)
    {
       return addHandler(resizeHandler, ResizeEvent.getType());

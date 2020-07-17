@@ -156,6 +156,12 @@ public class BuildPane extends WorkbenchPane
       return toolbar;
    }
 
+   @Override
+   public void setFocus()
+   {
+     // !!! TO DO
+   }
+
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override

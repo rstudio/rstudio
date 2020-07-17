@@ -101,4 +101,10 @@ public class SourceCppOutputPane extends WorkbenchPane
  
    private ToolbarFileLabel fileLabel_;
    private CompilePanel compilePanel_;
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TODO
+   }
 }

@@ -295,7 +295,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       refreshButton_.setVisible(true);
       progressButton_.setVisible(false);
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      // !!! TODO
+   }
    
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;

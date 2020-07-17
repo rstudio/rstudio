@@ -448,7 +448,13 @@ public class ConnectionsPane extends WorkbenchPane
       super.onBeforeSelected();
       connectionsDataGrid_.redraw();
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      newConnectionButton_.setFocus(true);
+   }
+
    private MenuItem connectMenuItem(ImageResource icon, 
          String text, 
          final String connectVia)
@@ -474,7 +480,8 @@ public class ConnectionsPane extends WorkbenchPane
    {
       toolbar_.removeAllWidgets();
       
-      toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
+      newConnectionButton_ =
+         toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
       
       toolbar_.addLeftSeparator();
         
@@ -578,6 +585,7 @@ public class ConnectionsPane extends WorkbenchPane
    
    
    private Toolbar toolbar_;
+   private ToolbarButton newConnectionButton_;
    private final SlidingLayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
    private final SingleSelectionModel<Connection> selectionModel_;

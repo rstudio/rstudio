@@ -126,6 +126,7 @@ public class EnvironmentPresenter extends BasePresenter
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
+      void setFocus();
       void setBrowserRange(DebugFilePosition filePosition);
       List<String> getSelectedObjects();
    }
@@ -627,6 +628,7 @@ public class EnvironmentPresenter extends BasePresenter
       if (initialized_)
       {
          view_.resize();
+         view_.setFocus();
       }
    }
 

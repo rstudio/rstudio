@@ -393,8 +393,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       openingForSourceNavigation_ = value;
    }
 
-   public void activateColumn(final Command afterActivation)
+   public void activateColumn(String name, final Command afterActivation)
    {
+      if (!StringUtil.isNullOrEmpty(name))
+         setActive(getByName(name));
       if (!hasActiveEditor())
       {
          if (activeColumn_ == null)
