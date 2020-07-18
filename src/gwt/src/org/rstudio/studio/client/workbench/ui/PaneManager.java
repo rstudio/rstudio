@@ -633,25 +633,29 @@ public class PaneManager
             nextFocusName = panes_.get(0).getNormal().getName();
       }
 
+
       // activate next pane
-      if (StringUtil.equals("Source", nextFocusName))
-         sourceColumnManager_.activateColumn(SourceColumnManager.MAIN_SOURCE_NAME, null);
-      else if (StringUtil.equals("Console", nextFocusName))
-         commands_.activateConsole().execute();
-      else if (StringUtil.equals("TabSet1", nextFocusName) ||
-               StringUtil.equals("TabSet2", nextFocusName))
+      if (nextFocusName.contains(SourceColumnManager.COLUMN_PREFIX))
+         sourceColumnManager_.activateColumn(nextFocusName, null);
+      else
       {
          WorkbenchTab selected;
-         if (StringUtil.equals("TabSet1", nextFocusName))
-            selected = tabSet1TabPanel_.getSelectedTab();
+         if (StringUtil.equals("Console", nextFocusName))
+            selected = consoleTabPanel_.getSelectedTab();
          else
-            selected = tabSet2TabPanel_.getSelectedTab();
-
-         activateTab(wbTabToTab_.get(selected));
+         {
+            if (StringUtil.equals("TabSet1", nextFocusName))
+               selected = tabSet1TabPanel_.getSelectedTab();
+            else
+               selected = tabSet2TabPanel_.getSelectedTab();
+            activateTab(wbTabToTab_.get(selected));
+         }
+         if (StringUtil.equals(selected.getTitle(), "Console"))
+            commands_.activateConsole().execute();
+         else if (selected instanceof DelayLoadWorkbenchTab)
+            ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          selected.setFocus();
       }
-      else // unknown names are source columns
-         sourceColumnManager_.activateColumn(nextFocusName, null);
    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)

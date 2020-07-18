@@ -96,7 +96,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
    public void installMainToolbar()
    {
       toolbar_.removeAllWidgets();
-      toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      toolbar_.addLeftWidget(startButton_ = commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
       progress_ = null;
@@ -220,14 +220,20 @@ public class JobsPaneWidgets implements JobsPaneOperations
    {
       return panel_;
    }
-   
+
+   public void focus()
+   {
+      startButton_.setFocus(true);
+   }
+
    // widgets
    private JobOutputPanel output_;
    private SlidingLayoutPanel panel_;
    private final Toolbar toolbar_;
    private final ToolbarButton allJobs_;
    private JobProgress progress_;
-   
+   private ToolbarButton startButton_;
+
    // internal state
    private String current_;
    

@@ -189,6 +189,7 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void setFocus()
    {
+      focus();
    }
 
    @Override

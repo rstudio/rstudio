@@ -92,7 +92,13 @@ public class LauncherJobsPane extends WorkbenchPane
    {
       baseImpl_.syncElapsedTime(timestamp);
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      baseImpl_.setFocus();
+   }
+
    @Override
    public void bringToFront()
    {
@@ -116,10 +122,4 @@ public class LauncherJobsPane extends WorkbenchPane
    // injected
    private final UserPrefs uiPrefs_;
    private final LauncherJobsPaneWidgets widgets_;
-
-   @Override
-   public void setFocus()
-   {
-      // !!! TODO
-   }
 }
