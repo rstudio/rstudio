@@ -24,6 +24,8 @@
 
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 
@@ -37,26 +39,92 @@ namespace collections {
 
 namespace {
 
+SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pProtect)
+{
+   std::vector<std::string> names;
+   names.push_back(kName);
+   names.push_back(kVersion);
+   SEXP cacheSpecSEXP = r::sexp::createList(names, pProtect);
+   r::sexp::setNamedListElement(cacheSpecSEXP, kName, cacheSpec.name);
+   r::sexp::setNamedListElement(cacheSpecSEXP, kVersion, cacheSpec.version);
+   return cacheSpecSEXP;
+}
+
 void getLocalLibrary(std::string key,
-                     ZoteroCollectionSpec, // no caching for now
+                     ZoteroCollectionSpec cacheSpec,
                      ZoteroCollectionsHandler handler)
 {
-   std::cerr << "key: " << key << std::endl;
-
-   ZoteroCollection myLibrary(ZoteroCollectionSpec(kMyLibrary, 0));
-   handler(Success(), std::vector<ZoteroCollection>{ myLibrary });
-
+   r::sexp::Protect protect;
+   std::string libraryJsonStr;
+   Error error = r::exec::RFunction(".rs.zoteroGetLibrary", key,
+                                    createCacheSpecSEXP(cacheSpec, &protect)).call(&libraryJsonStr);
+   if (error)
+   {
+      handler(error, std::vector<ZoteroCollection>());
+   }
+   else
+   {
+      json::Object libraryJson;
+      error = libraryJson.parse(libraryJsonStr);
+      if (error)
+      {
+         handler(error, std::vector<ZoteroCollection>());
+      }
+      else
+      {
+         ZoteroCollection collection;
+         collection.name = libraryJson[kName].getString();
+         collection.version = libraryJson[kVersion].getInt();
+         collection.items = libraryJson[kItems].getArray();
+         handler(Success(), std::vector<ZoteroCollection>{ collection });
+      }
+   }
 }
 
 
 void getLocalCollections(std::string key,
                          std::vector<std::string> collections,
-                         ZoteroCollectionSpecs, // no caching for now
+                         ZoteroCollectionSpecs cacheSpecs,
                          ZoteroCollectionsHandler handler)
 {
-    std::cerr << "key: " <<  key << std::endl;
+    json::Array cacheSpecsJson;
+    std::transform(cacheSpecs.begin(), cacheSpecs.end(), std::back_inserter(cacheSpecsJson), [](ZoteroCollectionSpec spec) {
+       json::Object specJson;
+       specJson[kName] = spec.name;
+       specJson[kVersion] = spec.version;
+       return specJson;
+    });
 
-    handler(Success(), std::vector<ZoteroCollection>());
+    r::sexp::Protect protect;
+    std::string collectionJsonStr;
+    Error error = r::exec::RFunction(".rs.zoteroGetCollections", key, collections, cacheSpecsJson)
+                                     .call(&collectionJsonStr);
+    if (error)
+    {
+       handler(error, std::vector<ZoteroCollection>());
+    }
+    else
+    {
+       json::Array collectionsJson;
+       error = collectionsJson.parse(collectionJsonStr);
+       if (error)
+       {
+          handler(error, std::vector<ZoteroCollection>());
+       }
+       else
+       {
+           ZoteroCollections collections;
+           std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](json::Value json) {
+              ZoteroCollection collection;
+              json::Object collectionJson = json.getObject();
+              collection.name = collectionJson[kName].getString();
+              collection.version = collectionJson[kVersion].getInt();
+              collection.items = collectionJson[kItems].getArray();
+              return collection;
+           });
+           handler(Success(), collections);
+       }
+    }
 }
 
 

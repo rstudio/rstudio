@@ -227,10 +227,12 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
 Error initialize()
 {
+   using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
-       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
-       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
+       (boost::bind(sourceModuleRFile, "SessionZotero.R"))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
+       (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
    ;
    return initBlock.execute();
 }
