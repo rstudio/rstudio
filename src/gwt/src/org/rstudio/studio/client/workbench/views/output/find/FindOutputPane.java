@@ -295,7 +295,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      // !!! TODO
+      table_.focus();
    }
 
    @Override
