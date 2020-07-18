@@ -634,12 +634,6 @@ public class Files
       renameFile(FileSystemItem.createFile(event.getPath()));
    }
 
-   @Override
-   public void setFocus()
-   {
-      view_.setFocus();
-   }
-
    private void navigateToDirectory(FileSystemItem directoryEntry)
    {
       hasNavigatedToDirectory_ = true;
