@@ -23,6 +23,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/Database.hpp>
 
 #include <core/system/Process.hpp>
 
@@ -52,6 +53,37 @@ SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pPro
    r::sexp::setNamedListElement(cacheSpecSEXP, kName, cacheSpec.name);
    r::sexp::setNamedListElement(cacheSpecSEXP, kVersion, cacheSpec.version);
    return cacheSpecSEXP;
+}
+
+void testZoteroSQLite(std::string dataDir)
+{
+   // connect to sqlite
+   std::string db = dataDir + "/zotero.sqlite";
+   database::SqliteConnectionOptions options = { db };
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = database::connect(options, &pConnection);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   database::Rowset rows;
+   database::Query query = pConnection->query("select collectionName, version from collections");
+   error = pConnection->execute(query, rows);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      database::Row& row = *it;
+      std::string name = row.get<std::string>("collectionName");
+      int version = row.get<int>("version");
+      std::cerr << name << " - " << version << std::endl;
+   }
 }
 
 void getLocalLibrary(std::string key,
