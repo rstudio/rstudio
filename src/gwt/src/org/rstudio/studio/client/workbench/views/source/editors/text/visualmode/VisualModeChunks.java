@@ -15,17 +15,20 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFontMetrics;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.dom.client.DivElement;
@@ -36,10 +39,24 @@ import jsinterop.base.Js;
 
 public class VisualModeChunks
 {
-   public VisualModeChunks(DocUpdateSentinel sentinel, CompletionContext rCompletionContext)
+   public VisualModeChunks(DocUpdateSentinel sentinel, TextEditingTarget target)
    {
-      rContext_ = rCompletionContext;
+      target_ = target;
       sentinel_ = sentinel;
+      editors_ = new ArrayList<PanmirrorUIChunkEditor>();
+      
+      // Create dummy element for font sizing (ensure hidden from a11y tree)
+      fontMeasurer_ = Document.get().createDivElement();
+      fontMeasurer_.addClassName("ace_editor");
+      fontMeasurer_.setId("font_measure_" + sentinel.getId());
+      Document.get().getBody().appendChild(fontMeasurer_);
+      A11y.setARIAHidden(fontMeasurer_);
+      
+      // Create a single font metrics provider to supply font sizing information
+      // to all of the UI chunks the factory below will create (otherwise each
+      // individual editor spends a lot of time computing these values)
+      fontMetrics_ = AceEditorNative.createFontMetrics(fontMeasurer_);
+      fontMetrics_.checkForSizeChanges();
    }
 
    public PanmirrorUIChunks uiChunks()
@@ -60,12 +77,13 @@ public class VisualModeChunks
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
-         final AceEditor editor = new AceEditor();
+         final AceEditor editor = new AceEditor(fontMetrics_);
          final AceEditorNative chunkEditor = editor.getWidget().getEditor();
+         
          chunk.editor = Js.uncheckedCast(chunkEditor);
 
          // Forward the R completion context from the parent editing session
-         editor.setRCompletionContext(rContext_);
+         editor.setRCompletionContext(target_.getRCompletionContext());
 
          // Provide the editor's container element; in the future this will be a
          // host element which hosts chunk output
@@ -106,9 +124,20 @@ public class VisualModeChunks
          // aren't attached to a dead editor instance
          chunk.destroy = () ->
          {
+            // Clean up all registered handlers
             for (HandlerRegistration reg: releaseOnDismiss)
             {
                reg.removeHandler();
+            }
+            
+            // Remove from active set of editors
+            editors_.remove(chunk);
+            
+            // When the last editor is removed, clean up the font metrics system
+            if (editors_.size() == 0)
+            {
+               Debug.devlog("clean up element: " + fontMeasurer_.getId());
+               fontMeasurer_.removeFromParent();
             }
          };
          
@@ -123,6 +152,8 @@ public class VisualModeChunks
 
          // Turn off line numbers as they're not helpful in chunks
          chunkEditor.getRenderer().setShowGutter(false);
+         
+         editors_.add(chunk);
          
          return chunk;
       };
@@ -185,7 +216,10 @@ public class VisualModeChunks
          break;
       }
    }
-   
-   private final CompletionContext rContext_;
+
+   private final List<PanmirrorUIChunkEditor> editors_;
+   private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;
+   private final AceFontMetrics fontMetrics_;
+   private final DivElement fontMeasurer_;
 }

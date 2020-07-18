@@ -33,6 +33,7 @@ var UndoManager = require("ace/undomanager").UndoManager;
 var Utils = require("mode/utils");
 var event = require("ace/lib/event");
 var oop = require("ace/lib/oop");
+var FontMetrics = require("ace/layer/font_metrics").FontMetrics;
 
 require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 
@@ -253,33 +254,106 @@ oop.inherits(RStudioUndoManager, UndoManager);
 }).call(RStudioUndoManager.prototype);
 
 
+// RStudioFontMetrics ----
+
+// see https://github.com/ajaxorg/ace/issues/2153
+
+var RStudioFontMetrics = function(parentEl) {
+    FontMetrics.call(this, parentEl);
+};
+oop.inherits(RStudioFontMetrics, FontMetrics);
+
+(function() {
+
+   this.checkForSizeChanges = function(size) {
+      // compute size if we weren't given the size
+      if (typeof(size) === "undefined") {
+         size = this.$measureSizes();
+      }
+
+      // don't attempt to recompute when container is hidden
+      if (size && (size.height === 0 || size.width === 0)) {
+         return;
+      }
+
+      // update cached size and perform check for size
+      this.$cachedSize = size;
+      FontMetrics.prototype.checkForSizeChanges.call(this, size);
+   }
+
+}).call(RStudioFontMetrics.prototype);
 
 // RStudioRenderer ----
 
-var RStudioRenderer = function(container, theme) {
+var RStudioRenderer = function(container, theme, fontMetrics) {
    Renderer.call(this, container, theme);
+
+   // use caller-supplied font metrics when specified
+   if (fontMetrics) {
+      var self = this;
+
+      // destroy original font metrics object (so we don't have a dangling observer)
+      if (self.$fontMetrics) {
+         self.$fontMetrics.destroy();
+      }
+
+      // replace with caller-supplied object
+      self.$fontMetrics = fontMetrics;
+      self.$textLayer.$setFontMetrics(fontMetrics);
+
+      // typically the font metrics change is what triggers a redraw when the
+      // size becomes nonzero; without font the font metrics system, we need
+      // another way to trigger that redraw, so we implement a direct resize
+      // observer here.
+      self.$cachedHeight = 0;
+      self.$resizeObserver = new window.ResizeObserver(function(e) {
+         if (container.clientHeight > 0 && 
+             container.clientHeight !== self.$cachedHeight) {
+            // force a redraw
+            self.onResize(true);
+
+            // save width so that we don't repeatedly redraw when the size
+            // hasn't changed
+            self.$cachedHeight = container.clientHeight;
+         }
+      });
+
+      // begin watching the container object for resizes
+      self.$resizeObserver.observe(container);
+   }
 };
 oop.inherits(RStudioRenderer, Renderer);
 
 (function() {
 
    this.setTheme = function(theme) {
-
       if (theme)
          Renderer.prototype.setTheme.call(this, theme);
+   }
 
+   // wrap the original VirtualRenderer destroy function with one that cleans
+   // up the resize observer we add in the constructor
+   this.destroy = function() {
+      Renderer.prototype.destroy.call(this);
+
+      if (this.$resizeObserver) {
+         this.$resizeObserver.disconnect();
+      }
    }
 
 }).call(RStudioRenderer.prototype);
 
 
+function createFontMetrics(container) {
+   return new RStudioFontMetrics(container);
+}
 
-function loadEditor(container) {
+function loadEditor(container, fontMetrics) {
    var env = {};
    container.env = env;
 
    // Load the editor
-   var renderer = new RStudioRenderer(container, "");
+   var renderer = new RStudioRenderer(container, "", fontMetrics);
    var session = new RStudioEditSession("");
    var editor = new RStudioEditor(renderer, session);
    env.editor = editor;
@@ -311,4 +385,5 @@ function loadEditor(container) {
 
 exports.RStudioEditor = RStudioEditor;
 exports.loadEditor = loadEditor;
+exports.createFontMetrics = createFontMetrics;
 });
