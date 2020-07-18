@@ -19,10 +19,20 @@
 #include "ZoteroCollections.hpp"
 
 namespace rstudio {
+
+namespace core {
+   class FilePath;
+}
+
 namespace session {
 namespace modules {
 namespace zotero {
 namespace collections {
+
+bool localZoteroAvailable();
+
+core::FilePath zoteroDataDirectory();
+core::FilePath detectedZoteroDataDirectory();
 
 ZoteroCollectionSource localCollections();
 

@@ -228,6 +228,7 @@ public class ElementIds
       BUILD_SCRIPT("build_Script"),
       CA_BUNDLE("ca_bundle"),
       DEFAULT_WORKING_DIR("default_working_dir"),
+      ZOTERO_DATA_DIRECTORY("zotero_data_directory"),
       EXISTING_PROJECT_DIR("existing_project_dir"),
       FIND_IN("find_in"),
       GIT("git"),

@@ -71,3 +71,8 @@
 .themeInfobarShowing {
    display: block;
 }
+
+.selectWidgetHelp {
+   margin-left: 8px;
+}
+

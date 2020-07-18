@@ -20,15 +20,23 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -41,6 +49,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                                    UserState state,
                                    PreferencesDialogResources res,
                                    Session session,
+                                   RemoteFileSystemContext fsContext,
+                                   FileDialogs fileDialogs,
                                    PanmirrorZoteroServerOperations zoteroServer)
    {
       prefs_ = prefs;
@@ -191,7 +201,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             "Show document outline by default",
             prefs_.visualMarkdownEditingShowDocOutline(),
             false);
-      spaced(visualEditorShowOutline);
+      lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
 
       // content width
@@ -204,7 +214,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          );
       visualModeContentWidth_.setWidth("42px");
       visualModeContentWidth_.setLimits(100, NumericValueWidget.NoMaximum);
-      spaced(visualModeContentWidth_);
+      lessSpaced(visualModeContentWidth_);
       visualModeOptions.add(nudgeRightPlus(visualModeContentWidth_));
 
       // font size
@@ -242,7 +252,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       checkBoxAutoWrap.addValueChangeHandler((value) -> {
          visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
       });
-      mediumSpaced(visualModeWrapColumn_);
+      spaced(visualModeWrapColumn_);
 
       // references
       String[] referencesValues = {
@@ -253,7 +263,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
-      mediumSpaced(visualModeReferences_);
+      spaced(visualModeReferences_);
       visualModeOptions.add(visualModeReferences_);
 
       // help on per-file markdown options
@@ -263,17 +273,56 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false // no version info
       );
       nudgeRight(markdownPerFileOptions);
-      mediumSpaced(markdownPerFileOptions);
+      spaced(markdownPerFileOptions);
       visualModeOptions.add(markdownPerFileOptions);
       
       visualModeOptions.add(headerLabel("Citations"));
       
-      zoteroApiKey_ = new ZoteroApiKeyWidget(zoteroServer, "330px");
+      zoteroConnection_ = new ZoteroConnectionWidget(res);
+      spaced(zoteroConnection_);
+      visualModeOptions.add(zoteroConnection_);
+     
+      zoteroApiKey_ = new ZoteroApiKeyWidget(zoteroServer, "240px");
+      zoteroApiKey_.getElement().getStyle().setMarginLeft(4, Unit.PX);
       zoteroApiKey_.setKey(state_.zoteroApiKey().getValue());
       visualModeOptions.add(zoteroApiKey_);
-   
+      
+      zoteroDataDir_ = new DirectoryChooserTextBox(
+         "Zotero Data Directory:",
+         "(None)",
+         ElementIds.TextBoxButtonId.ZOTERO_DATA_DIRECTORY,
+         null,
+         fileDialogs,
+         fsContext
+      );
+      spaced(zoteroDataDir_);
+      nudgeRight(zoteroDataDir_);
+      textBoxWithChooser(zoteroDataDir_);
+      String dataDir = state_.zoteroDataDir().getValue();
+      if (!dataDir.isEmpty())
+         zoteroDataDir_.setText(dataDir);
+      visualModeOptions.add(zoteroDataDir_);
        
       visualMode.add(visualModeOptions);
+      
+      // kickoff query for detected zotero data directory
+      zoteroServer.zoteroDetectDataDirectory(new ServerRequestCallback<String>() {
+
+         @Override
+         public void onResponseReceived(String directory)
+         {
+            detectedZoteroDataDir_ = directory;
+            if (zoteroDataDir_.getText().isEmpty())
+               zoteroDataDir_.setText(detectedZoteroDataDir_);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+         
+      });
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "533px");
@@ -293,8 +342,27 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return visualModeWrapColumn_.validate() &&
-             visualModeContentWidth_.validate();
+      GlobalDisplay globalDislay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+      
+      boolean valid =  visualModeWrapColumn_.validate() &&
+                       visualModeContentWidth_.validate();
+      
+      if (valid)
+      {
+         if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB))
+         {
+            if ((zoteroApiKey_.getKey().trim().isEmpty()))
+            {
+               globalDislay.showErrorMessage(
+                  "Error", "You must provide a Zotero API Key for access to web libraries."
+               );
+               zoteroApiKey_.focus();
+               valid = false;
+            } 
+         }
+      }
+      
+      return valid;
    }
 
    @Override
@@ -312,7 +380,18 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
       
+      zoteroConnection_.setType(prefs.zoteroConnectionType().getValue());
+      manageZoteroUI();
+      zoteroConnection_.addChangeHandler((event) -> { manageZoteroUI(); });
+      
       zoteroApiKey_.setProgressIndicator(getProgressIndicator());
+ 
+   }
+   
+   private void manageZoteroUI()
+   {
+      zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB));
+      zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
    }
 
    @Override
@@ -341,6 +420,15 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                knitWorkingDir_.getValue());
       }
       
+      prefs_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
+      
+      // if the zotero data dir is same as the detected data dir then 
+      // set it to empty (allowing the server to always get the right default)
+      if (zoteroDataDir_.getText().equals(detectedZoteroDataDir_))
+         state_.zoteroDataDir().setGlobalValue("");
+      else
+         state_.zoteroDataDir().setGlobalValue(zoteroDataDir_.getText());
+      
       state_.zoteroApiKey().setGlobalValue(zoteroApiKey_.getKey());
       
       return restartRequirement;
@@ -361,5 +449,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final NumericValueWidget visualModeWrapColumn_;
    private final SelectWidget visualModeReferences_;   
    
+   private final ZoteroConnectionWidget zoteroConnection_;
+   private final DirectoryChooserTextBox zoteroDataDir_;
    private final ZoteroApiKeyWidget zoteroApiKey_;
+   private String detectedZoteroDataDir_ = "";
 }

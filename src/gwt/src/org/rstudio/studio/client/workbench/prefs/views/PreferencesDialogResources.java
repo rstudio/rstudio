@@ -34,6 +34,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String alwaysCompletePanel();
       String themeInfobar();
       String themeInfobarShowing();
+      String selectWidgetHelp();
    }
 
    @Source("PreferencesDialog.css")

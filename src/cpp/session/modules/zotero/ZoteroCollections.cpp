@@ -241,27 +241,6 @@ ZoteroCollection responseFromServerCache(const std::string& type,
 
 }
 
-FilePath defaultZoteroDataDirectory()
-{
-   std::string homeEnv;
-#ifdef _WIN32
-   homeEnv = "USERPROFILE";
-#else
-   homeEnv = "HOME";
-#endif
-   FilePath homeDir = FilePath(string_utils::systemToUtf8(core::system::getenv(homeEnv)));
-   return homeDir.completeChildPath("Zotero");
-}
-
-FilePath localZoteroDataDirectory()
-{
-   std::string dataDir = prefs::userState().zoteroDataDir();
-   if (!dataDir.empty())
-      return module_context::resolveAliasedPath(dataDir);
-   else
-      return defaultZoteroDataDirectory();
-}
-
 struct Connection
 {
    bool empty() const { return type.length() == 0; }
@@ -278,13 +257,23 @@ Connection zoteroConnection()
    if (type.empty())
        type = kZoteroConnectionTypeLocal;
 
+   // force it to web if local is not available in this config
+   if (!localZoteroAvailable())
+      type = kZoteroConnectionTypeWeb;
+
    // initialize context
    std::string context;
    if (type == kZoteroConnectionTypeLocal)
    {
-      FilePath localDataDir = localZoteroDataDirectory();
+      FilePath localDataDir = zoteroDataDirectory();
       if (localDataDir.exists())
+      {
          context = string_utils::utf8ToSystem(localDataDir.getAbsolutePath());
+      }
+      else
+      {
+         LOG_ERROR(core::fileNotFoundError(localDataDir, ERROR_LOCATION));
+      }
    }
    else
    {

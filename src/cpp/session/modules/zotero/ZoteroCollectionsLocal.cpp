@@ -26,8 +26,10 @@
 
 #include <r/RExec.hpp>
 
+#include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "session-config.h"
 
 using namespace rstudio::core;
 
@@ -130,6 +132,61 @@ void getLocalCollections(std::string key,
 
 } // end anonymous namespace
 
+
+bool localZoteroAvailable()
+{
+   // availability based on server vs. desktop
+#ifdef RSTUDIO_SERVER
+   bool local = false;
+#else
+   bool local = true;
+#endif
+
+   // however, also make it available in debug mode for local dev/test
+#ifndef NDEBUG
+   local = true;
+#endif
+
+   return local;
+}
+
+
+// Returns the zoteroDataDirectory (if any). This will return a valid FilePath
+// if the user has specified a zotero data dir in the preferences; OR if
+// a zotero data dir was detected on the system. In the former case the
+// path may not exist (and this should be logged as an error)
+FilePath zoteroDataDirectory()
+{
+   std::string dataDir = prefs::userState().zoteroDataDir();
+   if (!dataDir.empty())
+      return module_context::resolveAliasedPath(dataDir);
+   else
+      return detectedZoteroDataDirectory();
+}
+
+// Automatically detect the Zotero data directory and return it if it exists
+FilePath detectedZoteroDataDirectory()
+{
+   if (localZoteroAvailable())
+   {
+      std::string homeEnv;
+   #ifdef _WIN32
+      homeEnv = "USERPROFILE";
+   #else
+      homeEnv = "HOME";
+   #endif
+      FilePath homeDir = FilePath(string_utils::systemToUtf8(core::system::getenv(homeEnv)));
+      FilePath zoteroPath = homeDir.completeChildPath("Zotero");
+      if (zoteroPath.exists())
+         return zoteroPath;
+      else
+         return FilePath();
+   }
+   else
+   {
+      return FilePath();
+   }
+}
 
 
 ZoteroCollectionSource localCollections()

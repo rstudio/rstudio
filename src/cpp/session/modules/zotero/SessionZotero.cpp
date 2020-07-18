@@ -26,6 +26,7 @@
 
 #include "ZoteroCollections.hpp"
 #include "ZoteroCollectionsWeb.hpp"
+#include "ZoteroCollectionsLocal.hpp"
 
 using namespace rstudio::core;
 
@@ -47,6 +48,14 @@ const char * const kStatusNoHost = "nohost";
 const char * const kStatusNotFound = "notfound";
 const char * const kStatusError = "error";
 
+Error zoteroDetectDataDirectory(const json::JsonRpcRequest&,
+                                json::JsonRpcResponse* pResponse)
+{
+   FilePath dataDirPath = collections::detectedZoteroDataDirectory();
+   std::string dataDir = !dataDirPath.isEmpty() ? module_context::createAliasedPath(dataDirPath) : "";
+   pResponse->setResult(dataDir);
+   return Success();
+}
 
 void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
                              const json::JsonRpcFunctionContinuation& cont)
@@ -225,6 +234,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+
 Error initialize()
 {
    using namespace module_context;
@@ -233,6 +243,7 @@ Error initialize()
        (boost::bind(sourceModuleRFile, "SessionZotero.R"))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
+       (boost::bind(registerRpcMethod, "zotero_detect_data_directory", zoteroDetectDataDirectory))
    ;
    return initBlock.execute();
 }

@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -31,7 +30,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -45,43 +43,25 @@ public class ZoteroApiKeyWidget extends Composite
       FlowPanel panel = new FlowPanel();
 
       // text box
+      HorizontalPanel apiKeyPanel = new HorizontalPanel();
+      apiKeyPanel.addStyleName(RES.styles().apiKeyPanel());
       txtApiKey_ = new TextBox();
       txtApiKey_.getElement().setAttribute("spellcheck", "false");
       txtApiKey_.addStyleName(RES.styles().apiKey());
       txtApiKey_.setWidth(textWidth);
-
-      // caption panel
-      HorizontalPanel captionPanel = new HorizontalPanel();
-      captionPanel.setWidth(textWidth);
-      FormLabel apiKeyLabel = new FormLabel("Zotero API Key:", txtApiKey_);
-      captionPanel.add(apiKeyLabel);
-      captionPanel.setCellHorizontalAlignment(
-            apiKeyLabel,
-            HasHorizontalAlignment.ALIGN_LEFT);
-
-      HorizontalPanel linkPanel = new HorizontalPanel();
-      helpLink_ = new HelpLink("Using Zotero", 
-                               "visual_markdown_editing-zotero",
-                               false);
-      helpLink_.addStyleName(RES.styles().helpLink());
-   
-      linkPanel.add(helpLink_);
-      captionPanel.add(helpLink_);
-      captionPanel.setCellHorizontalAlignment(
-            helpLink_, 
-            HasHorizontalAlignment.ALIGN_RIGHT);
-
-      panel.add(captionPanel);
-      panel.add(txtApiKey_);
+      apiKeyPanel.add(txtApiKey_);
       
       // verify key button
-      HorizontalPanel verifyKeyPanel = new HorizontalPanel();
-      verifyKeyPanel.addStyleName(RES.styles().verifyKeyPanel());
       SmallButton verifyKeyButton = new SmallButton();
-      verifyKeyButton.setText("Verify Connection...");
+      
+      verifyKeyButton.setText("Verify Key...");
       verifyKeyButton.addClickHandler(event -> verifyKey());
-      verifyKeyPanel.add(verifyKeyButton);
-      panel.add(verifyKeyPanel);
+      apiKeyPanel.add(verifyKeyButton);
+       
+      panel.add(new FormLabel("Zotero Web API Key:", txtApiKey_));
+      panel.add(apiKeyPanel);
+      
+      
 
       initWidget(panel);
    }
@@ -100,13 +80,18 @@ public class ZoteroApiKeyWidget extends Composite
    {
       return txtApiKey_.getText().trim();
    }
+   
+   public void focus()
+   {
+      txtApiKey_.setFocus(true);
+   }
   
    private void verifyKey()
    {
       String key = getKey();
       if (key.length() > 0)
       {
-         progressIndicator_.onProgress("Verifying Connection...");
+         progressIndicator_.onProgress("Verifying Key...");
          server_.zoteroValidateWebAPIKey(key, new ServerRequestCallback<Boolean>() {
             
             @Override
@@ -117,12 +102,12 @@ public class ZoteroApiKeyWidget extends Composite
                if (valid)
                {
                   display.showMessage(MessageDisplay.MSG_INFO, "Zotero", 
-                                      "Zotero API connection sucessfully verified.");
+                                      "Zotero API key sucessfully verified.");
                }
                else
                {
                   display.showMessage(MessageDisplay.MSG_WARNING, "Zotero", 
-                                      "Unable to verify Zotero API connection.\n\n" +
+                                      "Unable to verify Zotero API key.\n\n" +
                                       "You should verify that your API key is still valid, " +
                                       "and if necessary create a new key.");
                }
@@ -141,8 +126,7 @@ public class ZoteroApiKeyWidget extends Composite
    interface Styles extends CssResource
    {
       String apiKey();
-      String helpLink();
-      String verifyKeyPanel();
+      String apiKeyPanel();
    }
 
    interface Resources extends ClientBundle
@@ -157,10 +141,10 @@ public class ZoteroApiKeyWidget extends Composite
       RES.styles().ensureInjected();
    }
 
-   private final HelpLink helpLink_;
    private final TextBox txtApiKey_;
 
    private PanmirrorZoteroServerOperations server_;
    private ProgressIndicator progressIndicator_;
+  
 
 }
