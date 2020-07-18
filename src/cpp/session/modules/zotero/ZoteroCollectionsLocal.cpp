@@ -22,6 +22,8 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/FileSerializer.hpp>
+
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
@@ -129,6 +131,84 @@ void getLocalCollections(std::string key,
     }
 }
 
+FilePath userHomeDir()
+{
+   std::string homeEnv;
+#ifdef _WIN32
+   homeEnv = "USERPROFILE";
+#else
+   homeEnv = "HOME";
+#endif
+   return FilePath(string_utils::systemToUtf8(core::system::getenv(homeEnv)));
+}
+
+// https://www.zotero.org/support/kb/profile_directory
+FilePath zoteroProfilesDir()
+{
+   FilePath homeDir = userHomeDir();
+   std::string profilesDir;
+#if defined(_WIN32)
+   profilesDir = "AppData\\Roaming\\Zotero\\Zotero\\Profiles";
+#elif defined(__APPLE__)
+   profilesDir = "Library/Application Support/Zotero/Profiles";
+#else
+   profilesDir = ".zotero/zotero";
+#endif
+   return homeDir.completeChildPath(profilesDir);
+}
+
+// https://www.zotero.org/support/zotero_data
+FilePath defaultZoteroDataDir()
+{
+   FilePath homeDir = userHomeDir();
+   return homeDir.completeChildPath("Zotero");
+}
+
+FilePath detectZoteroDataDir()
+{
+   // we'll fall back to the default if we can't find another dir in the profile
+   FilePath dataDir = defaultZoteroDataDir();
+
+   // find the zotero profiles dir
+   FilePath profilesDir = zoteroProfilesDir();
+   if (profilesDir.exists())
+   {
+      // there will be one path in the directory
+      std::vector<FilePath> children;
+      Error error = profilesDir.getChildren(children);
+      if (error)
+         LOG_ERROR(error);
+      if (children.size() > 0)
+      {
+         // there will be a single directory inside the profiles dir
+         FilePath profileDir = children[0];
+         FilePath prefsFile = profileDir.completeChildPath("prefs.js");
+         if (prefsFile.exists())
+         {
+            // read the prefs.js file
+            std::string prefs;
+            error = core::readStringFromFile(prefsFile, &prefs);
+            if (error)
+               LOG_ERROR(error);
+
+            // look for the zotero.dataDir pref
+            boost::smatch match;
+            boost::regex regex("user_pref\\(\"extensions.zotero.dataDir\",\\s*\"([^\"]+)\"\\);");
+            if (boost::regex_search(prefs, match, regex))
+            {
+               // set dataDiroly if the path exists
+               FilePath profileDataDir(match[1]);
+               if (profileDataDir.exists())
+                  dataDir = profileDataDir;
+            }
+         }
+      }
+   }
+
+   // return the data dir
+   return dataDir;
+}
+
 
 } // end anonymous namespace
 
@@ -150,6 +230,23 @@ bool localZoteroAvailable()
    return local;
 }
 
+// Detect the Zotero data directory and return it if it exists
+FilePath detectedZoteroDataDirectory()
+{
+   if (localZoteroAvailable())
+   {
+      FilePath dataDir = detectZoteroDataDir();
+      if (dataDir.exists())
+         return dataDir;
+      else
+         return FilePath();
+   }
+   else
+   {
+      return FilePath();
+   }
+}
+
 
 // Returns the zoteroDataDirectory (if any). This will return a valid FilePath
 // if the user has specified a zotero data dir in the preferences; OR if
@@ -162,30 +259,6 @@ FilePath zoteroDataDirectory()
       return module_context::resolveAliasedPath(dataDir);
    else
       return detectedZoteroDataDirectory();
-}
-
-// Automatically detect the Zotero data directory and return it if it exists
-FilePath detectedZoteroDataDirectory()
-{
-   if (localZoteroAvailable())
-   {
-      std::string homeEnv;
-   #ifdef _WIN32
-      homeEnv = "USERPROFILE";
-   #else
-      homeEnv = "HOME";
-   #endif
-      FilePath homeDir = FilePath(string_utils::systemToUtf8(core::system::getenv(homeEnv)));
-      FilePath zoteroPath = homeDir.completeChildPath("Zotero");
-      if (zoteroPath.exists())
-         return zoteroPath;
-      else
-         return FilePath();
-   }
-   else
-   {
-      return FilePath();
-   }
 }
 
 
