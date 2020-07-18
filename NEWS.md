@@ -35,6 +35,8 @@
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
+* Updated Rainbow Parentheses colors to be more evenly distributed and better contrast across various themes (#7213)
+* Moved Rainbow Parentheses option to Display in Global Options
 
 ### RStudio Server Pro
 
@@ -71,4 +73,4 @@
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
 * Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
 * Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
-
+* Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
