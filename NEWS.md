@@ -55,7 +55,9 @@
 
 ### Bugfixes
 
-* Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
+* UTF-8 character vectors are now properly displayed within the Environment pane. (#6877)
+* Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
+* Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
 * Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
 * Git integration now works properly for project names containing the '!' character. (#6160)
@@ -74,3 +76,5 @@
 * Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
 * Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
 * Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
+* Fixed issue where Windows shortcuts were not resolved correctly in file dialogs. (#7327)
+
