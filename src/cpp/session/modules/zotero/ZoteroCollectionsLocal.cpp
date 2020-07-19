@@ -44,16 +44,11 @@ namespace collections {
 
 namespace {
 
-SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pProtect)
+struct ZoteroCollectionDBSpec : public ZoteroCollectionSpec
 {
-   std::vector<std::string> names;
-   names.push_back(kName);
-   names.push_back(kVersion);
-   SEXP cacheSpecSEXP = r::sexp::createList(names, pProtect);
-   r::sexp::setNamedListElement(cacheSpecSEXP, kName, cacheSpec.name);
-   r::sexp::setNamedListElement(cacheSpecSEXP, kVersion, cacheSpec.version);
-   return cacheSpecSEXP;
-}
+   int id;
+};
+typedef std::vector<ZoteroCollectionDBSpec> ZoteroCollectionDBSpecs;
 
 void execQuery(boost::shared_ptr<database::IConnection> pConnection,
                const std::string& sql,
@@ -75,11 +70,12 @@ void execQuery(boost::shared_ptr<database::IConnection> pConnection,
    }
 }
 
-ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection)
+ZoteroCollectionDBSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection)
 {
-   ZoteroCollectionSpecs specs;
-   execQuery(pConnection, "select collectionName, version from collections", [&specs](const database::Row& row) {
-      ZoteroCollectionSpec spec;
+   ZoteroCollectionDBSpecs specs;
+   execQuery(pConnection, "select collectionID, collectionName, version from collections", [&specs](const database::Row& row) {
+      ZoteroCollectionDBSpec spec;
+      spec.id = row.get<int>("collectionID");
       spec.name = row.get<std::string>("collectionName");
       spec.version = row.get<int>("version");
       specs.push_back(spec);
@@ -92,10 +88,10 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    int version = 0;
    execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
-      // bizzarly, this value comes back as a dt_string!?!?! we crashed when attempting
-      // to do a get<int>. rather than just switch to std::string, let's actually check
-      // the type to make sure we don't crash at some point in the future if this no
-      // longer returns dt_string
+
+      // bizzarly, this value comes back as a dt_string!?!?! we crashed when attempting to do a
+      // get<int>. rather than just switch to std::string, let's actually check the type to
+      // make sure we don't crash at some point in the future if this no longer returns dt_string
       std::ostringstream ostr;
       auto& props = row.get_properties(0);
       switch(props.get_data_type())
@@ -139,12 +135,20 @@ void testZoteroSQLite(std::string dataDir)
 
    std::cerr << "library: " << getLibraryVersion(pConnection) << std::endl;
 
-   ZoteroCollectionSpecs specs = getCollections(pConnection);
+   ZoteroCollectionDBSpecs specs = getCollections(pConnection);
    for (auto spec : specs)
-      std::cerr << spec.name << ": " << spec.version << std::endl;
+      std::cerr << spec.id << " - " << spec.name << ": " << spec.version << std::endl;
+}
 
-
-
+SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pProtect)
+{
+   std::vector<std::string> names;
+   names.push_back(kName);
+   names.push_back(kVersion);
+   SEXP cacheSpecSEXP = r::sexp::createList(names, pProtect);
+   r::sexp::setNamedListElement(cacheSpecSEXP, kName, cacheSpec.name);
+   r::sexp::setNamedListElement(cacheSpecSEXP, kVersion, cacheSpec.version);
+   return cacheSpecSEXP;
 }
 
 void getLocalLibrary(std::string key,
