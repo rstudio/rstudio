@@ -356,6 +356,14 @@ if(UNIX AND NOT APPLE)
 )
 endif()
 
+# configure launch settings (for Visual Studio on Windows)
+if(WIN32)
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/launch.vs.json"
+      @ONLY)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
