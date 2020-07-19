@@ -87,12 +87,38 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
    return specs;
 }
 
+
 int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    int version = 0;
    execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
-      std::string versionStr = row.get<std::string>("version");
-      version = safe_convert::stringTo<int>(versionStr, 0);
+      // bizzarly, this value comes back as a dt_string!?!?! we crashed when attempting
+      // to do a get<int>. rather than just switch to std::string, let's actually check
+      // the type to make sure we don't crash at some point in the future if this no
+      // longer returns dt_string
+      std::ostringstream ostr;
+      auto& props = row.get_properties(0);
+      switch(props.get_data_type())
+      {
+      case soci::dt_string:
+         ostr << row.get<std::string>(0);
+         break;
+      case soci::dt_double:
+         ostr << row.get<double>(0);
+         break;
+      case soci::dt_integer:
+         ostr << row.get<int>(0);
+         break;
+      case soci::dt_long_long:
+         ostr << row.get<long long>(0);
+         break;
+      case soci::dt_unsigned_long_long:
+         ostr << row.get<unsigned long long>(0);
+         break;
+      default:
+         ostr << "0";
+      }
+      version = safe_convert::stringTo<int>(ostr.str(), 0);
    });
    return version;
 }
