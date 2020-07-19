@@ -55,6 +55,49 @@ SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pPro
    return cacheSpecSEXP;
 }
 
+void execQuery(boost::shared_ptr<database::IConnection> pConnection,
+               const std::string& sql,
+               boost::function<void(const database::Row&)> rowHandler)
+{
+   database::Rowset rows;
+   database::Query query = pConnection->query(sql);
+   Error error = pConnection->execute(query, rows);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      const database::Row& row = *it;
+      rowHandler(row);
+   }
+}
+
+ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection)
+{
+   ZoteroCollectionSpecs specs;
+   execQuery(pConnection, "select collectionName, version from collections", [&specs](const database::Row& row) {
+      ZoteroCollectionSpec spec;
+      spec.name = row.get<std::string>("collectionName");
+      spec.version = row.get<int>("version");
+      specs.push_back(spec);
+   });
+   return specs;
+}
+
+int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
+{
+   int version = 0;
+   execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
+      std::string versionStr = row.get<std::string>("version");
+      version = safe_convert::stringTo<int>(versionStr, 0);
+   });
+   return version;
+}
+
+
 void testZoteroSQLite(std::string dataDir)
 {
    // connect to sqlite
@@ -68,28 +111,22 @@ void testZoteroSQLite(std::string dataDir)
       return;
    }
 
-   database::Rowset rows;
-   database::Query query = pConnection->query("select collectionName, version from collections");
-   error = pConnection->execute(query, rows);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   std::cerr << "library: " << getLibraryVersion(pConnection) << std::endl;
 
-   for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
-   {
-      database::Row& row = *it;
-      std::string name = row.get<std::string>("collectionName");
-      int version = row.get<int>("version");
-      std::cerr << name << " - " << version << std::endl;
-   }
+   ZoteroCollectionSpecs specs = getCollections(pConnection);
+   for (auto spec : specs)
+      std::cerr << spec.name << ": " << spec.version << std::endl;
+
+
+
 }
 
 void getLocalLibrary(std::string key,
                      ZoteroCollectionSpec cacheSpec,
                      ZoteroCollectionsHandler handler)
 {
+   testZoteroSQLite(key);
+
    r::sexp::Protect protect;
    std::string libraryJsonStr;
    Error error = r::exec::RFunction(".rs.zoteroGetLibrary", key,
