@@ -285,6 +285,37 @@ oop.inherits(RStudioFontMetrics, FontMetrics);
 
 // RStudioRenderer ----
 
+// queue of virtual renderers that need to be resized (redrawn)
+var ResizeQueue = [];
+
+// method called on a timer to redraw all renderers that need it
+var ProcessResizeQueue = function() {
+   // sort the resize queue so that elements closer to the top get priority. if
+   // we ever need to support opening a document with the viewport positioned
+   // somewhere other than the top by default, this would need to take
+   // scrollTop and friends into consideration
+   ResizeQueue.sort(function(a, b) {
+      return a.pos - b.pos;
+   });
+
+   // walk the resize queue and schedule the actual work of resizing each
+   // element; we do this on a zero timer so that it doesn't block the UI if
+   // e.g. 200 resizes need to get processed at once
+   for (var idx = 0; idx < ResizeQueue.length; idx++) {
+      window.setTimeout(function(renderer, args) {
+         // call base class resize method
+         Renderer.prototype.onResize.apply(renderer, args);
+      }, 0, ResizeQueue[idx].renderer, ResizeQueue[idx].args);
+   }
+
+   // clear queue
+   ResizeQueue = [];
+   ResizeQueueTimer = 0;
+};
+
+// id of window timer to process resize queue
+var ResizeQueueTimer = 0;
+
 var RStudioRenderer = function(container, theme, fontMetrics) {
    Renderer.call(this, container, theme);
 
@@ -309,17 +340,17 @@ var RStudioRenderer = function(container, theme, fontMetrics) {
       self.$resizeObserver = new window.ResizeObserver(function(e) {
          if (container.clientHeight > 0 && 
              container.clientHeight !== self.$cachedHeight) {
-            // force a redraw
-            self.onResize(true);
 
-            // save width so that we don't repeatedly redraw when the size
-            // hasn't changed
+            // invoke resize and update cached height so we don't invoke resize
+            // again for the same height
+            self.onResize(true);
             self.$cachedHeight = container.clientHeight;
          }
       });
 
       // begin watching the container object for resizes
       self.$resizeObserver.observe(container);
+      self.$deferResize = true;
    }
 };
 oop.inherits(RStudioRenderer, Renderer);
@@ -329,7 +360,7 @@ oop.inherits(RStudioRenderer, Renderer);
    this.setTheme = function(theme) {
       if (theme)
          Renderer.prototype.setTheme.call(this, theme);
-   }
+   };
 
    // wrap the original VirtualRenderer destroy function with one that cleans
    // up the resize observer we add in the constructor
@@ -339,7 +370,39 @@ oop.inherits(RStudioRenderer, Renderer);
       if (this.$resizeObserver) {
          this.$resizeObserver.disconnect();
       }
-   }
+   };
+
+   // wrap the VirtualRenderer onResize function with one that can defer the
+   // resize until the next event loop
+   this.onResize = function(force, gutterWidth, width, height) {
+      var self = this;
+      var pos = 0;
+
+      // use synchronous resize unless deferred resizing has been enabled (by
+      // supplying custom font metrics)
+      if (!self.$deferResize) {
+         Renderer.prototype.onResize.call(self, force, gutterWidth, width, height);
+         return;
+      }
+
+      // if we know where we are in the DOM, get our position so we can be
+      // placed appropriately in the render priority queue
+      if (self.container && self.container.parentElement) {
+         pos = self.container.parentElement.offsetTop;
+      }
+
+      // put this renderer resize call into the queue
+      ResizeQueue.push({
+         renderer: self, 
+         args: [force, gutterWidth, width, height],
+         pos: pos
+      });
+
+      // start the timer to process the resize queue if it isn't running yet
+      if (ResizeQueueTimer === 0) {
+         ResizeQueueTimer = window.setTimeout(ProcessResizeQueue, 0);
+      }
+   };
 
 }).call(RStudioRenderer.prototype);
 

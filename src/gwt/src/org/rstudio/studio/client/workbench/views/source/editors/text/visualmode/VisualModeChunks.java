@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.a11y.A11y;
@@ -43,24 +42,17 @@ public class VisualModeChunks
    {
       target_ = target;
       sentinel_ = sentinel;
-      editors_ = new ArrayList<PanmirrorUIChunkEditor>();
-      
-      // Create dummy element for font sizing (ensure hidden from a11y tree)
-      fontMeasurer_ = Document.get().createDivElement();
-      fontMeasurer_.addClassName("ace_editor");
-      fontMeasurer_.setId("font_measure_" + sentinel.getId());
-      Document.get().getBody().appendChild(fontMeasurer_);
-      A11y.setARIAHidden(fontMeasurer_);
-      
-      // Create a single font metrics provider to supply font sizing information
-      // to all of the UI chunks the factory below will create (otherwise each
-      // individual editor spends a lot of time computing these values)
-      fontMetrics_ = AceEditorNative.createFontMetrics(fontMeasurer_);
-      fontMetrics_.checkForSizeChanges();
    }
-
+   
    public PanmirrorUIChunks uiChunks()
    {
+      // Ensure we have a font measurement tool; every instance shares this
+      // resource
+      if (FONT_MEASURER == null)
+      {
+         FONT_MEASURER = new FontMeasurer();
+      }
+
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
       chunks.createChunkEditor = (type) -> {
 
@@ -77,7 +69,7 @@ public class VisualModeChunks
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
-         final AceEditor editor = new AceEditor(fontMetrics_);
+         final AceEditor editor = new AceEditor(FONT_MEASURER.getFontMetrics());
          final AceEditorNative chunkEditor = editor.getWidget().getEditor();
          
          chunk.editor = Js.uncheckedCast(chunkEditor);
@@ -129,16 +121,6 @@ public class VisualModeChunks
             {
                reg.removeHandler();
             }
-            
-            // Remove from active set of editors
-            editors_.remove(chunk);
-            
-            // When the last editor is removed, clean up the font metrics system
-            if (editors_.size() == 0)
-            {
-               Debug.devlog("clean up element: " + fontMeasurer_.getId());
-               fontMeasurer_.removeFromParent();
-            }
          };
          
          // Prevent tab from advancing into editor
@@ -152,8 +134,6 @@ public class VisualModeChunks
 
          // Turn off line numbers as they're not helpful in chunks
          chunkEditor.getRenderer().setShowGutter(false);
-         
-         editors_.add(chunk);
          
          return chunk;
       };
@@ -217,9 +197,39 @@ public class VisualModeChunks
       }
    }
 
-   private final List<PanmirrorUIChunkEditor> editors_;
+   /**
+    * Internal class to handle font metrics measurement
+    */
+   private class FontMeasurer
+   {
+      public FontMeasurer()
+      {
+         // Create dummy element for font sizing (ensure hidden from a11y tree)
+         fontMeasurer_ = Document.get().createDivElement();
+         fontMeasurer_.addClassName("ace_editor");
+         fontMeasurer_.setId("rstudio_ace_font_measure");
+         Document.get().getBody().appendChild(fontMeasurer_);
+         A11y.setARIAHidden(fontMeasurer_);
+
+         // Create a single font metrics provider to supply font sizing information
+         // to all of the UI chunks the factory below will create (otherwise each
+         // individual editor spends a lot of time computing these values)
+         fontMetrics_ = AceEditorNative.createFontMetrics(fontMeasurer_);
+         fontMetrics_.checkForSizeChanges();
+      }
+
+      public AceFontMetrics getFontMetrics()
+      {
+         return fontMetrics_;
+      }
+      
+      private final AceFontMetrics fontMetrics_;
+      private final DivElement fontMeasurer_;
+   }
+
+
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;
-   private final AceFontMetrics fontMetrics_;
-   private final DivElement fontMeasurer_;
+
+   private static FontMeasurer FONT_MEASURER = null;
 }
