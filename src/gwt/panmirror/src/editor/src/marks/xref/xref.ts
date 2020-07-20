@@ -197,8 +197,8 @@ function atRefInputRule() {
     const { parent, parentOffset } = state.selection.$head;
     const before = parent.textContent.slice(parentOffset - kRefLen, parentOffset);
     const after = parent.textContent.slice(parentOffset);
-    const potentialXref = before + '(' + after;
-    if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXref)) {
+    const potentialXRef = before + '(' + after;
+    if (/^@ref\([A-Za-z0-9:-]*\).*$/.test(potentialXRef)) {
       return null;
     }
 
