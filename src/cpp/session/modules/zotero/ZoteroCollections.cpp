@@ -44,9 +44,9 @@ namespace {
 const char * const kIndexFile = "INDEX";
 const char * const kFile = "file";
 
-void LOG(const std::string&)
+void LOG(const std::string& text)
 {
-   // std::cerr << text << std::endl;
+   std::cerr << text << std::endl;
 }
 
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)

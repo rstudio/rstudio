@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer } from "../zotero";
+import { ZoteroCollection, ZoteroServer, ZoteroCollectionSpec } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
@@ -39,7 +39,10 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       try {
 
         // Don't send the items back through to the server
-        const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
+        // const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
+
+        // TOOD: re-enable cache
+        const collectionSpecs: ZoteroCollectionSpec[] = [];
 
         const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || []);
         if (result.status === "ok") {
