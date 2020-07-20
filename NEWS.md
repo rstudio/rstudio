@@ -37,6 +37,7 @@
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 * Updated Rainbow Parentheses colors to be more evenly distributed and better contrast across various themes (#7213)
 * Moved Rainbow Parentheses option to Display in Global Options
+* Add support for navigating source history with mouse forward/back buttons (#7272)
 
 ### RStudio Server Pro
 
