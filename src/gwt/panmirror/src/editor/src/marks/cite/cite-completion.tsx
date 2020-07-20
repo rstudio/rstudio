@@ -110,15 +110,29 @@ function filterCitations(
     return entries;
   }
 
-  // String for a search
-  const searchResults = manager.searchAllSources(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
-  const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
+  const search = (str: string) => {
+    const results = manager.searchAllSources(str, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+    return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
+  };
+
+  // first search w/ the part of the token before any space -- if that yields an exact match then no completions
+  // (i.e. in this case there is already a valid cite_id at pos)
+  if (token.includes(' ')) {
+    const firstPart = token.split(' ')[0];
+    const firstPartResults = search(firstPart);
+    if (firstPartResults.find(entry => entry.source.id === firstPart) {
+      return [];
+    }
+  }
+
+  // Now do the regular search
+  const searchResults = search(token);
 
   // If we hav an exact match, no need for completions
-  if (dedupedResults.length === 1 && dedupedResults[0].source.id === token) {
+  if (searchResults.length === 1 && searchResults[0].source.id === token) {
     return [];
   } else {
-    return dedupedResults || [];
+    return searchResults || [];
   }
 }
 
