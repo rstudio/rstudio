@@ -73,7 +73,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
       toolbar_.addLeftWidget(commands_.viewerForward().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.viewerZoom().createToolbarButton());
+      toolbar_.addLeftWidget(zoomButton_ = commands_.viewerZoom().createToolbarButton());
       
       // export commands
       exportButtonSeparator_ = toolbar_.addLeftSeparator();
@@ -93,7 +93,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
+      toolbar_.addLeftWidget(clearAllButton_ = commands_.viewerClearAll().createToolbarButton());
         
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerPopout().createToolbarButton());
@@ -284,7 +284,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      if (zoomButton_.isVisible())
+         zoomButton_.setFocus(true);
+      else
+         clearAllButton_.setFocus(true);
    }
 
    private native static String getOrigin() /*-{
@@ -361,7 +364,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Toolbar toolbar_;
    
    private RSConnectPublishButton publishButton_;
-   
+
+   private ToolbarButton zoomButton_;
+   private ToolbarButton clearAllButton_;
    private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
 

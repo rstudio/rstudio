@@ -206,7 +206,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      plotsToolbar_.focus();
    }
 
    public HandlerRegistration addResizeHandler(ResizeHandler resizeHandler)
