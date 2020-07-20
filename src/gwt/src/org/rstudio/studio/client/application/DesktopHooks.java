@@ -251,14 +251,12 @@ public class DesktopHooks
       events_.fireEvent(new LauncherServerEvent(type, details));
    }
 
-   void mouseNavigateSourceForward()
+   void mouseNavigateButtonClick(boolean forward, int x, int y)
    {
-      commands_.sourceNavigateForward().execute();
-   }
-
-   void mouseNavigateSourceBackward()
-   {
-      commands_.sourceNavigateBack().execute();
+      if (forward)
+         commands_.sourceNavigateForward().execute();
+      else
+         commands_.sourceNavigateBack().execute();
    }
 
    private final Commands commands_;

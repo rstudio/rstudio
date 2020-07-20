@@ -52,7 +52,7 @@ public:
    WebPage* webPage() const { return pWebPage_; }
 
    void contextMenuEvent(QContextMenuEvent* event) override;
-   void mouseNavigateButtonClick(Qt::MouseButton button);
+   void mouseNavigateButtonClick(QMouseEvent* pMouseEvent);
 
 Q_SIGNALS:
   void onCloseWindowShortcut();

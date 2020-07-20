@@ -74,8 +74,8 @@ std::map<QWebEnginePage*, DevToolsWindow*> s_devToolsWindows;
 class MouseNavigateSourceEventFilter : public QObject
 {
 public:
-   explicit MouseNavigateSourceEventFilter(WebView* parent)
-      : QObject(parent)
+   explicit MouseNavigateSourceEventFilter(WebView* pParent)
+      : QObject(pParent)
    {
    }
 
@@ -83,24 +83,24 @@ protected:
    // Handler for mouse back/forward button for source history navigation.
    // This is needed for Desktop because QtWebEngine doesn't receive these button clicks. In the
    // web browser/Server scenario this is handled by Source.java::handleMouseButtonNavigations().
-   bool eventFilter(QObject* object, QEvent* event) override
+   bool eventFilter(QObject* pObject, QEvent* pEvent) override
    {
-      if (event->type() == QEvent::MouseButtonPress)
+      if (pEvent->type() == QEvent::MouseButtonPress)
       {
-         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-         if (mouseEvent->button() == Qt::ForwardButton ||
-             mouseEvent->button() == Qt::BackButton)
+         QMouseEvent* pMouseEvent = static_cast<QMouseEvent*>(pEvent);
+         if (pMouseEvent->button() == Qt::ForwardButton ||
+             pMouseEvent->button() == Qt::BackButton)
          {
             WebView* pWebView = qobject_cast<WebView*>(parent());
             if (pWebView)
             {
-               pWebView->mouseNavigateButtonClick(mouseEvent->button());
+               pWebView->mouseNavigateButtonClick(pMouseEvent);
                return true;
             }
          }
       }
 
-      return QObject::eventFilter(object, event);
+      return QObject::eventFilter(pObject, pEvent);
    }
 };
 
@@ -412,22 +412,14 @@ void WebView::childEvent(QChildEvent *event)
    }
 }
 
-void WebView::mouseNavigateButtonClick(Qt::MouseButton button)
+void WebView::mouseNavigateButtonClick(QMouseEvent* pMouseEvent)
 {
    QString command =  QStringLiteral(
       "if (window.desktopHooks) "
-      "  window.desktopHooks.");
-   switch (button)
-   {
-   case Qt::ForwardButton:
-      command += QStringLiteral("mouseNavigateSourceForward();");
-      break;
-   case Qt::BackButton:
-      command += QStringLiteral("mouseNavigateSourceBackward();");
-      break;
-   default:
-      return;
-   }
+      "  window.desktopHooks.mouseNavigateButtonClick(%1, %2, %3);")
+         .arg(pMouseEvent->button() == Qt::ForwardButton ? QStringLiteral("true") : QStringLiteral("false"))
+         .arg(pMouseEvent->x())
+         .arg(pMouseEvent->y());
 
    webPage()->runJavaScript(command);
 }
