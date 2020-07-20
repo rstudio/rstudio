@@ -2754,18 +2754,20 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 /* Rainbow parentheses colors */
-.ace_paren_color_0 {color: rgb(255, 124, 124);}
-.ace_paren_color_1 {color: rgb(255, 187, 0);}
-.ace_paren_color_2 {color: #00ff1f;}
-.ace_paren_color_3 {color: #2bcf2b;}
-.ace_paren_color_4 {color: lightskyblue;}
-.ace_paren_color_5 {color: rgb(150, 94, 255);}
-.ace_paren_color_6 {color: violet;}
+/* Generated with: colorspace::swatchplot(colorspace::qualitative_hcl(n=7, palette="set2")) */
+.ace_paren_color_0 {color: #ed90a4;}
+.ace_paren_color_1 {color: #d3a263;}
+.ace_paren_color_2 {color: #99b657;}
+.ace_paren_color_3 {color: #33c192;}
+.ace_paren_color_4 {color: #00bdce;}
+.ace_paren_color_5 {color: #94a9ec;}
+.ace_paren_color_6 {color: #dc91db;}
 
-.editor_dark .ace_paren_color_0 {color: rgb(255, 124, 124);}
-.editor_dark .ace_paren_color_1 {color: rgb(255, 187, 0);}
-.editor_dark .ace_paren_color_2 {color: yellow;}
-.editor_dark .ace_paren_color_3 {color: #2bcf2b;}
-.editor_dark .ace_paren_color_4 {color: lightskyblue;}
-.editor_dark .ace_paren_color_5 {color: rgb(150, 94, 255);}
-.editor_dark .ace_paren_color_6 {color: violet;}
+.editor_dark .ace_paren_color_0 {color: #ed90a4;}
+.editor_dark .ace_paren_color_1 {color: #d3a263;}
+.editor_dark .ace_paren_color_2 {color: #99b657;}
+.editor_dark .ace_paren_color_3 {color: #33c192;}
+.editor_dark .ace_paren_color_4 {color: #00bdce;}
+.editor_dark .ace_paren_color_5 {color: #94a9ec;}
+.editor_dark .ace_paren_color_6 {color: #dc91db;}
+

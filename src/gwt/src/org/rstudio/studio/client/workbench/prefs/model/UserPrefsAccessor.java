@@ -401,6 +401,9 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
+         if (!this.additional_source_columns)
+           return 0;
+
          return this.additional_source_columns;
       }-*/;
 
