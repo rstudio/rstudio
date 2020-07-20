@@ -61,7 +61,7 @@ public class SVNPane extends WorkbenchPane implements Display
    {
       Toolbar toolbar = new Toolbar("SVN Tab");
 
-      toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
+      toolbar.addLeftWidget(diffButton_ = commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsAddFiles().createToolbarButton());
       toolbar.addLeftWidget(commands_.vcsRemoveFiles().createToolbarButton());
@@ -161,9 +161,11 @@ public class SVNPane extends WorkbenchPane implements Display
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      diffButton_.setFocus(true);
    }
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
+
+   private ToolbarButton diffButton_;
 }

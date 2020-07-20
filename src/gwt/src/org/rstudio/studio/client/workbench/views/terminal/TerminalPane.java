@@ -235,7 +235,6 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      // !!! TODO
    }
 
    @Override

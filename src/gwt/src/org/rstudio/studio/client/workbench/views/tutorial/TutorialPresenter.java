@@ -139,7 +139,7 @@ public class TutorialPresenter
    @Override
    public void setFocus()
    {
-
+      display_.setFocus();
    }
 
    @Override
