@@ -211,7 +211,7 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    int version = 0;
    execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
-      std::string versionStr = readString(row, 0, "0");
+      std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
       version = safe_convert::stringTo<int>(versionStr, 0);
    });
    return version;
