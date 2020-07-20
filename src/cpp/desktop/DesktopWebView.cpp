@@ -70,6 +70,41 @@ private:
 
 std::map<QWebEnginePage*, DevToolsWindow*> s_devToolsWindows;
 
+
+class MouseNavigateSourceEventFilter : public QObject
+{
+public:
+   explicit MouseNavigateSourceEventFilter(WebView* parent)
+      : QObject(parent)
+   {
+   }
+
+protected:
+   // Handler for mouse back/forward button for source history navigation.
+   // This is needed for Desktop because QtWebEngine doesn't receive these button clicks. In the
+   // web browser/Server scenario this is handled by Source.java::handleMouseButtonNavigations().
+   bool eventFilter(QObject* object, QEvent* event) override
+   {
+      if (event->type() == QEvent::MouseButtonPress)
+      {
+         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+         if (mouseEvent->button() == Qt::ForwardButton ||
+             mouseEvent->button() == Qt::BackButton)
+         {
+            WebView* pWebView = qobject_cast<WebView*>(parent());
+            if (pWebView)
+            {
+               pWebView->mouseNavigateButtonClick(mouseEvent->button());
+               return true;
+            }
+         }
+      }
+
+      return QObject::eventFilter(object, event);
+   }
+};
+
+
 } // end anonymous namespace
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
@@ -368,6 +403,35 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    
    menu->exec(event->globalPos());
 }
+
+void WebView::childEvent(QChildEvent *event)
+{
+   if (event->added() && event->child()->inherits("QWidget"))
+   {
+      event->child()->installEventFilter(new MouseNavigateSourceEventFilter(this));
+   }
+}
+
+void WebView::mouseNavigateButtonClick(Qt::MouseButton button)
+{
+   QString command =  QStringLiteral(
+      "if (window.desktopHooks) "
+      "  window.desktopHooks.");
+   switch (button)
+   {
+   case Qt::ForwardButton:
+      command += QStringLiteral("mouseNavigateSourceForward();");
+      break;
+   case Qt::BackButton:
+      command += QStringLiteral("mouseNavigateSourceBackward();");
+      break;
+   default:
+      return;
+   }
+
+   webPage()->runJavaScript(command);
+}
+
 
 } // namespace desktop
 } // namespace rstudio

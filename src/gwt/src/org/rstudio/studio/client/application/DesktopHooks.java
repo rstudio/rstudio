@@ -251,6 +251,16 @@ public class DesktopHooks
       events_.fireEvent(new LauncherServerEvent(type, details));
    }
 
+   void mouseNavigateSourceForward()
+   {
+      commands_.sourceNavigateForward().execute();
+   }
+
+   void mouseNavigateSourceBackward()
+   {
+      commands_.sourceNavigateBack().execute();
+   }
+
    private final Commands commands_;
    private final EventBus events_;
    private final Session session_;
