@@ -17,7 +17,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/algorithm.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -26,8 +25,6 @@
 #include <core/Database.hpp>
 
 #include <core/system/Process.hpp>
-
-#include <r/RExec.hpp>
 
 #include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -70,6 +67,96 @@ void execQuery(boost::shared_ptr<database::IConnection> pConnection,
    }
 }
 
+template <typename T>
+std::string readString(const database::Row& row, T accessor, std::string defaultValue = "")
+{
+   std::ostringstream ostr;
+   auto& props = row.get_properties(accessor);
+   switch(props.get_data_type())
+   {
+   case soci::dt_string:
+      ostr << row.get<std::string>(accessor);
+      break;
+   case soci::dt_double:
+      ostr << row.get<double>(accessor);
+      break;
+   case soci::dt_integer:
+      ostr << row.get<int>(accessor);
+      break;
+   case soci::dt_long_long:
+      ostr << row.get<long long>(accessor);
+      break;
+   case soci::dt_unsigned_long_long:
+      ostr << row.get<unsigned long long>(accessor);
+      break;
+   default:
+      ostr << defaultValue;
+   }
+   return ostr.str();
+}
+
+json::Object itemToCSLJson(std::map<std::string,std::string> item)
+{
+   json::Object cslJson;
+   for (auto field : item)
+   {
+      cslJson[field.first] = field.second;
+   }
+   return cslJson;
+}
+
+
+ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnection,
+                               const std::string &name,
+                               const std::string& sql)
+{
+   int version = 0;
+   std::map<std::string,std::string> currentItem;
+   json::Array itemsJson;
+   execQuery(pConnection, sql, [&version, &currentItem, &itemsJson](const database::Row& row) {
+
+      std::string key = row.get<std::string>("key");
+      std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
+
+      // inception
+      if (currentKey.empty())
+      {
+         currentItem["key"] = key;
+      }
+
+      // finished an item
+      else if (key != currentKey)
+      {
+         itemsJson.push_back(itemToCSLJson(currentItem));
+         currentItem.clear();
+         currentItem["key"] = key;
+      }
+
+      // update version
+      int rowVersion = row.get<int>("version");
+      if (rowVersion > version)
+         version = rowVersion;
+
+      // read the csl
+      std::string name = row.get<std::string>("name");
+      std::string value = readString(row, "value");
+      currentItem[name] = value;
+   });
+
+   // add the final item (if we had one)
+   if (currentItem.count("key"))
+      itemsJson.push_back(itemToCSLJson(currentItem));
+
+
+   // TODO: run creators query
+
+   // success!
+   ZoteroCollection collection(ZoteroCollectionSpec(name, version));
+   collection.items = itemsJson;
+   return collection;
+}
+
+
 ZoteroCollectionDBSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection)
 {
    ZoteroCollectionDBSpecs specs;
@@ -84,149 +171,149 @@ ZoteroCollectionDBSpecs getCollections(boost::shared_ptr<database::IConnection> 
 }
 
 
+std::string collectionSQL(const std::string& name = "")
+{
+   boost::format fmt(R"(
+      SELECT
+         items.key as key,
+         items.version,
+         fields.fieldName as name,
+         itemDataValues.value as value
+      FROM
+         items
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join itemTypeFields on itemTypes.itemTypeID = itemTypeFields.itemTypeID
+         join libraries on items.libraryID = libraries.libraryID
+         join itemData on items.itemID = itemData.itemID
+         join itemDataValues on itemData.valueID = itemDataValues.valueID
+         join fields on itemData.fieldID = fields.fieldID
+         %1%
+      WHERE
+        libraries.type = 'user'
+        AND itemTypes.typeName <> 'attachment'
+        %2%
+      ORDER BY
+        items.key ASC,
+        itemTypeFields.orderIndex
+   )");
+   return boost::str(fmt %
+      (!name.empty() ? "join collections on libraries.libraryID = collections.libraryID" : "") %
+      (!name.empty() ? "AND collections.collectionName = '" + name + "'" : ""));
+}
+
+ZoteroCollection getLibrary(boost::shared_ptr<database::IConnection> pConnection)
+{
+   return getCollection(pConnection, kMyLibrary, collectionSQL());
+}
+
+
 int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    int version = 0;
    execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
-
-      // bizzarly, this value comes back as a dt_string!?!?! we crashed when attempting to do a
-      // get<int>. rather than just switch to std::string, let's actually check the type to
-      // make sure we don't crash at some point in the future if this no longer returns dt_string
-      std::ostringstream ostr;
-      auto& props = row.get_properties(0);
-      switch(props.get_data_type())
-      {
-      case soci::dt_string:
-         ostr << row.get<std::string>(0);
-         break;
-      case soci::dt_double:
-         ostr << row.get<double>(0);
-         break;
-      case soci::dt_integer:
-         ostr << row.get<int>(0);
-         break;
-      case soci::dt_long_long:
-         ostr << row.get<long long>(0);
-         break;
-      case soci::dt_unsigned_long_long:
-         ostr << row.get<unsigned long long>(0);
-         break;
-      default:
-         ostr << "0";
-      }
-      version = safe_convert::stringTo<int>(ostr.str(), 0);
+      std::string versionStr = readString(row, 0, "0");
+      version = safe_convert::stringTo<int>(versionStr, 0);
    });
    return version;
 }
 
 
-void testZoteroSQLite(std::string dataDir)
+Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppConnection)
 {
-   // connect to sqlite
    std::string db = dataDir + "/zotero.sqlite";
    database::SqliteConnectionOptions options = { db };
-   boost::shared_ptr<database::IConnection> pConnection;
-   Error error = database::connect(options, &pConnection);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   std::cerr << "library: " << getLibraryVersion(pConnection) << std::endl;
-
-   ZoteroCollectionDBSpecs specs = getCollections(pConnection);
-   for (auto spec : specs)
-      std::cerr << spec.id << " - " << spec.name << ": " << spec.version << std::endl;
-}
-
-SEXP createCacheSpecSEXP( ZoteroCollectionSpec cacheSpec, r::sexp::Protect* pProtect)
-{
-   std::vector<std::string> names;
-   names.push_back(kName);
-   names.push_back(kVersion);
-   SEXP cacheSpecSEXP = r::sexp::createList(names, pProtect);
-   r::sexp::setNamedListElement(cacheSpecSEXP, kName, cacheSpec.name);
-   r::sexp::setNamedListElement(cacheSpecSEXP, kVersion, cacheSpec.version);
-   return cacheSpecSEXP;
+   return database::connect(options, ppConnection);
 }
 
 void getLocalLibrary(std::string key,
                      ZoteroCollectionSpec cacheSpec,
                      ZoteroCollectionsHandler handler)
 {
-   r::sexp::Protect protect;
-   std::string libraryJsonStr;
-   Error error = r::exec::RFunction(".rs.zoteroGetLibrary", key,
-                                    createCacheSpecSEXP(cacheSpec, &protect)).call(&libraryJsonStr);
+   // connect to the database
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = connect(key, &pConnection);
    if (error)
    {
       handler(error, std::vector<ZoteroCollection>());
    }
+
+   // get the library version and reflect the cache back if it's up to date
+   int version = getLibraryVersion(pConnection);
+   if (version >= cacheSpec.version)
+   {
+      handler(error, { cacheSpec });
+   }
    else
    {
-      json::Object libraryJson;
-      error = libraryJson.parse(libraryJsonStr);
-      if (error)
-      {
-         handler(error, std::vector<ZoteroCollection>());
-      }
-      else
-      {
-         ZoteroCollection collection;
-         collection.name = libraryJson[kName].getString();
-         collection.version = libraryJson[kVersion].getInt();
-         collection.items = libraryJson[kItems].getArray();
-         handler(Success(), std::vector<ZoteroCollection>{ collection });
-      }
+      ZoteroCollection library = getLibrary(pConnection);
+      handler(Success(), std::vector<ZoteroCollection>{ library });
    }
 }
-
 
 void getLocalCollections(std::string key,
                          std::vector<std::string> collections,
                          ZoteroCollectionSpecs cacheSpecs,
                          ZoteroCollectionsHandler handler)
 {
-    json::Array cacheSpecsJson;
-    std::transform(cacheSpecs.begin(), cacheSpecs.end(), std::back_inserter(cacheSpecsJson), [](ZoteroCollectionSpec spec) {
-       json::Object specJson;
-       specJson[kName] = spec.name;
-       specJson[kVersion] = spec.version;
-       return specJson;
-    });
+   // connect to the database
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = connect(key, &pConnection);
+   if (error)
+   {
+      handler(error, std::vector<ZoteroCollection>());
+   }
 
-    r::sexp::Protect protect;
-    std::string collectionJsonStr;
-    Error error = r::exec::RFunction(".rs.zoteroGetCollections", key, collections, cacheSpecsJson)
-                                     .call(&collectionJsonStr);
-    if (error)
-    {
-       handler(error, std::vector<ZoteroCollection>());
-    }
-    else
-    {
-       json::Array collectionsJson;
-       error = collectionsJson.parse(collectionJsonStr);
-       if (error)
-       {
-          handler(error, std::vector<ZoteroCollection>());
-       }
-       else
-       {
-           ZoteroCollections collections;
-           std::transform(collectionsJson.begin(), collectionsJson.end(), std::back_inserter(collections), [](json::Value json) {
-              ZoteroCollection collection;
-              json::Object collectionJson = json.getObject();
-              collection.name = collectionJson[kName].getString();
-              collection.version = collectionJson[kVersion].getInt();
-              collection.items = collectionJson[kItems].getArray();
-              return collection;
-           });
-           handler(Success(), collections);
-       }
-    }
+   // divide collections into ones we need to do a download for, and one that
+   // we already have an up to date version for
+   ZoteroCollections upToDateCollections;
+   std::vector<std::pair<int, ZoteroCollectionSpec>> downloadCollections;
+
+   // get all of the user's collections
+   ZoteroCollectionDBSpecs userCollections = getCollections(pConnection);
+   for (auto userCollection : userCollections)
+   {
+      std::string name = userCollection.name;
+      int version = userCollection.version;
+      int collectionId = userCollection.id;
+
+      // see if this is a requested collection
+      bool requested =
+        collections.size() == 0 || // all collections requested
+        std::count_if(collections.begin(),
+                      collections.end(),
+                      [name](const std::string& str) { return boost::algorithm::iequals(name, str); }) > 0 ;
+
+      if (requested)
+      {
+         // see if we need to do a download for this collection
+         ZoteroCollectionSpecs::const_iterator it = std::find_if(
+           cacheSpecs.begin(), cacheSpecs.end(), [name](ZoteroCollectionSpec spec) { return boost::algorithm::iequals(spec.name,name); }
+         );
+         if (it != cacheSpecs.end())
+         {
+            ZoteroCollectionSpec collectionSpec(name, version);
+            if (it->version < version)
+               downloadCollections.push_back(std::make_pair(collectionId, collectionSpec));
+            else
+               upToDateCollections.push_back(collectionSpec);
+         }
+         else
+         {
+            downloadCollections.push_back(std::make_pair(collectionId, ZoteroCollectionSpec(name, version)));
+         }
+      }
+   }
+
+   // read collections we need to then append them to already up to date collections
+   ZoteroCollections resultCollections = upToDateCollections;
+   for (auto downloadSpec : downloadCollections)
+   {
+      std::string name = downloadSpec.second.name;
+      resultCollections.push_back(getCollection(pConnection, name, collectionSQL(name)));
+   }
+   handler(Success(), resultCollections);
 }
+
 
 FilePath userHomeDir()
 {
