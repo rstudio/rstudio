@@ -70,7 +70,9 @@ export function citationCompletionHandler(
       if (entry && bibManager.findIdInLocalBibliography(entry.source.id)) {
         // It's already in the bibliography, just write the id
         const tr = view.state.tr;
-        performCompletionReplacement(tr, pos, entry.source.id);
+        const schema = view.state.schema;
+        const id = schema.text(entry.source.id, [schema.marks.cite_id.create()]);
+        performCompletionReplacement(tr, pos, id);
         view.dispatch(tr);
       } else if (entry && entry.source.DOI) {
         // It isn't in the bibliography, show the insert cite dialog

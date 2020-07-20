@@ -662,7 +662,9 @@ export async function insertCitation(
       if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
 
         // Write the cite id
-        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+        const schema = view.state.schema;
+        const id = schema.text(result.id, [schema.marks.cite_id.create()]);
+        performCompletionReplacement(tr, tr.mapping.map(pos), id);
 
         view.dispatch(tr);
       }
