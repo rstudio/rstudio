@@ -613,7 +613,7 @@ export async function insertCitation(
     const tr = view.state.tr;
 
     // This could be called by paste handler, so stop completions
-    performCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
+    performCiteCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
     view.dispatch(tr);
 
   } else {
@@ -664,7 +664,7 @@ export async function insertCitation(
         // Write the cite id
         const schema = view.state.schema;
         const id = schema.text(result.id, [schema.marks.cite_id.create()]);
-        performCompletionReplacement(tr, tr.mapping.map(pos), id);
+        performCiteCompletionReplacement(tr, tr.mapping.map(pos), id);
 
         view.dispatch(tr);
       }
@@ -672,6 +672,20 @@ export async function insertCitation(
   }
 
   view.focus();
+
+}
+
+export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
+
+  // perform replacement
+  performCompletionReplacement(tr, pos, replacement);
+
+  // find the range of the cite and fixup marks
+  const range = getMarkRange(tr.selection.$head, tr.doc.type.schema.marks.cite);
+  if (range) {
+    encloseInCiteMark(tr, range.from, range.to);
+  }
+
 
 }
 

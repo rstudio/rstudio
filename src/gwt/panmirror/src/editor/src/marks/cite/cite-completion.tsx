@@ -32,7 +32,7 @@ import { EditorEvents } from '../../api/events';
 import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation, insertCitation } from './cite';
+import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -72,7 +72,7 @@ export function citationCompletionHandler(
         const tr = view.state.tr;
         const schema = view.state.schema;
         const id = schema.text(entry.source.id, [schema.marks.cite_id.create()]);
-        performCompletionReplacement(tr, pos, id);
+        performCiteCompletionReplacement(tr, pos, id);
         view.dispatch(tr);
       } else if (entry && entry.source.DOI) {
         // It isn't in the bibliography, show the insert cite dialog
