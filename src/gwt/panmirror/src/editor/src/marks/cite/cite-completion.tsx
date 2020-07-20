@@ -120,7 +120,7 @@ function filterCitations(
   if (token.includes(' ')) {
     const firstPart = token.split(' ')[0];
     const firstPartResults = search(firstPart);
-    if (firstPartResults.find(entry => entry.source.id === firstPart) {
+    if (firstPartResults.find(entry => entry.source.id === firstPart)) {
       return [];
     }
   }
