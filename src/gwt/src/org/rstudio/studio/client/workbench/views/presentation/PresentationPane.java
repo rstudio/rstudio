@@ -299,7 +299,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    public void setFocus()
    {
-      // !!! TODO
+      slideNavigationMenu_.focus();
    }
    
    private final native void initPresentationCallbacks() /*-{

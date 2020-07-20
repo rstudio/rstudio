@@ -195,7 +195,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       Toolbar toolbar = new Toolbar("Packages Tab");
      
       // install packages
-      toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
+      toolbar.addLeftWidget(installButton_ = commands_.installPackage().createToolbarButton());
       toolbar.addLeftSeparator();
       
       // update packages
@@ -333,7 +333,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setFocus()
    {
-      // !!! TO DO
+      installButton_.setFocus(true);
    }
    
    private void createPackagesTable()
@@ -694,7 +694,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_;
-   
+
+   private ToolbarButton installButton_;
    private ToolbarMenuButton packratMenuButton_;
    private ToolbarMenuButton renvMenuButton_;
    private Widget projectButtonSeparator_;

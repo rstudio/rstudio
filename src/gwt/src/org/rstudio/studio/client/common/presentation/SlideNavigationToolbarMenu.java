@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SlideNavigationToolbarMenu 
+public class SlideNavigationToolbarMenu
                      implements SlideNavigationMenu
 {
    public SlideNavigationToolbarMenu(Toolbar toolbar)
@@ -135,7 +135,12 @@ public class SlideNavigationToolbarMenu
    {
       return editButton_;
    }
-   
+
+   public void focus()
+   {
+      homeButton_.setFocus(true);
+   }
+
    private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
    {
       public SlidesPopupMenu()
