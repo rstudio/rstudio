@@ -14,6 +14,7 @@
  */
 
 import { Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { makeEventType } from './events';
 import { Navigation } from './navigation';
@@ -24,6 +25,6 @@ export const StateChangeEvent = makeEventType('StateChange');
 export const ResizeEvent = makeEventType('Resize');
 export const LayoutEvent = makeEventType('Layout');
 export const ScrollEvent = makeEventType('Scroll');
-export const FocusEvent = makeEventType('Focus');
+export const FocusEvent = makeEventType<ProsemirrorNode>('Focus');
 export const DispatchEvent = makeEventType<Transaction>('Dispatch');
 export const NavigateEvent = makeEventType<Navigation>('Navigate');

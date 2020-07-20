@@ -15,20 +15,24 @@
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { DecorationSet } from 'prosemirror-view';
+import { DecorationSet, EditorView } from 'prosemirror-view';
 
 import React from 'react';
 import uniqby from 'lodash.uniqby';
 
-import { BibliographyManager, BibliographySource } from '../../api/bibliography';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
+import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
+import { PandocServer } from '../../api/pandoc';
+import { EditorEvents } from '../../api/events';
+import { FocusEvent } from '../../api/event-types';
+
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation } from './cite';
+import { parseCitation, insertCitation } from './cite';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -40,8 +44,17 @@ export const kCitationCompleteScope = 'CitationScope';
 
 export function citationCompletionHandler(
   ui: EditorUI,
+  events: EditorEvents,
   bibManager: BibliographyManager,
+  server: PandocServer
 ): CompletionHandler<BibliographyEntry> {
+
+  // prime bibliography on initial focus
+  const focusUnsubscribe = events.subscribe(FocusEvent, (doc) => {
+    bibManager.load(ui, doc!);
+    focusUnsubscribe();
+  });
+
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
@@ -49,8 +62,20 @@ export function citationCompletionHandler(
 
     completions: citationCompletions(ui, bibManager),
 
-    filter: (_completions: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(token, bibManager, ui);
+    filter: (entries: BibliographyEntry[], _state: EditorState, token: string) => {
+      return filterCitations(token, bibManager, entries, ui);
+    },
+
+    replace(view: EditorView, pos: number, entry: BibliographyEntry | null) {
+      if (entry && bibManager.findIdInLocalBibliography(entry.source.id)) {
+        // It's already in the bibliography, just write the id
+        const tr = view.state.tr;
+        performCompletionReplacement(tr, pos, entry.source.id);
+        view.dispatch(tr);
+      } else if (entry && entry.source.DOI) {
+        // It isn't in the bibliography, show the insert cite dialog
+        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source, entry.source.provider);
+      }
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -75,15 +100,16 @@ export function citationCompletionHandler(
 function filterCitations(
   token: string,
   manager: BibliographyManager,
+  entries: BibliographyEntry[],
   ui: EditorUI,
 ) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
-    return [];
+    return entries;
   }
 
   // String for a search
-  const searchResults = manager.searchInLoadedBibliography(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+  const searchResults = manager.searchAllSources(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
   const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
 
   // If we hav an exact match, no need for completions
@@ -102,17 +128,41 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         token: parsed.token,
         pos: parsed.pos,
         offset: parsed.offset,
-        completions: (_state: EditorState) =>
-          manager.loadBibliography(ui, context.doc).then((bibliography) => {
+        completions: async (_state: EditorState) => {
 
+          // function to retreive entries from the bib manager
+          const managerEntries = () => {
             // Filter duplicate sources
-            const dedupedSources = uniqby(bibliography.sources, (source: BibliographySource) => source.id);
+            const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
             return sortedSources.map(source => entryForSource(source, ui));
+          };
+
+          // if we already have some completions from a previous load, then
+          // return them and kick off a refresh (new results will stream in)
+          if (manager.hasSources()) {
+
+            // kick off another load which we'll stream in by setting entries
+            let loadedEntries: BibliographyEntry[] | null = null;
+            manager.load(ui, context.doc).then(() => {
+              loadedEntries = managerEntries();
+            });
+
+            // return stream
+            return {
+              items: managerEntries(),
+              stream: () => loadedEntries
+            };
+
+            // no previous load, just perform the load and return the entries
+          } else {
+            return manager.load(ui, context.doc).then(() => {
+              return managerEntries();
+            });
           }
-          ),
+        },
         decorations:
           parsed.token.length === 0
             ? DecorationSet.create(
@@ -140,6 +190,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
+      adornmentImage={entry.adornmentImage}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || ''}
       detail={detail}

@@ -40,10 +40,13 @@ public class SourceAppCommand
                                               String buttonLabel,
                                               String buttonTitle,
                                               ImageResourceProvider imageResourceProvider,
-                                              ClickHandler clickHandler)
+                                              ClickHandler clickHandler,
+                                              /* false when button is managed elsewhere */
+                                              boolean synced)
       {
          super(buttonLabel, buttonTitle, imageResourceProvider, clickHandler);
          sourceCmd_ = sourceCmd;
+         synced_ = synced;
       }
 
       @Override
@@ -51,13 +54,19 @@ public class SourceAppCommand
       {
          super.onAttach();
 
-         setEnabled(command_.isVisible());
-         setVisible(command_.isVisible());
+         if (synced_)
+         {
+            setEnabled(buttonVisible_);
+            setVisible(buttonVisible_);
+         }
 
          parentToolbar_ = getParentToolbar();
          assert sourceCmd_ != null;
-         handlers_.add(sourceCmd_.addEnabledChangedHandler(this));
-         handlers_.add(sourceCmd_.addVisibleChangedHandler(this));
+         if (synced_)
+         {
+            handlers_.add(sourceCmd_.addEnabledChangedHandler(this));
+            handlers_.add(sourceCmd_.addVisibleChangedHandler(this));
+         }
 
          if (isVisible())
             setEnabled(true);
@@ -67,7 +76,8 @@ public class SourceAppCommand
       protected void onDetach()
       {
          super.onDetach();
-         handlers_.removeHandler();
+         if (synced_)
+            handlers_.removeHandler();
       }
 
       @Override
@@ -87,6 +97,7 @@ public class SourceAppCommand
          }
       }
 
+      private final boolean synced_;
       private final SourceAppCommand sourceCmd_;
       private final HandlerRegistrations handlers_ = new HandlerRegistrations();
       private Toolbar parentToolbar_;
@@ -134,19 +145,12 @@ public class SourceAppCommand
 
    public ToolbarButton createToolbarButton()
    {
-      CommandSourceColumnToolbarButton button =
-         new CommandSourceColumnToolbarButton(
-            this,
-            command_.getButtonLabel(),
-            command_.getDesc(),
-            command_,
-            event -> {
-               columnManager_.setActive(column_);
-               command_.execute();
-            });
-      if (command_.getTooltip() != null)
-         button.setTitle(command_.getTooltip());
-      return button;
+      return createToolbarButton(true);
+   }
+
+   public ToolbarButton createUnsyncedToolbarButton()
+   {
+      return createToolbarButton(false);
    }
 
    public MenuItem createMenuItem()
@@ -165,6 +169,7 @@ public class SourceAppCommand
 
    public void setVisible(boolean setCommand, boolean commandVisible, boolean buttonVisible)
    {
+      buttonVisible_ = buttonVisible;
       if (setCommand)
          command_.setVisible(commandVisible);
       handlers_.fireEvent(new VisibleChangedEvent(command_, column_, buttonVisible));
@@ -177,11 +182,31 @@ public class SourceAppCommand
 
    public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonVisible)
    {
+      buttonVisible_ = buttonVisible;
       if (setCommand)
          command_.setEnabled(commandEnabled);
       handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonVisible)));
    }
 
+   private ToolbarButton createToolbarButton(boolean synced)
+   {
+      CommandSourceColumnToolbarButton button =
+         new CommandSourceColumnToolbarButton(
+            this,
+            command_.getButtonLabel(),
+            command_.getDesc(),
+            command_,
+            event -> {
+               columnManager_.setActive(column_);
+               command_.execute();
+            },
+            synced);
+      if (command_.getTooltip() != null)
+         button.setTitle(command_.getTooltip());
+      return button;
+   }
+
+   private boolean buttonVisible_ = false;
    private final AppCommand command_;
    private final String column_;
    private final SourceColumnManager columnManager_;

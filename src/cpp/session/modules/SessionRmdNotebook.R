@@ -123,7 +123,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             .rs.readFile(
                file     = file,
                encoding = "UTF-8",
-               binary   = ext %in% c("png", "jpg", "jpeg", "rdf")
+               binary   = ext %in% c("webp", "png", "jpg", "jpeg", "rdf")
             )
          )
          

@@ -43,7 +43,7 @@ namespace core {
 namespace rstudio {
 namespace r {
 namespace exec {
-   
+
 // safe (no r error longjump) execution of abritrary nullary function
 core::Error executeSafely(boost::function<void()> function);
 
@@ -72,7 +72,19 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
    return executeSafely(target);
 }
 
-   
+// flags that can be set during evaluation
+enum EvalFlags
+{
+   EvalFlagsNone             = 0,
+   EvalFlagsSuppressWarnings = 1,
+   EvalFlagsSuppressMessages = 2
+};
+
+inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
+{
+   return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
 // parse and evaluate expressions  
 core::Error executeStringUnsafe(const std::string& str, 
                                 SEXP* pSEXP, 
@@ -83,9 +95,11 @@ core::Error executeStringUnsafe(const std::string& str,
                                 sexp::Protect* pProtect);
 
 core::Error executeString(const std::string& str);
-core::Error evaluateString(const std::string& str, 
-                           SEXP* pSEXP, 
-                           sexp::Protect* pProtect);
+core::Error evaluateString(const std::string& str,
+                           SEXP* pSEXP,
+                           sexp::Protect* pProtect,
+                           EvalFlags flags = EvalFlagsNone);
+
 template <typename T>
 core::Error evaluateString(const std::string& str, T* pValue)
 {

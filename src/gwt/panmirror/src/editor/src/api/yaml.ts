@@ -18,6 +18,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { findTopLevelBodyNodes } from './node';
 
 import yaml from 'js-yaml';
+import { NodeWithPos } from 'prosemirror-utils';
 
 export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
 export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
@@ -90,3 +91,24 @@ function logException(e: Error) {
   // TODO: log exceptions (we don't want to use console.log in production code, so this would
   // utilize some sort of external logging facility)
 }
+
+export interface ParsedYaml {
+  yamlCode: string;
+  yaml: any;
+  node: NodeWithPos;
+}
+
+export function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
+  const yamlNodes = yamlMetadataNodes(doc);
+
+  const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
+    const yamlText = node.node.textContent;
+    const yamlCode = stripYamlDelimeters(yamlText);
+    return { yamlCode, yaml: parseYaml(yamlCode), node };
+  });
+  return parsedYamlNodes;
+}
+
+
+
+

@@ -39,6 +39,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
@@ -49,6 +50,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -57,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -85,6 +88,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public void initialize(Binder binder,
                           Commands commands,
                           EventBus events,
+                          UserPrefs userPrefs,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
                           SourceServerOperations sourceServerOperations)
@@ -93,6 +97,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       binder.bind(commands_, this);
 
       events_ = events;
+      userPrefs_ = userPrefs;
       editingTargetSource_ = editingTargetSource;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
@@ -522,17 +527,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return target;
    }
 
-   public void addTab(Widget widget,
-                      FileIcon icon,
-                      String id,
-                      String value,
-                      String tabTooltip,
-                      Integer position,
-                      boolean switchToTab)
-   {
-      display_.addTab(widget, icon, id, value, tabTooltip, position, switchToTab);
-   }
-
    public void closeDoc(String docId)
    {
       suspendDocumentClose_ = true;
@@ -613,7 +607,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       if (activeEditor_ != null)
          return activeEditor_;
-      if (display_.getActiveTabIndex() > 0 &&
+      if (display_.getActiveTabIndex() > -1 &&
          editors_.size() > display_.getActiveTabIndex())
          return editors_.get(display_.getActiveTabIndex());
       return null;
@@ -698,7 +692,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       else
       {
          HashSet<AppCommand> commandsToEnable = new HashSet<>(newCommands);
-         commandsToEnable.removeAll(activeCommands_);
 
          for (AppCommand command : commandsToEnable)
          {
@@ -822,6 +815,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                      getNextActiveEditor().getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       boolean cmdEnabled = rsCommandsAvailable && active;
 
+      getSourceCommand(commands_.rsconnectConfigure()).setVisible(false);
+      getSourceCommand(commands_.rsconnectDeploy()).setVisible(false);
       getSourceCommand(commands_.rsconnectDeploy()).setVisible(active, cmdEnabled, rsCommandsAvailable);
       if (active)
       {
@@ -849,13 +844,15 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageRMarkdownCommands(boolean active)
    {
-      boolean rmdCommandsAvailable = active &&
+      boolean rmdCommandsAvailable =
               manager_.getSession().getSessionInfo().getRMarkdownPackageAvailable() &&
                       activeEditor_ != null &&
                       activeEditor_.getExtendedFileType() != null &&
                       activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
-      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(rmdCommandsAvailable);
-      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(rmdCommandsAvailable);
+      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(false);
+      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(false);
+      getSourceCommand(commands_.editRmdFormatOptions()).setVisible(active && rmdCommandsAvailable, rmdCommandsAvailable, rmdCommandsAvailable);
+      getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(active && rmdCommandsAvailable, rmdCommandsAvailable,rmdCommandsAvailable);
    }
 
    private void manageSynctexCommands(boolean active)
@@ -877,6 +874,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean cmdEnabled = active && synctexAvailable;
+      getSourceCommand(commands_.synctexSearch()).setVisible(false);
+      getSourceCommand(commands_.synctexSearch()).setEnabled(false);
       getSourceCommand(commands_.synctexSearch()).setVisible(active, cmdEnabled, synctexAvailable);
       getSourceCommand(commands_.synctexSearch()).setEnabled(active, cmdEnabled, synctexAvailable);
    }
@@ -962,6 +961,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                @Override
                public void onResponseReceived(SourceDocument newDoc)
                {
+                  // apply (dynamic) doc property defaults
+                  SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
+                  
                   EditingTarget target =
                      addTab(newDoc, Source.OPEN_INTERACTIVE);
 
@@ -1136,6 +1138,28 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       syncTabOrder();
       fireDocTabsChanged();
    }
+   
+   public static void applyDocPropertyDefaults(SourceDocument document, boolean newDoc, UserPrefs userPrefs)
+   {
+      // ensure this is a text file
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      FileType type = EditingTargetSource.getTypeFromDocument(registry, document);
+      if (type instanceof TextFileType)
+      {
+         TextFileType textFile = (TextFileType)type;
+         
+         // respect visual editing default for new markdown docs
+         if (textFile.isMarkdown() && 
+             newDoc && 
+             userPrefs.visualMarkdownEditingIsDefault().getValue())
+         {
+            document.getProperties().setString(
+                  TextEditingTarget.RMD_VISUAL_MODE,
+                  DocUpdateSentinel.PROPERTY_TRUE
+               );
+         }
+      }
+   }
 
    private void closeTabIndex(int idx, boolean closeDocument)
    {
@@ -1195,6 +1219,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private SourceServerOperations server_;
    private Timer debugSelectionTimer_ = null;
    private EventBus events_;
+   private UserPrefs userPrefs_;
    private EditingTargetSource editingTargetSource_;
 
    private SourceColumnManager manager_;

@@ -79,7 +79,21 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    
    # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
    setwd("x86")
-   cmake_args <- sprintf("-G \"Visual Studio 15 2017\" -A Win32 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DSOCI_TESTS=OFF -DSOCI_SHARED=OFF -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DPOSTGRESQL_INCLUDE_DIR=\"%s\" -DPOSTGRESQL_LIBRARY=\"%s\" ..\\..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3-debug-x86.lib"), file.path(postgresql_dir, "include"), file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"))
+   cmake_args <- paste0("-G \"Visual Studio 15 2017\" ",
+                        "-A Win32 ",
+                        "-DCMAKE_VERBOSE_MAKEFILE=ON ",
+                        "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",
+                        "-DBoost_USE_STATIC_LIBS=ON ",
+                        "-DCMAKE_LIBRARY_PATH=\"", file.path(boost_dir, "lib"), "\" ",
+                        "-DSOCI_TESTS=OFF ",
+                        "-DSOCI_SHARED=OFF ",
+                        "-DWITH_POSTGRESQL=ON ",
+                        "-DWITH_SQLITE3=ON ",
+                        "-DSQLITE3_INCLUDE_DIR=\"", sqlite_header_dir, "\" ",
+                        "-DSQLITE3_LIBRARY=\"", file.path(sqlite_dir, "sqlite3-debug-x86.lib"), "\" ",
+                        "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
+                        "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ", 
+                        "..\\..")
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
    

@@ -614,7 +614,10 @@ void setFileLocalParseOptions(const std::wstring& rCode,
    {
       std::wstring::const_iterator matchBegin = match[0].second;
       std::wstring::const_iterator matchEnd   = std::find(matchBegin, end, L'\n');
-      std::string command = string_utils::trimWhitespace(std::string(matchBegin, matchEnd));
+      
+      std::string command = string_utils::trimWhitespace(
+               string_utils::wideToUtf8(
+                  std::wstring(matchBegin, matchEnd)));
       
       if (command == "off")
       {

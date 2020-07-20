@@ -70,7 +70,7 @@ Error signRequest(const std::string& rsaPrivateKey,
    std::copy(signature.begin(), signature.end(), std::back_inserter(signatureData));
 
    std::string signatureHeader;
-   error = crypto::base64Encode(signatureData, &signatureHeader);
+   error = crypto::base64Encode(signatureData, signatureHeader);
    if (error)
       return error;
 
@@ -103,7 +103,7 @@ Error verifyRequestSignature(const std::string& rsaPublicKey,
    // base-64 decode the signature included on the request
    // it is encoded to allow transmission of the binary payload over HTTP
    std::vector<unsigned char> decoded;
-   Error error = core::system::crypto::base64Decode(signature, &decoded);
+   Error error = core::system::crypto::base64Decode(signature, decoded);
    if (error)
       return error;
 

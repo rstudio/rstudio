@@ -18,7 +18,7 @@ import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prose
 import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
-import { BibliographyResult } from './bibliography';
+import { BibliographyResult } from './bibliography/bibliography-provider_local';
 
 export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;

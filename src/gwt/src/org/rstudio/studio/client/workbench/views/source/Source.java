@@ -169,8 +169,6 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEv
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocHandler;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;

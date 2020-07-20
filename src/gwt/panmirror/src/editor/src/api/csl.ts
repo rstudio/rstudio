@@ -12,8 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { parseYamlNodes } from "./yaml";
 
 export interface CSL {
+
+  // The id. This is technically required, but some providers (like crossref) don't provide
+  // one
+  id?: string;
 
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
@@ -69,7 +76,7 @@ export interface CSLName {
 }
 
 export interface CSLDate {
-  'date-parts'?: [number, number?, number?][];
+  'date-parts'?: Array<[number, number?, number?]>;
   'raw'?: string;
 }
 
@@ -97,7 +104,33 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
       }
       return csl;
     });
+
+  // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
+  cslAny.abstract = undefined;
+
   return cslAny as CSL;
+}
+
+export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
+
+  // read the Yaml blocks from the document
+  const parsedYamlNodes = parseYamlNodes(doc);
+
+  const cslParsedYamls = parsedYamlNodes.filter(
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.csl,
+  );
+
+  // Look through any yaml nodes to see whether any contain csl information
+  if (cslParsedYamls.length > 0) {
+
+    // Pandoc uses the last csl block (whether or not it shares a yaml block with the
+    // bibliographies element that pandoc will ultimately use) so just pick the last csl
+    // block.
+    const cslParsedYaml = cslParsedYamls[cslParsedYamls.length - 1];
+    const cslFile = cslParsedYaml.yaml.csl;
+    return cslFile;
+  }
+  return undefined;
 }
 
 

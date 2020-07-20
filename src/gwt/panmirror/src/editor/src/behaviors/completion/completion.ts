@@ -13,8 +13,11 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
+// TODO: it may be that we need to not do full re-requests from the filter 
+// when we have streamed results (as they can cause reset of the allCompletions)
+
+
+import { Plugin, PluginKey, Transaction, Selection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import {
@@ -24,6 +27,8 @@ import {
   completionsShareScope,
   performCompletionReplacement,
   CompletionResult,
+  Completions,
+  CompletionsStream
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -161,7 +166,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.view = view;
 
           // update completions
-          this.updateCompletions(view);
+          this.updateCompletions(view, true);
         },
 
         destroy: () => {
@@ -259,10 +264,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
     window.document.addEventListener('focusin', this.clearCompletions);
   }
 
-  private updateCompletions(view: EditorView) {
+  private updateCompletions(view: EditorView, resetSelection: boolean) {
     const state = key.getState(view.state);
 
     if (state?.handler && state?.result) {
+
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
@@ -280,26 +286,50 @@ class CompletionPlugin extends Plugin<CompletionState> {
           return;
         }
 
-        // save completions
-        this.setAllCompletions(completions, state.handler.view.horizontal);
+        // function to update completions
+        const updateCompletions = (updatedCompletions: any[]) => {
 
-        // display if the request still maps to the current state
-        if (this.version === requestVersion) {
-          // if there is a filter then call it and update displayed completions
-          const displayedCompletions = state.handler.filter
-            ? state.handler.filter(completions, view.state, state.result.token)
-            : null;
-          if (displayedCompletions) {
-            this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+          // save completions
+          this.setAllCompletions(updatedCompletions, !!state.handler?.view.horizontal, resetSelection);
+
+          // display if the request still maps to the current state
+          if (state.handler && state.result && this.version === requestVersion) {
+            // if there is a filter then call it and update displayed completions
+            const displayedCompletions = state.handler.filter
+              ? state.handler.filter(this.allCompletions, view.state, state.result.token)
+              : null;
+            if (displayedCompletions) {
+              this.setDisplayedCompletions(displayedCompletions, !!state.handler.view.horizontal, resetSelection);
+            }
+
+            this.renderCompletions(view);
           }
 
-          this.renderCompletions(view);
-        }
+        };
 
+        // if we got an array, just set it. if we got a stream then poll it for it's update
+        if (Array.isArray(completions)) {
+          updateCompletions(completions);
+        } else {
+          const completionStream = completions as CompletionsStream;
+          updateCompletions(completionStream.items);
+          const pollingInterval = setInterval(() => {
+            // if the document has been updated then invalidate
+            if (this.version !== requestVersion) {
+              clearInterval(pollingInterval);
+            } else {
+              // otherwise check the stream
+              const result = completionStream.stream();
+              if (result) {
+                clearInterval(pollingInterval);
+                updateCompletions(result);
+              }
+            }
+          }, 300);
+        }
       };
 
       // first see if we can do this exclusively via filter
-
       if (state.prevToken && state.handler.filter) {
         this.completionQueue.enqueue(async () => {
 
@@ -314,10 +344,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             // got a hit from the filter!
             if (filteredCompletions) {
-              this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
+              this.setDisplayedCompletions(filteredCompletions, !!state.handler.view.horizontal, resetSelection);
               this.renderCompletions(view);
 
-              // couldn't use the filter, do a full request for all completions
+              // couldn't use the filter, do a full request for all completions (so long as we aren't
+              // already waiting on a strea,)
             } else {
               await requestAllCompletions();
             }
@@ -420,7 +451,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private clearCompletions() {
-    this.setAllCompletions([]);
+    this.setAllCompletions([], false, true);
     this.hideCompletionPopup();
   }
 
@@ -435,15 +466,19 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setAllCompletions(completions: any[], horizontal = false) {
+  private setAllCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.allCompletions = completions;
-    this.setDisplayedCompletions(completions, horizontal);
+    this.setDisplayedCompletions(completions, horizontal, resetSelection);
   }
 
-  private setDisplayedCompletions(completions: any[], horizontal = false) {
+  private setDisplayedCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.completions = completions;
     this.horizontal = !!horizontal;
-    this.selectedIndex = 0;
+
+    // reset selection if requested or if the current index exceeds the # of completions
+    if (resetSelection || this.selectedIndex > (this.completions.length - 1)) {
+      this.selectedIndex = 0;
+    }
   }
 
   private completionPageSize() {
@@ -455,6 +490,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
     }
   }
 }
+
+
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

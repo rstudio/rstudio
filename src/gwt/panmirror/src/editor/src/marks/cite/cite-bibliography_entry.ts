@@ -13,10 +13,11 @@
  *
  */
 
-import { BibliographySource } from '../../api/bibliography';
+import { BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
 import { CSLDate, CSLName } from '../../api/csl';
 import { formatAuthors, formatIssuedDate, imageForType } from '../../api/cite';
+import { kZoteroItemProvider } from '../../api/bibliography/bibliography-provider_zotero';
 
 // An entry which includes the source as well
 // additional metadata for displaying a bibliograph item
@@ -25,6 +26,7 @@ export interface BibliographyEntry {
   authorsFormatter: (authors?: CSLName[], maxLength?: number) => string;
   issuedDateFormatter: (issueDate?: CSLDate) => string;
   image?: string;
+  adornmentImage?: string;
 }
 
 export function entryForSource(source: BibliographySource, ui: EditorUI): BibliographyEntry {
@@ -47,6 +49,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
     authorsFormatter,
     issuedDateFormatter,
     image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
+    adornmentImage: source.provider === kZoteroItemProvider ? ui.images.citations?.zoteroOverlay : undefined
   };
 }
 

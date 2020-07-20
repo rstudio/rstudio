@@ -75,6 +75,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -110,6 +111,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
+import org.rstudio.studio.client.workbench.ui.polyfill.FocusVisiblePolyfill;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
@@ -309,6 +311,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorCrossrefServer panmirrorCrossrefServer);
    void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
    void injectMembers(PanmirrorXRefServer panmirrorXRefServer);
+   void injectMembers(PanmirrorZoteroServer panmirrorZoteroServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
@@ -370,6 +373,7 @@ public interface RStudioGinjector extends Ginjector
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
+   FocusVisiblePolyfill getFocusVisiblePolyfill();
    AriaLiveService getAriaLiveService();
 
    // Pro-only below here

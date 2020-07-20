@@ -23,7 +23,7 @@ import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocSe
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
-import { BibliographyManager, bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorUI, InsertCiteProps } from '../../api/ui';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
@@ -36,25 +36,27 @@ import { InsertCitationCommand } from './cite-commands';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
+import { bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
+import { join } from 'path';
 
 const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
 
-const kCiteIdFirstCharPattern = '\\w';
-const kCiteIdOptionalCharsPattern = '[\\w:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
+const kCiteIdFirstCharPattern = '[\\p{L}\\p{N}]';
+const kCiteIdOptionalCharsPattern = '[\\p{L}\\p{N}:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
 
 
 const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
-const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
+const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`, 'u');
 
-const kCiteIdRegEx = new RegExp(kCiteIdPattern);
-const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
+const kCiteIdRegEx = new RegExp(kCiteIdPattern, 'u');
+const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`, 'u');
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`, 'u');
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -76,7 +78,7 @@ interface Citation {
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
 
-  const mgr = new BibliographyManager(context.server.pandoc);
+  const mgr = new BibliographyManager(context.server.pandoc, context.server.zotero);
 
   if (!pandocExtensions.citations) {
     return null;
@@ -216,7 +218,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     completionHandlers: () => [
       citationDoiCompletionHandler(context.ui, mgr, context.server),
-      citationCompletionHandler(context.ui, mgr),
+      citationCompletionHandler(context.ui, context.events, mgr, context.server.pandoc),
     ],
 
     plugins: (schema: Schema) => {
@@ -245,7 +247,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
         // First check the local bibliography- if we already have this DOI
         // we can just paste the DOI and allow the completion to handle it
-        const source = bibManager.findDoiInLoadedBibliography(parsedDOI.token);
+        const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
 
         // Insert the DOI text as a placeholder
         const tr = view.state.tr;
@@ -257,7 +259,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         view.dispatch(tr);
 
         if (!source) {
-          insertCitationForDOI(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
+          insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
 
@@ -391,17 +393,24 @@ function citeIdInputRule(schema: Schema) {
   return new InputRule(new RegExp(`(-|@)$`), (state: EditorState, match: string[], start: number, end: number) => {
     // only operate within a cite mark
     if (markIsActive(state, schema.marks.cite)) {
-      const tr = state.tr;
-      tr.insertText(match[1]);
-      const beginCite = findCiteBeginBracket(tr.selection);
-      const endCite = findCiteEndBracket(tr.selection);
-      if (beginCite >= 0 && endCite >= 0) {
-        const citeText = tr.doc.textBetween(beginCite, endCite + 1);
-        if (editingCiteLength(citeText) > 0) {
-          encloseInCiteMark(tr, beginCite, endCite + 1);
+      // if we already have an @ 1 character before then this is a backspace
+      // (in that case don't insert the match)
+      const prefixChar = state.doc.textBetween(state.selection.from - 2, state.selection.from - 1);
+      if (prefixChar !== "@") {
+        const tr = state.tr;
+        tr.insertText(match[1]);
+        const beginCite = findCiteBeginBracket(tr.selection);
+        const endCite = findCiteEndBracket(tr.selection);
+        if (beginCite >= 0 && endCite >= 0) {
+          const citeText = tr.doc.textBetween(beginCite, endCite + 1);
+          if (editingCiteLength(citeText) > 0) {
+            encloseInCiteMark(tr, beginCite, endCite + 1);
+          }
         }
+        return tr;
+      } else {
+        return null;
       }
-      return tr;
     } else {
       return null;
     }
@@ -500,7 +509,7 @@ function findCiteEndBracket(selection: Selection) {
   }
 }
 
-const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'gu');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   const schema = tr.doc.type.schema;
@@ -546,20 +555,30 @@ export interface ParsedCitation {
   offset: number;
 }
 
+// completions allow spaces in the cite id (multiple search terms)
+const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace(/^\[/, '[\\s');
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`, 'u');
+
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
-  // return completions only if we are inside a cite id mark
-  const markType = context.doc.type.schema.marks.cite_id;
+
+  // return completions only if we are inside a cite (this allows for completions across
+  // cite_id marks and spaces after them (necesary to allow spaces in completion queries)
+  const markType = context.doc.type.schema.marks.cite;
   if (!markIsActive(context, markType)) {
     return null;
   }
 
+  // get the range of the full cite mark
   const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
   if (range) {
-    const citeText = context.doc.textBetween(range.from, range.to);
-    const match = citeText.match(kEditingCiteIdRegEx);
+    // examine text up to the cursor
+    const citeText = context.doc.textBetween(range.from, context.selection.head);
+    // look for a cite id that terminates at the cursor (including spaces/text after the id,
+    // but before any semicolon delimiter)
+    const match = citeText.match(kCompletionCiteIdRegEx);
     if (match) {
       const token = match[2];
-      const pos = range.from + match[1].length;
+      const pos = range.from + match.index! + match[1].length;
       return { token, pos, offset: -match[1].length };
     }
   }
@@ -568,22 +587,24 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 }
 
 // Replaces the current selection with a resolved citation id
-export async function insertCitationForDOI(
+export async function insertCitation(
   view: EditorView,
   doi: string,
   bibManager: BibliographyManager,
   pos: number,
   ui: EditorUI,
   server: PandocServer,
-  csl?: CSL
+  csl?: CSL,
+  provider?: string
 ) {
 
-  const bibliography = await bibManager.loadBibliography(ui, view.state.doc);
+  // ensure the bib manager is loaded before proceeding
+  await bibManager.load(ui, view.state.doc);
 
   // We try not call this function if the entry for this DOI is already in the bibliography,
   // but it can happen. So we need to check here if it is already in the bibliography and 
   // if it is, deal with it appropriately.
-  const existingEntry = bibManager.findDoiInLoadedBibliography(doi);
+  const existingEntry = bibManager.findDoiInLocalBibliography(doi);
   if (existingEntry) {
     // Now that we have loaded the bibliography, there is an entry
     // Just write it. Not an ideal experience, but something that
@@ -601,17 +622,18 @@ export async function insertCitationForDOI(
     // (even creating a bibliography if necessary)
 
     // Read bibliographies out of the document and pass those alone
-    const bibliographies = bibliographyPaths(ui, view.state.doc);
-    const existingIds = bibliography.sources.map(source => source.id);
+    const bibliographies = bibliographyPaths(view.state.doc);
+    const existingIds = bibManager.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(bibliography.project_biblios, bibliographies?.bibliography),
+      bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
+      provider,
       csl,
       citeUI: csl ? {
         suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
-        previewFields: formatForPreview(csl)
+        previewFields: formatForPreview(csl),
       } : undefined
     };
 
@@ -619,17 +641,17 @@ export async function insertCitationForDOI(
     if (result && result.id.length) {
 
       // Figure out whether this is a project or document level bibliography
-      const project = bibliography.project_biblios.length > 0;
+      const project = bibManager.projectBiblios().length > 0;
       const bibliographyFile = project
         ? result.bibliographyFile
-        : ui.context.getDefaultResourceDir() + "/" + result.bibliographyFile;
+        : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
       // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
       const cslToWrite = sanitizeForCiteproc(result.csl);
 
       // Write entry to a bibliography file if it isn't already present
-      await bibManager.loadBibliography(ui, view.state.doc);
-      if (!bibManager.findIdInLoadedBibliography(result.id)) {
+      await bibManager.load(ui, view.state.doc);
+      if (!bibManager.findIdInLocalBibliography(result.id)) {
         await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
       }
 

@@ -736,6 +736,7 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
 
 // return a printable error message from an error (depending on the error this
 // might require consulting the message, category, or name)
+std::string errorDescription(const Error& error);
 std::string errorMessage(const core::Error& error);
 
 
@@ -754,11 +755,11 @@ std::string errorMessage(const core::Error& error);
    catch(const std::exception& e)                                                   \
    {                                                                                \
       rstudio::core::log::logErrorMessage(std::string("Unexpected exception: ") +   \
-                        e.what(), "") ;                                             \
+                        e.what(), ERROR_LOCATION);                                  \
    }                                                                                \
    catch(...)                                                                       \
    {                                                                                \
-      rstudio::core::log::logErrorMessage("Unknown exception", "");                 \
+      rstudio::core::log::logErrorMessage("Unknown exception", ERROR_LOCATION);     \
    }
 
 #endif
