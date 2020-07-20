@@ -155,8 +155,6 @@ void getLocalLibrary(std::string key,
                      ZoteroCollectionSpec cacheSpec,
                      ZoteroCollectionsHandler handler)
 {
-   testZoteroSQLite(key);
-
    r::sexp::Protect protect;
    std::string libraryJsonStr;
    Error error = r::exec::RFunction(".rs.zoteroGetLibrary", key,
