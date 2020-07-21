@@ -256,7 +256,13 @@ oop.inherits(RStudioUndoManager, UndoManager);
 
 // RStudioFontMetrics ----
 
-// see https://github.com/ajaxorg/ace/issues/2153
+// This class is intended to provide font metrics to multiple Ace editor
+// instances. This is useful because otherwise each editor does its own font
+// metrics measurement, which can be expensive when there are many editors on
+// the same page.
+//
+// See https://github.com/ajaxorg/ace/issues/2153 for more background on this
+// issue.
 
 var RStudioFontMetrics = function(parentEl) {
     FontMetrics.call(this, parentEl);
