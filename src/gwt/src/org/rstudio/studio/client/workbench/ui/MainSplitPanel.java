@@ -237,7 +237,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    public void addLeftWidget(Widget widget)
    {
       clearForRefresh();
-      leftList_.add(widget);
+      leftList_.add(0, widget);
       initialize(leftList_, center_, right_);
    }
 

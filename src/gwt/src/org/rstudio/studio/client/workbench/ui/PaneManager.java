@@ -579,6 +579,14 @@ public class PaneManager
       panel_.focusSplitter();
    }
 
+   @Handler
+    public void onNewSourceColumn()
+    {
+       if (userPrefs_.allowSourceColumns().getGlobalValue() &&
+           additionalSourceCount_ < MAX_COLUMN_COUNT)
+          addSourceWindow();
+    }
+
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
@@ -1599,4 +1607,5 @@ public class PaneManager
    private ArrayList<Tab> hiddenTabs_;
 
    private int additionalSourceCount_; // this does not include the main source
+   public final static int MAX_COLUMN_COUNT = 3;
 }
