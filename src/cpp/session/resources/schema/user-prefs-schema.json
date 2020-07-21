@@ -176,7 +176,7 @@
                     "Console", 
                     "TabSet1",
                     "TabSet2"],
-                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "console_left_on_top": false,
                 "console_right_on_top": true
