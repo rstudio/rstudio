@@ -272,6 +272,7 @@ void getLocalLibrary(std::string key,
    if (error)
    {
       handler(error, std::vector<ZoteroCollection>());
+      return;
    }
 
    // get the library version and reflect the cache back if it's up to date
@@ -298,6 +299,7 @@ void getLocalCollections(std::string key,
    if (error)
    {
       handler(error, std::vector<ZoteroCollection>());
+      return;
    }
 
    // divide collections into ones we need to do a download for, and one that
