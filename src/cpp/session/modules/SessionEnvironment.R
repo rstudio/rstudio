@@ -117,39 +117,53 @@
 .rs.addFunction("valueContents", function(val)
 {
    tryCatch(
+      .rs.valueContentsImpl(val),
+      error = function(e) "NO_VALUE"
+   )
+})
+
+.rs.addFunction("valueContentsImpl", function(val)
+{
+   if (inherits(val, "ore.frame"))
    {
       # for Oracle R frames, show the query if it exists
-      if (is(val, "ore.frame")) 
-      {
-        query <- attr(val, "dataQry", exact = TRUE) 
-
-        # no query, show empty
-        if (is.null(query))
-          return("NO_VALUE") 
-
-        # query, display it
-        attributes(query) <- NULL
-        return(paste("   Query:", query))
-      }
-
+      query <- attr(val, "dataQry", exact = TRUE)
+      
+      # no query, show empty
+      if (is.null(query))
+         return("NO_VALUE") 
+      
+      # query, display it
+      attributes(query) <- NULL
+      paste("   Query:", query)
+   }
+   else if (inherits(val, "pandas.core.frame.DataFrame"))
+   {
+      output <- py_to_r(val$to_string(max_rows = 150L))
+      strsplit(output, "\n", fixed = TRUE)[[1]]
+   }
+   else
+   {
+      output <- .rs.valueFromStr(val)
+      
+      n <- length(output)
+      
       # only return the first 150 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
-      output <- .rs.valueFromStr(val)
-      lines <- length(output)
-      if (lines > 150) {
-        output <- c(output[2:150], 
-                    paste("  [... ", lines - 150, " lines omitted]", 
-                          sep = ""))
-      } 
-      else if (lines > 1) {
+      if (n > 150)
+      {
+         fmt <- "  [... %i lines omitted]"
+         tail <- sprintf(fmt, n - 150)
+         output <- c(output[2:150], tail)
+      }
+      else if (n > 1)
+      {
         output <- output[-1]
       }
-      return(output)
-   },
-   error = function(e) { })
-
-   return ("NO_VALUE")
+      
+      output
+   }
 })
 
 .rs.addFunction("isFunction", function(val)
@@ -447,6 +461,10 @@
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
+   
+   if (inherits(obj, "python.builtin.object"))
+      return(.rs.reticulate.describeObject(objName, env))
+   
    # objects containing null external pointers can crash when
    # evaluated--display generically (see case 4092)
    hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
@@ -467,9 +485,11 @@
       size <- if (computeSize) object.size(obj) else 0
       len <- length(obj)
    }
+   
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
+   
    # for language objects, don't evaluate, just show the expression
    if (is.language(obj) || is.symbol(obj))
    {
@@ -482,10 +502,15 @@
       # copied, which is slow for large objects.
       if (size > 524288)
       {
-         len_desc <- if (len > 1) 
-                   paste(len, " elements, ", sep="")
-                else 
-                   ""
+         len_desc <- if (len > 1)
+         {
+            paste(len, " elements, ", sep = "")
+         }
+         else
+         {
+            ""
+         }
+         
          # data frames are likely to be large, but a summary is still helpful
          if (is.data.frame(obj))
          {
@@ -494,8 +519,8 @@
          }
          else
          {
-            val <- paste("Large ", class, " (", len_desc, 
-                         format(size, units="auto", standard="SI"), ")", sep="")
+            fmt <- "Large %s (%s %s)"
+            val <- sprintf(fmt, class, len_desc, format(size, units = "auto", standard = "SI"))
          }
          contents_deferred <- TRUE
       }
@@ -505,14 +530,8 @@
          desc <- .rs.valueDescription(obj)
 
          # expandable object--supply contents 
-         if (class == "data.table" ||
-             class == "ore.frame" ||
-             class == "cast_df" ||
-             class == "xts" ||
-             class == "DataFrame" ||
-             is.list(obj) || 
-             is.data.frame(obj) ||
-             isS4(obj))
+         if (is.list(obj) ||  is.data.frame(obj) || isS4(obj) ||
+             inherits(obj, c("data.table", "ore.frame", "cast_df", "xts", "DataFrame")))
          {
             if (computeSize)
             {
@@ -528,17 +547,20 @@
          }
       }
    }
+   
    list(
-      name = .rs.scalar(objName),
-      type = .rs.scalar(class),
-      clazz = c(class(obj), typeof(obj)),
-      is_data = .rs.scalar(is.data.frame(obj)),
-      value = .rs.scalar(val),
-      description = .rs.scalar(desc),
-      size = .rs.scalar(size),
-      length = .rs.scalar(len),
-      contents = contents,
-      contents_deferred = .rs.scalar(contents_deferred))
+      name              = .rs.scalar(objName),
+      type              = .rs.scalar(class),
+      clazz             = c(class(obj), typeof(obj)),
+      is_data           = .rs.scalar(is.data.frame(obj)),
+      value             = .rs.scalar(val),
+      description       = .rs.scalar(desc),
+      size              = .rs.scalar(size),
+      length            = .rs.scalar(len),
+      contents          = contents,
+      contents_deferred = .rs.scalar(contents_deferred)
+   )
+   
 })
 
 # returns the name and frame number of an environment from a call frame

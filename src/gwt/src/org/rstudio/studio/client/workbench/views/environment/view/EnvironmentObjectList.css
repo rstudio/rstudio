@@ -77,7 +77,7 @@ td.resizeCol {
 td.valueCol
 {
    border: 1px solid #f0f0f0;
-   white-space: nowrap;
+   white-space: pre;
    text-overflow: ellipsis;
    overflow-x: hidden;
    padding-right: 20px;
@@ -131,7 +131,7 @@ td.decoratedValueCol
    padding-left: 10px;
    padding-right: 20px;
    border: none;
-   white-space: nowrap;
+   white-space: pre;
    overflow-x: hidden;
    text-overflow: ellipsis;
 }
