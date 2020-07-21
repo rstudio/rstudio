@@ -9,3 +9,6 @@
 - Fix issue where some log entries could not be displayed on the admin logs page (Pro #1783)
 - Fix "TypeError" when sign-in using IE11 (#7359)
 - Fix problem with moving Console between left and right columns (#7246)
+- Fix issue with `rstudioapi::setCursorPosition()` not scrolling cursor into view (#7317)
+- Fix issue with `rmarkdown` and `packrat` packages being eagerly loaded on IDE launch (#7265)
+- Fix issue with folded chunk outputs getting stuck at top of IDE (#7293)

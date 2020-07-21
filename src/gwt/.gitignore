@@ -7,5 +7,6 @@ war/
 panmirror/
 
 # ignore log files dumped by a crashing GWT devmode
+javac.*
 /*.log
 
