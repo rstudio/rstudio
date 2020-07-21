@@ -1,5 +1,10 @@
 ## v1.3 Patch 2 (Giant Goldenrod) - Release Notes
 
+### Misc
+
+- Add support for configurable `rsandbox` path in Server Pro (Pro #1777)
+- Add support for running Slurm plugin in unprivileged Docker containers (Pro #1744)
+
 ### Bugfixes
 
 - Fix issue where files could not be uploaded when using RStudio Server load balancing (Pro #1751)
