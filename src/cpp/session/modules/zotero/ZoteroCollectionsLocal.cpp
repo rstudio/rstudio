@@ -126,30 +126,33 @@ std::string creatorsSQL(const std::string& name = "")
 std::string collectionSQL(const std::string& name = "")
 {
    boost::format fmt(R"(
-      SELECT
-         items.key as key,
-         items.version,
-         fields.fieldName as name,
-         itemDataValues.value as value
-      FROM
-         items
-         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
-         join itemTypeFields on itemTypes.itemTypeID = itemTypeFields.itemTypeID
-         join libraries on items.libraryID = libraries.libraryID
-         join itemData on items.itemID = itemData.itemID
-         join itemDataValues on itemData.valueID = itemDataValues.valueID
-         join fields on itemData.fieldID = fields.fieldID
-         %1%
-      WHERE
-        libraries.type = 'user'
-        AND itemTypes.typeName <> 'attachment'
-        %2%
-      ORDER BY
-        items.key ASC,
-        itemTypeFields.orderIndex
+
+     SELECT
+       items.key as key,
+       items.version,
+       fields.fieldName as name,
+       itemDataValues.value as value
+     FROM
+       items
+       join libraries on items.libraryID = libraries.libraryID
+       %1%
+       join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+       join itemData on items.itemID = itemData.itemID
+       join itemDataValues on itemData.valueID = itemDataValues.valueID
+       join fields on itemData.fieldID = fields.fieldID
+       join itemTypeFields on (itemTypes.itemTypeID = itemTypeFields.itemTypeID
+         AND fields.fieldID = itemTypeFields.fieldID)
+     WHERE
+       libraries.type = 'user'
+       AND itemTypes.typeName <> 'attachment'
+       %2%
+     ORDER BY
+       items.key ASC,
+       itemTypeFields.orderIndex
    )");
    return boost::str(fmt %
-      (!name.empty() ? "join collections on libraries.libraryID = collections.libraryID" : "") %
+      (!name.empty() ? "join collectionItems on items.itemID = collectionItems.itemID\n"
+                       "join collections on collectionItems.collectionID = collections.collectionID" : "") %
       (!name.empty() ? "AND collections.collectionName = '" + name + "'" : ""));
 }
 
