@@ -510,10 +510,16 @@ public class DualWindowLayoutPanel extends SimplePanel
       registrations_.removeHandler();
    }
 
-   public void replaceWindows(LogicalWindow windowA,
-                              LogicalWindow windowB)
+   public enum ReplaceMode
    {
-      if (windowA_ != windowA && windowB_ != windowB)
+      IF_DIFFERENT,
+      ALWAYS
+   }
+   public void replaceWindows(LogicalWindow windowA,
+                              LogicalWindow windowB,
+                              ReplaceMode replaceMode)
+   {
+      if (replaceMode == ReplaceMode.ALWAYS || (windowA_ != windowA && windowB_ != windowB))
       {
          unhookEvents();
          windowA_ = windowA;

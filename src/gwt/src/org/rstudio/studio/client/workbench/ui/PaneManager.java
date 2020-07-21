@@ -343,8 +343,8 @@ public class PaneManager
          ArrayList<LogicalWindow> newPanes = createPanes(
                validateConfig(evt.getValue().cast()));
          panes_ = newPanes;
-         left_.replaceWindows(newPanes.get(0), newPanes.get(1));
-         right_.replaceWindows(newPanes.get(2), newPanes.get(3));
+         left_.replaceWindows(newPanes.get(0), newPanes.get(1), DualWindowLayoutPanel.ReplaceMode.ALWAYS);
+         right_.replaceWindows(newPanes.get(2), newPanes.get(3), DualWindowLayoutPanel.ReplaceMode.ALWAYS);
 
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
@@ -403,8 +403,8 @@ public class PaneManager
 
       eventBus.addHandler(UpdateTabPanelsEvent.TYPE, event ->
       {
-         left_.replaceWindows(panes_.get(0), panes_.get(1));
-         right_.replaceWindows(panes_.get(2), panes_.get(3));
+         left_.replaceWindows(panes_.get(0), panes_.get(1), DualWindowLayoutPanel.ReplaceMode.IF_DIFFERENT);
+         right_.replaceWindows(panes_.get(2), panes_.get(3), DualWindowLayoutPanel.ReplaceMode.IF_DIFFERENT);
 
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
