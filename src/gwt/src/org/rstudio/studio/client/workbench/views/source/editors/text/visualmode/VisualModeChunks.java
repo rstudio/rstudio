@@ -71,7 +71,6 @@ public class VisualModeChunks
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
-         // final AceEditor editor = new AceEditor(FONT_MEASURER.getFontMetrics());
          final AceEditor editor = new AceEditor(fontMeasurer_.getFontMetrics());
          final AceEditorNative chunkEditor = editor.getWidget().getEditor();
          
@@ -223,9 +222,10 @@ public class VisualModeChunks
          Document.get().getBody().appendChild(fontMeasurer_);
          A11y.setARIAHidden(fontMeasurer_);
 
-         // Create a single font metrics provider to supply font sizing information
-         // to all of the UI chunks the factory below will create (otherwise each
-         // individual editor spends a lot of time computing these values)
+         // Create a single font metrics provider to supply font sizing
+         // information to all of the UI chunks the factory will create
+         // (otherwise each individual editor spends a lot of time computing
+         // these values)
          fontMetrics_ = AceEditorNative.createFontMetrics(fontMeasurer_);
          fontMetrics_.checkForSizeChanges();
       }
