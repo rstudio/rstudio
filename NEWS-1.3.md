@@ -13,6 +13,7 @@
 - Fix issue where Launcher debug logs could contain user's plain text password (Pro #1687)
 - Fix issue where some log entries could not be displayed on the admin logs page (Pro #1783)
 - Fix "TypeError" when sign-in using IE11 (#7359)
+- Fix issue where users belonging to more than 101 groups could not launch Kubernetes sessions (Pro #1796)
 - Fix problem with moving Console between left and right columns (#7246)
 - Fix issue with `rstudioapi::setCursorPosition()` not scrolling cursor into view (#7317)
 - Fix issue with `rmarkdown` and `packrat` packages being eagerly loaded on IDE launch (#7265)
