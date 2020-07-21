@@ -126,30 +126,45 @@ std::string creatorsSQL(const std::string& name = "")
 std::string collectionSQL(const std::string& name = "")
 {
    boost::format fmt(R"(
-
-     SELECT
-       items.key as key,
-       items.version,
-       fields.fieldName as name,
-       itemDataValues.value as value
-     FROM
-       items
-       join libraries on items.libraryID = libraries.libraryID
-       %1%
-       join itemTypes on items.itemTypeID = itemTypes.itemTypeID
-       join itemData on items.itemID = itemData.itemID
-       join itemDataValues on itemData.valueID = itemDataValues.valueID
-       join fields on itemData.fieldID = fields.fieldID
-       join itemTypeFields on (itemTypes.itemTypeID = itemTypeFields.itemTypeID
-         AND fields.fieldID = itemTypeFields.fieldID)
-     WHERE
-       libraries.type = 'user'
-       AND itemTypes.typeName <> 'attachment'
-       %2%
-     ORDER BY
-       items.key ASC,
-       itemTypeFields.orderIndex
-   )");
+         SELECT
+            items.key as key,
+            items.version,
+            fields.fieldName as name,
+            itemDataValues.value as value,
+            itemTypeFields.orderIndex as fieldOrder
+         FROM
+            items
+            join libraries on items.libraryID = libraries.libraryID
+            %1%
+            join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+            join itemData on items.itemID = itemData.itemID
+            join itemDataValues on itemData.valueID = itemDataValues.valueID
+            join fields on itemData.fieldID = fields.fieldID
+            join itemTypeFields on (itemTypes.itemTypeID = itemTypeFields.itemTypeID
+               AND fields.fieldID = itemTypeFields.fieldID)
+         WHERE
+            libraries.type = 'user'
+            AND itemTypes.typeName <> 'attachment'
+            %2%
+      UNION
+         SELECT
+            items.key as key,
+            items.version,
+            'type' as name,
+            itemTypes.typeName as  value,
+            0 as fieldOrder
+         FROM
+            items
+            join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+            join libraries on items.libraryID = libraries.libraryID
+            %1%
+         WHERE
+            libraries.type = 'user'
+            AND itemTypes.typeName <> 'attachment'
+            %2%
+      ORDER BY
+         key ASC,
+         fieldOrder ASC   )");
    return boost::str(fmt %
       (!name.empty() ? "join collectionItems on items.itemID = collectionItems.itemID\n"
                        "join collections on collectionItems.collectionID = collections.collectionID" : "") %
