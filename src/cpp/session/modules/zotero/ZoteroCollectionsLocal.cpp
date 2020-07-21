@@ -260,8 +260,9 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 
 Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppConnection)
 {
-   std::string db = dataDir + "/zotero.sqlite";
-   database::SqliteConnectionOptions options = { db };
+   database::SqliteConnectionOptions options;
+   options.file = dataDir + "/zotero.sqlite";
+   options.readonly = true;
    return database::connect(options, ppConnection);
 }
 
