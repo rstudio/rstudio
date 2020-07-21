@@ -65,6 +65,12 @@ public class DataOutputPane extends WorkbenchPane
       fireEvent(new EnsureVisibleEvent(activate));
    }
 
+   @Override
+   public void setFocus()
+   {
+      dataOutputFile_.getElement().focus();
+   }
+
    public void outputStarted(String fileName)
    {
    }
@@ -102,10 +108,4 @@ public class DataOutputPane extends WorkbenchPane
    
    GridViewerFrame gridViewer_;
    Label dataOutputFile_;
-
-   @Override
-   public void setFocus()
-   {
-      // !!! TODO
-   }
 }
