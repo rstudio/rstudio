@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
+import org.rstudio.studio.client.panmirror.PanmirrorWriterReferencesOptions;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
@@ -75,13 +76,17 @@ public class VisualModeMarkdownWriter
          options.wrapColumn = 0;
       
       // use user pref for references location
-      options.references = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      PanmirrorWriterReferencesOptions references = new PanmirrorWriterReferencesOptions();
+      references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      options.references = references;
       
       // layer in format config
       if (formatConfig.wrapColumn > 0)
          options.wrapColumn = formatConfig.wrapColumn;
-      if (formatConfig.references != null)
-         options.references = formatConfig.references;
+      if (formatConfig.references_location != null)
+         options.references.location = formatConfig.references_location;
+      if (formatConfig.references_prefix != null)
+         options.references.prefix = formatConfig.references_prefix;
       
       // check if this represents a line wrapping change
       boolean wrapColumnChanged = lastUsedWriterOptions_ != null &&

@@ -1,5 +1,5 @@
 /*
- * PanmirrorOptions.java
+ * PanmirrorrWriterReferencesOptions.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -19,10 +19,8 @@ package org.rstudio.studio.client.panmirror;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorWriterOptions
+public class PanmirrorWriterReferencesOptions
 {    
-   public boolean atxHeaders;
-   public int wrapColumn;
-   public PanmirrorWriterReferencesOptions references;
-   public int dpi;
+   public String location;
+   public String prefix;
 }

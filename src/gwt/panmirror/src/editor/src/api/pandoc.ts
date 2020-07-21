@@ -45,9 +45,14 @@ export interface PandocServer {
 
 }
 
+export interface PandocWriterReferencesOptions {
+  location?: string; // block | section | document
+  prefix?: string;
+}
+
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
-  references?: string; // block | section | document
+  references?: PandocWriterReferencesOptions;
   wrapColumn?: boolean | number;
   dpi?: number;
 }

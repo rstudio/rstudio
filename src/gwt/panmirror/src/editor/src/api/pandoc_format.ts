@@ -47,7 +47,8 @@ export interface PandocFormatConfig {
   rmdExtensions?: string;
   wrapColumn?: number;
   doctypes?: string[];
-  references?: string;
+  references_location?: string;
+  references_prefix?: string;
   canonical?: boolean;
 }
 
@@ -192,7 +193,12 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
       .map(str => str.trim());
   }
   if (source.references) {
-    formatConfig.references = asString(source.references);
+    if (typeof source.references === 'string') {
+      formatConfig.references_location = source.references;
+    } else {
+      formatConfig.references_location = source.references.location;
+      formatConfig.references_prefix = source.references.prefix;
+    }
   }
   if (source.canonical) {
     formatConfig.canonical = asBoolean(source.canonical);
