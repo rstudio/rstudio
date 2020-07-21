@@ -27,6 +27,7 @@ public interface JobsPaneOperations
    void installJobToolbar();
    void installMainToolbar();
    void removeProgressWidget();
+   void focus();
    String getCurrent();
    void setCurrent(String current);
    boolean isCurrent(String id);

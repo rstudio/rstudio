@@ -220,6 +220,7 @@ public class JobsDisplayImpl implements JobsDisplay
    @Override
    public void setFocus()
    {
+      widgets_.focus();
    }
 
    // private state

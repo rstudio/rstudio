@@ -115,7 +115,7 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      widgets_.focus();
+      baseImpl_.setFocus();
    }
 
    // internal state

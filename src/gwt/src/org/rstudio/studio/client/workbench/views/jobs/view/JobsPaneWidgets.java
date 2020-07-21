@@ -221,6 +221,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       return panel_;
    }
 
+   @Override
    public void focus()
    {
       startButton_.setFocus(true);
