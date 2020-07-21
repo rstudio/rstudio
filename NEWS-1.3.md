@@ -17,3 +17,4 @@
 - Fix issue with `rstudioapi::setCursorPosition()` not scrolling cursor into view (#7317)
 - Fix issue with `rmarkdown` and `packrat` packages being eagerly loaded on IDE launch (#7265)
 - Fix issue with folded chunk outputs getting stuck at top of IDE (#7293)
+- Fix issue where Slurm Launcher jobs could not be started on systems with root squash configured for the user home directory (#1775)
