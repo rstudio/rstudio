@@ -1372,6 +1372,8 @@ public class AceEditor implements DocDisplay,
       setSelectionRange(ranges.get(0));
       for (int i = 1; i < n; i++)
          getNativeSelection().addRange(ranges.get(i), false);
+      
+      scrollCursorIntoViewIfNecessary();
    }
    
    public int getLength(int row)
