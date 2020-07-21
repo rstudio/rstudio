@@ -287,7 +287,7 @@ public class PaneManager
 
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns = new ArrayList<>();
-      additionalSourceCount_ = userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns();
+      additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
       if (additionalSourceCount_ !=  sourceColumnManager_.getSize())
          syncAdditionalColumnCount(additionalSourceCount_);
       if (additionalSourceCount_ > 0)
@@ -602,7 +602,7 @@ public class PaneManager
       if (currentFocus != null)
       {
          String currentName = currentFocus.getNormal().getName();
-         if (currentFocus.getNormal().getName() == "TabSet2")
+         if (StringUtil.equals(currentFocus.getNormal().getName(), "TabSet2"))
             nextFocusName = sourceColumnManager_.getLeftColumnName();
          else if (sourceColumnManager_.getByName(currentName) != null &&
                   !StringUtil.equals(currentName, SourceColumnManager.MAIN_SOURCE_NAME))

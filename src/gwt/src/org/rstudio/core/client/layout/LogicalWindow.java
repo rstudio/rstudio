@@ -127,9 +127,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
 
    public boolean equals(LogicalWindow window)
    {
-      if(normal_.equals(window.normal_))
-         return true;
-      return false;
+      return normal_.equals(window.normal_);
    }
 
    @Override
