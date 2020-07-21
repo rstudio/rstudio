@@ -32,5 +32,6 @@ public interface PanmirrorZoteroServerOperations
    void zoteroGetCollections(String file,
                              JsArrayString collections,
                              JsArray<PanmirrorZoteroCollectionSpec> cached, 
+                             boolean useCache,
                              ServerRequestCallback<JavaScriptObject> callback);
 }

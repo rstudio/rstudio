@@ -39,19 +39,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       try {
 
         // Don't send the items back through to the server
-        // const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
+        const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
 
-        // TOOD: re-enable cache
-        const collectionSpecs: ZoteroCollectionSpec[] = [];
-
-        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || []);
+        const useCache = true;
+        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || [], useCache);
         if (result.status === "ok") {
 
           if (result.message) {
 
             const newCollections = (result.message as ZoteroCollection[]).map(collection => {
               const existingCollection = this.collections.find(col => col.name === collection.name);
-              if (existingCollection && existingCollection.version === collection.version) {
+              if (useCache && existingCollection && existingCollection.version === collection.version) {
                 collection.items = existingCollection.items;
               } else {
                 hasUpdates = true;

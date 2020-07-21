@@ -135,7 +135,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    std::string file;
    json::Value collectionsJsonValue;
    json::Array collectionsJson, cachedJson;
-   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson);
+   bool useCache;
+   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson, &useCache);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -220,14 +221,14 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
          librarySpec = *it;
 
       // get the library
-      getLibrary(librarySpec, handler);
+      getLibrary(librarySpec, useCache, handler);
 
    }
 
    // otherwise get the requested collections
    else
    {
-      getCollections(collections, cacheSpecs, handler);
+      getCollections(collections, cacheSpecs, useCache, handler);
    }
 }
 

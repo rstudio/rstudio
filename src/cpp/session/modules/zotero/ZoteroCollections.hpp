@@ -83,11 +83,13 @@ struct ZoteroCollectionSource
 
 // get the entire library using the currently configured source
 void getLibrary(ZoteroCollectionSpec cacheSpec,
+                bool useCache,
                 ZoteroCollectionsHandler handler);
 
 // get collections using the currently configured source
 void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
+                    bool useCache,
                     ZoteroCollectionsHandler handler);
 
 

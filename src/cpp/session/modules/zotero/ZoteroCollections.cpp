@@ -44,9 +44,9 @@ namespace {
 const char * const kIndexFile = "INDEX";
 const char * const kFile = "file";
 
-void LOG(const std::string& text)
+void LOG(const std::string&)
 {
-   std::cerr << text << std::endl;
+   // std::cerr << text << std::endl;
 }
 
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
@@ -311,13 +311,18 @@ const char * const kItems = "items";
 const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
 
 
-void getLibrary(ZoteroCollectionSpec cacheSpec, ZoteroCollectionsHandler handler)
+void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollectionsHandler handler)
 {
+   // clear out the client cache if the cache is disabled
+   if (!useCache)
+      cacheSpec.version = 0;
+
    // get connection if we have one
    Connection conn = zoteroConnection();
    if (!conn.empty())
    {    
-      ZoteroCollectionSpec serverCacheSpec = cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary);
+      // use server cache if directed
+      ZoteroCollectionSpec serverCacheSpec = useCache ? cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary) : ZoteroCollectionSpec();
       conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
 
          ZoteroCollection collection;
@@ -383,31 +388,38 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, ZoteroCollectionsHandler handler
 
 void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
+                    bool useCache,
                     ZoteroCollectionsHandler handler)
 {   
+   // clear out client cache specs if the cache is disabled
+   if (!useCache)
+      cacheSpecs.clear();
+
    // get connection if we have o ne
    Connection conn = zoteroConnection();
    if (!conn.empty())
    {
       // create a set of specs based on what we have in our server cache (as we always want to keep our cache up to date)
       ZoteroCollectionSpecs serverCacheSpecs;
-
-      // request for explicit list of collections, provide specs for matching collections from the server cache
-      if (!collections.empty())
+      if (useCache)
       {
-         std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [conn](std::string name) {
-            ZoteroCollectionSpec cacheSpec(name, 0);
-            ZoteroCollectionSpec cached = cachedCollectionSpec(conn.type, conn.cacheContext, name);
-            if (!cached.empty())
-               cacheSpec.version = cached.version;
-            return cacheSpec;
-         });
-      }
+         // request for explicit list of collections, provide specs for matching collections from the server cache
+         if (!collections.empty())
+         {
+            std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [conn](std::string name) {
+               ZoteroCollectionSpec cacheSpec(name, 0);
+               ZoteroCollectionSpec cached = cachedCollectionSpec(conn.type, conn.cacheContext, name);
+               if (!cached.empty())
+                  cacheSpec.version = cached.version;
+               return cacheSpec;
+            });
+         }
 
-      // request for all collections, provide specs for all collections in the server cache
-      else
-      {
-         serverCacheSpecs = cachedCollectionsSpecs(conn.type, conn.cacheContext);
+         // request for all collections, provide specs for all collections in the server cache
+         else
+         {
+            serverCacheSpecs = cachedCollectionsSpecs(conn.type, conn.cacheContext);
+         }
       }
 
       // get collections
