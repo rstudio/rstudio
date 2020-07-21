@@ -124,7 +124,7 @@ public class MarkersOutputPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-     // !!! TODO
+      onSelected();
    }
 
    private SourceMarkerList markerList_;
