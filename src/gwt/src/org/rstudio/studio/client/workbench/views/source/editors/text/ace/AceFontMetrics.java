@@ -21,4 +21,5 @@ import jsinterop.annotations.JsPackage;
 public class AceFontMetrics
 {
    public native void checkForSizeChanges();
+   public native void destroy();
 }

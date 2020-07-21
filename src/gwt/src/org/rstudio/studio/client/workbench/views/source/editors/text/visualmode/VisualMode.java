@@ -118,16 +118,25 @@ public class VisualMode implements VisualModeEditorSync,
              
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
-      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) ->
+      {
          manageUI(isActivated(), true);
       }));
       
       // sync to outline visible prop
-      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
-         withPanmirror(() -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) ->
+      {
+         withPanmirror(() ->
+         {
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
       }));
+
+      // clean up chunks on exit
+      releaseOnDismiss.add(() ->
+      {
+         visualModeChunks_.destroy();
+      });
    } 
    
    

@@ -46,11 +46,13 @@ public class VisualModeChunks
    
    public PanmirrorUIChunks uiChunks()
    {
-      // Ensure we have a font measurement tool; every instance shares this
-      // resource
-      if (FONT_MEASURER == null)
+      // Create font measuring system if it doesn't exist. Ideally we would have
+      // one global font measurer, but Ace manipulates the state of the font
+      // metrics objects such that it's necessary to have one per outer
+      // document.
+      if (fontMeasurer_ == null)
       {
-         FONT_MEASURER = new FontMeasurer();
+         fontMeasurer_ = new FontMeasurer(target_.getId());
       }
 
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
@@ -69,7 +71,8 @@ public class VisualModeChunks
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
-         final AceEditor editor = new AceEditor(FONT_MEASURER.getFontMetrics());
+         // final AceEditor editor = new AceEditor(FONT_MEASURER.getFontMetrics());
+         final AceEditor editor = new AceEditor(fontMeasurer_.getFontMetrics());
          final AceEditorNative chunkEditor = editor.getWidget().getEditor();
          
          chunk.editor = Js.uncheckedCast(chunkEditor);
@@ -197,17 +200,26 @@ public class VisualModeChunks
       }
    }
 
+   public void destroy()
+   {
+      if (fontMeasurer_ != null)
+      {
+         fontMeasurer_.destroy();
+         fontMeasurer_ = null;
+      }
+   }
+
    /**
     * Internal class to handle font metrics measurement
     */
    private class FontMeasurer
    {
-      public FontMeasurer()
+      public FontMeasurer(String id)
       {
          // Create dummy element for font sizing (ensure hidden from a11y tree)
          fontMeasurer_ = Document.get().createDivElement();
          fontMeasurer_.addClassName("ace_editor");
-         fontMeasurer_.setId("rstudio_ace_font_measure");
+         fontMeasurer_.setId("rstudio_ace_font_measure_" + id);
          Document.get().getBody().appendChild(fontMeasurer_);
          A11y.setARIAHidden(fontMeasurer_);
 
@@ -223,13 +235,18 @@ public class VisualModeChunks
          return fontMetrics_;
       }
       
+      public void destroy()
+      {
+         fontMeasurer_.removeFromParent();
+         fontMetrics_.destroy();
+      }
+      
       private final AceFontMetrics fontMetrics_;
       private final DivElement fontMeasurer_;
    }
 
 
+   private FontMeasurer fontMeasurer_;
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;
-
-   private static FontMeasurer FONT_MEASURER = null;
 }
