@@ -76,19 +76,19 @@ public class BuildPane extends WorkbenchPane
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
 
       // always include build all
-      buildAllButton_ = commands_.buildAll().createToolbarButton();
+      ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
       if (website)
       {
          if (sessionInfo.getBuildToolsBookdownWebsite())
          {
-            buildAllButton_.setText("Build Book");
+            buildAllButton.setText("Build Book");
          }
          else
          {
-            buildAllButton_.setText("Build Website");
+            buildAllButton.setText("Build Website");
          }
       }
-      toolbar.addLeftWidget(buildAllButton_);
+      toolbar.addLeftWidget(buildAllButton);
 
       // book build menu
       if (sessionInfo.getBuildToolsBookdownWebsite())
@@ -159,7 +159,7 @@ public class BuildPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      buildAllButton_.setFocus(true);
+      compilePanel_.focus();
    }
 
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
@@ -321,5 +321,4 @@ public class BuildPane extends WorkbenchPane
    private String errorsBuildType_;
 
    private final CompilePanel compilePanel_;
-   private ToolbarButton buildAllButton_;
 }

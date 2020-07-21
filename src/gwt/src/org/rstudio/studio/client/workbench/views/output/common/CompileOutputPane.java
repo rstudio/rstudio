@@ -85,6 +85,12 @@ public class CompileOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      compilePanel_.focus();
+   }
+
+   @Override
    public void compileStarted(String fileName)
    {
       clearAll();
@@ -186,10 +192,4 @@ public class CompileOutputPane extends WorkbenchPane
    private CompilePanel compilePanel_;
    private String logTitle_;
    private boolean hasLogs_ = true;
-
-   @Override
-   public void setFocus()
-   {
-      // !!! TODO
-   }
 }

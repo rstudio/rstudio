@@ -66,7 +66,13 @@ public class SourceCppOutputPane extends WorkbenchPane
    { 
       compilePanel_.clearAll();
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      compilePanel_.focus();
+   }
+
    @Override
    public void showResults(SourceCppState state)
    {
@@ -101,10 +107,4 @@ public class SourceCppOutputPane extends WorkbenchPane
  
    private ToolbarFileLabel fileLabel_;
    private CompilePanel compilePanel_;
-
-   @Override
-   public void setFocus()
-   {
-      // !!! TODO
-   }
 }

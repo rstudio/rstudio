@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import com.google.gwt.user.client.ui.FocusPanel;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
@@ -32,7 +33,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.SimplePanel;
 
 public class CompilePanel extends Composite
 {
@@ -44,7 +44,7 @@ public class CompilePanel extends Composite
    public CompilePanel(CompileOutputDisplay outputDisplay)
    {
       
-      panel_ = new SimplePanel();
+      panel_ = new FocusPanel();
       outputDisplay_ = outputDisplay;
       
       panel_.setWidget(outputDisplay_.asWidget());
@@ -170,8 +170,7 @@ public class CompilePanel extends Composite
          showErrorsButton_.setVisible(true);
       }
    }  
- 
-   
+
    public void scrollToBottom()
    {
       outputDisplay_.scrollToBottom();
@@ -189,7 +188,12 @@ public class CompilePanel extends Composite
    {
       return stopButton_;
    }
-   
+
+   public void focus()
+   {
+      panel_.setFocus(true);
+   }
+
    public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
    {
       return errorList_;
@@ -210,7 +214,7 @@ public class CompilePanel extends Composite
    private ToolbarButton stopButton_;
    private LeftRightToggleButton showOutputButton_;
    private LeftRightToggleButton showErrorsButton_;
-   private SimplePanel panel_;
+   private FocusPanel panel_;
    private CompileOutputDisplay outputDisplay_;
    private SourceMarkerList errorList_;
    private boolean canStop_ = true;
