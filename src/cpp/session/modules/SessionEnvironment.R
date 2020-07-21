@@ -139,7 +139,7 @@
    }
    else if (inherits(val, "pandas.core.frame.DataFrame"))
    {
-      output <- py_to_r(val$to_string(max_rows = 150L))
+      output <- reticulate::py_to_r(val$to_string(max_rows = 150L))
       strsplit(output, "\n", fixed = TRUE)[[1]]
    }
    else
@@ -452,10 +452,7 @@
 
 .rs.addFunction("getSingleClass", function(obj)
 {
-   className <- "(unknown)"
-   tryCatch(className <- class(obj)[1],
-            error = function(e) print(e))
-   return (className)
+   class(obj)[[1L]]
 })
 
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
@@ -622,7 +619,7 @@
       # resolve namespaces
       if ((result %in% loadedNamespaces()) && 
           identical(asNamespace(result), env))
-         paste("namespace:", result, sep="")
+         paste("namespace:", result, sep = "")
       else
          result
    }
@@ -645,12 +642,14 @@
          # if this frame is from the callstack, store it and proceed
          if (frame$frame > 0)
          {
-            envs[[length(envs)+1]] <- frame 
+            envs[[length(envs) + 1]] <- frame
             env <- parent.env(env)
          }
          # otherwise, stop here and get names normally
          else
+         {
             break
+         }
       }
    }
    # we're now past the call-frame portion of the stack; proceed normally
@@ -666,14 +665,13 @@
 
       # hide the RStudio internal tools environment and the autoloads
       # environment, and any environment that doesn't have a name
-      if (nchar(envName) > 0 &&
-          envName != "tools:rstudio" &&
-          envName != "Autoloads")
+      if (nzchar(envName) && !envName %in% c("tools:rstudio", "Autoloads"))
       {
-         envs[[length(envs)+1]] <-
-                        list (name = .rs.scalar(envName),
-                              frame = .rs.scalar(0L),
-                              local = .rs.scalar(local))
+         envs[[length(envs) + 1]] <- list(
+            name = .rs.scalar(envName),
+            frame = .rs.scalar(0L),
+            local = .rs.scalar(local)
+         )
       }
       env <- parent.env(env)
    }
@@ -682,26 +680,29 @@
 
 .rs.addFunction("removeObjects", function(objNames, env)
 {
-   remove(list=unlist(objNames), envir=env)
+   objects <- unlist(objNames)
+   rm(list = objects, envir = env)
 })
 
 .rs.addFunction("removeAllObjects", function(includeHidden, env)
 {
-   rm(list=ls(envir=env, all.names=includeHidden), envir=env)
+   objects <- ls(envir = env, all.names = includeHidden)
+   rm(list = objects, envir = env)
 })
 
 .rs.addFunction("getObjectContents", function(objName, env)
 {
-   .rs.valueContents(get(objName, env));
+   object <- get(objName, envir = env)
+   .rs.valueContents(object)
 })
 
 .rs.addFunction("isAltrep", function(var)
 {
-   .Call("rs_isAltrep", var, PACKAGE="(embedding)")
+   .Call("rs_isAltrep", var, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("hasAltrep", function(var)
 {
-   .Call("rs_hasAltrep", var, PACKAGE="(embedding)")
+   .Call("rs_hasAltrep", var, PACKAGE = "(embedding)")
 })
 
