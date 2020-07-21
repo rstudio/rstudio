@@ -154,12 +154,12 @@ std::string collectionSQL(const std::string& name = "")
 }
 
 ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnection,
-                               const std::string &name,
-                               const std::string& sql)
+                               const std::string& name,
+                               const std::string& tableName = "")
 {
    // get creators
    ZoteroCreatorsByKey creators;
-   execQuery(pConnection, creatorsSQL(name), [&creators](const database::Row& row) {
+   execQuery(pConnection, creatorsSQL(tableName), [&creators](const database::Row& row) {
      std::string key = row.get<std::string>("key");
      ZoteroCreator creator;
      creator.firstName = row.get<std::string>("firstName");
@@ -171,7 +171,8 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
    int version = 0;
    std::map<std::string,std::string> currentItem;
    json::Array itemsJson;
-   execQuery(pConnection, sql, [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
+   execQuery(pConnection, collectionSQL(tableName),
+             [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
 
       std::string key = row.get<std::string>("key");
       std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
@@ -239,7 +240,7 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
 
 ZoteroCollection getLibrary(boost::shared_ptr<database::IConnection> pConnection)
 {
-   return getCollection(pConnection, kMyLibrary, collectionSQL());
+   return getCollection(pConnection, kMyLibrary);
 }
 
 
@@ -344,7 +345,7 @@ void getLocalCollections(std::string key,
    for (auto downloadSpec : downloadCollections)
    {
       std::string name = downloadSpec.second.name;
-      ZoteroCollection coll = getCollection(pConnection, name, collectionSQL(name));
+      ZoteroCollection coll = getCollection(pConnection, name, name);
       resultCollections.push_back(coll);
    }
 
