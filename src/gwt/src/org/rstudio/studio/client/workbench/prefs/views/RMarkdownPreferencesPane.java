@@ -289,7 +289,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       zoteroDataDir_ = new DirectoryChooserTextBox(
          "Zotero Data Directory:",
-         "(None)",
+         "(None Detected)",
          ElementIds.TextBoxButtonId.ZOTERO_DATA_DIRECTORY,
          null,
          fileDialogs,
@@ -298,6 +298,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(zoteroDataDir_);
       nudgeRight(zoteroDataDir_);
       textBoxWithChooser(zoteroDataDir_);
+      zoteroDataDir_.getTextBox().addStyleName(res.styles().smallerText());
       String dataDir = state_.zoteroDataDir().getValue();
       if (!dataDir.isEmpty())
          zoteroDataDir_.setText(dataDir);

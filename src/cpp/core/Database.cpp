@@ -127,7 +127,8 @@ public:
    {
       try
       {
-         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "shared_cache=true dbname=\"" + options.file + "\""));
+         std::string readonly = options.readonly ? " readonly=true" : "";
+         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "shared_cache=true" + readonly + " dbname=\"" + options.file + "\""));
 
          // foreign keys must explicitly be enabled for sqlite
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
