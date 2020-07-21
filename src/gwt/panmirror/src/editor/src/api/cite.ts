@@ -20,7 +20,11 @@ import { urlForDOI } from "./doi";
 const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
 
 // Suggests a bibliographic identifier based upon the source
-export function suggestCiteId(existingIds: string[], author?: CSLName[], issued?: CSLDate) {
+export function suggestCiteId(existingIds: string[], csl: CSL) {
+
+  const author = csl.author;
+  const issued = csl.issued;
+
   // Try to get the last name
   let authorPart = '';
   if (author && author.length > 0) {
@@ -43,7 +47,7 @@ export function suggestCiteId(existingIds: string[], author?: CSLName[], issued?
 
   // Create a deduplicated string against the existing entries
   let baseId = `${authorPart.toLowerCase()}${datePart}`;
-  baseId = baseId + "@@@";
+
 
   // Strip any characters that shouldn't appear in a bibtex citekey
   baseId = baseId.replace(kInvalidCiteKeyChars, '');
@@ -294,7 +298,7 @@ export function formatIssuedDate(date: CSLDate | undefined): string {
 
 export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
   if (citeProps.csl) {
-    const suggestedId = suggestCiteId(citeProps.existingIds, citeProps.csl.author, citeProps.csl.issued);
+    const suggestedId = suggestCiteId(citeProps.existingIds, citeProps.csl);
     const previewFields = formatForPreview(citeProps.csl);
     return {
       suggestedId,

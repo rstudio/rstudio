@@ -632,7 +632,7 @@ export async function insertCitation(
       provider,
       csl,
       citeUI: csl ? {
-        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
+        suggestedId: suggestCiteId(existingIds, csl),
         previewFields: formatForPreview(csl),
       } : undefined
     };

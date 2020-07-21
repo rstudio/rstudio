@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer, ZoteroCollectionSpec } from "../zotero";
+import { ZoteroCollection, ZoteroServer } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
@@ -89,7 +89,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     const items = collection.items?.map(item => {
       return {
         ...item,
-        id: suggestCiteId([], item.author, item.issued),
+        id: suggestCiteId([], item),
         provider: kZoteroItemProvider,
       };
     });
