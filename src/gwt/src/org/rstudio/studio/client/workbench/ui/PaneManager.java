@@ -53,6 +53,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -238,7 +239,8 @@ public class PaneManager
                       @Named("Tutorial") final WorkbenchTab tutorialTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
-                      OptionsLoader.Shim optionsLoader)
+                      OptionsLoader.Shim optionsLoader,
+                      Provider<GlobalDisplay> pGlobalDisplay)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -271,6 +273,7 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
+      pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
 
@@ -582,8 +585,13 @@ public class PaneManager
    @Handler
     public void onNewSourceColumn()
     {
-       if (userPrefs_.allowSourceColumns().getGlobalValue() &&
-           additionalSourceCount_ < MAX_COLUMN_COUNT)
+       if (!userPrefs_.allowSourceColumns().getValue())
+          pGlobalDisplay_.get().showErrorMessage("Cannot Add Column",
+             "Allow Source Columns preference is disabled.");
+       else if (additionalSourceCount_ == MAX_COLUMN_COUNT)
+          pGlobalDisplay_.get().showErrorMessage("Cannot Add Column",
+             "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+       else
           addSourceWindow();
     }
 
@@ -1578,6 +1586,7 @@ public class PaneManager
    private final WorkbenchTab dataTab_;
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
+   private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
    private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
