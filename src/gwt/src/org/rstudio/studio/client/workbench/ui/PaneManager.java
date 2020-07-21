@@ -586,10 +586,10 @@ public class PaneManager
     public void onNewSourceColumn()
     {
        if (!userPrefs_.allowSourceColumns().getValue())
-          pGlobalDisplay_.get().showErrorMessage("Cannot Add Column",
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
              "Allow Source Columns preference is disabled.");
        else if (additionalSourceCount_ == MAX_COLUMN_COUNT)
-          pGlobalDisplay_.get().showErrorMessage("Cannot Add Column",
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
              "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
        else
           addSourceWindow();
