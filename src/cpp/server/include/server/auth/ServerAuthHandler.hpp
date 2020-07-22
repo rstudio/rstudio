@@ -40,8 +40,7 @@ extern const char * const kRefreshCredentialsAndContinue;
 
 // functions which can be called on the handler directly
 std::string getUserIdentifier(const core::http::Request& request,
-                              bool requireUserListCookie,
-                              core::http::Response* pResponse);
+                              bool requireUserListCookie);
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
 
@@ -63,10 +62,8 @@ void refreshCredentialsThenContinue(
 // functions which must be provided by an auth handler
 struct Handler
 {
-   boost::function<std::string(const core::http::Request&,
-                               core::http::Response*)> getUserIdentifier;
-   boost::function<std::string(const std::string&)>
-                                                userIdentifierToLocalUsername;
+   boost::function<std::string(const core::http::Request&)> getUserIdentifier;
+   boost::function<std::string(const std::string&)> userIdentifierToLocalUsername;
    core::http::UriFilterFunction mainPageFilter;
    core::http::UriHandlerFunction signInThenContinue;
    core::http::AsyncUriHandlerFunction refreshCredentialsThenContinue;
