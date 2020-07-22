@@ -156,11 +156,7 @@ public class BuildPane extends WorkbenchPane
       return toolbar;
    }
 
-   @Override
-   public void setFocus()
-   {
-      compilePanel_.focus();
-   }
+
 
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {

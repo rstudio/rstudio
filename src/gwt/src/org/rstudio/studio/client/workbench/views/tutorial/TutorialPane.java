@@ -530,21 +530,13 @@ public class TutorialPane
       globalDisplay_.bringWindowToFront(name);
    }
 
-   @Override
-   public void setFocus()
-   {
-      homeButton_.setFocus(true);
-   }
-
-   // Resources ---- 
+   // Resources ----
    public interface Resources extends ClientBundle
    {
       @Source("TutorialPane.css")
       CssResource styles();
    }
 
-
-   
    private final ProgressIndicator indicator_;
    
    private RStudioFrame frame_;

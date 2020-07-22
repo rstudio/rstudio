@@ -205,12 +205,6 @@ public class GitPane extends WorkbenchPane implements Display
    }
 
    @Override
-   public void setFocus()
-   {
-      diffButton_.setFocus(true);
-   }
-
-   @Override
    public void onResize() 
    {
       super.onResize();

@@ -203,12 +203,6 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       }
    }
 
-   @Override
-   public void setFocus()
-   {
-      plotsToolbar_.focus();
-   }
-
    public HandlerRegistration addResizeHandler(ResizeHandler resizeHandler)
    {
       return addHandler(resizeHandler, ResizeEvent.getType());

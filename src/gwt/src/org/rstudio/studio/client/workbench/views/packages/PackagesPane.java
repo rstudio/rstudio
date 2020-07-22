@@ -330,12 +330,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       setFocus();
    }
 
-   @Override
-   public void setFocus()
-   {
-      installButton_.setFocus(true);
-   }
-   
    private void createPackagesTable()
    {
       try

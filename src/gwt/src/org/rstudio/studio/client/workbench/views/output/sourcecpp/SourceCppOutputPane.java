@@ -68,12 +68,6 @@ public class SourceCppOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void setFocus()
-   {
-      compilePanel_.focus();
-   }
-
-   @Override
    public void showResults(SourceCppState state)
    {
       fileLabel_.setFileName(state.getTargetFile());

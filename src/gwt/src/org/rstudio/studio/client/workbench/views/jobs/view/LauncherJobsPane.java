@@ -94,12 +94,6 @@ public class LauncherJobsPane extends WorkbenchPane
    }
 
    @Override
-   public void setFocus()
-   {
-      baseImpl_.setFocus();
-   }
-
-   @Override
    public void bringToFront()
    {
       setShowTabPref(true);

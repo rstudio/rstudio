@@ -293,12 +293,6 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void setFocus()
-   {
-      table_.focus();
-   }
-
-   @Override
    public void ensureVisible(boolean activate)
    {
       fireEvent(new EnsureVisibleEvent(activate));

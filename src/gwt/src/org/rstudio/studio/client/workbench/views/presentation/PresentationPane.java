@@ -296,12 +296,6 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       progressButton_.setVisible(false);
    }
 
-   @Override
-   public void setFocus()
-   {
-      slideNavigationMenu_.focus();
-   }
-   
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationKeydown = $entry(function(e) {

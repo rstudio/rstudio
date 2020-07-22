@@ -85,12 +85,6 @@ public class CompileOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void setFocus()
-   {
-      compilePanel_.focus();
-   }
-
-   @Override
    public void compileStarted(String fileName)
    {
       clearAll();

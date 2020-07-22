@@ -158,12 +158,6 @@ public class SVNPane extends WorkbenchPane implements Display
       setFocus();
    }
 
-   @Override
-   public void setFocus()
-   {
-      diffButton_.setFocus(true);
-   }
-
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
 

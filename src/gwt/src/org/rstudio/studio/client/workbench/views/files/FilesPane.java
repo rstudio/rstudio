@@ -116,12 +116,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
 
    @Override
-   public void setFocus()
-   {
-      filePathToolbar_.focus();
-   }
-
-   @Override
    public void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder)
    {
       filesList_.setColumnSortOrder(sortOrder);

@@ -112,12 +112,6 @@ public class JobsPane extends WorkbenchPane
       userPrefs_.writeUserPrefs();
    }
 
-   @Override
-   public void setFocus()
-   {
-      baseImpl_.setFocus();
-   }
-
    // internal state
    private JobsDisplayImpl baseImpl_;
    

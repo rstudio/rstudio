@@ -408,12 +408,6 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setFocus()
-   {
-      searchWidget_.focus();
-   }
-
-   @Override
    public void setBrowserRange(DebugFilePosition range)
    {
       objects_.updateLineNumber(range.getLine());

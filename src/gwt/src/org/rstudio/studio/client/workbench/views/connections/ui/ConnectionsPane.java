@@ -449,12 +449,6 @@ public class ConnectionsPane extends WorkbenchPane
       connectionsDataGrid_.redraw();
    }
 
-   @Override
-   public void setFocus()
-   {
-      newConnectionButton_.setFocus(true);
-   }
-
    private MenuItem connectMenuItem(ImageResource icon, 
          String text, 
          final String connectVia)
