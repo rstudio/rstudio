@@ -16,16 +16,12 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import org.rstudio.core.client.resources.ImageResource2x;
 
-import java.util.Map;
-
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -50,11 +46,11 @@ class CodeSearchSuggestion implements Suggestion
       ImageResource image = 
          fileTypeRegistry_.getIconForFilename(fileItem.getFilename()).getImageResource();
    
-      displayString_ = createDisplayString(image,
-                                           RES.styles().fileImage(),
-                                           fileItem.getFilename(),
-                                           null,
-                                           null);   
+      displayString_ = createDisplayString(
+            image, RES.styles().fileImage(),
+            fileItem.getFilename(), RES.styles().fileItem(),
+            null, null,
+            null, null);
    }
    
    private ImageResource iconForXRef(XRef xref)
@@ -140,34 +136,30 @@ class CodeSearchSuggestion implements Suggestion
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       
-      // infer appropriate CSS styling based on image attributes
-      String style = (image.getWidth() == 16 && image.getHeight() == 16)
-            ? RES.styles().fileImage()
-            : RES.styles().itemImage();
-      
-      // append id for certain xrefs (figures, tables, equations)
       if (sourceItem.hasXRef())
       {
-         XRef xref = sourceItem.getXRef();
-         String xrefType = xref.getType();
-         for (String type : new String[] { "tab", "fig", "eq" })
-         {
-            if (StringUtil.equals(xrefType, type))
-            {
-               name =
-                     "[" + xref.getXRefString() + "] " +
-                     StringUtil.truncate(name, 20, "...");
-               break;
-            }
-         }
+         displayString_ = createDisplayString(
+               image, RES.styles().xrefImage(),
+               name, RES.styles().xrefItem(),
+               sourceItem.getExtraInfo(), RES.styles().itemContext(),
+               context, RES.styles().itemContext());
       }
-      // create display string
-      displayString_ = createDisplayString(
-            image,
-            style,
-            name,
-            sourceItem.getExtraInfo(),
-            context);
+      else if (image.getHeight() < 16)
+      {
+         displayString_ = createDisplayString(
+               image, RES.styles().smallCodeImage(),
+               name, RES.styles().smallCodeItem(),
+               sourceItem.getExtraInfo(), RES.styles().itemContext(),
+               context, RES.styles().smallItemContext());
+      }
+      else
+      {
+         displayString_ = createDisplayString(
+               image, RES.styles().codeImage(),
+               name, RES.styles().codeItem(),
+               sourceItem.getExtraInfo(), RES.styles().itemContext(),
+               context, RES.styles().itemContext());
+      }
    }
    
    public String getMatchedString()
@@ -184,13 +176,14 @@ class CodeSearchSuggestion implements Suggestion
    public void setFileDisplayString(String file, String displayString)
    {
       // compute display string
-      ImageResource image =  fileTypeRegistry_.getIconForFilename(file).getImageResource();
-      displayString_ = createDisplayString(image,
-                                           RES.styles().fileImage(),
-                                           displayString,
-                                           null,
-                                           null);   
+      ImageResource image =
+            fileTypeRegistry_.getIconForFilename(file).getImageResource();
       
+      displayString_ = createDisplayString(
+            image, RES.styles().fileImage(),
+            displayString, RES.styles().fileItem(),
+            null, null,
+            null, null);
    }
 
    @Override
@@ -209,31 +202,35 @@ class CodeSearchSuggestion implements Suggestion
       return isFileTarget_;
    }
    
-   private String createDisplayString(ImageResource image, 
+   private String createDisplayString(ImageResource image,
                                       String imageStyle,
-                                      String name, 
+                                      String name,
+                                      String nameStyle,
                                       String extraInfo,
-                                      String context)
+                                      String extraInfoStyle,
+                                      String context,
+                                      String contextStyle)
    {    
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      SafeHtmlUtil.appendImage(sb, imageStyle, image);
-      SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);
+      
+      sb.append(SafeHtmlUtil.createOpenTag("div", "class", imageStyle));
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+            "src", image.getSafeUri().asString(),
+            "width", Integer.toString(image.getWidth()),
+            "height", Integer.toString(image.getHeight())));
+      sb.appendHtmlConstant("</img>");
+      sb.appendHtmlConstant("</div>");
+      
+      SafeHtmlUtil.appendSpan(sb, nameStyle, name);
       
       // check for extra info
       if (!StringUtil.isNullOrEmpty(extraInfo))
-      {
-         SafeHtmlUtil.appendSpan(sb, 
-                                 RES.styles().itemName(), 
-                                 extraInfo);
-      }
+         SafeHtmlUtil.appendSpan(sb, extraInfoStyle, extraInfo);
       
       // check for context
       if (context != null)
-      {
-         SafeHtmlUtil.appendSpan(sb, 
-                                 RES.styles().itemContext(),
-                                 "(" + context + ")");
-      }
+         SafeHtmlUtil.appendSpan(sb, contextStyle, "(" + context + ")");
+      
       return sb.toSafeHtml().asString();
    }
    
