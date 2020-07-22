@@ -99,9 +99,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public static class State extends JavaScriptObject
    {
-      public static native State createState(JsArrayString names) /*-{
+      public static native State createState(JsArrayString names, String activeColumn) /*-{
          return {
-            names: names
+            names: names,
+            activeColumn: activeColumn
          }
       }-*/;
 
@@ -112,6 +113,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          return JsUtil.toStringArray(getNamesNative());
       }
+
+      public final native String getActiveColumn() /*-{
+         return this.activeColumn || "";
+      }-*/;
 
       private native JsArrayString getNamesNative() /*-{
           return this.names;
@@ -236,7 +241,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
             if (value == null)
             {
-               columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+               columnState_ =
+                  State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                    getActive().getName());
                return;
             }
 
@@ -310,12 +317,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setActive(column);
 
       if (updateState)
-         columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+         columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                          getActive().getName());
       return column.getName();
    }
 
    public void initialSelect(int index)
    {
+      SourceColumn lastActive = getByName(columnState_.getActiveColumn());
+      if (lastActive != null)
+         setActive(getByName(columnState_.getActiveColumn()));
       getActive().initialSelect(index);
    }
 
@@ -364,6 +375,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             activeColumn_.setActiveEditor();
          manageCommands(true);
       }
+
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                       activeColumn_ == null ? "" : activeColumn_.getName());
    }
 
    private void setActiveDocId(String docId)
@@ -1444,7 +1458,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       }
 
-      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                       getActive().getName());
    }
 
    public void closeColumn(String name)
@@ -1456,7 +1471,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setActive(MAIN_SOURCE_NAME);
 
       columnList_.remove(column);
-      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                       getActive().getName());
    }
 
    public void closeColumn(SourceColumn column, boolean force)
@@ -1475,7 +1491,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (column == activeColumn_)
          setActive("");
       columnList_.remove(column);
-      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+                                       getActive().getName());
    }
 
    public void ensureVisible(boolean newTabPending)
