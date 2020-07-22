@@ -77,4 +77,4 @@
 * Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
 * Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
 * Fixed issue where Windows shortcuts were not resolved correctly in file dialogs. (#7327)
-
+* Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
