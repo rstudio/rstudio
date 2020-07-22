@@ -486,6 +486,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getHTML();
    }
    
+   public PanmirrorFormat getEditorFormat()
+   {
+      return editor_.getEditorFormat();
+   }
+   
    public PanmirrorPandocFormat getPandocFormat()
    {
       return editor_.getPandocFormat();
