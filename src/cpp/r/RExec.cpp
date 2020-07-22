@@ -291,13 +291,21 @@ Error executeString(const std::string& str)
    
 Error evaluateString(const std::string& str, 
                      SEXP* pSEXP, 
-                     sexp::Protect* pProtect)
+                     sexp::Protect* pProtect,
+                     EvalFlags flags)
 {
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
-   // surrond the string with try in silent mode so we can capture error text
-   std::string rCode = "base::try(" + str + ", TRUE)";
+   // surround the string with try in silent mode so we can capture error text
+   std::string rCode = "base::try(" + str + ", silent = TRUE)";
+   
+   // suppress warnings if requested
+   if (flags & EvalFlagsSuppressWarnings)
+      rCode = "base::suppressWarnings(" + rCode + ")";
+   
+   if (flags & EvalFlagsSuppressMessages)
+      rCode = "base::suppressMessages(" + rCode + ")";
 
    // parse expression
    SEXP ps;

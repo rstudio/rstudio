@@ -87,15 +87,17 @@ Error safeEvaluateString(const std::string& string,
    // only evaluate strings that consist of identifiers + extraction
    // operators, e.g. 'foo$bar[[1]]'
    boost::regex reSafeEvaluation("^[a-zA-Z0-9_$@\\[\\]]+$");
-   if (regex_utils::search(string, reSafeEvaluation))
-   {
-      return r::exec::evaluateString(string, pSEXP, pProtect);
-   }
-   else
+   if (!regex_utils::search(string, reSafeEvaluation))
    {
       *pSEXP = R_NilValue;
       return Success();
    }
+   
+   return r::exec::evaluateString(
+            string,
+            pSEXP,
+            pProtect,
+            r::exec::EvalFlagsSuppressWarnings);
 }
 
 bool isDataTableSingleBracketCall(RTokenCursor& cursor)

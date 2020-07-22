@@ -23,6 +23,6 @@ public class PanmirrorWriterOptions
 {    
    public boolean atxHeaders;
    public int wrapColumn;
-   public String references;
+   public PanmirrorWriterReferencesOptions references;
    public int dpi;
 }

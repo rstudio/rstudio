@@ -190,9 +190,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // return empty array if no collections were requested and we aren't getting allCollections
    if (collections.size() == 0 && !allCollections)
    {
-      json::JsonRpcResponse response;
-      response.setResult(json::Array());
-      cont(Success(), &response);
+      ZoteroCollections noCollections;
+      handleGetCollections(Success(), noCollections, cont);
       return;
    }
 
