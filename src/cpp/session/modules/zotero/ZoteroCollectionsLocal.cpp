@@ -293,7 +293,7 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 
 FilePath zoteroSqliteDir()
 {
-   FilePath sqliteDir = module_context::userScratchPath().completeChildPath("zotero-sqlite");
+   FilePath sqliteDir = module_context::scopedScratchPath().completeChildPath("zotero-sqlite");
    Error error = sqliteDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
