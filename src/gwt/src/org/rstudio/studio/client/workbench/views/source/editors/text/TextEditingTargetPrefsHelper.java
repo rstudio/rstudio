@@ -170,11 +170,6 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.syncDiagnosticsPrefs();
             }));
-      releaseOnDismiss.add(prefs.showInlineToolbarForRCodeChunks().bind(
-            (arg) ->
-            {
-               docDisplay.forceImmediateRender();
-            }));
       releaseOnDismiss.add(prefs.foldStyle().bind(
             (arg) ->
             {
@@ -194,6 +189,11 @@ public class TextEditingTargetPrefsHelper
       // Full editors get additional prefs (we don't use these in embedded editors)
       if (prefsSet == PrefsSet.Full)
       {
+         releaseOnDismiss.add(prefs.showInlineToolbarForRCodeChunks().bind(
+               (arg) ->
+               {
+                  docDisplay.forceImmediateRender();
+               }));
          releaseOnDismiss.add(prefs.showLineNumbers().bind(
                (arg) ->
                {
