@@ -125,6 +125,12 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      FocusHelper.setFocusDeferred(searchWidget_);
+   }
+
+   @Override
    protected Widget createMainWidget()
    {
       mainPanel_ = new LayoutPanel();
