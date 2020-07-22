@@ -369,13 +369,12 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
 }
 
 std::string getUserIdentifier(const core::http::Request& request,
-                              bool requireUserListCookie,
-                              http::Response* pResponse)
+                              bool requireUserListCookie)
 {
    if (isCookieRevoked(request.cookieValue(kUserIdCookie, options().wwwIFrameLegacyCookies())))
       return std::string();
 
-   std::string userIdentifier = s_handler.getUserIdentifier(request, pResponse);
+   std::string userIdentifier = s_handler.getUserIdentifier(request);
    if (userIdentifier.empty())
       return std::string();
 
