@@ -238,19 +238,11 @@ public class AceEditorNative extends JavaScriptObject
    private native static void removeDomListener(JavaScriptObject handle) /*-{
       handle();
    }-*/;
-   
-   public static native AceFontMetrics createFontMetrics(Element container) /*-{
+
+   public static native AceEditorNative createEditor(Element container) /*-{
       var require = $wnd.require;
       var loader = require("rstudio/loader");
-      var metrics = loader.createFontMetrics(container);
-      
-      return metrics;
-   }-*/;
-   
-   public static native AceEditorNative createEditor(Element container, AceFontMetrics fontMetrics) /*-{
-      var require = $wnd.require;
-      var loader = require("rstudio/loader");
-      return loader.loadEditor(container, fontMetrics);
+      return loader.loadEditor(container);
    }-*/;
    
    public final native void manageDefaultKeybindings() /*-{
@@ -470,7 +462,7 @@ public class AceEditorNative extends JavaScriptObject
    public final native void clearSelectionHistory() /*-{
       return this.$clearSelectionHistory();
    }-*/;
-
+   
    public final native Element getContainer() /*-{
       return this.container;
    }-*/;

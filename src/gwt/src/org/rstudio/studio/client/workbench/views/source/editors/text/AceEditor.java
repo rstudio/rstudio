@@ -112,7 +112,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFontMetrics;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
@@ -322,12 +321,7 @@ public class AceEditor implements DocDisplay,
    @Inject
    public AceEditor()
    {
-      this(null);
-   }
-
-   public AceEditor(AceFontMetrics fontMetrics)
-   {
-      widget_ = new AceEditorWidget(true, fontMetrics);
+      widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
