@@ -115,10 +115,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       public final native String getActiveColumn() /*-{
-         if (this.activeColumn)
-            return this.activeColumn;
-         else
-            return "";
+         return this.activeColumn || "";
       }-*/;
 
       private native JsArrayString getNamesNative() /*-{
