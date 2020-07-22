@@ -20,6 +20,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterReferencesOptions;
+import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
@@ -94,8 +95,12 @@ public class VisualModeMarkdownWriter
          options.references.prefix = formatConfig.references_prefix;
       
       // if the config doesn't have a references_prefix then provide one for
-      // bookdown projects (otherwise there will be duplicate footnotes)
-      if (options.references.prefix == null && format_.isBookdownProjectDocument())
+      // bookdown documents(otherwise there will be duplicate footnotes)
+      if (options.references.prefix == null && 
+          (format_.isBookdownProjectDocument() || 
+           PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown)
+          )
+         )
       {
          String docPath = docUpdateSentinel_.getPath();
          if (docPath != null)
