@@ -23,6 +23,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/Database.hpp>
+#include <core/Hash.hpp>
 
 #include <core/system/Process.hpp>
 
@@ -43,24 +44,23 @@ namespace collections {
 
 namespace {
 
-void execQuery(boost::shared_ptr<database::IConnection> pConnection,
-               const std::string& sql,
-               boost::function<void(const database::Row&)> rowHandler)
+Error execQuery(boost::shared_ptr<database::IConnection> pConnection,
+                const std::string& sql,
+                boost::function<void(const database::Row&)> rowHandler)
 {
    database::Rowset rows;
    database::Query query = pConnection->query(sql);
    Error error = pConnection->execute(query, rows);
    if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+      return error;
 
    for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
    {
       const database::Row& row = *it;
       rowHandler(row);
    }
+
+   return Success();
 }
 
 template <typename T>
@@ -175,9 +175,12 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
                                const std::string& name,
                                const std::string& tableName = "")
 {
+   // default to return in case of error
+   ZoteroCollection collection(ZoteroCollectionSpec(name, 0));
+
    // get creators
    ZoteroCreatorsByKey creators;
-   execQuery(pConnection, creatorsSQL(tableName), [&creators](const database::Row& row) {
+   Error error = execQuery(pConnection, creatorsSQL(tableName), [&creators](const database::Row& row) {
      std::string key = row.get<std::string>("key");
      ZoteroCreator creator;
      creator.firstName = row.get<std::string>("firstName");
@@ -185,12 +188,17 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
      creator.creatorType = row.get<std::string>("creatorType");
      creators[key].push_back(creator);
    });
+   if (error)
+   {
+      LOG_ERROR(error);
+      return collection;
+   }
 
    int version = 0;
    std::map<std::string,std::string> currentItem;
    json::Array itemsJson;
-   execQuery(pConnection, collectionSQL(tableName),
-             [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
+   error = execQuery(pConnection, collectionSQL(tableName),
+                     [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
 
       std::string key = row.get<std::string>("key");
       std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
@@ -224,9 +232,14 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
    if (currentItem.count("key"))
       itemsJson.push_back(sqliteItemToCSL(currentItem, creators));
 
+   if (error)
+   {
+      LOG_ERROR(error);
+      return collection;
+   }
 
    // success!
-   ZoteroCollection collection(ZoteroCollectionSpec(name, version));
+   collection.version = version;
    collection.items = itemsJson;
    return collection;
 }
@@ -246,12 +259,15 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
    )";
 
    ZoteroCollectionSpecs specs;
-   execQuery(pConnection, sql, [&specs](const database::Row& row) {
+   Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
       ZoteroCollectionSpec spec;
       spec.name = row.get<std::string>("collectionName");
       spec.version = row.get<int>("version");
       specs.push_back(spec);
    });
+   if (error)
+      LOG_ERROR(error);
+
    return specs;
 }
 
@@ -265,20 +281,74 @@ ZoteroCollection getLibrary(boost::shared_ptr<database::IConnection> pConnection
 int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    int version = 0;
-   execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
+   Error error = execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
       std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
       version = safe_convert::stringTo<int>(versionStr, 0);
    });
+   if (error)
+      LOG_ERROR(error);
    return version;
 }
 
 
+FilePath zoteroSqliteDir()
+{
+   FilePath sqliteDir = module_context::userScratchPath().completeChildPath("zotero-sqlite");
+   Error error = sqliteDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   return sqliteDir;
+}
+
+FilePath zoteroSqliteCopyPath(std::string dataDir)
+{
+   std::string sqliteFile = hash::crc32HexHash(dataDir) + ".sqlite";
+   return zoteroSqliteDir().completePath(sqliteFile);
+}
+
 Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppConnection)
 {
+   // get path to actual sqlite db
+   FilePath dbFile(dataDir + "/zotero.sqlite");
+
+   // get path to copy of file we will use for queries
+   FilePath dbCopyFile = zoteroSqliteCopyPath(dataDir);
+
+   // if the copy file doesn't exist or is older than the dbFile then make another copy
+   if (!dbCopyFile.exists() || (dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime()))
+   {
+      Error error = dbFile.copy(dbCopyFile, true);
+      if (error)
+         return error;
+   }
+
+   // create connection
    database::SqliteConnectionOptions options;
-   options.file = dataDir + "/zotero.sqlite";
+   options.file = string_utils::systemToUtf8(dbCopyFile.getAbsolutePath());
    options.readonly = true;
-   return database::connect(options, ppConnection);
+   Error error = database::connect(options, ppConnection);
+   if (error)
+   {
+      // if there is an error connecting then delete the copy (perhaps it's corrupted?)
+      Error removeError = dbCopyFile.remove();
+      if (removeError)
+         LOG_ERROR(error);
+      return error;
+   }
+
+   // try a simple query to ensure there are no other problems (delete the copy if there are)
+   error = execQuery(*ppConnection, "SELECT * FROM libraries", [](const database::Row&) {});
+   if (error)
+   {
+      // if there is an error running the query then delete the copy (perhaps it's corrupted?)
+      Error removeError = dbCopyFile.remove();
+      if (removeError)
+         LOG_ERROR(error);
+      return error;
+   }
+
+   // success!
+   return Success();
 }
 
 void getLocalLibrary(std::string key,

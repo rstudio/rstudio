@@ -268,7 +268,7 @@ Connection zoteroConnection()
       FilePath localDataDir = zoteroDataDirectory();
       if (localDataDir.exists())
       {
-         context = string_utils::utf8ToSystem(localDataDir.getAbsolutePath());
+         context = localDataDir.getAbsolutePath();
       }
       else
       {
