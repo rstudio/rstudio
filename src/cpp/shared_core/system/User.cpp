@@ -30,23 +30,11 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/PosixSystem.hpp>
 
 namespace rstudio {
 namespace core {
 namespace system {
-
-namespace {
-
-inline std::string getEnvVariable(const std::string& in_name)
-{
-   char* value = ::getenv(in_name.c_str());
-   if (value)
-      return std::string(value);
-
-   return std::string();
-}
-
-} // anonymous namespace
 
 struct User::Impl
 {
@@ -147,7 +135,7 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
            it != split_iterator<std::string::const_iterator>();
            ++it)
       {
-         std::string envHomePath = getEnvVariable(boost::copy_range<std::string>(*it));
+         std::string envHomePath = posix::getEnvironmentVariable(boost::copy_range<std::string>(*it));
          if (!envHomePath.empty())
          {
             FilePath userHomePath(envHomePath);
@@ -158,7 +146,7 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
    }
 
    // otherwise use standard unix HOME
-   return FilePath(getEnvVariable("HOME"));
+   return FilePath(posix::getEnvironmentVariable("HOME"));
 }
 
 User& User::operator=(const User& in_other)

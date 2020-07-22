@@ -24,12 +24,12 @@ import { CompletionHandler, CompletionResult, performCompletionReplacement, Comp
 import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
 import { CSL } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
-import { BibliographyManager } from '../../api/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
 import { DOIServer } from '../../api/doi';
 
 import { doiFromEditingContext } from './cite-doi';
-import { insertCitationForDOI } from './cite';
+import { insertCitation } from './cite';
 import { kCitationCompleteScope } from './cite-completion';
 
 const kCompletionWidth = 400;
@@ -55,7 +55,7 @@ export function citationDoiCompletionHandler(
         view.dispatch(tr);
       } else if (cslEntry && cslEntry.csl.DOI) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitationForDOI(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
+        insertCitation(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
     },
 
@@ -84,8 +84,8 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
 
           // If we have a local source that matches this DOI, just show the 
           // completion for the entry
-          await bibliographyManager.loadBibliography(ui, context.doc);
-          const source = bibliographyManager.findDoiInLoadedBibliography(parsedDOI.token);
+          await bibliographyManager.load(ui, context.doc);
+          const source = bibliographyManager.findDoiInLocalBibliography(parsedDOI.token);
           if (source) {
             return [
               {

@@ -38,7 +38,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
-import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -53,6 +52,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -238,7 +238,8 @@ public class PaneManager
                       @Named("Tutorial") final WorkbenchTab tutorialTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
-                      OptionsLoader.Shim optionsLoader)
+                      OptionsLoader.Shim optionsLoader,
+                      Provider<GlobalDisplay> pGlobalDisplay)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -271,6 +272,7 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
+      pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
 
@@ -288,11 +290,25 @@ public class PaneManager
       panel_ = pSplitPanel.get();
 
       // get the widgets for the extra source columns to be displayed
-      ArrayList<Widget> sourceColumns;
+      ArrayList<Widget> sourceColumns = new ArrayList<>();
       if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
-         sourceColumns = new ArrayList<>(sourceColumnManager_.getWidgets(true));
-      else
-         sourceColumns =  new ArrayList<>();
+      {
+         if (userPrefs_.allowSourceColumns().getGlobalValue())
+            sourceColumns.addAll(sourceColumnManager_.getWidgets(true));
+         else
+         {
+            sourceColumnManager_.consolidateColumns(0);
+            PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               0).cast());
+         }
+      }
       panel_.initialize(sourceColumns, left_, right_);
 
       // count the number of source docs assigned to this window
@@ -386,22 +402,6 @@ public class PaneManager
       eventBus_.addHandler(
             ManageLayoutCommandsEvent.TYPE,
             event -> manageLayoutCommands());
-
-      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, event ->
-      {
-         left_.replaceWindows(panes_.get(0), panes_.get(1));
-         right_.replaceWindows(panes_.get(2), panes_.get(3));
-
-         tabSet1TabPanel_.clear();
-         tabSet2TabPanel_.clear();
-         populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-         populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
-
-         manageLayoutCommands();
-
-         activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
-      });
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
       {
@@ -564,6 +564,19 @@ public class PaneManager
    {
       panel_.focusSplitter();
    }
+
+   @Handler
+    public void onNewSourceColumn()
+    {
+       if (!userPrefs_.allowSourceColumns().getValue())
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+             "Allow Source Columns preference is disabled.");
+       else if (additionalSourceCount_ == MAX_COLUMN_COUNT)
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+             "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+       else
+          addSourceWindow();
+    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
@@ -1145,29 +1158,27 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public void syncAdditionalColumnCount(int count)
+   public int syncAdditionalColumnCount(int count)
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return;
+    	  return additionalSourceCount_;
 
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;
          for (int i = 0; i < difference; i++)
-         {
             addSourceWindow();
-         }
       }
       else
       {
-         int difference = additionalSourceCount_ - count;
-         sourceColumnManager_.consolidateColumns(difference);
+         sourceColumnManager_.consolidateColumns(count + 1);
          panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
-         additionalSourceCount_ = sourceColumnManager_.getSize();
+         additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
       }
+      return additionalSourceCount_;
    }
 
    public int addSourceWindow()
@@ -1216,7 +1227,8 @@ public class PaneManager
 
          if (column.getTabCount() == 0)
          {
-            sourceColumnManager_.closeColumn(name);
+            panel_.removeLeftWidget(column.asWidget());
+            sourceColumnManager_.closeColumn(column, true);
             panesByName_.remove(name);
 
             additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
@@ -1557,6 +1569,7 @@ public class PaneManager
    private final WorkbenchTab dataTab_;
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
+   private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
    private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
@@ -1586,4 +1599,5 @@ public class PaneManager
    private ArrayList<Tab> hiddenTabs_;
 
    private int additionalSourceCount_; // this does not include the main source
+   public final static int MAX_COLUMN_COUNT = 3;
 }

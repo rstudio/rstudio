@@ -118,7 +118,7 @@ void asyncDownloadFile(const std::string& url,
    // create headers if we have them
    std::vector<std::string> headerList;
    std::transform(headers.begin(), headers.end(), std::back_inserter(headerList), [](const http::Field& field) {
-      return field.first + " = '" + field.second + "'";
+      return "`" + field.first + "` = '" + field.second + "'";
    });
    std::string headersStr;
    if (headerList.size() > 0)
@@ -151,6 +151,17 @@ void asyncJsonRpcRequest(const std::string& url,
 {
    asyncDownloadFile(url, headers, boost::bind(endJsonRpcRequest, cont, handler, _1));
 }
+
+bool is404Error(const std::string& stdErr)
+{
+   return boost::algorithm::contains(stdErr, "404 Not Found");
+}
+
+bool isHostError(const std::string& stdErr)
+{
+   return boost::algorithm::contains(stdErr, "resolve host name");
+}
+
 
 } // namespace session
 } // namespace rstudio

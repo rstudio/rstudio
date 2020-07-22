@@ -244,6 +244,19 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
    return writePref("using_mingw_gcc49", val);
 }
 
+/**
+ * Key for making Zotero API calls
+ */
+std::string UserStateValues::zoteroApiKey()
+{
+   return readPref<std::string>("zotero_api_key");
+}
+
+core::Error UserStateValues::setZoteroApiKey(std::string val)
+{
+   return writePref("zotero_api_key", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
@@ -264,6 +277,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kConnectVia,
       kErrorHandlerType,
       kUsingMingwGcc49,
+      kZoteroApiKey,
    });
 }
    

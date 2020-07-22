@@ -15,6 +15,7 @@
 
 import { CSLName, CSLDate, CSL } from "./csl";
 import { EditorUI, InsertCiteProps, InsertCiteUI } from "./ui";
+import { urlForDOI } from "./doi";
 
 const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
 
@@ -140,6 +141,14 @@ export function imageForType(ui: EditorUI, type: string): [string?, string?] {
 export interface CiteField {
   name: string;
   value: string;
+}
+
+export function urlForCitation(csl: CSL): string | undefined {
+  if (csl.URL) {
+    return csl.URL;
+  } else if (csl.DOI) {
+    return urlForDOI(csl.DOI);
+  }
 }
 
 export function formatForPreview(csl: CSL): CiteField[] {

@@ -463,6 +463,38 @@ public class Source implements InsertSourceHandler,
    {
       restoreDocuments(session_);
 
+
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!SourceWindowManager.isMainSourceWindow())
+         activeTabKey += "SourceWindow" +
+            pWindowManager_.get().getSourceWindowOrdinal();
+
+      new IntStateValue(MODULE_SOURCE, activeTabKey,
+         ClientState.PROJECT_PERSISTENT,
+         session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value == null)
+               return;
+
+            columnManager_.initialSelect(value);
+
+            // clear the history manager
+            columnManager_.clearSourceNavigationHistory();
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return columnManager_.getPhysicalTabIndex();
+         }
+      };
+
+      AceEditorNative.syncUiPrefs(userPrefs_);
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
       columnManager_.manageCommands(false);
@@ -538,40 +570,8 @@ public class Source implements InsertSourceHandler,
          WindowEx.addFocusHandler(
              (FocusEvent event) -> columnManager_.manageCommands(true));
       }
-
-      // get the key to use for active tab persistence; use ordinal-based key
-      // for source windows rather than their ID to avoid unbounded accumulation
-      String activeTabKey = KEY_ACTIVETAB;
-      if (!SourceWindowManager.isMainSourceWindow())
-         activeTabKey += "SourceWindow" +
-                         pWindowManager_.get().getSourceWindowOrdinal();
-
-      new IntStateValue(MODULE_SOURCE, activeTabKey,
-                        ClientState.PROJECT_PERSISTENT,
-                        session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Integer value)
-         {
-            if (value == null)
-               return;
-
-            columnManager_.initialSelect(value);
-
-            // clear the history manager
-            columnManager_.clearSourceNavigationHistory();
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return columnManager_.getPhysicalTabIndex();
-         }
-      };
-
-      AceEditorNative.syncUiPrefs(userPrefs_);
    }
-   
+
    /**
     * Process the save_files_before_build user preference.
     * If false, ask the user how to handle unsaved changes and act accordingly.
@@ -1814,8 +1814,8 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(final EditingTarget editor)
             {
-               TextEditingTarget target = (TextEditingTarget) editor;
-               target.navigateToXRef(event.getXRef());
+               TextEditingTarget target = (TextEditingTarget)editor;
+               target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
             }
       });
 

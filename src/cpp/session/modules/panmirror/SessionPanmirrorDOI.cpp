@@ -49,24 +49,6 @@ const char * const kStatusNotFound = "notfound";
 const char * const kStatusNoHost = "nohost";
 const char * const kStatusError = "error";
 
-bool is404Error(const std::string& stdErr)
-{
-   return boost::algorithm::contains(stdErr, "404 Not Found");
-}
-
-bool isHostError(const std::string& stdErr)
-{
-   return boost::algorithm::contains(stdErr, "resolve host name");
-}
-
-std::string errorDescription(const Error& error)
-{
-   std::string description = error.getProperty("description");
-   if (description.empty())
-      description = error.getSummary();
-   return description;
-}
-
 void resolveContinuation(const json::JsonRpcFunctionContinuation& cont,
                          const std::string& status,
                          const json::Value& messageJson = json::Value(),
@@ -123,7 +105,7 @@ void doiDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
    // return error
    else
    {
-      resolveContinuation(cont, kStatusError, json::Value(), errorDescription(error));
+      resolveContinuation(cont, kStatusError, json::Value(), core::errorDescription(error));
    }
 }
 

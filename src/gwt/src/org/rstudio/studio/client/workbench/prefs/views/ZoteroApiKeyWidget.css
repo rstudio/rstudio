@@ -1,0 +1,14 @@
+@charset "UTF-8";
+
+.apiKey {
+  font-family: monospace !important;
+}
+
+.helpLink {
+  font-size: 11px;  
+}
+
+.verifyKeyPanel {
+  margin-top: 4px;
+}
+

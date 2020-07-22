@@ -15,6 +15,7 @@
 
 import { PandocServer } from "./pandoc";
 import { CrossrefServer } from "./crossref";
+import { ZoteroServer } from './zotero';
 import { XRefServer } from "./xref";
 import { DOIServer } from "./doi";
 
@@ -23,5 +24,6 @@ export interface EditorServer {
   readonly pandoc: PandocServer;
   readonly doi: DOIServer;
   readonly crossref: CrossrefServer;
+  readonly zotero: ZoteroServer;
   readonly xref: XRefServer;
 }

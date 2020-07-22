@@ -116,6 +116,7 @@ import songImage from './images/citations/song.png';
 import songDarkImage from './images/citations/song_dark.png';
 import webImage from './images/citations/web.png';
 import webDarkImage from './images/citations/web_dark.png';
+import zoteroOverlayImage from './images/citations/zotero-overlay.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -221,6 +222,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       song_dark: songDarkImage,
       web: webImage,
       web_dark: webDarkImage,
+      zoteroOverlay: zoteroOverlayImage
     },
   };
 }

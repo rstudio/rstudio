@@ -852,6 +852,7 @@ bool isDistillProject();
 std::string websiteOutputDir();
 std::vector<core::FilePath> bookdownBibliographies();
 std::vector<std::string> bookdownBibliographiesRelative();
+std::vector<std::string> bookdownZoteroCollections();
 core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 

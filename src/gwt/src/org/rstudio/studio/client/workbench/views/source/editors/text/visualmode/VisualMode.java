@@ -31,7 +31,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -52,8 +51,6 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -107,7 +104,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(
             docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
-      visualModeWriterOptions_ = new VisualModeMarkdownWriter();
+      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
@@ -132,17 +129,13 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    @Inject
-   public void initialize(GlobalDisplay globalDisplay,
-                          Commands commands, 
+   public void initialize(Commands commands, 
                           UserPrefs prefs, 
-                          SourceServerOperations source,
-                          Session session)
+                          SourceServerOperations source)
    {
-      globalDisplay_ = globalDisplay;
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
-      sessionInfo_ = session.getSessionInfo();
    }
    
    private void initWidgets()
@@ -364,7 +357,7 @@ public class VisualMode implements VisualModeEditorSync,
          String editorCode = getEditorCode();
          
          VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromCode(editorCode);
-         
+          
          panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
                                 new CommandWithArg<JsObject>() {
             @Override
@@ -425,18 +418,6 @@ public class VisualMode implements VisualModeEditorSync,
                   {
                      view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
                   }
-                  else if (visualModeFormat_.isBookdownProjectDocument() && 
-                           !sessionInfo_.getBookdownHasRenumberFootnotes() &&
-                           !bookdownVersionWarningShown)
-                  {
-                     view_.showWarningBar(
-                       "Bookdown package update required for compatibility with visual mode.",
-                       "Learn more", () -> {
-                          globalDisplay_.openRStudioLink("visual_markdown_editing-bookdown-upgrade", false);                   
-                       });
-                     bookdownVersionWarningShown = true;
-                  }
-                  
                });          
             }
          });
@@ -1112,8 +1093,6 @@ public class VisualMode implements VisualModeEditorSync,
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
-   private SessionInfo sessionInfo_;
-   private GlobalDisplay globalDisplay_;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
@@ -1153,9 +1132,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;
-   
-   private static boolean bookdownVersionWarningShown = false;
-  
+     
 }
 
 

@@ -28,7 +28,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
       EditorCommandId.Citation,
-      [],
+      ['Shift-Mod-F8'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         // enable/disable command
         const schema = state.schema;

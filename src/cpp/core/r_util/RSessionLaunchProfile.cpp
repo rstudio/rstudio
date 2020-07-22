@@ -18,6 +18,9 @@
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/system/PosixSched.hpp>
+#include <shared_core/system/Crypto.hpp>
+
+#include <core/Algorithm.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -88,6 +91,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    json::Object profileJson;
    profileJson["context"] = contextAsJson(profile.context);
    profileJson["password"] = profile.password;
+   profileJson["encryptionKey"] = profile.encryptionKey;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = json::Array(profile.config.args);
@@ -106,8 +110,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    return profileJson;
 }
 
-SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Object& jsonProfile)
+SessionLaunchProfile sessionLaunchProfileFromJson(const json::Object& jsonProfile)
 {
    SessionLaunchProfile profile;
 
@@ -116,11 +119,11 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    Error error = json::readObject(jsonProfile,
                                   "context", contextJson,
                                   "password", profile.password,
+                                  "encryptionKey", profile.encryptionKey,
                                   "executablePath", profile.executablePath,
                                   "config", configJson);
    if (error)
       LOG_ERROR(error);
-
 
    // read context object
    error = contextFromJson(contextJson, &(profile.context));
@@ -183,7 +186,92 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    return profile;
 }
 
+// Launcher jobs (submitted by ServerJobLauncher.cpp) cannot have plain-text passwords,
+// otherwise these passwords could be exposed (including logs on disk!) and leak.
+// This function will encrypt the user's password returning the encrypted password or an error.
+// The password itself will be blank in the session profile and an encryption key will be there
+// instead. The password itself must be passed to the launching session via any out-of-band means.
+//
+// IMPORTANT: For a secure implementation the encrypted password cannot be part of the enviroment,
+// command arguments, or input of the launching session. Other means like file system, network, IPC
+// or RPC need to be used instead to send the password to the session.
+Error encryptProfilePassword(SessionLaunchProfile& profile, std::string* encryptedPassword)
+{
+   Error error;
 
+   // generate a 256-bit key to encrypt the user's password, convert it to a string
+   std::vector<unsigned char> passwordKey;
+   error = core::system::crypto::random(32, passwordKey);
+   if (error)
+   {
+      return error;
+   }
+   std::string passwordKeyStr;
+   std::copy(passwordKey.begin(), passwordKey.end(), std::back_inserter(passwordKeyStr));
+
+   // encrypt the user's password, keep the encrypted one, drop the unencrypted
+   std::string ivPasswordKey;
+   error = core::system::crypto::encryptAndBase64Encode(
+                                       profile.password,
+                                       passwordKeyStr,
+                                       ivPasswordKey,
+                                       *encryptedPassword);
+   if (error)
+   {
+      return error;
+   }
+
+   std::string base64PasswordKey;
+   error = core::system::crypto::base64Encode(passwordKey.data(), passwordKey.size(), base64PasswordKey);
+   if (error)
+   {
+      return error;
+   }
+
+   std::string encryptionKey = core::algorithm::join({ base64PasswordKey, ivPasswordKey }, "|");
+   profile.password = "";
+   profile.encryptionKey = encryptionKey;
+   return Success();
+}
+
+Error decryptProfilePassword(SessionLaunchProfile& profile, const std::string& encryptedPassword)
+{
+   Error error;
+
+   std::string passwordKey;
+   std::string ivPasswordKey;
+   std::vector<std::string> passwordKeyParts = core::algorithm::split(profile.encryptionKey, "|");
+   if (passwordKeyParts.size() != 2)
+   {
+      return unknownError("Profile password encryption key invalid format", Success(), ERROR_LOCATION);
+   }
+   passwordKey = passwordKeyParts[0];
+   ivPasswordKey = passwordKeyParts[1];
+
+   std::vector<unsigned char> passwordKeyBin;
+   error = core::system::crypto::base64Decode(passwordKey, passwordKeyBin);
+   if (error)
+   {
+      return error;
+   }
+   std::string passwordKeyBinStr;
+   std::copy(passwordKeyBin.begin(), passwordKeyBin.end(), std::back_inserter(passwordKeyBinStr));
+
+   // decrypted the actual password with the password key+iv
+   std::string decryptedPassword;
+   error = core::system::crypto::decryptAndBase64Decode(
+                                             encryptedPassword,
+                                             passwordKeyBinStr,
+                                             ivPasswordKey,
+                                             decryptedPassword);
+   if (error)
+   {
+      return error;
+   }
+   profile.password = decryptedPassword;
+   profile.encryptionKey = "";
+   return Success();
+}
 
 } // namespace r_util
 } // namespace core 

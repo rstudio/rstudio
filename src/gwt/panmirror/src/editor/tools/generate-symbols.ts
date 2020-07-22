@@ -597,7 +597,7 @@ function filterEmoji(filePath: string) {
   const allEmoji = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
   // Remove any emoji that don't render properly
-  const filteredEmoji: {
+  const filteredEmoji: Array<{
     emoji: string;
     description: string;
     category: string;
@@ -606,7 +606,7 @@ function filterEmoji(filePath: string) {
     unicode_version?: string;
     ios_version?: string;
     skin_tones?: boolean;
-  }[] = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
+  }> = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
 
   // Remove emoji metadata that we don't need
   const thinnedEmoji = filteredEmoji.map(emoji => {

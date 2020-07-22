@@ -70,6 +70,7 @@ import { editorMath } from '../api/math';
 import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
+import { pandocAutoIdentifier } from '../api/pandoc_id';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 import { getOutline } from '../behaviors/outline';
@@ -152,6 +153,7 @@ export { EditorCommandId as EditorCommands } from '../api/command';
 export interface UIToolsAttr {
   propsToInput(attr: AttrProps): AttrEditInput;
   inputToProps(input: AttrEditInput): AttrProps;
+  pandocAutoIdentifier(text: string): string;
 }
 
 export interface UIToolsImage {
@@ -185,6 +187,7 @@ export class UITools {
     this.attr = {
       propsToInput: attrPropsToInput,
       inputToProps: attrInputToProps,
+      pandocAutoIdentifier
     };
 
     this.image = {
@@ -678,6 +681,10 @@ export class Editor {
     });
   }
 
+  public getEditorFormat() {
+    return this.format;
+  }
+
   public getPandocFormat() {
     return this.pandocFormat;
   }
@@ -807,7 +814,7 @@ export class Editor {
       props: {
         handleDOMEvents: {
           focus: (view: EditorView, event: Event) => {
-            this.emitEvent(FocusEvent);
+            this.emitEvent(FocusEvent, view.state.doc);
             return false;
           },
           keydown: (view: EditorView, event: Event) => {
