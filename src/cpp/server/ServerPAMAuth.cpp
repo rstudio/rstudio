@@ -217,7 +217,7 @@ bool mainPageFilter(const http::Request& request,
                     http::Response* pResponse)
 {
    // check for user identity, if we have one then allow the request to proceed
-   std::string userIdentifier = getUserIdentifier(request);
+   std::string userIdentifier = auth::handler::getUserIdentifier(request, true);
    if (userIdentifier.empty())
    {
       // otherwise redirect to sign-in
@@ -255,7 +255,7 @@ void signIn(const http::Request& request,
             http::Response* pResponse)
 {
    // any attempt to load the sign in page with a valid cookie is sent back
-   std::string cookieUsername = core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
+   std::string cookieUsername = auth::handler::getUserIdentifier(request, true);
    if (!cookieUsername.empty())
    {
       pResponse->setMovedTemporarily(request, "./");

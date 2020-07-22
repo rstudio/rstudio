@@ -57,7 +57,7 @@ public:
    // provide http::UriHandlerFunction concept
    void operator()(const http::Request& request, http::Response *pResponse)
    {
-      std::string userIdentifier = handler::getUserIdentifier(request, requireUserListCookie_, pResponse);
+      std::string userIdentifier = handler::getUserIdentifier(request, requireUserListCookie_);
       if (userIdentifier.empty())
       {
          unauthorizedResponseFunction_(request, pResponse);
@@ -187,8 +187,7 @@ private:
       if (userIdentifier_.empty() || username_.empty())
       {
          userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
-                                                      requireUserListCookie_,
-                                                      &pConnection->response());
+                                                      requireUserListCookie_);
          if (userIdentifier_.empty())
          {
             unauthorizedResponseFunction_(pConnection);
