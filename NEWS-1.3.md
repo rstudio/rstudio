@@ -18,6 +18,7 @@
 - Fix issue with `rstudioapi::setCursorPosition()` not scrolling cursor into view (#7317)
 - Fix issue with `rmarkdown` and `packrat` packages being eagerly loaded on IDE launch (#7265)
 - Fix issue with folded chunk outputs getting stuck at top of IDE (#7293)
-- Fix issue where Slurm Launcher jobs could not be started on systems with root squash configured for the user home directory (#1775)
+- Fix issue where Slurm Launcher jobs could not be started on systems with root squash configured for the user home directory (Pro #1775)
 - Fix issue where locking an account would cause an infinite redirect loop on the sign-in page (Pro #1785, Pro #1764)
 - Fix issue where Jupyter sessions could not be started when the home directory was a root squash mount (Pro #1795)
+- Fix issue where large R objects in the environment pane could not be expanded (Pro #1779)
