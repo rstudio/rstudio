@@ -1676,6 +1676,11 @@ public class Source implements InsertSourceHandler,
    
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
+      // Prevent document from being opened in every window
+      if (!SourceWindowManager.getSourceWindowId().equals(
+          pWindowManager_.get().getLastFocusedSourceWindowId()))
+         return;
+
       // determine the type
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
