@@ -26,5 +26,6 @@ public class PanmirrorUIToolsAttr
 {
    public native PanmirrorAttrEditInput propsToInput(PanmirrorAttrProps attr);
    public native PanmirrorAttrProps inputToProps(PanmirrorAttrEditInput input);
+   public native String pandocAutoIdentifier(String text);
 }
 

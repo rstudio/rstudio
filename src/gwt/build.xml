@@ -97,7 +97,8 @@
    <available property="node.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node" file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
 
    <property name="panmirror.dir" value="./panmirror/src/editor"/>
-   <property name="panmirror.build.dir" value="./www/js/panmirror"/>      
+   <property name="panmirror.build.dir" value="./www/js/panmirror"/>
+
    <target name="panmirror" description="Compile panmirror library">
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">

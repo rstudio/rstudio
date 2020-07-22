@@ -26,7 +26,7 @@ redact_regex <- function() {
   
   words <- c(
     "API", "AUTH", "GITHUB", "HOST", "HOST", "KEY", "LOGNAME",
-    "PASSWORD", "PAT", "SECRET", "TOKEN", "USERNAME"
+    "PASSWORD", "PAT", "PWD", "SECRET", "TOKEN", "UID", "USERNAME"
   )
   
   fmt <- "\\b%s\\b"

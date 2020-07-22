@@ -16,6 +16,8 @@
 
 package org.rstudio.studio.client.panmirror.ui;
 
+import org.rstudio.core.client.XRef;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
@@ -50,7 +52,7 @@ public class PanmirrorUIDisplay {
    @JsFunction
    public interface NavigateToXRef
    {
-      void navigate(String file, String xref);
+      void navigate(XRef xref, FileSystemItem sourceFile);
    }
 
    public ShowContextMenu showContextMenu;   

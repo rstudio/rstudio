@@ -41,15 +41,15 @@ if(WIN32)
       ${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest
       ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.exe.manifest COPYONLY)
 
-   set(
-      CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
-
 endif()
 
 add_executable(rsinverse
   ${RSINVERSE_SOURCE_FILES}
 )
+
+if(WIN32)
+    set_target_properties(rsinverse PROPERTIES WIN32_EXECUTABLE YES)
+endif()
 
 # set link dependencies
 target_link_libraries(rsinverse
