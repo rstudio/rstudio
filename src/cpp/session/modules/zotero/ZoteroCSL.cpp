@@ -15,7 +15,6 @@
 
 #include "ZoteroCSL.hpp"
 
-#include <core/Log.hpp>
 #include <core/Algorithm.hpp>
 
 #include <shared_core/Error.hpp>
@@ -34,6 +33,8 @@ namespace {
 
 // Provides a map that contains zotero field names and their corresponding
 // csl fields names for a given zotero type.
+// The field mappings were generated from the explanation provided by Zotero at:
+// https://aurimasv.github.io/z2csl/typeMap.xml#map-artwork
 std::map<std::string, std::string> cslFieldNames(std::string zoteroType)
 {
   std::map<std::string, std::string> transforms;
@@ -916,15 +917,27 @@ json::Value transformValue(std::string cslFieldName, std::string value)
       // followed by a space and then an optional raw value like
       // yyyy/mm/dd
 
+      // Split the date string at the space. The left half is the formatted date
+      // the right half is the raw date string. The left half will always be there
+      // the right 'raw' form is optional
       json::Object dateJson;
       std::string date_parts = value.substr(0, value.find(' '));
       std::string date_raw;
+
+      // If the left 'date_parts' doesn't represent the whole string, then there
+      // is also a raw value. Split the string and capture the right side value
+      // and save that as the raw value
       if (date_parts.length() < value.length())
       {
          date_raw = value.substr(value.find(' '), value.length());
          dateJson["raw"] = date_raw;
       }
 
+      // Separate the date parts into their component year, month, and day parts
+      // CSL dates are represented as an array of ints representing the
+      // [year, month, day]
+      // and CSL Date values on CSL object are arrays of these CSL dates (so
+      // [[year, month, day]]
       if (date_parts.length() > 0)
       {
          std::vector<std::string> dateParts;
@@ -963,6 +976,8 @@ json::Value transformValue(std::string cslFieldName, std::string value)
 }
 
 // Return a CSL type for a given zoteroType
+// The type mappings were derived from the mappings here:
+// https://aurimasv.github.io/z2csl/typeMap.xml
 std::string cslType(std::string zoteroType) {
    if (zoteroType == "artwork") {
       return "graphic";
@@ -1044,39 +1059,39 @@ std::string cslType(std::string zoteroType) {
 
 } // end anonymous namespace
 
-
+// Convert the items and creators read from SQLite into a CSL Object
 json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const ZoteroCreatorsByKey& creators)
 {
    json::Object cslJson;
 
-   // The type is required - it should be impossible to
-   // have a Zotero item without a type
+   // Type is a special global field (all items are required to have an
+   // type property). Map the zotero type to it's corresponding CSL
+   // type and save that to the JSON
    const std::string zoteroType = item["type"];
    if (!zoteroType.empty()) {
 
       // Get the field mapping for this type
       std::map<std::string, std::string> cslFieldsNames = cslFieldNames(zoteroType);
+      cslJson["type"] = cslType(zoteroType);
 
       // Process the fields. This will either just apply the field
       // as if to the json or will transform the name and/or value
       // before applying the field to the json.
       for (auto field : item)
       {
-         const std::string fieldName = field.first;
+         const std::string zoteroFieldName = field.first;
          const std::string fieldValue = field.second;
 
-         if (fieldName == "type") {
-            cslJson["type"] = cslType(fieldValue);
-            continue;
-         }
-
-         // write the value
-         const std::string cslName = cslFieldsNames[fieldName];
-         if (cslName.length() > 0) {
-            cslJson[cslName] = transformValue(cslName, fieldValue);
-         }
-         else
-         {
+         // Type is a special global property that is used to deduce the
+         // right name mapping for properties, so it is written above.
+         // Just skip it when writing the fields.
+         if (zoteroFieldName != "type") {
+            // write the value
+            std:: string fieldName = zoteroFieldName;
+            const std::string cslName = cslFieldsNames[zoteroFieldName];
+            if (cslName.length() > 0) {
+               fieldName = cslName;
+            }
             cslJson[fieldName] = transformValue(fieldName, fieldValue);
          }
       }
@@ -1115,14 +1130,12 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
             std::string zoteroCreatorType = typeCreators.first;
             json::Array creatorsArray = typeCreators.second;
 
+            std:: string fieldName = zoteroCreatorType;
             const std::string cslName = cslFieldsNames[zoteroCreatorType];
             if (cslName.length() > 0) {
-               cslJson[cslName] = creatorsArray;
+               fieldName = cslName;
             }
-            else
-            {
-               cslJson[zoteroCreatorType] = creatorsArray;
-            }
+            cslJson[fieldName] = creatorsArray;
          }
       }
    }

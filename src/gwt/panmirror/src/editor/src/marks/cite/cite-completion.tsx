@@ -21,7 +21,7 @@ import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
@@ -74,9 +74,9 @@ export function citationCompletionHandler(
         const id = schema.text(entry.source.id, [schema.marks.cite_id.create()]);
         performCiteCompletionReplacement(tr, pos, id);
         view.dispatch(tr);
-      } else if (entry && entry.source.DOI) {
+      } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source, entry.source.provider);
+        insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
     },
 
