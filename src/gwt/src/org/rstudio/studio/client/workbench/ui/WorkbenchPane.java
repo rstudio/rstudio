@@ -67,7 +67,12 @@ public abstract class WorkbenchPane extends ToolbarPane
    {
       ArrayList<Element> focusableElements = DomUtils.getFocusableElements(getElement());
       if (!focusableElements.isEmpty())
-         focusableElements.get(0).focus();
+      {
+         Element el = focusableElements.get(0);
+         el.focus();
+         el.addClassName("focus-visible");
+         addRemoveFocusVisibleHandler(el);
+      }
       else
          Debug.logWarning("Could not set focus, no focusable element on " + title_ + " pane");
    }
@@ -97,6 +102,13 @@ public abstract class WorkbenchPane extends ToolbarPane
          events_.fireEvent(new ActivatePaneEvent(title_));
       super.bringToFront();
    }
+
+   private native void addRemoveFocusVisibleHandler(Element el) /*-{
+      el.addEventListener('blur', function(e) {
+         el.classList.remove('focus-visible');
+      });
+
+   }-*/;
 
    private String title_;
    protected final EventBus events_;
