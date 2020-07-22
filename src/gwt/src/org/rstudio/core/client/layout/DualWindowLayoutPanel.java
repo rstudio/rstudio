@@ -510,34 +510,22 @@ public class DualWindowLayoutPanel extends SimplePanel
       registrations_.removeHandler();
    }
 
-   public enum ReplaceMode
-   {
-      IF_DIFFERENT,
-      ALWAYS
-   }
    public void replaceWindows(LogicalWindow windowA,
-                              LogicalWindow windowB,
-                              ReplaceMode replaceMode)
+                              LogicalWindow windowB)
    {
-      if (replaceMode == ReplaceMode.ALWAYS || (windowA_ != windowA && windowB_ != windowB))
+      unhookEvents();
+      windowA_ = windowA;
+      windowB_ = windowB;
+      hookEvents();
+
+      layout_.setWidgets(new Widget[] {
+            windowA_.getNormal(), windowA_.getMinimized(),
+            windowB_.getNormal(), windowB_.getMinimized() });
+
+      Scheduler.get().scheduleFinally(() ->
       {
-         unhookEvents();
-         windowA_ = windowA;
-         windowB_ = windowB;
-         hookEvents();
-
-         layout_.setWidgets(new Widget[] {
-               windowA_.getNormal(), windowA_.getMinimized(),
-               windowB_.getNormal(), windowB_.getMinimized() });
-
-         Scheduler.get().scheduleFinally(new ScheduledCommand()
-         {
-            public void execute()
-            {
-               windowA_.onWindowStateChange(new WindowStateChangeEvent(NORMAL));
-            }
-         });
-      }
+         windowA_.onWindowStateChange(new WindowStateChangeEvent(NORMAL));
+      });
    }
 
    public void onResize()

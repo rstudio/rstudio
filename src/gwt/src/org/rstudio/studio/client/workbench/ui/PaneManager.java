@@ -38,7 +38,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
-import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -343,8 +342,8 @@ public class PaneManager
          ArrayList<LogicalWindow> newPanes = createPanes(
                validateConfig(evt.getValue().cast()));
          panes_ = newPanes;
-         left_.replaceWindows(newPanes.get(0), newPanes.get(1), DualWindowLayoutPanel.ReplaceMode.ALWAYS);
-         right_.replaceWindows(newPanes.get(2), newPanes.get(3), DualWindowLayoutPanel.ReplaceMode.ALWAYS);
+         left_.replaceWindows(newPanes.get(0), newPanes.get(1));
+         right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
@@ -400,22 +399,6 @@ public class PaneManager
       eventBus_.addHandler(
             ManageLayoutCommandsEvent.TYPE,
             event -> manageLayoutCommands());
-
-      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, event ->
-      {
-         left_.replaceWindows(panes_.get(0), panes_.get(1), DualWindowLayoutPanel.ReplaceMode.IF_DIFFERENT);
-         right_.replaceWindows(panes_.get(2), panes_.get(3), DualWindowLayoutPanel.ReplaceMode.IF_DIFFERENT);
-
-         tabSet1TabPanel_.clear();
-         tabSet2TabPanel_.clear();
-         populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-         populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
-
-         manageLayoutCommands();
-
-         activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
-      });
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
       {
