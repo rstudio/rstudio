@@ -200,7 +200,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          "Add Column",
          "Add column",
          res_.iconAddSourcePane());
-      if (displayColumnCount_ > MAX_COLUMN_COUNT - 1 ||
+      if (displayColumnCount_ > PaneManager.MAX_COLUMN_COUNT - 1 ||
          !userPrefs.allowSourceColumns().getGlobalValue())
          addButton.setEnabled(false);
 
@@ -215,7 +215,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          dirty_ = true;
          updateTable(displayColumnCount_ + 1);
 
-         if (displayColumnCount_ > MAX_COLUMN_COUNT - 1)
+         if (displayColumnCount_ > PaneManager.MAX_COLUMN_COUNT - 1)
             addButton.setEnabled(false);
          if (!removeButton.isEnabled())
             removeButton.setEnabled(true);
@@ -610,5 +610,4 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int TABLE_WIDTH = 435;
    private final static int GRID_PANE_COUNT = 2;
    private final static int GRID_SELECT_PADDING = 10; // must match CSS file
-   private final static int MAX_COLUMN_COUNT = 3; // limiting to 3 for now it looks nice
 }
