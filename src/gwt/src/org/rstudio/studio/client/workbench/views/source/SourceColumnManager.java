@@ -241,9 +241,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
             if (value == null)
             {
+               // default to main column name here because we haven't loaded any columns yet
                columnState_ =
                   State.createState(JsUtil.toJsArrayString(getNames(false)),
-                                    getActive().getName());
+                                    MAIN_SOURCE_NAME);
                return;
             }
 
