@@ -64,7 +64,8 @@ Error execQuery(boost::shared_ptr<database::IConnection> pConnection,
       rowCount++;
    }
 
-   TRACE(sql, rowCount);
+   TRACE("SQL Executed", rowCount);
+   TRACE(sql);
 
    return Success();
 }
@@ -182,7 +183,7 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
                                const std::string& tableName = "")
 {
    // default to return in case of error
-   ZoteroCollection collection(ZoteroCollectionSpec(name, 0));
+   ZoteroCollection collection(name);
 
    // get creators
    ZoteroCreatorsByKey creators;
@@ -370,7 +371,7 @@ void getLocalLibrary(std::string key,
    if (error)
    {
       LOG_ERROR(error);
-      handler(error, { cacheSpec });
+      handler(error, { ZoteroCollection(cacheSpec) });
    }
 
    // get the library version and reflect the cache back if it's exactly the same
@@ -378,7 +379,7 @@ void getLocalLibrary(std::string key,
    // which would make the cache version much higher than the actual version)
    else if (getLibraryVersion(pConnection) == cacheSpec.version)
    {
-      handler(error, { cacheSpec });
+      handler(error, { ZoteroCollection(cacheSpec) });
    }
 
    // otherwise fetch the library
@@ -437,7 +438,7 @@ void getLocalCollections(std::string key,
             if (it->version != version)
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
             else
-               upToDateCollections.push_back(collectionSpec);
+               upToDateCollections.push_back(ZoteroCollection(collectionSpec));
          }
          else
          {
