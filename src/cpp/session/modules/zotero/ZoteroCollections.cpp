@@ -228,7 +228,7 @@ ZoteroCollection responseFromServerCache(const std::string& type,
       {
          // client had up to date version, just return the spec w/ no items
          TRACE("Using client cache for " + collection);
-         return *clientIt;
+         return ZoteroCollection(*clientIt);
       }
    }
    else
@@ -307,12 +307,14 @@ const char * const kItems = "items";
 
 const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
 
+const int kNoVersion = -1;
+
 
 void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollectionsHandler handler)
 {
    // clear out the client cache if the cache is disabled
    if (!useCache)
-      cacheSpec.version = 0;
+      cacheSpec.version = kNoVersion;
 
    // get connection if we have one
    Connection conn = zoteroConnection();
@@ -361,9 +363,9 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          // just return w/o items
          else if (cacheSpec.version >= collection.version)
          {
-            ZoteroCollectionSpec spec(conn.type, cacheSpec.version);
+            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.version);
             TRACE("Using client cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ spec });
+            handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) });
          }
 
          // otherwise return the server cache (it's guaranteed to exist and be >=
@@ -404,7 +406,7 @@ void getCollections(std::vector<std::string> collections,
          if (!collections.empty())
          {
             std::transform(collections.begin(), collections.end(), std::back_inserter(serverCacheSpecs), [conn](std::string name) {
-               ZoteroCollectionSpec cacheSpec(name, 0);
+               ZoteroCollectionSpec cacheSpec(name);
                ZoteroCollectionSpec cached = cachedCollectionSpec(conn.type, conn.cacheContext, name);
                if (!cached.empty())
                   cacheSpec.version = cached.version;

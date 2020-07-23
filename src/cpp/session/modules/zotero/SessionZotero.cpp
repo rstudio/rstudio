@@ -212,7 +212,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    if (allCollections)
    {
       // we just need the kMyLibrary cache spec
-      ZoteroCollectionSpec librarySpec(kMyLibrary, 0);
+      ZoteroCollectionSpec librarySpec(kMyLibrary);
       ZoteroCollectionSpecs::iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [](const ZoteroCollectionSpec& spec) {
          return spec.name == kMyLibrary;
       });

@@ -332,7 +332,7 @@ void getWebLibraryForUser(std::string key,
       }
       else if (json.isObject() && json.getObject().getSize() == 0)
       {
-         handler(Success(), std::vector<ZoteroCollection>{ cacheSpec });
+         handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(cacheSpec) });
       }
       else
       {
@@ -417,7 +417,7 @@ void getWebCollectionsForUser(std::string key,
                if (it->version < version)
                   downloadCollections.push_back(std::make_pair(collectionID, collectionSpec));
                else
-                  upToDateCollections.push_back(collectionSpec);
+                  upToDateCollections.push_back(ZoteroCollection(collectionSpec));
             }
             else
             {

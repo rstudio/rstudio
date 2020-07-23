@@ -41,10 +41,12 @@ extern const char * const kItems;
 
 extern const char * const kMyLibrary;
 
+extern const int kNoVersion;
+
 // collection spec
 struct ZoteroCollectionSpec
 {
-   ZoteroCollectionSpec(const std::string& name = "", int version = 0)
+   ZoteroCollectionSpec(const std::string& name = "", int version = kNoVersion)
       : name(name), version(version)
    {
    }
@@ -58,7 +60,12 @@ typedef boost::function<void(core::Error,ZoteroCollectionSpecs)> ZoteroCollectio
 // collection
 struct ZoteroCollection : ZoteroCollectionSpec
 {
-   ZoteroCollection(ZoteroCollectionSpec spec = ZoteroCollectionSpec())
+   ZoteroCollection() : ZoteroCollectionSpec("", kNoVersion) {}
+   explicit ZoteroCollection(const std::string& colName)
+      : ZoteroCollectionSpec(colName, kNoVersion)
+   {
+   }
+   explicit ZoteroCollection(const ZoteroCollectionSpec& spec)
       : ZoteroCollectionSpec(spec.name, spec.version)
    {
    }
