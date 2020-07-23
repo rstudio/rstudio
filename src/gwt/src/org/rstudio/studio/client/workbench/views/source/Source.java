@@ -1676,6 +1676,15 @@ public class Source implements InsertSourceHandler,
    
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
+      // The document should only be opened in the last focused window, unless this window is a
+      // satellite that has already been closed. When this is the case, open the new doc in the
+      // main source window.
+      String lastFocusedWindow = pWindowManager_.get().getLastFocusedSourceWindowId();
+      if (!SourceWindowManager.getSourceWindowId().equals(lastFocusedWindow) &&
+          (!SourceWindowManager.isMainSourceWindow() ||
+           pWindowManager_.get().isSourceWindowOpen(lastFocusedWindow)))
+            return;
+
       // determine the type
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
