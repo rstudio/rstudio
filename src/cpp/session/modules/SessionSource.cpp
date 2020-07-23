@@ -76,9 +76,9 @@ Error sourceDatabaseError(Error error)
    if (isFileNotFoundError(error))
    {
       // The regular message (no such file or directory) is not useful
-      // to end users when attempting to save files (especially for autsoaves),
+      // to end users when attempting to save files (especially for autosaves),
       // since they typically have no knowledge that the source database exists.
-      // Instead, log this as unexpected error.
+      // Instead, log this as a generic 'internal error'.
       return Error(
                boost::system::errc::no_such_file_or_directory,
                "An internal error occurred",
