@@ -26,6 +26,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include "ZoteroUtil.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -74,6 +76,7 @@ void zoteroJsonRequest(std::string key,
    // build the url and make the request
    boost::format fmt("%s/%s%s");
    const std::string url = boost::str(fmt % kZoteroApiHost % resource % queryString);
+   TRACE(url);
    asyncDownloadFile(url, headers, [handler, schema](const core::system::ProcessResult& result) {
       if (result.exitStatus == EXIT_SUCCESS)
       {
@@ -534,7 +537,9 @@ ZoteroCollectionSource webCollections()
    static bool initialized = false;
    if (!initialized)
    {
-      Error error = s_userIdMap.initialize(module_context::userScratchPath().completeChildPath("zotero-userid"));
+      Error error = s_userIdMap.initialize(module_context::userScratchPath()
+         .completeChildPath("zotero")
+         .completeChildPath("userid"));
       if (error)
          LOG_ERROR(error);
    }

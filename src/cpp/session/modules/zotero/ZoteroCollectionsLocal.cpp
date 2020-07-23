@@ -21,6 +21,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Database.hpp>
 #include <core/Hash.hpp>
@@ -31,6 +32,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "ZoteroCSL.hpp"
+#include "ZoteroUtil.hpp"
 
 #include "session-config.h"
 
@@ -54,11 +56,15 @@ Error execQuery(boost::shared_ptr<database::IConnection> pConnection,
    if (error)
       return error;
 
+   std::size_t rowCount = 0;
    for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
    {
       const database::Row& row = *it;
       rowHandler(row);
+      rowCount++;
    }
+
+   TRACE(sql, rowCount);
 
    return Success();
 }
@@ -293,7 +299,9 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 
 FilePath zoteroSqliteDir()
 {
-   FilePath sqliteDir = module_context::scopedScratchPath().completeChildPath("zotero-sqlite");
+   FilePath sqliteDir = module_context::userScratchPath()
+        .completeChildPath("zotero")
+        .completeChildPath("sqlite");
    Error error = sqliteDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -317,6 +325,7 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
    // if the copy file doesn't exist or is older than the dbFile then make another copy
    if (!dbCopyFile.exists() || (dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime()))
    {
+      TRACE("Copying " + dbFile.getAbsolutePath());
       Error error = dbFile.copy(dbCopyFile, true);
       if (error)
          return error;
@@ -355,21 +364,24 @@ void getLocalLibrary(std::string key,
                      ZoteroCollectionSpec cacheSpec,
                      ZoteroCollectionsHandler handler)
 {
-   // connect to the database
+   // connect to the database (log and return cache on error)
    boost::shared_ptr<database::IConnection> pConnection;
    Error error = connect(key, &pConnection);
    if (error)
    {
-      handler(error, std::vector<ZoteroCollection>());
-      return;
+      LOG_ERROR(error);
+      handler(error, { cacheSpec });
    }
 
-   // get the library version and reflect the cache back if it's up to date
-   int version = getLibraryVersion(pConnection);
-   if (version <= cacheSpec.version)
+   // get the library version and reflect the cache back if it's exactly the same
+   // (we do an exact check b/c users might reset their entire zotero library,
+   // which would make the cache version much higher than the actual version)
+   else if (getLibraryVersion(pConnection) == cacheSpec.version)
    {
       handler(error, { cacheSpec });
    }
+
+   // otherwise fetch the library
    else
    {
       ZoteroCollection library = getLibrary(pConnection);
@@ -382,12 +394,16 @@ void getLocalCollections(std::string key,
                          ZoteroCollectionSpecs cacheSpecs,
                          ZoteroCollectionsHandler handler)
 {
-   // connect to the database
+   // connect to the database (log and return cache on error)
    boost::shared_ptr<database::IConnection> pConnection;
    Error error = connect(key, &pConnection);
    if (error)
    {
-      handler(error, std::vector<ZoteroCollection>());
+      LOG_ERROR(error);
+      ZoteroCollections cachedCollections;
+      std::transform(cacheSpecs.begin(), cacheSpecs.end(), std::back_inserter(cachedCollections),
+                     [](const ZoteroCollectionSpec& spec) { return ZoteroCollection(spec); });
+      handler(error, cachedCollections);
       return;
    }
 
@@ -418,7 +434,7 @@ void getLocalCollections(std::string key,
          if (it != cacheSpecs.end())
          {
             ZoteroCollectionSpec collectionSpec(name, version);
-            if (it->version < version)
+            if (it->version != version)
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
             else
                upToDateCollections.push_back(collectionSpec);

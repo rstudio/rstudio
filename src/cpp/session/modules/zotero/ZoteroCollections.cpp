@@ -30,6 +30,7 @@
 
 #include "ZoteroCollectionsLocal.hpp"
 #include "ZoteroCollectionsWeb.hpp"
+#include "ZoteroUtil.hpp"
 
 using namespace rstudio::core;
 
@@ -44,16 +45,12 @@ namespace {
 const char * const kIndexFile = "INDEX";
 const char * const kFile = "file";
 
-void LOG(const std::string&)
-{
-   // std::cerr << text << std::endl;
-}
-
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
    // ~/.local/share/rstudio/zotero-collections
    FilePath cachePath = module_context::userScratchPath()
-      .completeChildPath("zotero-collections")
+      .completeChildPath("zotero")
+      .completeChildPath("collections")
       .completeChildPath(type)
       .completeChildPath(context);
    Error error = cachePath.ensureDirectory();
@@ -224,13 +221,13 @@ ZoteroCollection responseFromServerCache(const std::string& type,
       if (clientIt == clientCacheSpecs.end())
       {
          // client spec didn't match, return cached collection
-         LOG("Returning server cache for " + collection);
+         TRACE("Returning server cache for " + collection, cached.items.getSize());
          return cached;
       }
       else
       {
          // client had up to date version, just return the spec w/ no items
-         LOG("Using client cache for " + collection);
+         TRACE("Using client cache for " + collection);
          return *clientIt;
       }
    }
@@ -352,11 +349,11 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
             return;
 
          // see if we need to update our server side cache. if we do then just return that version
-         if (serverCacheSpec.empty() || serverCacheSpec.version < collection.version)
+         if (serverCacheSpec.empty() || serverCacheSpec.version != collection.version)
          {
-            LOG("Updating server cache for <library>");
+            TRACE("Updating server cache for <library>", collection.items.getSize());
             updateCachedCollection(conn.type, conn.cacheContext, collection.name, collection);
-            LOG("Returning server cache for <library>");
+            TRACE("Returning server cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ collection });
          }
 
@@ -365,7 +362,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          else if (cacheSpec.version >= collection.version)
          {
             ZoteroCollectionSpec spec(conn.type, cacheSpec.version);
-            LOG("Using client cache for <library>");
+            TRACE("Using client cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ spec });
          }
 
@@ -375,7 +372,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          {
             ZoteroCollection serverCache = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
             collection.items = serverCache.items;
-            LOG("Returning server cache for <library>");
+            TRACE("Returning server cache for <library>", collection.items.getSize());
             handler(Success(), std::vector<ZoteroCollection>{ collection });
          }
       });
@@ -440,9 +437,9 @@ void getCollections(std::vector<std::string> collections,
                // need to update the cache -- do so and then return the just cached copy to the client
                if (it == serverCacheSpecs.end())
                {
-                  LOG("Updating server cache for " + webCollection.name);
+                  TRACE("Updating server cache for " + webCollection.name);
                   updateCachedCollection(conn.type, conn.cacheContext, webCollection.name, webCollection);
-                  LOG("Returning server cache for " + webCollection.name);
+                  TRACE("Returning server cache for " + webCollection.name);
                   responseCollections.push_back(webCollection);
                }
 
@@ -460,7 +457,7 @@ void getCollections(std::vector<std::string> collections,
                   {  
                      // shouldn't be possible to get here (as the initial condition tested in the loop ensures
                      // that we have a cached collection)
-                     LOG("Unexpected failure to find cache for " + webCollection.name);
+                     TRACE("Unexpected failure to find cache for " + webCollection.name);
                   }
                }
             }
