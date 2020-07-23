@@ -17,6 +17,7 @@
 #define RSTUDIO_SESSION_MODULES_ZOTERO_CSL_HPP
 
 #include <string>
+#include <vector>
 #include <map>
 
 namespace rstudio {
