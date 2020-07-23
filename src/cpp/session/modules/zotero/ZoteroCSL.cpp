@@ -30,12 +30,11 @@ namespace zotero {
 
 namespace {
 
-
 // Provides a map that contains zotero field names and their corresponding
 // csl fields names for a given zotero type.
 // The field mappings were generated from the explanation provided by Zotero at:
 // https://aurimasv.github.io/z2csl/typeMap.xml#map-artwork
-std::map<std::string, std::string> cslFieldNames(std::string zoteroType)
+std::map<std::string, std::string> cslFieldNames(const std::string& zoteroType)
 {
   std::map<std::string, std::string> transforms;
 
@@ -893,12 +892,12 @@ std::map<std::string, std::string> cslFieldNames(std::string zoteroType)
 bool isDateValue(std::string cslFieldName)
 {
    std::vector<std::string> dateFields = {
-                                          "accessed",
-                                          "container",
-                                          "event-date",
-                                          "issued",
-                                          "original-date",
-                                          "submitted"
+      "accessed",
+      "container",
+      "event-date",
+      "issued",
+      "original-date",
+      "submitted"
    };
    return std::find(dateFields.begin(),
                     dateFields.end(),
@@ -929,6 +928,8 @@ json::Value transformValue(std::string cslFieldName, std::string value)
       // and save that as the raw value
       if (date_parts.length() < value.length())
       {
+         // JJA: will data_raw include a leading ' ' here? does that matter?
+         // JJA: I believe you can exclude the second parameter to substr if you want the rest of the string
          date_raw = value.substr(value.find(' '), value.length());
          dateJson["raw"] = date_raw;
       }
@@ -961,13 +962,17 @@ json::Value transformValue(std::string cslFieldName, std::string value)
                datePartsJson.push_back(*day);
             }
 
+            // JJA: it seems like dataPartsJson could be of length 0, 1, 2, or 3 depending
+            // on the outputcome of safe_conver::stringTo. Is that okay or is it invalid
+            // if it doesn't end up as length == 3?
+
             json::Array datePartContainer;
             datePartContainer.push_back(datePartsJson);
             dateJson["date-parts"] = datePartContainer;
          }
       }
 
-      return dateJson;
+      return std::move(dateJson);
    }
    else
    {
@@ -978,7 +983,7 @@ json::Value transformValue(std::string cslFieldName, std::string value)
 // Return a CSL type for a given zoteroType
 // The type mappings were derived from the mappings here:
 // https://aurimasv.github.io/z2csl/typeMap.xml
-std::string cslType(std::string zoteroType) {
+std::string cslType(const std::string& zoteroType) {
    if (zoteroType == "artwork") {
       return "graphic";
    } else if (zoteroType == "attachment") {
