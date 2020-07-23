@@ -3387,7 +3387,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="toggleRainbowParens"
         label="Toggle Rainbow Parentheses Mode"
-        menuLabel="Rainbow parentheses"
+        menuLabel="Rainbow Parentheses"
         checkable="true"
         context="editor"/>
 
