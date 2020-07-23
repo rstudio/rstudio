@@ -13,17 +13,23 @@
 #
 #
 
-.rs.setOptionDefault("profvis.print", function(x) {
+.rs.setOptionDefault("profvis.print", function(x)
+{
    .rs.profilePrint(x)
 })
 
 .rs.setOptionDefault("profvis.prof_extension", ".Rprof")
 
+.rs.addFunction("profilesPath", function()
+{
+   .Call("rs_profilesPath", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("profileResources", function()
 {
    tempPath <- getOption(
       "profvis.prof_output",
-      default = .Call("rs_profilesPath", PACKAGE = "(embedding)")
+      default = .rs.profilesPath()
    )
    
    if (!.rs.dirExists(tempPath))
