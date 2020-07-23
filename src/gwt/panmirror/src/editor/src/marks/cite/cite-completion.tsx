@@ -208,7 +208,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
       image={entry.image}
       adornmentImage={entry.adornmentImage}
       title={`@${entry.source.id}`}
-      subTitle={entry.source.title || ''}
+      subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
       detail={detail}
       htmlTitle={true}
     />

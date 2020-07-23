@@ -18,6 +18,7 @@ import { EditorUI, InsertCiteProps, InsertCiteUI } from "./ui";
 import { urlForDOI } from "./doi";
 
 const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
+const kCiteIdLeadingLength = 8;
 
 // Suggests a bibliographic identifier based upon the source
 export function suggestCiteId(existingIds: string[], csl: CSL) {
@@ -26,12 +27,26 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   const issued = csl.issued;
 
   // Try to get the last name
-  let authorPart = '';
+  let citeIdLeading = '';
   if (author && author.length > 0) {
     if (author[0].family) {
-      authorPart = author[0].family;
+      citeIdLeading = author[0].family;
     } else if (author[0].literal) {
-      authorPart = author[0].literal;
+      citeIdLeading = author[0].literal;
+    }
+  }
+
+  // If we can't use author information, try using short title,
+  // the title, or perhaps the type to construct a leading part of the 
+  // citeId.
+  if (citeIdLeading.length === 0) {
+    const shortTitle = csl["short-title"];
+    if (shortTitle && shortTitle?.length > 0) {
+      citeIdLeading = shortTitle.substr(0, Math.min(kCiteIdLeadingLength, shortTitle.length));
+    } else if (csl.title) {
+      citeIdLeading = csl.title.substr(0, Math.min(kCiteIdLeadingLength, csl.title.length));
+    } else {
+      citeIdLeading = csl.type;
     }
   }
 
@@ -46,8 +61,11 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   }
 
   // Create a deduplicated string against the existing entries
-  let baseId = `${authorPart.toLowerCase()}${datePart}`;
+  let baseId = `${citeIdLeading.toLowerCase()}${datePart}`;
 
+  if (baseId.length === 0) {
+    // Could try title
+  }
 
   // Strip any characters that shouldn't appear in a bibtex citekey
   baseId = baseId.replace(kInvalidCiteKeyChars, '');
@@ -181,8 +199,18 @@ export function formatForPreview(csl: CSL): CiteField[] {
     pairs.push({ name: "Page(s)", value: page });
   }
 
+  const cslAny = csl as { [key: string]: any };
+  Object.keys(csl).forEach(key => {
+    if (!kFilteredFields.includes(key)) {
+      const value = cslAny[key];
+      pairs.push({ name: key, value });
+    }
+  });
+
   return pairs;
 }
+
+const kFilteredFields = ["id", "title", "author", "issued", "container-title", "volume", "page", "abstract"];
 
 // Sometimes, data arrives with a null value
 // This function will validate that the year (required) doesn't
