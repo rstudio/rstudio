@@ -114,9 +114,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    exists(fullName, envir = envir)
 })
 
-.rs.addFunction( "evalInGlobalEnv", function(code)
+.rs.addFunction("setOption", function(name, value)
 {
-   eval(parse(text=code), envir=globalenv())
+   data <- list(value)
+   names(data) <- name
+   options(data)
+})
+
+.rs.addFunction("setOptionDefault", function(name, value)
+{
+   # if the option is already set, nothing to do
+   if (!is.null(getOption(name)))
+      return(FALSE)
+   
+   # otherwise, set it
+   data <- list(value)
+   names(data) <- name
+   options(data)
+   
+   TRUE
+})
+
+.rs.addFunction("evalInGlobalEnv", function(code)
+{
+   eval(
+      parse(text = code),
+      envir = globalenv()
+   )
 })
 
 # attempts to restore the global environment from a file

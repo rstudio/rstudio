@@ -13,15 +13,11 @@
 #
 #
 
-if (is.null(getOption("profvis.print"))) {
-   options(profvis.print = function(x) {
-      .rs.profilePrint(x)
-   })
-}
+.rs.setOptionDefault("profvis.print", function(x) {
+   .rs.profilePrint(x)
+})
 
-if (is.null(getOption("profvis.prof_extension"))) {
-   options(profvis.prof_extension = ".Rprof")
-}
+.rs.setOptionDefault("profvis.prof_extension", ".Rprof")
 
 .rs.addFunction("profileResources", function()
 {
