@@ -478,15 +478,15 @@ public class DocUpdateSentinel
                   // Always log save errors.
                   Debug.logError(error);
                   
-                  // Inform the user once (via R console) that save has failed.
-                  if (isAutosave && !loggedSaveError_)
+                  // Inform the user once if this was an autosave failure.
+                  if (isAutosave && !loggedAutosaveError)
                   {
-                     loggedSaveError_ = true;
+                     loggedAutosaveError = true;
 
                      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                            "Error Autosaving File",
                            "RStudio was unable to autosave this file. You may need " +
-                           "to restart the R session.");
+                           "to restart RStudio.");
                   }
                  
                   // Avoid reporting auto-save errors to the user via the indicator,
@@ -904,7 +904,7 @@ public class DocUpdateSentinel
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
                  propertyChangeHandlers_;
-   private boolean loggedSaveError_ = false;
+   private boolean loggedAutosaveError = false;
    
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
