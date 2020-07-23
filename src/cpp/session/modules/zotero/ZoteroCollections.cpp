@@ -314,7 +314,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
 {
    // clear out the client cache if the cache is disabled
    if (!useCache)
-      cacheSpec.version = 0;
+      cacheSpec.version = kNoVersion;
 
    // get connection if we have one
    Connection conn = zoteroConnection();
@@ -363,7 +363,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          // just return w/o items
          else if (cacheSpec.version >= collection.version)
          {
-            ZoteroCollectionSpec spec(conn.type, cacheSpec.version);
+            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.version);
             TRACE("Using client cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) });
          }
