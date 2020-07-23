@@ -1808,16 +1808,18 @@ public class Source implements InsertSourceHandler,
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(event.getSourceFile());
 
       columnManager_.openFile(
-         event.getSourceFile(),
-         fileType,
-         new CommandWithArg<EditingTarget>() {
-            @Override
-            public void execute(final EditingTarget editor)
+            event.getSourceFile(),
+            fileType,
+            (final EditingTarget editor) ->
             {
-               TextEditingTarget target = (TextEditingTarget)editor;
-               target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
-            }
-      });
+               // NOTE: we defer execution here as otherwise we might attempt navigation
+               // before the underlying Ace editor has been fully initialized
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  TextEditingTarget target = (TextEditingTarget) editor;
+                  target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
+               });
+            });
 
    }
 
