@@ -33,6 +33,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -187,7 +188,7 @@ public class DocUpdateSentinel
                   {
                      // We're quitting. Save one last time.
                      final Token token = event.acquire();
-                     boolean saving = doSave(null, null, null,
+                     boolean saving = doSave(null, null, null, false,
                            new ProgressIndicator()
                      {
                         public void onProgress(String message)
@@ -239,7 +240,7 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         boolean saved = doSave(null, null, null, new ProgressIndicator() {
+         boolean saved = doSave(null, null, null, false, new ProgressIndicator() {
 
             @Override
             public void onCompleted()
@@ -271,7 +272,7 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, null, progress_);
+         return doSave(null, null, null, true, progress_);
       }
       else
       {
@@ -305,7 +306,8 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
-      doSave(path, fileType, encoding, new ProgressIndicator()
+      
+      doSave(path, fileType, encoding, false, new ProgressIndicator()
       {
          public void onProgress(String message)
          {
@@ -347,12 +349,13 @@ public class DocUpdateSentinel
    private boolean doSave(String path,
                           String fileType,
                           String encoding,
+                          boolean isAutosave,
                           ProgressIndicator progress)
    {
       boolean didSave = false;
       try
       {
-         didSave = doSaveImpl(path, fileType, encoding, progress);
+         didSave = doSaveImpl(path, fileType, encoding, isAutosave, progress);
       }
       catch (Exception ex)
       {
@@ -387,12 +390,14 @@ public class DocUpdateSentinel
             }
          }
       });
+      
       return didSave;
    }
 
    private boolean doSaveImpl(final String path,
                               final String fileType,
                               final String encoding,
+                              final boolean isAutosave,
                               final ProgressIndicator progress)
    {
       /* We need to fork the change tracker so that we can "mark" the moment
@@ -470,20 +475,52 @@ public class DocUpdateSentinel
                @Override
                public void onError(ServerError error)
                {
+                  // Always log save errors.
                   Debug.logError(error);
+                  
+                  // Inform the user once (via R console) that save has failed.
+                  if (isAutosave && !loggedSaveError_)
+                  {
+                     loggedSaveError_ = true;
+
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                           "Error Autosaving File",
+                           "RStudio was unable to autosave this file. You may need " +
+                           "to restart the R session.");
+                  }
+                 
+                  // Avoid reporting auto-save errors to the user via the indicator,
+                  // as this could lead to a relentless cascade of errors while the
+                  // user attempts to edit the document.
                   if (progress != null)
-                     progress.onError(error.getUserMessage());
+                  {
+                     if (isAutosave)
+                     {
+                        progress_.onCompleted();
+                     }
+                     else
+                     {
+                        String errorMessage =
+                              "Error saving " + path + ": " +
+                              error.getUserMessage();
+                     
+                        progress.onError(errorMessage);
+                     }
+                  }
+                  
+                  // Attempt to report save error.
                   try
                   {
                      if (path != null)
                      {
-                        eventBus_.fireEvent(new SaveFailedEvent(path, getId()));
+                        eventBus_.fireEvent(new SaveFailedEvent(path, getId(), isAutosave));
                      }
                   }
-                  catch(Exception e)
+                  catch (Exception e)
                   {
                      Debug.logException(e);
                   }
+                  
                   changesPending_ = false;
                }
 
@@ -530,7 +567,7 @@ public class DocUpdateSentinel
                   {
                      // We just hit a race condition where two updates
                      // happened at once. Try again
-                     doSave(path, fileType, encoding, progress);
+                     doSave(path, fileType, encoding, isAutosave, progress);
                   }
                   else
                   {
@@ -867,7 +904,10 @@ public class DocUpdateSentinel
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
                  propertyChangeHandlers_;
+   private boolean loggedSaveError_ = false;
    
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
+   
+   
 }
