@@ -947,6 +947,12 @@ json::Value transformValue(std::string cslFieldName, std::string value)
                                  boost::algorithm::is_any_of("-"));
          if (dateParts.size() == 3)
          {
+            // While the source data should always be include a year, month, and day,
+            // the CSL output format will accept an array with 1 or more elements
+            // meaning either a year, and year and month, or a year month and day.
+            // This isn't entirely clear from the spec, but looking at other implementations
+            // of CSL date handling (for example https://citation.js.org/api/get_date.js.html)
+            // + experience data in the wild from sources like CrossRef make this clear.
             json::Array datePartsJson;
             boost::optional<int> year = safe_convert::stringTo<int>(dateParts.at(0));
             if (year && *year > 0) {
@@ -961,10 +967,6 @@ json::Value transformValue(std::string cslFieldName, std::string value)
             if (day && *day > 0) {
                datePartsJson.push_back(*day);
             }
-
-            // JJA: it seems like dataPartsJson could be of length 0, 1, 2, or 3 depending
-            // on the outputcome of safe_conver::stringTo. Is that okay or is it invalid
-            // if it doesn't end up as length == 3?
 
             json::Array datePartContainer;
             datePartContainer.push_back(datePartsJson);
