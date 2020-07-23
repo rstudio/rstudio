@@ -29,12 +29,10 @@ public class SaveFailedEvent extends GwtEvent<SaveFailedEvent.Handler>
       new GwtEvent.Type<SaveFailedEvent.Handler>();
    
    public SaveFailedEvent(String path,
-                          String id,
-                          boolean isAutosave)
+                          String id)
    {
       path_ = path;
       id_ = id;
-      isAutosave_ = isAutosave;
    }
    
    public String getPath()
@@ -45,11 +43,6 @@ public class SaveFailedEvent extends GwtEvent<SaveFailedEvent.Handler>
    public String getId()
    {
       return id_;
-   }
-   
-   public boolean isAutosave()
-   {
-      return isAutosave_;
    }
    
    @Override
@@ -66,5 +59,4 @@ public class SaveFailedEvent extends GwtEvent<SaveFailedEvent.Handler>
    
    private final String path_;
    private final String id_;
-   private final boolean isAutosave_;
 }
