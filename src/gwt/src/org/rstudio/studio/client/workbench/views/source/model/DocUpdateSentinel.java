@@ -272,7 +272,53 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, null, true, progress_);
+         return doSave(null, null, null, true, new ProgressIndicator()
+         {
+            
+            @Override
+            public void onProgress(String message, Operation onCancel)
+            {
+               if (progress_ != null)
+                  progress_.onProgress(message, onCancel);
+            }
+            
+            @Override
+            public void onProgress(String message)
+            {
+               if (progress_ != null)
+                  progress_.onProgress(message);
+               
+            }
+            
+            @Override
+            public void onError(String message)
+            {
+               // Inform the user once if this was an autosave failure.
+               if (!loggedAutosaveError_)
+               {
+                  loggedAutosaveError_ = true;
+
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        "Error Autosaving File",
+                        "RStudio was unable to autosave this file. You may need " +
+                        "to restart RStudio.");
+               }
+            }
+            
+            @Override
+            public void onCompleted()
+            {
+               if (progress_ != null)
+                  progress_.onCompleted();
+            }
+            
+            @Override
+            public void clearProgress()
+            {
+               if (progress_ != null)
+                  progress_.clearProgress();
+            }
+         });
       }
       else
       {
@@ -478,34 +524,14 @@ public class DocUpdateSentinel
                   // Always log save errors.
                   Debug.logError(error);
                   
-                  // Inform the user once if this was an autosave failure.
-                  if (isAutosave && !loggedAutosaveError_)
-                  {
-                     loggedAutosaveError_ = true;
-
-                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           "Error Autosaving File",
-                           "RStudio was unable to autosave this file. You may need " +
-                           "to restart RStudio.");
-                  }
-                 
-                  // Avoid reporting auto-save errors to the user via the indicator,
-                  // as this could lead to a relentless cascade of errors while the
-                  // user attempts to edit the document.
+                  // Report errors to indicator.
                   if (progress != null)
                   {
-                     if (isAutosave)
-                     {
-                        progress_.onCompleted();
-                     }
-                     else
-                     {
-                        String errorMessage =
-                              "Error saving " + path + ": " +
-                              error.getUserMessage();
-                     
-                        progress.onError(errorMessage);
-                     }
+                     String errorMessage =
+                           "Error saving " + path + ": " +
+                                 error.getUserMessage();
+
+                     progress.onError(errorMessage);
                   }
                   
                   // Attempt to report save error.
