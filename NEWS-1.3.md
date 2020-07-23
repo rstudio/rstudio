@@ -2,6 +2,7 @@
 
 ### Misc
 
+- Compatible with R graphics engine version 13 (R 4.1.0+) (#7253)
 - Add support for configurable `rsandbox` path in Server Pro (Pro #1777)
 - Add support for running Slurm plugin in unprivileged Docker containers (Pro #1744)
 
