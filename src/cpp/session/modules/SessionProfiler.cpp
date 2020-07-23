@@ -107,12 +107,16 @@ Error initialize()
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 
+   RS_REGISTER_CALL_METHOD(rs_profilesPath);
+   
+   r::options::setOptionDefault(
+            "profvis.prof_output",
+            string_utils::utf8ToSystem(profilesCacheDir()));
+   
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq))
       (boost::bind(module_context::registerUriHandler, kProfilerResourceLocation, handleProfilerResourceResReq));
-
-   RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
 
    return initBlock.execute();
 }

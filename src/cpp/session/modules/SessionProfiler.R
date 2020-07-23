@@ -13,41 +13,27 @@
 #
 #
 
+if (is.null(getOption("profvis.print"))) {
+   options(profvis.print = function(x) {
+      .rs.profilePrint(x)
+   })
+}
+
+if (is.null(getOption("profvis.prof_extension"))) {
+   options(profvis.prof_extension = ".Rprof")
+}
+
 .rs.addFunction("profileResources", function()
 {
-   rStudioVersion <- package_version(
-      .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
+   tempPath <- getOption(
+      "profvis.prof_output",
+      default = .Call("rs_profilesPath", PACKAGE = "(embedding)")
    )
-   resetOptions <- rStudioVersion > "0.99.1053" && rStudioVersion < "0.99.1099"
-
-   if (identical(getOption("profvis.print"), NULL) || resetOptions) {
-      options(profvis.print = function(x) {
-         envir <- as.environment(which(search() == "tools:rstudio"))
-         eval(
-            substitute(.rs.profilePrint(x), list(x = x)),
-            envir = envir
-         )
-      })
-   }
-
-   if (identical(getOption("profvis.prof_extension"), NULL) ||
-       identical(getOption("profvis.prof_extension"), ".rprof") ||
-       resetOptions) {
-      options("profvis.prof_extension" = ".Rprof")
-   }
-
-   tempPath <- .Call("rs_profilesPath")
-   if (!.rs.dirExists(tempPath)) {
+   
+   if (!.rs.dirExists(tempPath))
       dir.create(tempPath, recursive = TRUE)
-   }
 
-   if (identical(getOption("profvis.prof_output"), NULL) || resetOptions) {
-      options("profvis.prof_output" = tempPath)
-   }
-
-   return (list(
-      tempPath = tempPath
-   ))
+   list(tempPath = tempPath)
 })
 
 .rs.addJsonRpcHandler("start_profiling", function(profilerOptions)
@@ -58,9 +44,7 @@
 
       Rprof(filename = fileName, line.profiling = TRUE, memory.profiling = TRUE)
 
-      return(list(
-         fileName = .rs.scalar(fileName)
-      ))
+      list(fileName = .rs.scalar(fileName))
    }, error = function(e) {
       return(list(error = .rs.scalar(e$message)))
    })
@@ -94,7 +78,7 @@
 
       if (identical(profilerOptions$profvis, NULL)) {
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
-            profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
+            profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split = "h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
          }
          else {

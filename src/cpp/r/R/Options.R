@@ -14,18 +14,20 @@
 #
 
 # get version
-.rs.addGlobalFunction("RStudio.Version", function() {
+.rs.addGlobalFunction("RStudio.Version", function()
+{
    .rs.api.versionInfo()
 })
 
 # custom browseURL implementation
 options(browser = function(url)
 {
-   .Call("rs_browseURL", url) ;
+   .Call("rs_browseURL", url, PACKAGE = "(embedding)")
 })
 
 # default viewer option if not already set
-if (is.null(getOption("viewer"))) {
+if (is.null(getOption("viewer")))
+{
    options(viewer = function(url, height = NULL)
    {
       if (!is.character(url) || (length(url) != 1))
@@ -42,7 +44,8 @@ if (is.null(getOption("viewer"))) {
 }
 
 # default page_viewer option if not already set
-if (is.null(getOption("page_viewer"))) {
+if (is.null(getOption("page_viewer")))
+{
    options(page_viewer = function(url, title = "RStudio Viewer", self_contained = FALSE)
    {
       if (!is.character(url) || (length(url) != 1))
@@ -59,7 +62,8 @@ if (is.null(getOption("page_viewer"))) {
 }
 
 # default shinygadgets.showdialog if not already set
-if (is.null(getOption("shinygadgets.showdialog"))) {
+if (is.null(getOption("shinygadgets.showdialog")))
+{
    options(shinygadgets.showdialog = function(caption,
                                               url,
                                               width = NULL,
@@ -88,16 +92,30 @@ if (is.null(getOption("shinygadgets.showdialog"))) {
 }
 
 # provide askpass function
-options(askpass = .rs.askForPassword)
+options(askpass = function(prompt)
+{
+   .rs.askForPassword(prompt)
+})
 
 # provide asksecret function
-options(asksecret = .rs.askForSecret)
+options(asksecret = function(name,
+                             title = name,
+                             prompt = paste(name, ":", sep = ""))
+{
+   .rs.askForSecret(name, title, prompt)
+})
 
 # provide restart function
-options(restart = .rs.restartR)
+options(restart = function(afterRestartCommand)
+{
+   .rs.restartR(afterRestartCommand)
+})
 
 # custom pager implementation
-options(pager = .rs.pager)
+options(pager = function(files, header, title, delete.file)
+{
+   .rs.pager(files, header, title, delete.file)
+})
 
 # never allow graphical menus
 options(menu.graphics = FALSE)
@@ -118,13 +136,13 @@ local({
    if (platform$GUI != "RStudio") {
       platform$GUI = "RStudio"
       unlockBinding(".Platform", asNamespace("base"))
-      assign(".Platform", platform, inherits=TRUE)
+      assign(".Platform", platform, inherits = TRUE)
       lockBinding(".Platform", asNamespace("base"))
    }
 })
 
 # set default x display (see below for comment on why we need to do this)
-if (is.na(Sys.getenv("DISPLAY", NA)))
+if (is.na(Sys.getenv("DISPLAY", unset = NA)))
    Sys.setenv(DISPLAY = ":0")
 
 # the above two display oriented command affect the behavior of edit.data.frame
