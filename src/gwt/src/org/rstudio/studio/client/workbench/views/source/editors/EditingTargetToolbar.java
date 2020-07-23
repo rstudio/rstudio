@@ -33,10 +33,8 @@ public class EditingTargetToolbar extends Toolbar
       // Buttons are unique to a source column so require SourceAppCommands
       SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
 
-      addLeftWidget(
-         mgr.getSourceCommand(commands.sourceNavigateBack(), column).createToolbarButton());
-      Widget forwardButton =
-         mgr.getSourceCommand(commands.sourceNavigateForward(), column).createToolbarButton();
+      addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
+      Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       addLeftWidget(forwardButton);
       addLeftSeparator();

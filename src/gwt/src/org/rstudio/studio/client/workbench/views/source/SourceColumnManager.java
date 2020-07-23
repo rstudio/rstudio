@@ -617,8 +617,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       commands_.sourceNavigateBack().setEnabled(
          sourceNavigationHistory_.isBackEnabled());
-      commands_.sourceNavigateBack().setEnabled(
-         sourceNavigationHistory_.isBackEnabled());
+      commands_.sourceNavigateForward().setEnabled(
+         sourceNavigationHistory_.isForwardEnabled());
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
