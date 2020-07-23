@@ -47,14 +47,14 @@ std::string getUserIdentifier(const core::http::Request& request)
 }
 
 bool mainPageFilter(const core::http::Request& request,
-                    core::http::Response* pResponse,
-                    UserIdentifierGetter userIdentifierGetter)
+                    core::http::Response* pResponse)
 {
    // check for user identity, if we have one then allow the request to proceed
-   std::string userIdentifier = userIdentifierGetter(request);
+   std::string userIdentifier = auth::handler::getUserIdentifier(request, true);
    if (userIdentifier.empty())
    {
       // otherwise redirect to sign-in
+      clearSignInCookies(request, pResponse);
       redirectToLoginPage(request, pResponse, request.uri());
       return false;
    }
@@ -86,9 +86,9 @@ void signIn(const core::http::Request& request,
             const std::string& formAction,
             std::map<std::string,std::string> variables /*= {}*/)
 {
-   // any attempt to load the sign in page with a valid cookie is sent back
-   std::string cookieUsername = core::http::secure_cookie::readSecureCookie(request, kUserIdCookie, options().wwwIFrameLegacyCookies());
-   if (!cookieUsername.empty())
+   // any attempt to load the sign in page with a valid cookie is sent back (multi-tab sign in)
+   std::string username = auth::handler::getUserIdentifier(request, true);
+   if (!username.empty())
    {
       pResponse->setMovedTemporarily(request, "./");
       return;
@@ -421,7 +421,7 @@ void prepareHandler(handler::Handler& handler,
    }
    handler.getUserIdentifier = boost::bind(getUserIdentifierArg, _1);
    handler.userIdentifierToLocalUsername = userIdentifierToLocalUsernameArg;
-   handler.mainPageFilter = boost::bind(mainPageFilter, _1, _2, getUserIdentifierArg);
+   handler.mainPageFilter = boost::bind(mainPageFilter, _1, _2);
    handler.signInThenContinue = signInThenContinue;
    handler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    handler.signIn = signInArg;

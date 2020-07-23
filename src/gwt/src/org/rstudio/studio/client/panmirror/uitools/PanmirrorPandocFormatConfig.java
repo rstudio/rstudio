@@ -15,8 +15,11 @@
 
 package org.rstudio.studio.client.panmirror.uitools;
 
+import java.util.Arrays;
+
 import org.rstudio.core.client.StringUtil;
 
+import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -33,6 +36,12 @@ public class PanmirrorPandocFormatConfig
    public String references_location;
    public String references_prefix;
    public boolean canonical;
+   
+ 
+   public static boolean isDoctype(PanmirrorPandocFormatConfig config, String doctype)
+   {
+      return config.doctypes != null && Arrays.asList(config.doctypes).contains(doctype);
+   }
    
    public static boolean areEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {

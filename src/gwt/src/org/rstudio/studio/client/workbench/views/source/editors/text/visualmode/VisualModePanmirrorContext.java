@@ -166,8 +166,9 @@ public class VisualModePanmirrorContext
    {
       PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
       uiDisplay.showContextMenu = showContextMenu;
-      uiDisplay.navigateToXRef = (XRef xref, FileSystemItem srcFile) ->
+      uiDisplay.navigateToXRef = (String file, XRef xref) ->
       {
+         FileSystemItem srcFile = FileSystemItem.createFile(file);
          events_.fireEvent(new XRefNavigationEvent(xref, srcFile, true));
       };
       

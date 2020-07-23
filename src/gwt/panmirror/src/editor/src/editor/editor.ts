@@ -681,6 +681,10 @@ export class Editor {
     });
   }
 
+  public getEditorFormat() {
+    return this.format;
+  }
+
   public getPandocFormat() {
     return this.pandocFormat;
   }
