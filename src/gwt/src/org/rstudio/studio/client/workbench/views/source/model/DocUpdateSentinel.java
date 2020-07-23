@@ -479,9 +479,9 @@ public class DocUpdateSentinel
                   Debug.logError(error);
                   
                   // Inform the user once if this was an autosave failure.
-                  if (isAutosave && !loggedAutosaveError)
+                  if (isAutosave && !loggedAutosaveError_)
                   {
-                     loggedAutosaveError = true;
+                     loggedAutosaveError_ = true;
 
                      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                            "Error Autosaving File",
@@ -904,7 +904,7 @@ public class DocUpdateSentinel
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
                  propertyChangeHandlers_;
-   private boolean loggedAutosaveError = false;
+   private boolean loggedAutosaveError_ = false;
    
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
