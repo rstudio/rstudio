@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFontMetrics;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
@@ -88,13 +87,8 @@ public class AceEditorWidget extends Composite
    {
       this(true);
    }
-
-   public AceEditorWidget(boolean applyNormalFontSize)
-   {
-      this(applyNormalFontSize, null);
-   }
     
-   public AceEditorWidget(boolean applyNormalFontSize, AceFontMetrics fontMetrics)
+   public AceEditorWidget(boolean applyNormalFontSize)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       initWidget(new HTML());
@@ -109,7 +103,7 @@ public class AceEditorWidget extends Composite
 
       addStyleName("loading");
 
-      editor_ = AceEditorNative.createEditor(getElement(), fontMetrics);
+      editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
       editor_.setShowPrintMargin(false);

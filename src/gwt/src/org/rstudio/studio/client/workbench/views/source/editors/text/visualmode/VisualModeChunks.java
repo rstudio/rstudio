@@ -17,17 +17,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFontMetrics;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.dom.client.DivElement;
@@ -38,23 +36,14 @@ import jsinterop.base.Js;
 
 public class VisualModeChunks
 {
-   public VisualModeChunks(DocUpdateSentinel sentinel, TextEditingTarget target)
+   public VisualModeChunks(DocUpdateSentinel sentinel, CompletionContext rCompletionContext)
    {
-      target_ = target;
+      rContext_ = rCompletionContext;
       sentinel_ = sentinel;
    }
-   
+
    public PanmirrorUIChunks uiChunks()
    {
-      // Create font measuring system if it doesn't exist. Ideally we would have
-      // one global font measurer, but Ace manipulates the state of the font
-      // metrics objects such that it's necessary to have one per outer
-      // document.
-      if (fontMeasurer_ == null)
-      {
-         fontMeasurer_ = new FontMeasurer(target_.getId());
-      }
-
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
       chunks.createChunkEditor = (type) -> {
 
@@ -71,13 +60,12 @@ public class VisualModeChunks
 
          // Create a new AceEditor instance and allow access to the underlying
          // native JavaScript object it represents (AceEditorNative)
-         final AceEditor editor = new AceEditor(fontMeasurer_.getFontMetrics());
+         final AceEditor editor = new AceEditor();
          final AceEditorNative chunkEditor = editor.getWidget().getEditor();
-         
          chunk.editor = Js.uncheckedCast(chunkEditor);
 
          // Forward the R completion context from the parent editing session
-         editor.setRCompletionContext(target_.getRCompletionContext());
+         editor.setRCompletionContext(rContext_);
 
          // Provide the editor's container element; in the future this will be a
          // host element which hosts chunk output
@@ -118,7 +106,6 @@ public class VisualModeChunks
          // aren't attached to a dead editor instance
          chunk.destroy = () ->
          {
-            // Clean up all registered handlers
             for (HandlerRegistration reg: releaseOnDismiss)
             {
                reg.removeHandler();
@@ -198,55 +185,7 @@ public class VisualModeChunks
          break;
       }
    }
-
-   public void destroy()
-   {
-      if (fontMeasurer_ != null)
-      {
-         fontMeasurer_.destroy();
-         fontMeasurer_ = null;
-      }
-   }
-
-   /**
-    * Internal class to handle font metrics measurement
-    */
-   private class FontMeasurer
-   {
-      public FontMeasurer(String id)
-      {
-         // Create dummy element for font sizing (ensure hidden from a11y tree)
-         fontMeasurer_ = Document.get().createDivElement();
-         fontMeasurer_.addClassName("ace_editor");
-         fontMeasurer_.setId("rstudio_ace_font_measure_" + id);
-         Document.get().getBody().appendChild(fontMeasurer_);
-         A11y.setARIAHidden(fontMeasurer_);
-
-         // Create a single font metrics provider to supply font sizing
-         // information to all of the UI chunks the factory will create
-         // (otherwise each individual editor spends a lot of time computing
-         // these values)
-         fontMetrics_ = AceEditorNative.createFontMetrics(fontMeasurer_);
-         fontMetrics_.checkForSizeChanges();
-      }
-
-      public AceFontMetrics getFontMetrics()
-      {
-         return fontMetrics_;
-      }
-      
-      public void destroy()
-      {
-         fontMeasurer_.removeFromParent();
-         fontMetrics_.destroy();
-      }
-      
-      private final AceFontMetrics fontMetrics_;
-      private final DivElement fontMeasurer_;
-   }
-
-
-   private FontMeasurer fontMeasurer_;
-   private final TextEditingTarget target_;
+   
+   private final CompletionContext rContext_;
    private final DocUpdateSentinel sentinel_;
 }
