@@ -116,5 +116,6 @@ export interface EditorUIImages {
     song_dark?: string;
     web?: string;
     web_dark?: string;
+    zoteroOverlay?: string;
   };
 }

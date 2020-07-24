@@ -230,7 +230,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       }
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Terminal");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(general, "General", general.getBasePanelId());
       tabPanel.add(closing, "Closing", closing.getBasePanelId());
       tabPanel.selectTab(0);

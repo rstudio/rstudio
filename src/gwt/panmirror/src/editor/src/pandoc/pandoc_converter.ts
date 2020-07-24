@@ -147,10 +147,18 @@ export class PandocConverter {
       pandocOptions.push('--dpi');
     }
     // default to block level references (validate known types)
-    const references = ['block', 'section', 'document'].includes(options.references || '')
-      ? options.references
-      : 'block';
-    pandocOptions.push(`--reference-location=${references}`);
+    let referenceLocation = 'block';
+    if (options.references?.location) {
+      referenceLocation = ['block', 'section', 'document'].includes(options.references.location)
+        ? options.references.location
+        : 'block';
+    }
+    pandocOptions.push(`--reference-location=${referenceLocation}`);
+
+    // references prefix (if any)
+    if (options.references?.prefix) {
+      pandocOptions.push('--id-prefix', options.references.prefix);
+    }
 
     // provide wrapColumn options
     pandocOptions = pandocOptions.concat(wrapColumnOptions(options));

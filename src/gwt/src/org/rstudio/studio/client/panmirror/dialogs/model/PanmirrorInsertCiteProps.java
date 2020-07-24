@@ -9,6 +9,9 @@ public class PanmirrorInsertCiteProps
    public String doi;
    public String[] existingIds;
    public String[] bibliographyFiles;
+   public String provider;
    public JsObject csl;
    public PanmirrorInsertCiteUI citeUI;
 }
+
+

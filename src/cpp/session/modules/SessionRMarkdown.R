@@ -481,6 +481,8 @@
       front_matter <- rmarkdown::yaml_front_matter(index)
       if (is.character(front_matter[[value]]))
          front_matter[[value]]
+      else if (is.logical(front_matter[[value]]))
+         paste0("LOGICAL:",front_matter[[value]])
       else
          character()
    }
@@ -488,18 +490,6 @@
    {
       character()
    }
-})
-
-.rs.addFunction("bookdown.bibliographies", function(input_dir) {
-   .rs.bookdown.frontMatterValue(input_dir, "bibliography")
-})
-
-.rs.addFunction("bookdown.csl", function(input_dir) {
-   csl <- .rs.bookdown.frontMatterValue(input_dir, "csl")
-   if (length(csl) > 0)
-     csl[[1]]
-   else
-     ""
 })
 
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {

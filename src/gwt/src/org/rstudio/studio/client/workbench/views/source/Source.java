@@ -463,6 +463,38 @@ public class Source implements InsertSourceHandler,
    {
       restoreDocuments(session_);
 
+
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!SourceWindowManager.isMainSourceWindow())
+         activeTabKey += "SourceWindow" +
+            pWindowManager_.get().getSourceWindowOrdinal();
+
+      new IntStateValue(MODULE_SOURCE, activeTabKey,
+         ClientState.PROJECT_PERSISTENT,
+         session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value == null)
+               return;
+
+            columnManager_.initialSelect(value);
+
+            // clear the history manager
+            columnManager_.clearSourceNavigationHistory();
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return columnManager_.getPhysicalTabIndex();
+         }
+      };
+
+      AceEditorNative.syncUiPrefs(userPrefs_);
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
       columnManager_.manageCommands(false);
@@ -538,40 +570,8 @@ public class Source implements InsertSourceHandler,
          WindowEx.addFocusHandler(
              (FocusEvent event) -> columnManager_.manageCommands(true));
       }
-
-      // get the key to use for active tab persistence; use ordinal-based key
-      // for source windows rather than their ID to avoid unbounded accumulation
-      String activeTabKey = KEY_ACTIVETAB;
-      if (!SourceWindowManager.isMainSourceWindow())
-         activeTabKey += "SourceWindow" +
-                         pWindowManager_.get().getSourceWindowOrdinal();
-
-      new IntStateValue(MODULE_SOURCE, activeTabKey,
-                        ClientState.PROJECT_PERSISTENT,
-                        session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Integer value)
-         {
-            if (value == null)
-               return;
-
-            columnManager_.initialSelect(value);
-
-            // clear the history manager
-            columnManager_.clearSourceNavigationHistory();
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return columnManager_.getPhysicalTabIndex();
-         }
-      };
-
-      AceEditorNative.syncUiPrefs(userPrefs_);
    }
-   
+
    /**
     * Process the save_files_before_build user preference.
     * If false, ask the user how to handle unsaved changes and act accordingly.
@@ -1676,6 +1676,15 @@ public class Source implements InsertSourceHandler,
    
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
+      // The document should only be opened in the last focused window, unless this window is a
+      // satellite that has already been closed. When this is the case, open the new doc in the
+      // main source window.
+      String lastFocusedWindow = pWindowManager_.get().getLastFocusedSourceWindowId();
+      if (!SourceWindowManager.getSourceWindowId().equals(lastFocusedWindow) &&
+          (!SourceWindowManager.isMainSourceWindow() ||
+           pWindowManager_.get().isSourceWindowOpen(lastFocusedWindow)))
+            return;
+
       // determine the type
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
@@ -1808,16 +1817,18 @@ public class Source implements InsertSourceHandler,
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(event.getSourceFile());
 
       columnManager_.openFile(
-         event.getSourceFile(),
-         fileType,
-         new CommandWithArg<EditingTarget>() {
-            @Override
-            public void execute(final EditingTarget editor)
+            event.getSourceFile(),
+            fileType,
+            (final EditingTarget editor) ->
             {
-               TextEditingTarget target = (TextEditingTarget) editor;
-               target.navigateToXRef(event.getXRef());
-            }
-      });
+               // NOTE: we defer execution here as otherwise we might attempt navigation
+               // before the underlying Ace editor has been fully initialized
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  TextEditingTarget target = (TextEditingTarget) editor;
+                  target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
+               });
+            });
 
    }
 

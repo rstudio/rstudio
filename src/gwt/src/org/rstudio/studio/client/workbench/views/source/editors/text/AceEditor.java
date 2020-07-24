@@ -1489,6 +1489,8 @@ public class AceEditor implements DocDisplay,
       setSelectionRange(ranges.get(0));
       for (int i = 1; i < n; i++)
          getNativeSelection().addRange(ranges.get(i), false);
+      
+      scrollCursorIntoViewIfNecessary();
    }
    
    public int getLength(int row)
@@ -3637,7 +3639,36 @@ public class AceEditor implements DocDisplay,
             }
          }
          
-      } while (false);
+      }
+      while (false);
+      
+      // check for binary operator on start line
+      if (rowEndsInBinaryOp(startRow))
+      {
+         // move token cursor to that row
+         c.moveToEndOfRow(startRow);
+
+         // skip comments, operators, etc.
+         while (c.hasType("text", "comment", "virtual-comment", "keyword.operator"))
+         {
+            if (c.isRightBracket())
+               break;
+
+            if (!c.moveToPreviousToken())
+               break;
+         }
+
+         // if we landed on a closing bracket, look for its match
+         // and then continue search from that row. otherwise,
+         // just look back a single row
+         if (c.valueEquals(")") || c.valueEquals("]"))
+         {
+            if (c.bwdToMatchingToken())
+            {
+               startRow = c.getRow();
+            }
+         }
+      }
       
       // discover start of current statement
       while (startRow >= startRowLimit)
@@ -3646,7 +3677,7 @@ public class AceEditor implements DocDisplay,
          if (startRow <= 0)
             break;
          
-         // if the row starts with an open bracket, expand to its match
+         // if the row starts with a closing bracket, expand to its match
          if (rowStartsWithClosingBracket(startRow))
          {
             c.moveToStartOfRow(startRow);
@@ -3657,15 +3688,50 @@ public class AceEditor implements DocDisplay,
             }
          }
          
-         // keep going if the line is empty or previous ends w/binary op
-         if (rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         // check for binary operator on previous line
+         int prevRow = startRow - 1;
+         if (rowEndsInBinaryOp(prevRow))
+         {
+            // move token cursor to that row
+            c.moveToEndOfRow(prevRow);
+            
+            // skip comments, operators, etc.
+            while (c.hasType("text", "comment", "virtual-comment", "keyword.operator"))
+            {
+               if (c.isRightBracket())
+                  break;
+                  
+               if (!c.moveToPreviousToken())
+                  break;
+            }
+          
+            // if we landed on a closing bracket, look for its match
+            // and then continue search from that row. otherwise,
+            // just look back a single row
+            if (c.valueEquals(")") || c.valueEquals("]"))
+            {
+               if (c.bwdToMatchingToken())
+               {
+                  startRow = c.getRow();
+                  continue;
+               }
+            }
+            else
+            {
+               startRow--;
+               continue;
+            }
+         }
+         
+         // keep going over blank, commented lines
+         if (rowIsEmptyOrComment(prevRow))
          {
             startRow--;
             continue;
          }
          
          // keep going if we're in a multiline string
-         String state = getSession().getState(startRow - 1);
+         String state = getSession().getState(prevRow);
          if (state == "qstring" || state == "qqstring")
          {
             startRow--;

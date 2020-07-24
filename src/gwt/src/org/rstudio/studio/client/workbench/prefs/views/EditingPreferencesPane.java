@@ -77,7 +77,6 @@ public class EditingPreferencesPane extends PreferencesPane
             "When enabled, the indentation for documents not part of an RStudio project " +
             "will be automatically detected."));
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
-      editingPanel.add(checkboxPref("Rainbow parentheses", prefs_.rainbowParentheses()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
@@ -204,8 +203,9 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
-      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls",
-         prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
+      displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
+      displayPanel.add(extraSpaced(
+         checkboxPref("Rainbow parentheses", prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
       foldMode_ = new SelectWidget(
             "Fold Style:",
@@ -469,7 +469,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Editing");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(editingPanel, "Editing", editingPanel.getBasePanelId());
       tabPanel.add(displayPanel, "Display", displayPanel.getBasePanelId());
       tabPanel.add(savePanel, "Saving", savePanel.getBasePanelId());

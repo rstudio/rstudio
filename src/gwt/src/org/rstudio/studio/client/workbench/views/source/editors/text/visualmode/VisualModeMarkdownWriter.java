@@ -16,12 +16,17 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
+import org.rstudio.studio.client.panmirror.PanmirrorWriterReferencesOptions;
+import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
 
@@ -41,9 +46,11 @@ public class VisualModeMarkdownWriter
       
    }
    
-   public VisualModeMarkdownWriter()
+   public VisualModeMarkdownWriter(DocUpdateSentinel docUpdateSentinel, VisualModePanmirrorFormat format)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      docUpdateSentinel_ = docUpdateSentinel;
+      format_ = format;
    }
    
    @Inject
@@ -75,13 +82,34 @@ public class VisualModeMarkdownWriter
          options.wrapColumn = 0;
       
       // use user pref for references location
-      options.references = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      PanmirrorWriterReferencesOptions references = new PanmirrorWriterReferencesOptions();
+      references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      options.references = references;
       
       // layer in format config
       if (formatConfig.wrapColumn > 0)
          options.wrapColumn = formatConfig.wrapColumn;
-      if (formatConfig.references != null)
-         options.references = formatConfig.references;
+      if (formatConfig.references_location != null)
+         options.references.location = formatConfig.references_location;
+      if (formatConfig.references_prefix != null)
+         options.references.prefix = formatConfig.references_prefix;
+      
+      // if the config doesn't have a references_prefix then provide one for
+      // bookdown documents(otherwise there will be duplicate footnotes)
+      if (options.references.prefix == null && 
+          (format_.isBookdownProjectDocument() || 
+           PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown)
+          )
+         )
+      {
+         String docPath = docUpdateSentinel_.getPath();
+         if (docPath != null)
+         {
+            String filename = FileSystemItem.createFile(docPath).getStem();
+            PanmirrorUIToolsAttr attr = new PanmirrorUITools().attr;
+            options.references.prefix = attr.pandocAutoIdentifier(filename) + "-";
+         }
+      }
       
       // check if this represents a line wrapping change
       boolean wrapColumnChanged = lastUsedWriterOptions_ != null &&
@@ -97,5 +125,7 @@ public class VisualModeMarkdownWriter
    
    private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
    private UserPrefs prefs_;
+   private final VisualModePanmirrorFormat format_;
+   private final DocUpdateSentinel docUpdateSentinel_;
    
 }

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -26,21 +27,29 @@ public class XRefNavigationEvent extends GwtEvent<XRefNavigationEvent.Handler>
       void onXRefNavigation(XRefNavigationEvent e);
    }
 
-   public XRefNavigationEvent(FileSystemItem sourceFile, String xref)
+   public XRefNavigationEvent(XRef xref,
+                              FileSystemItem file,
+                              boolean forceVisualMode)
    {
-      sourceFile_ = sourceFile;
       xref_ = xref;
+      file_ = file;
+      forceVisualMode_ = forceVisualMode;
    }
-
-   public FileSystemItem getSourceFile()
-   {
-      return sourceFile_;
-   }
-  
-   public String getXRef()
+   
+   public final XRef getXRef()
    {
       return xref_;
-   }   
+   }
+
+   public final FileSystemItem getSourceFile()
+   {
+      return file_;
+   }
+   
+   public final boolean getForceVisualMode()
+   {
+      return forceVisualMode_;
+   }
   
    @Override
    public Type<Handler> getAssociatedType()
@@ -54,8 +63,9 @@ public class XRefNavigationEvent extends GwtEvent<XRefNavigationEvent.Handler>
       handler.onXRefNavigation(this);
    }
 
-   private final FileSystemItem sourceFile_;
-   private final String xref_;
+   private final XRef xref_;
+   private final FileSystemItem file_;
+   private final boolean forceVisualMode_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

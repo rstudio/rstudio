@@ -38,7 +38,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
-import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -53,6 +52,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -238,7 +238,8 @@ public class PaneManager
                       @Named("Tutorial") final WorkbenchTab tutorialTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
-                      OptionsLoader.Shim optionsLoader)
+                      OptionsLoader.Shim optionsLoader,
+                      Provider<GlobalDisplay> pGlobalDisplay)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -271,6 +272,7 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
+      pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
       source_.load();
@@ -408,22 +410,6 @@ public class PaneManager
       eventBus_.addHandler(
             ManageLayoutCommandsEvent.TYPE,
             event -> manageLayoutCommands());
-
-      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, event ->
-      {
-         left_.replaceWindows(panes_.get(0), panes_.get(1));
-         right_.replaceWindows(panes_.get(2), panes_.get(3));
-
-         tabSet1TabPanel_.clear();
-         tabSet2TabPanel_.clear();
-         populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-         populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
-
-         manageLayoutCommands();
-
-         activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
-      });
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
       {
@@ -657,6 +643,19 @@ public class PaneManager
          selected.setFocus();
       }
    }
+
+   @Handler
+    public void onNewSourceColumn()
+    {
+       if (!userPrefs_.allowSourceColumns().getValue())
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+             "Allow Source Columns preference is disabled.");
+       else if (additionalSourceCount_ == MAX_COLUMN_COUNT)
+          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+             "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+       else
+          createSourceColumn();
+    }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
@@ -1641,6 +1640,7 @@ public class PaneManager
    private final WorkbenchTab dataTab_;
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
+   private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
    private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
@@ -1670,4 +1670,5 @@ public class PaneManager
    private ArrayList<Tab> hiddenTabs_;
 
    private int additionalSourceCount_; // this does not include the main source
+   public final static int MAX_COLUMN_COUNT = 3;
 }

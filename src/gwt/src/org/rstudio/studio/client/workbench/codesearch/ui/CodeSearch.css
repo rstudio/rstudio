@@ -11,26 +11,73 @@
 }
 
 .fileImage {
-   position: relative;
-   top: 2px;
-   margin-right: 5px;
+	display: inline-block;
+	position: relative;
+	top: 2px;
+	margin-right: 5px;
 }
 
-.itemImage {
-   position: relative;
-   top: 2px;
-   margin-left: 2px;
-   margin-right: 8px;
-   padding-top: 4px;
-   padding-bottom: 2px;
-
+.fileItem {
+	position: relative;
+	top: -1px;
+	margin-right: 7px;
 }
 
-.itemName {
-   margin-right: 7px;
+.smallCodeImage {
+	display: inline-block;
+	position: relative;
+	text-align: center;
+	margin-right: 5px;
+	width: 16px;
+	height: 19px;
+}
+
+.smallCodeImage img {
+	position: relative;
+	top: 4px;
+}
+
+.smallCodeItem {
+	position: relative;
+	margin-right: 7px;
+	top: 3px;
+}
+
+.smallItemContext {
+	position: relative;
+	top: 3px;
+	color: #888;
+}
+
+.codeImage {
+	display: inline-block;
+	position: relative;
+	top: 2px;
+	margin-right: 5px;
+}
+
+.codeItem {
+	position: relative;
+	top: -1px;
+	margin-right: 7px;
+}
+
+.xrefImage {
+	display: inline-block;
+	position: relative;
+	top: 2px;
+	margin-right: 5px;
+}
+
+.xrefItem {
+	position: relative;
+	top: -1px;
+	margin-right: 7px;
 }
 
 .itemContext {
+   position: relative;
+   top: -1px;
    color: #888;
 }
 
