@@ -203,6 +203,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     var reIdentifier = "[a-zA-Z.][a-zA-Z0-9._]*";
 
+    var $complements = {
+      "{" : "}",
+      "[" : "]",
+      "(" : ")"
+    };
+
     var rules = {};
 
     // Define rule sub-blocks that can be included to create
@@ -239,6 +245,28 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     ];
 
     rules["#string"] = [
+      {
+        token : "string",
+        regex : "[rR]['\"][-]*[[({]",
+        next  : "rawstring",
+        onMatch: function(value, state, stack, line) {
+          
+          // initialize stack
+          stack = stack || [];
+          stack.length = 2;
+
+          // save current state in stack
+          stack[0] = state;
+
+          // save the expected suffix for exit
+          stack[1] =
+            $complements[value[value.length - 1]] +
+            value.substring(2, value.length - 1) +
+            value[1];
+
+          return this.token;
+        }
+      },
       {
         token : "string", // single line
         regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
@@ -425,6 +453,26 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "#function-call", "#keyword-or-identifier",
       "#operator", "#text"
     ]);
+
+    rules["rawstring"] = [
+
+      // attempt to match the end of the raw string. be permissive
+      // in what the regular expression matches, but validate that
+      // the matched string is indeed the expected suffix based on
+      // what was provided when we entered the 'rawstring' state
+      {
+        token : "string",
+        regex : "[\\]})][-]*['\"]",
+        onMatch: function(value, state, stack, line) {
+          this.next = (value === stack[1]) ? stack[0] : "rawstring";
+          return this.token;
+        }
+      },
+
+      {
+        defaultToken : "string"
+      }
+    ];
 
     rules["qqstring"] = [
       {
