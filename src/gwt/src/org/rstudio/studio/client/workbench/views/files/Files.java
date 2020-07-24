@@ -73,7 +73,7 @@ public class Files
    interface Binder extends CommandBinder<Commands, Files> {}
  
    public interface Display extends WorkbenchView
-   {
+   {   
       public interface NavigationObserver
       {
          void onFileNavigation(FileSystemItem file);

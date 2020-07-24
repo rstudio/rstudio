@@ -127,7 +127,7 @@ public class GitPane extends WorkbenchPane implements Display
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar("Git Tab");
-      toolbar.addLeftWidget(diffButton_ = commands_.vcsDiff().createToolbarButton());
+      toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -198,12 +198,11 @@ public class GitPane extends WorkbenchPane implements Display
          @Override
          public void execute()
          {
-            manageToolbarSizes();
-            setFocus();
+            manageToolbarSizes(); 
          }
       });
    }
-
+   
    @Override
    public void onResize() 
    {
@@ -298,7 +297,6 @@ public class GitPane extends WorkbenchPane implements Display
 
    private ToolbarButton historyButton_;
    private ToolbarMenuButton moreButton_;
-   private ToolbarButton diffButton_;
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    private ToolbarButton refreshButton_;

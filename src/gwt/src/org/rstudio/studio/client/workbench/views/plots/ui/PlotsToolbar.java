@@ -47,12 +47,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       removeAllWidgets();
       installStandardUI();
    }
-
-   public void focus()
-   {
-      zoomButton_.setFocus(true);
-   }
-
+   
    private void installStandardUI()
    {
       // plot history navigation
@@ -61,7 +56,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftSeparator();
       
       // popout current plot
-      addLeftWidget(zoomButton_ = commands_.zoomPlot().createToolbarButton());
+      addLeftWidget(commands_.zoomPlot().createToolbarButton());
       addLeftSeparator();
       
       // export commands
@@ -97,7 +92,6 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addRightWidget(refreshButton);
    }
    
-   private final Commands commands_;
-   private ToolbarButton zoomButton_;
+   private final Commands commands_;   
    private final RSConnectPublishButton publishButton_;
 }

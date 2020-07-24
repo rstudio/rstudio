@@ -179,11 +179,6 @@ public class FilePathToolbar extends Composite
          ((RequiresResize)getWidget()).onResize();
    }
 
-   public void focus()
-   {
-      pathBreadcrumbWidget_.focus();
-   }
-
    private final Files.Display.NavigationObserver navigationObserver_;
    private final boolean cloudFolderEnabled_;
    private FileSystemContextImpl fileSystemContext_;

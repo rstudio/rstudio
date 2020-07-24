@@ -135,7 +135,7 @@ public class TutorialPresenter
       display_.addTutorialNavigateHandler(this);
       display_.addLoadHandler(this);
    }
-
+   
    @Override
    public void onTutorialNavigate(TutorialNavigateEvent event)
    {

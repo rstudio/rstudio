@@ -24,7 +24,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -117,8 +116,7 @@ public class TutorialPane
       // toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
       // toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
       
-      toolbar_.addLeftWidget(homeButton_ =
-         commands_.tutorialHome().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
@@ -529,19 +527,20 @@ public class TutorialPane
    {
       globalDisplay_.bringWindowToFront(name);
    }
-
-   // Resources ----
+   
+   // Resources ---- 
    public interface Resources extends ClientBundle
    {
       @Source("TutorialPane.css")
       CssResource styles();
    }
 
+
+   
    private final ProgressIndicator indicator_;
    
    private RStudioFrame frame_;
    private Toolbar toolbar_;
-   private ToolbarButton homeButton_;
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;

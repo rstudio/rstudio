@@ -217,7 +217,7 @@ public class EnvironmentPane extends WorkbenchPane
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
-      searchWidget_ = new SearchWidget("Search environment", new SuggestOracle() {
+      SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -228,8 +228,8 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
       
-      ElementIds.assignElementId(searchWidget_, ElementIds.SW_ENVIRONMENT);
-      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
+      ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
+      searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
@@ -238,10 +238,10 @@ public class EnvironmentPane extends WorkbenchPane
       });
 
       if (!RStudioThemes.isFlat(prefs_)) {
-         searchWidget_.getElement().getStyle().setMarginTop(1, Unit.PX);
+         searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
       }
 
-      toolbar.addRightWidget(searchWidget_);
+      toolbar.addRightWidget(searchWidget);
 
       secondaryToolbar_ = toolbar;
    }
@@ -488,7 +488,7 @@ public class EnvironmentPane extends WorkbenchPane
       prefs_.showInternalFunctions().setProjectValue(show);
    }
 
-   public void fillObjectContents(final RObject object,
+   public void fillObjectContents(final RObject object, 
                                   final Operation onCompleted)
    {
       server_.getObjectContents(object.getName(), 
@@ -864,7 +864,6 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
-   private SearchWidget searchWidget_;
    
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
