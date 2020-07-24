@@ -24,9 +24,9 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface NewProjectResources extends ClientBundle
 {
-   static NewProjectResources INSTANCE = 
+   static NewProjectResources INSTANCE =
                   (NewProjectResources)GWT.create(NewProjectResources.class);
-   
+
    @Source("newProjectDirectoryIcon_2x.png")
    ImageResource newProjectDirectoryIcon2x();
 
@@ -56,7 +56,7 @@ public interface NewProjectResources extends ClientBundle
 
    @Source("projectFromRepositoryIconLarge_2x.png")
    ImageResource projectFromRepositoryIconLarge2x();
-   
+
    @Source("gitIcon_2x.png")
    ImageResource gitIcon2x();
 
@@ -68,13 +68,10 @@ public interface NewProjectResources extends ClientBundle
 
    @Source("svnIconLarge_2x.png")
    ImageResource svnIconLarge2x();
-   
+
    @Source("plumberAppIcon_2x.png")
    ImageResource plumberAppIcon2x();
 
-   @Source("plumberAppIconLarge_2x.png")
-   ImageResource plumberAppIconLarge2x();
-   
    static interface Styles extends CssResource
    {
       String wizardWidget();
@@ -90,7 +87,7 @@ public interface NewProjectResources extends ClientBundle
       String codeFilesListBox();
       String invalidPkgName();
    }
-   
+
    @Source("NewProjectWizard.css")
    Styles styles();
 }
