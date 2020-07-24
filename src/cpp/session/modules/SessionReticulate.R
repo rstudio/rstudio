@@ -284,9 +284,20 @@ options(reticulate.initialized = function() {
    active
 })
 
-options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
-options(reticulate.repl.hook       = .rs.reticulate.replHook)
-options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
+options(reticulate.repl.initialize = function()
+{
+   .rs.reticulate.replInitialize()
+})
+
+options(reticulate.repl.hook = function(buffer, contents, trimmed)
+{
+   .rs.reticulate.replHook(buffer, contents, trimmed)
+})
+
+options(reticulate.repl.teardown = function()
+{
+   .rs.reticulate.replTeardown()
+})
 
 .rs.addFunction("python.tokenizationRules", function() {
    
