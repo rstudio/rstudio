@@ -520,6 +520,7 @@ well as menu structures (for main menu and popup menus).
                <cmd refid="activateSource"/>
                <cmd refid="activateConsole"/>
                <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="focusNextPane"/>
                <cmd refid="activateTerminal"/>
                <cmd refid="activateHelp"/>
                <cmd refid="focusMainToolbar"/>
@@ -887,6 +888,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+`"/>
+         <shortcut refid="focusNextPane" value="F6"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Alt+Shift+[" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Alt+1" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -3794,6 +3796,10 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="focusConsoleOutputEnd"
         menuLabel="_Focus Console Output"
+        windowMode="main"/>
+
+   <cmd id="focusNextPane"
+        menuLabel="_Focus Next Pane"
         windowMode="main"/>
 
    <cmd id="signOut"

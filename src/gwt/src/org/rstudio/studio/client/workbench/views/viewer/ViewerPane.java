@@ -89,9 +89,19 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(exportButton_);
       exportButton_.setVisible(false);
       exportButtonSeparator_.setVisible(false);
-      
+
+      // Each pane requires a focusable widget so rather than using the AppCommand method
+      // createToolbarButton here, we manually create the button so it can be enabled
+      // with a no-op when the command is disabled rather than throwing an exception.
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
+      toolbar_.addLeftWidget(new ToolbarButton(commands_.viewerClear().getButtonLabel(),
+                                               commands_.viewerClear().getDesc(),
+                                               commands_.viewerClear().getImageResource(),
+                                               event -> {
+                                                  if (commands_.viewerClear().isEnabled())
+                                                     commands_.viewerClear().execute();
+                                               }));
+
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
         

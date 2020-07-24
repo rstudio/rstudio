@@ -211,6 +211,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
+      SourceColumn column = GWT.create(SourceColumn.class);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      columnList_.add(column);
 
       new JSObjectStateValue("source-column-manager",
                              "column-info",
@@ -263,9 +266,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             return columnState_.cast();
          }
       };
-      SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnList_.add(column);
 
       setActive(column.getName());
    }
@@ -407,8 +407,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       openingForSourceNavigation_ = value;
    }
 
-   public void activateColumns(final Command afterActivation)
+   public void activateColumn(String name, final Command afterActivation)
    {
+      if (!StringUtil.isNullOrEmpty(name))
+         setActive(getByName(name));
       if (!hasActiveEditor())
       {
          if (activeColumn_ == null)
@@ -427,6 +429,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          doActivateSource(afterActivation);
       }
+   }
+
+   public String getLeftColumnName()
+   {
+     return columnList_.get(columnList_.size() - 1).getName();
+   }
+
+   public String getNextColumnName()
+   {
+      int index = columnList_.indexOf(getActive());
+      if (index == getSize() - 1)
+         return null;
+      else
+         return columnList_.get(1 + index).getName();
    }
 
    // This method sets activeColumn_ to the main column if it is null. It should be used in cases
@@ -559,6 +575,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public int getSize()
    {
       return columnList_.size();
+   }
+
+   public SourceColumn get(int index)
+   {
+      if (index >= columnList_.size())
+         return null;
+      return columnList_.get(index);
    }
 
    public int getUntitledNum(String prefix)
@@ -1404,7 +1427,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       for (SourceColumn column : columnList_)
       {
-         if (!column.hasDoc())
+         if (!column.hasDoc() && column.getName() != MAIN_SOURCE_NAME)
          {
             closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
