@@ -525,8 +525,12 @@ FilePath detectZoteroDataDir()
             boost::regex regex("user_pref\\(\"extensions.zotero.dataDir\",\\s*\"([^\"]+)\"\\);");
             if (boost::regex_search(prefs, match, regex))
             {
-               // set dataDiroly if the path exists
-               FilePath profileDataDir(match[1]);
+               // prefs file escapes backslahes (it's javascript) so convert them
+               std::string dataDirMatch = match[1];
+               dataDirMatch = boost::algorithm::replace_all_copy(dataDirMatch, "\\\\", "/");
+
+               // set dataDir only if the path exists
+               FilePath profileDataDir(dataDirMatch);
                if (profileDataDir.exists())
                   dataDir = profileDataDir;
             }
