@@ -29,6 +29,48 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     return result;
   }
 
+  function rawStringRule(quote, lhs, rhs, numDashes)
+  {
+    var reDashes = numDashes > 0
+      ? "[-]{" + numDashes + "}"
+      : "";
+
+    var reStart  = "[rR]" + quote + reDashes + "\\" + lhs;
+    var reEnd    = "\\" + rhs + reDashes + quote;
+
+    return {
+      token : "string",
+      regex : reStart,
+      next: [
+        { token: "string", regex: reEnd, next: "start" },
+        { defaultToken: "string"}
+      ]
+    }
+  }
+
+  function addRawStringRules(array)
+  {
+    var dashCounts = [3, 2, 1, 0];
+
+    var quotes = ['"', "'"];
+
+    var pairs = [
+      [ "(", ")" ],
+      [ "{", "}" ],
+      [ "[", "]" ]
+    ];
+
+    dashCounts.forEach(function(dashCount) {
+      quotes.forEach(function(quote) {
+        pairs.forEach(function(pair) {
+          var rule = rawStringRule(quote, pair[0], pair[1], dashCount);
+          array.unshift(rule);
+        });
+      });
+    });
+
+  }
+
   var oop = require("ace/lib/oop");
   var lang = require("ace/lib/lang");
   var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -41,7 +83,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   var RoxygenHighlightRules = function()
   {
     var rules = {};
-
 
     rules["start"] = [
       {
@@ -262,6 +303,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next : "qstring"
       }
     ];
+
+    addRawStringRules(rules["#string"]);
 
     rules["#number"] = [
       {
