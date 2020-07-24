@@ -311,6 +311,52 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    width = gsl::narrow_cast<int>(width * pixelRatio);
    height = gsl::narrow_cast<int>(height * pixelRatio);
    res = gsl::narrow_cast<int>(res * pixelRatio);
+   
+   // handle ragg specially
+   std::string backend = getDefaultBackend();
+   if (backend == "ragg" &&
+       (bitmapFileType == kPngFormat ||
+        bitmapFileType == kJpegFormat ||
+        bitmapFileType == kTiffFormat))
+   {
+      auto deviceFunction = [=]() -> core::Error
+      {
+         if (bitmapFileType == kPngFormat)
+         {
+            return r::exec::RFunction("ragg:::agg_png")
+                  .addParam("filename", targetPath.getAbsolutePath())
+                  .addParam("width", width)
+                  .addParam("height", height)
+                  .addParam("res", res)
+                  .call();
+         }
+         else if (bitmapFileType == kJpegFormat)
+         {
+            return r::exec::RFunction("ragg:::agg_jpeg")
+                  .addParam("filename", targetPath.getAbsolutePath())
+                  .addParam("width", width)
+                  .addParam("height", height)
+                  .addParam("res", res)
+                  .addParam("quality", 100)
+                  .call();
+         }
+         else if (bitmapFileType == kTiffFormat)
+         {
+            return r::exec::RFunction("ragg:::agg_tiff")
+                  .addParam("filename", targetPath.getAbsolutePath())
+                  .addParam("width", width)
+                  .addParam("height", height)
+                  .addParam("res", res)
+                  .call();
+         }
+         else
+         {
+            return Success();
+         }
+      };
+      
+      return savePlotAsFile(deviceFunction);
+   }
 
    // optional format specific extra params
    std::string extraParams;
