@@ -666,7 +666,7 @@ Error appendToYAMLBibliography(const FilePath& bibliographyFile, const std::stri
 
    // write the biblio
    boost::format fmt("---\nreferences:\n%1%%2%\n...\n");
-   return core::writeStringToFile(bibliographyFile, boost::str(fmt % biblioFile % biblioAppend));
+   return core::writeStringToFile(bibliographyFile, boost::str(fmt % biblioFile % biblioAppend), string_utils::LineEndingPosix);
 }
 
 Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::string& id, const std::string& biblio)
@@ -703,7 +703,7 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
 
    // write
    std::string newBiblio = biblioFileJson.writeFormatted();
-   return writeStringToFile(bibliographyFile, newBiblio);
+   return writeStringToFile(bibliographyFile, newBiblio, string_utils::LineEndingPosix);
 }
 
 Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
@@ -761,7 +761,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
 
       // apply indentation
       std::vector<std::string> lines;
-      boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\r\n"));
+      boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\n"));
       std::vector<std::string> indentedLines;
       for (std::size_t i = 0; i<lines.size(); i++)
       {
