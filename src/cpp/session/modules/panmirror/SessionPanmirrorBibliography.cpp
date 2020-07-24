@@ -459,6 +459,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       biblioFiles = projectBibliographies();
    }
 
+   // filter biblio files on existence
+   algorithm::expel_if(biblioFiles, [](const FileInfo& file) { return !FilePath::exists(file.absolutePath()); });
+
    // if the filesystem and the cache agree on the etag then we can serve from cache
    if (s_biblioCache.etag() == BiblioCache::etag(biblioFiles, refBlock))
    {
