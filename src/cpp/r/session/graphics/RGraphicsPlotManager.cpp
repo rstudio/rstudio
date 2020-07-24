@@ -351,7 +351,9 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
          }
          else
          {
-            return Success();
+            return Error(
+                     boost::system::errc::not_supported,
+                     ERROR_LOCATION);
          }
       };
       
