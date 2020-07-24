@@ -92,7 +92,7 @@ public class LauncherJobsPane extends WorkbenchPane
    {
       baseImpl_.syncElapsedTime(timestamp);
    }
-   
+
    @Override
    public void bringToFront()
    {

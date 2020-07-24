@@ -26,9 +26,20 @@ public interface CodeSearchResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String codeSearchWidget();
+      
       String fileImage();
-      String itemImage();
-      String itemName();
+      String fileItem();
+      
+      String smallCodeImage();
+      String smallCodeItem();
+      String smallItemContext();
+      
+      String codeImage();
+      String codeItem();
+      
+      String xrefImage();
+      String xrefItem();
+      
       String itemContext();
       String codeSearchDialogMainWidget();
    }

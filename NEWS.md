@@ -17,6 +17,7 @@
 * Any tab can be hidden from view through Global Options. (#6428)
 * Accessibility preference to reduce focus rectangle display (#7242)
 * Multiple source panes can be opened in the main window via Global Options. (#2854)
+* Keyboard shortcut `F6` added to navigate focus to the next pane. (#7408)
 
 ### Miscellaneous
 
@@ -78,4 +79,4 @@
 * Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
 * Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
 * Fixed issue where Windows shortcuts were not resolved correctly in file dialogs. (#7327)
-
+* Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)

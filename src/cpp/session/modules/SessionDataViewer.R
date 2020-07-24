@@ -671,29 +671,25 @@
       return(invisible(NULL))
    }
    
-   # if this is a (non-data.frame) list or environment,
-   # delegate to object explorer
-   isExplorable <-
-      isS4(x) ||
-      (is.list(x) && !is.data.frame(x)) ||
-      is.environment(x) ||
-      is.language(x)
-   
-   if (isExplorable)
+   # delegate to object explorer if this is an 'explorable' object
+   if (.rs.dataViewer.shouldUseObjectExplorer(x))
    {
-      view <- .rs.explorer.viewObject(x,
-                                      title = title,
-                                      envir = env)
+      view <- .rs.explorer.viewObject(x, title = title, envir = env)
       return(invisible(view))
    }
    
+   # convert Pandas DataFrames to R data.frames
+   if (inherits(x, "pandas.core.frame.DataFrame"))
+      x <- reticulate::py_to_r(x)
    
    # test for coercion to data frame--the goal of this expression is just to
    # raise an error early if the object can't be made into a frame; don't
    # require that we can generate row/col names
    coerced <- x
-   eval(substitute(as.data.frame(coerced, optional = TRUE)), 
-        envir = globalenv())
+   eval(
+      expr = substitute(as.data.frame(coerced, optional = TRUE)),
+      envir = globalenv()
+   )
    
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x), name)
@@ -703,6 +699,25 @@
 })
 
 .rs.registerReplaceHook("View", "utils", .rs.viewHook)
+
+.rs.addFunction("dataViewer.shouldUseObjectExplorer", function(object)
+{
+   # prefer data viewer for pandas DataFrames
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+      return(FALSE)
+   
+   # don't explore regular data.frames
+   isTabular <-
+      is.data.frame(object) ||
+      is.matrix(object) ||
+      is.table(object)
+   
+   if (isTabular)
+      return(FALSE)
+   
+   # other objects are worth using object explorer for
+   TRUE
+})
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")

@@ -270,6 +270,7 @@ well as menu structures (for main menu and popup menus).
          
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
+            <cmd refid="newSourceColumn"/>
             <separator/>
             <cmd refid="layoutConsoleOnLeft"/>
             <cmd refid="layoutConsoleOnRight"/>
@@ -519,6 +520,7 @@ well as menu structures (for main menu and popup menus).
                <cmd refid="activateSource"/>
                <cmd refid="activateConsole"/>
                <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="focusNextPane"/>
                <cmd refid="activateTerminal"/>
                <cmd refid="activateHelp"/>
                <cmd refid="focusMainToolbar"/>
@@ -718,6 +720,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateBuild" value="Ctrl+F2"/>
          <shortcut refid="activateConnections" value="Ctrl+F5"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6"/>
+         <shortcut refid="newSourceColumn" value="Ctrl+F7"/>
 
          <!-- Windows masks Ctrl+Shift+0 for IME input -->
          <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0" if="!org.rstudio.core.client.BrowseCap.isWindowsDesktop()" />
@@ -885,6 +888,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+`"/>
+         <shortcut refid="focusNextPane" value="F6"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Alt+Shift+[" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Alt+1" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -1497,7 +1501,12 @@ well as menu structures (for main menu and popup menus).
         label="Show All Panes"
         menuLabel="_Show All Panes"
         windowMode="main"/>
-        
+
+   <cmd id="newSourceColumn"
+        label="Add Source Column"
+        menuLabel="Add Source Column"
+        windowMode="main"/>
+
    <cmd id="layoutConsoleOnLeft"
         radio="true"
         label="Console on Left"
@@ -3380,7 +3389,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="toggleRainbowParens"
         label="Toggle Rainbow Parentheses Mode"
-        menuLabel="Rainbow parentheses"
+        menuLabel="Rainbow Parentheses"
         checkable="true"
         context="editor"/>
 
@@ -3787,6 +3796,10 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="focusConsoleOutputEnd"
         menuLabel="_Focus Console Output"
+        windowMode="main"/>
+
+   <cmd id="focusNextPane"
+        menuLabel="_Focus Next Pane"
         windowMode="main"/>
 
    <cmd id="signOut"

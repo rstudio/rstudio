@@ -750,27 +750,7 @@ public abstract class ModalDialogBase extends DialogBox
     */
    public ArrayList<Element> getFocusableElements()
    {
-      // css selector from https://github.com/scottaohara/accessible_modal_window
-      String focusableElements =
-            "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
-            "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
-            "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
-            "[tabindex=\"0\"]:not([hidden]):not([disabled]), summary:not([hidden]), " +
-            "[contenteditable]:not([hidden]), audio[controls]:not([hidden]), " +
-            "video[controls]:not([hidden])";
-      NodeList<Element> potentiallyFocusable = DomUtils.querySelectorAll(getElement(), focusableElements);
-
-      ArrayList<Element> focusable = new ArrayList<>();
-      for (int i = 0; i < potentiallyFocusable.getLength(); i++)
-      {
-         // only include items taking up space
-         if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 &&
-               potentiallyFocusable.getItem(i).getOffsetHeight() > 0)
-         {
-            focusable.add(potentiallyFocusable.getItem(i));
-         }
-      }
-      return focusable;
+      return DomUtils.getFocusableElements(getElement());
    }
 
    /**

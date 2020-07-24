@@ -49,11 +49,21 @@ then
    # create symlink to our boost datetime library so it is properly discovered by the SOCI build
    sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
  
+   # set compilation visibility
+   if [[ "$OSTYPE" = "darwin"* ]]; then
+      COMPILE_VISIBILITY="hidden"
+   else
+      COMPILE_VISIBILITY="default"
+   fi
+
    # build SOCI
    cmakeCommand=$(which cmake)
    makeCommand=$(which make)
    sudo $cmakeCommand -G "Unix Makefiles" \
+       -DCMAKE_POLICY_DEFAULT_CMP0063="NEW" \
        -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true \
+       -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
+       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12" \
        -DSOCI_TESTS=OFF \
        -DSOCI_CXX11=ON \
        -DSOCI_EMPTY=OFF \

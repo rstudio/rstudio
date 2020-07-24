@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
@@ -103,7 +104,13 @@ public class WorkbenchListManager
     
    private void updateList(String name, ArrayList<String> list)
    {
-      listContexts_.get(name).setList(list);
+      ListContext context = listContexts_.get(name);
+      if (context == null)
+      {
+         Debug.logWarning("Unknown workbench list: " + name);
+         return;
+      }
+      context.setList(list);
    }
     
    private class ListContext implements WorkbenchList

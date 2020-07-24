@@ -111,7 +111,7 @@ public class JobsPane extends WorkbenchPane
       userPrefs_.jobsTabVisibility().setGlobalValue(value);
       userPrefs_.writeUserPrefs();
    }
-   
+
    // internal state
    private JobsDisplayImpl baseImpl_;
    

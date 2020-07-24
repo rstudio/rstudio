@@ -67,11 +67,11 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public items(): BibliographySource[] {
-    if (!this.bibliography) {
+    if (!this.bibliography || !this.bibliography.sources) {
       return [];
     }
 
-    return this.bibliography?.sources.map(source => ({
+    return this.bibliography.sources.map(source => ({
       ...source,
       id: source.id!, // Local CSL always has an id
       provider: kLocalItemType

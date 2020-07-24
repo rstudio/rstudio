@@ -201,7 +201,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    {
       events_.fireEvent(new ActivatePaneEvent("Help"));
    }
-   
+
    private void home()
    {
       showHelp("help/doc/home/");

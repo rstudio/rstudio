@@ -125,7 +125,7 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Override
-   public void focusSearch()
+   public void setFocus()
    {
       FocusHelper.setFocusDeferred(searchWidget_);
    }
