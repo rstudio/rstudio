@@ -555,7 +555,6 @@ Error pandocCiteprocGenerateBibliography(const std::string& biblioJson,
    std::vector<std::string> args;
    args.push_back(string_utils::utf8ToSystem(jsonBiblioPath.getAbsolutePath()));
    args.push_back(formatArg);
-
    core::system::ProcessResult result;
    error = module_context::runPandocCiteproc(args, &result);
    if (error)
