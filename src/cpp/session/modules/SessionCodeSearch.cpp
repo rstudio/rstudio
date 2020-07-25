@@ -1629,9 +1629,20 @@ void fillFromBookdownRefs(const std::string& term,
       }
       
       // form appropriate text for display
-      std::string displayText = title;
+      std::string displayText;
       
-      // for 
+      switch (sourceType)
+      {
+      case SourceItem::Figure:
+      case SourceItem::Table:
+      case SourceItem::Math:
+         displayText = type + ":" + id;
+         break;
+         
+      default:
+         displayText = title;
+         break;
+      }
       
       // check to see if this is a subsequence match of the
       // user-provided search term
@@ -1640,6 +1651,7 @@ void fillFromBookdownRefs(const std::string& term,
       
       // bundle xref into source item
       json::Object meta;
+      meta["type"] = "xref";
       meta["xref"] = bookdownRef;
       
       // we found a match: construct source item and add to list
@@ -1679,8 +1691,9 @@ Error searchCode(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
-   std::size_t maxResults = safe_convert::numberTo<int, std::size_t>(maxResultsInt,
-                                                                20);
+   
+   std::size_t maxResults =
+         safe_convert::numberTo<int, std::size_t>(maxResultsInt, 20);
 
    // object to return
    json::Object result;

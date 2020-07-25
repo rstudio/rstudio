@@ -156,8 +156,13 @@ public class VisualModeChunks
       case "sql":
          editor.setFileType(FileTypeRegistry.SQL);
          break;
-      case "yaml":
       case "yaml-frontmatter":
+         editor.setFileType(FileTypeRegistry.YAML);
+         // Turn off all of Ace's built-in YAML completion as it's not helpful
+         // for embedded YAML front matter
+         editor.getWidget().getEditor().setCompletionOptions(false, false, false, 0, 0);
+         break;
+      case "yaml":
          editor.setFileType(FileTypeRegistry.YAML);
          break;
       case "java":

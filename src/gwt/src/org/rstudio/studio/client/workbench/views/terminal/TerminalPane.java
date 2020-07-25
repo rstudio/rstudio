@@ -233,6 +233,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      // Terminal Pane automatically directs focus to xterm.js so this method is intentionally
+      // left blank
+   }
+
+   @Override
    public void onBeforeUnselected()
    {
       // terminal tab being unselected

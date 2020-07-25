@@ -295,8 +295,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       refreshButton_.setVisible(true);
       progressButton_.setVisible(false);
    }
-   
-   
+
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationKeydown = $entry(function(e) {

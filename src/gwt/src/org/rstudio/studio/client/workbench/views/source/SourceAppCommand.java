@@ -56,7 +56,7 @@ public class SourceAppCommand
 
          if (synced_)
          {
-            setEnabled(buttonVisible_);
+            setEnabled(buttonEnabled_);
             setVisible(buttonVisible_);
          }
 
@@ -175,17 +175,17 @@ public class SourceAppCommand
       handlers_.fireEvent(new VisibleChangedEvent(command_, column_, buttonVisible));
    }
 
-   public void setEnabled(boolean visible)
+   public void setEnabled(boolean enabled)
    {
-      setEnabled(true, visible, visible);
+      setEnabled(true, enabled, enabled);
    }
 
-   public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonVisible)
+   public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonEnabled)
    {
-      buttonVisible_ = buttonVisible;
+      buttonEnabled_ = buttonEnabled;
       if (setCommand)
          command_.setEnabled(commandEnabled);
-      handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonVisible)));
+      handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonEnabled)));
    }
 
    private ToolbarButton createToolbarButton(boolean synced)
@@ -207,6 +207,7 @@ public class SourceAppCommand
    }
 
    private boolean buttonVisible_ = false;
+   private boolean buttonEnabled_ = false;
    private final AppCommand command_;
    private final String column_;
    private final SourceColumnManager columnManager_;

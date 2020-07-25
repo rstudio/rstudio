@@ -307,7 +307,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    void setActiveEditor()
    {
        if (activeEditor_ == null &&
-           display_.getActiveTabIndex() > 0 &&
+           display_.getActiveTabIndex() >= 0 &&
            editors_.size() > display_.getActiveTabIndex())
           onActivate(editors_.get(display_.getActiveTabIndex()));
    }

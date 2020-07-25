@@ -73,6 +73,7 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
    public abstract void onBeforeUnselected();
    public abstract void onBeforeSelected();
    public abstract void onSelected();
+   public abstract void setFocus();
 
    private TParentTab parentTab_;
 }
