@@ -78,6 +78,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -213,7 +214,8 @@ public class Source implements InsertSourceHandler,
                                RequestDocumentCloseEvent.Handler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
-                               NewDocumentWithCodeEvent.Handler
+                               NewDocumentWithCodeEvent.Handler,
+                               MouseNavigateSourceHistoryEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -326,6 +328,8 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
+      if (Desktop.hasDesktopFrame())
+         events_.addHandler(MouseNavigateSourceHistoryEvent.TYPE, this);
 
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
@@ -565,7 +569,8 @@ public class Source implements InsertSourceHandler,
       });
       
       //  handle mouse button navigations
-      handleMouseButtonNavigations();
+      if (!Desktop.hasDesktopFrame())
+         handleMouseButtonNavigations();
       
       // on macOS, we need to aggressively re-sync commands when a new
       // window is selected (since the main menu applies to both main
@@ -1678,7 +1683,7 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
+
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
       // The document should only be opened in the last focused window, unless this window is a
@@ -1750,7 +1755,19 @@ public class Source implements InsertSourceHandler,
                                           newDocCommand);
       }
    }
-   
+
+   @Override
+   public void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event)
+   {
+      if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
+      {
+         if (event.getForward())
+            onSourceNavigateForward();
+         else
+            onSourceNavigateBack();
+      }
+   }
+
    @Handler
    public void onNewRPlumberDoc()
    {
@@ -2163,21 +2180,26 @@ public class Source implements InsertSourceHandler,
       console.log(err);
    }
    }-*/;
-   
-   private boolean isMouseEventInSourcePane(NativeEvent event)
+
+   private boolean isPointInSourcePane(int x, int y)
    {
       ArrayList<Widget> sourceWidgets = columnManager_.getWidgets(false);
       for (Widget sourceWidget : sourceWidgets)
       {
          Element sourceEl = sourceWidget.getElement();
-         boolean inPane = event.getClientX() > sourceEl.getAbsoluteLeft() &&
-                          event.getClientX() < sourceEl.getAbsoluteRight() &&
-                          event.getClientY() > sourceEl.getAbsoluteTop() &&
-                          event.getClientY() < sourceEl.getAbsoluteBottom();
+         boolean inPane = x > sourceEl.getAbsoluteLeft() &&
+                          x < sourceEl.getAbsoluteRight() &&
+                          y > sourceEl.getAbsoluteTop() &&
+                          y < sourceEl.getAbsoluteBottom();
          if (inPane)
             return true;
       }
       return false;
+   }
+
+   private boolean isMouseEventInSourcePane(NativeEvent event)
+   {
+      return isPointInSourcePane(event.getClientX(), event.getClientY());
    }
 
    
