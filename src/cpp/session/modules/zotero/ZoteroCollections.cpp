@@ -205,7 +205,7 @@ void updateCachedCollection(const std::string& type, const std::string& context,
 
 
 // repsond with either a collection from the server cache or just name/version if the client
-// already has a more up to date verison
+// already has the same version
 ZoteroCollection responseFromServerCache(const std::string& type,
                                          const std::string& apiKey,
                                          const std::string& collection,
@@ -216,7 +216,7 @@ ZoteroCollection responseFromServerCache(const std::string& type,
    {
       // see if the client specs already indicate an up to date version
       ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(clientCacheSpecs.begin(), clientCacheSpecs.end(), [cached](ZoteroCollectionSpec spec) {
-         return spec.name == cached.name && spec.version >= cached.version;
+         return spec.name == cached.name && spec.version == cached.version;
       });
       if (clientIt == clientCacheSpecs.end())
       {
@@ -361,7 +361,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
 
          // see if the client already has the version we are serving. in that case
          // just return w/o items
-         else if (cacheSpec.version >= collection.version)
+         else if (cacheSpec.version == collection.version)
          {
             ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.version);
             TRACE("Using client cache for <library>");
@@ -434,7 +434,7 @@ void getCollections(std::vector<std::string> collections,
             {
                // see if the server side cache needs updating
                ZoteroCollectionSpecs::const_iterator it = std::find_if(serverCacheSpecs.begin(), serverCacheSpecs.end(), [webCollection](ZoteroCollectionSpec cacheSpec) {
-                  return cacheSpec.name == webCollection.name && cacheSpec.version >= webCollection.version;
+                  return cacheSpec.name == webCollection.name && cacheSpec.version == webCollection.version;
                });
                // need to update the cache -- do so and then return the just cached copy to the client
                if (it == serverCacheSpecs.end())
