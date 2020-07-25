@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -76,6 +78,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -211,7 +214,8 @@ public class Source implements InsertSourceHandler,
                                RequestDocumentCloseEvent.Handler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
-                               NewDocumentWithCodeEvent.Handler
+                               NewDocumentWithCodeEvent.Handler,
+                               MouseNavigateSourceHistoryEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -324,6 +328,8 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
+      if (Desktop.hasDesktopFrame())
+         events_.addHandler(MouseNavigateSourceHistoryEvent.TYPE, this);
 
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
@@ -561,6 +567,10 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+      
+      //  handle mouse button navigations
+      if (!Desktop.hasDesktopFrame())
+         handleMouseButtonNavigations();
       
       // on macOS, we need to aggressively re-sync commands when a new
       // window is selected (since the main menu applies to both main
@@ -1673,7 +1683,7 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
+
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
       // The document should only be opened in the last focused window, unless this window is a
@@ -1745,7 +1755,19 @@ public class Source implements InsertSourceHandler,
                                           newDocCommand);
       }
    }
-   
+
+   @Override
+   public void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event)
+   {
+      if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
+      {
+         if (event.getForward())
+            onSourceNavigateForward();
+         else
+            onSourceNavigateBack();
+      }
+   }
+
    @Handler
    public void onNewRPlumberDoc()
    {
@@ -2120,7 +2142,68 @@ public class Source implements InsertSourceHandler,
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
+   
+   // handle mouse forward and back buttons if the mouse is within a source pane
+   private native final void handleMouseButtonNavigations() /*-{
+   try {
+      if ($wnd.addEventListener) {
+         var self = this;
+         function handler(nav) {
+            return $entry(function(evt) {
+               if ((evt.button === 3 || evt.button === 4) &&
+                   self.@org.rstudio.studio.client.workbench.views.source.Source::isMouseEventInSourcePane(Lcom/google/gwt/dom/client/NativeEvent;)(evt)) {  
+                                  
+                  // perform navigation
+                  if (nav) {
+                     if (evt.button === 3) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateBack()();
+                     } else if (evt.button === 4) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateForward()(); 
+                     }
+                  }
+                 
+                  // prevent other handling
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                  evt.stopImmediatePropagation()
+                  return false;
+               }
+            });
+         }
+         
+         // mask mousedown from ace to prevent selection, mask mouseup from chrome 
+         // to prevent navigation of the entire browser
+         $wnd.addEventListener('mousedown', handler(false), false);
+         $wnd.addEventListener('mouseup', handler(true), false);
+      }
+   } catch(err) {
+      console.log(err);
+   }
+   }-*/;
 
+   private boolean isPointInSourcePane(int x, int y)
+   {
+      ArrayList<Widget> sourceWidgets = columnManager_.getWidgets(false);
+      for (Widget sourceWidget : sourceWidgets)
+      {
+         Element sourceEl = sourceWidget.getElement();
+         boolean inPane = x > sourceEl.getAbsoluteLeft() &&
+                          x < sourceEl.getAbsoluteRight() &&
+                          y > sourceEl.getAbsoluteTop() &&
+                          y < sourceEl.getAbsoluteBottom();
+         if (inPane)
+            return true;
+      }
+      return false;
+   }
+
+   private boolean isMouseEventInSourcePane(NativeEvent event)
+   {
+      return isPointInSourcePane(event.getClientX(), event.getClientY());
+   }
+
+   
+  
    @Handler
    public void onOpenNextFileOnFilesystem()
    {
