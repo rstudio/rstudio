@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
@@ -171,7 +172,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       loadAndPersistClientState();
 
       VerticalPanel controls = new VerticalPanel();
-
       // Create individual widgets
       apiNameTextBox_ = new TextBox();
       DomUtils.disableSpellcheck(apiNameTextBox_);
@@ -182,7 +182,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       apiNameLabel.addStyleName(RES.styles().label());
       controls.add(apiNameLabel);
       controls.add(apiNameTextBox_);
-
       directoryChooserTextBox_ = new DirectoryChooserTextBox(
          "Create within directory:",
          ElementIds.TextBoxButtonId.PLUMBER_DIR,
@@ -193,9 +192,9 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls.add(directoryChooserTextBox_);
 
       controls.add(new VerticalSpacer("20px"));
-
       container_ = new HorizontalPanel();
-      DecorativeImage image = new DecorativeImage(NewProjectResources.INSTANCE.plumberAppIcon2x());
+      DecorativeImage image =
+         new DecorativeImage(new ImageResource2x(NewProjectResources.INSTANCE.plumberAppIcon2x()));
       image.addStyleName(RES.styles().image());
       container_.add(image);
       container_.add(controls);
@@ -261,7 +260,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    private final TextBox apiNameTextBox_;
 
    private final DirectoryChooserTextBox directoryChooserTextBox_;
-
    private static Result result_ = Result.create();
    private static PlumberAPIClientState clientStateValue_;
 

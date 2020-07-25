@@ -23,7 +23,6 @@ import com.google.gwt.resources.client.ImageResource;
 public interface NewProjectResources extends ClientBundle
 {
    NewProjectResources INSTANCE = GWT.create(NewProjectResources.class);
-
    @Source("newProjectDirectoryIcon_2x.png")
    ImageResource newProjectDirectoryIcon2x();
 
