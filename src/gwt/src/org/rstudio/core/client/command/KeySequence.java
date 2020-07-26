@@ -116,7 +116,7 @@ public class KeySequence
       if (keyCombinations_ != null && keyCombinations_.size() > 0)
          keyCombinations_.remove(keyCombinations_.size() - 1);
    }
-   
+
    public void add(NativeEvent event)
    {
       keyCombinations_.add(new KeyCombination(event));

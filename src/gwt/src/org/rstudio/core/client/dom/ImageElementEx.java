@@ -25,7 +25,7 @@ public class ImageElementEx extends ImageElement
    public final native int naturalWidth() /*-{
       return this.naturalWidth;
    }-*/;
-   
+
    public final native int naturalHeight() /*-{
       return this.naturalHeight;
    }-*/;

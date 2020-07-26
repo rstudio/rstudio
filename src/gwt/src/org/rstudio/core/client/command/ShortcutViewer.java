@@ -58,7 +58,7 @@ public class ShortcutViewer implements NativePreviewHandler
       pAriaLive_ = pAriaLive;
       globalDisplay_ = globalDisplay;
    }
-   
+
    @Handler
    public void onHelpKeyboardShortcuts()
    {
@@ -81,7 +81,7 @@ public class ShortcutViewer implements NativePreviewHandler
       else
          showShortcutInfoPanel(new ShortcutInfoPanel(showAllShortcutsPage));
    }
-   
+
    public void showVimKeyboardShortcuts()
    {
       // prevent reentry
@@ -98,7 +98,7 @@ public class ShortcutViewer implements NativePreviewHandler
       }
       showShortcutInfoPanel(new VimKeyInfoPanel());
    }
-   
+
    private void showShortcutInfoPanel(ShortcutInfoPanel panel)
    {
       shortcutInfo_ = panel;
@@ -111,8 +111,8 @@ public class ShortcutViewer implements NativePreviewHandler
    {
       if (event.isCanceled())
          return;
-      
-      if (event.getTypeInt() == Event.ONKEYDOWN || 
+
+      if (event.getTypeInt() == Event.ONKEYDOWN ||
           event.getTypeInt() == Event.ONMOUSEDOWN)
       {
          if (event.getTypeInt() == Event.ONMOUSEDOWN &&
@@ -122,7 +122,7 @@ public class ShortcutViewer implements NativePreviewHandler
          // Don't dismiss the dialog if the click is targeted for a child
          // of the shortcut info panel's root element
          EventTarget et = event.getNativeEvent().getEventTarget();
-         if (Element.is(et) && event.getTypeInt() == Event.ONMOUSEDOWN) 
+         if (Element.is(et) && event.getTypeInt() == Event.ONMOUSEDOWN)
          {
             Element e = Element.as(et);
             while (e != null)
@@ -149,7 +149,7 @@ public class ShortcutViewer implements NativePreviewHandler
       String url = GWT.getHostPageBaseURL() + relativeURL;
       globalDisplay_.openWindow(url);
    }
-   
+
    private ShortcutInfoPanel shortcutInfo_ = null;
    private HandlerRegistration preview_;
 

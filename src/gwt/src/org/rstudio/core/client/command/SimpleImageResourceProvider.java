@@ -24,17 +24,17 @@ public class SimpleImageResourceProvider implements ImageResourceProvider
    {
       imageResource_ = image;
    }
-   
+
    @Override
    public ImageResource getImageResource()
    {
       return imageResource_;
    }
-   
+
    @Override
    public void addRenderedImage(Image image)
    {
    }
-   
+
    private ImageResource imageResource_;
 }
