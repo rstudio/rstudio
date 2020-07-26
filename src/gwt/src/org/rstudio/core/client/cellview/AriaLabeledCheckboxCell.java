@@ -27,7 +27,7 @@ import org.rstudio.core.client.StringUtil;
 
 /**
  * A Cell used to render a checkbox. The value of the checkbox may be
- * toggled using the ENTER key as well as via mouse click. The checkbox is 
+ * toggled using the ENTER key as well as via mouse click. The checkbox is
  * identified to screen readers using the supplied text string.
  */
 public class AriaLabeledCheckboxCell extends AbstractEditableCell<LabeledBoolean, LabeledBoolean>

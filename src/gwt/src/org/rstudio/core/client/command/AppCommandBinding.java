@@ -25,7 +25,7 @@ public class AppCommandBinding implements CommandBinding
       disableModes_ = ShortcutManager.parseDisableModes(disableModes);
       custom_ = custom;
    }
-   
+
    @Override
    public String getId()
    {
@@ -43,14 +43,14 @@ public class AppCommandBinding implements CommandBinding
    {
       if (!command_.isEnabled())
          return false;
-      
+
       int mode = ShortcutManager.INSTANCE.getEditorMode();
       if ((disableModes_ & mode) != 0)
          return false;
-      
+
       return true;
    }
-   
+
    @Override
    public boolean isUserDefinedBinding()
    {
