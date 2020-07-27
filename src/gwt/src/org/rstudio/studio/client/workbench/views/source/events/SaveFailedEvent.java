@@ -28,7 +28,8 @@ public class SaveFailedEvent extends GwtEvent<SaveFailedEvent.Handler>
    public static final GwtEvent.Type<SaveFailedEvent.Handler> TYPE =
       new GwtEvent.Type<SaveFailedEvent.Handler>();
    
-   public SaveFailedEvent(String path, String id)
+   public SaveFailedEvent(String path,
+                          String id)
    {
       path_ = path;
       id_ = id;

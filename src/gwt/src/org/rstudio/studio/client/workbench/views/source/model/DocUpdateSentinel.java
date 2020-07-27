@@ -33,6 +33,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -271,7 +272,57 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, null, progress_);
+         return doSave(null, null, null, new ProgressIndicator()
+         {
+            
+            @Override
+            public void onProgress(String message, Operation onCancel)
+            {
+               if (progress_ != null)
+                  progress_.onProgress(message, onCancel);
+            }
+            
+            @Override
+            public void onProgress(String message)
+            {
+               if (progress_ != null)
+                  progress_.onProgress(message);
+               
+            }
+            
+            @Override
+            public void onError(String message)
+            {
+               // Inform the user only once if this was an autosave failure.
+               if (!loggedAutosaveError_)
+               {
+                  loggedAutosaveError_ = true;
+
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        "Error Autosaving File",
+                        "RStudio was unable to autosave this file. You may need " +
+                        "to restart RStudio.");
+               }
+               
+               // Use regular completed callback for indicator.
+               if (progress_ != null)
+                  progress_.onCompleted();
+            }
+            
+            @Override
+            public void onCompleted()
+            {
+               if (progress_ != null)
+                  progress_.onCompleted();
+            }
+            
+            @Override
+            public void clearProgress()
+            {
+               if (progress_ != null)
+                  progress_.clearProgress();
+            }
+         });
       }
       else
       {
@@ -305,6 +356,7 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
+      
       doSave(path, fileType, encoding, new ProgressIndicator()
       {
          public void onProgress(String message)
@@ -387,6 +439,7 @@ public class DocUpdateSentinel
             }
          }
       });
+      
       return didSave;
    }
 
@@ -470,9 +523,20 @@ public class DocUpdateSentinel
                @Override
                public void onError(ServerError error)
                {
+                  // Always log save errors.
                   Debug.logError(error);
+                  
+                  // Report errors to indicator.
                   if (progress != null)
-                     progress.onError(error.getUserMessage());
+                  {
+                     String errorMessage =
+                           "Error saving " + path + ": " +
+                                 error.getUserMessage();
+
+                     progress.onError(errorMessage);
+                  }
+                  
+                  // Attempt to report save error.
                   try
                   {
                      if (path != null)
@@ -480,10 +544,11 @@ public class DocUpdateSentinel
                         eventBus_.fireEvent(new SaveFailedEvent(path, getId()));
                      }
                   }
-                  catch(Exception e)
+                  catch (Exception e)
                   {
                      Debug.logException(e);
                   }
+                  
                   changesPending_ = false;
                }
 
@@ -867,7 +932,10 @@ public class DocUpdateSentinel
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
                  propertyChangeHandlers_;
+   private boolean loggedAutosaveError_ = false;
    
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
+   
+   
 }

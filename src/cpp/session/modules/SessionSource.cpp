@@ -71,6 +71,24 @@ namespace {
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
 module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
 
+Error sourceDatabaseError(Error error)
+{
+   if (isFileNotFoundError(error))
+   {
+      // The regular message (no such file or directory) is not useful
+      // to end users when attempting to save files (especially for autosaves),
+      // since they typically have no knowledge that the source database exists.
+      // Instead, log this as a generic 'internal error'.
+      return Error(
+               boost::system::errc::no_such_file_or_directory,
+               "An internal error occurred",
+               error.getLocation());
+   }
+   else
+   {
+      return error;
+   }
+}
 std::string inferDocumentType(const FilePath& documentPath,
                               const std::string& defaultType)
 {
@@ -508,7 +526,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error;
+      return sourceDatabaseError(error);
    
    // check if the document contents have changed
    bool hasChanges = contents != pDoc->contents();
@@ -573,7 +591,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error;
+      return sourceDatabaseError(error);
    
    // Don't even attempt anything if we're not working off the same original
    if (pDoc->hash() != hash)
