@@ -203,7 +203,10 @@ export function formatForPreview(csl: CSL): CiteField[] {
   Object.keys(csl).forEach(key => {
     if (!kFilteredFields.includes(key)) {
       const value = cslAny[key];
-      pairs.push({ name: key, value });
+
+      // Capitalize preview names
+      const name = key.charAt(0).toUpperCase() + key.slice(1);
+      pairs.push({ name, value });
     }
   });
 
