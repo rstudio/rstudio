@@ -251,10 +251,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
 
-            columnState_ = value.cast();
-            for (int i = 0; i < columnState_.getNames().length; i++)
+            State state = value.cast();
+            for (int i = 0; i < state.getNames().length; i++)
             {
-               String name = columnState_.getNames()[i];
+               String name = state.getNames()[i];
                if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
                   add(name, false);
             }
@@ -439,10 +439,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public String getNextColumnName()
    {
       int index = columnList_.indexOf(getActive());
-      if (index == getSize() - 1)
+      if (index < 1)
          return null;
       else
-         return columnList_.get(1 + index).getName();
+         return columnList_.get(index - 1).getName();
    }
 
    // This method sets activeColumn_ to the main column if it is null. It should be used in cases

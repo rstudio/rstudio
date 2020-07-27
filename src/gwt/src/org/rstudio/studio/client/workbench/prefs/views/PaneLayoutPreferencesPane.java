@@ -525,7 +525,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             consoleRightOnTop = false;
 
          if (displayColumnCount_ != additionalColumnCount_)
-            additionalColumnCount_ = paneManager_.syncAdditionalColumnCount(displayColumnCount_);
+            additionalColumnCount_ =
+               paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
 
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,

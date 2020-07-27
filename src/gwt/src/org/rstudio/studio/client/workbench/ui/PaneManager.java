@@ -290,8 +290,8 @@ public class PaneManager
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns = new ArrayList<>();
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
-      if (additionalSourceCount_ !=  sourceColumnManager_.getSize())
-         syncAdditionalColumnCount(additionalSourceCount_);
+      if (additionalSourceCount_ !=  sourceColumnManager_.getSize() - 1)
+         syncAdditionalColumnCount(additionalSourceCount_, false /* refreshDisplay */);
       if (additionalSourceCount_ > 0)
       {
          if (userPrefs_.allowSourceColumns().getGlobalValue())
@@ -300,7 +300,7 @@ public class PaneManager
             {
                String name = sourceColumnManager_.get(i).getName();
                if (!StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
-                  sourceColumns.add(createSourceColumnWindow(name));
+                  sourceColumns.add(0, createSourceColumnWindow(name));
             }
          }
          else
@@ -418,7 +418,8 @@ public class PaneManager
          {
             if (additionalSourceCount_ != userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns())
             {
-               syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
+               syncAdditionalColumnCount(
+                  userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns(), true);
             }
          }
       });
@@ -594,7 +595,7 @@ public class PaneManager
                   !StringUtil.equals(currentName, SourceColumnManager.MAIN_SOURCE_NAME))
          {
             nextFocusName = sourceColumnManager_.getNextColumnName();
-            if (StringUtil.isNullOrEmpty(nextFocusName))
+            if (StringUtil.equals(nextFocusName, SourceColumnManager.MAIN_SOURCE_NAME))
                nextFocusName = panes_.get(0).getNormal().getName();
          }
          else
@@ -1227,7 +1228,7 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public int syncAdditionalColumnCount(int count)
+   public int syncAdditionalColumnCount(int count, boolean refreshDisplay)
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
@@ -1235,18 +1236,25 @@ public class PaneManager
       if (count == additionalSourceCount_)
     	  return additionalSourceCount_;
 
+      // save originalCount because it may change during processing
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;
          for (int i = 0; i < difference; i++)
-            createSourceColumn();
+         {
+            if (refreshDisplay)
+               createSourceColumn();
+            else
+               sourceColumnManager_.add();
+         }
       }
       else
       {
          sourceColumnManager_.consolidateColumns(count + 1);
-         panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
-         additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+         if (refreshDisplay)
+            panel_.resetLeftWidgets(sourceColumnManager_.getWidgets(true));
       }
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
       return additionalSourceCount_;
    }
 
