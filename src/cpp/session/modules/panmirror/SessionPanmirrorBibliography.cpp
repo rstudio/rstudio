@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionPanmirrorBibliogrpahy.hpp"
+#include "SessionPanmirrorBibliography.hpp"
 
 #include <boost/bind.hpp>
 
