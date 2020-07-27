@@ -1,0 +1,21 @@
+/*
+  This will hide the focus indicator if the element receives focus via the mouse,
+  but it will still show up on keyboard focus.
+*/
+.js-focus-visible :focus:not(.focus-visible) {
+    outline: none;
+}
+
+.js-focus-visible :focus:not([data-focus-visible-added]) {
+    outline: none;
+}
+
+.js-focus-visible .focus-visible:not(.gwt-MenuBar), input[type="checkbox"].focus-visible {
+    outline: #8AA9DB solid 2px !important;
+    outline-offset: -1px !important;
+}
+
+/* button on sign-in page is solid blue, hard to see focus rectangle so offset it a bit */
+button.fancy.focus-visible {
+    outline-offset: 1px !important;
+}
