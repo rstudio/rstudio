@@ -184,7 +184,7 @@ std::string collectionSQL(const std::string& name = "")
 ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnection,
                                const std::string& name,
                                const std::string& tableName = "")
-{`
+{
    // default to return in case of error
    ZoteroCollection collection(name);
 
@@ -258,21 +258,31 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
 ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection)
 {
    std::string sql = R"(
-     SELECT
-        collectionName,
-        collections.version
-     FROM
-        collections
-        join libraries on libraries.libraryID = collections.libraryID
-     WHERE
-        libraries.type = 'user'
+      SELECT
+         collectionName,
+         MAX(items.version) AS version
+      FROM
+         items
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join libraries on libraries.libraryID = collections.libraryID
+         join collectionItems on items.itemID = collectionItems.itemID
+         join collections on collectionItems.collectionID = collections.collectionID
+      WHERE
+         libraries.type = 'user'
+         AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+      GROUP BY
+         collectionName
    )";
 
    ZoteroCollectionSpecs specs;
    Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
       ZoteroCollectionSpec spec;
       spec.name = row.get<std::string>("collectionName");
-      spec.version = row.get<int>("version");
+
+      std::string versionStr = readString(row, static_cast<std::size_t>(1), "0");
+      spec.version = safe_convert::stringTo<int>(versionStr, 0);
+
       specs.push_back(spec);
    });
    if (error)
@@ -290,8 +300,21 @@ ZoteroCollection getLibrary(boost::shared_ptr<database::IConnection> pConnection
 
 int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
+   std::string sql = R"(
+     SELECT
+        MAX(items.version) AS version
+      FROM
+         items
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join libraries on items.libraryID = libraries.libraryID
+      WHERE
+         libraries.type = 'user'
+         AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+   )";
+
    int version = 0;
-   Error error = execQuery(pConnection, "SELECT MAX(version) AS version from items", [&version](const database::Row& row) {
+   Error error = execQuery(pConnection, sql, [&version](const database::Row& row) {
       std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
       version = safe_convert::stringTo<int>(versionStr, 0);
    });
