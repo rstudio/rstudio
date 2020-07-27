@@ -1,5 +1,5 @@
 /*
- * SessionZotero.hpp
+ * ZoteroCollectionsLocal.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,25 +13,33 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_HPP
-#define RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP
+
+#include "ZoteroCollections.hpp"
 
 namespace rstudio {
+
 namespace core {
-   class Error;
-}
+   class FilePath;
 }
 
-namespace rstudio {
 namespace session {
 namespace modules {
 namespace zotero {
+namespace collections {
 
-core::Error initialize();
+bool localZoteroAvailable();
 
+core::FilePath zoteroDataDirectory();
+core::FilePath detectedZoteroDataDirectory();
+
+ZoteroCollectionSource localCollections();
+
+} // end namespace collections
 } // end namespace zotero
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
 
-#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_HPP */
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_COLLECTIONS_LOCAL_HPP */

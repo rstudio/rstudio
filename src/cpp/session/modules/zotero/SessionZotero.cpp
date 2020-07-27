@@ -26,6 +26,7 @@
 
 #include "ZoteroCollections.hpp"
 #include "ZoteroCollectionsWeb.hpp"
+#include "ZoteroCollectionsLocal.hpp"
 
 using namespace rstudio::core;
 
@@ -47,6 +48,14 @@ const char * const kStatusNoHost = "nohost";
 const char * const kStatusNotFound = "notfound";
 const char * const kStatusError = "error";
 
+Error zoteroDetectDataDirectory(const json::JsonRpcRequest&,
+                                json::JsonRpcResponse* pResponse)
+{
+   FilePath dataDirPath = collections::detectedZoteroDataDirectory();
+   std::string dataDir = !dataDirPath.isEmpty() ? module_context::createAliasedPath(dataDirPath) : "";
+   pResponse->setResult(dataDir);
+   return Success();
+}
 
 void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
                              const json::JsonRpcFunctionContinuation& cont)
@@ -126,7 +135,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    std::string file;
    json::Value collectionsJsonValue;
    json::Array collectionsJson, cachedJson;
-   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson);
+   bool useCache;
+   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson, &useCache);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -202,7 +212,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    if (allCollections)
    {
       // we just need the kMyLibrary cache spec
-      ZoteroCollectionSpec librarySpec(kMyLibrary, 0);
+      ZoteroCollectionSpec librarySpec(kMyLibrary);
       ZoteroCollectionSpecs::iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [](const ZoteroCollectionSpec& spec) {
          return spec.name == kMyLibrary;
       });
@@ -210,26 +220,29 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
          librarySpec = *it;
 
       // get the library
-      getLibrary(librarySpec, handler);
+      getLibrary(librarySpec, useCache, handler);
 
    }
 
    // otherwise get the requested collections
    else
    {
-      getCollections(collections, cacheSpecs, handler);
+      getCollections(collections, cacheSpecs, useCache, handler);
    }
 }
 
 
 } // end anonymous namespace
 
+
 Error initialize()
 {
+   using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
-       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
-       (boost::bind(module_context::registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
+       (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
+       (boost::bind(registerRpcMethod, "zotero_detect_data_directory", zoteroDetectDataDirectory))
    ;
    return initBlock.execute();
 }

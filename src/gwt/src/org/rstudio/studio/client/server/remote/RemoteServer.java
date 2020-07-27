@@ -6209,12 +6209,14 @@ public class RemoteServer implements Server
    public void zoteroGetCollections(String file,
                                     JsArrayString collections,
                                     JsArray<PanmirrorZoteroCollectionSpec> cached,
+                                    boolean useCache,
                                     ServerRequestCallback<JavaScriptObject> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(file)));
       params.set(1, new JSONArray(collections));
       params.set(2, new JSONArray(cached));
+      params.set(3,  JSONBoolean.getInstance(useCache));
       sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
    }
    
@@ -6222,6 +6224,12 @@ public class RemoteServer implements Server
    public void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE, ZOTERO_VALIDATE_WEB_API_KEY, key, callback);
+   }
+   
+   @Override
+   public void zoteroDetectDataDirectory(ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, ZOTERO_DETECT_DATA_DIRECTORY, callback);
    }
    
    
@@ -6750,11 +6758,13 @@ public class RemoteServer implements Server
    
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
    private static final String ZOTERO_VALIDATE_WEB_API_KEY = "zotero_validate_web_api_key";
+   private static final String ZOTERO_DETECT_DATA_DIRECTORY = "zotero_detect_data_directory";
    
    private static final String DOI_FETCH_CSL = "doi_fetch_csl";
    
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
+  
   
   
 }

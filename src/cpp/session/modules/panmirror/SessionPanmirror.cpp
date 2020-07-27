@@ -22,7 +22,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include "SessionPanmirrorPandoc.hpp"
-#include "SessionPanmirrorBibliogrpahy.hpp"
+#include "SessionPanmirrorBibliography.hpp"
 #include "SessionPanmirrorCrossref.hpp"
 #include "SessionPanmirrorDOI.hpp"
 

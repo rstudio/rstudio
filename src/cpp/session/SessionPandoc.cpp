@@ -45,7 +45,11 @@ std::string pandocBinary(const std::string& binary)
 core::system::ProcessOptions pandocOptions()
 {
    core::system::ProcessOptions options;
+#ifdef _WIN32
+   options.createNewConsole = true;
+#else
    options.terminateChildren = true;
+#endif
    return options;
 }
 

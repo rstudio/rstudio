@@ -421,6 +421,18 @@ public class UserStateAccessor extends Prefs
          "");
    }
 
+   /**
+    * Directory containing Zotero data files
+    */
+   public PrefValue<String> zoteroDataDir()
+   {
+      return string(
+         "zotero_data_dir",
+         "Zotero Data Directory", 
+         "Directory containing Zotero data files", 
+         "");
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("context_id"))
@@ -459,6 +471,8 @@ public class UserStateAccessor extends Prefs
          usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
       if (source.hasKey("zotero_api_key"))
          zoteroApiKey().setValue(layer, source.getString("zotero_api_key"));
+      if (source.hasKey("zotero_data_dir"))
+         zoteroDataDir().setValue(layer, source.getString("zotero_data_dir"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -481,6 +495,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(errorHandlerType());
       prefs.add(usingMingwGcc49());
       prefs.add(zoteroApiKey());
+      prefs.add(zoteroDataDir());
       return prefs;
    }
    

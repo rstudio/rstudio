@@ -1,5 +1,5 @@
 /*
- * SessionZotero.hpp
+ * ZoteroCSL.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,12 +13,19 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_HPP
-#define RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_CSL_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_CSL_HPP
+
+#include <string>
+#include <vector>
+#include <map>
 
 namespace rstudio {
 namespace core {
    class Error;
+namespace json{
+   class Object;
+}
 }
 }
 
@@ -27,11 +34,20 @@ namespace session {
 namespace modules {
 namespace zotero {
 
-core::Error initialize();
+struct ZoteroCreator
+{
+   std::string firstName;
+   std::string lastName;
+   std::string creatorType;
+};
+
+typedef std::map<std::string,std::vector<ZoteroCreator>> ZoteroCreatorsByKey;
+
+core::json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const ZoteroCreatorsByKey& creators);
 
 } // end namespace zotero
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
 
-#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_HPP */
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_CSL_HPP */

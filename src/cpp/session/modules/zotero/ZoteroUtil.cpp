@@ -1,7 +1,7 @@
 /*
- * SessionZotero.hpp
+ * ZoteroUtil.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,25 +13,38 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_HPP
-#define RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+#include "ZoteroUtil.hpp"
 
-namespace rstudio {
-namespace core {
-   class Error;
-}
-}
+#include <iostream>
+
+#include <r/ROptions.hpp>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace zotero {
 
-core::Error initialize();
+#ifndef NDEBUG
+void TRACE(const std::string& message, boost::optional<std::size_t> items)
+{
+   if (r::options::getOption<bool>("rstudio.zotero.trace", false, false))
+   {
+      std::cerr << "[Zotero] " << message;
+      if (items)
+         std::cerr << " [" << *items << " items]";
+      std::cerr << std::endl;
+   }
+}
+#else
+void TRACE(const std::string&, boost::optional<std::size_t>)
+{
+}
+#endif
+
 
 } // end namespace zotero
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
-
-#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_HPP */

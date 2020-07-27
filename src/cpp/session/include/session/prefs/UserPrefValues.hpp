@@ -338,6 +338,9 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
+#define kZoteroConnectionType "zotero_connection_type"
+#define kZoteroConnectionTypeLocal "local"
+#define kZoteroConnectionTypeWeb "web"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1531,6 +1534,12 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
+
+   /**
+    * Zotero connection type (local or web)
+    */
+   std::string zoteroConnectionType();
+   core::Error setZoteroConnectionType(std::string val);
 
    /**
     * Preferred emoji skintone

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResul
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -46,16 +47,16 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
 
 
-@JsType
-enum AlertType {
-   Info,
-   Warning,
-   Error
-}
 
 @JsType
 public class PanmirrorDialogs {
    
+   public static class AlertType
+   {
+      public static final int Info = 1;
+      public static final int Warning = 2;
+      public static final int Error = 3;
+   }
   
    public PanmirrorDialogs(PanmirrorUIContext uiContext) {
       this.uiContext_ = uiContext;
@@ -68,19 +69,18 @@ public class PanmirrorDialogs {
       this.globalDisplay_ = globalDisplay;
    }
    
-   public Promise<Boolean> alert(String message, String title, AlertType type) 
-   {   
+   public Promise<Boolean> alert(String message, String title, int type) 
+   {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
-         
          int alertType = MessageDisplay.MSG_INFO;
          switch(type) {
-            case Info:
+            case AlertType.Info:
               alertType = MessageDisplay.MSG_INFO;
               break;
-            case Warning:
+            case AlertType.Warning:
               alertType = MessageDisplay.MSG_WARNING;
               break;
-            case Error:
+            case AlertType.Error:
               alertType = MessageDisplay.MSG_ERROR;
               break;
          }

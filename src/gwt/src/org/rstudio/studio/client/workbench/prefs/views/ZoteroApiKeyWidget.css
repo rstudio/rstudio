@@ -2,13 +2,11 @@
 
 .apiKey {
   font-family: monospace !important;
+  margin-right: 6px;
 }
 
-.helpLink {
-  font-size: 11px;  
+.apiKeyPanel {
+	margin-top: 4px;
 }
 
-.verifyKeyPanel {
-  margin-top: 4px;
-}
 

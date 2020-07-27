@@ -71,3 +71,12 @@
 .themeInfobarShowing {
    display: block;
 }
+
+.selectWidgetHelp {
+   margin-left: 8px;
+}
+
+.smallerText {
+   font-size: 0.9em;
+}
+

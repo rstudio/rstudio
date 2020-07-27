@@ -105,6 +105,11 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
       return csl;
     });
 
+  // Strip any raw date representations
+  if (csl.issued?.raw) {
+    csl.issued.raw = undefined;
+  }
+
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   cslAny.abstract = undefined;
 

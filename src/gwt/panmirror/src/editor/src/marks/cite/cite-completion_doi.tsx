@@ -51,11 +51,13 @@ export function citationDoiCompletionHandler(
       if (cslEntry && cslEntry.inBibliography) {
         // It's already in the bibliography, just write the id
         const tr = view.state.tr;
-        performCompletionReplacement(tr, pos, cslEntry.id);
+        const schema = view.state.schema;
+        const id = schema.text(cslEntry.id, [schema.marks.cite_id.create()]);
+        performCompletionReplacement(tr, pos, id);
         view.dispatch(tr);
-      } else if (cslEntry && cslEntry.csl.DOI) {
+      } else if (cslEntry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, cslEntry.csl.DOI, bibManager, pos, ui, server.pandoc, cslEntry.csl);
+        insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
     },
 

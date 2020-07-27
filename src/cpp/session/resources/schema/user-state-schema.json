@@ -206,6 +206,12 @@
             "default": "",
             "title": "Zotero API Key",
             "description": "Key for making Zotero API calls"  
+        },
+        "zotero_data_dir": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero Data Directory",
+            "description": "Directory containing Zotero data files" 
         }
     }
 }

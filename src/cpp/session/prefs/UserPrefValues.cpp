@@ -2546,6 +2546,19 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
 }
 
 /**
+ * Zotero connection type (local or web)
+ */
+std::string UserPrefValues::zoteroConnectionType()
+{
+   return readPref<std::string>("zotero_connection_type");
+}
+
+core::Error UserPrefValues::setZoteroConnectionType(std::string val)
+{
+   return writePref("zotero_connection_type", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2846,6 +2859,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
+      kZoteroConnectionType,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

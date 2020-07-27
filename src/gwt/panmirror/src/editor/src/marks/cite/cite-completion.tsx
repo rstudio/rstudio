@@ -21,7 +21,7 @@ import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult, performCompletionReplacement } from '../../api/completion';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
@@ -32,7 +32,7 @@ import { EditorEvents } from '../../api/events';
 import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation, insertCitation } from './cite';
+import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -70,11 +70,13 @@ export function citationCompletionHandler(
       if (entry && bibManager.findIdInLocalBibliography(entry.source.id)) {
         // It's already in the bibliography, just write the id
         const tr = view.state.tr;
-        performCompletionReplacement(tr, pos, entry.source.id);
+        const schema = view.state.schema;
+        const id = schema.text(entry.source.id, [schema.marks.cite_id.create()]);
+        performCiteCompletionReplacement(tr, pos, id);
         view.dispatch(tr);
-      } else if (entry && entry.source.DOI) {
+      } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI, bibManager, pos, ui, server, entry.source, entry.source.provider);
+        insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
     },
 
@@ -108,15 +110,29 @@ function filterCitations(
     return entries;
   }
 
-  // String for a search
-  const searchResults = manager.searchAllSources(token, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
-  const dedupedResults = uniqby(searchResults, (entry: BibliographyEntry) => entry.source.id);
+  const search = (str: string) => {
+    const results = manager.searchAllSources(str, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+    return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
+  };
+
+  // first search w/ the part of the token before any space -- if that yields an exact match then no completions
+  // (i.e. in this case there is already a valid cite_id at pos)
+  if (token.includes(' ')) {
+    const firstPart = token.split(' ')[0];
+    const firstPartResults = search(firstPart);
+    if (firstPartResults.find(entry => entry.source.id === firstPart)) {
+      return [];
+    }
+  }
+
+  // Now do the regular search
+  const searchResults = search(token);
 
   // If we hav an exact match, no need for completions
-  if (dedupedResults.length === 1 && dedupedResults[0].source.id === token) {
+  if (searchResults.length === 1 && searchResults[0].source.id === token) {
     return [];
   } else {
-    return dedupedResults || [];
+    return searchResults || [];
   }
 }
 
@@ -192,7 +208,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
       image={entry.image}
       adornmentImage={entry.adornmentImage}
       title={`@${entry.source.id}`}
-      subTitle={entry.source.title || ''}
+      subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
       detail={detail}
       htmlTitle={true}
     />

@@ -24,7 +24,7 @@ import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
-import { EditorUI, InsertCiteProps } from '../../api/ui';
+import { EditorUI, InsertCiteProps, kAlertTypeError } from '../../api/ui';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
 import { performCompletionReplacement } from '../../api/completion';
@@ -613,7 +613,7 @@ export async function insertCitation(
     const tr = view.state.tr;
 
     // This could be called by paste handler, so stop completions
-    performCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
+    performCiteCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
     view.dispatch(tr);
 
   } else {
@@ -632,7 +632,7 @@ export async function insertCitation(
       provider,
       csl,
       citeUI: csl ? {
-        suggestedId: suggestCiteId(existingIds, csl.author, csl.issued),
+        suggestedId: suggestCiteId(existingIds, csl),
         previewFields: formatForPreview(csl),
       } : undefined
     };
@@ -640,35 +640,53 @@ export async function insertCitation(
     const result = await ui.dialogs.insertCite(citeProps);
     if (result && result.id.length) {
 
-      // Figure out whether this is a project or document level bibliography
-      const project = bibManager.projectBiblios().length > 0;
-      const bibliographyFile = project
-        ? result.bibliographyFile
-        : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+      if (!result?.csl.title) {
+        await ui.dialogs.alert("This citation can't be added to the bibliography because it is missing required fields.", "Invalid Citation", kAlertTypeError);
+      } else {
+        // Figure out whether this is a project or document level bibliography
+        const project = bibManager.projectBiblios().length > 0;
+        const bibliographyFile = project
+          ? result.bibliographyFile
+          : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
-      // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
-      const cslToWrite = sanitizeForCiteproc(result.csl);
+        // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
+        const cslToWrite = sanitizeForCiteproc(result.csl);
 
-      // Write entry to a bibliography file if it isn't already present
-      await bibManager.load(ui, view.state.doc);
-      if (!bibManager.findIdInLocalBibliography(result.id)) {
-        await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
-      }
+        // Write entry to a bibliography file if it isn't already present
+        await bibManager.load(ui, view.state.doc);
+        if (!bibManager.findIdInLocalBibliography(result.id)) {
+          await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
+        }
 
-      const tr = view.state.tr;
+        const tr = view.state.tr;
 
-      // Update the bibliography on the page if need be
-      if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+        // Update the bibliography on the page if need be
+        if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
 
-        // Write the cite id
-        performCompletionReplacement(tr, tr.mapping.map(pos), result.id);
+          // Write the cite id
+          const schema = view.state.schema;
+          const id = schema.text(result.id, [schema.marks.cite_id.create()]);
+          performCiteCompletionReplacement(tr, tr.mapping.map(pos), id);
 
-        view.dispatch(tr);
+          view.dispatch(tr);
+        }
       }
     }
   }
-
   view.focus();
+}
+
+export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
+
+  // perform replacement
+  performCompletionReplacement(tr, pos, replacement);
+
+  // find the range of the cite and fixup marks
+  const range = getMarkRange(tr.selection.$head, tr.doc.type.schema.marks.cite);
+  if (range) {
+    encloseInCiteMark(tr, range.from, range.to);
+  }
+
 
 }
 
