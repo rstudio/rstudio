@@ -317,6 +317,14 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (isActivated()) 
       {
+         // new editor content about to be sent to prosemirror, validate that we can edit it
+         String invalid = validateActivation();
+         if (invalid != null)
+         {
+            deactivateForInvalidSource(invalid);
+            return;
+         }
+         
          // get reference to the editing container 
          TextEditorContainer editorContainer = view_.editorContainer();
          
@@ -659,12 +667,11 @@ public class VisualMode implements VisualModeEditorSync,
       if (activate)
       {
          String invalid = validateActivation();
-         if (invalid != null) 
+         if (invalid != null)
          {
-            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
-            view_.showWarningBar(invalid);
+            deactivateWithMessage(invalid);
             return;
-         }
+         } 
       }
       
       // manage commands
@@ -741,8 +748,7 @@ public class VisualMode implements VisualModeEditorSync,
       // visual mode not enabled (source editor)
       else 
       {
-         // sync any pending edits, then activate the editor
-         syncToEditor(true, () -> {
+         Command activateSourceEditor = () -> {
             
             unmanageCommands();
             
@@ -759,7 +765,20 @@ public class VisualMode implements VisualModeEditorSync,
             
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
-         });  
+         };
+         
+         // if we are deactivating to allow the user to edit invalid source code then don't sync
+         // back to the source editor (as this would have happended b/c we inspected the contents
+         // of the source editor in syncFromEditorIfActivated() and decided we couldn't edit it)
+         if (deactivatingForInvalidSource_)
+         {
+            deactivatingForInvalidSource_ = false;
+            activateSourceEditor.execute();
+         }
+         else
+         {
+            syncToEditor(true, activateSourceEditor);
+         }
       }
    }
 
@@ -1075,19 +1094,27 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    private String validateActivation()
-   {
+   { 
       if (this.docDisplay_.hasActiveCollabSession())
       {
          return "You cannot enter visual mode while using realtime collaboration.";
       }
-      else if (visualModeFormat_.isXaringanDocument())
+      else 
       {
-         return "Xaringan presentations cannot be edited in visual mode.";
+         return visualModeFormat_.validateSourceForVisualMode();
       }
-      else
-      {
-         return null;
-      }
+   }
+   
+   private void deactivateForInvalidSource(String invalid)
+   {
+      deactivatingForInvalidSource_ = true;
+      deactivateWithMessage(invalid);     
+   }
+
+   private void deactivateWithMessage(String message)
+   {
+      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+      view_.showWarningBar(message);
    }
    
    private Commands commands_;
@@ -1115,6 +1142,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean deactivatingForInvalidSource_ = false;
    
    private PanmirrorWidget panmirror_;
   
