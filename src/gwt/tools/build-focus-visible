@@ -18,8 +18,9 @@ npm install focus-visible@5.1.0
 # Location used to embed in client bundle for GWT build
 FOCUS_VISIBLE_GWT_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/ui/polyfill/js
 cp ./node_modules/focus-visible/dist/focus-visible.js ${FOCUS_VISIBLE_GWT_TARGET_DIR}
-cp ./node_modules/focus-visible/dist/focus-visible.min.js ${FOCUS_VISIBLE_GWT_TARGET_DIR}
 cp ./node_modules/focus-visible/dist/focus-visible.min.js.map ${FOCUS_VISIBLE_GWT_TARGET_DIR}
+# Strip source-map reference since it doesn't work via ClientBundle
+sed '/^\/\/# sourceMappingURL=/d' ./node_modules/focus-visible/dist/focus-visible.min.js > ${FOCUS_VISIBLE_GWT_TARGET_DIR}/focus-visible.min.js
 
 # Location used to embed in client bundle for GWT build
 FOCUS_VISIBLE_OTHER_TARGET_DIR=../../www
