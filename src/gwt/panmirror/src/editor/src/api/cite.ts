@@ -213,7 +213,7 @@ export function formatForPreview(csl: CSL): CiteField[] {
   return pairs;
 }
 
-const kFilteredFields = ["id", "title", "author", "issued", "container-title", "volume", "page", "abstract"];
+const kFilteredFields = ["id", "title", "author", "issued", "container-title", "volume", "page", "abstract", "provider"];
 
 // Sometimes, data arrives with a null value
 // This function will validate that the year (required) doesn't
