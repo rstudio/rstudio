@@ -5,6 +5,11 @@ const symbols: SymbolCharacterGroup[] = [
     "name": "Miscellaneous",
     "symbols": [
       {
+        "name": "NO-BREAK SPACE",
+        "value": " ",
+        "codepoint": 160
+      },
+      {
         "name": "INVERTED EXCLAMATION MARK",
         "value": "¡",
         "codepoint": 161
