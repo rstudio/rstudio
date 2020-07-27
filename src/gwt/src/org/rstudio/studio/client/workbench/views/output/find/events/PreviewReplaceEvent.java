@@ -48,5 +48,5 @@ public class PreviewReplaceEvent extends GwtEvent<PreviewReplaceEvent.Handler>
 
    private final String searchPattern_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

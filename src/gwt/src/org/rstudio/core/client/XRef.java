@@ -16,31 +16,27 @@ package org.rstudio.core.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
-
 public class XRef extends JavaScriptObject
 {
    protected XRef()
    {
    }
-   
+
    public static final native XRef create()
    /*-{
       return {};
    }-*/;
-   
+
    public final native boolean hasXRefString()
    /*-{
       return !!this.type && !!this.id;
    }-*/;
-   
+
    public final native String getXRefString()
    /*-{
       return this.type + ":" + this.id;
    }-*/;
-   
+
    public final native String getFile()  /*-{ return this["file"];  }-*/;
    public final native String getType()  /*-{ return this["type"];  }-*/;
    public final native String getId()    /*-{ return this["id"];    }-*/;

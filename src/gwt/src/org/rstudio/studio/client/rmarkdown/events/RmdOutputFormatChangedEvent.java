@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChangedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event);
@@ -34,7 +34,7 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    {
       return format_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -46,8 +46,8 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    {
       handler.onRmdOutputFormatChanged(this);
    }
-   
+
    private final String format_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

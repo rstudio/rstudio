@@ -23,21 +23,21 @@ public class InterruptChunkEvent extends GwtEvent<InterruptChunkEvent.Handler>
    {
       row_ = row;
    }
-   
+
    public int getRow()
    {
       return row_;
    }
-   
+
    private final int row_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onInterruptChunk(InterruptChunkEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -50,5 +50,5 @@ public class InterruptChunkEvent extends GwtEvent<InterruptChunkEvent.Handler>
       handler.onInterruptChunk(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

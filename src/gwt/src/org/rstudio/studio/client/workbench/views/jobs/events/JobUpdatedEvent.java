@@ -26,7 +26,7 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
    {
       void onJobUpdated(JobUpdatedEvent event);
    }
-   
+
    public JobUpdatedEvent(JobUpdate data)
    {
       JobState.recordReceived(data.job);
@@ -52,5 +52,5 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
 
    private final JobUpdate data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

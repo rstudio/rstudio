@@ -21,13 +21,13 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class NewDocumentWithCodeEvent 
+public class NewDocumentWithCodeEvent
    extends GwtEvent<NewDocumentWithCodeEvent.Handler>
 {
    public final static String SQL = "sql";
    public final static String R_SCRIPT = "r_script";
    public final static String R_NOTEBOOK = "r_notebook";
-   
+
    public interface Handler extends EventHandler
    {
       void onNewDocumentWithCode(NewDocumentWithCodeEvent e);
@@ -35,10 +35,10 @@ public class NewDocumentWithCodeEvent
 
    public static class Data extends JavaScriptObject
    {
-      protected Data() 
+      protected Data()
       {
       }
-      
+
       public final native String type() /*-{
          return this.type;
       }-*/;
@@ -67,7 +67,7 @@ public class NewDocumentWithCodeEvent
       cursorPosition_ = SourcePosition.create(data.row(), data.column());
       execute_ = data.execute();
    }
-   
+
    public NewDocumentWithCodeEvent(String type,
                                    String code,
                                    SourcePosition cursorPosition,
@@ -83,22 +83,22 @@ public class NewDocumentWithCodeEvent
    {
       return type_;
    }
-   
+
    public String getCode()
    {
       return code_;
    }
-   
+
    public SourcePosition getCursorPosition()
    {
       return cursorPosition_;
    }
-   
+
    public boolean getExecute()
    {
       return execute_;
    }
-  
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -115,9 +115,9 @@ public class NewDocumentWithCodeEvent
    private final String code_;
    private final SourcePosition cursorPosition_;
    private final boolean execute_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    public static final int STATE_NONE = 0;
    public static final int STATE_DRAGGING = 1;
 }

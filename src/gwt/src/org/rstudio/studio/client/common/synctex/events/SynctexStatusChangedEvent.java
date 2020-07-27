@@ -23,23 +23,23 @@ public class SynctexStatusChangedEvent extends GwtEvent<SynctexStatusChangedEven
    {
       void onSynctexStatusChanged(SynctexStatusChangedEvent event);
    }
-   
+
    public SynctexStatusChangedEvent(String targetFile, String pdfPath)
    {
       targetFile_ = targetFile;
       pdfPath_ = pdfPath;
    }
-   
+
    public boolean isAvailable()
    {
       return getPdfPath() != null;
    }
-   
+
    public String getTargetFile()
    {
       return targetFile_;
    }
-   
+
    public String getPdfPath()
    {
       return pdfPath_;
@@ -59,6 +59,6 @@ public class SynctexStatusChangedEvent extends GwtEvent<SynctexStatusChangedEven
 
    private final String pdfPath_;
    private final String targetFile_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

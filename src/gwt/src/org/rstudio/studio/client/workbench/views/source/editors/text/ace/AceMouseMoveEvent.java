@@ -64,5 +64,5 @@ public class AceMouseMoveEvent extends GwtEvent<AceMouseMoveEvent.Handler>
 
    private final AceMouseEventNative event_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

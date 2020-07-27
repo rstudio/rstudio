@@ -37,12 +37,12 @@ public class EditPresentationSourceEvent extends GwtEvent<EditPresentationSource
    {
       return sourceFile_;
    }
-  
+
    public int getSlideIndex()
    {
       return slideIndex_;
-   }   
-  
+   }
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -58,5 +58,5 @@ public class EditPresentationSourceEvent extends GwtEvent<EditPresentationSource
    private final FileSystemItem sourceFile_;
    private final int slideIndex_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

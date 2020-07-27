@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class TestsOutputEvent extends GwtEvent<TestsOutputEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onTestsOutput(TestsOutputEvent event);
@@ -36,7 +36,7 @@ public class TestsOutputEvent extends GwtEvent<TestsOutputEvent.Handler>
    {
       return output_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,8 +48,8 @@ public class TestsOutputEvent extends GwtEvent<TestsOutputEvent.Handler>
    {
       handler.onTestsOutput(this);
    }
-   
+
    private final CompileOutput output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

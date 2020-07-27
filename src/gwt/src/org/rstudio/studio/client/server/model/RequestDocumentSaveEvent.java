@@ -26,26 +26,26 @@ public class RequestDocumentSaveEvent extends GwtEvent<RequestDocumentSaveEvent.
       protected Data()
       {
       }
-      
+
       public native final JsArrayString getDocumentIds()
       /*-{
          return this["ids"];
       }-*/;
-      
+
    }
-   
+
    public RequestDocumentSaveEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public JsArrayString getDocumentIds()
    {
       return data_.getDocumentIds();
    }
-   
+
    private final Data data_;
-   
+
    // Boilerplate ----
 
    public interface Handler extends EventHandler
@@ -65,5 +65,5 @@ public class RequestDocumentSaveEvent extends GwtEvent<RequestDocumentSaveEvent.
       handler.onRequestDocumentSave(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

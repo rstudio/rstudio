@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class HTMLPreviewCompletedEvent extends GwtEvent<HTMLPreviewCompletedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onHTMLPreviewCompleted(HTMLPreviewCompletedEvent event);
@@ -30,12 +30,12 @@ public class HTMLPreviewCompletedEvent extends GwtEvent<HTMLPreviewCompletedEven
    {
       result_ = result;
    }
-    
+
    public HTMLPreviewResult getResult()
    {
       return result_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +47,8 @@ public class HTMLPreviewCompletedEvent extends GwtEvent<HTMLPreviewCompletedEven
    {
       handler.onHTMLPreviewCompleted(this);
    }
-   
+
    private final HTMLPreviewResult result_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

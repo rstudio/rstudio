@@ -27,13 +27,13 @@ public class RprofEvent extends GwtEvent<RprofEvent.Handler>
       STOP,
       CREATE
    }
-   
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getPath() /*-{
          return this.path;
       }-*/;
@@ -46,18 +46,18 @@ public class RprofEvent extends GwtEvent<RprofEvent.Handler>
          return this.htmlLocalPath;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onRprofEvent(RprofEvent event);
    }
-   
+
    public RprofEvent(RprofEventType type, RprofEvent.Data data)
    {
       type_ = type;
       data_ = data;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -69,18 +69,18 @@ public class RprofEvent extends GwtEvent<RprofEvent.Handler>
    {
       handler.onRprofEvent(this);
    }
-   
+
    public RprofEventType getEventType()
    {
       return type_;
    }
-   
+
    public RprofEvent.Data getData()
    {
       return data_;
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
    private RprofEventType type_;
    private RprofEvent.Data data_;
 }

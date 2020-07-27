@@ -18,14 +18,14 @@ package org.rstudio.studio.client.workbench.views.source.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class DocTabDragStateChangedEvent 
+public class DocTabDragStateChangedEvent
    extends GwtEvent<DocTabDragStateChangedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onDocTabDragStateChanged(DocTabDragStateChangedEvent e);
    }
-   
+
    public DocTabDragStateChangedEvent(int state)
    {
       state_ = state;
@@ -35,7 +35,7 @@ public class DocTabDragStateChangedEvent
    {
       return state_;
    }
-  
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -49,9 +49,9 @@ public class DocTabDragStateChangedEvent
    }
 
    private final int state_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    public static final int STATE_NONE = 0;
    public static final int STATE_DRAGGING = 1;
 }

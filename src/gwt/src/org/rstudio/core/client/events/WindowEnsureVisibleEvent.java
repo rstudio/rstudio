@@ -50,5 +50,5 @@ public class WindowEnsureVisibleEvent extends GwtEvent<WindowEnsureVisibleEvent.
       handler.onWindowEnsureVisible(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

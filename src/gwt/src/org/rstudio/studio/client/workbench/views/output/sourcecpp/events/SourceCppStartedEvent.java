@@ -27,8 +27,8 @@ public class SourceCppStartedEvent extends GwtEvent<SourceCppStartedEvent.Handle
    public SourceCppStartedEvent()
    {
    }
-   
-   
+
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -40,6 +40,6 @@ public class SourceCppStartedEvent extends GwtEvent<SourceCppStartedEvent.Handle
    {
       handler.onSourceCppStarted(this);
    }
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

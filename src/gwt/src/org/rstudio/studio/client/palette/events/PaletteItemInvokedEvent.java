@@ -26,17 +26,17 @@ public class PaletteItemInvokedEvent
    {
       item_ = item;
    }
-   
+
    public CommandPaletteItem getItem()
    {
       return item_;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onPaletteItemInvoked(PaletteItemInvokedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -50,6 +50,6 @@ public class PaletteItemInvokedEvent
    }
 
    private final CommandPaletteItem item_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

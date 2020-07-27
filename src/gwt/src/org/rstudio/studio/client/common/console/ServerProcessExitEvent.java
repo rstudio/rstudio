@@ -65,5 +65,5 @@ public class ServerProcessExitEvent extends GwtEvent<ServerProcessExitEvent.Hand
    private final String procHandle_;
    private final int exitCode_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

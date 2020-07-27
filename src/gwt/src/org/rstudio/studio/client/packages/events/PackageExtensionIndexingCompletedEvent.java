@@ -26,21 +26,21 @@ public class PackageExtensionIndexingCompletedEvent
    {
       data_ = data;
    }
-   
+
    public PackageProvidedExtensions.Data getData()
    {
       return data_;
    }
-   
+
    private final PackageProvidedExtensions.Data data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onPackageExtensionIndexingCompleted(PackageExtensionIndexingCompletedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,5 +53,5 @@ public class PackageExtensionIndexingCompletedEvent
       handler.onPackageExtensionIndexingCompleted(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

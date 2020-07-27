@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdChunkOutputEvent extends GwtEvent<RmdChunkOutputEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdChunkOutput(RmdChunkOutputEvent event);
@@ -36,7 +36,7 @@ public class RmdChunkOutputEvent extends GwtEvent<RmdChunkOutputEvent.Handler>
    {
       return output_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,8 +48,8 @@ public class RmdChunkOutputEvent extends GwtEvent<RmdChunkOutputEvent.Handler>
    {
       handler.onRmdChunkOutput(this);
    }
-   
+
    private RmdChunkOutput output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -26,21 +26,21 @@ public class AvailablePackagesReadyEvent extends GwtEvent<AvailablePackagesReady
       protected Data()
       {
       }
-      
+
       public final native boolean isReady()           /*-{ return this["ready"];    }-*/;
       public final native JsArrayString getPackages() /*-{ return this["packages"]; }-*/;
    }
-   
+
    public AvailablePackagesReadyEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    private final Data data_;
 
    // Boilerplate ----
@@ -62,6 +62,6 @@ public class AvailablePackagesReadyEvent extends GwtEvent<AvailablePackagesReady
       handler.onAvailablePackagesReady(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
 

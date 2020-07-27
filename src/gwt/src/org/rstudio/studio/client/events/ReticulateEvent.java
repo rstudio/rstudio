@@ -28,7 +28,7 @@ public class ReticulateEvent extends GwtEvent<ReticulateEvent.Handler>
 
       // Event data accessors ----
       public final native String getType() /*-{ return this["type"]; }-*/;
-      
+
    }
 
    public ReticulateEvent(Data data)
@@ -40,7 +40,7 @@ public class ReticulateEvent extends GwtEvent<ReticulateEvent.Handler>
    {
       return data_;
    }
-   
+
    public String getType()
    {
       return data_.getType();
@@ -67,12 +67,11 @@ public class ReticulateEvent extends GwtEvent<ReticulateEvent.Handler>
       handler.onReticulate(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
- 
+   public static final Type<Handler> TYPE = new Type<>();
+
    // synchronize with SessionReticulate.R
    public static final String TYPE_PYTHON_INITIALIZED = "python_initialized";
    public static final String TYPE_REPL_INITIALIZED   = "repl_initialized";
    public static final String TYPE_REPL_ITERATION     = "repl_iteration";
    public static final String TYPE_REPL_TEARDOWN      = "repl_teardown";
 }
-
