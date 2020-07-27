@@ -275,9 +275,7 @@ public class PaneManager
       pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
-
       source_.load();
-      loadAdditionalSourceColumns();
 
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -291,10 +289,20 @@ public class PaneManager
 
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns = new ArrayList<>();
-      if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
+      additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
+      if (additionalSourceCount_ !=  sourceColumnManager_.getSize())
+         syncAdditionalColumnCount(additionalSourceCount_);
+      if (additionalSourceCount_ > 0)
       {
          if (userPrefs_.allowSourceColumns().getGlobalValue())
-            sourceColumns.addAll(sourceColumnManager_.getWidgets(true));
+         {
+            for (int i = 0; i < sourceColumnManager_.getSize(); i++)
+            {
+               String name = sourceColumnManager_.get(i).getName();
+               if (!StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
+                  sourceColumns.add(createSourceColumnWindow(name));
+            }
+         }
          else
          {
             sourceColumnManager_.consolidateColumns(0);
@@ -438,13 +446,19 @@ public class PaneManager
    LogicalWindow getParentLogicalWindow(Element el)
    {
       LogicalWindow targetWindow = null;
+      ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
+      windowList.addAll(sourceLogicalWindows_);
 
       while (el != null && targetWindow == null)
       {
          el = el.getParentElement();
-         for (LogicalWindow window : panes_)
+         for (LogicalWindow window : windowList)
          {
-            Widget activeWidget = window.getActiveWidget();
+            Widget activeWidget = null;
+            if (window.getState() != null)
+               activeWidget = window.getActiveWidget();
+            else
+               activeWidget = window.getNormal();
             if (activeWidget == null)
                continue;
 
@@ -566,6 +580,71 @@ public class PaneManager
    }
 
    @Handler
+   public void onFocusNextPane()
+   {
+      // get the name of the currently focused pane
+      LogicalWindow currentFocus = getActiveLogicalWindow();
+      String nextFocusName = null;
+      if (currentFocus != null)
+      {
+         String currentName = currentFocus.getNormal().getName();
+         if (StringUtil.equals(currentFocus.getNormal().getName(), "TabSet2"))
+            nextFocusName = sourceColumnManager_.getLeftColumnName();
+         else if (sourceColumnManager_.getByName(currentName) != null &&
+                  !StringUtil.equals(currentName, SourceColumnManager.MAIN_SOURCE_NAME))
+         {
+            nextFocusName = sourceColumnManager_.getNextColumnName();
+            if (StringUtil.isNullOrEmpty(nextFocusName))
+               nextFocusName = panes_.get(0).getNormal().getName();
+         }
+         else
+         {
+            for (int i = 0; i < panes_.size() - 1; i++)
+            {
+               if (currentFocus.equals(panes_.get(i)))
+               {
+                  nextFocusName = panes_.get(i + 1).getNormal().getName();
+                  break;
+               }
+            }
+         }
+      }
+
+      // if null, default to the top left pane
+      if (StringUtil.isNullOrEmpty(nextFocusName))
+      {
+         if (sourceColumnManager_.getSize() > 1)
+            nextFocusName = sourceColumnManager_.getLeftColumnName();
+         else
+            nextFocusName = panes_.get(0).getNormal().getName();
+      }
+
+
+      // activate next pane
+      if (nextFocusName.contains(SourceColumnManager.COLUMN_PREFIX))
+         sourceColumnManager_.activateColumn(nextFocusName, null);
+      else
+      {
+         WorkbenchTab selected;
+         if (StringUtil.equals("Console", nextFocusName))
+            selected = consoleTabPanel_.getSelectedTab();
+         else
+         {
+            if (StringUtil.equals("TabSet1", nextFocusName))
+               selected = tabSet1TabPanel_.getSelectedTab();
+            else
+               selected = tabSet2TabPanel_.getSelectedTab();
+            activateTab(wbTabToTab_.get(selected));
+         }
+         if (StringUtil.equals(selected.getTitle(), "Console"))
+            commands_.activateConsole().execute();
+         else if (selected instanceof DelayLoadWorkbenchTab)
+            ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
+         selected.setFocus();
+      }
+   }
+
+   @Handler
     public void onNewSourceColumn()
     {
        if (!userPrefs_.allowSourceColumns().getValue())
@@ -575,7 +654,7 @@ public class PaneManager
           pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
              "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
        else
-          addSourceWindow();
+          createSourceColumn();
     }
 
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
@@ -830,16 +909,6 @@ public class PaneManager
          results.add(panesByName_.get(panes.get(i)));
       }
       return results;
-   }
-
-   private void loadAdditionalSourceColumns()
-   {
-      additionalSourceCount_ = userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns();
-
-      // determine the desired number of source columns (add one for the main source)
-      // and add any missing
-      while (sourceColumnManager_.getSize() <= additionalSourceCount_)
-         sourceColumnManager_.add();
    }
 
    private void initPanes(PaneConfig config)
@@ -1170,7 +1239,7 @@ public class PaneManager
       {
          int difference = count - additionalSourceCount_;
          for (int i = 0; i < difference; i++)
-            addSourceWindow();
+            createSourceColumn();
       }
       else
       {
@@ -1181,17 +1250,18 @@ public class PaneManager
       return additionalSourceCount_;
    }
 
-   public int addSourceWindow()
+   private void createSourceColumn()
    {
-      int id = sourceColumnManager_.getSize();
       PaneConfig.addSourcePane();
-      String columnName = sourceColumnManager_.add();
-      panesByName_.put(columnName,
-                       createSource(columnName,
-                                    sourceColumnManager_.getWidget(columnName)));
-      panel_.addLeftWidget(sourceColumnManager_.getWidget(columnName));
-      additionalSourceCount_ = id;
-      sourceColumnManager_.beforeShow(columnName);
+      String name = sourceColumnManager_.add();
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+      panel_.addLeftWidget(createSourceColumnWindow(name));
+      sourceColumnManager_.beforeShow(name);
+   }
+
+   private Widget createSourceColumnWindow(String name)
+   {
+      panesByName_.put(name, createSource(name, sourceColumnManager_.getWidget(name)));
 
       PaneConfig paneConfig = getCurrentConfig();
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -1201,9 +1271,10 @@ public class PaneManager
          paneConfig.getHiddenTabSet(),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         id).cast());
+         additionalSourceCount_).cast());
       userPrefs_.writeUserPrefs();
-      return id;
+
+      return panesByName_.get(name).getNormal();
    }
 
    public int closeAllAdditionalColumns()
@@ -1227,7 +1298,7 @@ public class PaneManager
 
          if (column.getTabCount() == 0)
          {
-            panel_.removeLeftWidget(column.asWidget());
+            panel_.removeLeftWidget(panesByName_.get(name).getNormal());
             sourceColumnManager_.closeColumn(column, true);
             panesByName_.remove(name);
 

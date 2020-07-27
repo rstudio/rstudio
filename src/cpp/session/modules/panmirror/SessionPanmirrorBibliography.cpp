@@ -459,6 +459,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       biblioFiles = projectBibliographies();
    }
 
+   // filter biblio files on existence
+   algorithm::expel_if(biblioFiles, [](const FileInfo& file) { return !FilePath::exists(file.absolutePath()); });
+
    // if the filesystem and the cache agree on the etag then we can serve from cache
    if (s_biblioCache.etag() == BiblioCache::etag(biblioFiles, refBlock))
    {
@@ -552,7 +555,6 @@ Error pandocCiteprocGenerateBibliography(const std::string& biblioJson,
    std::vector<std::string> args;
    args.push_back(string_utils::utf8ToSystem(jsonBiblioPath.getAbsolutePath()));
    args.push_back(formatArg);
-
    core::system::ProcessResult result;
    error = module_context::runPandocCiteproc(args, &result);
    if (error)
@@ -666,7 +668,7 @@ Error appendToYAMLBibliography(const FilePath& bibliographyFile, const std::stri
 
    // write the biblio
    boost::format fmt("---\nreferences:\n%1%%2%\n...\n");
-   return core::writeStringToFile(bibliographyFile, boost::str(fmt % biblioFile % biblioAppend));
+   return core::writeStringToFile(bibliographyFile, boost::str(fmt % biblioFile % biblioAppend), string_utils::LineEndingPosix);
 }
 
 Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::string& id, const std::string& biblio)
@@ -703,7 +705,7 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
 
    // write
    std::string newBiblio = biblioFileJson.writeFormatted();
-   return writeStringToFile(bibliographyFile, newBiblio);
+   return writeStringToFile(bibliographyFile, newBiblio, string_utils::LineEndingPosix);
 }
 
 Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
@@ -761,7 +763,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
 
       // apply indentation
       std::vector<std::string> lines;
-      boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\r\n"));
+      boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\n"));
       std::vector<std::string> indentedLines;
       for (std::size_t i = 0; i<lines.size(); i++)
       {

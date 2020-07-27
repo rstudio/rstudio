@@ -14,11 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
+
+import java.util.ArrayList;
 
 public abstract class WorkbenchPane extends ToolbarPane
                                  implements WorkbenchView,
@@ -58,6 +63,21 @@ public abstract class WorkbenchPane extends ToolbarPane
    }
 
    @Override
+   public void setFocus()
+   {
+      ArrayList<Element> focusableElements = DomUtils.getFocusableElements(getElement());
+      if (!focusableElements.isEmpty())
+      {
+         Element el = focusableElements.get(0);
+         el.focus();
+         el.addClassName("focus-visible");
+         addRemoveFocusVisibleHandler(el);
+      }
+      else
+         Debug.logWarning("Could not set focus, no focusable element on " + title_ + " pane");
+   }
+
+   @Override
    public boolean isSuppressed()
    {
       return false;
@@ -82,6 +102,13 @@ public abstract class WorkbenchPane extends ToolbarPane
          events_.fireEvent(new ActivatePaneEvent(title_));
       super.bringToFront();
    }
+
+   private native void addRemoveFocusVisibleHandler(Element el) /*-{
+      el.addEventListener('blur', function(e) {
+         el.classList.remove('focus-visible');
+      });
+
+   }-*/;
 
    private String title_;
    protected final EventBus events_;

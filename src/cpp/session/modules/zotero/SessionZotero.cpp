@@ -240,7 +240,6 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
-       (boost::bind(sourceModuleRFile, "SessionZotero.R"))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_data_directory", zoteroDetectDataDirectory))

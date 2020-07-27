@@ -27,22 +27,35 @@ assign(".rs.toolsEnv", function()
    .rs.Env
 }, envir = .rs.Env)
 
-# add a function to the tools:rstudio environment
-assign(".rs.addFunction", function(name, FN, attrs = list())
+#' Add a function to the 'tools:rstudio' environment.
+#' 
+#' This environment is placed on the search path, and so is accessible and
+#' readable during regular evaluation in an R session.
+#'
+#' @param name The name of the R function. The prefix '.rs.' will be pre-pended
+#'   to the supplied function name.
+#'
+#' @param FN The \R function to be added.
+#' 
+#' @param attrs An optional list of attributes, to be set on the function.
+#' 
+#' @param envir An optional environment, to be set as the enclosing environment
+#'   for the function `f`. By default, newly-defined functions use the
+#'   'tools:rstudio' environment as the parent function. For functions which
+#'   might be exposed to users (e.g. via options), you may want to instead use
+#'   the base environment to avoid issues with serialization.
+assign(".rs.addFunction", function(name, FN, attrs = list(), envir = .rs.toolsEnv())
 { 
    # add optional attributes
    for (attrib in names(attrs))
       attr(FN, attrib) <- attrs[[attrib]]
    
-   # get tools env
-   envir <- .rs.toolsEnv()
-   
-   # ensure function evaluates in tools env
+   # ensure function evaluates in requested environment
    environment(FN) <- envir
    
    # assign in tools env
    fullName <- paste(".rs.", name, sep = "")
-   assign(fullName, FN, envir = envir)
+   assign(fullName, FN, envir = .rs.toolsEnv())
    
 }, envir = .rs.Env)
 
@@ -69,7 +82,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN)
+   .rs.addFunction(fullName, FN, envir = globalenv())
 })
 
 .rs.addFunction("setVar", function(name, var)
@@ -101,9 +114,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    exists(fullName, envir = envir)
 })
 
-.rs.addFunction( "evalInGlobalEnv", function(code)
+.rs.addFunction("setOption", function(name, value)
 {
-   eval(parse(text=code), envir=globalenv())
+   data <- list(value)
+   names(data) <- name
+   options(data)
+})
+
+.rs.addFunction("setOptionDefault", function(name, value)
+{
+   # if the option is already set, nothing to do
+   if (!is.null(getOption(name)))
+      return(FALSE)
+   
+   # otherwise, set it
+   data <- list(value)
+   names(data) <- name
+   options(data)
+   
+   TRUE
+})
+
+.rs.addFunction("evalInGlobalEnv", function(code)
+{
+   eval(
+      parse(text = code),
+      envir = globalenv()
+   )
 })
 
 # attempts to restore the global environment from a file

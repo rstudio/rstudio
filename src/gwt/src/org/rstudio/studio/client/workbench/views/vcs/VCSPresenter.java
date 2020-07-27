@@ -79,6 +79,10 @@ public class VCSPresenter implements IsWidget,
       presenter_.onSelected();
    }
 
+   public void setFocus()
+   {
+      presenter_.setFocus();
+   }
 
    void onVcsCommit()
    {

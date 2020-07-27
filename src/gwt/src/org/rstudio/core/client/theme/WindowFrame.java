@@ -50,6 +50,7 @@ public class WindowFrame extends Composite
 
    public WindowFrame(String name)
    {
+      name_ = name;
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
@@ -102,6 +103,11 @@ public class WindowFrame extends Composite
       frame_.add(buttonsArea_);
 
       initWidget(frame_);
+   }
+
+   public String getName()
+   {
+      return name_;
    }
 
    @Inject
@@ -398,5 +404,6 @@ public class WindowFrame extends Composite
 
    // Injected ----
    private EventBus events_;
+   String name_;
 
 }

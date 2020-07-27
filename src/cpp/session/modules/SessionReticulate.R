@@ -284,9 +284,20 @@ options(reticulate.initialized = function() {
    active
 })
 
-options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
-options(reticulate.repl.hook       = .rs.reticulate.replHook)
-options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
+options(reticulate.repl.initialize = function()
+{
+   .rs.reticulate.replInitialize()
+})
+
+options(reticulate.repl.hook = function(buffer, contents, trimmed)
+{
+   .rs.reticulate.replHook(buffer, contents, trimmed)
+})
+
+options(reticulate.repl.teardown = function()
+{
+   .rs.reticulate.replTeardown()
+})
 
 .rs.addFunction("python.tokenizationRules", function() {
    
@@ -1478,10 +1489,13 @@ html.heading = _heading
 .rs.addFunction("reticulate.describeObject", function(name, parent)
 {
    builtins <- reticulate::import_builtins(convert = TRUE)
+   
    object <- if (inherits(parent, "python.builtin.dict"))
       reticulate::py_get_item(parent, name)
-   else
+   else if (inherits(parent, "python.builtin.object"))
       reticulate::py_get_attr(parent, name)
+   else
+      get(name, envir = parent)
    
    # is this object 'data'? consider non-callable, non-module objects as data
    isData <- !(
@@ -1510,6 +1524,9 @@ html.heading = _heading
    # get object length (note: not all objects in Python have a length)
    length <- .rs.reticulate.describeObjectLength(object)
    
+   # get object summary when appropriate
+   contents <- .rs.reticulate.describeObjectContents(object)
+   
    list(
       name              = .rs.scalar(name),
       type              = .rs.scalar(type),
@@ -1519,7 +1536,7 @@ html.heading = _heading
       description       = .rs.scalar(value),
       size              = .rs.scalar(size),
       length            = .rs.scalar(length),
-      contents          = list(),
+      contents          = contents,
       contents_deferred = .rs.scalar(FALSE)
    )
 
@@ -1569,6 +1586,27 @@ html.heading = _heading
       builtins$len(object),
       error = function(e) -1L
    )
+})
+
+.rs.addFunction("reticulate.describeObjectContents", function(object)
+{
+   tryCatch(
+      .rs.reticulate.describeObjectContentsImpl(object),
+      error = function(e) warning
+   )
+})
+
+.rs.addFunction("reticulate.describeObjectContentsImpl", function(object)
+{
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      text <- reticulate::py_to_r(object$to_string(max_rows = 150L, show_dimensions = FALSE))
+      strsplit(text, "\n", fixed = TRUE)[[1]]
+   }
+   else
+   {
+      list()
+   }
 })
 
 .rs.addFunction("reticulate.resolveModule", function(module)

@@ -52,16 +52,20 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     let updateIndex = false;
     if (docPath || bibliographiesAbsolute.length > 0 || refBlock) {
       // get the bibliography
-      const result = await this.server.getBibliography(docPath, bibliographiesAbsolute, refBlock, this.etag);
+      try {
+        const result = await this.server.getBibliography(docPath, bibliographiesAbsolute, refBlock, this.etag);
 
-      // Read bibliography data from files (via server)
-      if (!this.bibliography || result.etag !== this.etag) {
-        this.bibliography = result.bibliography;
-        updateIndex = true;
+        // Read bibliography data from files (via server)
+        if (!this.bibliography || result.etag !== this.etag) {
+          this.bibliography = result.bibliography;
+          updateIndex = true;
+        }
+
+        // record the etag for future queries
+        this.etag = result.etag;
+      } catch (e) {
+        // ignore error
       }
-
-      // record the etag for future queries
-      this.etag = result.etag;
     }
     return updateIndex;
   }
