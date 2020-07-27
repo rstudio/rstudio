@@ -214,15 +214,18 @@ class PandocWriter implements PandocOutput {
       let textRun = '';
       const flushTextRun = () => {
         if (textRun) {
+          // if this is a line block, convert leading nbsp to regular space,
+          if (!this.options.writeSpaces) {
+            textRun = textRun.replace(/(^|\n)+(\u00A0+)/g, (_match, p1, p2) => {
+              return p1 + Array(p2.length).join(' ');
+            });
+          }
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';
         }
       };
       for (let i = 0; i < text.length; i++) {
-        let ch = text.charAt(i);
-        if (ch.charCodeAt(0) === 160) {
-          ch = ' '; // convert &nbsp; to ' '
-        }
+        const ch = text.charAt(i);
         if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
@@ -233,9 +236,7 @@ class PandocWriter implements PandocOutput {
           textRun += ch;
         }
       }
-      if (textRun) {
-        this.writeToken(PandocTokenType.Str, textRun);
-      }
+      flushTextRun();
     }
   }
 
