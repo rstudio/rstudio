@@ -79,11 +79,13 @@
    # create and move to directory we'll use to stage our scripts
    scriptDir <- tempfile("rstudio-script-")
    dir.create(scriptDir, recursive = TRUE, showWarnings = FALSE)
-   on.exit(unlink(scriptDir, recursive = TRUE), add = TRUE)
-   
-   # move to that directory
    owd <- setwd(scriptDir)
-   on.exit(setwd(owd), add = TRUE)
+   
+   # clean up when we're done
+   on.exit({
+      setwd(owd)
+      unlink(scriptDir, recursive = TRUE)
+   }, add = TRUE)
    
    # set R_LIBS so that library paths are propagated to child process
    rlibs <- Sys.getenv("R_LIBS", unset = NA)
