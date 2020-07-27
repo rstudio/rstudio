@@ -440,9 +440,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       int index = columnList_.indexOf(getActive());
       if (index < 1)
-         return null;
+         return "";
       else
          return columnList_.get(index - 1).getName();
+   }
+
+   public String getPreviousColumnName()
+   {
+      int index = columnList_.indexOf(getActive());
+      if (index == getSize() - 1)
+         return "";
+      else
+         return columnList_.get(index + 1).getName();
+
    }
 
    // This method sets activeColumn_ to the main column if it is null. It should be used in cases
@@ -1420,15 +1430,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          null);
    }
 
-   public void consolidateColumns(int num)
+   public ArrayList<String> consolidateColumns(int num)
    {
+      ArrayList<String> removedColumns = new ArrayList<>();
       if (num >= columnList_.size() || num < 1)
-         return;
+         return removedColumns;
 
       for (SourceColumn column : columnList_)
       {
          if (!column.hasDoc() && column.getName() != MAIN_SOURCE_NAME)
          {
+            removedColumns.add(column.getName());
             closeColumn(column.getName());
             if (num >= columnList_.size() || num == 1)
                break;
@@ -1440,20 +1452,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
       if (num < columnList_.size())
       {
-         CPSEditingTargetCommand moveCommand = new CPSEditingTargetCommand()
-         {
-            @Override
-            public void execute(EditingTarget editingTarget, Command continuation)
-            {
-            }
-         };
          ArrayList<SourceColumn> moveColumns = new ArrayList<>(columnList_);
          moveColumns.remove(mainColumn);
+
+         // remove columns from the end of the lsit first
          int additionalColumnCount = num - 1;
-         if (num > 1 &&
-             moveColumns.size() != additionalColumnCount)
-            moveColumns = new ArrayList<>(moveColumns.subList(0,
-               moveColumns.size() - additionalColumnCount));
+         if (num > 1 && moveColumns.size() != additionalColumnCount)
+            moveColumns = new ArrayList<>(
+               moveColumns.subList(additionalColumnCount - 1, moveColumns.size() - 1));
 
          for (SourceColumn column : moveColumns)
          {
@@ -1478,12 +1484,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      }
                   });
             }
+            removedColumns.add(column.getName());
             closeColumn(column, true);
          }
       }
 
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
                                        getActive().getName());
+      return removedColumns;
    }
 
    public void closeColumn(String name)
