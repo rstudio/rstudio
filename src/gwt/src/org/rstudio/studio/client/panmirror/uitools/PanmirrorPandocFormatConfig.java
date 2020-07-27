@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import org.rstudio.core.client.StringUtil;
 
-import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsType;
 
 @JsType
