@@ -1,7 +1,7 @@
 /*
- * insert_special_characters.ts
+ * nbsp.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,12 @@
  */
 
 
-import { EditorCommandId, InsertCharacterCommand } from "../../api/command";
+import { EditorCommandId, InsertCharacterCommand } from "../api/command";
 
 const extension = {
 
   commands: () => {
     return [
-      new InsertCharacterCommand(EditorCommandId.EmDash, '—', []),
-      new InsertCharacterCommand(EditorCommandId.EnDash, '–', []),
       new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, '\u00A0', ['Ctrl-Space', 'Ctrl-Shift-Space'])
     ];
   },

@@ -233,6 +233,31 @@ export class WrapCommand extends NodeCommand {
   }
 }
 
+export class InsertCharacterCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, ch: string, keymap: string[]) {
+    super(
+      id,
+      keymap,
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+        // enable/disable command
+        const schema = state.schema;
+        if (!canInsertNode(state, schema.nodes.text)) {
+          return false;
+        }
+        if (dispatch) {
+          const tr = state.tr;
+          tr.replaceSelectionWith(schema.text(ch), true).scrollIntoView();
+          dispatch(tr);
+        }
+
+        return true;
+      }
+    );
+  }
+}
+
+
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {

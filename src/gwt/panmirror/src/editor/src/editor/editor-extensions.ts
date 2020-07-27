@@ -73,6 +73,7 @@ import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugin-symbol';
 import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
+import behaviorNbsp from '../behaviors/nbsp';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -150,6 +151,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorInsertSymbol,
     behaviorInsertSymbolEmoji,
     beahviorInsertSpecialCharacters,
+    behaviorNbsp,
 
     // nodes
     nodeDiv,

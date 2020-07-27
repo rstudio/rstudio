@@ -153,6 +153,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           { separator: true },
           { command: EditorCommandId.EnDash },
           { command: EditorCommandId.EmDash },
+          { separator: true },
           { command: EditorCommandId.NonBreakingSpace },
         ],
       },
