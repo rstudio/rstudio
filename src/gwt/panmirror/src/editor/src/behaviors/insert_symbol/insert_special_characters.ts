@@ -25,7 +25,7 @@ const extension = {
     return [
       new InsertCharacterCommand(EditorCommandId.EmDash, '—', []),
       new InsertCharacterCommand(EditorCommandId.EnDash, '–', []),
-      new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, '\u00A0', ['Ctrl-Shift-Space'])
+      new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, '\u00A0', ['Ctrl-Space', 'Ctrl-Shift-Space'])
     ];
   },
 };
