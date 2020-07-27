@@ -1,7 +1,5 @@
 package org.rstudio.core.client.command;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -11,7 +9,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.server.remote.RegisterUserCommandEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,24 +30,6 @@ public class UserCommandManager
 
       private final String name_;
       private final Command command_;
-   }
-
-   public static class UserCommandResult extends JavaScriptObject
-   {
-      protected UserCommandResult() {}
-
-      public native final String getAction() /*-{ return this.action; }-*/;
-      public native final String getText() /*-{ return this.text; }-*/;
-      private native final JsArrayInteger getRangeVector() /*-{ return this.range; }-*/;
-      public final Range getRange()
-      {
-         JsArrayInteger rangeVector = getRangeVector();
-         return Range.create(
-               rangeVector.get(0),
-               rangeVector.get(1),
-               rangeVector.get(2),
-               rangeVector.get(3));
-      }
    }
 
    public UserCommandManager()
