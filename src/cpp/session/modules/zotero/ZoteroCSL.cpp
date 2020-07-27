@@ -928,10 +928,12 @@ json::Value transformValue(std::string cslFieldName, std::string value)
       // and save that as the raw value
       if (date_parts.length() < value.length())
       {
-         // JJA: will data_raw include a leading ' ' here? does that matter?
-         // JJA: I believe you can exclude the second parameter to substr if you want the rest of the string
-         date_raw = value.substr(value.find(' '), value.length());
-         dateJson["raw"] = date_raw;
+         std::string::size_type rawPosition = value.find(' ');
+         if (rawPosition != std::string::npos)
+         {
+            date_raw = value.substr(rawPosition + 1);
+            dateJson["raw"] = date_raw;
+         }
       }
 
       // Separate the date parts into their component year, month, and day parts
