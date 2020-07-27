@@ -743,6 +743,8 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    else
    {
       // get the path to the bibtex csl
+      // Summary of bibtex types, fields, and so on
+      // http://texdoc.net/texmf-dist/doc/bibtex/tamethebeast/ttb_en.pdf
       FilePath cslPath = session::options().rResourcesPath().completePath("bibtex.csl");
 
       std::vector<std::string> args;
