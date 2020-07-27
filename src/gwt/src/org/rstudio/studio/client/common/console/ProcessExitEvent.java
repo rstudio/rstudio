@@ -55,5 +55,5 @@ public class ProcessExitEvent extends GwtEvent<Handler>
 
    private final int exitCode_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

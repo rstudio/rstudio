@@ -75,5 +75,5 @@ public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
    private final String handle_;
    private final ArrayList<FindResult> results_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

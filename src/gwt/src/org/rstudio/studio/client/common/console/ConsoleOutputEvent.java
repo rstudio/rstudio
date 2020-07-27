@@ -55,5 +55,5 @@ public class ConsoleOutputEvent extends GwtEvent<Handler>
 
    private final String output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

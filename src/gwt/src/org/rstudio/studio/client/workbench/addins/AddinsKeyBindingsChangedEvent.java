@@ -29,29 +29,29 @@ public class AddinsKeyBindingsChangedEvent extends CrossWindowEvent<AddinsKeyBin
    {
       bindings_ = JavaScriptObject.createObject();
    }
-   
+
    public AddinsKeyBindingsChangedEvent(EditorKeyBindings bindings)
    {
       bindings_ = bindings.cast();
    }
-   
+
    public EditorKeyBindings getBindings()
    {
       return bindings_.cast();
    }
-   
+
    private final JavaScriptObject bindings_;
-   
+
    // Boilerplate ----
-   
+
    @Override
    public boolean forward() { return false; }
-   
+
    public interface Handler extends EventHandler
    {
       void onAddinsKeyBindingsChanged(AddinsKeyBindingsChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -64,5 +64,5 @@ public class AddinsKeyBindingsChangedEvent extends CrossWindowEvent<AddinsKeyBin
       handler.onAddinsKeyBindingsChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -22,9 +22,9 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteOpenWindowEvent 
+public class ChunkSatelliteOpenWindowEvent
              extends CrossWindowEvent<ChunkSatelliteOpenWindowEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onChunkSatelliteOpenWindow(ChunkSatelliteOpenWindowEvent event);
@@ -33,7 +33,7 @@ public class ChunkSatelliteOpenWindowEvent
    public ChunkSatelliteOpenWindowEvent()
    {
    }
-   
+
    public ChunkSatelliteOpenWindowEvent(
       String docId,
       String chunkId,
@@ -76,10 +76,10 @@ public class ChunkSatelliteOpenWindowEvent
    {
       return true;
    }
-   
+
    private String docId_;
    private String chunkId_;
    private Size size_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -31,7 +31,7 @@ public class JobRunScriptEvent extends CrossWindowEvent<JobRunScriptEvent.Handle
    {
       path_ = "";
    }
-   
+
    public JobRunScriptEvent(String path)
    {
       path_ = path;
@@ -41,7 +41,7 @@ public class JobRunScriptEvent extends CrossWindowEvent<JobRunScriptEvent.Handle
    {
       return path_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -56,5 +56,5 @@ public class JobRunScriptEvent extends CrossWindowEvent<JobRunScriptEvent.Handle
 
    private final String path_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

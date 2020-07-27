@@ -22,22 +22,22 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdRenderStartedEvent extends GwtEvent<RmdRenderStartedEvent.Handler>
-{  
+{
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getTargetFile() /*-{
          return this.target_file;
       }-*/;
-      
+
       public final native RmdOutputFormat getFormat() /*-{
          return this.output_format;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onRmdRenderStarted(RmdRenderStartedEvent event);
@@ -52,12 +52,12 @@ public class RmdRenderStartedEvent extends GwtEvent<RmdRenderStartedEvent.Handle
    {
       return data_.getTargetFile();
    }
-   
-   public RmdOutputFormat getFormat() 
+
+   public RmdOutputFormat getFormat()
    {
       return data_.getFormat();
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -69,8 +69,8 @@ public class RmdRenderStartedEvent extends GwtEvent<RmdRenderStartedEvent.Handle
    {
       handler.onRmdRenderStarted(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

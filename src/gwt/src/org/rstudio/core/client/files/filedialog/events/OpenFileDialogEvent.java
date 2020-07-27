@@ -72,5 +72,5 @@ public class OpenFileDialogEvent extends GwtEvent<OpenFileDialogEvent.Handler>
       handler.onOpenFileDialog(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

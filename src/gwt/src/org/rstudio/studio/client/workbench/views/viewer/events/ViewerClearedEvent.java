@@ -28,12 +28,12 @@ public class ViewerClearedEvent extends GwtEvent<ViewerClearedEvent.Handler>
    {
       forStop_ = forStop;
    }
-   
+
    public boolean isForStop()
    {
       return forStop_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,6 +47,6 @@ public class ViewerClearedEvent extends GwtEvent<ViewerClearedEvent.Handler>
    }
 
    private final boolean forStop_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -40,5 +40,5 @@ public class PdfJsWindowClosedEvent extends GwtEvent<PdfJsWindowClosedEvent.Hand
       handler.onPdfJsWindowClosed(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -35,7 +35,7 @@ public class XRefNavigationEvent extends GwtEvent<XRefNavigationEvent.Handler>
       file_ = file;
       forceVisualMode_ = forceVisualMode;
    }
-   
+
    public final XRef getXRef()
    {
       return xref_;
@@ -45,12 +45,12 @@ public class XRefNavigationEvent extends GwtEvent<XRefNavigationEvent.Handler>
    {
       return file_;
    }
-   
+
    public final boolean getForceVisualMode()
    {
       return forceVisualMode_;
    }
-  
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -67,5 +67,5 @@ public class XRefNavigationEvent extends GwtEvent<XRefNavigationEvent.Handler>
    private final FileSystemItem file_;
    private final boolean forceVisualMode_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

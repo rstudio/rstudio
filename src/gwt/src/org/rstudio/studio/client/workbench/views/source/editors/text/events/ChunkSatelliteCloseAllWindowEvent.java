@@ -21,9 +21,9 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCloseAllWindowEvent 
+public class ChunkSatelliteCloseAllWindowEvent
              extends CrossWindowEvent<ChunkSatelliteCloseAllWindowEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onChunkSatelliteCloseAllWindow(ChunkSatelliteCloseAllWindowEvent event);
@@ -32,7 +32,7 @@ public class ChunkSatelliteCloseAllWindowEvent
    public ChunkSatelliteCloseAllWindowEvent()
    {
    }
-   
+
    public ChunkSatelliteCloseAllWindowEvent(
       String docId)
    {
@@ -61,8 +61,8 @@ public class ChunkSatelliteCloseAllWindowEvent
    {
       return true;
    }
-   
+
    private String docId_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

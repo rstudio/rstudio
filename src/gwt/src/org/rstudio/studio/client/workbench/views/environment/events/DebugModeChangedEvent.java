@@ -24,7 +24,7 @@ public class DebugModeChangedEvent
    {
       void onDebugModeChanged(DebugModeChangedEvent event);
    }
-   
+
    public DebugModeChangedEvent(boolean debugging)
    {
       debugging_ = debugging;
@@ -47,6 +47,6 @@ public class DebugModeChangedEvent
       handler.onDebugModeChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
    private final boolean debugging_;
 }

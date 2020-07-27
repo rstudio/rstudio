@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdShinyDocStarted(RmdShinyDocStartedEvent event);
@@ -36,7 +36,7 @@ public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Ha
    {
       return docInfo_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,8 +48,8 @@ public class RmdShinyDocStartedEvent extends GwtEvent<RmdShinyDocStartedEvent.Ha
    {
       handler.onRmdShinyDocStarted(this);
    }
-   
+
    private final RmdShinyDocInfo docInfo_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

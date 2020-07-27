@@ -23,17 +23,17 @@ public class SatelliteClosedEvent extends GwtEvent<SatelliteClosedEvent.Handler>
    {
       void onSatelliteClosed(SatelliteClosedEvent event);
    }
-   
+
    public SatelliteClosedEvent(String name)
    {
       name_ = name;
    }
-   
+
    public String getName()
    {
       return name_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -45,8 +45,8 @@ public class SatelliteClosedEvent extends GwtEvent<SatelliteClosedEvent.Handler>
    {
       handler.onSatelliteClosed(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final String name_;
 }

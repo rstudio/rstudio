@@ -65,12 +65,12 @@ public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Hand
    {
       return username_;
    }
-   
+
    public TutorialApiCallContext getCallContext()
    {
       return callContext_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -83,7 +83,7 @@ public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Hand
       handler.onNewProjectFromVcsEvent(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private final String vcsId_;
    private final String repoUrl_;

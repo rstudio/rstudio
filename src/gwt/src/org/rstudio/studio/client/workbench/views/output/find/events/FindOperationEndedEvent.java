@@ -48,5 +48,5 @@ public class FindOperationEndedEvent extends GwtEvent<FindOperationEndedEvent.Ha
 
    private final String handle_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

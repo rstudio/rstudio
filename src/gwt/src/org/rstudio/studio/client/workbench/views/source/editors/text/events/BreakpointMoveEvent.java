@@ -29,12 +29,12 @@ public class BreakpointMoveEvent extends GwtEvent<BreakpointMoveEvent.Handler>
    {
       breakpointId_ = breakpointId;
    }
-   
+
    public int getBreakpointId()
    {
       return breakpointId_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,7 +47,7 @@ public class BreakpointMoveEvent extends GwtEvent<BreakpointMoveEvent.Handler>
       handler.onBreakpointMove(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private int breakpointId_;
 }

@@ -25,7 +25,7 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
    {
       void onJobInit(JobInitEvent event);
    }
-   
+
    public JobInitEvent(JobState state)
    {
       state.recordReceived();
@@ -36,7 +36,7 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
    {
       return state_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -51,5 +51,5 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
 
    private final JobState state_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

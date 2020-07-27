@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RenderRmdSourceEvent extends GwtEvent<RenderRmdSourceEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRenderRmdSource(RenderRmdSourceEvent event);
@@ -34,7 +34,7 @@ public class RenderRmdSourceEvent extends GwtEvent<RenderRmdSourceEvent.Handler>
    {
       return source_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -46,8 +46,8 @@ public class RenderRmdSourceEvent extends GwtEvent<RenderRmdSourceEvent.Handler>
    {
       handler.onRenderRmdSource(this);
    }
-   
+
    private final String source_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

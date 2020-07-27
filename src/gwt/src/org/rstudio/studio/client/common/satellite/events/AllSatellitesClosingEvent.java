@@ -17,14 +17,14 @@ package org.rstudio.studio.client.common.satellite.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class AllSatellitesClosingEvent 
+public class AllSatellitesClosingEvent
    extends GwtEvent<AllSatellitesClosingEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onAllSatellitesClosing(AllSatellitesClosingEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -36,6 +36,6 @@ public class AllSatellitesClosingEvent
    {
       handler.onAllSatellitesClosing(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

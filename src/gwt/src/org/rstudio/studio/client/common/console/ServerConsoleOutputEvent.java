@@ -68,5 +68,5 @@ public class ServerConsoleOutputEvent
    private final String procHandle_;
    private final String output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

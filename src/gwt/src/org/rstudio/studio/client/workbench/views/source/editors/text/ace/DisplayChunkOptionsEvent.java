@@ -29,12 +29,12 @@ public class DisplayChunkOptionsEvent extends GwtEvent<DisplayChunkOptionsEvent.
    {
       event_ = event;
    }
-   
+
    public NativeEvent getNativeEvent()
    {
       return event_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,6 +48,6 @@ public class DisplayChunkOptionsEvent extends GwtEvent<DisplayChunkOptionsEvent.
    }
 
    private final NativeEvent event_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

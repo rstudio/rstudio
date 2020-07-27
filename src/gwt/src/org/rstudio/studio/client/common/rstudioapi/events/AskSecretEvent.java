@@ -36,7 +36,7 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
       public native final String getPrompt() /*-{
          return this.prompt;
       }-*/;
-      
+
       public native final String getWindow() /*-{
          return this.window;
       }-*/;
@@ -68,7 +68,7 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    {
       return prompt_;
    }
-   
+
    public String getWindow()
    {
       return window_;
@@ -102,5 +102,5 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    private final boolean canRemember_;
    private final boolean hasSecret_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

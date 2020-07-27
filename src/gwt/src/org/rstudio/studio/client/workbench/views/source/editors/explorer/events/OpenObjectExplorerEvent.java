@@ -26,21 +26,21 @@ public class OpenObjectExplorerEvent extends GwtEvent<OpenObjectExplorerEvent.Ha
    {
       handle_ = handle;
    }
-   
+
    public ObjectExplorerHandle getHandle()
    {
       return handle_;
    }
-   
+
    private final ObjectExplorerHandle handle_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onOpenObjectExplorerEvent(OpenObjectExplorerEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -52,7 +52,7 @@ public class OpenObjectExplorerEvent extends GwtEvent<OpenObjectExplorerEvent.Ha
    {
       handler.onOpenObjectExplorerEvent(this);
    }
-   
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+
+   public static final Type<Handler> TYPE = new Type<>();
 }
