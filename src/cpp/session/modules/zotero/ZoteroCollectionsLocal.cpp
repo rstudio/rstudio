@@ -120,6 +120,7 @@ std::string creatorsSQL(const std::string& name = "")
       WHERE
         libraries.type = 'user'
         AND itemTypes.typeName <> 'attachment'
+        AND itemTypes.typeName <> 'note'
         %2%
       ORDER BY
         items.key ASC,
@@ -152,6 +153,7 @@ std::string collectionSQL(const std::string& name = "")
       WHERE
          libraries.type = 'user'
          AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
          %2%
    UNION
       SELECT
@@ -168,6 +170,7 @@ std::string collectionSQL(const std::string& name = "")
       WHERE
          libraries.type = 'user'
          AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
          %2%
    ORDER BY
       key ASC,
@@ -181,7 +184,7 @@ std::string collectionSQL(const std::string& name = "")
 ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnection,
                                const std::string& name,
                                const std::string& tableName = "")
-{
+{`
    // default to return in case of error
    ZoteroCollection collection(name);
 
