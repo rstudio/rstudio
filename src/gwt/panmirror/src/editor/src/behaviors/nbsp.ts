@@ -14,15 +14,80 @@
  */
 
 
+
+import { DecorationSet, Decoration } from "prosemirror-view";
+import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { Node as ProsemirrorNode } from "prosemirror-model";
+
 import { EditorCommandId, InsertCharacterCommand } from "../api/command";
+import { forChangedNodes } from "../api/transaction";
+import { mergedTextNodes } from "../api/text";
+
+const kNbsp = '\u00A0';
 
 const extension = {
 
   commands: () => {
     return [
-      new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, '\u00A0', ['Ctrl-Space', 'Ctrl-Shift-Space'])
+      new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, kNbsp, ['Ctrl-Space', 'Ctrl-Shift-Space'])
     ];
   },
+
+  plugins: () => {
+    return [
+      nonBreakingSpaceHighlightPlugin()
+    ];
+  }
 };
+
+const pluginKey = new PluginKey('nbsp-highlight');
+
+function nonBreakingSpaceHighlightPlugin() {
+  return new Plugin<DecorationSet>({
+    key: pluginKey,
+    state: {
+      init(_config: { [key: string]: any }, instance: EditorState) {
+        return DecorationSet.create(instance.doc, highlightNode(instance.doc));
+      },
+      apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
+
+        // map
+        set = set.map(tr.mapping, tr.doc);
+
+        // find new
+        if (tr.docChanged) {
+          const decorations: Decoration[] = [];
+          forChangedNodes(oldState, newState, node => node.textContent.includes(kNbsp), (node, pos) => {
+            decorations.push(...highlightNode(node, pos + 1));
+          });
+          set = set.add(tr.doc, decorations);
+        }
+
+        // return the set
+        return set;
+      },
+    },
+    props: {
+      decorations(state: EditorState) {
+        return pluginKey.getState(state);
+      },
+    },
+  });
+}
+
+function highlightNode(doc: ProsemirrorNode, nodePos = 0) {
+  const decorations: Decoration[] = [];
+  mergedTextNodes(doc, node => node.textContent.includes(kNbsp)).forEach(textWithPos => {
+    const { text, pos } = textWithPos;
+    let index = text.indexOf(kNbsp);
+    while (index !== -1) {
+      decorations.push(Decoration.inline(nodePos + pos + index, nodePos + pos + index + 1,
+        { class: 'pm-nbsp pm-span-background-color' }));
+      index = text.indexOf(kNbsp, index + 1);
+    }
+  });
+  return decorations;
+}
+
 
 export default extension;
