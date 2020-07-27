@@ -140,6 +140,8 @@ public class KeyCombination
          return pretty ? "PgDn" : "PageDown";
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
+      else if (keyCode_ == KeyCodes.KEY_SPACE)
+         return macStyle? "&#9250" : "Space";
 
       if (key_ != null)
          return key_;

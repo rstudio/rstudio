@@ -17,7 +17,6 @@ import { InputRule } from 'prosemirror-inputrules';
 import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { EditorUI } from '../api/ui';
 import { ProsemirrorCommand } from '../api/command';
 import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
@@ -73,6 +72,7 @@ import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugin-symbol';
 import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
+import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -149,6 +149,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorBottomPadding,
     behaviorInsertSymbol,
     behaviorInsertSymbolEmoji,
+    beahviorInsertSpecialCharacters,
 
     // nodes
     nodeDiv,

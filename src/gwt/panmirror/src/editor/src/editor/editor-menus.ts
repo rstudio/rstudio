@@ -102,23 +102,23 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.OmniInsert },
     ...(haveAnyOf(commands, EditorCommandId.RCodeChunk, EditorCommandId.PythonCodeChunk)
       ? [
-          { separator: true },
-          {
-            subMenu: {
-              text: ui.context.translateText('Code Chunk'),
-              items: [
-                { command: EditorCommandId.RCodeChunk },
-                { separator: true },
-                { command: EditorCommandId.PythonCodeChunk },
-                { command: EditorCommandId.BashCodeChunk },
-                { command: EditorCommandId.RcppCodeChunk },
-                { command: EditorCommandId.SQLCodeChunk },
-                { command: EditorCommandId.D3CodeChunk },
-                { command: EditorCommandId.StanCodeChunk },
-              ],
-            },
+        { separator: true },
+        {
+          subMenu: {
+            text: ui.context.translateText('Code Chunk'),
+            items: [
+              { command: EditorCommandId.RCodeChunk },
+              { separator: true },
+              { command: EditorCommandId.PythonCodeChunk },
+              { command: EditorCommandId.BashCodeChunk },
+              { command: EditorCommandId.RcppCodeChunk },
+              { command: EditorCommandId.SQLCodeChunk },
+              { command: EditorCommandId.D3CodeChunk },
+              { command: EditorCommandId.StanCodeChunk },
+            ],
           },
-        ]
+        },
+      ]
       : []),
     { separator: true },
     { command: EditorCommandId.Image },
@@ -126,34 +126,37 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.HorizontalRule },
     ...(haveAnyOf(commands, EditorCommandId.DefinitionList)
       ? [
-          { separator: true },
-          {
-            subMenu: {
-              text: ui.context.translateText('Definition'),
-              items: [
-                { command: EditorCommandId.DefinitionList },
-                { separator: true },
-                { command: EditorCommandId.DefinitionTerm },
-                { command: EditorCommandId.DefinitionDescription },
-              ],
-            },
+        { separator: true },
+        {
+          subMenu: {
+            text: ui.context.translateText('Definition'),
+            items: [
+              { command: EditorCommandId.DefinitionList },
+              { separator: true },
+              { command: EditorCommandId.DefinitionTerm },
+              { command: EditorCommandId.DefinitionDescription },
+            ],
           },
-        ]
+        },
+      ]
       : []),
     { separator: true },
     { command: EditorCommandId.InlineMath },
     { command: EditorCommandId.DisplayMath },
-    ...(haveAnyOf(commands, EditorCommandId.Symbol, EditorCommandId.Emoji)
-      ? [
+    { separator: true },
+    {
+      subMenu: {
+        text: ui.context.translateText('Special Characters'),
+        items: [
+          { command: EditorCommandId.Emoji },
+          { command: EditorCommandId.Symbol },
           { separator: true },
-          {
-            subMenu: {
-              text: ui.context.translateText('Emoji & Symbol'),
-              items: [{ command: EditorCommandId.Emoji }, { command: EditorCommandId.Symbol }],
-            },
-          },
-        ]
-      : []),
+          { command: EditorCommandId.EnDash },
+          { command: EditorCommandId.EmDash },
+          { command: EditorCommandId.NonBreakingSpace },
+        ],
+      },
+    },
     { separator: true },
     { command: EditorCommandId.Footnote },
     { command: EditorCommandId.Citation },
