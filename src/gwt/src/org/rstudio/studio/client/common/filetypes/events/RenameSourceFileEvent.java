@@ -26,16 +26,16 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
    {
       void onRenameSourceFile(RenameSourceFileEvent event);
    }
-   
+
    public RenameSourceFileEvent(String path)
    {
       path_ = path;
    }
-   
+
    public RenameSourceFileEvent()
    {
    }
-   
+
    public String getPath()
    {
       return path_;
@@ -53,7 +53,7 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
       return TYPE;
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private String path_;
 }

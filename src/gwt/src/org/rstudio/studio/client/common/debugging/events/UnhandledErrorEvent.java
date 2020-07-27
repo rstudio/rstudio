@@ -31,12 +31,12 @@ public class UnhandledErrorEvent
    {
       err_ = err;
    }
-   
+
    public UnhandledError getError()
    {
       return err_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -49,7 +49,7 @@ public class UnhandledErrorEvent
       handler.onUnhandledError(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private UnhandledError err_;
 }

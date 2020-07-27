@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConvertToShinyDocEvent extends GwtEvent<ConvertToShinyDocEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onConvertToShinyDoc(ConvertToShinyDocEvent event);
@@ -46,8 +46,8 @@ public class ConvertToShinyDocEvent extends GwtEvent<ConvertToShinyDocEvent.Hand
    {
       handler.onConvertToShinyDoc(this);
    }
-   
+
    private final String path_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -33,7 +33,7 @@ public abstract class CommandBundle
 
       commandsById_.put(id, command);
    }
-   
+
    public HashMap<String, AppCommand> getCommands()
    {
       return commandsById_;

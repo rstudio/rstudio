@@ -18,33 +18,33 @@ package org.rstudio.studio.client.projects.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class OpenProjectEvent 
+public class OpenProjectEvent
    extends GwtEvent<OpenProjectEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onOpenProjectEvent(OpenProjectEvent event);
    }
-   
+
    public OpenProjectEvent(boolean forceSaveAll, boolean allowOpenInNewWindow)
    {
       forceSaveAll_ = forceSaveAll;
       allowOpenInNewWindow_ = allowOpenInNewWindow;
    }
-   
-   
+
+
    public boolean getForceSaveAll()
    {
       return forceSaveAll_;
    }
-   
-   
+
+
    public boolean getAllowOpenInNewWindow()
    {
       return allowOpenInNewWindow_;
    }
-   
-   
+
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -56,9 +56,9 @@ public class OpenProjectEvent
    {
       handler.onOpenProjectEvent(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final boolean forceSaveAll_;
    private final boolean allowOpenInNewWindow_;
 }

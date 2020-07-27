@@ -41,5 +41,5 @@ public class PresentationPaneRequestCompletedEvent extends GwtEvent<Presentation
    }
 
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

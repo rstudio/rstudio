@@ -32,7 +32,7 @@ public class EnvironmentChangedEvent extends GwtEvent<EnvironmentChangedEvent.Ha
 
       public final native JsArray<RObject> getChangedObjects() /*-{ return this["changed"]; }-*/;
       public final native JsArrayString getRemovedObjects()    /*-{ return this["removed"]; }-*/;
-      
+
    }
 
    public EnvironmentChangedEvent(Data data)
@@ -66,6 +66,6 @@ public class EnvironmentChangedEvent extends GwtEvent<EnvironmentChangedEvent.Ha
       handler.onEnvironmentChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
 

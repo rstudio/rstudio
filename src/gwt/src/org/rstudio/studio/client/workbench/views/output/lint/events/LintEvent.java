@@ -28,17 +28,17 @@ public class LintEvent extends GwtEvent<LintEvent.Handler>
       protected Data()
       {
       }
-      
+
       public native final JsArray<LintItem> getLint() /*-{
          return this["lint"];
       }-*/;
-      
+
       public native final String getDocumentId() /*-{
          return this["document_id"];
       }-*/;
-      
+
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onLintEvent(LintEvent event);
@@ -60,18 +60,18 @@ public class LintEvent extends GwtEvent<LintEvent.Handler>
    {
       handler.onLintEvent(this);
    }
-   
+
    public JsArray<LintItem> getLint()
    {
       return data_.getLint();
    }
-   
+
    public String getDocumentId()
    {
       return data_.getDocumentId();
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final Data data_;
 }

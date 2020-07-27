@@ -60,5 +60,5 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    private String replacePattern_;
    private boolean replace_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

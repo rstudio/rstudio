@@ -26,7 +26,7 @@ public class AddinCommandBinding implements CommandBinding
       addin_ = addin;
       executor_ = new AddinExecutor();
    }
-   
+
    @Override
    public String getId()
    {
@@ -44,13 +44,13 @@ public class AddinCommandBinding implements CommandBinding
    {
       return true;
    }
-   
+
    @Override
    public boolean isUserDefinedBinding()
    {
       return true;
    }
-   
+
    @Override
    public Context getContext()
    {

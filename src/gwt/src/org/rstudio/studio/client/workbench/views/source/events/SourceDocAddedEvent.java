@@ -29,11 +29,11 @@ public class SourceDocAddedEvent
    {
       void onSourceDocAdded(SourceDocAddedEvent e);
    }
-   
+
    public SourceDocAddedEvent()
    {
    }
-   
+
    public SourceDocAddedEvent(SourceDocument doc, int mode, String displayName)
    {
       doc_ = doc;
@@ -46,7 +46,7 @@ public class SourceDocAddedEvent
    {
       return doc_;
    }
-   
+
    public String getDisplayName()
    {
       return displayName_;
@@ -56,12 +56,12 @@ public class SourceDocAddedEvent
    {
       return windowId_;
    }
-   
+
    public int getMode()
    {
       return mode_;
    }
-  
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -78,6 +78,6 @@ public class SourceDocAddedEvent
    private String displayName_;
    private String windowId_;
    private int mode_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

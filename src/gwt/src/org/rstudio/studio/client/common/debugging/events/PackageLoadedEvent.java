@@ -29,12 +29,12 @@ public class PackageLoadedEvent
    {
       packageName_ = packageName;
    }
-   
+
    public String getPackageName()
    {
       return packageName_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,7 +47,7 @@ public class PackageLoadedEvent
       handler.onPackageLoaded(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
-   private String packageName_;   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   private String packageName_;
 }

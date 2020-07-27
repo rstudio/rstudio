@@ -28,7 +28,7 @@ public class HTMLPreviewOutputEvent extends GwtEvent<HTMLPreviewOutputEvent.Hand
    {
       output_ = output;
    }
-   
+
    public String getOutput()
    {
       return output_;
@@ -45,8 +45,8 @@ public class HTMLPreviewOutputEvent extends GwtEvent<HTMLPreviewOutputEvent.Hand
    {
       handler.onHTMLPreviewOutput(this);
    }
-   
+
    private String output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

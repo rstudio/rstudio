@@ -27,7 +27,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
    {
       void onShowVcsDiff(ShowVcsDiffEvent event);
    }
-   
+
    public ShowVcsDiffEvent()
    {
    }
@@ -36,7 +36,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
    {
       file_ = file;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
@@ -54,7 +54,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
       handler.onShowVcsDiff(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private FileSystemItem file_;
 }

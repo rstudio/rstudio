@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SlideIndexChangedEvent extends GwtEvent<SlideIndexChangedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onSlideIndexChanged(SlideIndexChangedEvent event);
@@ -28,12 +28,12 @@ public class SlideIndexChangedEvent extends GwtEvent<SlideIndexChangedEvent.Hand
    {
       index_ = index;
    }
-    
+
    public int getIndex()
    {
       return index_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -45,8 +45,8 @@ public class SlideIndexChangedEvent extends GwtEvent<SlideIndexChangedEvent.Hand
    {
       handler.onSlideIndexChanged(this);
    }
-   
+
    private final int index_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

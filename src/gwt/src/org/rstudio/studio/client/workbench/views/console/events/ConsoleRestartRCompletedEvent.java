@@ -40,5 +40,5 @@ public class ConsoleRestartRCompletedEvent extends GwtEvent<ConsoleRestartRCompl
       handler.onRestartRCompleted(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
