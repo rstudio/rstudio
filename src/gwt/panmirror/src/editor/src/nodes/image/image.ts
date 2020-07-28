@@ -126,7 +126,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
     // get attributes
     const target = tok.c[IMAGE_TARGET];
     const attrs = {
-      src: target[TARGET_URL],
+      src: decodeURI(target[TARGET_URL]),
       title: readPandocTitle(target[TARGET_TITLE]),
       alt: '',
       ...(imageAttributes ? pandocAttrReadAST(tok, IMAGE_ATTR) : {}),
