@@ -28,13 +28,13 @@ public class FindRequestedEvent extends GwtEvent<FindRequestedEvent.Handler>
    {
       defaultForward_ = defaultForward;
    }
-   
+
    public boolean getDefaultForward()
    {
       return defaultForward_;
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -47,6 +47,6 @@ public class FindRequestedEvent extends GwtEvent<FindRequestedEvent.Handler>
    {
       handler.onFindRequested(this);
    }
-   
+
    private final boolean defaultForward_;
 }

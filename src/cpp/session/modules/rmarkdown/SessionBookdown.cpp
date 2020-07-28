@@ -30,6 +30,26 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 
+namespace {
+
+std::vector<std::string> bookdownFrontMatterValue(const std::string& name)
+{
+   std::vector<std::string> values;
+   if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
+   {
+      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
+      Error error = r::exec::RFunction(".rs.bookdown.frontMatterValue", inputDir, name).call(&values);
+      if (error)
+         LOG_ERROR(error);
+   }
+   return values;
+}
+
+
+
+} // anonymous namespace
+
 namespace module_context {
 
 // currently we implement this function in SessionBookdown.cpp b/c it's the
@@ -53,40 +73,27 @@ std::vector<FilePath> bookdownBibliographies()
 
 std::vector<std::string> bookdownBibliographiesRelative()
 {
-   std::vector<std::string> files;
+   return bookdownFrontMatterValue("bibliography");
+}
 
-   if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
-   {
-      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
-
-      Error error = r::exec::RFunction(".rs.bookdown.bibliographies", inputDir).call(&files);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return files;
+std::vector<std::string> bookdownZoteroCollections()
+{
+  return bookdownFrontMatterValue("zotero");
 }
 
 FilePath bookdownCSL()
 {
-   FilePath cslPath;
-   if (module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown"))
+   std::vector<std::string> cslVector = bookdownFrontMatterValue("csl");
+   std::string csl = cslVector.size() > 0 ? cslVector[0] : "";
+   if (!csl.empty())
    {
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-      std::string inputDir = string_utils::utf8ToSystem(buildTargetPath.getAbsolutePath());
-      std::string csl;
-      Error error = r::exec::RFunction(".rs.bookdown.csl", inputDir).call(&csl);
-      if (error)
-         LOG_ERROR(error);
-      else if (!csl.empty())
-         cslPath = buildTargetPath.completePath(csl);
-
+      return buildTargetPath.completePath(csl);
    }
-   if (cslPath.exists())
-      return cslPath;
    else
+   {
       return FilePath();
+   }
 }
 
 } // namespace module_context

@@ -20,17 +20,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onBuildOutput(BuildOutputEvent event);
    }
-   
+
    public BuildOutputEvent(CompileOutput output)
    {
       output_ = output;
    }
-   
+
    public CompileOutput getOutput()
    {
       return output_;
@@ -47,8 +47,8 @@ public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
    {
       handler.onBuildOutput(this);
    }
-   
+
    private final CompileOutput output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

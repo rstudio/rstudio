@@ -25,21 +25,21 @@ public class SourceExtendedTypeDetectedEvent extends GwtEvent<SourceExtendedType
       protected Data()
       {
       }
-      
+
       public native final String getDocId() /*-{
          return this.doc_id;
       }-*/;
-      
+
       public native final String getExtendedType() /*-{
          return this.extended_type;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e);
    }
-   
+
    public SourceExtendedTypeDetectedEvent(Data data)
    {
       data_ = data;
@@ -48,13 +48,13 @@ public class SourceExtendedTypeDetectedEvent extends GwtEvent<SourceExtendedType
    public String getDocId()
    {
       return data_.getDocId();
-   }   
-   
+   }
+
    public String getExtendedType()
    {
       return data_.getExtendedType();
    }
-  
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -68,6 +68,6 @@ public class SourceExtendedTypeDetectedEvent extends GwtEvent<SourceExtendedType
    }
 
    private final Data data_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -27,7 +27,7 @@ public class AceSelectionChangedEvent extends GwtEvent<AceSelectionChangedEvent.
    public AceSelectionChangedEvent()
    {
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -40,5 +40,5 @@ public class AceSelectionChangedEvent extends GwtEvent<AceSelectionChangedEvent.
       handler.onSelectionChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

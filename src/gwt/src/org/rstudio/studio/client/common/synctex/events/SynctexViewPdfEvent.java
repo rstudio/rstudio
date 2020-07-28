@@ -25,13 +25,13 @@ public class SynctexViewPdfEvent extends GwtEvent<SynctexViewPdfEvent.Handler>
    {
       void onSynctexViewPdf(SynctexViewPdfEvent event);
    }
-   
+
    public SynctexViewPdfEvent(PdfLocation pdfLocation)
    {
       pdfLocation_ = pdfLocation;
    }
-   
-   
+
+
    public PdfLocation getPdfLocation()
    {
       return pdfLocation_;
@@ -50,6 +50,6 @@ public class SynctexViewPdfEvent extends GwtEvent<SynctexViewPdfEvent.Handler>
    }
 
    private final PdfLocation pdfLocation_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

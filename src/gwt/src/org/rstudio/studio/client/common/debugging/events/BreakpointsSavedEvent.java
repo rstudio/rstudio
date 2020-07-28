@@ -35,12 +35,12 @@ public class BreakpointsSavedEvent
       breakpoints_ = breakpoints;
       successful_ = successful;
    }
-   
+
    public boolean successful()
    {
       return successful_;
    }
-   
+
    public ArrayList<Breakpoint> breakpoints()
    {
       return breakpoints_;
@@ -58,8 +58,8 @@ public class BreakpointsSavedEvent
       handler.onBreakpointsSaved(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private ArrayList<Breakpoint> breakpoints_;
    private boolean successful_;
 }

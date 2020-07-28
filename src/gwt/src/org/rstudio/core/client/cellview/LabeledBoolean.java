@@ -51,7 +51,7 @@ public class LabeledBoolean
    {
       if (rhsObject == null || !(rhsObject instanceof LabeledBoolean))
          return false;
- 
+
       LabeledBoolean rhs = (LabeledBoolean)rhsObject;
       return (bool_ == rhs.getBool()) && StringUtil.equals(label_, rhs.getLabel());
    }

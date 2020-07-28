@@ -401,21 +401,24 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
+         if (!this.additional_source_columns)
+           return 0;
+
          return this.additional_source_columns;
       }-*/;
 
    }
 
    /**
-    * Temporary flag to enable additional source columns.
+    * Whether to enable the ability to add source columns to display.
     */
-   public PrefValue<Boolean> enableAdditionalColumns()
+   public PrefValue<Boolean> allowSourceColumns()
    {
       return bool(
-         "enable_additional_columns",
-         "Enable Additional Columns", 
-         "Temporary flag to enable additional source columns.", 
-         false);
+         "allow_source_columns",
+         "Allow source columns", 
+         "Whether to enable the ability to add source columns to display.", 
+         true);
    }
 
    /**
@@ -2551,6 +2554,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   public PrefValue<Boolean> showFocusRectangles()
+   {
+      return bool(
+         "show_focus_rectangles",
+         "Always show focus outlines", 
+         "Control with keyboard focus displays a visual focus indicator.", 
+         true);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -2741,6 +2756,25 @@ public class UserPrefsAccessor extends Prefs
    public final static String VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR = "codemirror";
 
    /**
+    * Zotero connection type (local or web)
+    */
+   public PrefValue<String> zoteroConnectionType()
+   {
+      return enumeration(
+         "zotero_connection_type",
+         "Zotero connection type", 
+         "Zotero connection type (local or web)", 
+         new String[] {
+            ZOTERO_CONNECTION_TYPE_LOCAL,
+            ZOTERO_CONNECTION_TYPE_WEB
+         },
+         "local");
+   }
+
+   public final static String ZOTERO_CONNECTION_TYPE_LOCAL = "local";
+   public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
+
+   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -2921,8 +2955,8 @@ public class UserPrefsAccessor extends Prefs
          highlightSelectedLine().setValue(layer, source.getBool("highlight_selected_line"));
       if (source.hasKey("panes"))
          panes().setValue(layer, source.getObject("panes"));
-      if (source.hasKey("enable_additional_columns"))
-         enableAdditionalColumns().setValue(layer, source.getBool("enable_additional_columns"));
+      if (source.hasKey("allow_source_columns"))
+         allowSourceColumns().setValue(layer, source.getBool("allow_source_columns"));
       if (source.hasKey("use_spaces_for_tab"))
          useSpacesForTab().setValue(layer, source.getBool("use_spaces_for_tab"));
       if (source.hasKey("num_spaces_for_tab"))
@@ -3241,6 +3275,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("show_focus_rectangles"))
+         showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
@@ -3267,6 +3303,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
+      if (source.hasKey("zotero_connection_type"))
+         zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3307,7 +3345,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
-      prefs.add(enableAdditionalColumns());
+      prefs.add(allowSourceColumns());
       prefs.add(useSpacesForTab());
       prefs.add(numSpacesForTab());
       prefs.add(autoDetectIndentation());
@@ -3467,6 +3505,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(showFocusRectangles());
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
@@ -3480,6 +3519,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
+      prefs.add(zoteroConnectionType());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

@@ -149,6 +149,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-div-background-color {
       background-color: ${theme.divBackgroundColor} !important;
     }
+    .pm-nbsp-background-color {
+      background-color: ${theme.spanBackgroundColor} !important;
+    }
     .pm-comment-color {
       color: ${theme.commentColor} !important;
     }

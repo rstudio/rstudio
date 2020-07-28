@@ -26,21 +26,21 @@ public class ProjectTemplateRegistryUpdatedEvent
    {
       data_ = data;
    }
-   
+
    public ProjectTemplateRegistry getData()
    {
       return data_;
    }
-   
+
    private final ProjectTemplateRegistry data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onProjectTemplateRegistryUpdated(ProjectTemplateRegistryUpdatedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,6 +53,6 @@ public class ProjectTemplateRegistryUpdatedEvent
       handler.onProjectTemplateRegistryUpdated(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

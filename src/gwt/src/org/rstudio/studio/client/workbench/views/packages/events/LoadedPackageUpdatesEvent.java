@@ -48,5 +48,5 @@ public class LoadedPackageUpdatesEvent extends GwtEvent<LoadedPackageUpdatesEven
 
    private final String installCmd_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

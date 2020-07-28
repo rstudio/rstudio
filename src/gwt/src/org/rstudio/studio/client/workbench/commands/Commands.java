@@ -142,6 +142,7 @@ public abstract class
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
    public abstract AppCommand activateFindInFiles();
+   public abstract AppCommand newSourceColumn();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
    public abstract AppCommand foldAll();
@@ -654,6 +655,7 @@ public abstract class
    public abstract AppCommand focusMainToolbar();
    public abstract AppCommand speakEditorLocation();
    public abstract AppCommand focusConsoleOutputEnd();
+   public abstract AppCommand focusNextPane();
    public abstract AppCommand showAccessibilityHelp();
 
    // Internal

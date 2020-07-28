@@ -87,7 +87,7 @@ public class AppMenuItem extends MenuItem
          }
       });
    }
-   
+
    public String getId()
    {
       return cmd_.getId();

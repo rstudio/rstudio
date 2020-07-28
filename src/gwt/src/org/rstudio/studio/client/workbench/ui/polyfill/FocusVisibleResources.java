@@ -1,5 +1,5 @@
 /*
- * NativeEventProperty.java
+ * FocusVisibleResources.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.dom;
+package org.rstudio.studio.client.workbench.ui.polyfill;
 
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import org.rstudio.core.client.resources.StaticDataResource;
 
-public class NativeEventProperty
+public interface FocusVisibleResources extends ClientBundle
 {
-   public static final native String key(NativeEvent event) /*-{ return event.key || ""; }-*/;
+   FocusVisibleResources INSTANCE = GWT.create(FocusVisibleResources.class);
+
+   @Source("js/focus-visible.min.js")
+   StaticDataResource focusVisibleJs();
+
+   @Source("css/focus-visible.css")
+   StaticDataResource focusVisibleCss();
 }

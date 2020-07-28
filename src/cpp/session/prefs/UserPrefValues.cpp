@@ -284,16 +284,16 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
- * Temporary flag to enable additional source columns.
+ * Whether to enable the ability to add source columns to display.
  */
-bool UserPrefValues::enableAdditionalColumns()
+bool UserPrefValues::allowSourceColumns()
 {
-   return readPref<bool>("enable_additional_columns");
+   return readPref<bool>("allow_source_columns");
 }
 
-core::Error UserPrefValues::setEnableAdditionalColumns(bool val)
+core::Error UserPrefValues::setAllowSourceColumns(bool val)
 {
-   return writePref("enable_additional_columns", val);
+   return writePref("allow_source_columns", val);
 }
 
 /**
@@ -2364,6 +2364,19 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
+ * Control with keyboard focus displays a visual focus indicator.
+ */
+bool UserPrefValues::showFocusRectangles()
+{
+   return readPref<bool>("show_focus_rectangles");
+}
+
+core::Error UserPrefValues::setShowFocusRectangles(bool val)
+{
+   return writePref("show_focus_rectangles", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2533,6 +2546,19 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
 }
 
 /**
+ * Zotero connection type (local or web)
+ */
+std::string UserPrefValues::zoteroConnectionType()
+{
+   return readPref<std::string>("zotero_connection_type");
+}
+
+core::Error UserPrefValues::setZoteroConnectionType(std::string val)
+{
+   return writePref("zotero_connection_type", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2659,7 +2685,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
-      kEnableAdditionalColumns,
+      kAllowSourceColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
@@ -2819,6 +2845,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kShowFocusRectangles,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
@@ -2832,6 +2859,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
+      kZoteroConnectionType,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

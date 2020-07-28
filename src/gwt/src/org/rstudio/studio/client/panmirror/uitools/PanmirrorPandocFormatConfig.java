@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.panmirror.uitools;
 
+import java.util.Arrays;
+
 import org.rstudio.core.client.StringUtil;
 
 import jsinterop.annotations.JsType;
@@ -30,8 +32,15 @@ public class PanmirrorPandocFormatConfig
    
    // markdown writing
    public int wrapColumn;
-   public String references;
+   public String references_location;
+   public String references_prefix;
    public boolean canonical;
+   
+ 
+   public static boolean isDoctype(PanmirrorPandocFormatConfig config, String doctype)
+   {
+      return config.doctypes != null && Arrays.asList(config.doctypes).contains(doctype);
+   }
    
    public static boolean areEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
@@ -51,8 +60,8 @@ public class PanmirrorPandocFormatConfig
    public static boolean markdownWritingConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
       return a.wrapColumn == b.wrapColumn &&
-             a.references == b.references &&
-             a.canonical == b.canonical;         
+             a.references_location == b.references_location &&
+             a.references_prefix == b.references_prefix;         
    }
 }
 

@@ -40,5 +40,5 @@ public class SwitchViewEvent extends GwtEvent<SwitchViewEvent.Handler>
       handler.onSwitchView(this);
    }
 
-   private static final Type<Handler> TYPE = new Type<Handler>();
+   private static final Type<Handler> TYPE = new Type<>();
 }

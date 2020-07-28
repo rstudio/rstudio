@@ -24,7 +24,7 @@ import * as https from 'https';
 const maxUnicodeAge = 6.0;
 
 // The file that should be generated holding the symbol data
-const outputFile = './src/behaviors/insert_symbol/symbols.json';
+const outputFile = './src/behaviors/insert_symbol/symbols.ts';
 
 // The names of blocks of unicode characters to be scan for characters to include.
 // Blocks will only be included if characters from that block are selected (e.g. characters)
@@ -92,7 +92,6 @@ const groupToBlockMapping = [
 // These characters are excluded because they don't render properly in the default font. 
 // Consider re-enabling them as address font issues with unicode.
 const excludedChars = [
-  160, // no-break space
   65860, 65861, 65910, 65911, 65912, 65923, 65927, 65928, 65929, 65931, 65932, 65933, 65934, // Ancient Characters
   11094, 11095, 11096, 11097, // Arrows
   10190, 10191, 120778, 120779, // Mathematical
@@ -377,7 +376,7 @@ const unicodeDownloadUrl = `https://www.unicode.org/Public/UCD/latest/ucdxml/${t
 
 // The set of emoji + metadata used by Github
 const emojiDownloadUrl = 'https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json';
-const emojiPath = './src/api/emojis-all.json';
+const emojiPath = './src/api/emojis-all.ts';
 
 // The set of emoji that has markdown rendering in pandoc.
 import kPandocEmojis from './emojis-pandoc.json';
@@ -522,6 +521,7 @@ function unzipSingleZipFile(zipFile: string, fileToExtract: string, outputDirect
           resolve(outputFilePath);
         });
 
+
         entry.pipe(outputStream);
       } else {
         entry.autodrain();
@@ -583,7 +583,13 @@ function writeSymbolsFile(symbolGroups: Group[]) {
   info('Writing output', outputFile);
   cleanupFiles([outputFile], false);
   const finalJson = JSON.stringify(symbolGroups, null, 2);
-  fs.writeFileSync(outputFile, finalJson);
+
+  fs.writeFileSync(outputFile, `import { SymbolCharacterGroup } from \"./insert_symbol-dataprovider\";
+
+const symbols: SymbolCharacterGroup[] = ${finalJson};
+
+export default symbols;
+`);
 
   const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
     return count + symbolGroup.symbols.length;
@@ -597,7 +603,7 @@ function filterEmoji(filePath: string) {
   const allEmoji = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
   // Remove any emoji that don't render properly
-  const filteredEmoji: {
+  const filteredEmoji: Array<{
     emoji: string;
     description: string;
     category: string;
@@ -606,7 +612,7 @@ function filterEmoji(filePath: string) {
     unicode_version?: string;
     ios_version?: string;
     skin_tones?: boolean;
-  }[] = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
+  }> = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
 
   // Remove emoji metadata that we don't need
   const thinnedEmoji = filteredEmoji.map(emoji => {
@@ -623,7 +629,13 @@ function filterEmoji(filePath: string) {
 
   info(thinnedEmoji.length + ' emoji generated');
   const finalJson = JSON.stringify(thinnedEmoji, null, 2);
-  fs.writeFileSync(filePath, finalJson);
+
+  fs.writeFileSync(emojiPath, `import { EmojiRaw } from "./emoji";
+
+const emjois: EmojiRaw[] = ${finalJson};
+
+export default emjois;
+`);
   info('done');
 }
 

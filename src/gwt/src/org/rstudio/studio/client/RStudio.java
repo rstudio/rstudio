@@ -92,6 +92,7 @@ import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
+import org.rstudio.studio.client.workbench.prefs.views.ZoteroApiKeyWidget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
@@ -466,6 +467,7 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetDialog.ensureStylesInjected();
       PanmirrorResources.INSTANCE.styles().ensureInjected();
       PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
+      ZoteroApiKeyWidget.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();

@@ -44,8 +44,8 @@ const extension = (context: ExtensionContext): Extension => {
 function symbolOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Symbol...'),
-    keywords: ['unicode'],
-    description: ui.context.translateText('Unicode graphical symbol'),
+    keywords: ['unicode', 'special', 'character'],
+    description: ui.context.translateText('Unicode symbol / special character'),
     group: OmniInsertGroup.Content,
     priority: 6,
     image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.symbol_dark! : ui.images.omni_insert?.symbol!),

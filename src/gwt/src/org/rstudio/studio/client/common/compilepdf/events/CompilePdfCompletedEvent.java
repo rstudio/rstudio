@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onCompilePdfCompleted(CompilePdfCompletedEvent event);
@@ -30,12 +30,12 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
    {
       result_ = result;
    }
-    
+
    public CompilePdfResult getResult()
    {
       return result_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +47,8 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
    {
       handler.onCompilePdfCompleted(this);
    }
-   
+
    private final CompilePdfResult result_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

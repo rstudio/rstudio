@@ -252,6 +252,12 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
    modules/viewer/ViewerHistory.cpp
+   modules/zotero/ZoteroCollections.cpp
+   modules/zotero/ZoteroCollectionsWeb.cpp
+   modules/zotero/ZoteroCollectionsLocal.cpp
+   modules/zotero/ZoteroCSL.cpp
+   modules/zotero/ZoteroUtil.cpp
+   modules/zotero/SessionZotero.cpp
    prefs/PrefLayer.cpp
    prefs/Preferences.cpp
    prefs/UserPrefValues.cpp

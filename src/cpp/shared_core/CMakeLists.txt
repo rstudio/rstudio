@@ -37,12 +37,13 @@ set (SHARED_CORE_SOURCE_FILES
    ReaderWriterMutex.cpp
    StderrLogDestination.cpp
    json/Json.cpp
+   system/Crypto.cpp
 )
 
 set (SHARED_INCLUDE_DIRS
    include
    ${BOOST_INCLUDEDIR}
-   )
+   ${EXT_SOURCE_DIR})
 
 # UNIX specific
 if (UNIX)
@@ -57,6 +58,24 @@ if (UNIX)
    find_library(PTHREAD_LIBRARIES pthread)
    set (SHARED_CORE_SYSTEM_LIBS
       ${PTHREAD_LIBRARIES})
+
+   if(APPLE)
+      if(${MACOSX_VERSION} VERSION_GREATER "10.10"
+         AND EXISTS "/usr/local/opt/openssl")
+         set(SHARED_CORE_SYSTEM_LIBS
+            ${SHARED_CORE_SYSTEM_LIBS}
+            -L/usr/local/opt/openssl/lib -lssl -lcrypto)
+
+         set(SHARED_INCLUDE_DIRS
+            ${SHARED_INCLUDE_DIRS}
+            /usr/local/opt/openssl/include)
+
+         if(NOT DEFINED OPENSSL_ROOT_DIR)
+            set(OPENSSL_ROOT_DIR
+               /usr/local/opt/openssl)
+         endif()
+      endif()
+   endif()
 
 else()
 

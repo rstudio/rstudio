@@ -79,7 +79,7 @@ public class TerminalPane extends WorkbenchPane
                                      ServerProcessExitEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
-   SessionSerializationEvent.Handler,
+                                     SessionSerializationEvent.Handler,
                                      TerminalSubprocEvent.Handler
 {
    @Inject
@@ -233,6 +233,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      // Terminal Pane automatically directs focus to xterm.js so this method is intentionally
+      // left blank
+   }
+
+   @Override
    public void onBeforeUnselected()
    {
       // terminal tab being unselected
@@ -374,8 +381,7 @@ public class TerminalPane extends WorkbenchPane
       boolean didCloseCurrent = false;
       TerminalSession visibleTerminalWidget = getSelectedTerminal();
       TerminalSession killedTerminalWidget = loadedTerminalWithHandle(handle);
-      if (visibleTerminalWidget != null && killedTerminalWidget != null &&
-            (visibleTerminalWidget == killedTerminalWidget))
+      if (killedTerminalWidget != null && (visibleTerminalWidget == killedTerminalWidget))
       {
          didCloseCurrent = true;
          newTerminalHandle = terminalToShowWhenClosing(handle);
@@ -756,11 +762,11 @@ public class TerminalPane extends WorkbenchPane
          {
             // map default to current user preference setting
             String autoCloseSetting = uiPrefs_.terminalCloseBehavior().getValue();
-            if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS)
+            if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
-            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER)
+            else if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
-            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN)
+            else if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT;
             else
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;

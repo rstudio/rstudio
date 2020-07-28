@@ -22,6 +22,8 @@ import java.util.List;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
@@ -170,17 +172,7 @@ public class VisualModePanmirrorFormat
    }
    
    
-   public boolean isXaringanDocument()
-   {
-      List<String> formats = getOutputFormats();
-      for (String format : formats)
-      {
-         if (format.startsWith("xaringan"))
-            return true;
-      }
-      return false;
-   }
-   
+  
    
    public boolean isHugoProjectDocument()
    {
@@ -191,6 +183,23 @@ public class VisualModePanmirrorFormat
    public boolean isBookdownProjectDocument() 
    {
       return sessionInfo_.getIsBookdownProject() && isDocInProject();
+   }
+   
+   public String validateSourceForVisualMode()
+   {
+      String invalid = null;
+      
+      if (isXaringanDocument())
+      {
+         invalid = "Xaringan presentations cannot be edited in visual mode.";
+      }
+      else if (hasVcsConflictMarkers())
+      {
+         invalid = "Version control conflict markers detected. " + 
+                   "Please resolve them before editing in visual mode.";
+      }
+      
+      return invalid;
    }
     
   
@@ -239,6 +248,16 @@ public class VisualModePanmirrorFormat
              getOutputFormats().contains("distill::distill_article");
    }
    
+   private boolean isXaringanDocument()
+   {
+      List<String> formats = getOutputFormats();
+      for (String format : formats)
+      {
+         if (format.startsWith("xaringan"))
+            return true;
+      }
+      return false;
+   }
    
    private boolean hasBookdownCrossReferences()
    {
@@ -260,6 +279,26 @@ public class VisualModePanmirrorFormat
              config.rmdExtensions.contains("-tex_math_dollars_in_code");
    }
    
+   private boolean hasVcsConflictMarkers()
+   {
+      String code = getEditorCode();
+      int markers = 0;
+      int nonEqualsMarkers = 0;
+      boolean vcsMarkers = false;
+      
+      Match match = VCS_CONFLICT_PATTERN.match(code, 0);
+      while (match != null)
+      {
+         markers++;
+         nonEqualsMarkers += !match.getGroup(1).equals("=") ? 1 : 0;
+         vcsMarkers = markers > 1 && nonEqualsMarkers > 0;
+         if (vcsMarkers)
+           break;
+         match = match.nextMatch();
+      }
+      
+      return vcsMarkers;
+   }
    
    // see if there's an alternate markdown engine in play
    private Pair<String,String> alternateMarkdownEngine()
@@ -339,9 +378,6 @@ public class VisualModePanmirrorFormat
    {
       return sessionInfo_.getBlogdownConfig();
    }
-   
-   
-   
 
    private SessionInfo sessionInfo_;
    private WorkbenchContext workbenchContext_;
@@ -350,4 +386,6 @@ public class VisualModePanmirrorFormat
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
 
+   private final static Pattern VCS_CONFLICT_PATTERN = 
+         Pattern.create("^[\\+\\-]?([\\<\\>|=])\\1{6}.*?$", "gm");
 }

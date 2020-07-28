@@ -28,7 +28,7 @@ public class KeyCombination
       String key = EventProperty.key(event);
       int keyCode = event.getKeyCode();
       int modifiers = KeyboardShortcut.getModifierValue(event);
-      
+
       // Unfortunately, the 'key' event property is corrupt with
       // certain versions of Qt. We need to check that we've received
       // a valid 'key' entry; if it's not valid, then we infer the correct
@@ -41,11 +41,11 @@ public class KeyCombination
       {
          key = KeyboardHelper.keyNameFromKeyCode(keyCode);
       }
-      
+
       key_ = key;
       keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
-      
+
    }
 
    public KeyCombination(String key,
@@ -140,6 +140,8 @@ public class KeyCombination
          return pretty ? "PgDn" : "PageDown";
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
+      else if (keyCode_ == KeyCodes.KEY_SPACE)
+         return macStyle? "&#9250" : "Space";
 
       if (key_ != null)
          return key_;
@@ -165,44 +167,44 @@ public class KeyCombination
       return keyCode_ == other.keyCode_ &&
             modifiers_ == other.modifiers_;
    }
-   
+
    private static boolean requiresQtWebEngineWorkaround()
    {
       if (REQUIRES_QT_WEBENGINE_WORKAROUND == null)
       {
          REQUIRES_QT_WEBENGINE_WORKAROUND = requiresQtWebEngineWorkaroundImpl();
       }
-      
+
       return REQUIRES_QT_WEBENGINE_WORKAROUND;
    }
-   
+
    private static boolean requiresQtWebEngineWorkaroundImpl()
    {
       if (!BrowseCap.isQtWebEngine())
          return false;
-      
+
       String version = BrowseCap.qtWebEngineVersion();
       return Version.compare(version, "5.15.0") < 0;
    }
-   
+
    private static int normalizeKeyCode(int keyCode)
    {
       switch (keyCode)
       {
-      
+
       case 109: // NumPad minus
       case 173: // Firefox hyphen
          return 189;
-         
+
       default:
          return keyCode;
-         
+
       }
    }
-   
+
    private final String key_;
    private final int keyCode_;
    private final int modifiers_;
-   
+
    private static Boolean REQUIRES_QT_WEBENGINE_WORKAROUND = null;
 }

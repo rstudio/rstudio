@@ -31,7 +31,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -52,8 +51,6 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -107,7 +104,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(
             docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
-      visualModeWriterOptions_ = new VisualModeMarkdownWriter();
+      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
@@ -132,17 +129,13 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    @Inject
-   public void initialize(GlobalDisplay globalDisplay,
-                          Commands commands, 
+   public void initialize(Commands commands, 
                           UserPrefs prefs, 
-                          SourceServerOperations source,
-                          Session session)
+                          SourceServerOperations source)
    {
-      globalDisplay_ = globalDisplay;
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
-      sessionInfo_ = session.getSessionInfo();
    }
    
    private void initWidgets()
@@ -324,6 +317,14 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (isActivated()) 
       {
+         // new editor content about to be sent to prosemirror, validate that we can edit it
+         String invalid = validateActivation();
+         if (invalid != null)
+         {
+            deactivateForInvalidSource(invalid);
+            return;
+         }
+         
          // get reference to the editing container 
          TextEditorContainer editorContainer = view_.editorContainer();
          
@@ -364,7 +365,7 @@ public class VisualMode implements VisualModeEditorSync,
          String editorCode = getEditorCode();
          
          VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromCode(editorCode);
-         
+          
          panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
                                 new CommandWithArg<JsObject>() {
             @Override
@@ -425,18 +426,6 @@ public class VisualMode implements VisualModeEditorSync,
                   {
                      view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
                   }
-                  else if (visualModeFormat_.isBookdownProjectDocument() && 
-                           !sessionInfo_.getBookdownHasRenumberFootnotes() &&
-                           !bookdownVersionWarningShown)
-                  {
-                     view_.showWarningBar(
-                       "Bookdown package update required for compatibility with visual mode.",
-                       "Learn more", () -> {
-                          globalDisplay_.openRStudioLink("visual_markdown_editing-bookdown-upgrade", false);                   
-                       });
-                     bookdownVersionWarningShown = true;
-                  }
-                  
                });          
             }
          });
@@ -678,12 +667,11 @@ public class VisualMode implements VisualModeEditorSync,
       if (activate)
       {
          String invalid = validateActivation();
-         if (invalid != null) 
+         if (invalid != null)
          {
-            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
-            view_.showWarningBar(invalid);
+            deactivateWithMessage(invalid);
             return;
-         }
+         } 
       }
       
       // manage commands
@@ -760,8 +748,7 @@ public class VisualMode implements VisualModeEditorSync,
       // visual mode not enabled (source editor)
       else 
       {
-         // sync any pending edits, then activate the editor
-         syncToEditor(true, () -> {
+         Command activateSourceEditor = () -> {
             
             unmanageCommands();
             
@@ -778,7 +765,20 @@ public class VisualMode implements VisualModeEditorSync,
             
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
-         });  
+         };
+         
+         // if we are deactivating to allow the user to edit invalid source code then don't sync
+         // back to the source editor (as this would have happended b/c we inspected the contents
+         // of the source editor in syncFromEditorIfActivated() and decided we couldn't edit it)
+         if (deactivatingForInvalidSource_)
+         {
+            deactivatingForInvalidSource_ = false;
+            activateSourceEditor.execute();
+         }
+         else
+         {
+            syncToEditor(true, activateSourceEditor);
+         }
       }
    }
 
@@ -1094,26 +1094,32 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    private String validateActivation()
-   {
+   { 
       if (this.docDisplay_.hasActiveCollabSession())
       {
          return "You cannot enter visual mode while using realtime collaboration.";
       }
-      else if (visualModeFormat_.isXaringanDocument())
+      else 
       {
-         return "Xaringan presentations cannot be edited in visual mode.";
+         return visualModeFormat_.validateSourceForVisualMode();
       }
-      else
-      {
-         return null;
-      }
+   }
+   
+   private void deactivateForInvalidSource(String invalid)
+   {
+      deactivatingForInvalidSource_ = true;
+      deactivateWithMessage(invalid);     
+   }
+
+   private void deactivateWithMessage(String message)
+   {
+      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+      view_.showWarningBar(message);
    }
    
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
-   private SessionInfo sessionInfo_;
-   private GlobalDisplay globalDisplay_;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
@@ -1136,6 +1142,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean deactivatingForInvalidSource_ = false;
    
    private PanmirrorWidget panmirror_;
   
@@ -1153,9 +1160,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;
-   
-   private static boolean bookdownVersionWarningShown = false;
-  
+     
 }
 
 

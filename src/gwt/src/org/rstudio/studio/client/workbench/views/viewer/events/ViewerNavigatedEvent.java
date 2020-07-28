@@ -31,17 +31,17 @@ public class ViewerNavigatedEvent extends GwtEvent<ViewerNavigatedEvent.Handler>
       url_ = url;
       frame_ = frame;
    }
-   
+
    public String getURL()
    {
       return url_;
    }
-   
+
    public RStudioFrame getFrame()
    {
       return frame_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,9 +53,9 @@ public class ViewerNavigatedEvent extends GwtEvent<ViewerNavigatedEvent.Handler>
    {
       handler.onViewerNavigated(this);
    }
-   
+
    private final String url_;
    private final RStudioFrame frame_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

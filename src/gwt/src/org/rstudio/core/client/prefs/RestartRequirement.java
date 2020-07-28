@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.prefs;
 
+import org.rstudio.studio.client.application.Desktop;
+
 public class RestartRequirement
 {
    public RestartRequirement()
@@ -64,6 +66,14 @@ public class RestartRequirement
       if (requirement.getDesktopRestartRequired())
          setDesktopRestartRequired(true);
       if (requirement.getUiReloadRequired())
+         setUiReloadRequired(true);
+   }
+
+   public void setRestartRequired()
+   {
+      if (Desktop.isDesktop())
+         setDesktopRestartRequired(true);
+      else
          setUiReloadRequired(true);
    }
 

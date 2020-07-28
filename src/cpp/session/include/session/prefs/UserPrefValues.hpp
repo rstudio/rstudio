@@ -80,7 +80,7 @@ namespace prefs {
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kPanesAdditionalSourceColumns "additional_source_columns"
-#define kEnableAdditionalColumns "enable_additional_columns"
+#define kAllowSourceColumns "allow_source_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -313,6 +313,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kShowFocusRectangles "show_focus_rectangles"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -337,6 +338,9 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
+#define kZoteroConnectionType "zotero_connection_type"
+#define kZoteroConnectionTypeLocal "local"
+#define kZoteroConnectionTypeWeb "web"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -488,10 +492,10 @@ public:
    core::Error setPanes(core::json::Object val);
 
    /**
-    * Temporary flag to enable additional source columns.
+    * Whether to enable the ability to add source columns to display.
     */
-   bool enableAdditionalColumns();
-   core::Error setEnableAdditionalColumns(bool val);
+   bool allowSourceColumns();
+   core::Error setAllowSourceColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
@@ -1448,6 +1452,12 @@ public:
    core::Error setTabKeyMoveFocus(bool val);
 
    /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   bool showFocusRectangles();
+   core::Error setShowFocusRectangles(bool val);
+
+   /**
     * How to deal with changes to documents on idle.
     */
    std::string autoSaveOnIdle();
@@ -1524,6 +1534,12 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
+
+   /**
+    * Zotero connection type (local or web)
+    */
+   std::string zoteroConnectionType();
+   core::Error setZoteroConnectionType(std::string val);
 
    /**
     * Preferred emoji skintone

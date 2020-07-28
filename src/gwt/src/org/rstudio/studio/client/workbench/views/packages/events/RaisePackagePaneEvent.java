@@ -36,5 +36,5 @@ public class RaisePackagePaneEvent extends GwtEvent<RaisePackagePaneEvent.Handle
       handler.onRaisePackagePane(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

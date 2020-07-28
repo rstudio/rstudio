@@ -48,11 +48,11 @@ public class SpellingPreferencesPane extends PreferencesPane
       res_ = res;
       spellingService_ = spellingService;
       uiPrefs_ = prefs;
-      
+
       languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
       spaced(languageWidget_);
       add(languageWidget_);
-      
+
       customDictsWidget_ =  new SpellingCustomDictionariesWidget();
       spaced(customDictsWidget_);
       nudgeRight(customDictsWidget_);
@@ -81,7 +81,7 @@ public class SpellingPreferencesPane extends PreferencesPane
       });
    }
 
-   
+
    private CommandWithArg<String> onInstallLanguages_ = new CommandWithArg<String>()
    {
       @Override
@@ -90,10 +90,10 @@ public class SpellingPreferencesPane extends PreferencesPane
          // show progress
          final ProgressIndicator indicator = getProgressIndicator();
          indicator.onProgress(progress);
-         
+
          // save current selection for restoring
          final String currentLang = languageWidget_.getSelectedLanguage();
-         
+
          spellingService_.installAllDictionaries(
             new ServerRequestCallback<SpellingPrefsContext> () {
 
@@ -106,7 +106,7 @@ public class SpellingPreferencesPane extends PreferencesPane
                                        context.getAvailableLanguages());
                   languageWidget_.setSelectedLanguage(currentLang);
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
@@ -115,7 +115,7 @@ public class SpellingPreferencesPane extends PreferencesPane
                   {
                      indicator.onCompleted();
                      globalDisplay_.showErrorMessage(
-                                             "Error Downloading Dictionaries", 
+                                             "Error Downloading Dictionaries",
                                               userMessage.stringValue());
                   }
                   else
@@ -123,19 +123,19 @@ public class SpellingPreferencesPane extends PreferencesPane
                      indicator.onError(error.getUserMessage());
                   }
                }
-            
+
          });
       }
-      
+
    };
-   
+
    @Override
    protected void initialize(UserPrefs rPrefs)
    {
       SpellingPrefsContext context = uiPrefs_.spellingPrefsContext().getValue();
       languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
                                    context.getAvailableLanguages());
-      
+
       languageWidget_.setSelectedLanguage(
                         uiPrefs_.spellingDictionaryLanguage().getValue());
 
@@ -148,13 +148,12 @@ public class SpellingPreferencesPane extends PreferencesPane
    {
       uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
                                        languageWidget_.getSelectedLanguage());
-      
+
       RestartRequirement restart = super.onApply(rPrefs);
       restart.setDesktopRestartRequired(restart.getDesktopRestartRequired() || customDictsWidget_.getCustomDictsModified());
       return restart;
    }
 
-   
    @Override
    public ImageResource getIcon()
    {
@@ -173,10 +172,10 @@ public class SpellingPreferencesPane extends PreferencesPane
       return "Spelling";
    }
 
-  
+
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
-   
+
    private final GlobalDisplay globalDisplay_;
    private final UserPrefs uiPrefs_;
    private final SpellingService spellingService_;

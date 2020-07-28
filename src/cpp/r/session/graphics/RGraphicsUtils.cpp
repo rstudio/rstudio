@@ -192,7 +192,10 @@ std::string extraBitmapParams()
          backend = "default";
    }
    
-   if (backend != "default")
+   // don't use the 'ragg' backend here (these parameters are normally passed
+   // to devices defined by the 'grDevices' package, and it doesn't handle
+   // 'ragg')
+   if (backend != "default" && backend != "ragg")
       params.push_back("type = \"" + backend + "\"");
    
    std::string antialias = getDefaultAntialiasing();

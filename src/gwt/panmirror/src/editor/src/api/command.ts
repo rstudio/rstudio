@@ -105,6 +105,9 @@ export enum EditorCommandId {
   DefinitionDescription = 'F0738D83-8E11-4CB5-B958-390190A2D7DD',
   Symbol = '1419765F-6E4A-4A4C-8670-D9E8578EA996',
   Emoji = 'F73896A2-02CC-4E5D-A596-78444A1D2A37',
+  EmDash = '5B0DD33B-6209-4713-B8BB-60B5CA0BC3B3',
+  EnDash = 'C32AFE32-0E57-4A16-9C39-88EB1D82B8B4',
+  NonBreakingSpace = 'CF6428AB-F36E-446C-8661-2781B2CD1169',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -229,6 +232,31 @@ export class WrapCommand extends NodeCommand {
     super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs), omniInsert);
   }
 }
+
+export class InsertCharacterCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, ch: string, keymap: string[]) {
+    super(
+      id,
+      keymap,
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+        // enable/disable command
+        const schema = state.schema;
+        if (!canInsertNode(state, schema.nodes.text)) {
+          return false;
+        }
+        if (dispatch) {
+          const tr = state.tr;
+          tr.replaceSelectionWith(schema.text(ch), true).scrollIntoView();
+          dispatch(tr);
+        }
+
+        return true;
+      }
+    );
+  }
+}
+
 
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 

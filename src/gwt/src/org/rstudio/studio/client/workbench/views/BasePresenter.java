@@ -50,6 +50,11 @@ public abstract class BasePresenter implements IsWidget
    {
       view_.onSelected();
    }
+
+   public void setFocus()
+   {
+      view_.setFocus();
+   }
    
    private final WorkbenchView view_;
 }

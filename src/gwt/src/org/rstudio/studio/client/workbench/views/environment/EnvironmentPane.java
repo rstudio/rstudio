@@ -253,7 +253,10 @@ public class EnvironmentPane extends WorkbenchPane
       
       EnvironmentContextData data = session_.getSessionInfo().getEnvironmentState();
       if (StringUtil.equals(data.language(), "Python"))
-         setPythonEnabled(true, false);
+      {
+         setPythonEnabled(true);
+         setActiveLanguage("Python", false);
+      }
       
       return objects_;
    }
@@ -690,7 +693,7 @@ public class EnvironmentPane extends WorkbenchPane
    public void onSessionInit(SessionInitEvent sie)
    {
       boolean initialized = session_.getSessionInfo().getPythonInitialized();
-      setPythonEnabled(initialized, false);
+      setPythonEnabled(initialized);
    }
    
    @Override
@@ -700,7 +703,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       if (StringUtil.equals(type, ReticulateEvent.TYPE_PYTHON_INITIALIZED))
       {
-         setPythonEnabled(true, false);
+         setPythonEnabled(true);
       }
       else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
       {
@@ -775,15 +778,11 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
-   public void setPythonEnabled(boolean enabled,
-                                boolean syncWithSession)
+   public void setPythonEnabled(boolean enabled)
    {
       languageButton_.setEnabled(enabled);
       languageButton_.setVisible(enabled);
       secondaryToolbar_.manageSeparators();
-      
-      String language = enabled ? "Python" : "R";
-      setActiveLanguage(language, syncWithSession);
    }
    
    // NOTE: 'syncWithSession = false' should only be used

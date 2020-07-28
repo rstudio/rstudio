@@ -15,15 +15,15 @@
 
 .rs.addFunction("invokePlumberPaneViewer", function(url) {
    invisible(.Call("rs_plumberviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
-}, attrs = list(plumberViewerType = "pane"))
+}, attrs = list(plumberViewerType = "pane"), envir = baseenv())
 
 .rs.addFunction("invokePlumberWindowViewer", function(url) {
    invisible(.Call("rs_plumberviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
-}, attrs = list(plumberViewerType = "window"))
+}, attrs = list(plumberViewerType = "window"), envir = baseenv())
 
 .rs.addFunction("invokePlumberWindowExternal", function(url) {
    invisible(.Call("rs_plumberviewer", url, getwd(), "browser", PACKAGE = "(embedding)"))
-}, attrs = list(plumberViewerType = "browser"))
+}, attrs = list(plumberViewerType = "browser"), envir = baseenv())
 
 .rs.addFunction("setPlumberViewerType", function(type) {
    if (identical(type, "none"))

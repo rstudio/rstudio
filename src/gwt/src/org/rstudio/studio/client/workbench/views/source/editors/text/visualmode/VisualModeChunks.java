@@ -111,6 +111,9 @@ public class VisualModeChunks
                reg.removeHandler();
             }
          };
+         
+         // Prevent tab from advancing into editor
+         chunkEditor.getTextInputElement().setTabIndex(-1);
 
          // Allow the editor's size to be determined by its content (these
          // settings trigger an auto-growing behavior), up to a max of 1000
@@ -153,8 +156,13 @@ public class VisualModeChunks
       case "sql":
          editor.setFileType(FileTypeRegistry.SQL);
          break;
-      case "yaml":
       case "yaml-frontmatter":
+         editor.setFileType(FileTypeRegistry.YAML);
+         // Turn off all of Ace's built-in YAML completion as it's not helpful
+         // for embedded YAML front matter
+         editor.getWidget().getEditor().setCompletionOptions(false, false, false, 0, 0);
+         break;
+      case "yaml":
          editor.setFileType(FileTypeRegistry.YAML);
          break;
       case "java":

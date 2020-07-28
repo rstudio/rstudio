@@ -1,5 +1,5 @@
 /*
- * ValueSink.java
+ * SessionZotero.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,9 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
 
-public interface ValueSink<T>
-{
-   void setValue(T value);
+#ifndef RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+#define RSTUDIO_SESSION_MODULES_ZOTERO_HPP
+
+namespace rstudio {
+namespace core {
+   class Error;
 }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace zotero {
+
+core::Error initialize();
+
+} // end namespace zotero
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
+
+#endif /* RSTUDIO_SESSION_MODULES_ZOTERO_HPP */

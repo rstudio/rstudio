@@ -66862,13 +66862,14 @@ function LineWidgets(session) {
             var w = lineWidgets[i];
             if (!w || !w.el) continue;
             if (w.hidden) {
-                w.el.style.top = -100 - (w.pixelHeight || 0) + "px";
+                w.el.style.top = -10000 - (w.pixelHeight || 0) + "px";
                 continue;
             }
             if (!w._inDocument) {
                 w._inDocument = true;
                 renderer.container.appendChild(w.el);
             }
+
             var top = renderer.$cursorLayer.getPixelPosition({row: i, column:0}, true).top;
             if (!w.coverLine)
                 top += config.lineHeight * this.session.getRowLineCount(w.row);

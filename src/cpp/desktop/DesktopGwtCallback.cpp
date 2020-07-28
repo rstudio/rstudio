@@ -260,13 +260,15 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
-#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
-   dialog.setResolveSymlinks(false);
-#else
-   dialog.setOption(QFileDialog::DontResolveSymlinks, true);
-#endif
    dialog.setWindowModality(Qt::WindowModal);
 
+   // don't resolve links on non-Windows platforms
+   // https://github.com/rstudio/rstudio/issues/2476
+   // https://github.com/rstudio/rstudio/issues/7327
+#ifndef _WIN32
+   dialog.setOption(QFileDialog::DontResolveSymlinks, true);
+#endif
+   
    QString result;
    if (dialog.exec() == QDialog::Accepted)
       result = dialog.selectedFiles().value(0);

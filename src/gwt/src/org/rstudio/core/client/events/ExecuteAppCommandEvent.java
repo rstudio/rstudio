@@ -39,12 +39,12 @@ public class ExecuteAppCommandEvent extends GwtEvent<ExecuteAppCommandEvent.Hand
    {
       void onExecuteAppCommand(ExecuteAppCommandEvent event);
    }
-   
+
    public ExecuteAppCommandEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
@@ -63,6 +63,6 @@ public class ExecuteAppCommandEvent extends GwtEvent<ExecuteAppCommandEvent.Hand
    }
 
    private final Data data_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

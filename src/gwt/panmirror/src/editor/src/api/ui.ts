@@ -23,6 +23,7 @@ import { CSL } from './csl';
 import { SkinTone } from './emoji';
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
+import { XRef } from './xref';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -109,7 +110,7 @@ export interface EditorUIMath {
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
-  navigateToXRef: (file: string, xref: string) => void;
+  navigateToXRef: (file: string, xref: XRef) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
@@ -121,13 +122,11 @@ export interface EditorUIPrefs {
   setEmojiSkinTone: (skinTone: SkinTone) => void;
 }
 
-export enum AlertType {
-  Info,
-  Warning,
-  Error,
-}
+export const kAlertTypeInfo = 1;
+export const kAlertTypeWarning = 2;
+export const kAlertTypeError = 3;
 
-export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<boolean>;
+export type AlertFn = (message: string, title: string, type: number) => Promise<boolean>;
 
 export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 
@@ -233,6 +232,7 @@ export interface InsertCiteProps {
   doi: string;
   existingIds: string[];
   bibliographyFiles: string[];
+  provider?: string;
   csl?: CSL;
   citeUI?: InsertCiteUI;
 }

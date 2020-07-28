@@ -40,7 +40,16 @@
 })
 
 .rs.addFunction("isPackified", function(project) {
+   
+   # perform Packrat-independent check first, to avoid loading
+   # Packrat if un-necessary
+   lockPath <- file.path(project, "packrat/packrat.lock")
+   if (!file.exists(lockPath))
+      return(FALSE)
+   
+   # otherwise, looks like Packrat, so load Packrat
    packrat:::checkPackified(project = project, quiet = TRUE)
+   
 })
 
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {

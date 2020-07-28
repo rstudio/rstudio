@@ -26,7 +26,7 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       protected Data()
       {
       }
-      
+
       public native final JsArrayString getDocumentIds()
       /*-{
          return this["ids"];
@@ -37,24 +37,24 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
          return this["save"];
       }-*/;
    }
-   
+
    public RequestDocumentCloseEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public JsArrayString getDocumentIds()
    {
       return data_.getDocumentIds();
    }
-   
+
    public boolean getSave()
    {
       return data_.getSave();
    }
-   
+
    private final Data data_;
-   
+
    // Boilerplate ----
 
    public interface Handler extends EventHandler
@@ -74,5 +74,5 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       handler.onRequestDocumentClose(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

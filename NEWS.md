@@ -15,6 +15,9 @@
 ### Workbench
 
 * Any tab can be hidden from view through Global Options. (#6428)
+* Accessibility preference to reduce focus rectangle display (#7242)
+* Multiple source panes can be opened in the main window via Global Options. (#2854)
+* Keyboard shortcut `F6` added to navigate focus to the next pane. (#7408)
 
 ### Miscellaneous
 
@@ -33,6 +36,9 @@
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
+* Updated Rainbow Parentheses colors to be more evenly distributed and better contrast across various themes (#7213)
+* Moved Rainbow Parentheses option to Display in Global Options
+* Add support for navigating source history with mouse forward/back buttons (#7272)
 
 ### RStudio Server Pro
 
@@ -51,7 +57,9 @@
 
 ### Bugfixes
 
-* Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
+* UTF-8 character vectors are now properly displayed within the Environment pane. (#6877)
+* Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
+* Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
 * Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
 * Git integration now works properly for project names containing the '!' character. (#6160)
@@ -68,3 +76,9 @@
 * Added CSRF protection to sign-in pages (Pro #1469)
 * Fixed issue that allowed multiple concurrent sign-in requests (#6502)
 * Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
+* Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
+* Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
+* Fixed issue where Windows shortcuts were not resolved correctly in file dialogs. (#7327)
+* Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
+* Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
+* Fixed issue where indented Python chunks could not be run (#3731)

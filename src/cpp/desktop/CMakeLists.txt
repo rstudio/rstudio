@@ -315,9 +315,6 @@ if(WIN32)
       add_subdirectory(synctex/rsinverse)
    endif()
 
-   set(
-      CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
 endif(WIN32)
 
 
@@ -356,6 +353,14 @@ if(UNIX AND NOT APPLE)
 )
 endif()
 
+# configure launch settings (for Visual Studio on Windows)
+if(WIN32)
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/launch.vs.json"
+      @ONLY)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -365,6 +370,10 @@ if(NOT APPLE)
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
    )
+
+   if(WIN32)
+      set_target_properties(rstudio PROPERTIES WIN32_EXECUTABLE YES)
+   endif()
 
    # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
    # these on any platform.

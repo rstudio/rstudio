@@ -30,12 +30,12 @@ public class AfterAceRenderEvent extends GwtEvent<AfterAceRenderEvent.Handler>
    {
       editor_ = editor;
    }
-   
+
    public AceEditorNative getEditor()
    {
       return editor_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +47,8 @@ public class AfterAceRenderEvent extends GwtEvent<AfterAceRenderEvent.Handler>
    {
       handler.onAfterAceRender(this);
    }
-   
+
    private final AceEditorNative editor_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

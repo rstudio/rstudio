@@ -25,7 +25,7 @@ public class JobRefreshEvent extends GwtEvent<JobRefreshEvent.Handler>
    {
       void onJobRefresh(JobRefreshEvent event);
    }
-   
+
    public JobRefreshEvent(JobState data)
    {
       data_ = data;
@@ -50,5 +50,5 @@ public class JobRefreshEvent extends GwtEvent<JobRefreshEvent.Handler>
 
    private final JobState data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

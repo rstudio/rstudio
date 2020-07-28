@@ -28,16 +28,16 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    {
       void onPopoutDoc(PopoutDocEvent e);
    }
-   
+
    public PopoutDocEvent()
    {
    }
-   
+
    public PopoutDocEvent(String docId, SourcePosition sourcePosition, SourceColumn column)
    {
       this(new PopoutDocInitiatedEvent(docId, null), sourcePosition, column);
    }
-   
+
    public PopoutDocEvent(PopoutDocInitiatedEvent originator,
          SourcePosition sourcePosition, SourceColumn column)
    {
@@ -45,27 +45,27 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
       sourcePosition_ = sourcePosition;
       column_ = column;
    }
-   
+
    public PopoutDocInitiatedEvent getOriginator()
    {
       return originator_;
    }
-   
+
    public SourcePosition getSourcePosition()
    {
       return sourcePosition_;
    }
-   
+
    public SourceColumn getColumn()
    {
       return column_;
    }
-   
+
    public String getDocId()
    {
       return originator_.getDocId();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -77,7 +77,7 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    {
       handler.onPopoutDoc(this);
    }
-   
+
    @Override
    public boolean forward()
    {
@@ -87,6 +87,6 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    private SourcePosition sourcePosition_;
    private SourceColumn column_;
    private PopoutDocInitiatedEvent originator_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }
