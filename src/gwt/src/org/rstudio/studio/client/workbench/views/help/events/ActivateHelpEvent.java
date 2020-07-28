@@ -14,25 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.help.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ActivateHelpEvent extends GwtEvent<ActivateHelpHandler>
+public class ActivateHelpEvent extends GwtEvent<ActivateHelpEvent.Handler>
 {
-   public static final GwtEvent.Type<ActivateHelpHandler> TYPE =
-      new GwtEvent.Type<ActivateHelpHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
    public ActivateHelpEvent()
    {
    }
-   
+
    @Override
-   protected void dispatch(ActivateHelpHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onActivateHelp(this);
    }
 
+   public interface Handler extends EventHandler
+   {
+      void onActivateHelp(ActivateHelpEvent event);
+   }
+
    @Override
-   public GwtEvent.Type<ActivateHelpHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
