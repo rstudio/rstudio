@@ -110,19 +110,16 @@ export class AceRenderQueue {
     return false;
   }
 
-  public destroy() {
-    // Cancel any pending renderes
-    if (this.renderTimer !== 0) {
-      window.clearTimeout(this.renderTimer);
-      this.renderTimer = 0;
-    }
-
-    // Clean up resize observer
-    if (this.observer) {
-      this.observer.disconnect();
-    }
+  /**
+   * Indicates whether the rendering is finished.
+   */
+  public isRenderCompleted(): boolean {
+    return this.renderCompleted;
   }
 
+  /**
+   * Adds a node view to the render queue
+   */
   public add(view: CodeBlockNodeView) {
     // We allow the first few code blocks to render synchronously instead of
     // being dumped into the queue for later processing. This slightly increases
@@ -134,21 +131,15 @@ export class AceRenderQueue {
       return;
     }
 
-    // Schedule init of editor
-    if (this.renderCompleted) {
-      // If we've fully processed the render queue, initialize synchronously
-      view.initEditor();
-    } else {
-      this.renderQueue.push(view);
+    this.renderQueue.push(view);
 
-      // Defer/debounce rendering of editors until event loop finishes
-      if (this.renderTimer !== 0) {
-        window.clearTimeout(this.renderTimer);
-      }
-      this.renderTimer = window.setTimeout(() => {
-        this.processRenderQueue();
-      }, 0);
+    // Defer/debounce rendering of editors until event loop finishes
+    if (this.renderTimer !== 0) {
+      window.clearTimeout(this.renderTimer);
     }
+    this.renderTimer = window.setTimeout(() => {
+      this.processRenderQueue();
+    }, 0);
   }
 
   /**
@@ -186,12 +177,11 @@ export class AceRenderQueue {
     // Pop the next view (editor instance) to be rendered off the stack
     const view = this.renderQueue.shift();
 
+    // Render this view
     if (view) {
-      if (this.container) {
-        console.log("rendering editor at " + view.dom.offsetTop + "/" + Math.abs(view.dom.offsetTop - this.container!.scrollTop) + " inside " + this.container!.offsetHeight + " (" + this.renderQueue.length + " to go)");
-      }
       view.initEditor();
     }
+
     if (this.renderQueue.length > 0) {
       // There are still remaining editors to be rendered, so process again on
       // the next event loop.
@@ -202,6 +192,23 @@ export class AceRenderQueue {
       // No remaining editors; we're done.
       this.renderTimer = 0;
       this.renderCompleted = true;
+      this.destroy();
+    }
+  }
+
+  /**
+   * Cleans up the render queue instance
+   */
+  private destroy() {
+    // Cancel any pending renderes
+    if (this.renderTimer !== 0) {
+      window.clearTimeout(this.renderTimer);
+      this.renderTimer = 0;
+    }
+
+    // Clean up resize observer
+    if (this.observer) {
+      this.observer.disconnect();
     }
   }
 }

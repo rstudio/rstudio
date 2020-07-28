@@ -69,7 +69,8 @@
 }
 
 .pm-ace-editor pre.ace_editor {
-  margin-top: 2px;
-  margin-bottom: 2px;
-  margin-left: 5px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 4px;
+  line-height: 145%;
 }

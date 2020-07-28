@@ -44,10 +44,8 @@ import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
 
 import './ace.css';
-import { Context } from 'vm';
-import { kAddToHistoryTransaction } from '../../api/transaction';
 import { AceRenderQueue } from './render_queue';
-import { render } from 'react-dom';
+import { AcePlaceholder } from './ace_placeholder';
 
 const plugin = new PluginKey('ace');
 
@@ -72,7 +70,7 @@ export function acePlugins(
       key: plugin,
       props: {
         nodeViews,
-      },
+      }
     }),
     // arrow in and out of editor
     keymap({
@@ -146,10 +144,8 @@ export class CodeBlockNodeView implements NodeView {
     }
 
     // Create a preview of the text (will be shown until editor is fully initialized)
-    const preview = document.createElement("pre");
-    preview.innerText = node.textContent;
-    preview.className = "ace_editor";
-    this.dom.appendChild(preview);
+    const preview = new AcePlaceholder(node.textContent);
+    this.dom.appendChild(preview.getElement());
 
     // Style the first line differently if requested
     if (options.firstLineMeta) {
@@ -174,8 +170,15 @@ export class CodeBlockNodeView implements NodeView {
     // inner editor
     this.updating = false;
 
-    // Add to the render queue
-    renderQueue.add(this);
+    if (renderQueue.isRenderCompleted()) {
+      // All editors have been rendered and the queue is empty; initialize
+      // directly (this happens when e.g., inserting code chunks interactively
+      // after the document is fully rendered)
+      this.initEditor();
+    } else {
+      // Rendering is not complete; add to the queue
+      renderQueue.add(this);
+    }
   }
 
   public destroy() {
@@ -186,9 +189,6 @@ export class CodeBlockNodeView implements NodeView {
     if (this.chunk) {
       this.chunk.destroy();
     }
-
-    // Clean up render queue for chunks
-    this.renderQueue.destroy();
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -681,6 +681,7 @@ export class CodeBlockNodeView implements NodeView {
   }
 
   private executeChunk() {
+    // ensure editor is rendered
     if (!this.aceEditor) {
       this.initEditor();
     }

@@ -66,6 +66,10 @@ public class VisualModeChunks
 
          // Forward the R completion context from the parent editing session
          editor.setRCompletionContext(rContext_);
+         
+         // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
+         // editors)
+         editor.setUseWrapMode(true);
 
          // Provide the editor's container element; in the future this will be a
          // host element which hosts chunk output
