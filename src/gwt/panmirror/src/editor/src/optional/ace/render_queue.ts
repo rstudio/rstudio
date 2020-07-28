@@ -85,9 +85,7 @@ export class AceRenderQueue {
           // internally.)
           if (this.container?.parentElement) {
             this.visible = false;
-            if (this.renderTimer > 0) {
-              window.clearTimeout(this.renderTimer);
-            }
+            this.cancelTimer();
           }
         }
       }
@@ -190,9 +188,19 @@ export class AceRenderQueue {
       }, 0);
     } else {
       // No remaining editors; we're done.
-      this.renderTimer = 0;
       this.renderCompleted = true;
       this.destroy();
+    }
+  }
+
+  /**
+   * Cancels the timer that is responsible for triggering the processing of the
+   * next unit in the render queue.
+   */
+  private cancelTimer() {
+    if (this.renderTimer !== 0) {
+      window.clearTimeout(this.renderTimer);
+      this.renderTimer = 0;
     }
   }
 
@@ -200,11 +208,8 @@ export class AceRenderQueue {
    * Cleans up the render queue instance
    */
   private destroy() {
-    // Cancel any pending renderes
-    if (this.renderTimer !== 0) {
-      window.clearTimeout(this.renderTimer);
-      this.renderTimer = 0;
-    }
+    // Cancel any pending renders
+    this.cancelTimer();
 
     // Clean up resize observer
     if (this.observer) {
