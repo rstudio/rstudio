@@ -42,21 +42,19 @@ import { join } from 'path';
 const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
-
-const kCiteIdFirstCharPattern = '[\\p{L}\\p{N}]';
-const kCiteIdOptionalCharsPattern = '[\\p{L}\\p{N}:\\.#\\$%&\\-\\+\\?<>~/()/+<>#]*';
+const kCiteIdOptionalCharsPattern = '[^@;\\[\\]\\s]*';
 
 
-const kCiteIdCharsPattern = `${kCiteIdFirstCharPattern}${kCiteIdOptionalCharsPattern}`;
+const kCiteIdCharsPattern = `${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
-const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`, 'u');
+const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
 
-const kCiteIdRegEx = new RegExp(kCiteIdPattern, 'u');
-const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`, 'u');
+const kCiteIdRegEx = new RegExp(kCiteIdPattern);
+const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`, 'u');
+export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -74,6 +72,8 @@ interface Citation {
   citationPrefix: PandocToken[];
   citationSuffix: PandocToken[];
 }
+
+
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
@@ -509,7 +509,7 @@ function findCiteEndBracket(selection: Selection) {
   }
 }
 
-const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'gu');
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   const schema = tr.doc.type.schema;
@@ -556,8 +556,8 @@ export interface ParsedCitation {
 }
 
 // completions allow spaces in the cite id (multiple search terms)
-const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace(/^\[/, '[\\s');
-const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`, 'u');
+const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace('\\s', '');
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`);
 
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
 
