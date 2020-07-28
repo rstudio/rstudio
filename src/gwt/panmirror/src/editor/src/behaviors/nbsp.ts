@@ -57,9 +57,11 @@ function nonBreakingSpaceHighlightPlugin() {
         // find new
         if (tr.docChanged) {
           const decorations: Decoration[] = [];
-          forChangedNodes(oldState, newState, node => node.textContent.includes(kNbsp), (node, pos) => {
-            decorations.push(...highlightNode(node, pos + 1));
-          });
+          forChangedNodes(oldState, newState,
+            node => node.isTextblock && node.textContent.includes(kNbsp),
+            (node, pos) => {
+              decorations.push(...highlightNode(node, pos + 1));
+            });
           set = set.add(tr.doc, decorations);
         }
 
@@ -75,16 +77,26 @@ function nonBreakingSpaceHighlightPlugin() {
   });
 }
 
-function highlightNode(doc: ProsemirrorNode, nodePos = 0) {
+const kHighlightRegEx = /\xA0+/g;
+
+function highlightNode(node: ProsemirrorNode, nodePos = 0) {
   const decorations: Decoration[] = [];
-  mergedTextNodes(doc, node => node.textContent.includes(kNbsp)).forEach(textWithPos => {
-    const { text, pos } = textWithPos;
-    let index = text.indexOf(kNbsp);
-    while (index !== -1) {
-      decorations.push(Decoration.inline(nodePos + pos + index, nodePos + pos + index + 1,
-        { class: 'pm-nbsp pm-span-background-color' }));
-      index = text.indexOf(kNbsp, index + 1);
+  const textNodes = mergedTextNodes(node);
+  textNodes.forEach(textNode => {
+    const text = textNode.text;
+    let m;
+    kHighlightRegEx.lastIndex = 0;
+    // tslint:disable-next-line no-conditional-assignment
+    while ((m = kHighlightRegEx.exec(text))) {
+      if (m[0] === '') {
+        break;
+      }
+      const from = nodePos + textNode.pos + m.index;
+      const to = nodePos + textNode.pos + m.index + m[0].length;
+      const classes = ['pm-nbsp', 'pm-span-background-color'];
+      decorations.push(Decoration.inline(from, to, { class: classes.join(' ') }));
     }
+    kHighlightRegEx.lastIndex = 0;
   });
   return decorations;
 }
