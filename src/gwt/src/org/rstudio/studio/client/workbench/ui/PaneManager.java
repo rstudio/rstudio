@@ -576,7 +576,21 @@ public class PaneManager
    @Handler
    public void onFocusCenterSeparator()
    {
-      panel_.focusSplitter();
+      panel_.focusSplitter(right_);
+   }
+
+   @Handler
+   public void onFocusSourceColumnSeparator()
+   {
+      LogicalWindow window = getParentLogicalWindow(sourceColumnManager_.getActiveElement());
+      if (window == null ||
+          window.getNormal() == null ||
+          !window.getNormal().getName().contains(SourceColumnManager.COLUMN_PREFIX))
+      {
+         Debug.log("Attempted focusSourceColumnSeparator when source column not active.");
+         return;
+      }
+      panel_.focusSplitter(window.getNormal());
    }
 
    @Handler
