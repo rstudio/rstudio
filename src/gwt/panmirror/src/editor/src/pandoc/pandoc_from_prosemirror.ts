@@ -398,6 +398,11 @@ class PandocWriter implements PandocOutput {
 
     // filter standard escape characters w/ preventEscapeCharacters
     const allEscapeCharacters = ['\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!'];
+    if (this.format.extensions.angle_brackets_escapable) {
+      allEscapeCharacters.push('<');
+    }
     this.escapeCharacters.push(...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch)));
+
+
   }
 }
