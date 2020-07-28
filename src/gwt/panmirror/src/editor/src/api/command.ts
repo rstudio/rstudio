@@ -15,7 +15,7 @@
 
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands';
 import { MarkType, Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
-import { wrapInList } from 'prosemirror-schema-list';
+import { wrapInList, liftListItem } from 'prosemirror-schema-list';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNode, findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
@@ -274,14 +274,16 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
 
     if (range.depth >= 1 && parentList && range.depth - parentList.depth <= 1) {
       if (isList(parentList.node) && listType.validContent(parentList.node.content)) {
-        const tr: Transaction = state.tr;
-        tr.setNodeMarkup(parentList.pos, listType);
-
-        if (dispatch) {
-          dispatch(tr);
+        if (parentList.node.type !== listType) {
+          if (dispatch) {
+            const tr: Transaction = state.tr;
+            tr.setNodeMarkup(parentList.pos, listType);
+            dispatch(tr);
+          }
+          return true;
+        } else {
+          return liftListItem(itemType)(state, dispatch);
         }
-
-        return true;
       }
     }
 

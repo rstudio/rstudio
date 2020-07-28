@@ -235,9 +235,6 @@ export function applyTheme(theme: EditorTheme) {
     .pm-background-color *::-moz-selection {
       background-color: ${theme.selectionColor} !important;
     }
-    .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
-      background: none !important;
-    }
     .pm-fixedwidth-font {
       font-family: ${theme.fixedWidthFont} !important;
       font-size: ${theme.fixedWidthFontSizePt}pt !important;
@@ -253,48 +250,6 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.borderBackgroundColor};
       background-color: ${theme.backgroundColor};
     }
-    .CodeMirror,
-    .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-      font-family: ${theme.fixedWidthFont};
-      font-size: ${theme.fixedWidthFontSizePt}pt !important;
-    }
-    .CodeMirror {
-      background: ${theme.backgroundColor};
-    }
-    .CodeMirror-selected { background: none  ; }
-    .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }
-    .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: ${theme.selectionColor}  ; }
-    .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: ${theme.selectionColor}  ; }
-    .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
-    .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
-    .CodeMirror-gutters { 
-      border-right-color: ${theme.blockBorderColor} !important;
-      background-color: ${theme.gutterBackgroundColor} !important; 
-    }
-    .CodeMirror-linenumber { color: ${theme.gutterTextColor} !important; }
-    .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
-    .cm-s-default .cm-atom {color: ${theme.code.atomColor};}
-    .cm-s-default .cm-number {color: ${theme.code.numberColor};}
-    .cm-s-default .cm-def {color: ${theme.code.defColor};}
-    .cm-s-default .cm-variable { color: ${theme.textColor}; }
-    .cm-s-default .cm-punctuation,
-    .cm-s-default .cm-property,
-    .cm-s-default .cm-operator {color: ${theme.code.operatorColor};}
-    .cm-s-default .cm-variable-2 { color: ${theme.textColor}; }
-    .cm-s-default .cm-variable-3, .cm-s-default .cm-type { color: ${theme.textColor}; }
-    .cm-s-default .cm-comment {color: ${theme.code.commentColor};}
-    .cm-s-default .cm-string {color: ${theme.code.stringColor};}
-    .cm-s-default .cm-string-2 {color: ${theme.code.stringColor};}
-    .cm-s-default .cm-meta {color: ${theme.code.metaColor};}
-    .cm-s-default .cm-qualifier {color:${theme.code.metaColor};}
-    .cm-s-default .cm-builtin {color: ${theme.code.builtinColor};}
-    .cm-s-default .cm-bracket {color: ${theme.code.bracketColor};}
-    .cm-s-default .cm-tag {color: ${theme.code.tagColor};}
-    .cm-s-default .cm-attribute {color: ${theme.code.attributeColor};}
-    .cm-s-default .cm-hr {color: ${theme.code.hrColor};}
-    .cm-s-default .cm-link {color:${theme.code.linkColor};}
-    .cm-s-default .cm-error {color: ${theme.code.errorColor};}
-
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child span {
       color: ${theme.lightTextColor} !important;

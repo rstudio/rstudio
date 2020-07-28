@@ -29,6 +29,7 @@ import { undo, redo } from 'prosemirror-history';
 import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
 import { undoInputRule } from 'prosemirror-inputrules';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 import { CodeViewOptions, editingRootNode } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
@@ -615,6 +616,13 @@ export class CodeBlockNodeView implements NodeView {
       const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
       return nextNode?.type.spec.selectable;
     };
+    const prevNodeCode = () => {
+      return $pos.nodeBefore && $pos.nodeBefore.type.spec.code;
+    };
+    const nextNodeCode = () => {
+      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
+      return nextNode?.type.spec.code;
+    };
 
     // see if we can get a new selection
     const tr = this.view.state.tr;
@@ -629,6 +637,15 @@ export class CodeBlockNodeView implements NodeView {
     } else if (dir >= 0 && nextNodeSelectable()) {
       const nextNodePos = this.getPos() + this.node.nodeSize;
       selection = NodeSelection.create(tr.doc, nextNodePos);
+
+      // if we are going backwards and the previous node is a code node then create a gap cursor
+    } else if (dir < 0 && prevNodeCode()) {
+      selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
+
+      // if we are going forwards and the next node is a code node then create a gap cursor
+    } else if (dir >= 0 && nextNodeCode()) {
+      const endPos = this.getPos() + this.node.nodeSize;
+      selection = new GapCursor(tr.doc.resolve(endPos), tr.doc.resolve(endPos));
 
       // otherwise use text selection handling (handles forward/backward text selections)
     } else {

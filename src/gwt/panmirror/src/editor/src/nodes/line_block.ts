@@ -37,6 +37,7 @@ const extension = (context: ExtensionContext) => {
         spec: {
           content: 'paragraph+',
           group: 'block',
+          defining: true,
           parseDOM: [
             {
               tag: "div[class*='line-block']",

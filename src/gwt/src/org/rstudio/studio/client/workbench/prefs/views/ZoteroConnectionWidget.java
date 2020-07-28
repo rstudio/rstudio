@@ -55,10 +55,7 @@ public class ZoteroConnectionWidget extends Composite
          );
       zoteroConnection_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       panel.add(zoteroConnection_);
-      HelpLink zoteroHelp = new HelpLink("Using Zotero", 
-            "https://rstudio.github.io/visual-markdown-editing/#/technical?id=citations-from-zotero",
-            false,
-            false);
+      HelpLink zoteroHelp = new HelpLink("Using Zotero", "visual_markdown_editing-zotero", false);
       zoteroHelp.addStyleName(res.styles().selectWidgetHelp());
       
       panel.add(zoteroHelp);

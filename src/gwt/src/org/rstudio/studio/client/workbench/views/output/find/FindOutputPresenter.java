@@ -580,7 +580,7 @@ public class FindOutputPresenter extends BasePresenter
          dialog.setState(dialogState_);
       }
 
-      dialog.showModal();
+      dialog.showModal(event.getRestoreFocus());
    }
 
    public void onDismiss()
