@@ -14,35 +14,40 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 
-public class PlotsChangedEvent extends GwtEvent<PlotsChangedHandler>
+public class PlotsChangedEvent extends GwtEvent<PlotsChangedEvent.Handler>
 {
-   public static final GwtEvent.Type<PlotsChangedHandler> TYPE =
-      new GwtEvent.Type<PlotsChangedHandler>();
-     
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
    public PlotsChangedEvent(PlotsState plotsState)
    {
       plotsState_ = plotsState;
    }
-   
+
    public PlotsState getPlotsState()
    {
       return plotsState_;
    }
-   
+
    @Override
-   protected void dispatch(PlotsChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onPlotsChanged(this);
    }
 
    @Override
-   public GwtEvent.Type<PlotsChangedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   private PlotsState plotsState_;
+
+   public interface Handler extends EventHandler
+   {
+      void onPlotsChanged(PlotsChangedEvent event);
+   }
+
+   private final PlotsState plotsState_;
 }

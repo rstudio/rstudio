@@ -26,15 +26,13 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
-import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpHandler;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpHandler;
 
 public class HelpTab extends DelayLoadWorkbenchTab<Help>
 {
    public abstract static class Shim extends DelayLoadTabShim<Help, HelpTab>
-                                     implements ShowHelpHandler,
-                                                ActivateHelpHandler
+                                     implements ShowHelpEvent.Handler,
+                                                ActivateHelpEvent.Handler
    {
       @Handler public abstract void onHelpHome();
       @Handler public abstract void onHelpSearch();
@@ -57,10 +55,10 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       @Handler public abstract void onBrowseCheatSheets();
       @Handler public abstract void onProfileHelp();
       @Handler public abstract void onShowAccessibilityHelp();
-      
+
       public abstract void bringToFront();
    }
-   
+
    public interface Binder extends CommandBinder<Commands, HelpTab.Shim> {}
 
    @Inject
@@ -74,7 +72,7 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       binder.bind(commands, shim);
       events.addHandler(ShowHelpEvent.TYPE, shim);
       events.addHandler(ActivateHelpEvent.TYPE, shim);
-      
+
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {

@@ -63,18 +63,18 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
    }
-   
+
    @Override
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Viewer Tab");
-      
+
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
       toolbar_.addLeftWidget(commands_.viewerForward().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerZoom().createToolbarButton());
-      
+
       // export commands
       exportButtonSeparator_ = toolbar_.addLeftSeparator();
       ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
@@ -82,7 +82,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
-      
+
       exportButton_ = new ToolbarMenuButton(
             "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
@@ -104,24 +104,24 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
-        
+
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerPopout().createToolbarButton());
-     
+
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
-     
-      // add publish button 
+
+      // add publish button
       publishButton_ = new RSConnectPublishButton(
             RSConnectPublishButton.HOST_VIEWER,
             RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar_.addRightWidget(publishButton_);
-      
+
       toolbar_.addRightSeparator();
       toolbar_.addRightWidget(commands_.viewerRefresh().createToolbarButton());
-   
 
-      // create an HTML generator 
+
+      // create an HTML generator
       publishButton_.setPublishHtmlSource(new PublishHtmlSource()
       {
          @Override
@@ -139,7 +139,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                @Override
                public void onError(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Could Not Publish", 
+                  globalDisplay_.showErrorMessage("Could Not Publish",
                         error.getMessage());
                }
             });
@@ -154,11 +154,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
             return title;
          }
       });
-      
+
       return toolbar_;
    }
-   
-   @Override 
+
+   @Override
    protected Widget createMainWidget()
    {
       frame_ = new RStudioFrame("Viewer Pane");
@@ -179,7 +179,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
       }
-      else 
+      else
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
       }
@@ -194,25 +194,25 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
    }
-   
+
    @Override
-   public void previewShiny(ShinyApplicationParams params) 
+   public void previewShiny(ShinyApplicationParams params)
    {
       navigate(params.getUrl(), true);
       publishButton_.setManuallyHidden(false);
       publishButton_.setShinyPreview(params);
       toolbar_.invalidateSeparators();
    }
-   
+
    @Override
-   public void previewPlumber(PlumberAPIParams params) 
+   public void previewPlumber(PlumberAPIParams params)
    {
       navigate(params.getUrl(), true);
       publishButton_.setManuallyHidden(false);
       publishButton_.setPlumberPreview(params);
       toolbar_.invalidateSeparators();
    }
-    
+
    @Override
    public void setExportEnabled(boolean exportEnabled)
    {
@@ -221,23 +221,23 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setManuallyHidden(!exportEnabled);
       toolbar_.invalidateSeparators();
    }
-   
+
    @Override
    public String getUrl()
    {
       return frame_.getUrl();
    }
-   
+
    @Override
    public String getTitle()
    {
       return frame_.getTitle();
    }
-   
+
    @Override
    public void popout()
    {
-      if (rmdPreviewParams_ != null && 
+      if (rmdPreviewParams_ != null &&
           !rmdPreviewParams_.isShinyDocument())
       {
          globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
@@ -265,7 +265,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       if (url != null)
          frame_.setUrl(url);
    }
-   
+
 
    @Override
    public HandlerRegistration addLoadHandler(LoadHandler handler)
@@ -278,8 +278,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
-   
-   
+
+
    @Override
    public void onResize()
    {
@@ -287,10 +287,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       int width = getOffsetWidth();
       if (width == 0)
          return;
-      
+
       publishButton_.setShowCaption(width > 500);
    }
-   
+
    private native static String getOrigin() /*-{
      return $wnd.location.origin;
    }-*/;
@@ -317,39 +317,39 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
 
       // append the viewer_pane query parameter
-      if ((unmodifiedUrl_ != null) && 
+      if ((unmodifiedUrl_ != null) &&
           !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK) &&
           !useRawURL)
       {
-         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
-                                                   "viewer_pane", 
+         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_,
+                                                   "viewer_pane",
                                                    "1");
-         
+
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "capabilities",
                                             String.valueOf(1 << Capabilities.OpenFile.ordinal()));
-         
+
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "host",
                                             htmlMessageListener_.getOriginDomain());
-         
+
          frame_.setUrl(viewerUrl);
       }
       else
       {
          frame_.setUrl(unmodifiedUrl_);
       }
-      
+
       if (unmodifiedUrl_ != null && !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK)) {
          frame_.getElement().getStyle().setBackgroundColor("#FFF");
       }
       else {
          frame_.getElement().getStyle().clearBackgroundColor();
       }
-      
+
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
-   
+
    private enum Capabilities
    {
       OpenFile
@@ -361,11 +361,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final ViewerServerOperations server_;
-   
+
    private Toolbar toolbar_;
-   
+
    private RSConnectPublishButton publishButton_;
-   
+
    private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
 

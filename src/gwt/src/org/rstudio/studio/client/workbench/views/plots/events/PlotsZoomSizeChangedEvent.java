@@ -31,7 +31,6 @@ public class PlotsZoomSizeChangedEvent extends GwtEvent<PlotsZoomSizeChangedEven
       {
       }
 
-
       public native final int getWidth() /*-{
          return this.width;
       }-*/;
