@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -57,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -236,6 +239,9 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public void focus()
    {
+      ArrayList<Element> focusableElements = DomUtils.getFocusableElements(asWidget().getElement());
+      if (!focusableElements.isEmpty());
+         focusableElements.get(0).focus();
    }
 
    public void onActivate()
