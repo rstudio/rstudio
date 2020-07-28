@@ -290,7 +290,7 @@ public class PaneManager
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns = new ArrayList<>();
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
-      if (additionalSourceCount_ !=  sourceColumnManager_.getSize() - 1)
+      if (additionalSourceCount_ != sourceColumnManager_.getSize() - 1)
          syncAdditionalColumnCount(additionalSourceCount_, false /* refreshDisplay */);
       if (additionalSourceCount_ > 0)
       {
@@ -605,7 +605,7 @@ public class PaneManager
        if (!userPrefs_.allowSourceColumns().getValue())
           pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
              "Allow Source Columns preference is disabled.");
-       else if (additionalSourceCount_ == MAX_COLUMN_COUNT)
+       else if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
           pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
              "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
        else

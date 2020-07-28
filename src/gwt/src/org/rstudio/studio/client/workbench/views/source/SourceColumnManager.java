@@ -1455,7 +1455,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          ArrayList<SourceColumn> moveColumns = new ArrayList<>(columnList_);
          moveColumns.remove(mainColumn);
 
-         // remove columns from the end of the lsit first
+         // remove columns from the end of the list first
          int additionalColumnCount = num - 1;
          if (num > 1 && moveColumns.size() != additionalColumnCount)
             moveColumns = new ArrayList<>(
