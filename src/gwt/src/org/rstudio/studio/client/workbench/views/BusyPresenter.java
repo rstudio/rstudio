@@ -21,19 +21,19 @@ import org.rstudio.studio.client.workbench.events.BusyHandler;
 
 import com.google.gwt.event.shared.HandlerManager;
 
-public abstract class BusyPresenter extends BasePresenter 
+public abstract class BusyPresenter extends BasePresenter
    implements ProvidesBusy
 {
    protected BusyPresenter(WorkbenchView view)
    {
       super(view);
    }
-   
+
    public boolean isBusy()
    {
       return isBusy_;
    }
-   
+
    public void setIsBusy(boolean isBusy)
    {
       if (isBusy_ != isBusy)
@@ -42,7 +42,7 @@ public abstract class BusyPresenter extends BasePresenter
          isBusy_ = isBusy;
       }
    }
-   
+
    @Override
    public void addBusyHandler(BusyHandler handler)
    {
@@ -52,7 +52,7 @@ public abstract class BusyPresenter extends BasePresenter
          handler.onBusy(new BusyEvent(true));
       handlerManager_.addHandler(BusyEvent.TYPE, handler);
    }
-   
+
    private boolean isBusy_ = false;
    private HandlerManager handlerManager_ = new HandlerManager(this);
 }
