@@ -459,7 +459,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    // where it is better for the column to be the main column than null.
    public SourceColumn getActive()
    {
-      if (activeColumn_ != null)
+      if (activeColumn_ != null &&
+          activeColumn_.asWidget().isAttached() &&
+          activeColumn_.asWidget().getOffsetWidth() > 0)
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 
