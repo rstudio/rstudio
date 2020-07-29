@@ -278,12 +278,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       ModalDialogBase.registerReturnFocusHandler((Element el) ->
       {
          final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
-         Element proseMirrorEl = DomUtils.findParentElement(el, (Element parent) ->
+         Element sourceEl = DomUtils.findParentElement(el, (Element parent) ->
          {
             return parent.hasClassName(sourceClass);
          });
          
-         if (proseMirrorEl != null)
+         if (sourceEl != null)
          {
             commands_.activateSource().execute();
             return true;
