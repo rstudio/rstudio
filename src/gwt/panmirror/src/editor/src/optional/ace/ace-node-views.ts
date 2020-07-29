@@ -22,7 +22,6 @@ import { EditorView } from "prosemirror-view";
  * (e.g. gap cursor for clicks between editor instances)
  */
 
-
 export class AceNodeViews {
 
   private nodeViews: AceNodeView[];
@@ -43,20 +42,41 @@ export class AceNodeViews {
 
   public handleClick(view: EditorView, event: Event): boolean {
 
-    /*
     // see if the click is between 2 contiguously located node views
     for (const nodeView of this.nodeViews) {
 
-      // alias stuff we need for the computation
-      const { pos, node } = nodeView.getPosAndNode();
-      const dom = nodeView.dom;
+      // if the previous node is code, see if the click is between the 2 nodes
+      const pos = nodeView.getPos();
+      const $pos = view.state.doc.resolve(pos);
+      if ($pos.nodeBefore && $pos.nodeBefore.type.spec.code) {
 
+        // get our bounding rect
+        const dom = nodeView.dom;
+        const nodeViewRect = dom.getBoundingClientRect();
 
+        // get the previous node's bounding rect
+        const prevNodePos = pos - $pos.nodeBefore!.nodeSize;
+        const prevNodeView = this.nodeViews.find(nv => nv.getPos() === prevNodePos);
+        if (prevNodeView) {
+          const prevNodeRect = prevNodeView.dom.getBoundingClientRect();
 
+          // check for a click between the two nodes
+          const mouseY = (event as MouseEvent).clientY;
+          if (mouseY > (prevNodeRect.top + prevNodeRect.height) && mouseY < (nodeViewRect.top)) {
+
+            // provide gap cursor
+            const tr = view.state.tr;
+            tr.setSelection(new GapCursor($pos, $pos));
+            view.dispatch(tr);
+
+            // prevent default event handling
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }
+      }
     }
-
-    console.log(this.nodeViews.length + ' node views');
-    */
 
     return false;
   }

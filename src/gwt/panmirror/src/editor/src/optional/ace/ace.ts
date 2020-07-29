@@ -94,9 +94,12 @@ export function acePlugins(
 }
 
 export class AceNodeView implements NodeView {
+
+  public readonly getPos: () => number;
+  public node: ProsemirrorNode;
   public readonly dom: HTMLElement;
+
   private readonly view: EditorView;
-  private readonly getPos: () => number;
   private readonly ui: EditorUI;
   private readonly nodeViews: AceNodeViews;
   private readonly renderQueue: AceRenderQueue;
@@ -108,7 +111,6 @@ export class AceNodeView implements NodeView {
 
   private readonly runChunkToolbar: HTMLDivElement;
 
-  private node: ProsemirrorNode;
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
@@ -294,13 +296,6 @@ export class AceNodeView implements NodeView {
 
   public stopEvent() {
     return true;
-  }
-
-  public getPosAndNode() {
-    return {
-      pos: this.getPos(),
-      node: this.node,
-    };
   }
 
   private onEditorDispatch(tr: Transaction) {
