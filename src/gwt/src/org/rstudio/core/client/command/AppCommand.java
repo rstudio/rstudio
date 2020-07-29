@@ -37,6 +37,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudio;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -109,7 +110,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public AppCommand()
    {
-      if (Desktop.hasDesktopFrame())
+      // If we're in desktop mode and we're the main window, push command
+      // enabled/visible state from this window into the global app menu managed
+      // by Qt; it is not currently possible for commands to have their per-window
+      // state reflected in the global menu.
+      //
+      // Note that we can't use the more robust check
+      // Satellite.isCurrentWindowSatellite since AppCommand instances are
+      // constructed before satellites are fully online.
+      if (Desktop.hasDesktopFrame() && StringUtil.isNullOrEmpty(RStudio.getSatelliteView()))
       {
          addEnabledChangedHandler((event) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
          addVisibleChangedHandler((event) -> DesktopMenuCallback.setCommandVisible(id_, visible_));

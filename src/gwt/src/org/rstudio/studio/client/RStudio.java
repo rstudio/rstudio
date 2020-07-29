@@ -280,7 +280,7 @@ public class RStudio implements EntryPoint
    {
       // if we are loading the main window, and we're not a launcher session, 
       // add buttons for bailing out
-      String view = Window.Location.getParameter("view");
+      String view = getSatelliteView();
       if (StringUtil.isNullOrEmpty(view) && !ApplicationAction.isLauncherSession())
       {
          rTimeoutOptions_ = new RTimeoutOptions();
@@ -492,6 +492,11 @@ public class RStudio implements EntryPoint
       el.getStyle().setMargin(-1.0, Unit.PX);
       el.getStyle().setOverflow(Overflow.HIDDEN);
       el.getStyle().setPadding(0.0, Unit.PX);
+   }
+
+   public final static String getSatelliteView()
+   {
+      return Window.Location.getParameter("view");
    }
 
    private Command dismissProgressAnimation_;
