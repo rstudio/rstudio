@@ -988,8 +988,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onFindInFiles()
    {
       String searchPattern = "";
-      boolean restoreFocus = true;
-      
       if (hasActiveEditor() && activeColumn_.getActiveEditor() instanceof TextEditingTarget)
       {
          TextEditingTarget textEditor = (TextEditingTarget) activeColumn_.getActiveEditor();
@@ -998,18 +996,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
          if ((selection.length() != 0) && !multiLineSelection)
             searchPattern = selection;
-         
-         // if a visual editor is active then don't restore focus - we observed that just
-         // for the Find in Files dialog that this resulted in the editor selection being
-         // popped up to the top of the document. no idea why this is happening but it 
-         // appears to be triggered by a dom mutation observer that modifies the selection
-         // when the editor has it's focus restored. it's generally fine to suppress the 
-         // restoration of focus for the find in files dialog b/c unless the user hits 
-         // cancel the focus is moving to the find results pane anyway
-         restoreFocus = !textEditor.isVisualModeActivated();
       }
 
-      events_.fireEvent(new FindInFilesEvent(searchPattern, restoreFocus));
+      events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
 
    @Override
