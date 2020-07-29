@@ -23,3 +23,4 @@
 - Fix issue where locking an account would cause an infinite redirect loop on the sign-in page (Pro #1785, Pro #1764)
 - Fix issue where Jupyter sessions could not be started when the home directory was a root squash mount (Pro #1795)
 - Fix issue where large R objects in the environment pane could not be expanded (Pro #1779)
+- Fix issue where Session Server settings for a saved server could not be modified (Pro #1824)
