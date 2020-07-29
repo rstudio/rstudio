@@ -42,12 +42,20 @@ export class AceNodeViews {
 
   public handleClick(view: EditorView, event: Event): boolean {
 
+    // alias to mouseEvent
+    const mouseEvent = event as MouseEvent;
+
     // see if the click is between 2 contiguously located node views
     for (const nodeView of this.nodeViews) {
 
-      // if the previous node is code, see if the click is between the 2 nodes
+      // gap cursor we might detect
+      let gapCursor: GapCursor | null = null;
+
+      // get the position 
       const pos = nodeView.getPos();
       const $pos = view.state.doc.resolve(pos);
+
+      // if the previous node is code, see if the click is between the 2 nodes
       if ($pos.nodeBefore && $pos.nodeBefore.type.spec.code) {
 
         // get our bounding rect
@@ -61,20 +69,27 @@ export class AceNodeViews {
           const prevNodeRect = prevNodeView.dom.getBoundingClientRect();
 
           // check for a click between the two nodes
-          const mouseY = (event as MouseEvent).clientY;
+          const mouseY = mouseEvent.clientY;
           if (mouseY > (prevNodeRect.top + prevNodeRect.height) && mouseY < (nodeViewRect.top)) {
-
-            // provide gap cursor
-            const tr = view.state.tr;
-            tr.setSelection(new GapCursor($pos, $pos));
-            view.dispatch(tr);
-
-            // prevent default event handling
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return true;
+            gapCursor = new GapCursor($pos, $pos);
           }
         }
+
+        // if there is no previous node and the click is above us then gap cursor above
+      } else if (!$pos.nodeBefore && (mouseEvent.clientY < nodeView.dom.getBoundingClientRect().top)) {
+        gapCursor = new GapCursor($pos, $pos);
+      }
+
+      // return gapCursor if we found one
+      if (gapCursor) {
+        const tr = view.state.tr;
+        tr.setSelection(gapCursor);
+        view.dispatch(tr);
+
+        // prevent default event handling
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return true;
       }
     }
 

@@ -649,8 +649,12 @@ export class AceNodeView implements NodeView {
     const tr = this.view.state.tr;
     let selection: Selection | undefined;
 
-    // if we are going backwards and the previous node can take node selections then select it
-    if (dir < 0 && prevNodeSelectable()) {
+    // if we are going backwards and there is no previous position, then return a gap cursor
+    if (dir < 0 && !$pos.nodeBefore) {
+      selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
+
+      // if we are going backwards and the previous node can take node selections then select it
+    } else if (dir < 0 && prevNodeSelectable()) {
       const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
       selection = NodeSelection.create(tr.doc, prevNodePos);
 
