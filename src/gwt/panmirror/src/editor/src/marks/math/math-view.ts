@@ -146,7 +146,7 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
     appendTransaction: (_transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
 
       // not currently in math 
-      if (!getMarkRange(newState.selection.$from, schema.marks.math)) {
+      if (!getMarkRange(newState.selection.$from, schema.marks.math) && newState.selection.from > 0) {
 
         // did we end up just to the right of math? if so check for navigation from a distance
         // (would imply an up/down arrow)
