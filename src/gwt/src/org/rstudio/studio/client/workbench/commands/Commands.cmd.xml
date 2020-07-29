@@ -27,6 +27,9 @@ well as menu structures (for main menu and popup menus).
       exclusive behavior is not automatic and must be managed in code
    @preventShortcutWhenDisabled: Whether the command's shortcut should be
       suppressed when the command is disabled
+   @visible: Whether the command should initially be visible. You should always 
+      set windowMode to "main" for commands not initially visible, unless all
+      satellite windows manage the command state correctly at startup.
    @windowMode: Which window the command wants to operate on; possible values:
       "any": operates on current window (the default),
       "main": always operates on main window, and raises main window
@@ -1195,21 +1198,21 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Return to main window"/>
 
-   <cmd id="mru0" visible="false" rebindable="false"/>
-   <cmd id="mru1" visible="false" rebindable="false"/>
-   <cmd id="mru2" visible="false" rebindable="false"/>
-   <cmd id="mru3" visible="false" rebindable="false"/>
-   <cmd id="mru4" visible="false" rebindable="false"/>
-   <cmd id="mru5" visible="false" rebindable="false"/>
-   <cmd id="mru6" visible="false" rebindable="false"/>
-   <cmd id="mru7" visible="false" rebindable="false"/>
-   <cmd id="mru8" visible="false" rebindable="false"/>
-   <cmd id="mru9" visible="false" rebindable="false"/>
-   <cmd id="mru10" visible="false" rebindable="false"/>
-   <cmd id="mru11" visible="false" rebindable="false"/>
-   <cmd id="mru12" visible="false" rebindable="false"/>
-   <cmd id="mru13" visible="false" rebindable="false"/>
-   <cmd id="mru14" visible="false" rebindable="false"/>
+   <cmd id="mru0" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru1" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru2" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru3" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru4" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru5" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru6" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru7" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru8" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru9" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru10" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru11" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru12" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru13" visible="false" windowMode="main" rebindable="false"/>
+   <cmd id="mru14" visible="false" windowMode="main" rebindable="false"/>
    
    <cmd id="clearRecentFiles"
         menuLabel="_Clear List"
@@ -2314,6 +2317,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showFolder"
         label="Show Folder in New Window"
         visible="false"
+        windowMode="main"
         context="files"
         rebindable="false"/>
         
@@ -2956,6 +2960,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="checkForUpdates"
         label="Check for RStudio Updates"
         menuLabel="Check for _Updates"
+        windowMode="main"
         visible="false"/>
 
    <cmd id="helpUsingRStudio"
@@ -3142,6 +3147,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
         context="diagnostics"
+        windowMode="main"
         visible="false"/>
         
    <cmd id="openDeveloperConsole"
@@ -3223,6 +3229,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
         visible="false"
+        windowMode="main"
         rebindable="false"/>
         
    <cmd id="updateCredentials"
@@ -3242,6 +3249,7 @@ well as menu structures (for main menu and popup menus).
     <cmd id="rstudioLicense"
         menuLabel="RStudio _License"
         visible="false"
+        windowMode="main"
         rebindable="false"/>
 
    <cmd id="buildAll"
@@ -3590,18 +3598,21 @@ well as menu structures (for main menu and popup menus).
         menuLabel="P_ublish..."
         desc="Publish the application or document"
         visible="false"
+        windowMode="main"
         rebindable="false"/>
         
    <cmd id="rsconnectConfigure"
         menuLabel="_Configure Application..."
         desc="Configure the application"
         visible="false"
+        windowMode="main"
         rebindable="false"/>
         
    <cmd id="rsconnectManageAccounts"
         menuLabel="_Manage Accounts..."
         desc="Connect or disconnect accounts"
         visible="false"
+        windowMode="main"
         rebindable="false"/>
         
    <cmd id="showGpuDiagnostics"

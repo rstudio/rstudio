@@ -110,18 +110,33 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public AppCommand()
    {
-      // If we're in desktop mode and we're the main window, push command
-      // enabled/visible state from this window into the global app menu managed
-      // by Qt; it is not currently possible for commands to have their per-window
-      // state reflected in the global menu.
-      //
-      // Note that we can't use the more robust check
-      // Satellite.isCurrentWindowSatellite since AppCommand instances are
-      // constructed before satellites are fully online.
-      if (Desktop.hasDesktopFrame() && StringUtil.isNullOrEmpty(RStudio.getSatelliteView()))
+      if (Desktop.hasDesktopFrame())
       {
-         addEnabledChangedHandler((event) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
-         addVisibleChangedHandler((event) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
+         // If this command is destined for the main window, do not allow
+         // satellite windows to alter the global state of the command.
+         //
+         // Note that we can't use the more robust isCurrentWindowSatellite()
+         // here since AppCommand callbacks run on app init (before the
+         // satellite callbacks are wired up).
+         // 
+         // We also need to execute this check at runtime (not in the constructor)
+         // since windowMode is not set when the AppCommand is constructed.
+         addEnabledChangedHandler((event) -> 
+         {
+            if (!StringUtil.equals(getWindowMode(), WINDOW_MODE_MAIN) ||
+                StringUtil.isNullOrEmpty(RStudio.getSatelliteView()))
+            {
+               DesktopMenuCallback.setCommandEnabled(id_, enabled_); 
+            }
+         });
+         addVisibleChangedHandler((event) -> 
+         {
+            if (!StringUtil.equals(getWindowMode(), WINDOW_MODE_MAIN) ||
+                StringUtil.isNullOrEmpty(RStudio.getSatelliteView()))
+            {
+               DesktopMenuCallback.setCommandVisible(id_, visible_); 
+            }
+         });
       }
    }
 
