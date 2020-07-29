@@ -16,6 +16,7 @@
 import { NodeType, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { autoJoin } from 'prosemirror-commands';
 import { NodeWithPos, findParentNode } from 'prosemirror-utils';
 
 import { NodeCommand, toggleList, ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -31,7 +32,7 @@ export class ListCommand extends NodeCommand {
     listItemType: NodeType,
     omniInsert: OmniInsert,
   ) {
-    super(id, keymap, listType, {}, toggleList(listType, listItemType), omniInsert);
+    super(id, keymap, listType, {}, autoJoin(toggleList(listType, listItemType), [listType.name]), omniInsert);
   }
 }
 
