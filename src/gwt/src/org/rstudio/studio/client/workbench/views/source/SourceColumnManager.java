@@ -277,9 +277,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // instance (or element within) had focus
       ModalDialogBase.registerReturnFocusHandler((Element el) ->
       {
+         final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
          Element proseMirrorEl = DomUtils.findParentElement(el, (Element parent) ->
          {
-            return parent.hasClassName("rstudio_source_panel");
+            return parent.hasClassName(sourceClass);
          });
          
          if (proseMirrorEl != null)
