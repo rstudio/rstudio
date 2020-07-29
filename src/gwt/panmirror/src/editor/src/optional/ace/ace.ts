@@ -789,7 +789,7 @@ function computeChange(oldVal: string, newVal: string) {
 
 function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+    if (state.selection.empty && !(state.selection instanceof GapCursor) && view && view.endOfTextblock(dir)) {
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
       const $head = state.selection.$head;
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
