@@ -13,13 +13,13 @@
  *
  */
 
-import { CodeBlockNodeView } from './ace';
+import { AceNodeView } from './ace';
 
 /**
  * Represents a queue of Ace editor instances that are rendered asynchronously.
  */
 export class AceRenderQueue {
-  private readonly renderQueue: CodeBlockNodeView[] = [];
+  private readonly renderQueue: AceNodeView[] = [];
 
   private renderCompleted: boolean = false;
   private renderTimer: number = 0;
@@ -118,7 +118,7 @@ export class AceRenderQueue {
   /**
    * Adds a node view to the render queue
    */
-  public add(view: CodeBlockNodeView) {
+  public add(view: AceNodeView) {
     // We allow the first few code blocks to render synchronously instead of
     // being dumped into the queue for later processing. This slightly increases
     // startup time but prevents the flicker that would otherwise occur as

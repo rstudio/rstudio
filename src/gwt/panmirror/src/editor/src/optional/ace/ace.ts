@@ -46,8 +46,10 @@ import { findPluginState } from '../../behaviors/find';
 
 import { AceRenderQueue } from './ace-render-queue';
 import { AcePlaceholder } from './ace-placeholder';
+import { AceNodeViews } from './ace-node-views';
 
 import './ace.css';
+
 
 const plugin = new PluginKey('ace');
 
@@ -55,15 +57,19 @@ export function acePlugins(
   codeViews: { [key: string]: CodeViewOptions },
   context: ExtensionContext
 ): Plugin[] {
+
+  // shared services
+  const aceRenderQueue = new AceRenderQueue();
+  const aceNodeViews = new AceNodeViews();
+
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
-  const renderQueue = new AceRenderQueue();
   const nodeViews: {
     [name: string]: (node: ProsemirrorNode<any>, view: EditorView<any>, getPos: boolean | (() => number)) => NodeView;
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, context, codeViews[name], renderQueue);
+      return new AceNodeView(node, view, getPos as () => number, context, codeViews[name], aceRenderQueue, aceNodeViews);
     };
   });
 
@@ -72,6 +78,9 @@ export function acePlugins(
       key: plugin,
       props: {
         nodeViews,
+        handleDOMEvents: {
+          click: aceNodeViews.handleClick.bind(aceNodeViews)
+        }
       }
     }),
     // arrow in and out of editor
@@ -84,11 +93,12 @@ export function acePlugins(
   ];
 }
 
-export class CodeBlockNodeView implements NodeView {
+export class AceNodeView implements NodeView {
   public readonly dom: HTMLElement;
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly ui: EditorUI;
+  private readonly nodeViews: AceNodeViews;
   private readonly renderQueue: AceRenderQueue;
   private chunk?: ChunkEditor;
   private aceEditor?: AceAjax.Editor;
@@ -113,7 +123,8 @@ export class CodeBlockNodeView implements NodeView {
     getPos: () => number,
     context: ExtensionContext,
     options: CodeViewOptions,
-    renderQueue: AceRenderQueue
+    renderQueue: AceRenderQueue,
+    nodeViews: AceNodeViews,
   ) {
     // context
     const ui = context.ui;
@@ -130,6 +141,7 @@ export class CodeBlockNodeView implements NodeView {
     this.findMarkers = [];
     this.selectionMarker = null;
     this.renderQueue = renderQueue;
+    this.nodeViews = nodeViews;
 
     // options
     this.editorOptions = editorOptions;
@@ -181,6 +193,9 @@ export class CodeBlockNodeView implements NodeView {
       // Rendering is not complete; add to the queue
       renderQueue.add(this);
     }
+
+    // add ourselves to the list of all ace node views
+    this.nodeViews.add(this);
   }
 
   public destroy() {
@@ -191,6 +206,9 @@ export class CodeBlockNodeView implements NodeView {
     if (this.chunk) {
       this.chunk.destroy();
     }
+
+    // remove ourselves from the list of all ace node views
+    this.nodeViews.remove(this);
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -276,6 +294,13 @@ export class CodeBlockNodeView implements NodeView {
 
   public stopEvent() {
     return true;
+  }
+
+  public getPosAndNode() {
+    return {
+      pos: this.getPos(),
+      node: this.node,
+    };
   }
 
   private onEditorDispatch(tr: Transaction) {
