@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -57,6 +58,7 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
@@ -65,6 +67,25 @@ public abstract class ModalDialogBase extends DialogBox
    private static final String lastFocusClass = "__rstudio_modal_last_focus";
 
    protected static final String allowEnterKeyClass = "__rstudio_modal_allow_enter_key";
+   
+   public interface ReturnFocusHandler
+   {
+      boolean returnFocus(Element el);
+   }
+   
+   public static final HandlerRegistration registerReturnFocusHandler(final ReturnFocusHandler handler)
+   {
+      FOCUS_HANDLERS.add(handler);
+      
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            FOCUS_HANDLERS.remove(handler);
+         }
+      };
+   }
 
    protected ModalDialogBase(DialogRole role)
    {
@@ -183,6 +204,11 @@ public abstract class ModalDialogBase extends DialogBox
    {
       enterDisabled_ = enterDisabled;
    }
+   
+   public void setRestoreFocusOnClose(boolean restoreFocus)
+   {
+      restoreFocus_ = restoreFocus;
+   }
 
    public void showModal()
    {
@@ -200,6 +226,8 @@ public abstract class ModalDialogBase extends DialogBox
          mainPanel_.insert(mainWidget_, 0);
       }
 
+      restoreFocus_ = restoreFocus;
+      
       if (restoreFocus)
       {
          originallyActiveElement_ = DomUtils.getActiveElement();
@@ -501,29 +529,59 @@ public abstract class ModalDialogBase extends DialogBox
    {
       hide();
       removeFromParent();
-
+      
+      // nothing to do if we don't have an element to return focus to
+      if (originallyActiveElement_ == null)
+         return;
+      
       try
       {
-         if (originallyActiveElement_ != null
-               && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
-         {
-            Document doc = originallyActiveElement_.getOwnerDocument();
-            if (doc != null)
-            {
-               originallyActiveElement_.focus();
-            }
-         }
+         if (restoreFocus_)
+            restoreFocus();
       }
       catch (Exception e)
       {
-         // focus() fail if the element is no longer visible. It's
-         // easier to just catch this than try to detect it.
-
-         // Also originallyActiveElement_.getTagName() can fail with:
-         // "Permission denied to access property 'tagName' from a non-chrome context"
-         // possibly due to Firefox "anonymous div" issue.
+         
       }
-      originallyActiveElement_ = null;
+      finally
+      {
+         originallyActiveElement_ = null;
+      }
+   }
+   
+   private void restoreFocus()
+   {
+      // iterate over focus handlers (in reverse order so
+      // most recently added handlers are executed first)
+      // and see if a registered handler can fire
+      for (int i = 0, n = FOCUS_HANDLERS.size(); i < n; i++)
+      {
+         try
+         {
+            // first, try running a registered focus handler
+            ReturnFocusHandler handler = FOCUS_HANDLERS.get(n - i - 1);
+            if (handler.returnFocus(originallyActiveElement_))
+               return;
+            
+         }
+         catch (Exception e)
+         {
+            // swallow exceptions (attempts to focus an element can
+            // fail for a multitude of reasons and those reasons are
+            // usually not actionable by the user)
+         }
+      }
+      
+      try
+      {
+         // if no registered handler fired, then just focus element
+         originallyActiveElement_.focus();
+      }
+      catch (Exception e)
+      {
+         // swallow exceptions
+      }
+      
    }
 
    protected SimplePanel getContainerPanel()
@@ -845,8 +903,11 @@ public abstract class ModalDialogBase extends DialogBox
    private ThemedButton defaultOverrideButton_;
    private final ArrayList<ThemedButton> allButtons_ = new ArrayList<>();
    private Widget mainWidget_;
-   private com.google.gwt.dom.client.Element originallyActiveElement_;
+   private boolean restoreFocus_;
+   private Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
    private final DialogRole role_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
+   
+   private static final List<ReturnFocusHandler> FOCUS_HANDLERS = new ArrayList<>();
 }
