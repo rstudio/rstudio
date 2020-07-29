@@ -67,3 +67,10 @@
 .pm-ace-editor .pm-find-text {
   position: absolute;
 }
+
+.pm-ace-editor pre.ace_editor {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 4px;
+  line-height: 145%;
+}

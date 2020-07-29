@@ -31,7 +31,7 @@ import { keymap } from 'prosemirror-keymap';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { GapCursor } from 'prosemirror-gapcursor';
 
-import { CodeViewOptions } from '../../api/node';
+import { CodeViewOptions, editingRootNode } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI, ChunkEditor } from '../../api/ui';
@@ -45,6 +45,8 @@ import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
 
 import './ace.css';
+import { AceRenderQueue } from './render_queue';
+import { AcePlaceholder } from './ace_placeholder';
 
 const plugin = new PluginKey('ace');
 
@@ -54,12 +56,13 @@ export function acePlugins(
 ): Plugin[] {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
+  const renderQueue = new AceRenderQueue();
   const nodeViews: {
     [name: string]: (node: ProsemirrorNode<any>, view: EditorView<any>, getPos: boolean | (() => number)) => NodeView;
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, context, codeViews[name]);
+      return new CodeBlockNodeView(node, view, getPos as () => number, context, codeViews[name], renderQueue);
     };
   });
 
@@ -68,7 +71,7 @@ export function acePlugins(
       key: plugin,
       props: {
         nodeViews,
-      },
+      }
     }),
     // arrow in and out of editor
     keymap({
@@ -80,13 +83,15 @@ export function acePlugins(
   ];
 }
 
-class CodeBlockNodeView implements NodeView {
+export class CodeBlockNodeView implements NodeView {
   public readonly dom: HTMLElement;
   private readonly view: EditorView;
   private readonly getPos: () => number;
-  private readonly chunk: ChunkEditor;
-  private readonly aceEditor: AceAjax.Editor;
-  private readonly editSession: AceAjax.IEditSession;
+  private readonly ui: EditorUI;
+  private readonly renderQueue: AceRenderQueue;
+  private chunk?: ChunkEditor;
+  private aceEditor?: AceAjax.Editor;
+  private editSession?: AceAjax.IEditSession;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
 
@@ -107,35 +112,30 @@ class CodeBlockNodeView implements NodeView {
     getPos: () => number,
     context: ExtensionContext,
     options: CodeViewOptions,
+    renderQueue: AceRenderQueue
   ) {
     // context
     const ui = context.ui;
     const events = context.events;
     const editorOptions = context.options;
+
     // Store for later
     this.node = node;
     this.view = view;
+    this.ui = context.ui;
     this.getPos = getPos;
     this.mode = "";
     this.escaping = false;
     this.findMarkers = [];
     this.selectionMarker = null;
+    this.renderQueue = renderQueue;
 
     // options
     this.editorOptions = editorOptions;
     this.options = options;
 
-    // call host factory to instantiate editor and populate with initial content
-    this.chunk = ui.chunks.createChunkEditor('ace');
-    this.aceEditor = this.chunk.editor as AceAjax.Editor;
-    this.aceEditor.setValue(node.textContent);
-    this.aceEditor.clearSelection();
-
-    // cache edit session for convenience; most operations happen on the session
-    this.editSession = this.aceEditor.getSession();
-
     // The editor's outer node is our DOM representation
-    this.dom = this.chunk.element;
+    this.dom = document.createElement("div");
     this.dom.classList.add('pm-code-editor');
     this.dom.classList.add('pm-ace-editor');
     this.dom.classList.add('pm-ace-editor-inactive');
@@ -143,6 +143,10 @@ class CodeBlockNodeView implements NodeView {
     if (this.options.classes) {
       this.options.classes.forEach(className => this.dom.classList.add(className));
     }
+
+    // Create a preview of the text (will be shown until editor is fully initialized)
+    const preview = new AcePlaceholder(node.textContent);
+    this.dom.appendChild(preview.getElement());
 
     // Style the first line differently if requested
     if (options.firstLineMeta) {
@@ -166,6 +170,206 @@ class CodeBlockNodeView implements NodeView {
     // This flag is used to avoid an update loop between the outer and
     // inner editor
     this.updating = false;
+
+    if (renderQueue.isRenderCompleted()) {
+      // All editors have been rendered and the queue is empty; initialize
+      // directly (this happens when e.g., inserting code chunks interactively
+      // after the document is fully rendered)
+      this.initEditor();
+    } else {
+      // Rendering is not complete; add to the queue
+      renderQueue.add(this);
+    }
+  }
+
+  public destroy() {
+    // Unsubscribe from events
+    this.dispatchUnsubscribe();
+
+    // Clean up attached editor instance when it's removed from the DOM
+    if (this.chunk) {
+      this.chunk.destroy();
+    }
+  }
+
+  public update(node: ProsemirrorNode, _decos: Decoration[]) {
+    if (node.type !== this.node.type) {
+      return false;
+    }
+    if (!this.editSession) {
+      return false;
+    }
+    this.node = node;
+    this.updateMode();
+
+    const AceRange = window.require("ace/range").Range;
+    const doc = this.editSession.getDocument();
+
+    const change = computeChange(this.editSession.getValue(), node.textContent);
+    if (change) {
+      this.updating = true;
+      const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
+        doc.indexToPosition(change.to, 0));
+      this.editSession.replace(range, change.text);
+      this.updating = false;
+    }
+
+    // Clear any previously rendered find markers
+    this.findMarkers.forEach(id => {
+      if (this.editSession) {
+        this.editSession.removeMarker(id);
+      }
+    });
+    this.findMarkers = [];
+
+    // Get all of the find results inside this node
+    const decorations = findPluginState(this.view.state);
+    if (decorations) {
+      const decos = decorations?.find(this.getPos(), (this.getPos() + node.nodeSize) - 1);
+
+      // If we got results, render them
+      if (decos) {
+        decos.forEach((deco: any) => {
+          if (!this.editSession) {
+            return;
+          }
+
+          // Calculate from/to position for result marker (adjust for zero based column)
+          const markerFrom = doc.indexToPosition(deco.from - this.getPos(), 0);
+          markerFrom.column--;
+          const markerTo = doc.indexToPosition(deco.to - this.getPos(), 0);
+          markerTo.column--;
+          const range = AceRange.fromPoints(markerFrom, markerTo);
+
+          // Create the search result marker and add it to the rendered set
+          const markerId = this.editSession.addMarker(range, deco.type.attrs.class, "result", true);
+          this.findMarkers.push(markerId);
+        });
+      }
+    }
+
+    return true;
+  }
+
+  public setSelection(anchor: number, head: number) {
+    if (!this.aceEditor || !this.editSession) {
+      return;
+    }
+    if (!this.escaping) {
+      this.aceEditor.focus();
+    }
+    this.updating = true;
+    const doc = this.editSession.getDocument();
+    const AceRange = window.require("ace/range").Range;
+    const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
+      doc.indexToPosition(head, 0));
+    this.editSession.getSelection().setSelectionRange(range);
+    this.updating = false;
+  }
+
+  public selectNode() {
+    if (this.aceEditor) {
+      this.aceEditor.focus();
+    }
+  }
+
+  public stopEvent() {
+    return true;
+  }
+
+  private onEditorDispatch(tr: Transaction) {
+    if (tr.selectionSet) {
+      this.highlightSelectionAcross(tr.selection);
+    }
+  }
+
+  private forwardSelection() {
+    // ignore if we don't have focus
+    if (!this.chunk ||
+      !this.chunk.element.contains(window.document.activeElement)) {
+      return;
+    }
+
+    const state = this.view.state;
+    const selection = this.asProseMirrorSelection(state.doc);
+    if (selection && !selection.eq(state.selection)) {
+      this.view.dispatch(state.tr.setSelection(selection));
+    }
+  }
+
+  private asProseMirrorSelection(doc: ProsemirrorNode) {
+    if (!this.editSession) {
+      return null;
+    }
+    const offset = this.getPos() + 1;
+    const session = this.editSession;
+    const range = session.getSelection().getRange();
+    const anchor = session.getDocument().positionToIndex(range.start, 0) + offset;
+    const head = session.getDocument().positionToIndex(range.end, 0) + offset;
+    return TextSelection.create(doc, anchor, head);
+  }
+
+  // detect the entire editor being selected across, in which case we add an ace marker 
+  // visually indicating that the text is selected
+  private highlightSelectionAcross(selection: Selection) {
+    if (!this.aceEditor || !this.editSession) {
+      return;
+    }
+
+    // clear any existing selection marker
+    if (this.selectionMarker !== null) {
+      this.editSession.removeMarker(this.selectionMarker);
+      this.selectionMarker = null;
+    }
+
+    // check for selection spanning us
+    const pos = this.getPos();
+    if ((selection.from < pos) && (selection.to > pos + this.node.nodeSize)) {
+      const doc = this.editSession.getDocument();
+      const AceRange = window.require("ace/range").Range;
+      const range = AceRange.fromPoints(doc.indexToPosition(0, 0), doc.indexToPosition(this.node.nodeSize - 1, 0));
+      this.selectionMarker = this.editSession.addMarker(range, 'pm-selected-text', "selection", true);
+    }
+  }
+
+  private valueChanged() {
+    const change = computeChange(this.node.textContent, this.getContents());
+    if (change) {
+      // update content
+      const start = this.getPos() + 1;
+      const tr = this.view.state.tr.replaceWith(
+        start + change.from,
+        start + change.to,
+        change.text ? this.node.type.schema.text(change.text) : null,
+      );
+      this.view.dispatch(tr);
+    }
+    this.updateMode();
+  }
+
+  /**
+   * Initializes the editing surface by creating and injecting an Ace editor
+   * instance from the host.
+   */
+  public initEditor() {
+    // skip if we're already initialized
+    if (this.aceEditor) {
+      return;
+    }
+
+    // call host factory to instantiate editor and populate with initial content
+    this.chunk = this.ui.chunks.createChunkEditor('ace');
+    this.aceEditor = this.chunk.editor as AceAjax.Editor;
+    this.aceEditor.setValue(this.node.textContent);
+    this.aceEditor.clearSelection();
+
+    // cache edit session for convenience; most operations happen on the session
+    this.editSession = this.aceEditor.getSession();
+
+    // remove the preview and recreate chunk toolbar
+    this.dom.innerHTML = "";
+    this.dom.appendChild(this.chunk.element);
+    this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
     this.aceEditor.on("changeCursor", () => {
@@ -194,7 +398,9 @@ class CodeBlockNodeView implements NodeView {
 
       // Clear the selection (otherwise could conflict with Prosemirror's
       // selection)
-      this.editSession.selection.clearSelection();
+      if (this.editSession) {
+        this.editSession.selection.clearSelection();
+      }
     });
 
     // Add custom escape commands for movement keys (left/right/up/down); these
@@ -236,8 +442,8 @@ class CodeBlockNodeView implements NodeView {
         mac: "Command-Z"
       },
       exec: () => {
-        if (undo(view.state, view.dispatch)) {
-          view.focus();
+        if (undo(this.view.state, this.view.dispatch)) {
+          this.view.focus();
         }
       }
     });
@@ -248,8 +454,8 @@ class CodeBlockNodeView implements NodeView {
         mac: "Command-Shift-Z|Command-Y"
       },
       exec: () => {
-        if (redo(view.state, view.dispatch)) {
-          view.focus();
+        if (redo(this.view.state, this.view.dispatch)) {
+          this.view.focus();
         }
 
       }
@@ -263,8 +469,8 @@ class CodeBlockNodeView implements NodeView {
         mac: "Command-A"
       },
       exec: () => {
-        if (selectAll(view.state, view.dispatch, view)) {
-          view.focus();
+        if (selectAll(this.view.state, this.view.dispatch, this.view)) {
+          this.view.focus();
         }
       }
     });
@@ -278,8 +484,8 @@ class CodeBlockNodeView implements NodeView {
         mac: "Ctrl-Enter|Shift-Enter|Command-Enter"
       },
       exec: () => {
-        if (exitCode(view.state, view.dispatch)) {
-          view.focus();
+        if (exitCode(this.view.state, this.view.dispatch)) {
+          this.view.focus();
         }
       }
     });
@@ -292,8 +498,8 @@ class CodeBlockNodeView implements NodeView {
         mac: "Command-\\"
       },
       exec: () => {
-        if (insertParagraph(view.state, view.dispatch)) {
-          view.focus();
+        if (insertParagraph(this.view.state, this.view.dispatch)) {
+          this.view.focus();
         }
       }
     });
@@ -303,152 +509,33 @@ class CodeBlockNodeView implements NodeView {
       this.aceEditor.commands.addCommand({
         name: "editAttributes",
         bindKey: "F4",
-        exec: () => { this.options.attrEditFn!(view.state, view.dispatch, view); }
+        exec: () => { this.options.attrEditFn!(this.view.state, this.view.dispatch, this.view); }
       });
     }
-  }
 
-  public destroy() {
-    // Unsubscribe from events
-    this.dispatchUnsubscribe();
-
-    // Clean up attached editor instance when it's removed from the DOM
-    this.chunk.destroy();
-  }
-
-  public update(node: ProsemirrorNode, _decos: Decoration[]) {
-    if (node.type !== this.node.type) {
-      return false;
-    }
-    this.node = node;
-    this.updateMode();
-
-    const AceRange = window.require("ace/range").Range;
-    const doc = this.editSession.getDocument();
-
-    const change = computeChange(this.editSession.getValue(), node.textContent);
-    if (change) {
-      this.updating = true;
-      const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
-        doc.indexToPosition(change.to, 0));
-      this.editSession.replace(range, change.text);
-      this.updating = false;
+    // Apply editor mode
+    if (this.mode) {
+      this.chunk.setMode(this.mode);
     }
 
-    // Clear any previously rendered find markers
-    this.findMarkers.forEach(id => {
-      this.editSession.removeMarker(id);
+    // Disconnect font metrics system after render loop
+    (this.aceEditor.renderer as any).on("afterRender", () => {
+      window.setTimeout(() => {
+        if (this.aceEditor) {
+          const metrics = (this.aceEditor.renderer as any).$fontMetrics;
+          if (metrics && metrics.$observer) {
+            metrics.$observer.disconnect();
+          }
+        }
+      }, 0);
     });
-    this.findMarkers = [];
 
-    // Get all of the find results inside this node
-    const decorations = findPluginState(this.view.state);
-    if (decorations) {
-      const decos = decorations?.find(this.getPos(), (this.getPos() + node.nodeSize) - 1);
-
-      // If we got results, render them
-      if (decos) {
-        decos.forEach((deco: any) => {
-          // Calculate from/to position for result marker (adjust for zero based column)
-          const markerFrom = doc.indexToPosition(deco.from - this.getPos(), 0);
-          markerFrom.column--;
-          const markerTo = doc.indexToPosition(deco.to - this.getPos(), 0);
-          markerTo.column--;
-          const range = AceRange.fromPoints(markerFrom, markerTo);
-
-          // Create the search result marker and add it to the rendered set
-          const markerId = this.editSession.addMarker(range, deco.type.attrs.class, "result", true);
-          this.findMarkers.push(markerId);
-        });
-      }
+    // Hook up the container to the render queue
+    const editingRoot = editingRootNode(this.view.state.selection)!;
+    const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+    if (container.parentElement) {
+      this.renderQueue.setContainer(container);
     }
-
-    return true;
-  }
-
-  public setSelection(anchor: number, head: number) {
-    if (!this.escaping) {
-      this.aceEditor.focus();
-    }
-    this.updating = true;
-    const doc = this.editSession.getDocument();
-    const AceRange = window.require("ace/range").Range;
-    const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
-      doc.indexToPosition(head, 0));
-    this.editSession.getSelection().setSelectionRange(range);
-    this.updating = false;
-  }
-
-  public selectNode() {
-    this.aceEditor.focus();
-  }
-
-  public stopEvent() {
-    return true;
-  }
-
-  private onEditorDispatch(tr: Transaction) {
-    if (tr.selectionSet) {
-      this.highlightSelectionAcross(tr.selection);
-    }
-  }
-
-  private forwardSelection() {
-
-    // ignore if we don't have focus
-    if (!this.chunk.element.contains(window.document.activeElement)) {
-      return;
-    }
-
-    const state = this.view.state;
-    const selection = this.asProseMirrorSelection(state.doc);
-    if (!selection.eq(state.selection)) {
-      this.view.dispatch(state.tr.setSelection(selection));
-    }
-  }
-
-  private asProseMirrorSelection(doc: ProsemirrorNode) {
-    const offset = this.getPos() + 1;
-    const session = this.editSession;
-    const range = session.getSelection().getRange();
-    const anchor = session.getDocument().positionToIndex(range.start, 0) + offset;
-    const head = session.getDocument().positionToIndex(range.end, 0) + offset;
-    return TextSelection.create(doc, anchor, head);
-  }
-
-  // detect the entire editor being selected across, in which case we add an ace marker 
-  // visually indicating that the text is selected
-  private highlightSelectionAcross(selection: Selection) {
-
-    // clear any existing selection marker
-    if (this.selectionMarker !== null) {
-      this.editSession.removeMarker(this.selectionMarker);
-      this.selectionMarker = null;
-    }
-
-    // check for selection spanning us
-    const pos = this.getPos();
-    if ((selection.from < pos) && (selection.to > pos + this.node.nodeSize)) {
-      const doc = this.editSession.getDocument();
-      const AceRange = window.require("ace/range").Range;
-      const range = AceRange.fromPoints(doc.indexToPosition(0, 0), doc.indexToPosition(this.node.nodeSize - 1, 0));
-      this.selectionMarker = this.editSession.addMarker(range, 'pm-selected-text', "selection", true);
-    }
-  }
-
-  private valueChanged() {
-    const change = computeChange(this.node.textContent, this.getContents());
-    if (change) {
-      // update content
-      const start = this.getPos() + 1;
-      const tr = this.view.state.tr.replaceWith(
-        start + change.from,
-        start + change.to,
-        change.text ? this.node.type.schema.text(change.text) : null,
-      );
-      this.view.dispatch(tr);
-    }
-    this.updateMode();
   }
 
   private updateMode() {
@@ -456,7 +543,9 @@ class CodeBlockNodeView implements NodeView {
     const lang = this.options.lang(this.node, this.getContents());
 
     if (lang !== null && this.mode !== lang) {
-      this.chunk.setMode(lang);
+      if (this.chunk) {
+        this.chunk.setMode(lang);
+      }
       this.mode = lang;
     }
 
@@ -485,7 +574,7 @@ class CodeBlockNodeView implements NodeView {
         this.view.dispatch(tr);
         this.view.focus();
       }
-    } else {
+    } else if (this.aceEditor) {
       this.aceEditor.execCommand("backspace");
     }
   }
@@ -495,6 +584,9 @@ class CodeBlockNodeView implements NodeView {
   // sends the focus to the right node; if not, executes the given Ace command
   // (to perform the arrow key's usual action)
   private arrowMaybeEscape(unit: string, dir: number, command: string) {
+    if (!this.aceEditor || !this.editSession) {
+      return;
+    }
     const pos = this.aceEditor.getCursorPosition();
     const lastrow = this.editSession.getLength() - 1;
     if ((!this.aceEditor.getSelection().isEmpty()) ||
@@ -606,6 +698,10 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private executeChunk() {
+    // ensure editor is rendered
+    if (!this.aceEditor) {
+      this.initEditor();
+    }
     if (this.isChunkExecutionEnabled()) {
       const chunk = rmdChunk(this.node.textContent);
       if (chunk != null) {
@@ -637,7 +733,11 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private getContents(): string {
-    return this.editSession.getValue();
+    if (this.editSession) {
+      return this.editSession.getValue();
+    } else {
+      return this.dom.innerText;
+    }
   }
 }
 
