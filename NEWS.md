@@ -82,3 +82,4 @@
 * Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
 * Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
 * Fixed issue where indented Python chunks could not be run (#3731)
+* Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
