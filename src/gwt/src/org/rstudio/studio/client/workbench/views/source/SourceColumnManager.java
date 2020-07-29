@@ -459,7 +459,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    // where it is better for the column to be the main column than null.
    public SourceColumn getActive()
    {
-      if (activeColumn_ != null)
+      if (activeColumn_ != null &&
+          activeColumn_.asWidget().isAttached() &&
+          activeColumn_.asWidget().getOffsetWidth() > 0)
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 
@@ -507,7 +509,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public int getTabCount()
    {
-      return activeColumn_.getTabCount();
+      return getActive().getTabCount();
    }
 
    public int getPhysicalTabIndex()
@@ -622,7 +624,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       for (SourceColumn column : columnList_)
       {
          if (column.isInitialized() &&
-            !StringUtil.equals(activeColumn_.getName(), column.getName()))
+            !StringUtil.equals(getActive().getName(), column.getName()))
             column.manageCommands(forceSync, activeColumn_);
 
          // if one document is dirty then we are enabled
@@ -657,7 +659,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
-         column = activeColumn_;
+         column = getActive();
       return column.addTab(doc, mode);
    }
 
@@ -665,7 +667,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                int mode, SourceColumn column)
    {
       if (column == null)
-         column = activeColumn_;
+         column = getActive();
       return column.addTab(doc, atEnd, mode);
    }
 
@@ -825,7 +827,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
-               activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+               getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
    }
@@ -833,7 +835,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void showOverflowPopout()
    {
       ensureVisible(false);
-      activeColumn_.showOverflowPopout();
+      getActive().showOverflowPopout();
    }
 
    public void showDataItem(DataItem data)
@@ -863,7 +865,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
-               activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+               getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
    }
@@ -874,39 +876,39 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
       Command onCancelled)
    {
-      activeColumn_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
+      getActive().showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
 
    public boolean insertSource(String code, boolean isBlock)
    {
       if (!hasActiveEditor())
          return false;
-      return activeColumn_.insertCode(code, isBlock);
+      return getActive().insertCode(code, isBlock);
    }
 
    @Handler
    public void onMoveTabRight()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(), 1);
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(), 1);
    }
 
    @Handler
    public void onMoveTabLeft()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(), -1);
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(), -1);
    }
 
    @Handler
    public void onMoveTabToFirst()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(),
          activeColumn_.getPhysicalTabIndex() * -1);
    }
 
    @Handler
    public void onMoveTabToLast()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(),
          (activeColumn_.getTabCount() -
             activeColumn_.getPhysicalTabIndex()) - 1);
    }
@@ -914,7 +916,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onSwitchToTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
       showOverflowPopout();
    }
@@ -922,12 +924,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onFirstTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
 
       ensureVisible(false);
-      if (activeColumn_.getTabCount() > 0)
-         activeColumn_.setPhysicalTabIndex(0);
+      if (getActive().getTabCount() > 0)
+         getActive().setPhysicalTabIndex(0);
    }
 
    @Handler
@@ -945,7 +947,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onLastTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
 
       activeColumn_.ensureVisible(false);
@@ -1044,7 +1046,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void doActivateSource(final Command afterActivation)
    {
-      activeColumn_.ensureVisible(false);
+      getActive().ensureVisible(false);
       if (hasActiveEditor())
       {
          activeColumn_.getActiveEditor().focus();
@@ -1194,7 +1196,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void startDebug()
    {
-      activeColumn_.setPendingDebugSelection();
+      getActive().setPendingDebugSelection();
    }
 
    private EditingTarget selectTabWithDocPath(String path)
@@ -1313,7 +1315,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void closeTab(boolean interactive)
    {
-      closeTab(activeColumn_.getActiveEditor(), interactive);
+      if (hasActiveEditor())
+         closeTab(activeColumn_.getActiveEditor(), interactive);
    }
 
    public void closeTab(EditingTarget target, boolean interactive)
@@ -1342,7 +1345,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void execute(EditingTarget target, Command continuation)
                {
-                  if (excludeActive && target == activeColumn_.getActiveEditor())
+                  if (excludeActive &&
+                     (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
                   {
                      continuation.execute();
                      return;
