@@ -44,9 +44,10 @@ import { DispatchEvent } from '../../api/event-types';
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
 
+import { AceRenderQueue } from './ace-render-queue';
+import { AcePlaceholder } from './ace-placeholder';
+
 import './ace.css';
-import { AceRenderQueue } from './render_queue';
-import { AcePlaceholder } from './ace_placeholder';
 
 const plugin = new PluginKey('ace');
 

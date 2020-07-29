@@ -1,5 +1,5 @@
 /*
- * ace_placeholder.ts
+ * ace-placeholder.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *

@@ -1,5 +1,5 @@
 /*
- * render_queue.ts
+ * ace-render-queue.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
