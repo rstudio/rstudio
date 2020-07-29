@@ -541,7 +541,8 @@ public abstract class ModalDialogBase extends DialogBox
       }
       catch (Exception e)
       {
-         
+         // intentionally swallow exceptions (as they can occur
+         // for a multitude of reasons and generally are not actionable)
       }
       finally
       {
