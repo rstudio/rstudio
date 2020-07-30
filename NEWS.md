@@ -83,3 +83,5 @@
 * Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
 * Fixed issue where indented Python chunks could not be run (#3731)
 * Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
+* Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
+
