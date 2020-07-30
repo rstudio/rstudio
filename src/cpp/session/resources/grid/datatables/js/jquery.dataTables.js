@@ -5133,9 +5133,16 @@
           if (!!e.target && e.target.className === "resizer") return;
 
           // we also don't want to sort when the filter UI is clicked
-          if (!!e.target && (e.target.className.indexOf("colFilter") !== -1 ||
-              !!e.target.parentElement && e.target.parentElement.className.indexOf("colFilter") !== -1))
+          if (!!e.target) {
+            if (e.target.className.indexOf("colFilter") !== -1)
               return;
+
+            if (e.target.parentElement) {
+              var parEle = e.target.parentElement;
+              if (parEle.className.indexOf("colFilter") !== -1 || parEle.className.indexOf("filterValue") !== -1)
+                return;
+            }
+          }
 
           n.blur(); // Remove focus outline for mouse users
           fn(e);
