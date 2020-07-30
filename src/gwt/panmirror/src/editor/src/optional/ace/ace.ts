@@ -93,6 +93,18 @@ export function acePlugins(
   ];
 }
 
+/**
+ * Represents a selection that was applied prior to the editor rendering (needs
+ * to be applied when the editor rendering completes)
+ */
+class QueuedSelection {
+  constructor(
+    public readonly anchor: number,
+    public readonly head: number
+  ) {
+  }
+}
+
 export class AceNodeView implements NodeView {
 
   public readonly getPos: () => number;
@@ -116,6 +128,7 @@ export class AceNodeView implements NodeView {
   private mode: string;
   private findMarkers: number[];
   private selectionMarker: number | null;
+  private queuedSelection: QueuedSelection | null;
 
   private dispatchUnsubscribe: VoidFunction;
 
@@ -144,6 +157,7 @@ export class AceNodeView implements NodeView {
     this.selectionMarker = null;
     this.renderQueue = renderQueue;
     this.nodeViews = nodeViews;
+    this.queuedSelection = null;
 
     // options
     this.editorOptions = editorOptions;
@@ -273,7 +287,10 @@ export class AceNodeView implements NodeView {
   }
 
   public setSelection(anchor: number, head: number) {
+    // We haven't drawn the editor yet, so queue the selection until we can
+    // apply it.
     if (!this.aceEditor || !this.editSession) {
+      this.queuedSelection = new QueuedSelection(anchor, head);
       return;
     }
     if (!this.escaping) {
@@ -556,6 +573,13 @@ export class AceNodeView implements NodeView {
     const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
     if (container.parentElement) {
       this.renderQueue.setContainer(container);
+    }
+
+    // Forward selection, if we have one (this can be set while the editor is
+    // waiting to render)
+    if (this.queuedSelection) {
+      this.setSelection(this.queuedSelection.anchor, this.queuedSelection.head);
+      this.queuedSelection = null;
     }
   }
 
