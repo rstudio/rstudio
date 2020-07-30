@@ -54,6 +54,7 @@
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
 * R sessions can now be renamed from within the session or the home page. (Pro #1572)
 * Project Sharing now works on Launcher sessions.
+* Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
 
 ### Bugfixes
 
