@@ -33,6 +33,8 @@ capitalize <- function(s) {
    paste0(toupper(substring(s, 1, 1)), substring(s, 2))
 }
 
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 # Builds "enum" values in Java (really just named constants)
 javaenum <- function(def, pref, type, indent) {
    java <- ""
@@ -234,11 +236,18 @@ generate <- function (schemaPath, className) {
             "      protected ", type, "() {} \n\n")
          props <- def[["properties"]]
          for (prop in names(props)) {
+            
             propdef <- props[[prop]]
             propname <- gsub("(^|_)(.)", "\\U\\2\\E", prop, perl = TRUE)
             proptype <- propdef[["type"]]
+            
+            default <- propdef[["default"]]
+            if (!is.null(default))
+               default <- paste(" ||", default)
+            
             if (identical(proptype, "array")) {
                proptype <- "JsArrayString"
+               default <- default %||% " || []"
                if (!is.null(propdef[["items"]])) {
                   enumtype <- capitalize(propdef[["items"]][["type"]])
                   java <- paste0(java, javaenum(propdef[["items"]], propname, 
@@ -246,12 +255,19 @@ generate <- function (schemaPath, className) {
                }
             } else if (identical(proptype, "string")) {
                proptype <- "String"
+               default <- default %||% " || \"\""
             } else if (identical(proptype, "integer")) {
                proptype <- "int"
+               default <- default %||% " || 0"
+            } else if (identical(proptype, "boolean")) {
+               default <- default %||% " || false"
+            } else {
+               default <- ""
             }
+            
             java <- paste0(java,
               "      public final native ", proptype, " get",  propname, "() /*-{\n",
-              "         return this.", prop, ";\n",
+              "         return this.", prop, default, ";\n",
               "      }-*/;\n\n")
             cppstrings <- paste0(cppstrings,
                                  "#define k", capitalize(camel), propname, " \"", prop, "\"\n")

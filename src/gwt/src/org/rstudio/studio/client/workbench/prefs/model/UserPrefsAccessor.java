@@ -116,27 +116,27 @@ public class UserPrefsAccessor extends Prefs
       protected CranMirror() {} 
 
       public final native String getName() /*-{
-         return this.name;
+         return this.name || "";
       }-*/;
 
       public final native String getHost() /*-{
-         return this.host;
+         return this.host || "";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url;
+         return this.url || "";
       }-*/;
 
       public final native String getRepos() /*-{
-         return this.repos;
+         return this.repos || "";
       }-*/;
 
       public final native String getCountry() /*-{
-         return this.country;
+         return this.country || "";
       }-*/;
 
       public final native String getSecondary() /*-{
-         return this.secondary;
+         return this.secondary || "";
       }-*/;
 
    }
@@ -377,34 +377,31 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this.quadrants;
+         return this.quadrants || [];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this.tabSet1;
+         return this.tabSet1 || [];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this.tabSet2;
+         return this.tabSet2 || [];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
-         return this.hiddenTabSet;
+         return this.hiddenTabSet || [];
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
-         return this.console_left_on_top;
+         return this.console_left_on_top || false;
       }-*/;
 
       public final native boolean getConsoleRightOnTop() /*-{
-         return this.console_right_on_top;
+         return this.console_right_on_top || false;
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
-         if (!this.additional_source_columns)
-           return 0;
-
-         return this.additional_source_columns;
+         return this.additional_source_columns || 0;
       }-*/;
 
    }
@@ -2480,15 +2477,15 @@ public class UserPrefsAccessor extends Prefs
       protected DefaultRVersion() {} 
 
       public final native String getVersion() /*-{
-         return this.version;
+         return this.version || "";
       }-*/;
 
       public final native String getRHome() /*-{
-         return this.r_home;
+         return this.r_home || "";
       }-*/;
 
       public final native String getLabel() /*-{
-         return this.label;
+         return this.label || "";
       }-*/;
 
    }
