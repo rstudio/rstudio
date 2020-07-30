@@ -32,6 +32,11 @@
 #include <openssl/x509.h>
 #endif
 
+#ifdef __APPLE__
+#include <core/http/Keychain.hpp>
+#include <openssl/x509.h>
+#endif
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -74,8 +79,18 @@ public:
          // on Windows, OpenSSL does not support loading certificates from the Windows certificate store
          // because of this, each time we need to verify certificates, we initialize
          // all certificates individually with OpenSSL
-         const WindowsCertificateStore& certStore = getCertificateStore();
-         for (const auto& cert : certStore.certificates)
+         const ICertStore& certStore = getCertificateStore();
+      #endif
+
+      #ifdef __APPLE__
+         // on OSX, OpenSSL does not support loading certificates from the Keychain
+         // because of this, each time we need to verify certificates, we initialize
+         // all certificates individually with OpenSSL, similar to what is done above for Windows
+         const ICertStore& certStore = getKeychain();
+      #endif
+
+      #if defined(__APPLE__) || defined(_WIN32)
+         for (const auto& cert : certStore.getCertificates())
          {
             if (X509_STORE* store = SSL_CTX_get_cert_store(sslContext_.native_handle()))
             {
@@ -193,9 +208,28 @@ private:
       return util::isSslShutdownError(ec);
    }
 
-#ifdef _WIN32
-   struct WindowsCertificateStore
+private:
+   boost::asio::ssl::context sslContext_;
+   boost::scoped_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > ptrSslStream_;
+   std::string address_;
+   std::string port_;
+   bool verify_;
+   std::string certificateAuthority_;
+   boost::posix_time::time_duration connectionTimeout_;
+
+#if defined(_WIN32) || defined(__APPLE__)
+   class ICertStore
    {
+   public:
+      virtual std::vector<X509*> getCertificates() const = 0;
+      virtual ~ICertStore() {}
+   };
+#endif
+
+#ifdef _WIN32
+   class WindowsCertificateStore : public ICertStore
+   {
+   public:
       WindowsCertificateStore()
       {
          // load certificates from important stores
@@ -224,12 +258,18 @@ private:
          }
       }
 
+      std::vector<X509*> getCertificates() const
+      {
+         return certificates;
+      }
+
+   private:
       // certificate pointers - these are intentionally leaked
       // as they need to be available for the entire run of the program
       std::vector<X509*> certificates;
    };
 
-   static const WindowsCertificateStore& getCertificateStore()
+   static const ICertStore& getCertificateStore()
    {
        // Meyer's singleton - guarantees this is thread safe
        // and will be initialized exactly once by the first caller
@@ -238,14 +278,43 @@ private:
    }
 #endif
 
-private:
-   boost::asio::ssl::context sslContext_;
-   boost::scoped_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > ptrSslStream_;
-   std::string address_;
-   std::string port_;
-   bool verify_;
-   std::string certificateAuthority_;
-   boost::posix_time::time_duration connectionTimeout_;
+#ifdef __APPLE__
+   class Keychain : public ICertStore
+   {
+   public:
+      Keychain()
+      {
+         // load all certs from the keychain
+         std::vector<KeychainCertificateData> certs = getKeychainCertificates();
+         for (const auto& cert : certs)
+         {
+            // convert the raw bytes from the keychain into a format that OpenSSL can understand
+            const unsigned char* bytePtr = cert.data.get();
+            X509* x509 = d2i_X509(nullptr, &bytePtr, cert.size);
+            if (x509)
+               certificates.push_back(x509);
+         }
+      }
+
+      std::vector<X509*> getCertificates() const
+      {
+         return certificates;
+      }
+
+   private:
+      // certificate pointers - these are intentionally leaked
+      // as they need to be available for the entire run of the program
+      std::vector<X509*> certificates;
+   };
+
+   static const ICertStore& getKeychain()
+   {
+      // Meyer's singleton - guarantees this is thread safe
+      // and will be initialized exactly once by the first caller
+      static Keychain instance;
+      return instance;
+   }
+#endif
 };
 
 
