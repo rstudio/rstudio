@@ -27,6 +27,7 @@ public class PanmirrorUIChunkEditor
    public Element element;
    public SetMode setMode;
    public Destroy destroy;
+   public ExecuteSelection executeSelection;
    
    @JsFunction
    public interface SetMode
@@ -38,5 +39,11 @@ public class PanmirrorUIChunkEditor
    public interface Destroy
    {
       void destroy();
+   }
+
+   @JsFunction
+   public interface ExecuteSelection
+   {
+      void executeSelection();
    }
 }

@@ -495,7 +495,6 @@ export class AceNodeView implements NodeView {
         if (redo(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-
       }
     });
 
@@ -517,10 +516,7 @@ export class AceNodeView implements NodeView {
     // ProseMirror
     this.aceEditor.commands.addCommand({
       name: "exitCodeBlock",
-      bindKey: {
-        win: "Ctrl-Enter|Shift-Enter",
-        mac: "Ctrl-Enter|Shift-Enter|Command-Enter"
-      },
+      bindKey: "Shift-Enter",
       exec: () => {
         if (exitCode(this.view.state, this.view.dispatch)) {
           this.view.focus();
@@ -538,6 +534,33 @@ export class AceNodeView implements NodeView {
       exec: () => {
         if (insertParagraph(this.view.state, this.view.dispatch)) {
           this.view.focus();
+        }
+      }
+    });
+
+
+    // Line-by-line execution
+    this.aceEditor.commands.addCommand({
+      name: "executeSelection",
+      bindKey: {
+        win: "Ctrl-Enter",
+        mac: "Ctrl-Enter|Command-Enter"
+      },
+      exec: () => {
+        if (this.chunk && this.aceEditor) {
+          // Record the position prior to execution
+          const pos = this.aceEditor.getCursorPosition();
+
+          // Execute the selection
+          this.chunk.executeSelection();
+
+          // If the cursor stayed on the last line, step out of the code block
+          // if we're not at the end of the doc (this is a no-op when not on the
+          // last line, and mirrors the behavior when stepping past the end of
+          // chunks in the code editor)
+          if (pos.row === this.aceEditor.getCursorPosition().row) {
+            this.arrowMaybeEscape('line', 1);
+          }
         }
       }
     });
@@ -628,7 +651,7 @@ export class AceNodeView implements NodeView {
   // Checks to see whether an arrow key should escape the editor or not. If so,
   // sends the focus to the right node; if not, executes the given Ace command
   // (to perform the arrow key's usual action)
-  private arrowMaybeEscape(unit: string, dir: number, command: string) {
+  private arrowMaybeEscape(unit: string, dir: number, command?: string) {
     if (!this.aceEditor || !this.editSession) {
       return;
     }
@@ -639,7 +662,9 @@ export class AceNodeView implements NodeView {
       (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command
-      this.aceEditor.execCommand(command);
+      if (command) {
+        this.aceEditor.execCommand(command);
+      }
       return;
     }
 

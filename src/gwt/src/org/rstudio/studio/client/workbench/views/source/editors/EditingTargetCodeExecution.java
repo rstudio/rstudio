@@ -70,6 +70,7 @@ public class EditingTargetCodeExecution
       docDisplay_ = display;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
+      appendLinesAtEnd_ = true;
       inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(
             display, docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -386,6 +387,17 @@ public class EditingTargetCodeExecution
       return range;
    }
    
+   /**
+    * Sets whether to append blank lines at the end of the document when the
+    * cursor is moved past the end of the document due to code execution.
+    * 
+    * @param append Whether to append blank lines
+    */
+   public void setAppendLinesAtEnd(boolean append)
+   {
+      appendLinesAtEnd_ = append;
+   }
+   
    public void executeLastCode()
    {
       if (lastExecutedCode_ != null)
@@ -525,7 +537,13 @@ public class EditingTargetCodeExecution
       docDisplay_.setCursorPosition(Position.create(
             selectionRange.getEnd().getRow(), 0));
       if (!docDisplay_.moveSelectionToNextLine(skipBlankLines))
-         docDisplay_.moveSelectionToBlankLine();
+      {
+         if (appendLinesAtEnd_)
+         {
+            // Create a new line if we have nowhere to go
+            docDisplay_.moveSelectionToBlankLine();
+         }
+      }
       docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }
    
@@ -534,6 +552,8 @@ public class EditingTargetCodeExecution
    private final CodeExtractor codeExtractor_;
    private final String docId_;
    private final EditingTargetInlineChunkExecution inlineChunkExecutor_;
+   
+   private boolean appendLinesAtEnd_;
    private AnchoredSelection lastExecutedCode_;
    
    // Injected ----
