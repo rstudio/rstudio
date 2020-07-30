@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -90,7 +92,8 @@ public class PythonPreferencesPane extends PreferencesPane
             });
       
       tbPythonInterpreter_.setWidth("420px");
-      tbPythonInterpreter_.setText("(No interpreter selected)");
+      
+      tbPythonInterpreter_.setText(PYTHON_PLACEHOLDER_TEXT);
       add(tbPythonInterpreter_);
       
    }
@@ -110,12 +113,30 @@ public class PythonPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
-      // TODO Auto-generated method stub
+      String pythonPath = prefs.pythonDefaultInterpreter().getValue();
+      if (!StringUtil.isNullOrEmpty(pythonPath))
+         tbPythonInterpreter_.setText(pythonPath);
+   }
+   
+   @Override
+   public RestartRequirement onApply(UserPrefs prefs)
+   {
+      String pythonPath = tbPythonInterpreter_.getText();
       
+      boolean isSet =
+            !StringUtil.isNullOrEmpty(pythonPath) &&
+            !StringUtil.equals(pythonPath, PYTHON_PLACEHOLDER_TEXT);
+      
+      if (isSet)
+         prefs.pythonDefaultInterpreter().setGlobalValue(pythonPath);
+      
+      return super.onApply(prefs);
    }
    
    private final PythonDialogResources res_;
    private final PythonServerOperations server_;
    private final TextBoxWithButton tbPythonInterpreter_;
+   
+   private static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreted selected)";
 
 }

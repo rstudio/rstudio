@@ -34,10 +34,8 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       
       widgets_ = new WidgetListBox<PythonInterpreterListEntryUi>();
       for (PythonInterpreter interpreter : JsUtil.asIterable(interpreters))
-      {
          if (interpreter.getVersion() != null)
             widgets_.addItem(new PythonInterpreterListEntryUi(interpreter));
-      }
    }
    
    @Override
