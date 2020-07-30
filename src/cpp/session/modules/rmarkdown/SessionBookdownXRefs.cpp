@@ -48,7 +48,10 @@ bool isBookdownRmd(const FileInfo& fileInfo)
 {
    FilePath filePath(fileInfo.absolutePath());
    FilePath bookDir = projects::projectContext().buildTargetPath();
-   return filePath.isWithin(bookDir) && (filePath.getExtensionLowerCase() == ".rmd");
+   if (bookDir.exists())
+      return filePath.isWithin(bookDir) && (filePath.getExtensionLowerCase() == ".rmd");
+   else
+      return false;
 }
 
 std::vector<std::string> bookdownSourceFiles()
@@ -396,10 +399,37 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    }
 }
 
+bool isBookdownContext()
+{
+   return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
+}
 
+boost::signals2::connection s_onDocUpdatedConnection;
+boost::signals2::connection s_onDocRemovedConnection;
+boost::signals2::connection s_onAllDocsRemovedConnection;
+
+void unsubscribeFromConnection(boost::signals2::connection conn)
+{
+   if (conn.connected())
+      conn.disconnect();
+}
+
+void unsubscribeFromDocUpdates()
+{
+   unsubscribeFromConnection(s_onDocUpdatedConnection);
+   unsubscribeFromConnection(s_onDocRemovedConnection);
+   unsubscribeFromConnection(s_onAllDocsRemovedConnection);
+}
 
 void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   // bail if there is no bookdown context
+   if (!isBookdownContext())
+   {
+      unsubscribeFromDocUpdates();
+      return;
+   }
+
    // ignore if the file doesn't have a path
    if (pDoc->path().empty())
       return;
@@ -413,6 +443,13 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onSourceDocRemoved(const std::string&, const std::string& path)
 {
+   // bail if there is no bookdown context
+   if (!isBookdownContext())
+   {
+      unsubscribeFromDocUpdates();
+      return;
+   }
+
    // ignore if the file has no path
    if (path.empty())
       return;
@@ -425,18 +462,20 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
 
 void onAllSourceDocsRemoved()
 {
-   s_unsavedIndex.removeAllUnsaved();
-}
+   // bail if there is no bookdown context
+   if (!isBookdownContext())
+   {
+      unsubscribeFromDocUpdates();
+      return;
+   }
 
-bool isBookdownContext()
-{
-   return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
+   s_unsavedIndex.removeAllUnsaved();
 }
 
 void onDeferredInit(bool)
 {
    if (isBookdownContext())
-   {
+   {     
       // create an incremental file change handler (on the heap so that it
       // survives the call to this function and is never deleted)
       IncrementalFileChangeHandler* pFileChangeHandler =
@@ -447,7 +486,7 @@ void onDeferredInit(bool)
             boost::posix_time::milliseconds(500),
             true
          );
-      pFileChangeHandler->subscribeToFileMonitor("Bookdown Cross References");
+      pFileChangeHandler->subscribeToFileMonitor("Bookdown Cross References");   
    }
 
 }
@@ -567,9 +606,9 @@ namespace xrefs {
 Error initialize()
 {
    // subscribe to source docs events for maintaining the unsaved files list
-   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
-   source_database::events().onDocRemoved.connect(onSourceDocRemoved);
-   source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+   s_onDocUpdatedConnection = source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+   s_onDocRemovedConnection = source_database::events().onDocRemoved.connect(onSourceDocRemoved);
+   s_onAllDocsRemovedConnection = source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
 
    // deferred init (build xref file index)
    module_context::events().onDeferredInit.connect(onDeferredInit);
