@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -237,20 +239,32 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(headerLabel("Markdown"));
 
       // auto wrap
-      CheckBox checkBoxAutoWrap = checkboxPref(
-         "Auto-wrap text (break lines at specified column)",
-         prefs.visualMarkdownEditingWrapAuto(),
-         false
-      );
-      visualModeOptions.add(checkBoxAutoWrap);
+      String[] wrapValues = {
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      };
+      visualModeWrap_ = new SelectWidget("Automatic text wrapping (line breaks): ", wrapValues, wrapValues, false, true, false);
+      if (!visualModeWrap_.setValue(prefs_.visualMarkdownEditingWrap().getGlobalValue()))
+         visualModeWrap_.getListBox().setSelectedIndex(0);
+      HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", "Learn more about automatic line wrapping", 0);
+      visualModeWrap_.addStyleName(res.styles().visualModeWrapSelectWidget());
+      visualModeOptions.add(visualModeWrap_);
+      
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Wrap column:", 1, UserPrefs.MAX_WRAP_COLUMN,
-          prefs.visualMarkdownEditingWrapColumn()
+          "Wrap text at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          prefs.visualMarkdownEditingWrapAtColumn()
       )));
+      visualModeWrapColumn_.getElement().getStyle().setMarginBottom(8, Unit.PX);
       visualModeWrapColumn_.setWidth("36px");
-      visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
-      checkBoxAutoWrap.addValueChangeHandler((value) -> {
-         visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
+      Command manageWrapColumn = () -> {
+         boolean wrapAtColumn = visualModeWrap_.getValue().equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN);
+         visualModeWrapColumn_.setVisible(wrapAtColumn);
+         visualModeWrap_.getElement().getStyle().setMarginBottom(wrapAtColumn ? 2 : 8, Unit.PX);
+      };
+      manageWrapColumn.execute();
+      visualModeWrap_.addChangeHandler((arg) -> {
+         manageWrapColumn.execute();
       });
       spaced(visualModeWrapColumn_);
 
@@ -381,6 +395,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
       
+      visualModeWrap_.setValue(prefs.visualMarkdownEditingWrap().getGlobalValue());
+      visualModeReferences_.setValue(prefs.visualMarkdownEditingReferencesLocation().getGlobalValue());
+      
       zoteroConnection_.setType(prefs.zoteroConnectionType().getValue());
       manageZoteroUI();
       zoteroConnection_.addChangeHandler((event) -> { manageZoteroUI(); });
@@ -412,6 +429,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
             Integer.parseInt(visualModeFontSize_.getValue()));
 
+      prefs_.visualMarkdownEditingWrap().setGlobalValue(
+            visualModeWrap_.getValue());
+      
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
 
@@ -448,6 +468,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+   private final SelectWidget visualModeWrap_;
    private final SelectWidget visualModeReferences_;   
    
    private final ZoteroConnectionWidget zoteroConnection_;

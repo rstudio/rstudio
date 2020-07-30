@@ -36,6 +36,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String themeInfobarShowing();
       String selectWidgetHelp();
       String smallerText();
+      String visualModeWrapSelectWidget();
    }
 
    @Source("PreferencesDialog.css")

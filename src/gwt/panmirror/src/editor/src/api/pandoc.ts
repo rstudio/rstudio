@@ -53,7 +53,7 @@ export interface PandocWriterReferencesOptions {
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
   references?: PandocWriterReferencesOptions;
-  wrapColumn?: boolean | number;
+  wrap?: string;
   dpi?: number;
 }
 

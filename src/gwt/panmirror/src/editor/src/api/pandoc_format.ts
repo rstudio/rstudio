@@ -45,7 +45,7 @@ export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
   rmdExtensions?: string;
-  wrapColumn?: number;
+  wrap?: string;
   doctypes?: string[];
   references_location?: string;
   references_prefix?: string;
@@ -167,10 +167,10 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
     }
   };
 
-  const readWrapColumn = () => {
-    const wrapColumn = source.wrap_column || source['fill-column'];
-    if (wrapColumn) {
-      return parseInt(asString(wrapColumn), 10) || undefined;
+  const readWrap = () => {
+    const wrap = source.wrap || source.wrap_column || source['fill-column'];
+    if (wrap) {
+      return asString(wrap);
     } else {
       return undefined;
     }
@@ -186,7 +186,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   if (source.rmd_extensions) {
     formatConfig.rmdExtensions = asString(source.rmd_extensions);
   }
-  formatConfig.wrapColumn = readWrapColumn();
+  formatConfig.wrap = readWrap();
   if (source.doctype) {
     formatConfig.doctypes = asString(source.doctype)
       .split(',')

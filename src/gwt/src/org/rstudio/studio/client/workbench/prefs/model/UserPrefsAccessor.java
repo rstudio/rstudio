@@ -2658,25 +2658,34 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   public PrefValue<Boolean> visualMarkdownEditingWrapAuto()
+   public PrefValue<String> visualMarkdownEditingWrap()
    {
-      return bool(
-         "visual_markdown_editing_wrap_auto",
+      return enumeration(
+         "visual_markdown_editing_wrap",
          "Wrap text in visual markdown editing mode", 
          "Whether to automatically wrap text when writing markdown", 
-         false);
+         new String[] {
+            VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+            VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+            VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+         },
+         "none");
    }
+
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_NONE = "none";
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_COLUMN = "column";
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE = "sentence";
 
    /**
     * The column to wrap text at when writing markdown
     */
-   public PrefValue<Integer> visualMarkdownEditingWrapColumn()
+   public PrefValue<Integer> visualMarkdownEditingWrapAtColumn()
    {
       return integer(
-         "visual_markdown_editing_wrap_column",
+         "visual_markdown_editing_wrap_at_column",
          "Wrap column for visual markdown editing mode", 
          "The column to wrap text at when writing markdown", 
-         80);
+         72);
    }
 
    /**
@@ -3289,10 +3298,10 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("visual_markdown_editing_is_default"))
          visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
-      if (source.hasKey("visual_markdown_editing_wrap_auto"))
-         visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
-      if (source.hasKey("visual_markdown_editing_wrap_column"))
-         visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_wrap"))
+         visualMarkdownEditingWrap().setValue(layer, source.getString("visual_markdown_editing_wrap"));
+      if (source.hasKey("visual_markdown_editing_wrap_at_column"))
+         visualMarkdownEditingWrapAtColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_at_column"));
       if (source.hasKey("visual_markdown_editing_references_location"))
          visualMarkdownEditingReferencesLocation().setValue(layer, source.getString("visual_markdown_editing_references_location"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
@@ -3512,8 +3521,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());
-      prefs.add(visualMarkdownEditingWrapAuto());
-      prefs.add(visualMarkdownEditingWrapColumn());
+      prefs.add(visualMarkdownEditingWrap());
+      prefs.add(visualMarkdownEditingWrapAtColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());

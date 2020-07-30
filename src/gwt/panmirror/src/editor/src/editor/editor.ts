@@ -71,6 +71,7 @@ import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
 import { pandocAutoIdentifier } from '../api/pandoc_id';
+import { wrapSentences } from '../api/wrap';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 import { getOutline } from '../behaviors/outline';
@@ -928,6 +929,11 @@ export class Editor {
 
     // apply save fixups 
     this.extensionFixups(tr, FixupContext.Save);
+
+    // apply sentence wrapping if requested
+    if (options.wrap === "sentence") {
+      wrapSentences(tr);
+    }
 
     // get code
     return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);

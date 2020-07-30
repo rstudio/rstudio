@@ -326,8 +326,11 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
-#define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
-#define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingWrap "visual_markdown_editing_wrap"
+#define kVisualMarkdownEditingWrapNone "none"
+#define kVisualMarkdownEditingWrapColumn "column"
+#define kVisualMarkdownEditingWrapSentence "sentence"
+#define kVisualMarkdownEditingWrapAtColumn "visual_markdown_editing_wrap_at_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
@@ -1496,14 +1499,14 @@ public:
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   bool visualMarkdownEditingWrapAuto();
-   core::Error setVisualMarkdownEditingWrapAuto(bool val);
+   std::string visualMarkdownEditingWrap();
+   core::Error setVisualMarkdownEditingWrap(std::string val);
 
    /**
     * The column to wrap text at when writing markdown
     */
-   int visualMarkdownEditingWrapColumn();
-   core::Error setVisualMarkdownEditingWrapColumn(int val);
+   int visualMarkdownEditingWrapAtColumn();
+   core::Error setVisualMarkdownEditingWrapAtColumn(int val);
 
    /**
     * Placement of footnotes within markdown output.
