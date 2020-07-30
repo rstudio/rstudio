@@ -104,7 +104,7 @@ public:
                               static_cast<int>(::ERR_get_error()),
                               boost::asio::error::get_ssl_category());
                   Error error(ec, ERROR_LOCATION);
-                  error.addProperty("Description", "Could not add Windows certificate to OpenSSL cert store: " + subjectNameStr);
+                  error.addProperty("Description", "Could not add certificate to OpenSSL cert store: " + subjectNameStr);
 
                   LOG_ERROR(error);
                }
