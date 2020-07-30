@@ -483,8 +483,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public SourceColumn getActive()
    {
       if (activeColumn_ != null &&
+         (!columnList_.get(0).asWidget().isAttached() ||
           activeColumn_.asWidget().isAttached() &&
-          activeColumn_.asWidget().getOffsetWidth() > 0)
+          activeColumn_.asWidget().getOffsetWidth() > 0))
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 
