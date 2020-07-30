@@ -23,9 +23,11 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { showInsertCitationPopup } from '../../behaviors/insert_citation/insert_citation-popup';
+import { EditorEvents } from '../../api/events';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI) {
+  constructor(ui: EditorUI, events: EditorEvents) {
     super(
       EditorCommandId.Citation,
       ['Shift-Mod-F8'],
@@ -36,15 +38,8 @@ export class InsertCitationCommand extends ProsemirrorCommand {
           return false;
         }
 
-        if (dispatch) {
-          const tr = state.tr;
-          const citeMark = schema.marks.cite.create();
-          const cite = schema.text(`[@]`, [citeMark]);
-          tr.replaceSelectionWith(cite, false);
-          const citeIdMark = schema.marks.cite_id.create();
-          tr.addMark(state.selection.from + 1, state.selection.from + 2, citeIdMark);
-          setTextSelection(state.selection.from + 2)(tr);
-          dispatch(tr);
+        if (dispatch && view) {
+          showInsertCitationPopup(events);
         }
 
         return true;
@@ -56,6 +51,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         priority: 1,
         image: () => (ui.prefs.darkMode() ? ui.images.omni_insert!.citation_dark! : ui.images.omni_insert!.citation!),
       },
+      false
     );
   }
 }

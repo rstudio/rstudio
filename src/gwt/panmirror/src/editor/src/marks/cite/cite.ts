@@ -32,12 +32,12 @@ import { performCompletionReplacement } from '../../api/completion';
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { InsertCitationCommand } from './cite-commands';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { join } from 'path';
+import { InsertCitationCommand } from './cite-commands';
 
 const kCiteCitationsIndex = 0;
 
@@ -176,7 +176,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (_schema: Schema) => {
-      return [new InsertCitationCommand(ui)];
+      return [new InsertCitationCommand(ui, context.events)];
     },
 
     appendMarkTransaction: (schema: Schema) => {
@@ -231,7 +231,8 @@ const extension = (context: ExtensionContext): Extension | null => {
             }
           }),
         citeHighlightPlugin(schema),
-        citePopupPlugin(schema, ui, mgr, context.server.pandoc)];
+        citePopupPlugin(schema, ui, mgr, context.server.pandoc)
+      ];
     },
   };
 };
