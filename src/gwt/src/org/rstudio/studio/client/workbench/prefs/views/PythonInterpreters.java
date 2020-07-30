@@ -1,5 +1,5 @@
 /*
- * PythonServerOperations.java
+ * PythonInterpreters.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,9 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-public interface PythonServerOperations
+public class PythonInterpreters extends JavaScriptObject
 {
-   void pythonFindInterpreters(ServerRequestCallback<PythonInterpreters> requestCallback);
+   protected PythonInterpreters()
+   {
+   }
+   
+   public final native JsArray<PythonInterpreter> getPythonInterpreters()
+   /*-{
+      return this["python_interpreters"];
+   }-*/;
+   
+   public final native String getDefaultInterpreter()
+   /*-{
+      return this["default_interpreter"];
+   }-*/;
+   
 }

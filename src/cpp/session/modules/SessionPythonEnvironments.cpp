@@ -17,6 +17,9 @@
 
 #include <core/Exec.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserPrefValues.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -26,9 +29,30 @@ namespace session {
 namespace modules {
 namespace python_environments {
 
+namespace {
+
+void updateDefaultPythonInterpreter()
+{
+   core::system::setenv(
+            "RETICULATE_PYTHON",
+            prefs::userPrefs().pythonDefaultInterpreter());
+}
+
+void onPrefsChanged(const std::string& /* layerName */, const std::string prefName)
+{
+   if (prefName == kPythonDefaultInterpreter)
+   {
+      updateDefaultPythonInterpreter();
+   }
+}
+
+} // end anonymous namespace
+
 Error initialize()
 {
    using namespace module_context;
+   
+   prefs::userPrefs().onChanged.connect(onPrefsChanged);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

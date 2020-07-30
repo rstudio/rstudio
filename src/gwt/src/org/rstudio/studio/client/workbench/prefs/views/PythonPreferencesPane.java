@@ -26,7 +26,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterSelectionDialog;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -57,21 +56,22 @@ public class PythonPreferencesPane extends PreferencesPane
                {
                   getProgressIndicator().onProgress("Finding interpreters...");
                   
-                  server_.pythonFindInterpreters(new ServerRequestCallback<JsArray<PythonInterpreter>>()
+                  server_.pythonFindInterpreters(new ServerRequestCallback<PythonInterpreters>()
                   {
                      @Override
-                     public void onResponseReceived(JsArray<PythonInterpreter> response)
+                     public void onResponseReceived(final PythonInterpreters response)
                      {
                         getProgressIndicator().onCompleted();
                         PythonInterpreterSelectionDialog dialog =
                               new PythonInterpreterSelectionDialog(
-                                    response,
+                                    response.getPythonInterpreters(),
                                     new OperationWithInput<PythonInterpreter>()
                                     {
                                        @Override
                                        public void execute(PythonInterpreter input)
                                        {
-                                          tbPythonInterpreter_.setText(input.getPath());
+                                          String path = input.getPath();
+                                          tbPythonInterpreter_.setText(path);
                                        }
                                     });
                         dialog.showModal(true);
@@ -92,7 +92,6 @@ public class PythonPreferencesPane extends PreferencesPane
             });
       
       tbPythonInterpreter_.setWidth("420px");
-      
       tbPythonInterpreter_.setText(PYTHON_PLACEHOLDER_TEXT);
       add(tbPythonInterpreter_);
       
@@ -121,6 +120,8 @@ public class PythonPreferencesPane extends PreferencesPane
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
+      RestartRequirement requirement = super.onApply(prefs);
+      
       String pythonPath = tbPythonInterpreter_.getText();
       
       boolean isSet =
@@ -130,9 +131,9 @@ public class PythonPreferencesPane extends PreferencesPane
       if (isSet)
          prefs.pythonDefaultInterpreter().setGlobalValue(pythonPath);
       
-      return super.onApply(prefs);
+      return requirement;
    }
-   
+ 
    private final PythonDialogResources res_;
    private final PythonServerOperations server_;
    private final TextBoxWithButton tbPythonInterpreter_;

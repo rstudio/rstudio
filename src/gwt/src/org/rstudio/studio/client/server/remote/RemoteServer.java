@@ -148,6 +148,7 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
+import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreters;
 import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -1049,7 +1050,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, MARKDOWN_GET_COMPLETIONS, params, requestCallback);
    }
    
-   public void pythonFindInterpreters(ServerRequestCallback<JsArray<PythonInterpreter>> requestCallback)
+   public void pythonFindInterpreters(ServerRequestCallback<PythonInterpreters> requestCallback)
    {
       sendRequest(RPC_SCOPE, PYTHON_FIND_INTERPRETERS, requestCallback);
    }

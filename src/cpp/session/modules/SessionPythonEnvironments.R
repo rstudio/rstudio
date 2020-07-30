@@ -72,10 +72,16 @@
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
-   c(
-      .rs.python.findPythonSystemInterpreters(),
-      .rs.python.findPythonVirtualEnvironments(),
-      .rs.python.findPythonCondaEnvironments()
+   list(
+      
+      python_interpreters = c(
+         .rs.python.findPythonSystemInterpreters(),
+         .rs.python.findPythonVirtualEnvironments(),
+         .rs.python.findPythonCondaEnvironments()
+      ),
+      
+      default_interpreter = .rs.scalar(Sys.getenv("RETICULATE_PYTHON"))
+      
    )
 })
 
