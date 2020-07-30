@@ -99,7 +99,7 @@
 })
 
 # provide restart function
-.rs.setOption("restart", function(afterRestartCommand)
+.rs.setOption("restart", function(afterRestartCommand = "")
 {
    .rs.restartR(afterRestartCommand)
 })
