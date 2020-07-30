@@ -38,7 +38,7 @@ void updateDefaultPythonInterpreter()
             prefs::userPrefs().pythonDefaultInterpreter());
 }
 
-void onPrefsChanged(const std::string& /* layerName */, const std::string prefName)
+void onPrefsChanged(const std::string& /* layerName */, const std::string& prefName)
 {
    if (prefName == kPythonDefaultInterpreter)
    {
