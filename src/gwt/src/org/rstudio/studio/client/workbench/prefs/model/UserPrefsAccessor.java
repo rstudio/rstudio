@@ -116,27 +116,27 @@ public class UserPrefsAccessor extends Prefs
       protected CranMirror() {} 
 
       public final native String getName() /*-{
-         return this.name || "Global (CDN)";
+         return this && this.name || "Global (CDN)";
       }-*/;
 
       public final native String getHost() /*-{
-         return this.host || "RStudio";
+         return this && this.host || "RStudio";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url || "https://cran.rstudio.com/";
+         return this && this.url || "https://cran.rstudio.com/";
       }-*/;
 
       public final native String getRepos() /*-{
-         return this.repos || "";
+         return this && this.repos || "";
       }-*/;
 
       public final native String getCountry() /*-{
-         return this.country || "us";
+         return this && this.country || "us";
       }-*/;
 
       public final native String getSecondary() /*-{
-         return this.secondary || "";
+         return this && this.secondary || "";
       }-*/;
 
    }
@@ -377,31 +377,31 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
+         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
+         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
+         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
-         return this.hiddenTabSet || [];
+         return this && this.hiddenTabSet || [];
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
-         return this.console_left_on_top || false;
+         return this && this.console_left_on_top || false;
       }-*/;
 
       public final native boolean getConsoleRightOnTop() /*-{
-         return this.console_right_on_top || true;
+         return this && this.console_right_on_top || true;
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
-         return this.additional_source_columns || 0;
+         return this && this.additional_source_columns || 0;
       }-*/;
 
    }
@@ -2477,15 +2477,15 @@ public class UserPrefsAccessor extends Prefs
       protected DefaultRVersion() {} 
 
       public final native String getVersion() /*-{
-         return this.version || "";
+         return this && this.version || "";
       }-*/;
 
       public final native String getRHome() /*-{
-         return this.r_home || "";
+         return this && this.r_home || "";
       }-*/;
 
       public final native String getLabel() /*-{
-         return this.label || "";
+         return this && this.label || "";
       }-*/;
 
    }

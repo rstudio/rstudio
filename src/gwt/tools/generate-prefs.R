@@ -267,7 +267,7 @@ generate <- function (schemaPath, className) {
             
             java <- paste0(java,
               "      public final native ", proptype, " get",  propname, "() /*-{\n",
-              "         return this.", prop, default, ";\n",
+              "         return this && this.", prop, default, ";\n",
               "      }-*/;\n\n")
             cppstrings <- paste0(cppstrings,
                                  "#define k", capitalize(camel), propname, " \"", prop, "\"\n")
