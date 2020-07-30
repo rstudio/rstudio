@@ -251,13 +251,27 @@ private:
                 const BYTE* certPtr = pContext->pbCertEncoded;
                 X509* x509 = d2i_X509(nullptr, &certPtr, pContext->cbCertEncoded);
                 if (x509)
+                {
                    certificates.push_back(x509);
+                }
+                else
+                {
+                   boost::system::error_code ec = boost::system::error_code(
+                               static_cast<int>(::ERR_get_error()),
+                               boost::asio::error::get_ssl_category());
+                   Error error(ec, ERROR_LOCATION);
+                   error.addProperty("Description",
+                                     "Could not create OpenSSL certificate object from Windows certificate data");
+                   LOG_DEBUG_MESSAGE(error.asString());
+                }
              }
 
              CertCloseStore(hStore, 0);
          }
       }
 
+      // note to caller - the certificate data (X509 pointers) here must not be freed as the data
+      // must persist for the lifetime of the process
       std::vector<X509*> getCertificates() const
       {
          return certificates;
@@ -292,10 +306,24 @@ private:
             const unsigned char* bytePtr = cert.data.get();
             X509* x509 = d2i_X509(nullptr, &bytePtr, cert.size);
             if (x509)
+            {
                certificates.push_back(x509);
+            }
+            else
+            {
+               boost::system::error_code ec = boost::system::error_code(
+                           static_cast<int>(::ERR_get_error()),
+                           boost::asio::error::get_ssl_category());
+               Error error(ec, ERROR_LOCATION);
+               error.addProperty("Description",
+                                 "Could not create OpenSSL certificate object from Keychain certificate data");
+               LOG_DEBUG_MESSAGE(error.asString());
+            }
          }
       }
 
+      // note to caller - the certificate data (X509 pointers) here must not be freed as the data
+      // must persist for the lifetime of the process
       std::vector<X509*> getCertificates() const
       {
          return certificates;
