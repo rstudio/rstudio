@@ -21,7 +21,6 @@ import yaml from 'js-yaml';
 import { NodeWithPos } from 'prosemirror-utils';
 
 export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
-export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
 
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
