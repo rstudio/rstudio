@@ -241,9 +241,9 @@ generate <- function (schemaPath, className) {
             propname <- gsub("(^|_)(.)", "\\U\\2\\E", prop, perl = TRUE)
             proptype <- propdef[["type"]]
             
-            default <- propdef[["default"]]
+            default <- propdef[["default"]] %||% def[["default"]][[prop]]
             if (!is.null(default))
-               default <- paste(" ||", default)
+               default <- paste(" ||", jsonlite::toJSON(default, auto_unbox = TRUE))
             
             if (identical(proptype, "array")) {
                proptype <- "JsArrayString"

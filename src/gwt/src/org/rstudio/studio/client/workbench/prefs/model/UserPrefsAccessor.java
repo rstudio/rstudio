@@ -116,15 +116,15 @@ public class UserPrefsAccessor extends Prefs
       protected CranMirror() {} 
 
       public final native String getName() /*-{
-         return this.name || "";
+         return this.name || "Global (CDN)";
       }-*/;
 
       public final native String getHost() /*-{
-         return this.host || "";
+         return this.host || "RStudio";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url || "";
+         return this.url || "https://cran.rstudio.com/";
       }-*/;
 
       public final native String getRepos() /*-{
@@ -132,7 +132,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native String getCountry() /*-{
-         return this.country || "";
+         return this.country || "us";
       }-*/;
 
       public final native String getSecondary() /*-{
@@ -377,15 +377,15 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this.quadrants || [];
+         return this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this.tabSet1 || [];
+         return this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this.tabSet2 || [];
+         return this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
@@ -397,7 +397,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native boolean getConsoleRightOnTop() /*-{
-         return this.console_right_on_top || false;
+         return this.console_right_on_top || true;
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{

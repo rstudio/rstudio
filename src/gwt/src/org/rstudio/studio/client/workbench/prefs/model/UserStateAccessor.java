@@ -80,11 +80,11 @@ public class UserStateAccessor extends Prefs
       protected Theme() {} 
 
       public final native String getName() /*-{
-         return this.name || "";
+         return this.name || "Textmate (default)";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url || "";
+         return this.url || "theme/default/textmate.rstheme";
       }-*/;
 
       public final native boolean getIsDark() /*-{
@@ -134,15 +134,15 @@ public class UserStateAccessor extends Prefs
       protected ExportPlotOptions() {} 
 
       public final native int getWidth() /*-{
-         return this.width || 0;
+         return this.width || 550;
       }-*/;
 
       public final native int getHeight() /*-{
-         return this.height || 0;
+         return this.height || 450;
       }-*/;
 
       public final native String getFormat() /*-{
-         return this.format || "";
+         return this.format || "PNG";
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
@@ -282,7 +282,7 @@ public class UserStateAccessor extends Prefs
       protected CompileRMarkdownNotebookPrefs() {} 
 
       public final native String getFormat() /*-{
-         return this.format || "";
+         return this.format || "html_document";
       }-*/;
 
    }
