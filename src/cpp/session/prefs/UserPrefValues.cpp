@@ -2675,6 +2675,19 @@ core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
    return writePref("browser_fixed_width_fonts", val);
 }
 
+/**
+ * The path to the default Python interpreter
+ */
+std::string UserPrefValues::pythonDefaultInterpreter()
+{
+   return readPref<std::string>("python_default_interpreter");
+}
+
+core::Error UserPrefValues::setPythonDefaultInterpreter(std::string val)
+{
+   return writePref("python_default_interpreter", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2882,6 +2895,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGraphicsBackend,
       kGraphicsAntialiasing,
       kBrowserFixedWidthFonts,
+      kPythonDefaultInterpreter,
    });
 }
    

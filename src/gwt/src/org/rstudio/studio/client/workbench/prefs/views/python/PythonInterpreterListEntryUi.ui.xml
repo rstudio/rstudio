@@ -16,6 +16,7 @@
 	
 	.version {
 		padding: 4px;
+		min-width: 100px;
 	}
 	
 	.path {

@@ -1382,6 +1382,11 @@
                 "Victor Mono",
                 "Ubuntu Mono"
             ]
+        },
+        "python_default_interpreter": {
+            "type": "string",
+            "title": "Default Python interpreter",
+            "description": "The path to the default Python interpreter"
         }
     }
 }
