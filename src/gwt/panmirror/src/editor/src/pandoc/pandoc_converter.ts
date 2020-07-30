@@ -160,8 +160,8 @@ export class PandocConverter {
       pandocOptions.push('--id-prefix', options.references.prefix);
     }
 
-    // provide wrapColumn options
-    pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
+    // provide wrap options
+    pandocOptions = pandocOptions.concat(wrapOptions(options));
 
     // render to markdown
     const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
@@ -208,11 +208,20 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
   return disabledTableTypes;
 }
 
-function wrapColumnOptions(options: PandocWriterOptions) {
+function wrapOptions(options: PandocWriterOptions) {
   const pandocOptions: string[] = [];
-  if (options.wrapColumn) {
-    pandocOptions.push('--wrap=auto');
-    pandocOptions.push(`--columns=${options.wrapColumn}`);
+  if (options.wrap) {
+    if (options.wrap === 'none' || options.wrap === 'sentence') {
+      pandocOptions.push('--wrap=none');
+    } else {
+      const column = parseInt(options.wrap, 10);
+      if (column) {
+        pandocOptions.push('--wrap=auto');
+        pandocOptions.push(`--columns=${column}`);
+      } else {
+        pandocOptions.push('--wrap=none');
+      }
+    }
   } else {
     pandocOptions.push('--wrap=none');
   }

@@ -1240,15 +1240,16 @@
             "title": "Use visual editing by default for new markdown documents",
             "description": "Whether to enable visual editing by default for new markdown documents"
         },
-        "visual_markdown_editing_wrap_auto": {
-            "type": "boolean",
-            "default": false,
+        "visual_markdown_editing_wrap": {
+            "type": "string",
+            "enum": ["none", "column", "sentence"],
+            "default": "none",
             "title": "Wrap text in visual markdown editing mode",
             "description": "Whether to automatically wrap text when writing markdown"
         },
-        "visual_markdown_editing_wrap_column": {
+        "visual_markdown_editing_wrap_at_column": {
             "type": "integer",
-            "default": 80,
+            "default": 72,
             "title": "Wrap column for visual markdown editing mode",
             "description": "The column to wrap text at when writing markdown"
         },

@@ -1,5 +1,5 @@
 
-@external gwt-CheckBox;
+@external gwt-CheckBox gwt-Label;
 
 .panelContainer {
    width: 570px;
@@ -80,3 +80,6 @@
    font-size: 0.9em;
 }
 
+.visualModeWrapSelectWidget .gwt-Label {
+   margin-bottom: 1px;
+}

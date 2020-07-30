@@ -271,7 +271,7 @@ public class VisualMode implements VisualModeEditorSync,
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
-                     if (!writerOptions.wrapColumnChanged) 
+                     if (!writerOptions.wrapChanged) 
                      {
                         TextEditorContainer.Changes changes = toEditorChanges(markdown);
                         getSourceEditor().applyChanges(changes, activatingEditor); 
@@ -440,7 +440,7 @@ public class VisualMode implements VisualModeEditorSync,
                                  (markdown) -> {
             if  (markdown != null) 
             {
-               if (!writerOptions.wrapColumnChanged)
+               if (!writerOptions.wrapChanged)
                {
                   PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
                   TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
