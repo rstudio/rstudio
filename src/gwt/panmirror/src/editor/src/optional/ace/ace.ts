@@ -93,6 +93,18 @@ export function acePlugins(
   ];
 }
 
+/**
+ * Represents a selection that was applied prior to the editor rendering (needs
+ * to be applied when the editor rendering completes)
+ */
+class QueuedSelection {
+  constructor(
+    public readonly anchor: number,
+    public readonly head: number
+  ) {
+  }
+}
+
 export class AceNodeView implements NodeView {
 
   public readonly getPos: () => number;
@@ -116,6 +128,7 @@ export class AceNodeView implements NodeView {
   private mode: string;
   private findMarkers: number[];
   private selectionMarker: number | null;
+  private queuedSelection: QueuedSelection | null;
 
   private dispatchUnsubscribe: VoidFunction;
 
@@ -144,6 +157,7 @@ export class AceNodeView implements NodeView {
     this.selectionMarker = null;
     this.renderQueue = renderQueue;
     this.nodeViews = nodeViews;
+    this.queuedSelection = null;
 
     // options
     this.editorOptions = editorOptions;
@@ -273,7 +287,10 @@ export class AceNodeView implements NodeView {
   }
 
   public setSelection(anchor: number, head: number) {
+    // We haven't drawn the editor yet, so queue the selection until we can
+    // apply it.
     if (!this.aceEditor || !this.editSession) {
+      this.queuedSelection = new QueuedSelection(anchor, head);
       return;
     }
     if (!this.escaping) {
@@ -478,7 +495,6 @@ export class AceNodeView implements NodeView {
         if (redo(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-
       }
     });
 
@@ -500,10 +516,7 @@ export class AceNodeView implements NodeView {
     // ProseMirror
     this.aceEditor.commands.addCommand({
       name: "exitCodeBlock",
-      bindKey: {
-        win: "Ctrl-Enter|Shift-Enter",
-        mac: "Ctrl-Enter|Shift-Enter|Command-Enter"
-      },
+      bindKey: "Shift-Enter",
       exec: () => {
         if (exitCode(this.view.state, this.view.dispatch)) {
           this.view.focus();
@@ -521,6 +534,33 @@ export class AceNodeView implements NodeView {
       exec: () => {
         if (insertParagraph(this.view.state, this.view.dispatch)) {
           this.view.focus();
+        }
+      }
+    });
+
+
+    // Line-by-line execution
+    this.aceEditor.commands.addCommand({
+      name: "executeSelection",
+      bindKey: {
+        win: "Ctrl-Enter",
+        mac: "Ctrl-Enter|Command-Enter"
+      },
+      exec: () => {
+        if (this.chunk && this.aceEditor) {
+          // Record the position prior to execution
+          const pos = this.aceEditor.getCursorPosition();
+
+          // Execute the selection
+          this.chunk.executeSelection();
+
+          // If the cursor stayed on the last line, step out of the code block
+          // if we're not at the end of the doc (this is a no-op when not on the
+          // last line, and mirrors the behavior when stepping past the end of
+          // chunks in the code editor)
+          if (pos.row === this.aceEditor.getCursorPosition().row) {
+            this.arrowMaybeEscape('line', 1);
+          }
         }
       }
     });
@@ -556,6 +596,13 @@ export class AceNodeView implements NodeView {
     const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
     if (container.parentElement) {
       this.renderQueue.setContainer(container);
+    }
+
+    // Forward selection, if we have one (this can be set while the editor is
+    // waiting to render)
+    if (this.queuedSelection) {
+      this.setSelection(this.queuedSelection.anchor, this.queuedSelection.head);
+      this.queuedSelection = null;
     }
   }
 
@@ -604,7 +651,7 @@ export class AceNodeView implements NodeView {
   // Checks to see whether an arrow key should escape the editor or not. If so,
   // sends the focus to the right node; if not, executes the given Ace command
   // (to perform the arrow key's usual action)
-  private arrowMaybeEscape(unit: string, dir: number, command: string) {
+  private arrowMaybeEscape(unit: string, dir: number, command?: string) {
     if (!this.aceEditor || !this.editSession) {
       return;
     }
@@ -615,7 +662,9 @@ export class AceNodeView implements NodeView {
       (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command
-      this.aceEditor.execCommand(command);
+      if (command) {
+        this.aceEditor.execCommand(command);
+      }
       return;
     }
 
