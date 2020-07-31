@@ -39,7 +39,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
     let hasUpdates = false;
     if (zoteroEnabled(docPath, yamlBlocks)) {
-      const collectionNames = zoteroCollectionsForDoc(yamlBlocks);
 
       try {
 
@@ -47,7 +46,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
 
         const useCache = true;
-        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || [], useCache);
+        // TODO: remove collection names from server call
+        const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
         if (result.status === "ok") {
 
           if (result.message) {
@@ -121,7 +121,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 //
 function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
   );
 
   if (zoteroYaml.length > 0) {
@@ -146,29 +146,3 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
   }
 }
 
-function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] | null {
-  const zoteroYaml = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
-  );
-
-  // Look through any yaml nodes to see whether any contain bibliography information
-  if (zoteroYaml.length > 0) {
-    // Pandoc will use the last biblography node when generating a bibliography.
-    // So replicate this and use the last biblography node that we find
-    const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
-    const zoteroCollections = zoteroParsedYaml.yaml.zotero;
-
-    if (
-      Array.isArray(zoteroCollections) &&
-      zoteroCollections.every(collection => typeof collection === 'string')) {
-      return zoteroCollections;
-    } else if (typeof zoteroCollections === 'string') {
-      return [zoteroCollections];
-      // zotero: true means request all collections (signified by null)
-    } else if (typeof zoteroCollections === 'boolean' && zoteroCollections === true) {
-      return null;
-    }
-  }
-  return [];
-
-}
