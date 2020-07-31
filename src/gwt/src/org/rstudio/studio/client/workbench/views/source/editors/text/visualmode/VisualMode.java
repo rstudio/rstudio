@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Rendezvous;
@@ -1098,6 +1099,10 @@ public class VisualMode implements VisualModeEditorSync,
       if (this.docDisplay_.hasActiveCollabSession())
       {
          return "You cannot enter visual mode while using realtime collaboration.";
+      }
+      else if (BrowseCap.isInternetExplorer())
+      {
+         return "Visual mode is not supported in Internet Explorer.";
       }
       else 
       {

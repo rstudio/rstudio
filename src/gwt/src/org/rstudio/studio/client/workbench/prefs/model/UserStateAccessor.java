@@ -80,15 +80,15 @@ public class UserStateAccessor extends Prefs
       protected Theme() {} 
 
       public final native String getName() /*-{
-         return this.name;
+         return this && this.name || "Textmate (default)";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url;
+         return this && this.url || "theme/default/textmate.rstheme";
       }-*/;
 
       public final native boolean getIsDark() /*-{
-         return this.isDark;
+         return this && this.isDark || false;
       }-*/;
 
    }
@@ -134,27 +134,27 @@ public class UserStateAccessor extends Prefs
       protected ExportPlotOptions() {} 
 
       public final native int getWidth() /*-{
-         return this.width;
+         return this && this.width || 550;
       }-*/;
 
       public final native int getHeight() /*-{
-         return this.height;
+         return this && this.height || 450;
       }-*/;
 
       public final native String getFormat() /*-{
-         return this.format;
+         return this && this.format || "PNG";
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this.keepRatio;
+         return this && this.keepRatio || false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this.viewAfterSave;
+         return this && this.viewAfterSave || false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this.copyAsMetafile;
+         return this && this.copyAsMetafile || false;
       }-*/;
 
    }
@@ -176,27 +176,27 @@ public class UserStateAccessor extends Prefs
       protected ExportViewerOptions() {} 
 
       public final native int getWidth() /*-{
-         return this.width;
+         return this && this.width || 0;
       }-*/;
 
       public final native int getHeight() /*-{
-         return this.height;
+         return this && this.height || 0;
       }-*/;
 
       public final native String getFormat() /*-{
-         return this.format;
+         return this && this.format || "";
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this.keepRatio;
+         return this && this.keepRatio || false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this.viewAfterSave;
+         return this && this.viewAfterSave || false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this.copyAsMetafile;
+         return this && this.copyAsMetafile || false;
       }-*/;
 
    }
@@ -218,23 +218,23 @@ public class UserStateAccessor extends Prefs
       protected SavePlotAsPdfOptions() {} 
 
       public final native int getWidth() /*-{
-         return this.width;
+         return this && this.width || 0;
       }-*/;
 
       public final native int getHeight() /*-{
-         return this.height;
+         return this && this.height || 0;
       }-*/;
 
       public final native boolean getPortrait() /*-{
-         return this.portrait;
+         return this && this.portrait || false;
       }-*/;
 
       public final native boolean getCairoPdf() /*-{
-         return this.cairo_pdf;
+         return this && this.cairo_pdf || false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this.viewAfterSave;
+         return this && this.viewAfterSave || false;
       }-*/;
 
    }
@@ -256,11 +256,11 @@ public class UserStateAccessor extends Prefs
       protected CompileRNotebookPrefs() {} 
 
       public final native String getAuthor() /*-{
-         return this.author;
+         return this && this.author || "";
       }-*/;
 
       public final native String getType() /*-{
-         return this.type;
+         return this && this.type || "";
       }-*/;
 
    }
@@ -282,7 +282,7 @@ public class UserStateAccessor extends Prefs
       protected CompileRMarkdownNotebookPrefs() {} 
 
       public final native String getFormat() /*-{
-         return this.format;
+         return this && this.format || "html_document";
       }-*/;
 
    }
@@ -328,11 +328,11 @@ public class UserStateAccessor extends Prefs
       protected PublishAccount() {} 
 
       public final native String getName() /*-{
-         return this.name;
+         return this && this.name || "";
       }-*/;
 
       public final native String getServer() /*-{
-         return this.server;
+         return this && this.server || "";
       }-*/;
 
    }

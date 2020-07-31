@@ -196,7 +196,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             int[] splitterArray = new int[leftList_.size() + 1];
             splitterArray[0] = right_.getOffsetWidth();
             for (int i = 0; i < leftList_.size(); i++)
-               splitterArray[i + 1] = leftList_.get(i).getOffsetWidth();
+               splitterArray[i + 1] = splitterArray[i] + leftList_.get(i).getOffsetWidth();
             state.setSplitterPos(splitterArray);
             return state.cast();
          }
