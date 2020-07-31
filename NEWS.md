@@ -85,4 +85,5 @@
 * Fixed issue where indented Python chunks could not be run (#3731)
 * Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
 * Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
+* Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
 
