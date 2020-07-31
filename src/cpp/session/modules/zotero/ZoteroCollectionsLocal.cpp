@@ -483,6 +483,8 @@ void getLocalCollections(std::string key,
    {
       std::string name = userCollection.name;
       int version = userCollection.version;
+      std::string key = userCollection.key;
+      std::string parentKey = userCollection.parentKey;
 
       // see if this is a requested collection
       bool requested =
@@ -498,7 +500,7 @@ void getLocalCollections(std::string key,
          );
          if (it != cacheSpecs.end())
          {
-            ZoteroCollectionSpec collectionSpec(name, version);
+            ZoteroCollectionSpec collectionSpec(name, key, parentKey, version);
             if (it->version != version)
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
             else
@@ -506,7 +508,7 @@ void getLocalCollections(std::string key,
          }
          else
          {
-            downloadCollections.push_back(std::make_pair(name, ZoteroCollectionSpec(name, version)));
+            downloadCollections.push_back(std::make_pair(name, ZoteroCollectionSpec(name, key, parentKey, version)));
          }
       }
    }

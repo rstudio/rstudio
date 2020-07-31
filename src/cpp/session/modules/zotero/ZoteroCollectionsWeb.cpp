@@ -354,7 +354,7 @@ void getWebLibraryForUser(std::string key,
                });
 
                // create collection
-               ZoteroCollectionSpec spec(kMyLibrary, version);
+               ZoteroCollectionSpec spec(kMyLibrary, kMyLibraryCollectionKey, version);
                ZoteroCollection collection = collectionFromItemsDownload(spec, json);
 
                // return it
@@ -396,6 +396,7 @@ void getWebCollectionsForUser(std::string key,
       {
          json::Object collectionJson = json.getObject()["data"].getObject();
          std::string collectionID = collectionJson["key"].getString();
+         std::string parentCollectionID = collectionJson["parentCollection"].getString();
          std::string name = collectionJson[kName].getString();
          int version = collectionJson[kVersion].getInt();
 
@@ -413,7 +414,7 @@ void getWebCollectionsForUser(std::string key,
             );
             if (it != cacheSpecs.end())
             {
-               ZoteroCollectionSpec collectionSpec(name, version);
+               ZoteroCollectionSpec collectionSpec(name, collectionID, parentCollectionID, version);
                if (it->version < version)
                   downloadCollections.push_back(std::make_pair(collectionID, collectionSpec));
                else
@@ -421,7 +422,7 @@ void getWebCollectionsForUser(std::string key,
             }
             else
             {
-               downloadCollections.push_back(std::make_pair(collectionID, ZoteroCollectionSpec(name, version)));
+               downloadCollections.push_back(std::make_pair(collectionID, ZoteroCollectionSpec(name, collectionID, parentCollectionID, version)));
             }
          }
       }

@@ -64,6 +64,8 @@ struct IndexedCollection
    bool empty() const { return file.empty(); }
    int version;
    std::string file;
+   std::string key;
+   std::string parentKey;
 };
 
 std::map<std::string,IndexedCollection> collectionsCacheIndex(const FilePath& cacheDir)
@@ -87,6 +89,8 @@ std::map<std::string,IndexedCollection> collectionsCacheIndex(const FilePath& ca
                IndexedCollection coll;
                coll.version = entryJson[kVersion].getInt();
                coll.file = entryJson[kFile].getString();
+               coll.key = entryJson[kKey].getString();
+               coll.parentKey = entryJson[kParentKey].getString();
                index.insert(std::make_pair(member.getName(),coll));
             });
          }
@@ -108,6 +112,8 @@ void updateCollectionsCacheIndex(const FilePath& cacheDir, const std::map<std::s
       json::Object collJson;
       collJson[kVersion] = item.second.version;
       collJson[kFile] = item.second.file;
+      collJson[kKey] = item.second.key;
+      collJson[kParentKey] = item.second.parentKey;
       indexJson[item.first] = collJson;
    }
 
@@ -132,6 +138,8 @@ Error readCollection(const FilePath& filePath, ZoteroCollection* pCollection)
 
    pCollection->name = collectionJson[kName].getString();
    pCollection->version = collectionJson[kVersion].getInt();
+   pCollection->key = collectionJson[kKey].getString();
+   pCollection->parentKey = collectionJson[kParentKey].getString();
    pCollection->items = collectionJson[kItems].getArray();
 
    return Success();
@@ -175,7 +183,7 @@ ZoteroCollectionSpecs cachedCollectionsSpecs(const std::string& type, const std:
    auto index = collectionsCacheIndex(cacheDir);
    for (auto entry : index)
    {
-      ZoteroCollectionSpec spec(entry.first, entry.second.version);
+      ZoteroCollectionSpec spec(entry.first, entry.second.key, entry.second.parentKey, entry.second.version);
       specs.push_back(spec);
    }
    return specs;
@@ -197,6 +205,8 @@ void updateCachedCollection(const std::string& type, const std::string& context,
    json::Object collectionJson;
    collectionJson[kName] = collection.name;
    collectionJson[kVersion] = collection.version;
+   collectionJson[kKey] = collection.key;
+   collectionJson[kParentKey] = collection.parentKey;
    collectionJson[kItems] = collection.items;
    Error error = core::writeStringToFile(cacheDir.completeChildPath(coll.file), collectionJson.writeFormatted());
    if (error)
@@ -303,9 +313,12 @@ Connection zoteroConnection()
 
 const char * const kName = "name";
 const char * const kVersion = "version";
+const char * const kKey = "key";
+const char * const kParentKey = "parentKey";
 const char * const kItems = "items";
 
 const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
+const char * const kMyLibraryCollectionKey = "A033E139-E005-49D0-8C0A-689B12A80F4F";
 
 const int kNoVersion = -1;
 
@@ -363,7 +376,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          // just return w/o items
          else if (cacheSpec.version == collection.version)
          {
-            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.version);
+            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.key, cacheSpec.parentKey, cacheSpec.version);
             TRACE("Using client cache for <library>");
             handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) });
          }

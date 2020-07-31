@@ -95,6 +95,8 @@ void handleGetCollections(Error error, ZoteroCollections collections, const json
          json::Object collectionJson;
          collectionJson[kName] = collection.name;
          collectionJson[kVersion] = collection.version;
+         collectionJson[kKey] = collection.key;
+         collectionJson[kParentKey] = collection.parentKey;
          collectionJson[kItems] = collection.items;
          collectionsJson.push_back(collectionJson);
       }
@@ -202,6 +204,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       ZoteroCollectionSpec cacheSpec;
       cacheSpec.name = jsonSpec[kName].getString();
       cacheSpec.version = jsonSpec[kVersion].getInt();
+      cacheSpec.key = jsonSpec[kKey].getString();
+      cacheSpec.parentKey = jsonSpec[kParentKey].getString();
       return cacheSpec;
    });
 
