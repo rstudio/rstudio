@@ -287,7 +287,9 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
 {
    std::string sql = R"(
       SELECT
-         collectionName,
+         collections.key as collectionKey,
+	 collections.collectionName as collectionName,
+	 parentCollections.key as parentCollectionKey,
          MAX(items.version) AS version
       FROM
          items
@@ -295,20 +297,28 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
          join libraries on libraries.libraryID = collections.libraryID
          join collectionItems on items.itemID = collectionItems.itemID
          join collections on collectionItems.collectionID = collections.collectionID
+	 left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
       WHERE
          libraries.type = 'user'
          AND itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
       GROUP BY
-         collectionName
+	collections.key
    )";
 
    ZoteroCollectionSpecs specs;
    Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
       ZoteroCollectionSpec spec;
       spec.name = row.get<std::string>("collectionName");
+      spec.key = row.get<std::string>("collectionKey");
 
-      std::string versionStr = readString(row, static_cast<std::size_t>(1), "0");
+      const soci::indicator indicator = row.get_indicator("parentCollectionKey");
+      if (indicator == soci::i_ok) {
+         // If the parent key is null, this is a root level collection
+         spec.parentKey = row.get<std::string>("parentCollectionKey");
+      }
+
+      std::string versionStr = readString(row, static_cast<std::size_t>(3), "0");
       spec.version = safe_convert::stringTo<int>(versionStr, 0);
 
       specs.push_back(spec);
