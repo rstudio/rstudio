@@ -442,32 +442,25 @@ export class AceNodeView implements NodeView {
     });
 
     // allow the enter key to insert a paragraph above in some circumstances
-    this.aceEditor.commands.addCommand({
-      name: "returnKey",
-      bindKey: "Return",
-      exec: () => {
-        // check to see if this is an Enter key at the beginning of a code block
-        // for which any content before the first line is invalid
-        if (this.options.isRequiredFirstLine && this.view.state.selection.empty) {
-          const pos = this.aceEditor?.getCursorPosition();
-          if (pos && pos.column === 0 && pos.row === 0) {
-            if (this.options.isRequiredFirstLine(this.editSession?.getLine(0) || '')) {
-              // noticed that if I hit enter very soon after navigating to the first
-              // character that ace would actually have the editor selection wrong
-              // (perhaps there is an async component to selection propagation?)
-              if (!this.updating) {
-                this.forwardSelection();
-              }
-              if (insertParagraph(this.view.state, this.view.dispatch)) {
-                this.arrowMaybeEscape('line', -1, "golineup");
-                return;
-              }
+    (this.aceEditor.commands as any).on("exec", (event: any) => {
+      if (this.options.isRequiredFirstLine && this.view.state.selection.empty &&
+        event.command.name === "insertstring" && event.args === "\n"
+      ) {
+        const pos = this.aceEditor?.getCursorPosition();
+        if (pos && pos.column === 0 && pos.row === 0) {
+          if (this.options.isRequiredFirstLine(this.editSession?.getLine(0) || '')) {
+            // noticed that if I hit enter very soon after navigating to the first
+            // character that ace would actually have the editor selection wrong
+            // (perhaps there is an async component to selection propagation?)
+            if (!this.updating) {
+              this.forwardSelection();
+            }
+            if (insertParagraph(this.view.state, this.view.dispatch)) {
+              event.stopPropagation();
+              event.preventDefault();
             }
           }
         }
-
-        // default handling
-        this.aceEditor?.execCommand("insertstring", "\n");
       }
     });
 
