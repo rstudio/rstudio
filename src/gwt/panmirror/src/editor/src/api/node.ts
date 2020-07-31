@@ -68,6 +68,7 @@ export interface CodeViewOptions {
   lineNumbers?: boolean;
   bookdownTheorems?: boolean;
   lineNumberFormatter?: (lineNumber: number, lineCount?: number, line?: string) => string;
+  isRequiredFirstLine?: (line: string) => boolean;
 }
 
 export type NodeTraversalFn = (

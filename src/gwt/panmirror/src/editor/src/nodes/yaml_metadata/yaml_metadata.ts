@@ -56,6 +56,7 @@ const extension = (context: ExtensionContext): Extension => {
         code_view: {
           lang: () => 'yaml-frontmatter',
           classes: ['pm-metadata-background-color', 'pm-yaml-metadata-block'],
+          isRequiredFirstLine: (line: string) => /^---/.test(line)
         },
 
         pandoc: {

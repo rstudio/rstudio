@@ -82,6 +82,8 @@ const extension = (context: ExtensionContext): Extension | null => {
           executeRmdChunkFn: ui.execute.executeRmdChunk
             ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
             : undefined,
+
+          isRequiredFirstLine: (line: string) => /^\{/.test(line)
         },
 
         pandoc: {
