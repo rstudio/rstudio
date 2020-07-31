@@ -724,7 +724,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
 
 
    // yaml or json target
-   bool isYAML = bibliographyPath.getExtensionLowerCase() == ".yaml";
+   bool isYAML = bibliographyPath.getExtensionLowerCase() == ".yaml" || bibliographyPath.getExtensionLowerCase() == ".yml";
    bool isJSON = bibliographyPath.getExtensionLowerCase() == ".json";
    if (isYAML || isJSON)
    {
