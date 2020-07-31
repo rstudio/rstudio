@@ -39,6 +39,7 @@ export interface EditorUIChunks {
 export interface ChunkEditor {
   editor: unknown;
   setMode(mode: string): void;
+  executeSelection(): void;
   element: HTMLElement;
   destroy(): void;
 }
