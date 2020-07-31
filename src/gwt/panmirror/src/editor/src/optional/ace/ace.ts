@@ -552,7 +552,7 @@ export class AceNodeView implements NodeView {
           const pos = this.aceEditor.getCursorPosition();
 
           // Execute the selection
-          this.chunk.executeSelection();
+          // this.chunk.executeSelection();
 
           // If the cursor stayed on the last line, step out of the code block
           // if we're not at the end of the doc (this is a no-op when not on the
