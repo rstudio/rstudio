@@ -20,6 +20,11 @@ const kDpi = 96;
 // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
 export const kValidUnits = [kPixelUnit, 'in', 'cm', 'mm', kPercentUnit];
 
+export enum ImageType {
+  Image,
+  Figure,
+}
+
 export interface ImageDimensions {
   naturalWidth: number | null;
   naturalHeight: number | null;

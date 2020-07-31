@@ -235,7 +235,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void initialSelect(int index)
    {
-      if (index >= 0 && display_.getTabCount() > index)
+      if (index < 0)
+         return;
+      if (display_.getTabCount() > index)
       {
          display_.selectTab(index);
       }

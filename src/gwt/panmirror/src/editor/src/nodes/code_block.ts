@@ -27,7 +27,8 @@ import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI, CodeBlockProps } from '../api/ui';
+import { EditorUI } from '../api/ui';
+import { CodeBlockProps } from '../api/ui-dialogs';
 import { hasFencedCodeBlocks } from '../api/pandoc_format';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 import { EditorOptions } from '../api/options';
@@ -64,12 +65,12 @@ const extension = (context: ExtensionContext): Extension => {
             const fontClass = 'pm-fixedwidth-font';
             const attrs = hasAttr
               ? pandocAttrToDomAttr({
-                  ...node.attrs,
-                  classes: [...node.attrs.classes, fontClass],
-                })
+                ...node.attrs,
+                classes: [...node.attrs.classes, fontClass],
+              })
               : {
-                  class: fontClass,
-                };
+                class: fontClass,
+              };
             return ['pre', attrs, ['code', 0]];
           },
         },

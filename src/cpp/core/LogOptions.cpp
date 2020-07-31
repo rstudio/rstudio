@@ -58,9 +58,7 @@ namespace {
 const FilePath kDefaultLogPath("/var/log/rstudio-server");
 #else
 // desktop - store logs under user dir
-const FilePath kDefaultLogPath = core::system::userSettingsPath(core::system::userHomePath(),
-                                                               "RStudio-Desktop",
-                                                                false).completePath("logs");
+const FilePath kDefaultLogPath = core::system:xdg:::userDataDir().completePath("log");
 #endif
 
 std::string logLevelToString(LogLevel logLevel)
