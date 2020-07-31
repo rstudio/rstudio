@@ -172,6 +172,25 @@ std::string collectionSQL(const std::string& name = "")
          AND itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
          %2%
+   UNION
+      SELECT
+         items.key as key,
+         items.version,
+         'collectionKeys' as name,
+         group_concat(collections.key) as value,
+         10000 as fieldOrder
+      FROM
+         items
+	 join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         left join collectionItems on items.itemID = collectionItems.itemID
+	 left join collections on collectionItems.collectionID = collections.collectionID
+         join libraries on items.libraryID = libraries.libraryID
+      WHERE
+         libraries.type = 'user'
+         AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+         %2%
+      GROUP BY items.key
    ORDER BY
       key ASC,
       fieldOrder ASC   )");
@@ -210,6 +229,7 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
    error = execQuery(pConnection, collectionSQL(tableName),
                      [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
 
+
       std::string key = row.get<std::string>("key");
       std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
 
@@ -234,8 +254,16 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
 
       // read the csl
       std::string name = row.get<std::string>("name");
-      std::string value = readString(row, "value");
-      currentItem[name] = value;
+
+      // If the value is NULL, we should just omit it
+      // null values are meaningless
+      soci::indicator indicator = row.get_indicator("value");
+      if (indicator == soci::i_ok)
+      {
+         std::string value = readString(row, "value");
+         // the data was returned without problems
+         currentItem[name] = value;
+      }
    });
 
    // add the final item (if we had one)

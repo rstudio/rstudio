@@ -904,6 +904,18 @@ bool isDateValue(std::string cslFieldName)
                     cslFieldName) != dateFields.end();
 }
 
+json::Array collectionKeysToArray(const std::string collectionKeys)
+{
+   json::Array collectionKeysJson;
+   std::istringstream ss(collectionKeys);
+   std::string collectionKey;
+   while (std::getline(ss, collectionKey, ','))
+   {
+      collectionKeysJson.push_back(collectionKey);
+   }
+   return collectionKeysJson;
+}
+
 // Transforms the value, if needed. Currently the only transform
 // that occurs will be to write a date value as a complex CSL Date.
 // All other values just pass through as is.
@@ -977,6 +989,10 @@ json::Value transformValue(std::string cslFieldName, std::string value)
       }
 
       return std::move(dateJson);
+   }
+   else if (cslFieldName == "collectionKeys")
+   {
+      return collectionKeysToArray(value);
    }
    else
    {
@@ -1082,6 +1098,7 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
       // Get the field mapping for this type
       std::map<std::string, std::string> cslFieldsNames = cslFieldNames(zoteroType);
       cslJson["type"] = cslType(zoteroType);
+
 
       // Process the fields. This will either just apply the field
       // as if to the json or will transform the name and/or value

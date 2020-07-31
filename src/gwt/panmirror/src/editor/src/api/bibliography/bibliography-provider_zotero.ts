@@ -114,10 +114,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 // zotero: true | false                           Globally enables or disables the zotero integration
 //                                                If true, uses all collections. If false uses none.
 //
-// zotero: <collectionname> | [<collectionname>]  A single collection name or an array of collection
-//                                                names that will be used when searching for citation
-// 
-// Be default, zotero integration is disabled. Add this header to enable integration
+// By default, zotero integration is enabled. Add this header to disable integration
 //
 function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
