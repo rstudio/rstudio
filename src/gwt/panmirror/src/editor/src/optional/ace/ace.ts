@@ -36,10 +36,11 @@ import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI, ChunkEditor } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
+import { EditorEvents } from '../../api/events';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 import { ExtensionContext } from '../../api/extension';
-import { DispatchEvent } from '../../api/event-types';
+import { DispatchEvent, ResizeEvent } from '../../api/event-types';
 
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
@@ -120,6 +121,7 @@ export class AceNodeView implements NodeView {
   private editSession?: AceAjax.IEditSession;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
+  private readonly events: EditorEvents;
 
   private readonly runChunkToolbar: HTMLDivElement;
 
@@ -129,8 +131,10 @@ export class AceNodeView implements NodeView {
   private findMarkers: number[];
   private selectionMarker: number | null;
   private queuedSelection: QueuedSelection | null;
+  private resizeTimer: number;
+  private renderedWidth: number;
 
-  private dispatchUnsubscribe: VoidFunction;
+  private readonly subscriptions: VoidFunction[];
 
   constructor(
     node: ProsemirrorNode,
@@ -143,14 +147,16 @@ export class AceNodeView implements NodeView {
   ) {
     // context
     const ui = context.ui;
-    const events = context.events;
     const editorOptions = context.options;
 
     // Store for later
     this.node = node;
     this.view = view;
     this.ui = context.ui;
+    this.events = context.events;
     this.getPos = getPos;
+
+    // Initialize values
     this.mode = "";
     this.escaping = false;
     this.findMarkers = [];
@@ -158,6 +164,9 @@ export class AceNodeView implements NodeView {
     this.renderQueue = renderQueue;
     this.nodeViews = nodeViews;
     this.queuedSelection = null;
+    this.subscriptions = [];
+    this.resizeTimer = 0;
+    this.renderedWidth = 0;
 
     // options
     this.editorOptions = editorOptions;
@@ -190,11 +199,11 @@ export class AceNodeView implements NodeView {
     this.updateMode();
 
     // observe all editor dispatches
-    this.dispatchUnsubscribe = events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
+    this.subscriptions.push(this.events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
       if (tr) {
         this.onEditorDispatch(tr);
       }
-    });
+    }));
 
     // This flag is used to avoid an update loop between the outer and
     // inner editor
@@ -216,7 +225,7 @@ export class AceNodeView implements NodeView {
 
   public destroy() {
     // Unsubscribe from events
-    this.dispatchUnsubscribe();
+    this.subscriptions.forEach((unsub) => unsub());
 
     // Clean up attached editor instance when it's removed from the DOM
     if (this.chunk) {
@@ -581,6 +590,11 @@ export class AceNodeView implements NodeView {
 
     // Disconnect font metrics system after render loop
     (this.aceEditor.renderer as any).on("afterRender", () => {
+      // Update known rendered width
+      if (this.chunk) {
+        this.renderedWidth = this.chunk.element.offsetWidth;
+      }
+
       window.setTimeout(() => {
         if (this.aceEditor) {
           const metrics = (this.aceEditor.renderer as any).$fontMetrics;
@@ -604,6 +618,35 @@ export class AceNodeView implements NodeView {
       this.setSelection(this.queuedSelection.anchor, this.queuedSelection.head);
       this.queuedSelection = null;
     }
+
+    // Subscribe to resize event; will reflow the editor to wrap properly at the
+    // new width
+    this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
+      this.debounceResize();
+    }));
+  }
+
+  /**
+   * Debounced version of editor resize; ensures we don't aggressively resize
+   * while size is still changing.
+   */
+  private debounceResize() {
+    // Clear any previously running resize timer
+    if (this.resizeTimer !== 0) {
+      window.clearTimeout(this.resizeTimer);
+    }
+
+    // Create a new resize timer 
+    this.resizeTimer = window.setTimeout(() => {
+      if (this.chunk && this.aceEditor) {
+        // If the width we last rendered is different than our current width,
+        // trigger an Ace resize event (causes editor to reflow wrapped text)
+        if (this.renderedWidth !== this.chunk.element.offsetWidth) {
+          this.aceEditor.resize();
+        }
+      }
+      this.resizeTimer = 0;
+    }, 500);
   }
 
   private updateMode() {
