@@ -82,6 +82,7 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    public void onCompleted()
    {
+      setRestoreFocusOnClose(false);
       closeDialog();  
    }
    

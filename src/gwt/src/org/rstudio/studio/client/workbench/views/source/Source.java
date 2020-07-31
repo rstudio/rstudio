@@ -1795,12 +1795,13 @@ public class Source implements InsertSourceHandler,
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      doOpenSourceFile(event.getFile(),
-                     event.getFileType(),
-                     event.getPosition(),
-                     null, 
-                     event.getNavigationMethod(),
-                     false);
+      doOpenSourceFile(
+            event.getFile(),
+            event.getFileType(),
+            event.getPosition(),
+            null, 
+            event.getNavigationMethod(),
+            false);
    }
    
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
@@ -1935,6 +1936,9 @@ public class Source implements InsertSourceHandler,
                            null);
                }
             }
+            
+            if (file.focusOnNavigate())
+               target.focus();
          }
          
          private void navigate(final EditingTarget target,
