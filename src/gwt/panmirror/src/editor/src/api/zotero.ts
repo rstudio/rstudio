@@ -27,6 +27,8 @@ export interface ZoteroResult {
 export interface ZoteroCollectionSpec {
   name: string;
   version: number;
+  key: string;
+  parentKey: string;
 }
 
 export interface ZoteroCollection extends ZoteroCollectionSpec {

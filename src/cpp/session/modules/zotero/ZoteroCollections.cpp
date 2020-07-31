@@ -50,7 +50,7 @@ FilePath collectionsCacheDir(const std::string& type, const std::string& context
    // ~/.local/share/rstudio/zotero-collections
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero")
-      .completeChildPath("collections")
+      .completeChildPath("collections-v2")
       .completeChildPath(type)
       .completeChildPath(context);
    Error error = cachePath.ensureDirectory();
