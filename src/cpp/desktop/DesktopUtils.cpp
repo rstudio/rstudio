@@ -63,11 +63,7 @@ void reattachConsoleIfNecessary()
 // SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
-   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
-   FilePath logPath = core::system::userSettingsPath(
-      userHomePath,
-      "RStudio-Desktop").completeChildPath("log");
-   return logPath;
+   return core::system::xdg::userDataDir().completeChildPath("log");
 }
 
 FilePath userWebCachePath()
