@@ -82,6 +82,8 @@ const extension = (context: ExtensionContext): Extension | null => {
           executeRmdChunkFn: ui.execute.executeRmdChunk
             ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
             : undefined,
+
+          createFromPastePattern: /^\{([a-zA-Z0-9_]+).*}.*?\n/m
         },
 
         pandoc: {

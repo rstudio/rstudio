@@ -107,6 +107,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { acePlugins } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
+import { codeViewClipboardPlugin } from '../api/code';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
   // create extension manager
@@ -199,10 +200,12 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   ]);
 
   // additional plugins derived from extensions
+  const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
   if (context.options.codeEditor === "ace") {
-    plugins.push(...acePlugins(manager.codeViews(), context));
+    plugins.push(...acePlugins(codeViews, context));
   }
+  plugins.push(codeViewClipboardPlugin(codeViews));
 
   // register plugins
   manager.registerPlugins(plugins);
