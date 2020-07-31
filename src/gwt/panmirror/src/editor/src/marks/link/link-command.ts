@@ -14,7 +14,8 @@
  */
 
 import { MarkType } from 'prosemirror-model';
-import { LinkEditorFn, LinkProps, EditorUI } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { LinkEditorFn, LinkProps } from '../../api/ui-dialogs';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findChildren } from 'prosemirror-utils';

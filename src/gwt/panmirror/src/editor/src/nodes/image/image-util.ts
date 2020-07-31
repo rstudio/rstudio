@@ -16,7 +16,7 @@
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
-import { ImageProps, attrPartitionKeyvalue } from '../../api/ui';
+import { ImageProps } from '../../api/ui-dialogs';
 import {
   imageSizePropWithUnit,
   isValidImageSizeUnit,
@@ -24,7 +24,7 @@ import {
   isNaturalAspectRatio,
   ImageDimensions,
 } from '../../api/image';
-import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
+import { kWidthAttrib, kHeightAttrib, attrPartitionKeyvalue } from '../../api/pandoc_attr';
 import { kPercentUnit, kPixelUnit } from '../../api/css';
 import { elementInnerDimensions } from '../../api/dom';
 
