@@ -20,8 +20,9 @@ import { PandocServer } from "../pandoc";
 import { expandPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, WritableBibliographyFile } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
+import { join } from 'path';
 
 export const kLocalItemType = 'Local';
 
@@ -40,6 +41,8 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.server = server;
     this.etag = '';
   }
+
+  public name: string = "Local Bibliography";
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
@@ -70,6 +73,20 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
+  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
+    if (!this.bibliography || !this.bibliography.sources) {
+      return [];
+    }
+
+    if (this.projectBibios().length > 0) {
+      return this.projectBibios();
+    }
+
+    const bibliographies = bibliographyPaths(doc, ui);
+    return bibliographies || [];
+  }
+
+
   public items(): BibliographySource[] {
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
@@ -86,9 +103,28 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return this.bibliography?.project_biblios || [];
   }
 
+  public writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[] {
+    if (this.bibliography?.project_biblios
+      && this.bibliography.project_biblios.length > 0) {
+      return this.bibliography?.project_biblios.map(projectBiblio => {
+        return {
+          displayPath: projectBiblio,
+          fullPath: projectBiblio,
+          isProject: true,
+        };
+      });
+    }
+    return bibliographyPaths(doc, ui)?.map(path => {
+      return {
+        displayPath: path,
+        fullPath: join(ui.context.getDefaultResourceDir(), path),
+        isProject: false
+      };
+    }) || [];
+  }
 }
 
-export function bibliographyPaths(doc: ProsemirrorNode): string[] | undefined {
+function bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): string[] | undefined {
   // Gather the files from the document
   return bibliographyFilesFromDoc(parseYamlNodes(doc));
 }

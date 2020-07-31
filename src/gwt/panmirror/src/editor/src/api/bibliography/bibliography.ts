@@ -26,11 +26,19 @@ import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 
+export interface WritableBibliographyFile {
+  displayPath: string;
+  fullPath: string;
+  isProject: boolean;
+}
 
 export interface BibliographyDataProvider {
+  name: string;
+
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  containers(doc: ProsemirrorNode, ui: EditorUI): string[];
   items(): BibliographySource[];
-  projectBibios(): string[];
+  writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[];
 }
 
 export interface Bibliography {
@@ -60,7 +68,6 @@ export class BibliographyManager {
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySource[];
-  private projectBibs?: string[];
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
@@ -86,10 +93,6 @@ export class BibliographyManager {
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySource[]).concat(...providersEntries);
 
-      // Get the project biblios
-      const providersProjectBibs = this.providers.map(provider => provider.projectBibios());
-      this.projectBibs = ([] as string[]).concat(...providersProjectBibs);
-
       this.updateIndex(this.sources);
     }
   }
@@ -109,11 +112,13 @@ export class BibliographyManager {
     return this.allSources().filter(source => source.provider === kLocalItemType);
   }
 
-  public projectBiblios(): string[] {
-    if (this.projectBibs) {
-      return this.projectBibs;
-    }
-    return [];
+  public writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[] {
+    const writablePaths = this.providers.map(provider => provider.writableBibliographyPaths(doc, ui));
+    return ([] as WritableBibliographyFile[]).concat(...writablePaths);
+  }
+
+  public localProviders(): BibliographyDataProvider[] {
+    return this.providers;
   }
 
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {

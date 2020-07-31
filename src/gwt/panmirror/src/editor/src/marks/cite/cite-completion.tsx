@@ -128,8 +128,8 @@ function filterCitations(
   // Now do the regular search
   const searchResults = search(token);
 
-  // If we hav an exact match, no need for completions
-  if (searchResults.length === 1 && searchResults[0].source.id === token) {
+  // If we have an exact match, no need for completions
+  if (searchResults.find(entry => entry.source.id === token)) {
     return [];
   } else {
     return searchResults || [];

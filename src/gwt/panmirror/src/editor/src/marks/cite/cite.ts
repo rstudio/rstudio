@@ -35,9 +35,9 @@ import { Extension, ExtensionContext } from '../../api/extension';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
-import { bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
-import { join } from 'path';
+import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
+import { join } from 'path';
 
 const kCiteCitationsIndex = 0;
 
@@ -623,13 +623,12 @@ export async function insertCitation(
     // (even creating a bibliography if necessary)
 
     // Read bibliographies out of the document and pass those alone
-    const bibliographies = bibliographyPaths(view.state.doc);
     const existingIds = bibManager.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
+      bibliographyFiles: bibManager.writableBibliographyPaths(view.state.doc, ui).map(writableFile => writableFile.displayPath),
       provider,
       csl,
       citeUI: csl ? {
@@ -644,11 +643,13 @@ export async function insertCitation(
       if (!result?.csl.title) {
         await ui.dialogs.alert("This citation can't be added to the bibliography because it is missing required fields.", "Invalid Citation", kAlertTypeError);
       } else {
+
         // Figure out whether this is a project or document level bibliography
-        const project = bibManager.projectBiblios().length > 0;
-        const bibliographyFile = project
-          ? result.bibliographyFile
-          : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+        const writableBiblios = bibManager.writableBibliographyPaths(view.state.doc, ui);
+
+        const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
+        const project = thisWritableBiblio?.isProject || false;
+        const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
         // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
         const cslToWrite = sanitizeForCiteproc(result.csl);
@@ -656,7 +657,7 @@ export async function insertCitation(
         // Write entry to a bibliography file if it isn't already present
         await bibManager.load(ui, view.state.doc);
         if (!bibManager.findIdInLocalBibliography(result.id)) {
-          await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
+          await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]));
         }
 
         const tr = view.state.tr;
@@ -691,14 +692,5 @@ export function performCiteCompletionReplacement(tr: Transaction, pos: number, r
 
 }
 
-function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): string[] {
-  if (projectBiblios.length > 0) {
-    return projectBiblios;
-  } else if (docBiblios) {
-    return docBiblios;
-  } else {
-    return [];
-  }
-}
 
 export default extension;

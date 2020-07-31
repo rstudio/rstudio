@@ -12,12 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
 import { ZoteroCollection, ZoteroServer } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, WritableBibliographyFile } from "./bibliography";
+import { EditorUI } from '../ui';
 
 export const kZoteroItemProvider = 'Zotero';
 
@@ -29,6 +32,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public constructor(server: ZoteroServer) {
     this.server = server;
   }
+
+  public name: string = "Zotero";
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -77,13 +82,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return hasUpdates;
   }
 
+  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
+    return this.collections.map(collection => collection.name);
+  }
+
   public items(): BibliographySource[] {
     const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
     const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
     return zoteroEntries;
   }
 
-  public projectBibios(): string[] {
+  public writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[] {
     return [];
   }
 
@@ -98,7 +107,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     });
     return items || [];
   }
-
 }
 
 
