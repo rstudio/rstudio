@@ -36,9 +36,8 @@
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
-* Updated Rainbow Parentheses colors to be more evenly distributed and better contrast across various themes (#7213)
-* Moved Rainbow Parentheses option to Display in Global Options
 * Add support for navigating source history with mouse forward/back buttons (#7272)
+* Improved error logging of mistyped usernames when using PAM authentication (#7501)
 
 ### RStudio Server Pro
 
