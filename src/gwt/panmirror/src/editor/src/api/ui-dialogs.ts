@@ -34,7 +34,25 @@ export interface EditorDialogs {
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
   insertCite: InsertCiteFn;
+  htmlDialog: EditorHTMLDialogFn;
 }
+
+export type EditorHTMLDialogFn = (
+  title: string,
+  okText: string | null,
+  create: EditorHTMLDialogCreateFn,
+  focus: VoidFunction,
+  validate: EditorHTMLDialogValidateFn
+) => Promise<boolean>;
+
+export type EditorHTMLDialogCreateFn = (
+  containerWidth: number,
+  containerHeight: number,
+  confirm: VoidFunction,
+  cancel: VoidFunction
+) => HTMLElement;
+
+export type EditorHTMLDialogValidateFn = () => string | null;
 
 export const kAlertTypeInfo = 1;
 export const kAlertTypeWarning = 2;
