@@ -134,7 +134,7 @@ export function previousRmdChunks(state: EditorState, pos: number, filter?: (chu
 export function rmdChunk(code: string): EditorRmdChunk | null {
   const lines = code.trimLeft().split('\n');
   if (lines.length > 0) {
-    const meta = lines[0].replace(/^[\s\{]*(.*?)\}?\s*$/, '$1');
+    const meta = lines[0].replace(/^[\s`\{]*(.*?)\}?\s*$/, '$1');
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
     return {
