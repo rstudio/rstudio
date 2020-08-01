@@ -6221,6 +6221,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void zoteroGetCollectionSpecs(ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONSPECS, callback);
+   }
+   
+   @Override
    public void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE, ZOTERO_VALIDATE_WEB_API_KEY, key, callback);
@@ -6757,6 +6763,7 @@ public class RemoteServer implements Server
    private static final String CROSSREF_WORKS = "crossref_works";
    
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
+   private static final String ZOTERO_GET_COLLECTIONSPECS = "zotero_get_collection_specs";
    private static final String ZOTERO_VALIDATE_WEB_API_KEY = "zotero_validate_web_api_key";
    private static final String ZOTERO_DETECT_DATA_DIRECTORY = "zotero_detect_data_directory";
    

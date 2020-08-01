@@ -68,5 +68,14 @@ public class PanmirrorZoteroServer
       });
    }
 
+   public Promise<JavaScriptObject> getCollectionSpecs()
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.zoteroGetCollectionSpecs(
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         );
+      });
+   }
+   
    PanmirrorZoteroServerOperations server_;
 }

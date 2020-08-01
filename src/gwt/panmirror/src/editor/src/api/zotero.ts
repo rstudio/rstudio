@@ -32,7 +32,11 @@ export interface ZoteroCollectionSpec {
 }
 
 export interface ZoteroCollection extends ZoteroCollectionSpec {
-  items: CSL[];
+  items: ZoteroCSL[];
+}
+
+export interface ZoteroCSL extends CSL {
+  collectionKeys?: string[];
 }
 
 export interface ZoteroServer {
@@ -43,5 +47,7 @@ export interface ZoteroServer {
     cached: ZoteroCollectionSpec[],
     useCache: boolean
   ) => Promise<ZoteroResult>;
+  getCollectionSpecs: ()
+    => Promise<ZoteroResult>;
 }
 
