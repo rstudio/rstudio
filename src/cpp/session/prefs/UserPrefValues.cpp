@@ -2520,6 +2520,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowDocOutline(bool val)
 }
 
 /**
+ * Whether to show the margin guide in the visual mode code blocks.
+ */
+bool UserPrefValues::visualMarkdownEditingShowMargin()
+{
+   return readPref<bool>("visual_markdown_editing_show_margin");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
+{
+   return writePref("visual_markdown_editing_show_margin", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2857,6 +2870,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
+      kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroConnectionType,

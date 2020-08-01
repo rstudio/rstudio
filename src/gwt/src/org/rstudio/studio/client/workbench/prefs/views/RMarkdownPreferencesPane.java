@@ -205,6 +205,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
+      
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      lessSpaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
 
       // content width
       visualModeContentWidth_ = numericPref(

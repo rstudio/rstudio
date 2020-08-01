@@ -95,11 +95,6 @@ public class TextEditingTargetPrefsHelper
                if (projectConfig == null)
                  docDisplay.autoDetectIndentation(arg);
             }));
-      releaseOnDismiss.add(prefs.showMargin().bind(
-            (arg) ->
-            {
-               docDisplay.setShowPrintMargin(arg);
-            }));
       releaseOnDismiss.add(prefs.blinkingCursor().bind(
             (arg) ->
             {
@@ -194,6 +189,11 @@ public class TextEditingTargetPrefsHelper
       // Full editors get additional prefs (we don't use these in embedded editors)
       if (prefsSet == PrefsSet.Full)
       {
+         releaseOnDismiss.add(prefs.showMargin().bind(
+               (arg) ->
+               {
+                  docDisplay.setShowPrintMargin(arg);
+               }));
          releaseOnDismiss.add(prefs.showLineNumbers().bind(
                (arg) ->
                {
@@ -213,6 +213,16 @@ public class TextEditingTargetPrefsHelper
                (arg) ->
                {
                   docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
+               }));
+      }
+      
+      // Embedded mode specific prefs
+      if (prefsSet == PrefsSet.Embedded)
+      {
+         releaseOnDismiss.add(prefs.visualMarkdownEditingShowMargin().bind(
+               (arg) ->
+               {
+                  docDisplay.setShowPrintMargin(arg);
                }));
       }
    }

@@ -337,6 +337,7 @@ namespace prefs {
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
+#define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -1525,6 +1526,12 @@ public:
     */
    bool visualMarkdownEditingShowDocOutline();
    core::Error setVisualMarkdownEditingShowDocOutline(bool val);
+
+   /**
+    * Whether to show the margin guide in the visual mode code blocks.
+    */
+   bool visualMarkdownEditingShowMargin();
+   core::Error setVisualMarkdownEditingShowMargin(bool val);
 
    /**
     * The default visual editing mode font size, in points
