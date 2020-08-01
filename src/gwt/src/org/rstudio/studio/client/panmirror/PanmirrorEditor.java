@@ -78,6 +78,9 @@ public class PanmirrorEditor
       PanmirrorEditingLocation previousLocation
    );
    
+   public native String getYamlFrontMatter();
+   public native void applyYamlFrontMatter(String yaml);
+   
    public native void focus();
    public native void blur();
    

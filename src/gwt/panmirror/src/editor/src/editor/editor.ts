@@ -74,6 +74,7 @@ import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
 import { pandocAutoIdentifier } from '../api/pandoc_id';
 import { wrapSentences } from '../api/wrap';
+import { yamlFrontMatter, applyYamlFrontMatter } from '../api/yaml';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 import { getOutline } from '../behaviors/outline';
@@ -595,6 +596,20 @@ export class Editor {
 
     // return markdown (will apply save fixups)
     return this.getMarkdownCode(tr, options);
+  }
+
+  public getYamlFrontMatter() {
+    if (this.schema.nodes.yaml_metadata) {
+      return yamlFrontMatter(this.view.state.doc);
+    } else {
+      return '';
+    }
+  }
+
+  public applyYamlFrontMatter(yaml: string) {
+    if (this.schema.nodes.yaml_metadata) {
+      applyYamlFrontMatter(this.view, yaml);
+    }
   }
 
   public focus() {

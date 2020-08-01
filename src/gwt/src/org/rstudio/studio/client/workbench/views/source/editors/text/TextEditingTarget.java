@@ -4258,18 +4258,32 @@ public class TextEditingTarget implements
                }
             });
    }
-
+   
    private String getRmdFrontMatter()
    {
-      return YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (isVisualEditorActive()) 
+      {
+         return visualMode_.getYamlFrontMatter();
+      } 
+      else 
+      {
+         return YamlFrontMatter.getFrontMatter(docDisplay_);
+      }
    }
 
    private void applyRmdFrontMatter(String yaml)
    {
-      if (YamlFrontMatter.applyFrontMatter(docDisplay_, yaml))
+      boolean applied = false;
+      if (isVisualEditorActive()) 
       {
-         updateRmdFormatList();
+         applied = visualMode_.applyYamlFrontMatter(yaml);
       }
+      else
+      {
+         applied = YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+      }
+      if (applied)
+         updateRmdFormatList();
    }
 
    private RmdSelectedTemplate getSelectedTemplate()
@@ -7666,10 +7680,18 @@ public class TextEditingTarget implements
       autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
 
+   // logical state (may not be physically activated yet due to async loading)
    public boolean isVisualModeActivated()
    {
       return docUpdateSentinel_.getBoolProperty(RMD_VISUAL_MODE, false);
    }
+   
+   // physical state (guaranteed to be loaded and addressable)
+   private boolean isVisualEditorActive() 
+   {
+      return visualMode_ != null && visualMode_.isVisualEditorActive();
+   }
+
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

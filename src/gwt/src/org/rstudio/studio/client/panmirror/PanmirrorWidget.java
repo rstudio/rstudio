@@ -547,6 +547,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       });
    }
    
+   public String getYamlFrontMatter()
+   {
+      return editor_.getYamlFrontMatter();
+   }
+
+   public void applyYamlFrontMatter(String yaml)
+   {
+      editor_.applyYamlFrontMatter(yaml);
+   }
+   
    public void activateDevTools() 
    { 
       ProseMirrorDevTools.load(() -> {

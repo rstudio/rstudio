@@ -157,6 +157,13 @@ public class VisualMode implements VisualModeEditorSync,
       return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
+   
+   public boolean isVisualEditorActive()
+   {
+      return view_.editorContainer().isWidgetActive(panmirror_);
+   }
+   
+   
    public void activate(ScheduledCommand completed)
    {
       if (!isActivated())
@@ -251,7 +258,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
       });
 
-      if (isPanmirrorActive() && (activatingEditor || isDirty_)) {
+      if (isVisualEditorActive() && (activatingEditor || isDirty_)) {
          // set flags
          isDirty_ = false;
          
@@ -612,6 +619,17 @@ public class VisualMode implements VisualModeEditorSync,
             
    }
    
+   public String getYamlFrontMatter()
+   {
+      return panmirror_.getYamlFrontMatter();
+   }
+   
+   public boolean applyYamlFrontMatter(String yaml)
+   {
+      panmirror_.applyYamlFrontMatter(yaml);
+      return true;
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {
@@ -735,7 +753,7 @@ public class VisualMode implements VisualModeEditorSync,
          withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
-            if (!isPanmirrorActive()) 
+            if (!isVisualEditorActive()) 
             {
                syncFromEditor(done, focus);
             }
@@ -958,12 +976,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return VisualModeUtil.getEditorCode(view_);
    }   
-   
-   // is our widget active in the editor container
-   private boolean isPanmirrorActive()
-   {
-      return view_.editorContainer().isWidgetActive(panmirror_);
-   }
+
    
    private TextEditorContainer.Editor getSourceEditor()
    {
