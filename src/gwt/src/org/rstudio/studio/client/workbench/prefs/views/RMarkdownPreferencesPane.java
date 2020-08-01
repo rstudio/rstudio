@@ -181,7 +181,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       CheckBox visualMarkdownIsDefault = checkboxPref(
             "Use visual editing by default for new documents",
             prefs_.visualMarkdownEditingIsDefault());
-      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(7, Unit.PX);
       visualMode.add(visualMarkdownIsDefault);
 
       HelpLink visualModeHelpLink = new HelpLink(
@@ -190,7 +190,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false // no version info
       );
       nudgeRight(visualModeHelpLink);
-      mediumSpaced(visualModeHelpLink);
+      spaced(visualModeHelpLink);
       visualMode.add(visualModeHelpLink);
 
       VerticalPanel visualModeOptions = new VerticalPanel();
@@ -205,6 +205,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
+      
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      lessSpaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
 
       // content width
       visualModeContentWidth_ = numericPref(
