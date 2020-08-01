@@ -66,6 +66,7 @@ import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
+import behaviorEscapeMark from '../behaviors/escape_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
@@ -144,6 +145,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorEmptyMark,
+    behaviorEscapeMark,
     behaviorOutline,
     beahviorCodeBlockInput,
     behaviorPasteText,
