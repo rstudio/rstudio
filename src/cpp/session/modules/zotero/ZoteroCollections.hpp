@@ -99,6 +99,8 @@ struct ZoteroCollectionSource
                         std::vector<std::string>,
                         ZoteroCollectionSpecs,
                         ZoteroCollectionsHandler)> getCollections;
+
+   boost::function<void(std::string, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
 };
 
 // get the entire library using the currently configured source
@@ -111,6 +113,9 @@ void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,
                     ZoteroCollectionsHandler handler);
+
+// get the collection specs for all the collections in the library
+void getCollectionSpecs(ZoteroCollectionSpecsHandler handler);
 
 
 } // end namespace collections

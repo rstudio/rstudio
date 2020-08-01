@@ -454,6 +454,22 @@ void getLocalLibrary(std::string key,
    }
 }
 
+void getLocalCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handler)
+{
+   // connect to the database (log and return cache on error)
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = connect(key, &pConnection);
+   if (error)
+   {
+      LOG_ERROR(error);
+      handler(error, std::vector<ZoteroCollectionSpec>());
+      return;
+   }
+
+   ZoteroCollectionSpecs userCollections = getCollections(pConnection);
+   handler(Success(), userCollections);
+}
+
 void getLocalCollections(std::string key,
                          std::vector<std::string> collections,
                          ZoteroCollectionSpecs cacheSpecs,
@@ -666,6 +682,7 @@ ZoteroCollectionSource localCollections()
    ZoteroCollectionSource source;
    source.getLibrary = getLocalLibrary;
    source.getCollections = getLocalCollections;
+   source.getCollectionSpecs = getLocalCollectionSpecs;
    return source;
 }
 

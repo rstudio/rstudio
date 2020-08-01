@@ -398,6 +398,20 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
    }
 }
 
+void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
+{
+   // get connection if we have o ne
+   Connection conn = zoteroConnection();
+   if (!conn.empty())
+   {
+      conn.source.getCollectionSpecs(conn.context, handler);
+   }
+   else
+   {
+      handler(Success(), std::vector<ZoteroCollectionSpec>());
+   }
+}
+
 void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,

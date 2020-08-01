@@ -992,6 +992,8 @@ json::Value transformValue(std::string cslFieldName, std::string value)
    }
    else if (cslFieldName == "collectionKeys")
    {
+      // Collection Keys are a field containing a comma delimited list of
+      // parent collection keys.
       return collectionKeysToArray(value);
    }
    else

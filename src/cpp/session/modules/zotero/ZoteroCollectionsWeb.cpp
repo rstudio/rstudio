@@ -493,6 +493,42 @@ void getWebLibrary(std::string key,
    });
 }
 
+void getWebCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handler)
+{
+   withUserId(key, [key, handler](Error error, int userID) {
+     if (error)
+     {
+        handler(error, std::vector<ZoteroCollectionSpec>());
+        return;
+     }
+     else
+     {
+        zoteroCollections(key, userID, [handler](Error error,int,json::Value jsonValue) {
+          std::vector<ZoteroCollectionSpec> collectionSpecs;
+          // download items for specified collections
+          json::Array collectionsJson = jsonValue.getArray();
+          for (auto json : collectionsJson)
+          {
+             json::Object collectionJson = json.getObject()["data"].getObject();
+             std::string name = collectionJson[kName].getString();
+             std::string collectionID = collectionJson[kKey].getString();
+
+             // Parent collection will either be the collection key of the parent
+             // or a boolean false (thanks guys)
+             std::string parentCollectionID = "";
+             if (collectionJson["parentCollection"].isString())
+             {
+                parentCollectionID = collectionJson["parentCollection"].getString();
+             }
+
+             int version = collectionJson[kVersion].getInt();
+             collectionSpecs.push_back(ZoteroCollectionSpec(name, collectionID, parentCollectionID, version));
+          }
+          handler(Success(), collectionSpecs);
+        });
+     }
+   });
+}
 
 void getWebCollections(std::string key,
                        std::vector<std::string> collections,
@@ -548,6 +584,7 @@ ZoteroCollectionSource webCollections()
    ZoteroCollectionSource source;
    source.getLibrary = getWebLibrary;
    source.getCollections = getWebCollections;
+   source.getCollectionSpecs = getWebCollectionSpecs;
    return source;
 }
 
