@@ -431,7 +431,6 @@ export class AceNodeView implements NodeView {
     this.aceEditor.on('change', () => {
       if (!this.updating) {
         this.valueChanged();
-        this.forwardSelection();
       }
     });
 
