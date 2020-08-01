@@ -28,6 +28,8 @@ import { selectionIsBodyTopLevel } from '../../api/selection';
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 import { yamlMetadataBlockCapsuleFilter } from './yaml_metadata-capsule';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { fragmentText } from '../../api/fragment';
+import { stripYamlDelimeters } from '../../api/yaml';
 
 const extension = (context: ExtensionContext): Extension => {
   const { ui } = context;
@@ -63,7 +65,12 @@ const extension = (context: ExtensionContext): Extension => {
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.Para, () => {
-              output.writeRawMarkdown(node.content);
+              const yaml =
+                '---\n' +
+                stripYamlDelimeters(fragmentText(node.content)) +
+                '\n---'
+                ;
+              output.writeRawMarkdown(yaml);
             });
           },
         },

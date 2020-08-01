@@ -83,7 +83,9 @@ export function toYamlCode(obj: any): string | null {
 }
 
 export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode.replace(/^\s*---/, '').replace(/(?:---|\.\.\.)([ \t]*)$/, '');
+  return yamlCode
+    .replace(/^[\s-]+/, '')
+    .replace(/[\s-\.]+$/, '');
 }
 
 function logException(e: Error) {
