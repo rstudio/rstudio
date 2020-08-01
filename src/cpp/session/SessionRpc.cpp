@@ -36,6 +36,9 @@ namespace rstudio {
 namespace session {
 namespace {
 
+// a delay used when processing RPC methods (used to simulate network latency)
+int s_rpcDelayMs = -1;
+
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
    
@@ -256,6 +259,12 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType)
 {
+   // delay handling this RPC if requested
+   if (s_rpcDelayMs > 0)
+   {
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(s_rpcDelayMs));
+   }
+   
    // record the time just prior to execution of the event
    // (so we can determine if any events were added during execution)
    using namespace boost::posix_time;
@@ -305,6 +314,11 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
 
       endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
    }
+}
+
+void setRpcDelay(int delayMs)
+{
+   s_rpcDelayMs = delayMs;
 }
 
 Error initialize()
