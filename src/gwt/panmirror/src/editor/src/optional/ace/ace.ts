@@ -324,6 +324,10 @@ export class AceNodeView implements NodeView {
     return true;
   }
 
+  public ignoreMutation(_mutation: MutationRecord | { type: 'selection'; target: Element }) {
+    return true;
+  }
+
   private onEditorDispatch(tr: Transaction) {
     if (tr.selectionSet) {
       this.highlightSelectionAcross(tr.selection);
@@ -419,7 +423,7 @@ export class AceNodeView implements NodeView {
     this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
-    this.aceEditor.on("changeCursor", () => {
+    this.aceEditor.on("changeSelection", () => {
       if (!this.updating) {
         this.forwardSelection();
       }
