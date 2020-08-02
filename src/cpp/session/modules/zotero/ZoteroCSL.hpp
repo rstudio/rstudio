@@ -44,6 +44,7 @@ struct ZoteroCreator
 typedef std::map<std::string,std::vector<ZoteroCreator>> ZoteroCreatorsByKey;
 
 core::json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const ZoteroCreatorsByKey& creators);
+std::string citeKeyForExtra(std::string extraFieldValue);
 
 } // end namespace zotero
 } // end namespace modules

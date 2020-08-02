@@ -27,6 +27,7 @@
 #include <session/SessionAsyncDownloadFile.hpp>
 
 #include "ZoteroUtil.hpp"
+#include "ZoteroCSL.hpp"
 
 using namespace rstudio::core;
 
@@ -235,7 +236,22 @@ ZoteroCollection collectionFromItemsDownload(ZoteroCollectionSpec spec, const js
    json::Array itemsJson;
    json::Array resultItemsJson = json.getArray();
    std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
-      return resultItemJson.getObject()["csljson"];
+
+      const json::Value cslResult = resultItemJson.getObject()["csljson"];
+      json::Object dataObject = resultItemJson.getObject()["data"].getObject();
+      if (dataObject.hasMember("extra"))
+      {
+         const json::Value extraJson = dataObject["extra"];
+         if (extraJson.isString()) {
+            const std::string extraValue = extraJson.getString();
+            std::string citeKey = citeKeyForExtra(extraValue);
+            if (citeKey.length() > 0 && cslResult.isObject())
+            {
+               cslResult.getObject().insert("id", citeKey);
+            }
+         }
+      }
+      return cslResult;
    });
    collection.items = itemsJson;
    return collection;

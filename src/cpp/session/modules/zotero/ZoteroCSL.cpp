@@ -15,6 +15,8 @@
 
 #include "ZoteroCSL.hpp"
 
+#include <core/Log.hpp>
+
 #include <core/Algorithm.hpp>
 
 #include <shared_core/Error.hpp>
@@ -1110,16 +1112,47 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
          const std::string zoteroFieldName = field.first;
          const std::string fieldValue = field.second;
 
+         // convert the name to the proper CSL name
+         std:: string fieldName = zoteroFieldName;
+         const std::string cslName = cslFieldsNames[zoteroFieldName];
+         if (cslName.length() > 0) {
+            fieldName = cslName;
+         }
+
+         // Pinned Citation Keys can either be in the 'extra' field or might be the
+         // WEB:
+         // Pinned key is stored as 'extra' in JSON raw format (not CSL)
+         // Will need to use the following format URL to get data:
+         //
+         // https://api.zotero.org/users/6706487/items/773M89Q2?format=json&include=csljson,data
+         // "csljson" contains the CSL json
+         // "data" contains the data, including the 'extra' field
+         //
+         // LOCAL:
+         // Pinned key is stored as Collection Key in 'extra' field
+
+         // Extra is a field that contains special additional data about items
+         // Most importantly, it stores any pinned citation keys
+         if (zoteroFieldName == "extra")
+         {
+            const std::string citeKey = citeKeyForExtra(fieldValue);
+            if (citeKey.length() > 0)
+            {
+               // There is a citekey
+               cslJson["id"] = citeKey;
+            }
+            else
+            {
+               // There is no citekey, just pass this through
+               cslJson[fieldName] = transformValue(fieldName, fieldValue);
+            }
+         }
          // Type is a special global property that is used to deduce the
          // right name mapping for properties, so it is written above.
          // Just skip it when writing the fields.
-         if (zoteroFieldName != "type") {
-            // write the value
-            std:: string fieldName = zoteroFieldName;
-            const std::string cslName = cslFieldsNames[zoteroFieldName];
-            if (cslName.length() > 0) {
-               fieldName = cslName;
-            }
+         else if (zoteroFieldName != "type")
+         {
+            // Write any value that isn't one of our special cases
             cslJson[fieldName] = transformValue(fieldName, fieldValue);
          }
       }
@@ -1168,6 +1201,24 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
       }
    }
    return cslJson;
+}
+
+std::string citeKeyForExtra(std::string extraFieldValue)
+{
+   // TODO: This should be made more robust (for example should we use a regex
+   // to read to the end of valid cite chars (e.g. break at whitespace)?
+   const std::string citeKeyStr = "Citation Key: ";
+   const std::string::size_type keyPosition = extraFieldValue.find(citeKeyStr);
+   if (keyPosition != std::string::npos)
+   {
+      // There is a citekey
+      return extraFieldValue.substr(keyPosition + citeKeyStr.length());
+   }
+   else
+   {
+      // There is no citekey
+      return "";
+   }
 }
 
 

@@ -28,6 +28,9 @@
       },
       "csljson": {
         "type": "object"
+      },
+      "data": {
+        "type": "object"
       }
     }
   }
