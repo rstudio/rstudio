@@ -130,7 +130,7 @@ const extension = (context: ExtensionContext): Extension => {
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               if (mark.attrs.heading) {
                 output.writeRawMarkdown('[');
-                output.writeText(mark.attrs.heading);
+                output.writeInlines(parent);
                 output.writeRawMarkdown(']');
               } else {
                 output.writeLink(
