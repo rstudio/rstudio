@@ -80,10 +80,17 @@ export class PandocConverter {
     this.pandocCapabilities = pandocCapabilities;
   }
 
-  public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
+  public async toProsemirror(markdown: string, format: string, gfmAutoIdentifiers: boolean): Promise<PandocToProsemirrorResult> {
+
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
-    format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
+    // we always need to read with auto_identifiers so we can catch any auto-generated ids 
+    // required to fulfill links inside the document (we will strip out heading ids that
+    // aren't explicit or a link target using the heading_ids returned with the ast)
+
+    // determine type of auto_ids
+    const autoIds = gfmAutoIdentifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
+    format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds], []);
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -132,8 +139,11 @@ export class PandocConverter {
     // adjust format. we always need to be able to write raw_attribute b/c that's how preprocessors
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
-    // to the source document just the way they came in.
-    let format = adjustedFormat(pandocFormat.fullName, ['raw_html', 'raw_attribute']);
+    // to the source document just the way they came in. for writing markdown from pm we don't 
+    // ever want to generate auto identifiers so we disable them here.
+    let format = adjustedFormat(pandocFormat.fullName,
+      ['raw_html', 'raw_attribute'],                 // always enable
+      ['auto_identifiers', 'gfm_auto_identifiers']); // always disable
 
     // disable selected format options
     format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
@@ -171,11 +181,12 @@ export class PandocConverter {
   }
 }
 
-// adjust the specified format (remove options that are never applicable
-// to editing scenarios)
-function adjustedFormat(format: string, extensions: string[]) {
-  const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-  let newFormat = pandocFormatWith(format, '', extensions.map(ext => `+${ext}`).join('') + kDisabledFormatOptions);
+// adjust the specified format
+function adjustedFormat(format: string, extensions: string[], disabled: string[]) {
+
+  let newFormat = pandocFormatWith(format, '',
+    extensions.map(ext => `+${ext}`).join('') + disabled.map(ext => `-${ext}`).join('')
+  );
 
   // any extension specified needs to not have a - anywhere in the format
   extensions.forEach(ext => {

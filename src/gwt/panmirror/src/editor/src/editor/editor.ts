@@ -458,7 +458,11 @@ export class Editor {
     emitUpdate: boolean,
   ): Promise<EditorSetMarkdownResult> {
     // get the result
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const result = await this.pandocConverter.toProsemirror(
+      markdown,
+      this.pandocFormat.fullName,
+      this.pandocFormat.extensions.gfm_auto_identifiers
+    );
     const { doc, unrecognized } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
@@ -581,7 +585,8 @@ export class Editor {
   // source mode is configured to save a canonical version of markdown)
   public async getCanonical(markdown: string, options: PandocWriterOptions): Promise<string> {
     // convert to prosemirror doc
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const result = await this.pandocConverter.toProsemirror(
+      markdown, this.pandocFormat.fullName, this.pandocFormat.extensions.gfm_auto_identifiers);
 
     // create a state for this doc
     const state = EditorState.create({

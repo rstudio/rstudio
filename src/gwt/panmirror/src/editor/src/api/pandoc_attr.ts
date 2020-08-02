@@ -18,9 +18,9 @@ import { NodeSpec, MarkSpec } from 'prosemirror-model';
 import { PandocToken, PandocExtensions } from './pandoc';
 import { extensionEnabled, extensionIfEnabled, Extension } from './extension';
 
-const PANDOC_ATTR_ID = 0;
-const PANDOC_ATTR_CLASSES = 1;
-const PANDOC_ATTR_KEYVAULE = 2;
+export const kPandocAttrId = 0;
+export const kPandocAttrClasses = 1;
+export const kPandocAttrKeyvalue = 2;
 
 const kDataPmPandocAttr = 'data-pm-pandoc-attr';
 
@@ -71,9 +71,9 @@ export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
 export function pandocAttrReadAST(tok: PandocToken, index: number) {
   const pandocAttr = tok.c[index];
   return {
-    id: pandocAttr[PANDOC_ATTR_ID] || undefined,
-    classes: pandocAttr[PANDOC_ATTR_CLASSES],
-    keyvalue: pandocAttr[PANDOC_ATTR_KEYVAULE],
+    id: pandocAttr[kPandocAttrId] || undefined,
+    classes: pandocAttr[kPandocAttrClasses],
+    keyvalue: pandocAttr[kPandocAttrKeyvalue],
   };
 }
 

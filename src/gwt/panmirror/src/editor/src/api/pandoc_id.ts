@@ -13,6 +13,8 @@
  *
  */
 
+import { emojis, SkinTone, emojiForAllSkinTones } from "./emoji";
+
 // emulate pandoc behavior (https://pandoc.org/MANUAL.html#headings-and-sections)
 export function pandocAutoIdentifier(text: string) {
   return text
@@ -28,4 +30,27 @@ export function pandocAutoIdentifier(text: string) {
     // Remove everything up to the first letter 
     // (identifiers may not begin with a number or punctuation mark
     .replace(/^[^A-Za-z]+/, '');
+}
+
+// emulate github behavior: 
+// https://pandoc.org/MANUAL.html#extension-gfm_auto_identifiers
+export function gfmAutoIdentifier(text: string) {
+  // unemoji 
+  // TODO: if necessary
+  // https://github.com/jgm/pandoc/blob/83880b0dbc318703babfbb6905b1046fa48f1216/src/Text/Pandoc/Shared.hs#L528
+  for (const emjoi of emojis(SkinTone.None)) {
+    emojiForAllSkinTones(emjoi).forEach(skinToneEmoji => {
+      const charLoc = text.indexOf(skinToneEmoji.emoji);
+      if (charLoc !== -1) {
+        text = text.substr(0, charLoc) + skinToneEmoji.aliases[0] + text.substr(charLoc + skinToneEmoji.emoji.length);
+      }
+    });
+  }
+
+  // other transformations
+  // https://github.com/jgm/pandoc/blob/83880b0dbc318703babfbb6905b1046fa48f1216/src/Text/Pandoc/Shared.hs#L539
+  return text
+    .replace(/[^ \t\w\-_]/g, '')  // filterPunct
+    .replace(/[ \t]/g, '-')       // spaceToDash
+    .toLowerCase();               // toLower
 }

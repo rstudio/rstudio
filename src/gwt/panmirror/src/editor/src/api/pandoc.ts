@@ -147,6 +147,7 @@ export interface PandocAst {
   blocks: PandocToken[];
   'pandoc-api-version': PandocApiVersion;
   meta: any;
+  heading_ids?: string[]; // used only for reading not writing
 }
 
 export type PandocApiVersion = number[];
