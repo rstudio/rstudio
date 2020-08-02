@@ -22,6 +22,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -39,6 +41,51 @@ import jsinterop.base.JsPropertyMap;
 public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteResult>
 {
 
+   private enum BibliographyType {
+      yaml {
+         @Override
+         public String displayName()
+         {
+            return "Yaml";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "yaml";
+         }
+      },
+      bibtex {
+         @Override
+         public String displayName()
+         {
+            return "Bibtex";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "bib";
+         }
+      },
+      json {
+         @Override
+         public String displayName()
+         {
+            return "Json";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "json";
+         }
+      };
+      
+      public abstract String displayName();
+      public abstract String fileExtension();
+   }
+   
    public PanmirrorInsertCiteDialog(PanmirrorInsertCiteProps citeProps,
          OperationWithInput<PanmirrorInsertCiteResult> operation)
    {
@@ -52,6 +99,21 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 
       setBibliographies(citeProps.bibliographyFiles);
       previewScrollPanel_.setSize("100%", "160px");
+
+      
+      // Bibliography Types (for when user is creating a new bibliography)
+      for (BibliographyType bibType : BibliographyType.values()) {
+         createBibliographyTypes_.addItem(bibType.displayName(), bibType.fileExtension());   
+      }
+      createBibliographyTypes_.addChangeHandler(new ChangeHandler(){
+
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            String extension = createBibliographyTypes_.getSelectedValue();
+            String currentFileName = createBibliographyFileName_.getValue();
+            createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension));         
+         }});
 
       if (citeProps_.citeUI != null)
       {
@@ -269,7 +331,8 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          // Show create UI
          createBibliographyPanel_.setVisible(true);
          addTobibliographyPanel_.setVisible(false);
-         createBibliographyFileName_.setText("references.bib");
+         createBibliographyFileName_.setText(ensureExtension("references", BibliographyType.yaml.fileExtension()));
+         createBibliographyTypes_.setVisible(true);
       }
       else
       {
@@ -277,12 +340,13 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          // Show add UI
          createBibliographyPanel_.setVisible(false);
          addTobibliographyPanel_.setVisible(true);
+         createBibliographyTypes_.setVisible(false);
          for (String file : bibliographyFiles)
          {
             bibliographies_.addItem(file);
          }
       }
-   }
+   } 
 
    private void displayPreview(PanmirrorInsertCiteField[] fields)
    {
@@ -347,6 +411,8 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    VerticalPanel createBibliographyPanel_;
    @UiField
    TextBox createBibliographyFileName_;
+   @UiField
+   FormListBox createBibliographyTypes_;
 
    
    interface Binder extends UiBinder<Widget, PanmirrorInsertCiteDialog>
@@ -364,6 +430,17 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          else
             return title;
       }
+   }
+   
+   private static String ensureExtension(String fileName, String extension) {
+      int lastDot = fileName.lastIndexOf(".");
+      if (lastDot == -1) {
+         return fileName + "." + extension;
+      } else {
+         String fileNoExt = fileName.substring(0, lastDot);
+         return fileNoExt + "." + extension;   
+      }           
+
    }
    
    private static String kUnknownError = "An error occurred while loading citation data for this DOI.";

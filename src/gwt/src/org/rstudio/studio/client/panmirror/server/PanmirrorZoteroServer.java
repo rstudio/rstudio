@@ -13,7 +13,6 @@
  *
  */
 
-
 package org.rstudio.studio.client.panmirror.server;
 
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
@@ -32,50 +31,44 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorZoteroServer
 {
-   public PanmirrorZoteroServer() {
+   public PanmirrorZoteroServer()
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
    @Inject
    void initialize(PanmirrorZoteroServerOperations server)
    {
       server_ = server;
    }
-   
+
    public Promise<Boolean> validateWebAPIKey(String key)
    {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
-         server_.zoteroValidateWebAPIKey(
-            key,
-            new PromiseServerRequestCallback<Boolean>(resolve, reject)
-         );
+         server_.zoteroValidateWebAPIKey(key,
+               new PromiseServerRequestCallback<Boolean>(resolve, reject));
       });
    }
-   
-   public Promise<JavaScriptObject> getCollections(String file, 
-                                                   JsArrayString collections,
+
+   public Promise<JavaScriptObject> getCollections(String file, JsArrayString collections,
                                                    JsArray<PanmirrorZoteroCollectionSpec> cached,
                                                    boolean useCache)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.zoteroGetCollections(
-            file,
-            collections,
-            cached,
-            useCache,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
-         );
-      });
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetCollections(file, collections, cached, useCache,
+                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
+            });
    }
 
    public Promise<JavaScriptObject> getCollectionSpecs()
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.zoteroGetCollectionSpecs(
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
-         );
-      });
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetCollectionSpecs(
+                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
+            });
    }
-   
+
    PanmirrorZoteroServerOperations server_;
 }

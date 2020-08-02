@@ -38,7 +38,6 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResul
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;

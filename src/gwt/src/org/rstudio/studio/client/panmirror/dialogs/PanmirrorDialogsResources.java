@@ -48,6 +48,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String flexTablePreviewName();
       String flexTablePreviewValue();
       String disabled();
+      String listBox();
    }
 
    @Source("PanmirrorDialogsStyles.css")

@@ -26,6 +26,7 @@
             styleName="{res.styles.fullWidth} {res.styles.spaced}"
             ui:field="citationId_" />
                     
+                    
         <rw:FormLabel
             styleName="{res.styles.fullWidth} {res.styles.spaced}"
             text="Citation:" />
@@ -57,15 +58,41 @@
         <g:VerticalPanel
             styleName="{res.styles.fullWidth}"
             ui:field="createBibliographyPanel_">
-            <rw:FormLabel
-                for="{ElementIds.getVisualMdInsertCiteCreateBib}"
-                styleName="{res.styles.fullWidth} {res.styles.spaced}"        
-                text="Create bibliography:" />    
             
-            <rw:FormTextBox
-                elementId="{ElementIds.getVisualMdInsertCiteCreateBib}"
-                styleName="{res.styles.fullWidth} {res.styles.spaced}"
-                ui:field="createBibliographyFileName_" />
+            <g:HorizontalPanel
+            	styleName="{res.styles.fullWidth} {res.styles.spaced}">
+
+            	<g:VerticalPanel
+            		styleName="{res.styles.fullWidth} {res.styles.spaced}">
+
+		            <rw:FormLabel
+		                for="{ElementIds.getVisualMdInsertCiteCreateBib}"
+		                styleName="{res.styles.fullWidth} {res.styles.spaced}"        
+		                text="Create bibliography file:" />    
+	
+		            <rw:FormTextBox
+		                elementId="{ElementIds.getVisualMdInsertCiteCreateBib}"
+		                styleName="{res.styles.fullWidth} {res.styles.spaced}"
+		                ui:field="createBibliographyFileName_" />
+	
+                </g:VerticalPanel>
+
+            	<g:VerticalPanel
+            		styleName="{res.styles.fullWidth} {res.styles.spaced}">
+	                
+		            <rw:FormLabel
+		                for="{ElementIds.getVisualMdInsertCiteCreateBibType}"
+		                styleName="{res.styles.fullWidth} {res.styles.spaced}"        
+		                text="Format:" />    
+	
+		            <rw:FormListBox
+		                elementId="{ElementIds.getVisualMdInsertCiteCreateBibType}"
+		                styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.listBox}"
+		                ui:field="createBibliographyTypes_" />    
+            	
+            	</g:VerticalPanel>
+
+            </g:HorizontalPanel>
         </g:VerticalPanel>
     </g:VerticalPanel>
 </ui:UiBinder>
