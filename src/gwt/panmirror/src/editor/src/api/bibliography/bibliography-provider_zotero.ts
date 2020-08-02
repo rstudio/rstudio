@@ -101,7 +101,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     const items = collection.items?.map(item => {
       return {
         ...item,
-        id: suggestCiteId([], item),
+        id: item.id || suggestCiteId([], item),
         provider: kZoteroItemProvider,
       };
     });
