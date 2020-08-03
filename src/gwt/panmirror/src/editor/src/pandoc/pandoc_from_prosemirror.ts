@@ -217,7 +217,7 @@ class PandocWriter implements PandocOutput {
           // if this is a line block, convert leading nbsp to regular space,
           if (!this.options.writeSpaces) {
             textRun = textRun.replace(/(^|\n)+(\u00A0+)/g, (_match, p1, p2) => {
-              return p1 + Array(p2.length).join(' ');
+              return p1 + Array(p2.length + 1).join(' ');
             });
           }
           this.writeToken(PandocTokenType.Str, textRun);
