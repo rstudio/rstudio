@@ -59,6 +59,10 @@
    width: 100%;
 }
 
+.dialog .fullWidthTable {
+	width: 100%;
+}
+
 .spaced {
    margin-bottom: 10px;
 }

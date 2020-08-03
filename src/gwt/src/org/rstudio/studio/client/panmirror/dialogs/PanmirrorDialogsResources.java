@@ -32,6 +32,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String checkBox();
       String fullWidth();
       String fullWidthSelect();
+      String fullWidthTable();
       String infoLabel();
       String imageDialogTabs();
       String linkDialogTabs();

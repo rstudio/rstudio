@@ -42,7 +42,7 @@
         </g:ScrollPanel>
 
         <g:VerticalPanel
-            styleName="{res.styles.fullWidth}"
+            styleName="{res.styles.fullWidthTable}"
             ui:field="addTobibliographyPanel_">
             <rw:FormLabel
                 for="{ElementIds.getVisualMdInsertCiteBib}"
@@ -51,16 +51,16 @@
         
             <rw:FormListBox
                 elementId="{ElementIds.getVisualMdInsertCiteBib}"
-                styleName="{res.styles.fullWidthSelect} {res.styles.spaced}"
+                styleName="{res.styles.fullWidthSelect} {res.styles.spaced} {res.styles.listBox}"
                 ui:field="bibliographies_" />
         </g:VerticalPanel>
 
         <g:VerticalPanel
-            styleName="{res.styles.fullWidth}"
+            styleName="{res.styles.fullWidthTable}"
             ui:field="createBibliographyPanel_">
             
             <g:HorizontalPanel
-            	styleName="{res.styles.fullWidth} {res.styles.spaced}">
+            	styleName="{res.styles.fullWidthTable} {res.styles.spaced}">
 
             	<g:VerticalPanel
             		styleName="{res.styles.fullWidth} {res.styles.spaced}">
@@ -78,7 +78,7 @@
                 </g:VerticalPanel>
 
             	<g:VerticalPanel
-            		styleName="{res.styles.fullWidth} {res.styles.spaced}">
+            		styleName="{res.styles.fullWidthTable} {res.styles.spaced}">
 	                
 		            <rw:FormLabel
 		                for="{ElementIds.getVisualMdInsertCiteCreateBibType}"
