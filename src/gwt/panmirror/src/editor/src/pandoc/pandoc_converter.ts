@@ -107,6 +107,7 @@ export class PandocConverter {
     const result = pandocToProsemirror(
       ast,
       this.schema,
+      format.extensions,
       this.readers,
       this.tokensFilters,
       this.blockReaders,

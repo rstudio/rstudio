@@ -21,8 +21,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsert, OmniInsertGroup } from '../../api/omni_insert';
-
-import { MathType, delimiterForType } from './math';
+import { MathType, delimiterForType } from '../../api/math';
 
 export class InsertInlineMathCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {

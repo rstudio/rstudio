@@ -32,6 +32,10 @@ export const kAlignAttrib = 'align';
 export const kCodeBlockAttr = 0;
 export const kCodeBlockText = 1;
 
+export const kSpanAttr = 0;
+export const kSpanChildren = 1;
+
+
 export interface PandocAttr {
   id: string;
   classes: string[];

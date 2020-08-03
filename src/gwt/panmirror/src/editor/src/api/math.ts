@@ -15,6 +15,15 @@
 
 
 import { EditorUI } from "./ui";
+import { PandocToken } from "./pandoc";
+
+export const kMathType = 0;
+export const kMathContent = 1;
+
+export enum MathType {
+  Inline = 'InlineMath',
+  Display = 'DisplayMath',
+}
 
 export interface EditorMath {
   typeset: (el: HTMLElement, math: string, priority: boolean) => Promise<boolean>;
@@ -46,4 +55,17 @@ export function editorMath(ui: EditorUI): EditorMath {
 
     }
   };
+}
+
+export function delimiterForType(type: string) {
+  if (type === MathType.Inline) {
+    return '$';
+  } else {
+    return '$$';
+  }
+}
+
+export function stringifyMath(tok: PandocToken) {
+  const delimter = delimiterForType(tok.c[kMathType].t);
+  return delimter + tok.c[kMathContent] + delimter;
 }

@@ -191,7 +191,7 @@ export class UITools {
     this.attr = {
       propsToInput: attrPropsToInput,
       inputToProps: attrInputToProps,
-      pandocAutoIdentifier
+      pandocAutoIdentifier: (text: string) => pandocAutoIdentifier(text, false)
     };
 
     this.image = {

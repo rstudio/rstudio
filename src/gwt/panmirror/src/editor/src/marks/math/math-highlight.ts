@@ -18,8 +18,7 @@ import { DecorationSet, Decoration } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 
 import { markHighlightPlugin } from '../../api/mark-highlight';
-
-import { delimiterForType } from './math';
+import { delimiterForType } from '../../api/math';
 
 const key = new PluginKey<DecorationSet>('math-highlight');
 

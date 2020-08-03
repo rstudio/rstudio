@@ -16,16 +16,17 @@
 import { Plugin, PluginKey, EditorState, Transaction, Selection } from "prosemirror-state";
 import { Schema } from "prosemirror-model";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
+import { keymap } from "prosemirror-keymap";
+import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 
 import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
+
 import { getMarkRange, getMarkAttrs } from "../../api/mark";
-import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
-import { EditorMath } from "../../api/math";
+
+import { EditorMath, MathType } from "../../api/math";
 import { EditorUI } from "../../api/ui";
 import { kSetMarkdownTransaction } from "../../api/transaction";
 
-import { MathType } from "./math";
-import { keymap } from "prosemirror-keymap";
 
 
 // NOTE: rendered equations don't curently show selection background color when part
