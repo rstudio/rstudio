@@ -26,6 +26,7 @@ import {
   PandocInlineHTMLReaderFn,
   PandocWriterOptions,
   PandocTokensFilterFn,
+  PandocExtensions,
 } from '../api/pandoc';
 
 import { haveTableCellsWithInlineRcode } from '../api/rmd';
@@ -80,7 +81,7 @@ export class PandocConverter {
     this.pandocCapabilities = pandocCapabilities;
   }
 
-  public async toProsemirror(markdown: string, format: string, gfmAutoIdentifiers: boolean): Promise<PandocToProsemirrorResult> {
+  public async toProsemirror(markdown: string, format: PandocFormat): Promise<PandocToProsemirrorResult> {
 
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
@@ -89,8 +90,8 @@ export class PandocConverter {
     // aren't explicit or a link target using the heading_ids returned with the ast)
 
     // determine type of auto_ids
-    const autoIds = gfmAutoIdentifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
-    format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds], []);
+    const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
+    const targetFormat = adjustedFormat(format.fullName, ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds], []);
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -102,7 +103,7 @@ export class PandocConverter {
       markdown = pandocMarkdownWithBlockCapsules(markdown, filter);
     });
 
-    const ast = await this.pandoc.markdownToAst(markdown, format, []);
+    const ast = await this.pandoc.markdownToAst(markdown, targetFormat, []);
     const result = pandocToProsemirror(
       ast,
       this.schema,
