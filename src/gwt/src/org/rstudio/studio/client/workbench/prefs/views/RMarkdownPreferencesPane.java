@@ -31,9 +31,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -364,28 +362,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
    @Override
    public boolean validate()
-   {
-      GlobalDisplay globalDislay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      
-      boolean valid =  visualModeWrapColumn_.validate() &&
-                       visualModeContentWidth_.validate();
-      
-      if (valid)
-      {
-         if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB))
-         {
-            if ((zoteroApiKey_.getKey().trim().isEmpty()))
-            {
-               globalDislay.showErrorMessage(
-                  "Error", "You must provide a Zotero API Key for access to web libraries."
-               );
-               zoteroApiKey_.focus();
-               valid = false;
-            } 
-         }
-      }
-      
-      return valid;
+   {  
+      return visualModeWrapColumn_.validate() && visualModeContentWidth_.validate();
    }
 
    @Override
