@@ -412,6 +412,14 @@ public class ProfilerEditingTarget implements EditingTarget,
                                   boolean highlightLine)
    {
    }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  Command onNavigationCompleted)
+   {
+   }
 
    @Override
    public void restorePosition(SourcePosition position)
