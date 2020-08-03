@@ -27,7 +27,7 @@
 * The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
 * The font used in the editor and console can now be customized on RStudio Server. (#2534)
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
-* For added security, all cookies are now marked as `SameSite=Lax`. The new option `www-iframe-embedding` marks cookies as `SameSite=None` so RStudio can be used embedded in an IFrame. The new option `www-legacy-cookies` provides a behavior compatible with older browsers. (#6608)
+* The new option `www-same-site` provides support for the `SameSite` attribute on cookies issued by RStudio. (#6608)
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
@@ -54,7 +54,6 @@
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
 * R sessions can now be renamed from within the session or the home page. (Pro #1572)
 * Project Sharing now works on Launcher sessions.
-* Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
 
 ### Bugfixes
 
@@ -83,6 +82,3 @@
 * Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
 * Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
 * Fixed issue where indented Python chunks could not be run (#3731)
-* Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
-* Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
-

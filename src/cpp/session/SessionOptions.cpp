@@ -125,11 +125,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description user("user");
    options_description misc("misc");
    std::string saveActionDefault;
+   int sameSite;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&runTests, &runScript, &verify, &program, &log, &docs, &www,
                       &session, &allow, &r, &limits, &external, &git, &user, &misc,
-                      &saveActionDefault);
+                      &saveActionDefault, &sameSite);
 
    addOverlayOptions(&misc);
 
@@ -178,6 +179,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // resolve scope
    scope_ = r_util::SessionScope::fromProjectId(projectId_, scopeId_);
    scopeState_ = core::r_util::ScopeValid;
+
+   sameSite_ = static_cast<rstudio::core::http::Cookie::SameSite>(sameSite);
 
    // call overlay hooks
    resolveOverlayOptions();

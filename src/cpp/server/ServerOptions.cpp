@@ -14,6 +14,7 @@
  */
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerConstants.hpp>
 
 #include <iosfwd>
 #include <fstream>
@@ -179,10 +180,11 @@ ProgramStatus Options::read(int argc,
    std::string authLoginPageHtml;
    std::string authRdpLoginPageHtml;
    std::string authMinimumUserId;
+   std::string sameSite;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&verify, &server, &www, &rsession, &database, &auth, &monitor,
-                      &wwwAllowedOrigins, &authLoginPageHtml, &authRdpLoginPageHtml,
+                      &sameSite, &wwwAllowedOrigins, &authLoginPageHtml, &authRdpLoginPageHtml,
                       &authMinimumUserId);
 
    // overlay hook
@@ -213,6 +215,21 @@ ProgramStatus Options::read(int argc,
    // check auth revocation dir - if unspecified, it should be put under the server data dir
    if (authRevocationListDir_.empty())
       authRevocationListDir_ = serverDataDir_;
+
+   if (sameSite != kSameSiteOmitOption && 
+      sameSite != kSameSiteNoneOption &&
+      //sameSite != kSameSiteStrictOption &&
+      sameSite != kSameSiteLaxOption)
+   {
+      program_options::reportError("Invalid SameSite option: " + sameSite, ERROR_LOCATION);
+      return ProgramStatus::exitFailure();
+   }
+   if (sameSite == kSameSiteNoneOption)
+      wwwSameSite_ = rstudio::core::http::Cookie::SameSite::None;
+   else if (sameSite == kSameSiteLaxOption)
+      wwwSameSite_ = rstudio::core::http::Cookie::SameSite::Lax;
+   else
+      wwwSameSite_ = rstudio::core::http::Cookie::SameSite::Undefined;
 
    // call overlay hooks
    resolveOverlayOptions();

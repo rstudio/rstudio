@@ -28,7 +28,6 @@ class Request;
 
 #define kLegacyCookieSuffix "-legacy"
 
-
 class Cookie
 {
 public:
@@ -39,16 +38,6 @@ public:
       Lax,
       Strict
    };
-
-   static SameSite selectSameSite(bool legacy, bool iFramed)
-   {
-      // select between legacy and iframe behaviors for the cookie
-      return iFramed
-               ? SameSite::None
-               : (legacy
-                     ? SameSite::Undefined
-                     : SameSite::Lax);
-   }
 
    Cookie(const Request& request,
           const std::string& name,

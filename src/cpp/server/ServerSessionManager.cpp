@@ -108,10 +108,8 @@ core::system::ProcessConfig sessionProcessConfig(
                            options.getOverlayOption("ssl-enabled") == "1";
    args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
                                  useSecureCookies ? "1" : "0"));
-   args.push_back(std::make_pair("--" kIFrameEmbeddingSessionOption,
-                                 options.wwwIFrameEmbedding() ? "1" : "0"));
-   args.push_back(std::make_pair("--" kLegacyCookiesSessionOption,
-                                 options.wwwLegacyCookies() ? "1" : "0"));
+   args.push_back(std::make_pair("--" kSameSiteSessionOption,
+                                 safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
    // create launch token if we haven't already
    if (s_launcherToken.empty())
