@@ -163,8 +163,7 @@ public class VisualMode implements VisualModeEditorSync,
       return view_.editorContainer().isWidgetActive(panmirror_);
    }
    
-   
-   public void activate(ScheduledCommand completed)
+   public void withActivatedVisualEditor(ScheduledCommand completed)
    {
       if (!isActivated())
       {
@@ -179,6 +178,11 @@ public class VisualMode implements VisualModeEditorSync,
       {
          completed.execute();
       }
+   }
+   
+   public void activate(ScheduledCommand completed)
+   {
+      withActivatedVisualEditor(completed);
    }
   
    public void deactivate(ScheduledCommand completed)
@@ -676,7 +680,7 @@ public class VisualMode implements VisualModeEditorSync,
 
    public void focus()
    {
-      panmirror_.focus();
+      withActivatedVisualEditor(() -> panmirror_.focus());
    }
    
    private void manageUI(boolean activate, boolean focus)
