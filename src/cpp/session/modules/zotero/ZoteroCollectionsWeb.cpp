@@ -237,7 +237,7 @@ ZoteroCollection collectionFromItemsDownload(ZoteroCollectionSpec spec, const js
    json::Array resultItemsJson = json.getArray();
    std::transform(resultItemsJson.begin(), resultItemsJson.end(), std::back_inserter(itemsJson), [](const json::Value& resultItemJson) {
 
-      const json::Value cslResult = resultItemJson.getObject()["csljson"];
+      json::Object cslResult = resultItemJson.getObject()["csljson"].getObject();
       json::Object dataObject = resultItemJson.getObject()["data"].getObject();
       if (dataObject.hasMember("extra"))
       {
@@ -247,7 +247,7 @@ ZoteroCollection collectionFromItemsDownload(ZoteroCollectionSpec spec, const js
             std::string citeKey = citeKeyForExtra(extraValue);
             if (citeKey.length() > 0 && cslResult.isObject())
             {
-               cslResult.getObject().insert("id", citeKey);
+               cslResult.insert("id", citeKey);
             }
          }
       }

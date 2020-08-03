@@ -18,6 +18,7 @@
 #include <core/Log.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -1130,7 +1131,6 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
          //
          // LOCAL:
          // Pinned key is stored as Collection Key in 'extra' field
-
          // Extra is a field that contains special additional data about items
          // Most importantly, it stores any pinned citation keys
          if (zoteroFieldName == "extra")
@@ -1205,14 +1205,18 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
 
 std::string citeKeyForExtra(std::string extraFieldValue)
 {
-   // TODO: This should be made more robust (for example should we use a regex
-   // to read to the end of valid cite chars (e.g. break at whitespace)?
    const std::string citeKeyStr = "Citation Key: ";
    const std::string::size_type keyPosition = extraFieldValue.find(citeKeyStr);
    if (keyPosition != std::string::npos)
    {
-      // There is a citekey
-      return extraFieldValue.substr(keyPosition + citeKeyStr.length());
+      const std::string restOfExtra = extraFieldValue.substr(keyPosition + citeKeyStr.length());
+      boost::smatch match;
+      if (regex_utils::match(restOfExtra, match, boost::regex("^\\S*")))
+      {
+         // There is a citekey
+         return match[0];
+      }
+      return "";
    }
    else
    {
