@@ -38,9 +38,23 @@ export class InsertCitationCommand extends ProsemirrorCommand {
           return false;
         }
 
+
+        if (dispatch) {
+          const tr = state.tr;
+          const citeMark = schema.marks.cite.create();
+          const cite = schema.text(`[@]`, [citeMark]);
+          tr.replaceSelectionWith(cite, false);
+          const citeIdMark = schema.marks.cite_id.create();
+          tr.addMark(state.selection.from + 1, state.selection.from + 2, citeIdMark);
+          setTextSelection(state.selection.from + 2)(tr);
+          dispatch(tr);
+        }
+
+        /*
         if (dispatch && view) {
           showInsertCitationPopup(events);
         }
+        */
 
         return true;
       },
@@ -51,7 +65,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         priority: 1,
         image: () => (ui.prefs.darkMode() ? ui.images.omni_insert!.citation_dark! : ui.images.omni_insert!.citation!),
       },
-      false
+      //false
     );
   }
 }
