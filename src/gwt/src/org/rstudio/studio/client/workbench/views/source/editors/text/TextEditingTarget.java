@@ -1198,6 +1198,21 @@ public class TextEditingTarget implements
       });
    }
    
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  Command onNavigationCompleted)
+   {
+      ensureTextEditorActive(() -> {
+         
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         if (onNavigationCompleted != null)
+            onNavigationCompleted.execute();
+         
+      });
+   }
+   
    // These methods are called by SourceNavigationHistory and source pane management
    // features (e.g. external source window and source columns) so need to check for
    // and dispatch to visual mode
@@ -2456,7 +2471,14 @@ public class TextEditingTarget implements
 
    public void focus()
    {
-      view_.editorContainer().focus();
+      if (isVisualModeActivated())
+      {
+         visualMode_.focus();
+      }
+      else
+      {
+         view_.editorContainer().focus();
+      }
    }
 
    public String getSelectedText()
