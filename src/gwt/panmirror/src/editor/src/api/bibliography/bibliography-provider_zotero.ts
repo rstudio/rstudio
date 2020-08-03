@@ -19,7 +19,7 @@ import { ZoteroCollection, ZoteroServer } from "../zotero";
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, WritableBibliographyFile } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile } from "./bibliography";
 import { EditorUI } from '../ui';
 
 export const kZoteroItemProvider = 'Zotero';
@@ -92,7 +92,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return zoteroEntries;
   }
 
-  public writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[] {
+  public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     return [];
   }
 

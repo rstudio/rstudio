@@ -65,7 +65,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         priority: 1,
         image: () => (ui.prefs.darkMode() ? ui.images.omni_insert!.citation_dark! : ui.images.omni_insert!.citation!),
       },
-      //false
+      // false
     );
   }
 }

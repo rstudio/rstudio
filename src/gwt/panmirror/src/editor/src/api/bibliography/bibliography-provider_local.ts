@@ -17,10 +17,10 @@ import { Transaction } from 'prosemirror-state';
 
 import { PandocServer } from "../pandoc";
 
-import { expandPaths } from "../path";
+import { expandPaths, getExtension } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, WritableBibliographyFile } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { join } from 'path';
 
@@ -82,7 +82,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
       return this.projectBibios();
     }
 
-    const bibliographies = bibliographyPaths(doc, ui);
+    const bibliographies = bibliographyFilesFromDocument(doc, ui);
     return bibliographies || [];
   }
 
@@ -103,7 +103,9 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return this.bibliography?.project_biblios || [];
   }
 
-  public writableBibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): WritableBibliographyFile[] {
+  public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+
+    const kPermissableFileExtensions = ['bib', 'yaml', 'yml', 'json'];
     if (this.bibliography?.project_biblios
       && this.bibliography.project_biblios.length > 0) {
       return this.bibliography?.project_biblios.map(projectBiblio => {
@@ -111,20 +113,22 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
           displayPath: projectBiblio,
           fullPath: projectBiblio,
           isProject: true,
+          writable: kPermissableFileExtensions.includes(getExtension(projectBiblio))
         };
       });
     }
-    return bibliographyPaths(doc, ui)?.map(path => {
+    return bibliographyFilesFromDocument(doc, ui)?.map(path => {
       return {
         displayPath: path,
         fullPath: join(ui.context.getDefaultResourceDir(), path),
-        isProject: false
+        isProject: false,
+        writable: kPermissableFileExtensions.includes(getExtension(path))
       };
     }) || [];
   }
 }
 
-function bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): string[] | undefined {
+function bibliographyFilesFromDocument(doc: ProsemirrorNode, ui: EditorUI): string[] | undefined {
   // Gather the files from the document
   return bibliographyFilesFromDoc(parseYamlNodes(doc));
 }

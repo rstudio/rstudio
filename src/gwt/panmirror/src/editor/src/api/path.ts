@@ -19,3 +19,16 @@ export function expandPaths(rootPath: string, paths: string[]): string[] {
   return paths.map(path => join(rootPath, path));
 }
 
+export function getExtension(path: string) {
+
+  // Get the file out of the path
+  const fileName = path.split(/[\\/]/).pop();
+  if (fileName) {
+    const lastDot = fileName.lastIndexOf(".");
+    if (lastDot > 0) {
+      return fileName.slice(lastDot + 1);
+    }
+  }
+  return "";
+}
+

@@ -259,7 +259,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
 
-        if (!source) {
+        if (!source && bibManager.isWritable()) {
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
@@ -628,7 +628,7 @@ export async function insertCitation(
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibManager.writableBibliographyPaths(view.state.doc, ui).map(writableFile => writableFile.displayPath),
+      bibliographyFiles: bibManager.writableBibliographyFiles(view.state.doc, ui).map(writableFile => writableFile.displayPath),
       provider,
       csl,
       citeUI: csl ? {
@@ -645,7 +645,7 @@ export async function insertCitation(
       } else {
 
         // Figure out whether this is a project or document level bibliography
-        const writableBiblios = bibManager.writableBibliographyPaths(view.state.doc, ui);
+        const writableBiblios = bibManager.writableBibliographyFiles(view.state.doc, ui);
 
         const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
         const project = thisWritableBiblio?.isProject || false;
