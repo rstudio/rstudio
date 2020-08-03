@@ -46,7 +46,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          @Override
          public String displayName()
          {
-            return "Yaml";
+            return "YAML";
          }
 
          @Override
@@ -55,11 +55,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             return "yaml";
          }
       },
-      bibtex {
+      biblatex {
          @Override
          public String displayName()
          {
-            return "Bibtex";
+            return "BibLaTeX";
          }
 
          @Override
@@ -72,7 +72,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          @Override
          public String displayName()
          {
-            return "Json";
+            return "JSON";
          }
 
          @Override
