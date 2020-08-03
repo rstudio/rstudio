@@ -1055,6 +1055,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PYTHON_FIND_INTERPRETERS, requestCallback);
    }
    
+   public void pythonDescribeInterpreter(String interpreterPath,
+                                         ServerRequestCallback<PythonInterpreter> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(interpreterPath)
+            .get();
+      
+      sendRequest(RPC_SCOPE, PYTHON_DESCRIBE_INTERPRETER, params, requestCallback);
+   }
+   
    public void pythonGetCompletions(String line,
                                     PythonCompletionContext context,
                                     ServerRequestCallback<Completions> requestCallback)
@@ -6593,6 +6603,7 @@ public class RemoteServer implements Server
    private static final String MARKDOWN_GET_COMPLETIONS = "markdown_get_completions";
    
    private static final String PYTHON_FIND_INTERPRETERS = "python_find_interpreters";
+   private static final String PYTHON_DESCRIBE_INTERPRETER = "python_describe_interpreter";
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    private static final String PYTHON_GO_TO_HELP = "python_go_to_help";

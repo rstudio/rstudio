@@ -18,71 +18,158 @@
    .rs.python.findPythonInterpreters()
 })
 
-.rs.addFunction("python.getPythonVersion", function(pythonPath, defaultOnError = "[unknown]")
+.rs.addJsonRpcHandler("python_describe_interpreter", function(pythonPath)
 {
-   tryCatch(
-      .rs.python.getPythonVersionImpl(pythonPath),
-      error = function(e) defaultOnError
-   )
+   .rs.python.describeInterpreter(pythonPath)
 })
 
-.rs.addFunction("python.getPythonVersionImpl", function(pythonPath)
+.rs.addFunction("python.execute", function(python, code)
 {
-   # build command
-   code <- "import platform; print(platform.python_version())"
-   args <- c("-E", "-c", shQuote(code))
+   python <- normalizePath(python, winslash = "/", mustWork = TRUE)
    
-   # run it (suppress warnings as system2 will warn on error)
+   args <- c("-E", "-c", shQuote(code))
    result <- suppressWarnings(
-      system2(pythonPath, args, stdout = TRUE, stderr = TRUE)
+      system2(python, args, stdout = TRUE, stderr = TRUE)
    )
    
    # propagate failure as error
    status <- .rs.nullCoalesce(attr(result, "status", exact = TRUE), 0L)
-   
    if (!identical(status, 0L))
       .rs.stopf("error retrieving Python version [error code %i]", status)
    
-   result
+   paste(result, collapse = "\n")
 })
 
-.rs.addFunction("python.interpreterInfo", function(path, type, version = NULL)
+.rs.addFunction("python.getPythonVersion", function(pythonPath)
 {
-   version <- .rs.nullCoalesce(version, .rs.python.getPythonVersion(path))
+   .rs.python.execute(pythonPath, "import platform; print(platform.python_version())")
+})
+
+.rs.addFunction("python.getPythonDescription", function(pythonPath)
+{
+   .rs.python.execute(pythonPath, "import sys; print(sys.version)")
+})
+
+.rs.addFunction("python.getPythonInfo", function(path, strict)
+{
+   # default to concluding python binary path == requested path
+   pythonPath <- path
    
-   .rs.scalarListFromList(list(
-      path    = .rs.createAliasedPath(path),
-      type    = type,
-      version = version,
-      valid   = TRUE,
-      reason  = NULL
-   ))
+   # try to resolve the path to the associated python binary, in case
+   # the caller has supplied the path to the root of a python environment,
+   # or something similar
+   if (!strict)
+   {
+      # if this is the path to an existing file, use the directory path
+      info <- file.info(path, extra_cols = FALSE)
+      if (identical(info$isdir, FALSE))
+         path <- dirname(path)
+      
+      # if this is the path to the 'root' of an environment,
+      # start from the associated bin / scripts directory
+      binExt <- if (.rs.platform.isWindows) "Scripts" else "bin"
+      binPath <- file.path(path, binExt)
+      if (file.exists(binPath))
+         path <- binPath
+      
+      # now form the python path
+      exe <- if (.rs.platform.isWindows) "python.exe" else "python"
+      pythonPath <- file.path(path, exe)
+   }
+   
+   # if this python doesn't exist, bail
+   if (!file.exists(pythonPath))
+   {
+      info <- .rs.python.invalidInterpreter(
+         path = pythonPath,
+         type = NULL,
+         reason = "There is no Python interpreter at this location."
+      )
+      
+      return(info)
+   }
+   
+   # check for conda environment
+   # (look for folders normally seen in conda installations)
+   condaFiles <- c("conda-meta", "condabin")
+   condaPaths <- file.path(path, condaFiles)
+   if (any(file.exists(condaPaths)))
+      return(.rs.python.interpreterInfo(pythonPath, "conda"))
+ 
+   # check for virtual environment
+   # (look for files normally seen in virtual envs)
+   venvFiles <- c("activate", "pyvenv.cfg", "../pyvenv.cfg")
+   venvPaths <- file.path(path, venvFiles)
+   if (any(file.exists(venvPaths)))
+      return(.rs.python.interpreterInfo(pythonPath, "virtualenv"))
+   
+   # default to assuming a system interpreter
+   .rs.python.interpreterInfo(pythonPath, "system")
+   
+})
+
+.rs.addFunction("python.interpreterInfo", function(path, type)
+{
+   # defaults for version, description
+   valid <- TRUE
+   version <- "[unknown]"
+   description <- "[unknown]"
+   
+   # determine interpreter version
+   version <- tryCatch(
+      .rs.python.getPythonVersion(path),
+      error = function(e) {
+         valid <<- FALSE
+         conditionMessage(e)
+      }
+   )
+   
+   # determine interpreter description
+   description <- tryCatch(
+      .rs.python.getPythonDescription(path),
+      error = function(e) {
+         valid <<- FALSE
+         conditionMessage(e)
+      }
+   )
+   
+   list(
+      path        = .rs.createAliasedPath(path),
+      type        = type,
+      version     = version,
+      description = description,
+      valid       = valid,
+      reason      = NULL
+   )
 })
 
 .rs.addFunction("python.invalidInterpreter", function(path, type, reason)
 {
-   .rs.scalarListFromList(list(
-      path    = .rs.createAliasedPath(path),
-      type    = type,
-      version = NULL,
-      valid   = FALSE,
-      reason  = reason
-   ))
+   list(
+      path        = .rs.createAliasedPath(path),
+      type        = type,
+      version     = NULL,
+      description = NULL,
+      valid       = FALSE,
+      reason      = reason
+   )
 })
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
-   list(
-      
-      python_interpreters = c(
-         .rs.python.findPythonSystemInterpreters(),
-         .rs.python.findPythonVirtualEnvironments(),
-         .rs.python.findPythonCondaEnvironments()
-      ),
-      
-      default_interpreter = .rs.scalar(Sys.getenv("RETICULATE_PYTHON"))
-      
+   interpreters <- c(
+      .rs.python.findPythonSystemInterpreters(),
+      .rs.python.findPythonVirtualEnvironments(),
+      .rs.python.findPythonCondaEnvironments()
    )
+   
+   default <- Sys.getenv("RETICULATE_PYTHON", unset = "")
+   
+   list(
+      python_interpreters = .rs.scalarListFromList(interpreters),
+      default_interpreter = .rs.scalar(default)
+   )
+   
 })
 
 .rs.addFunction("python.findPythonSystemInterpreters", function()
@@ -97,10 +184,7 @@
       if (!file.exists(pythonPath))
          next
       
-      info <- .rs.python.interpreterInfo(
-         path = pythonPath,
-         type = "system",
-      )
+      info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
       
       interpreters[[length(interpreters) + 1]] <- info
       
@@ -108,14 +192,6 @@
    
    interpreters
    
-})
-
-.rs.addFunction("python.findPythonEnvironments", function()
-{
-   c(
-      .rs.python.findPythonVirtualEnvironments(),
-      .rs.python.findPythonCondaEnvironments()
-   )
 })
 
 .rs.addFunction("python.findPythonCondaEnvironments", function()
@@ -142,13 +218,13 @@
 .rs.addFunction("python.getVirtualEnvironmentInfo", function(envPath)
 {
    # form path to Python executable from root
-   exeSuffix <- if (Sys.info()[["sysname"]] == "Windows")
+   exeSuffix <- if (.rs.platform.isWindows)
       "Scripts/python.exe"
    else
       "bin/python"
    
    # form executable path (ensure it exists)
-   exePath <- path.expand(file.path(envPath, exeSuffix))
+   exePath <- file.path(envPath, exeSuffix)
    if (!file.exists(exePath))
    {
       fmt <- "Python executable '%s' does not exist."
@@ -160,37 +236,15 @@
       ))
    }
    
-   # if this Python environment has a pyvenv.cfg file, then we can try
-   # and use that to determine the version of Python used for this environment
-   pyvenvPath <- file.path(envPath, "pyvenv.cfg")
-   if (file.exists(pyvenvPath))
-   {
-      # read config file
-      contents <- readLines(pyvenvPath, warn = FALSE)
-      
-      # find version line
-      versionLine <- grep("^version\\s*=", contents, value = TRUE, perl = TRUE)
-      
-      # trim off version prefix
-      version <- gsub("^version\\s*=\\s*", "", versionLine)
-      
-      # build environment info object
-      info <- .rs.python.interpreterInfo(
-         path    = exePath,
-         type    = "virtualenv",
-         version = version
-      )
-      
-      # return it
-      return(info)
-   }
-   
-   # virtual environments created by the virtualenv module
-   # won't have a .cfg file, so glean the required information from the
-   # python executable itself
    .rs.python.interpreterInfo(
       path = exePath,
       type = "virtualenv"
    )
    
+})
+
+.rs.addFunction("python.describeInterpreter", function(pythonPath)
+{
+   info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
+   .rs.scalarListFromList(info)
 })

@@ -20,9 +20,9 @@ public class PythonInterpreterListEntryUi extends Composite
    {
       interpreter_ = interpreter;
       
-      uiIcon_    = uiIcon();
-      uiVersion_ = uiVersion();
-      uiPath_    = uiPath();
+      uiIcon_    = createUiIcon();
+      uiVersion_ = createUiVersion();
+      uiPath_    = createUiPath();
       
       initWidget(uiBinder.createAndBindUi(this));
    }
@@ -32,7 +32,7 @@ public class PythonInterpreterListEntryUi extends Composite
       return interpreter_;
    }
    
-   private final Image uiIcon()
+   private final Image createUiIcon()
    {
       ImageResource resource;
       
@@ -53,18 +53,33 @@ public class PythonInterpreterListEntryUi extends Composite
       return new Image(resource);
    }
    
-   private final Label uiVersion()
+   private final Label createUiVersion()
    {
       return new Label("Python " + interpreter_.getVersion());
    }
    
-   private final Label uiPath()
+   private final Label createUiPath()
    {
       return new Label("[" + interpreter_.getPath() + "]");
    }
+   
+   public final Image getIcon()
+   {
+      return uiIcon_;
+   }
+   
+   public final Label getVersion()
+   {
+      return uiVersion_;
+   }
+   
+   public final Label getPath()
+   {
+      return uiPath_;
+   }
 
-   private static PythonInterpreterListEntryUiUiBinder uiBinder = GWT
-         .create(PythonInterpreterListEntryUiUiBinder.class);
+   private static PythonInterpreterListEntryUiUiBinder uiBinder =
+         GWT.create(PythonInterpreterListEntryUiUiBinder.class);
 
    interface PythonInterpreterListEntryUiUiBinder
          extends UiBinder<Widget, PythonInterpreterListEntryUi>
