@@ -13,6 +13,26 @@
 #
 #
 
+.rs.addJsonRpcHandler("python_active_interpreter", function()
+{
+   pythonPath <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
+   
+   info <- if (is.na(pythonPath))
+   {
+      .rs.python.invalidInterpreter(
+         path = pythonPath,
+         type = NULL,
+         reason = "RETICULATE_PYTHON is unset."
+      )
+   }
+   else
+   {
+      .rs.python.getPythonInfo(pythonPath, strict = TRUE)
+   }
+   
+   .rs.scalarListFromList(info)
+})
+
 .rs.addJsonRpcHandler("python_find_interpreters", function()
 {
    .rs.python.findPythonInterpreters()

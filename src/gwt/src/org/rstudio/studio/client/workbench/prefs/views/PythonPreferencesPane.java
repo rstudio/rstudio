@@ -51,6 +51,12 @@ public class PythonPreferencesPane extends PreferencesPane
       
       add(headerLabel("Python"));
       
+      mismatchWarningBar_ = new InfoBar(InfoBar.WARNING);
+      mismatchWarningBar_.setText(
+            "The active Python interpreter has been changed by an R startup script.");
+      mismatchWarningBar_.setVisible(false);
+      add(spaced(mismatchWarningBar_));
+      
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
             "(No interpreter selected)",
@@ -194,6 +200,34 @@ public class PythonPreferencesPane extends PreferencesPane
          container_.setWidget(ui);
       }
    }
+   
+   private void checkForMismatch(PythonInterpreter activeInterpreter)
+   {
+      // nothing to do if there isn't an active interpreter
+      if (StringUtil.isNullOrEmpty(activeInterpreter.getPath()))
+      {
+         mismatchWarningBar_.setVisible(false);
+         return;
+      }
+      
+      // nothing to do if the user hasn't changed the configured Python
+      String requestedPath = tbPythonInterpreter_.getText();
+      boolean isSet =
+            !StringUtil.isNullOrEmpty(requestedPath) &&
+            !StringUtil.equals(requestedPath, PYTHON_PLACEHOLDER_TEXT);
+      
+      if (!isSet)
+      {
+         mismatchWarningBar_.setVisible(false);
+         return;
+      }
+      
+      // toggle visibility
+      boolean mismatch =
+            !StringUtil.equals(requestedPath, activeInterpreter.getPath());
+      
+      mismatchWarningBar_.setVisible(mismatch);
+   }
 
    @Override
    public ImageResource getIcon()
@@ -213,6 +247,21 @@ public class PythonPreferencesPane extends PreferencesPane
       String pythonPath = prefs.pythonDefaultInterpreter().getValue();
       if (!StringUtil.isNullOrEmpty(pythonPath))
          tbPythonInterpreter_.setText(pythonPath);
+      
+      server_.pythonActiveInterpreter(new ServerRequestCallback<PythonInterpreter>()
+      {
+         @Override
+         public void onResponseReceived(PythonInterpreter response)
+         {
+            checkForMismatch(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Override
@@ -250,10 +299,13 @@ public class PythonPreferencesPane extends PreferencesPane
       Styles styles();
    }
 
+   private final InfoBar mismatchWarningBar_;
    private final PythonDialogResources res_;
    private final PythonServerOperations server_;
    private final TextBoxWithButton tbPythonInterpreter_;
    private final SimplePanel container_ = new SimplePanel();
+   
+   private PythonInterpreter activeInterpreter_;
    
    private static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreted selected)";
 

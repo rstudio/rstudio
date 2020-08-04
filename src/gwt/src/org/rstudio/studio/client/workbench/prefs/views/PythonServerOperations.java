@@ -18,7 +18,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface PythonServerOperations
 {
+   void pythonActiveInterpreter(ServerRequestCallback<PythonInterpreter> requestCallback);
+   
    void pythonFindInterpreters(ServerRequestCallback<PythonInterpreters> requestCallback);
+   
    void pythonDescribeInterpreter(String interpreterPath,
                                   ServerRequestCallback<PythonInterpreter> requestCallback);
 }
