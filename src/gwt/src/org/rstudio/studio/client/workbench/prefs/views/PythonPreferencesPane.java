@@ -19,6 +19,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.server.ServerError;
@@ -167,17 +168,37 @@ public class PythonPreferencesPane extends PreferencesPane
       {
          String reason = info.getInvalidReason();
          if (StringUtil.isNullOrEmpty(reason))
-            reason = "[The selected Python interpreter appears to be invalid.]";
+            reason = "The selected Python interpreter appears to be invalid.";
          
-         Label label = new Label(reason);
-         label.addStyleName(RES.styles().invalid());
-         container_.setWidget(label);
+         InfoBar bar = new InfoBar(InfoBar.WARNING);
+         bar.setText(reason);
+         container_.setWidget(bar);
       }
       else
       {
          PythonInterpreterListEntryUi ui = new PythonInterpreterListEntryUi(info);
          ui.addStyleName(RES.styles().description());
-         ui.getPath().setVisible(false);
+         
+         String type = info.getType();
+         
+         if (type == null)
+         {
+            type = "[Unknown]";
+         }
+         else if (type == "virtualenv")
+         {
+            type = "Virtual Environment";
+         }
+         else if (type == "conda")
+         {
+            type = "Conda Environment";
+         }
+         else if (type == "system")
+         {
+            type = "System Interpreter";
+         }
+         
+         ui.getPath().setText("[" + type + "]");
          container_.setWidget(ui);
       }
    }

@@ -55,24 +55,21 @@
    # default to concluding python binary path == requested path
    pythonPath <- path
    
-   # try to resolve the path to the associated python binary, in case
-   # the caller has supplied the path to the root of a python environment,
-   # or something similar
+   # if this is the path to an existing file, use the directory path
+   info <- file.info(path, extra_cols = FALSE)
+   if (identical(info$isdir, FALSE))
+      path <- dirname(path)
+   
+   # if this is the path to the 'root' of an environment,
+   # start from the associated bin / scripts directory
+   binExt <- if (.rs.platform.isWindows) "Scripts" else "bin"
+   binPath <- file.path(path, binExt)
+   if (file.exists(binPath))
+      path <- binPath
+      
+   # now form the python path
    if (!strict)
    {
-      # if this is the path to an existing file, use the directory path
-      info <- file.info(path, extra_cols = FALSE)
-      if (identical(info$isdir, FALSE))
-         path <- dirname(path)
-      
-      # if this is the path to the 'root' of an environment,
-      # start from the associated bin / scripts directory
-      binExt <- if (.rs.platform.isWindows) "Scripts" else "bin"
-      binPath <- file.path(path, binExt)
-      if (file.exists(binPath))
-         path <- binPath
-      
-      # now form the python path
       exe <- if (.rs.platform.isWindows) "python.exe" else "python"
       pythonPath <- file.path(path, exe)
    }
@@ -83,7 +80,7 @@
       info <- .rs.python.invalidInterpreter(
          path = pythonPath,
          type = NULL,
-         reason = "There is no Python interpreter at this location."
+         reason = "There is no Python interpreter available at this location."
       )
       
       return(info)
@@ -91,7 +88,7 @@
    
    # check for conda environment
    # (look for folders normally seen in conda installations)
-   condaFiles <- c("conda-meta", "condabin")
+   condaFiles <- c("../conda-meta", "../condabin")
    condaPaths <- file.path(path, condaFiles)
    if (any(file.exists(condaPaths)))
       return(.rs.python.interpreterInfo(pythonPath, "conda"))
