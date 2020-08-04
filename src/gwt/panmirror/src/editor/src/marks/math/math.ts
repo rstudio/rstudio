@@ -77,7 +77,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
           toDOM(mark: Mark) {
             return [
-              'div',
+              'span',
               {
                 class: 'math pm-fixedwidth-font pm-light-text-color',
                 'data-type': mark.attrs.type,
