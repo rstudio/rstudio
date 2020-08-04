@@ -128,12 +128,15 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                state_.writeState();
 
                progressIndicator.onCompleted();
+               
                if (onCompleted != null)
                   onCompleted.execute();
-               if (restartRequirement.getDesktopRestartRequired())
-                  restart(globalDisplay_, quit_, session_);
-               if (restartRequirement.getUiReloadRequired())
-                  reload();
+               
+               handleRestart(
+                     globalDisplay_,
+                     quit_,
+                     session_,
+                     restartRequirement);
             }
 
             @Override

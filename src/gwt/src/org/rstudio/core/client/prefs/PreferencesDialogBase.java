@@ -210,13 +210,39 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                          Operation onCompleted,
                                          ProgressIndicator progressIndicator,
                                          RestartRequirement restartRequirement);
+   
+   protected void handleRestart(GlobalDisplay display,
+                                ApplicationQuit quit,
+                                Session session,
+                                RestartRequirement requirement)
+   {
+      boolean restartIde =
+            requirement.getDesktopRestartRequired() ||
+            (requirement.getUiReloadRequired() &&
+             requirement.getSessionRestartRequired());
+      
+      if (restartIde)
+      {
+         restart(display, quit, session);
+      }
+      else if (requirement.getUiReloadRequired())
+      {
+         reload();
+      }
+      else if (requirement.getSessionRestartRequired())
+      {
+         restartSession(display);
+      }
+   }
 
    protected void reload()
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
    }
 
-   protected void restart(GlobalDisplay globalDisplay, ApplicationQuit quit, Session session)
+   protected void restart(GlobalDisplay globalDisplay,
+                          ApplicationQuit quit,
+                          Session session)
    {
       globalDisplay.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
@@ -225,6 +251,25 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                   "Do you want to do this now?",
             () -> forceClosed(() -> quit.doRestart(session)),
             true);
+   }
+   
+   protected void restartSession(GlobalDisplay display)
+   {
+      display.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            "Restart Required",
+            "You need to restart the R session in order for these changes to take effect. " +
+            "Do you want to do this now?",
+            () -> onRestartSession(),
+            true);
+   }
+   
+   private void onRestartSession()
+   {
+      forceClosed(() ->
+      {
+         RStudioGinjector.INSTANCE.getCommands().restartR().execute();
+      });
    }
 
    void forceClosed(final Command onClosed)
