@@ -178,30 +178,14 @@ export class BibliographyManager {
         keys: kFields,
       };
 
-      const allItemsSearch: Fuse.Expression =
-      {
-        $or: [
-          { id: query },
-          { title: query },
-          { 'author.family': query },
-          { 'author.literal': query },
-          { 'author.given': query },
-          { issued: query }
-        ]
-      };
+      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
 
-      const localOnlySearch: Fuse.Expression =
-      {
-        $and: [
-          { provider: kLocalItemType },
-          allItemsSearch
-        ],
-      };
-
-      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(this.isWritable() ? allItemsSearch : localOnlySearch, options);
       const items = results.map((result: { item: any }) => result.item);
 
-      return uniqby(items, (source: BibliographySource) => source.id);
+      // Filter out any non local items if this isn't a writable bibliography
+      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalItemType);
+
+      return uniqby(filteredItems, (source: BibliographySource) => source.id);
 
     } else {
       return [];
