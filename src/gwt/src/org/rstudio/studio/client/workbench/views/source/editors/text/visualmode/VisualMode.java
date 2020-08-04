@@ -389,6 +389,15 @@ public class VisualMode implements VisualModeEditorSync,
                   return;
                }
                
+               // show warning and terminate if there was unparsed metadata
+               if (JsObject.keys(result.unparsed_meta).length > 0)
+               {
+                  view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
+                  if (done != null)
+                     done.execute(false);
+                  return;
+               }
+               
                // update flags
                isDirty_ = false;
                loadingFromSource_ = false;

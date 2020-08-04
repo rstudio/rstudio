@@ -43,6 +43,7 @@ import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
   unrecognized: string[];
+  unparsed_meta: { [key: string]: any };
 }
 
 export class PandocConverter {

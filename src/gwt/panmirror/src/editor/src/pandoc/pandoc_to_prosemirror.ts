@@ -124,6 +124,7 @@ class Parser {
     return {
       doc: state.doc(),
       unrecognized: state.unrecognized(),
+      unparsed_meta: ast.meta
     };
   }
 
