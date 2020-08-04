@@ -1,31 +1,35 @@
 
--- custom format that extracts all explicit heading ids from a document. 
+-- custom format that extracts all explicit heading ids from a document
+-- and writes them to stdout
 
 -- capture heading id
 function Header(lev, s, attr)
   if string.len(attr.id) > 0 then
-    return attr.id .. '\n'
-  else
-    return ''
+    io.write('#' .. attr.id .. '\n')
   end
+  return ''
 end
 
--- echo body
+-- capture links
+function Link(s, src, tit, attr)
+  if string.len(src) > 1 and string.sub(src, 1, 1) == '#' then
+    io.write(src .. '\n')     
+  end
+  return ''
+end
+
+-- no-op everything else
 function Doc(body, metadata, variables)
-  return body
+  return ''
 end
 
--- echo text
 function Str(s)
-  return s
+  return ''
 end
 
--- echo space
 function Space()
-  return ' '
+  return ''
 end
-
--- no-op marks
 
 function Emph(s)
   return ''
@@ -55,11 +59,6 @@ function Code(s, attr)
   return ''
 end
 
-function Link(s, src, tit, attr)
-  return ''
-end
-
-
 function InlineMath(s)
   return '' 
 end
@@ -83,8 +82,6 @@ end
 function Cite(s, cs)
   return ''
 end
-
--- no-op for other things within the ast
 
 function Para(s)
   return ''

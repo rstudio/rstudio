@@ -336,6 +336,11 @@ export function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
   return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
 }
 
+// e.g. [My Heading] to link to ## My Heading
+export function hasShortcutHeadingLinks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.implicit_header_references && pandocExtensions.shortcut_reference_links;
+}
+
 function commonmarkExtensions() {
   const extensions = ['+raw_html'];
   return extensions;

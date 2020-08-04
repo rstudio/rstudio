@@ -27,6 +27,7 @@ import {
 } from '../../api/pandoc_attr';
 import { Extension, ExtensionContext } from '../../api/extension';
 import { kLinkTarget, kLinkTargetUrl, kLinkTargetTitle, kLinkAttr, kLinkChildren } from '../../api/link';
+import { hasShortcutHeadingLinks } from '../../api/pandoc_format';
 
 import { linkCommand, removeLinkCommand, linkOmniInsert } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
@@ -40,13 +41,13 @@ const extension = (context: ExtensionContext): Extension => {
   const { pandocExtensions, ui, navigation } = context;
 
   const capabilities = {
-    headings: pandocExtensions.implicit_header_references,
+    headings: hasShortcutHeadingLinks(pandocExtensions),
     attributes: pandocExtensions.link_attributes,
     text: true,
   };
   const linkAttr = pandocExtensions.link_attributes;
   const autoLink = pandocExtensions.autolink_bare_uris;
-  const headingLink = pandocExtensions.implicit_header_references;
+  const headingLink = hasShortcutHeadingLinks(pandocExtensions);
 
   return {
     marks: [
@@ -116,7 +117,7 @@ const extension = (context: ExtensionContext): Extension => {
               },
               getChildren: (tok: PandocToken) => tok.c[kLinkChildren],
 
-              postprocessor: pandocExtensions.implicit_header_references ? linkHeadingsPostprocessor : undefined,
+              postprocessor: hasShortcutHeadingLinks(pandocExtensions) ? linkHeadingsPostprocessor : undefined,
             },
           ],
 

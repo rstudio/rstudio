@@ -41,6 +41,7 @@ import { kLinkTarget, kLinkTargetUrl, kLinkChildren, kLinkAttr, kLinkTargetTitle
 import { kHeadingAttr, kHeadingLevel, kHeadingChildren } from '../api/heading';
 import { pandocAutoIdentifier, gfmAutoIdentifier } from '../api/pandoc_id';
 import { equalsIgnoreCase } from '../api/text';
+import { hasShortcutHeadingLinks } from '../api/pandoc_format';
 
 export function pandocToProsemirror(
   ast: PandocAst,
@@ -426,15 +427,19 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
   let astBlocks = mapTokens(ast.blocks, tok => {
     if (tok.t === PandocTokenType.Link) {
       const target = tok.c[kLinkTarget];
-      let href = target[kLinkTargetUrl] as string;
+      const href = target[kLinkTargetUrl] as string;
       if (href.startsWith('#')) {
-        // strip leading # 
-        href = href.substr(1);
 
-        // also check to see whether the link text resolves to the 
-        // target (in that case we don't need the explicit id)
+        // if we have support for implicit header references and shortcut reference links, 
+        // also check to see whether the link text resolves to the target (in that case 
+        // we don't need the explicit id). note that if that heading has an explicit
+        // id defined then we also leave it alone.
         const text = stringifyTokens(tok.c[kLinkChildren], extensions.gfm_auto_identifiers);
-        if (equalsIgnoreCase(autoIdentifier(text, extensions.ascii_identifiers), href) && !headingIds.has(href)) {
+        if (
+          hasShortcutHeadingLinks(extensions) &&
+          equalsIgnoreCase('#' + autoIdentifier(text, extensions.ascii_identifiers), href) &&
+          !headingIds.has(href)
+        ) {
 
           // return a version of the link w/o the target
           return {
@@ -463,7 +468,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
   astBlocks = mapTokens(ast.blocks, tok => {
     if (tok.t === PandocTokenType.Header) {
       const attr = pandocAttrReadAST(tok, kHeadingAttr);
-      if (attr.id && !headingIds.has(attr.id)) {
+      if (attr.id && !headingIds.has('#' + attr.id)) {
         return {
           t: PandocTokenType.Header,
           c: [
