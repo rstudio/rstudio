@@ -193,7 +193,14 @@
 
 .rs.addFunction("python.findPythonCondaEnvironments", function()
 {
-   envs <- reticulate::conda_list()
+   envs <- tryCatch(
+      reticulate::conda_list(),
+      error = identity
+   )
+   
+   if (inherits(envs, "error"))
+      return(list())
+   
    lapply(envs$python, .rs.python.getCondaEnvironmentInfo)
 })
 
