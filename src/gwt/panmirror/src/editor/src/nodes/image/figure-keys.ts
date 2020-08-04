@@ -26,7 +26,7 @@ import {
   findParentNodeClosestToPos,
 } from 'prosemirror-utils';
 
-import { BaseKey } from '../../api/basekeys';
+import { BaseKey, verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
 import { exitNode } from '../../api/command';
 
 export function figureKeys(schema: Schema) {
@@ -154,6 +154,8 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       // compute side offset
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
 
+
+
       // get selection head
       const { $head } = selection;
 
@@ -162,6 +164,10 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       if (nextPos.$head) {
         const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, schema.nodes.figure);
         if (figure) {
+          // check for e.g. math where you can advance across embedded newlines
+          if ((dir === 'up' || dir === 'down') && verticalArrowCanAdvanceWithinTextBlock(state.selection, dir)) {
+            return false;
+          }
           // arrowing back into a figure with a caption selects the caption
           if (side === -1 && figure.node.childCount > 0) {
             selectFigureCaption(figure, dir === 'left');

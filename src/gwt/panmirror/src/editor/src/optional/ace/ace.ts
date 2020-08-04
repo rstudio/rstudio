@@ -50,6 +50,7 @@ import { AcePlaceholder } from './ace-placeholder';
 import { AceNodeViews } from './ace-node-views';
 
 import './ace.css';
+import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
 
 
 const plugin = new PluginKey('ace');
@@ -889,6 +890,10 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]
       const $head = state.selection.$head;
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
       if (nextPos.$head && nodeTypes.includes(nextPos.$head.parent.type.name)) {
+        // check for e.g. math where you can advance across embedded newlines
+        if ((dir === 'up' || dir === 'down') && verticalArrowCanAdvanceWithinTextBlock(state.selection, dir)) {
+          return false;
+        }
         if (dispatch) {
           dispatch(state.tr.setSelection(nextPos));
         }
