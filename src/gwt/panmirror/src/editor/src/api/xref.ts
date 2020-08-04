@@ -35,7 +35,7 @@ export interface XRef {
   file: string;
   type: string;
   id: string;
-  title: string;
+  title?: string;
 }
 
 export function xrefKey(xref: XRef, headingType = false) {
