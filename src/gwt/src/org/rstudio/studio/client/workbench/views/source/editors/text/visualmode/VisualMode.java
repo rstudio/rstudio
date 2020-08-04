@@ -389,7 +389,23 @@ public class VisualMode implements VisualModeEditorSync,
                   return;
                }
                
-               // show warning and terminate if there was unparsed metadata
+               // show warning and terminate if there was unparsed metadata. note that the other 
+               // option here would be to have setMarkdown send the unparsed metadata back to the
+               // server to generate yaml, and then include the metadata as yaml at end the of the
+               // document. this could be done using the method outlined here: 
+               //   https://github.com/jgm/pandoc/issues/2019 
+               // specifically using this template:
+               /*
+                  $if(titleblock)$
+                  $titleblock$
+                  $else$
+                  --- {}
+                  $endif$
+                  */
+               // ...with this command line: 
+               /*
+                  pandoc -t markdown --template=yaml.template foo.md
+               */
                if (JsObject.keys(result.unparsed_meta).length > 0)
                {
                   view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
