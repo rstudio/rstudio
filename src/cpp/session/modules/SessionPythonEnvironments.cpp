@@ -54,6 +54,8 @@ Error initialize()
    
    prefs::userPrefs().onChanged.connect(onPrefsChanged);
    
+   updateDefaultPythonInterpreter();
+   
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPythonEnvironments.R"));
