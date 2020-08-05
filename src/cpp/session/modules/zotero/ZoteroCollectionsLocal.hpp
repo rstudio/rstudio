@@ -18,21 +18,26 @@
 
 #include "ZoteroCollections.hpp"
 
+#include <shared_core/FilePath.hpp>
+
 namespace rstudio {
-
-namespace core {
-   class FilePath;
-}
-
 namespace session {
 namespace modules {
 namespace zotero {
 namespace collections {
 
+struct DetectedLocalZoteroConfig
+{
+   DetectedLocalZoteroConfig() : betterBibtex(false) {}
+   core::FilePath dataDirectory;
+   bool betterBibtex;
+};
+
 bool localZoteroAvailable();
 
 core::FilePath zoteroDataDirectory();
-core::FilePath detectedZoteroDataDirectory();
+
+DetectedLocalZoteroConfig detectedLocalZoteroConfig();
 
 ZoteroCollectionSource localCollections();
 

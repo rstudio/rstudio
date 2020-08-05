@@ -72,7 +72,7 @@ struct ZoteroCollection : ZoteroCollectionSpec
    core::json::Array items;
 };
 typedef std::vector<ZoteroCollection> ZoteroCollections;
-typedef boost::function<void(core::Error,ZoteroCollections)> ZoteroCollectionsHandler;
+typedef boost::function<void(core::Error,ZoteroCollections,std::string)> ZoteroCollectionsHandler;
 
 
 // requirements for implementing a collection source

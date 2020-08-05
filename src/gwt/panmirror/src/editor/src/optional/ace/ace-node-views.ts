@@ -76,7 +76,7 @@ export class AceNodeViews {
         }
 
         // if there is no previous node and the click is above us then gap cursor above
-      } else if (!$pos.nodeBefore && (mouseEvent.clientY < nodeView.dom.getBoundingClientRect().top)) {
+      } else if (!$pos.nodeBefore && $pos.depth === 1 && (mouseEvent.clientY < nodeView.dom.getBoundingClientRect().top)) {
         gapCursor = new GapCursor($pos, $pos);
       }
 

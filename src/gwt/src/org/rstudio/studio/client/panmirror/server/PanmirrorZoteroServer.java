@@ -67,6 +67,20 @@ public class PanmirrorZoteroServer
          );
       });
    }
+   
+   public Promise<JavaScriptObject> betterBibtexExport(JsArrayString itemKeys, 
+                                                       String translatorId, 
+                                                       int libraryID)
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.zoteroBetterBibtexExport(
+            itemKeys, 
+            translatorId, 
+            libraryID, 
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         );
+      });
+   }
 
    PanmirrorZoteroServerOperations server_;
 }
