@@ -157,6 +157,12 @@ public class VisualMode implements VisualModeEditorSync,
       return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
+   
+   public boolean isVisualEditorActive()
+   {
+      return view_.editorContainer().isWidgetActive(panmirror_);
+   }
+   
    public void activate(ScheduledCommand completed)
    {
       if (!isActivated())
@@ -173,7 +179,7 @@ public class VisualMode implements VisualModeEditorSync,
          completed.execute();
       }
    }
-  
+   
    public void deactivate(ScheduledCommand completed)
    {
       if (isActivated())
@@ -251,7 +257,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
       });
 
-      if (isPanmirrorActive() && (activatingEditor || isDirty_)) {
+      if (isVisualEditorActive() && (activatingEditor || isDirty_)) {
          // set flags
          isDirty_ = false;
          
@@ -378,6 +384,31 @@ public class VisualMode implements VisualModeEditorSync,
                // bail on error
                if (result == null)
                {
+                  if (done != null)
+                     done.execute(false);
+                  return;
+               }
+               
+               // show warning and terminate if there was unparsed metadata. note that the other 
+               // option here would be to have setMarkdown send the unparsed metadata back to the
+               // server to generate yaml, and then include the metadata as yaml at end the of the
+               // document. this could be done using the method outlined here: 
+               //   https://github.com/jgm/pandoc/issues/2019 
+               // specifically using this template:
+               /*
+                  $if(titleblock)$
+                  $titleblock$
+                  $else$
+                  --- {}
+                  $endif$
+                  */
+               // ...with this command line: 
+               /*
+                  pandoc -t markdown --template=yaml.template foo.md
+               */
+               if (JsObject.keys(result.unparsed_meta).length > 0)
+               {
+                  view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
                   if (done != null)
                      done.execute(false);
                   return;
@@ -612,6 +643,17 @@ public class VisualMode implements VisualModeEditorSync,
             
    }
    
+   public String getYamlFrontMatter()
+   {
+      return panmirror_.getYamlFrontMatter();
+   }
+   
+   public boolean applyYamlFrontMatter(String yaml)
+   {
+      panmirror_.applyYamlFrontMatter(yaml);
+      return true;
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {
@@ -656,6 +698,10 @@ public class VisualMode implements VisualModeEditorSync,
       return panmirror_.getCommandPaletteItems();
    }
 
+   public void focus()
+   {
+      activate(() -> panmirror_.focus());
+   }
    
    private void manageUI(boolean activate, boolean focus)
    {
@@ -735,7 +781,7 @@ public class VisualMode implements VisualModeEditorSync,
          withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
-            if (!isPanmirrorActive()) 
+            if (!isVisualEditorActive()) 
             {
                syncFromEditor(done, focus);
             }
@@ -958,12 +1004,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return VisualModeUtil.getEditorCode(view_);
    }   
-   
-   // is our widget active in the editor container
-   private boolean isPanmirrorActive()
-   {
-      return view_.editorContainer().isWidgetActive(panmirror_);
-   }
+
    
    private TextEditorContainer.Editor getSourceEditor()
    {

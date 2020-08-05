@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror;
 
 
+import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -23,4 +24,5 @@ public class PanmirrorSetMarkdownResult
 {    
    public String canonical;
    public String[] unrecognized;
+   public JsObject unparsed_meta;
 }

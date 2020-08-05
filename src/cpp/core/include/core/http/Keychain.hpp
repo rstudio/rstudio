@@ -1,5 +1,5 @@
 /*
- * fragment.ts
+ * Keychain.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,27 @@
  *
  */
 
-import { Fragment } from 'prosemirror-model';
+#ifndef CORE_HTTP_KEYCHAIN_HPP
+#define CORE_HTTP_KEYCHAIN_HPP
 
-export function fragmentText(fragment: Fragment, unemoji = false) {
-  let text = '';
-  fragment.forEach(node => {
-    const emjojiMark = node.marks.find(mark => mark.type === node.type.schema.marks.emoji);
-    if (unemoji && emjojiMark) {
-      return text = text + (emjojiMark.attrs.emojihint || node.textContent);
-    } else {
-      return text = text + node.textContent;
-    }
-  });
-  return text;
-}
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+
+namespace rstudio {
+namespace core {
+namespace http {
+
+struct KeychainCertificateData
+{
+   long size;
+   boost::shared_ptr<unsigned char> data;
+};
+
+std::vector<KeychainCertificateData> getKeychainCertificates();
+
+} // namespace http
+} // namespace core
+} // namespace rstudio
+
+#endif // CORE_HTTP_KEYCHAIN_HPP

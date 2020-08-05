@@ -31,9 +31,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -181,7 +179,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       CheckBox visualMarkdownIsDefault = checkboxPref(
             "Use visual editing by default for new documents",
             prefs_.visualMarkdownEditingIsDefault());
-      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(7, Unit.PX);
       visualMode.add(visualMarkdownIsDefault);
 
       HelpLink visualModeHelpLink = new HelpLink(
@@ -190,7 +188,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false // no version info
       );
       nudgeRight(visualModeHelpLink);
-      mediumSpaced(visualModeHelpLink);
+      spaced(visualModeHelpLink);
       visualMode.add(visualModeHelpLink);
 
       VerticalPanel visualModeOptions = new VerticalPanel();
@@ -205,6 +203,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
+      
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      lessSpaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
 
       // content width
       visualModeContentWidth_ = numericPref(
@@ -356,28 +362,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
    @Override
    public boolean validate()
-   {
-      GlobalDisplay globalDislay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      
-      boolean valid =  visualModeWrapColumn_.validate() &&
-                       visualModeContentWidth_.validate();
-      
-      if (valid)
-      {
-         if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB))
-         {
-            if ((zoteroApiKey_.getKey().trim().isEmpty()))
-            {
-               globalDislay.showErrorMessage(
-                  "Error", "You must provide a Zotero API Key for access to web libraries."
-               );
-               zoteroApiKey_.focus();
-               valid = false;
-            } 
-         }
-      }
-      
-      return valid;
+   {  
+      return visualModeWrapColumn_.validate() && visualModeContentWidth_.validate();
    }
 
    @Override

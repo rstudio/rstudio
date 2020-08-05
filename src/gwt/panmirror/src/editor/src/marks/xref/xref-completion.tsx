@@ -179,7 +179,7 @@ function xrefView(ui: EditorUI): React.FC<XRef> {
         classes={['pm-xref-completion-item']}
         image={image}
         title={xrefKey(xref)}
-        subTitle={xref.title}
+        subTitle={xref.title || ''}
         detail={xref.file}
       />
     );

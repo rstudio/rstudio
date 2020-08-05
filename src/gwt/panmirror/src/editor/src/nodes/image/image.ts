@@ -33,7 +33,7 @@ import {
   PandocTokenType,
   ProsemirrorWriter,
   PandocToken,
-  tokensCollectText,
+  stringifyTokens,
   imageAttributesAvailable,
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
@@ -134,7 +134,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
 
     // add alt as plain text if it's not a figure
     if (!figure) {
-      attrs.alt = tokensCollectText(tok.c[IMAGE_ALT]);
+      attrs.alt = stringifyTokens(tok.c[IMAGE_ALT]);
     }
 
     // read image and (if appropriate) children

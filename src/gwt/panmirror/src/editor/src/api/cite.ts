@@ -14,7 +14,8 @@
  */
 
 import { CSLName, CSLDate, CSL } from "./csl";
-import { EditorUI, InsertCiteProps, InsertCiteUI } from "./ui";
+import { EditorUI } from "./ui";
+import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
 import { urlForDOI } from "./doi";
 
 const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;

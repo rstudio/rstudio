@@ -404,32 +404,8 @@ bool isBookdownContext()
    return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
 }
 
-boost::signals2::connection s_onDocUpdatedConnection;
-boost::signals2::connection s_onDocRemovedConnection;
-boost::signals2::connection s_onAllDocsRemovedConnection;
-
-void unsubscribeFromConnection(boost::signals2::connection conn)
-{
-   if (conn.connected())
-      conn.disconnect();
-}
-
-void unsubscribeFromDocUpdates()
-{
-   unsubscribeFromConnection(s_onDocUpdatedConnection);
-   unsubscribeFromConnection(s_onDocRemovedConnection);
-   unsubscribeFromConnection(s_onAllDocsRemovedConnection);
-}
-
 void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   // bail if there is no bookdown context
-   if (!isBookdownContext())
-   {
-      unsubscribeFromDocUpdates();
-      return;
-   }
-
    // ignore if the file doesn't have a path
    if (pDoc->path().empty())
       return;
@@ -443,13 +419,6 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onSourceDocRemoved(const std::string&, const std::string& path)
 {
-   // bail if there is no bookdown context
-   if (!isBookdownContext())
-   {
-      unsubscribeFromDocUpdates();
-      return;
-   }
-
    // ignore if the file has no path
    if (path.empty())
       return;
@@ -462,13 +431,6 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
 
 void onAllSourceDocsRemoved()
 {
-   // bail if there is no bookdown context
-   if (!isBookdownContext())
-   {
-      unsubscribeFromDocUpdates();
-      return;
-   }
-
    s_unsavedIndex.removeAllUnsaved();
 }
 
@@ -476,6 +438,18 @@ void onDeferredInit(bool)
 {
    if (isBookdownContext())
    {     
+      // index docs
+      std::vector<boost::shared_ptr<source_database::SourceDocument> > pDocs;
+      Error error = source_database::list(&pDocs);
+      if (error)
+         LOG_ERROR(error);
+      std::for_each(pDocs.begin(), pDocs.end(), onSourceDocUpdated);
+
+      // hookup source doc events
+      source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+      source_database::events().onDocRemoved.connect(onSourceDocRemoved);
+      source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+
       // create an incremental file change handler (on the heap so that it
       // survives the call to this function and is never deleted)
       IncrementalFileChangeHandler* pFileChangeHandler =
@@ -605,11 +579,6 @@ namespace xrefs {
 
 Error initialize()
 {
-   // subscribe to source docs events for maintaining the unsaved files list
-   s_onDocUpdatedConnection = source_database::events().onDocUpdated.connect(onSourceDocUpdated);
-   s_onDocRemovedConnection = source_database::events().onDocRemoved.connect(onSourceDocRemoved);
-   s_onAllDocsRemovedConnection = source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
-
    // deferred init (build xref file index)
    module_context::events().onDeferredInit.connect(onDeferredInit);
 

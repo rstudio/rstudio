@@ -113,6 +113,7 @@ public class CodeSearch
                }
                else
                {
+                  srcItem.setFocusOnNavigate(true);
                   fileTypeRegistry.editFile(srcItem, pos);
                }
             });

@@ -36,9 +36,8 @@
 * Option to display Console error and message output in same color as regular output (#7029)
 * Moved console options to a new pane in Global Options (#7047)
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
-* Updated Rainbow Parentheses colors to be more evenly distributed and better contrast across various themes (#7213)
-* Moved Rainbow Parentheses option to Display in Global Options
 * Add support for navigating source history with mouse forward/back buttons (#7272)
+* Improved error logging of mistyped usernames when using PAM authentication (#7501)
 
 ### RStudio Server Pro
 
@@ -54,6 +53,8 @@
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
 * R sessions can now be renamed from within the session or the home page. (Pro #1572)
 * Project Sharing now works on Launcher sessions.
+* Remote session connections over HTTPS can now load certificates from the Apple Keychain. (Pro #1828)
+* Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
 
 ### Bugfixes
 
@@ -82,3 +83,7 @@
 * Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
 * Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
 * Fixed issue where indented Python chunks could not be run (#3731)
+* Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
+* Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
+* Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
+

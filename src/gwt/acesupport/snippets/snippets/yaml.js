@@ -1,5 +1,5 @@
 /*
- * fragment.ts
+ * yaml.js
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,25 @@
  *
  */
 
-import { Fragment } from 'prosemirror-model';
+define("rstudio/snippets/yaml", ["require", "exports", "module"], function(require, exports, module) {
 
-export function fragmentText(fragment: Fragment, unemoji = false) {
-  let text = '';
-  fragment.forEach(node => {
-    const emjojiMark = node.marks.find(mark => mark.type === node.type.schema.marks.emoji);
-    if (unemoji && emjojiMark) {
-      return text = text + (emjojiMark.attrs.emojihint || node.textContent);
-    } else {
-      return text = text + node.textContent;
-    }
-  });
-  return text;
-}
+var utils = require("rstudio/snippets");
+var SnippetManager = require("ace/snippets").snippetManager;
+
+var snippets = [
+   {
+      name: "key",
+      content: '${1:key}: ${2:value}'
+   },
+   {
+      name: "list",
+      content: '${1:key}:\n  - ${2:value1}\n  - ${3:value2}'
+   }
+];
+
+utils.normalizeSnippets(snippets);
+exports.snippetText = utils.toSnippetText(snippets);
+
+SnippetManager.register(snippets, "yaml");
+
+});

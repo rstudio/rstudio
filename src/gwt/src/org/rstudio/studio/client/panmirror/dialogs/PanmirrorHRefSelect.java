@@ -126,7 +126,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       {   
          for (int i = 0; i<targets_.headings.length; i++)
          {
-            if (targets_.headings[i].text.equals(href))
+            if (targets_.headings[i].text.equalsIgnoreCase(href))
             {
                headings_.setSelectedIndex(i);
                break;
@@ -141,7 +141,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       {
          for (int i = 0; i<targets_.ids.length; i++)
          {
-            if (targets_.ids[i].equals(href))
+            if (targets_.ids[i].equalsIgnoreCase(href))
             {
                ids_.setSelectedIndex(i);
                break;

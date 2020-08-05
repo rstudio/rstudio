@@ -18,7 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocOutput, PandocTokenType, PandocToken, tokensCollectText, ProsemirrorWriter } from '../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocToken, stringifyTokens, ProsemirrorWriter } from '../api/pandoc';
 
 import { kHugoDocType } from '../api/format';
 
@@ -78,7 +78,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           // unroll shortcode from paragraph with single shortcode
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
             if (isParaWrappingShortcode(tok)) {
-              const text = tokensCollectText(tok.c);
+              const text = stringifyTokens(tok.c);
               writer.addNode(schema.nodes.shortcode_block, {}, [schema.text(text)]);
               return true;
             } else {
@@ -138,7 +138,7 @@ function isParaWrappingShortcode(tok: PandocToken) {
       const [first, second] = tok.c;
       const firstText = first.t === PandocTokenType.Str ? first.c : second.c;
       if (typeof firstText === 'string' && firstText.startsWith('{{<')) {
-        const text = tokensCollectText(children);
+        const text = stringifyTokens(children);
         return !!text.match(kShortcodeRegEx);
       }
     }

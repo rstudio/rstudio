@@ -18,9 +18,9 @@ import { NodeSpec, MarkSpec } from 'prosemirror-model';
 import { PandocToken, PandocExtensions } from './pandoc';
 import { extensionEnabled, extensionIfEnabled, Extension } from './extension';
 
-const PANDOC_ATTR_ID = 0;
-const PANDOC_ATTR_CLASSES = 1;
-const PANDOC_ATTR_KEYVAULE = 2;
+export const kPandocAttrId = 0;
+export const kPandocAttrClasses = 1;
+export const kPandocAttrKeyvalue = 2;
 
 const kDataPmPandocAttr = 'data-pm-pandoc-attr';
 
@@ -31,6 +31,10 @@ export const kAlignAttrib = 'align';
 
 export const kCodeBlockAttr = 0;
 export const kCodeBlockText = 1;
+
+export const kSpanAttr = 0;
+export const kSpanChildren = 1;
+
 
 export interface PandocAttr {
   id: string;
@@ -71,9 +75,9 @@ export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
 export function pandocAttrReadAST(tok: PandocToken, index: number) {
   const pandocAttr = tok.c[index];
   return {
-    id: pandocAttr[PANDOC_ATTR_ID] || undefined,
-    classes: pandocAttr[PANDOC_ATTR_CLASSES],
-    keyvalue: pandocAttr[PANDOC_ATTR_KEYVAULE],
+    id: pandocAttr[kPandocAttrId] || undefined,
+    classes: pandocAttr[kPandocAttrClasses],
+    keyvalue: pandocAttr[kPandocAttrKeyvalue],
   };
 }
 
@@ -136,6 +140,31 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
   });
   return attr;
 }
+
+
+export interface AttrKeyvaluePartitioned {
+  base: Array<[string, string]>;
+  partitioned: Array<[string, string]>;
+}
+
+export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>): AttrKeyvaluePartitioned {
+  const base = new Array<[string, string]>();
+  const partitioned = new Array<[string, string]>();
+
+  keyvalue.forEach(kv => {
+    if (partition.includes(kv[0])) {
+      partitioned.push(kv);
+    } else {
+      base.push(kv);
+    }
+  });
+
+  return {
+    base,
+    partitioned,
+  };
+}
+
 
 export function extensionIfPandocAttrEnabled(extension: Extension) {
   return extensionIfEnabled(extension, kPandocAttrExtensions);

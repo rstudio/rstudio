@@ -82,8 +82,6 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    public void onCompleted()
    {
-      // don't restore focus on close, as we'll be separately
-      // navigating the document in response to dialog completion
       setRestoreFocusOnClose(false);
       closeDialog();  
    }

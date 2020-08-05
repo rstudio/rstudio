@@ -69,6 +69,7 @@
 
 #include <session/http/SessionRequest.hpp>
 
+#include "SessionRpc.hpp"
 #include "SessionClientEventQueue.hpp"
 #include "SessionMainProcess.hpp"
 
@@ -527,6 +528,13 @@ SEXP rs_getPersistentValue(SEXP nameSEXP)
    {
       return R_NilValue;
    }
+}
+
+SEXP rs_setRpcDelay(SEXP delayMsSEXP)
+{
+   int delayMs = r::sexp::asInteger(delayMsSEXP);
+   rstudio::session::rpc::setRpcDelay(delayMs);
+   return delayMsSEXP;
 }
 
 } // anonymous namespace
@@ -2796,6 +2804,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
+   RS_REGISTER_CALL_METHOD(rs_setRpcDelay);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
