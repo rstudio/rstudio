@@ -288,7 +288,7 @@ private:
       }
       else
       {
-         handler_(Success(), collections_);
+         handler_(Success(), collections_, "");
       }
    }
 
@@ -296,7 +296,7 @@ private:
    {
       if (error)
       {
-         handler_(error, std::vector<ZoteroCollection>());
+         handler_(error, std::vector<ZoteroCollection>(), "");
       }
       else
       {
@@ -328,11 +328,11 @@ void getWebLibraryForUser(std::string key,
    zoteroItemVersions(key, userID, cacheSpec.version, [key, userID, cacheSpec, handler](core::Error error, int, json::Value json) {
       if (error)
       {
-         handler(error, std::vector<ZoteroCollection>());
+         handler(error, std::vector<ZoteroCollection>(), "");
       }
       else if (json.isObject() && json.getObject().getSize() == 0)
       {
-         handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(cacheSpec) });
+         handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(cacheSpec) }, "");
       }
       else
       {
@@ -340,7 +340,7 @@ void getWebLibraryForUser(std::string key,
 
             if (error)
             {
-               handler(error, std::vector<ZoteroCollection>());
+               handler(error, std::vector<ZoteroCollection>(), "");
             }
             else
             {
@@ -358,7 +358,7 @@ void getWebLibraryForUser(std::string key,
                ZoteroCollection collection = collectionFromItemsDownload(spec, json);
 
                // return it
-               handler(Success(), std::vector<ZoteroCollection>{ collection });
+               handler(Success(), std::vector<ZoteroCollection>{ collection }, "");
             }
          });
       }
@@ -381,7 +381,7 @@ void getWebCollectionsForUser(std::string key,
 
       if (error)
       {
-         handler(error, std::vector<ZoteroCollection>());
+         handler(error, std::vector<ZoteroCollection>(), "");
          return;
       }
 
@@ -427,17 +427,17 @@ void getWebCollectionsForUser(std::string key,
       }
 
       // do the download
-      ZoteroCollectionsDownloader::create(key, userID, downloadCollections, [handler, upToDateCollections](Error error,ZoteroCollections collections) {
+      ZoteroCollectionsDownloader::create(key, userID, downloadCollections, [handler, upToDateCollections](Error error,ZoteroCollections collections,std::string warning) {
 
          if (error)
          {
-            handler(error, ZoteroCollections());
+            handler(error, ZoteroCollections(), warning);
          }
          else
          {
             // append downloaded collections to already up to date collections and return them
             std::copy(upToDateCollections.begin(), upToDateCollections.end(), std::back_inserter(collections));
-            handler(Success(), collections);
+            handler(Success(), collections, warning);
          }
 
       });
@@ -482,7 +482,7 @@ void getWebLibrary(std::string key,
    withUserId(key, [key, cacheSpec, handler](Error error, int userID) {
       if (error)
       {
-         handler(error, std::vector<ZoteroCollection>());
+         handler(error, std::vector<ZoteroCollection>(), "");
          return;
       }
       else
@@ -501,7 +501,7 @@ void getWebCollections(std::string key,
    withUserId(key, [key, collections, cacheSpecs, handler](Error error, int userID) {
       if (error)
       {
-         handler(error, std::vector<ZoteroCollection>());
+         handler(error, std::vector<ZoteroCollection>(), "");
          return;
       }
       else

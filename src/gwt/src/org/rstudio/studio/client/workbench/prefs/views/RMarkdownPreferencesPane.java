@@ -21,6 +21,9 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import elemental2.core.JsObject;
+import jsinterop.base.Js;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -33,6 +36,7 @@ import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroLocalConfig;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -323,18 +327,28 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (!dataDir.isEmpty())
          zoteroDataDir_.setText(dataDir);
       visualModeOptions.add(zoteroDataDir_);
+      
+      zoteroUseBetterBibtex_ = checkboxPref(
+         "Use Better BibTeX for citation keys and BibLaTeX export",
+         prefs_.zoteroUseBetterBibtex(),
+         false);
+      lessSpaced(zoteroUseBetterBibtex_);
+      visualModeOptions.add(zoteroUseBetterBibtex_);
        
       visualMode.add(visualModeOptions);
       
       // kickoff query for detected zotero data directory
-      zoteroServer.zoteroDetectDataDirectory(new ServerRequestCallback<String>() {
+      zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {
 
          @Override
-         public void onResponseReceived(String directory)
+         public void onResponseReceived(JsObject response)
          {
-            detectedZoteroDataDir_ = directory;
+            zoteroLocalConfig_ = Js.uncheckedCast(response);
+            
             if (zoteroDataDir_.getText().isEmpty())
-               zoteroDataDir_.setText(detectedZoteroDataDir_);
+               zoteroDataDir_.setText(zoteroLocalConfig_.dataDirectory);
+            
+            manageZoteroUI();
          }
          
          @Override
@@ -396,6 +410,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB));
       zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
+      zoteroUseBetterBibtex_.setVisible(zoteroDataDir_.isVisible() && zoteroLocalConfig_.betterBibtex);
    }
 
    @Override
@@ -431,7 +446,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // if the zotero data dir is same as the detected data dir then 
       // set it to empty (allowing the server to always get the right default)
-      if (zoteroDataDir_.getText().equals(detectedZoteroDataDir_))
+      if (zoteroDataDir_.getText().equals(zoteroLocalConfig_.dataDirectory))
          state_.zoteroDataDir().setGlobalValue("");
       else
          state_.zoteroDataDir().setGlobalValue(zoteroDataDir_.getText());
@@ -460,5 +475,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final ZoteroConnectionWidget zoteroConnection_;
    private final DirectoryChooserTextBox zoteroDataDir_;
    private final ZoteroApiKeyWidget zoteroApiKey_;
-   private String detectedZoteroDataDir_ = "";
+   private final CheckBox zoteroUseBetterBibtex_;
+   private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
 }
