@@ -19,6 +19,8 @@ import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemir
 import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
+import { BibLatexExporter, BibDB, BibFieldTypes, EntryObject, TextNodeObject } from 'biblatex-csl-converter';
+
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
@@ -38,6 +40,7 @@ import { citePopupPlugin } from './cite-popup';
 import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
 import { join } from 'path';
+import { toBibLaTeX } from '../../api/bibliography/bibDb';
 
 const kCiteCitationsIndex = 0;
 
@@ -657,7 +660,8 @@ export async function insertCitation(
         // Write entry to a bibliography file if it isn't already present
         await bibManager.load(ui, view.state.doc);
         if (!bibManager.findIdInLocalBibliography(result.id)) {
-          await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]));
+          const sourceAsBibLaTeX = toBibLaTeX(result.id, result.csl);
+          await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
         }
 
         const tr = view.state.tr;

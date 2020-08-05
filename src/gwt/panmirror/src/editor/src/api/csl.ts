@@ -15,6 +15,9 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
+import { BibDB, EntryObject, BibFieldTypes, TextNodeObject, NameDictObject, NodeArray, RangeArray } from 'biblatex-csl-converter';
+import { convertArrayOfRowsToTableNode } from 'prosemirror-utils';
+
 
 export interface CSL {
 
@@ -137,5 +140,13 @@ export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
   }
   return undefined;
 }
+
+export function cslDateToEDTFDate(date: CSLDate) {
+  if (date["date-parts"]) {
+    return date["date-parts"][0].join('-');
+  }
+}
+
+
 
 
