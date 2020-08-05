@@ -249,12 +249,14 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    else if (boost::algorithm::starts_with(address, proxiedAddress))
    {
       // find the base url from the original request
-      std::string absoluteUri = originalRequest.absoluteUri();
-      std::string::size_type pos = absoluteUri.find(portPath);
+      std::string baseUri = (originalRequest.rootPath(server::options().wwwUrlPathPrefix()) != "/")
+         ? originalRequest.proxiedUri()
+         : originalRequest.absoluteUri();
+      std::string::size_type pos = baseUri.find(portPath);
       if (pos != std::string::npos) // precaution, should always be true
       {
           // substitute the base url for the proxied address
-         std::string baseUrl = absoluteUri.substr(0, pos + portPath.length());
+         std::string baseUrl = baseUri.substr(0, pos + portPath.length());
          address = baseUrl + address.substr(proxiedAddress.length());
       }
    }

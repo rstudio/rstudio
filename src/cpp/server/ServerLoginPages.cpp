@@ -155,7 +155,8 @@ void redirectToLoginPage(const core::http::Request& request,
 {
    pResponse->setMovedTemporarily(
                          request,
-                         generateLoginPath(request, appUri, error));
+                         generateLoginPath(request, appUri, error),
+                         server::options().wwwUrlPathPrefix());
 }
 
 } // namespace server

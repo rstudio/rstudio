@@ -55,7 +55,8 @@ public:
 
    bool isSecure() const;
    std::string absoluteUri() const;
-   std::string proxiedUri() const;
+   std::string proxiedUri(const std::string& prefix = "/") const;
+   std::string rootPath(const std::string& prefix = "/") const;
    
    bool acceptsContentType(const std::string& contentType) const;
 

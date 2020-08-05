@@ -371,7 +371,7 @@ private:
 
          // response filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
-                     this, _1, _2)
+                     this, _1, _2, _3, _4)
       ));
 
       // wait for next connection
@@ -589,6 +589,8 @@ private:
    }
 
    void connectionResponseFilter(const std::string& absoluteUri,
+                                 const std::string& proxiedUri,
+                                 const std::string& rootPath,
                                  http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
@@ -602,7 +604,7 @@ private:
       }
 
       if (responseFilter_)
-         responseFilter_(absoluteUri, pResponse);
+         responseFilter_(absoluteUri, proxiedUri, rootPath, pResponse);
    }
 
    void waitForScheduledCommandTimer()

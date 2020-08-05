@@ -43,7 +43,7 @@ bool supportedBrowserFilter(const http::Request& request,
       }
       else
       {
-         pResponse->setMovedTemporarily(request, kBrowserUnsupported);
+         pResponse->setMovedTemporarily(request, kBrowserUnsupported, options().wwwUrlPathPrefix());
          return false;
       }
    }

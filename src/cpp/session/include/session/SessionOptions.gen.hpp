@@ -178,6 +178,9 @@ protected:
       (kPackageOutputInPackageFolder,
       value<bool>(&packageOutputToPackageFolder_)->default_value(false),
       "Specifies whether or not package builds output to the package project folder.")
+      (kUrlPathPrefixSessionOption,
+      value<std::string>(&urlPathPrefix_)->default_value("/"),
+      "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL.")
       (kUseSecureCookiesSessionOption,
       value<bool>(&useSecureCookies_)->default_value(false),
       "Indicates whether or not to mark cookies as secure.")
@@ -411,6 +414,7 @@ public:
    int webSocketLogLevel() const { return webSocketLogLevel_; }
    int webSocketHandshakeTimeoutMs() const { return webSocketHandshakeTimeoutMs_; }
    bool packageOutputInPackageFolder() const { return packageOutputToPackageFolder_; }
+   std::string urlPathPrefix() const { return urlPathPrefix_; }
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
@@ -504,6 +508,7 @@ protected:
    int webSocketLogLevel_;
    int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
+   std::string urlPathPrefix_;
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;

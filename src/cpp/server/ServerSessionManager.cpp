@@ -106,6 +106,8 @@ core::system::ProcessConfig sessionProcessConfig(
    // ensure cookies are marked secure if applicable
    bool useSecureCookies = options.authCookiesForceSecure() ||
                            options.getOverlayOption("ssl-enabled") == "1";
+   args.push_back(std::make_pair("--" kUrlPathPrefixSessionOption,
+                                 options.wwwUrlPathPrefix()));
    args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
                                  useSecureCookies ? "1" : "0"));
    args.push_back(std::make_pair("--" kSameSiteSessionOption,

@@ -203,7 +203,7 @@ public:
 
       // call the response filter if we have one
       if (responseFilter_)
-         responseFilter_(absoluteUri_, &response_);
+         responseFilter_(absoluteUri_, proxiedUri_, rootPath_, &response_);
 
       if (response_.isStreamResponse())
       {
@@ -398,6 +398,8 @@ private:
             {
                // record the original uri
                absoluteUri_ = request_.absoluteUri();
+               proxiedUri_ = request_.proxiedUri();
+               rootPath_ = request_.rootPath();
 
                // call the request filter if we have one
                if (requestFilter_)
@@ -596,6 +598,8 @@ private:
    boost::array<char, 8192> buffer_;
    RequestParser requestParser_;
    std::string absoluteUri_;
+   std::string proxiedUri_;
+   std::string rootPath_;
    http::Request request_;
    http::Response response_;
 

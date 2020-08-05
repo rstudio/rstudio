@@ -109,6 +109,7 @@ http::UriHandlerFunction blockingFileHandler()
    // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
+                                   options.wwwUrlPathPrefix(),
                                    mainPageFilter,
                                    initJs,
                                    options.gwtPrefix(),
@@ -183,6 +184,8 @@ void pageNotFoundHandler(const http::Request& request,
    std::ostringstream os;
    std::map<std::string, std::string> vars;
    vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
+   vars["root_path"] = string_utils::jsLiteralEscape(request.rootPath(options().wwwUrlPathPrefix()));
+   vars["base_uri"] = string_utils::jsLiteralEscape(request.proxiedUri(options().wwwUrlPathPrefix()));
 
    FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).completeChildPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);

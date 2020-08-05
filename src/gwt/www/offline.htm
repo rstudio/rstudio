@@ -73,10 +73,16 @@ body, td {
 <script>
    function getBaseUri()
    {
-      var index = window.location.href.lastIndexOf("#!request_uri#");
+      var baseUri = "#!base_uri#";
+      var rootPath = "#!root_path#";
+      if (rootPath === "/")
+      {
+        baseUri = window.location.href;
+      }
+      var index = baseUri.lastIndexOf("#!request_uri#");
       if (index > 0)
       {
-         return window.location.href.substring(0, index);
+        return baseUri.substring(0, index);
       }
       return "/";
    }

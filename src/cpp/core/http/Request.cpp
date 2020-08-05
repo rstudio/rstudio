@@ -57,7 +57,24 @@ std::string Request::absoluteUri() const
    return scheme + "://" + host() + uri();
 }
 
-std::string Request::proxiedUri() const
+std::string Request::rootPath(const std::string& prefix /*= "/"*/) const
+{
+   std::string rootPathHeader = headerValue("X-RStudio-Root-Path");
+   if (rootPathHeader == "")
+   {
+      rootPathHeader = prefix;
+   }
+
+   // be sure the root path start with slash but doesn't end with one
+   if (rootPathHeader.empty() || rootPathHeader[0] != '/')
+      rootPathHeader = '/' + rootPathHeader;
+   if (rootPathHeader[rootPathHeader.length() - 1] == '/')
+      rootPathHeader = rootPathHeader.substr(0, rootPathHeader.length() - 1);
+
+   return rootPathHeader;
+}
+
+std::string Request::proxiedUri(const std::string& prefix /*= "/"*/) const
 {
    // if using the product-specific header use it
    // it should contain the exact scheme/host/port/path
@@ -67,6 +84,8 @@ std::string Request::proxiedUri() const
    {
       return overrideHeader;
    }
+
+   std::string rootPathContext = rootPath(prefix);
 
    // might be using new Forwarded header
    std::string forwarded = headerValue("Forwarded");
@@ -83,7 +102,7 @@ std::string Request::proxiedUri() const
       if (boost::regex_search(forwarded, matches, reProto))
          protocol = matches[1];
 
-      return URL::complete(protocol + "://" + forwardedHost, uri());
+      return URL::complete(protocol + "://" + forwardedHost, rootPathContext + '/' + uri());
    }
 
    // get the protocol that was specified in the request
@@ -113,11 +132,11 @@ std::string Request::proxiedUri() const
          }
       }
 
-      return URL::complete(protocol + "://" + forwardedHost, uri());
+      return URL::complete(protocol + "://" + forwardedHost, rootPathContext + '/' + uri());
    }
 
    // use the protocol that may have been set by X-Forwarded-Proto
-   return URL::complete(protocol + "://" + host(), uri());
+   return URL::complete(protocol + "://" + host(), rootPathContext + '/' + uri());
 }
 
 bool Request::acceptsContentType(const std::string& contentType) const

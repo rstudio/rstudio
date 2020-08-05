@@ -275,6 +275,14 @@
             "description": "Specifies whether or not package builds output to the package project folder."
          },
          {
+            "name": {"constant": "kUrlPathPrefixSessionOption", "value": "session-url-path-prefix"},
+            "memberName": "urlPathPrefix_",
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": "/",
+            "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
+         },
+         {
             "name": {"constant": "kUseSecureCookiesSessionOption", "value": "session-use-secure-cookies"},
             "type": "bool",
             "isHidden": true,

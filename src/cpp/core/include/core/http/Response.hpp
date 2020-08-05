@@ -439,8 +439,12 @@ public:
 
    void setError(const Error& error);
    
-   void setMovedPermanently(const http::Request& request, const std::string& location);
-   void setMovedTemporarily(const http::Request& request, const std::string& location);
+   void setMovedPermanently(const http::Request& request,
+                            const std::string& location,
+                            const std::string& pathPrefix = "/");
+   void setMovedTemporarily(const http::Request& request,
+                            const std::string& location,
+                            const std::string& pathPrefix = "/");
    
    void setNotFoundHandler(const NotFoundHandler& handler)
    {

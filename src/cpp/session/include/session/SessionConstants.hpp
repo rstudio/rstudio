@@ -83,6 +83,7 @@
 
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 
+#define kUrlPathPrefixSessionOption       "session-url-path-prefix"
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
 #define kSameSiteSessionOption            "session-same-site"
 

@@ -31,7 +31,9 @@ endif()
 
 # allow opt in / out of GWT build
 # mainly for faster iteration in builds
-set(GWT_BUILD Yes)
+if(NOT DEFINED GWT_BUILD)
+   set(GWT_BUILD Yes)
+endif()
 if(DEFINED ENV{GWT_BUILD})
    set(GWT_BUILD $ENV{GWT_BUILD})
 endif()
@@ -43,6 +45,7 @@ if(DEFINED ENV{GWT_MAIN_MODULE})
 endif()
 
 if(GWT_BUILD)
+   message(STATUS "Configured to build GWT")
 
    # invoke ant to build
    add_custom_target(gwt_build ALL)

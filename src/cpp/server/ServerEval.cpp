@@ -52,7 +52,7 @@ bool expirationFilter(const core::http::Request& request,
    // serve back the expired page
    if (expiresSeconds > date_time::secondsSinceEpoch())
    {
-      pResponse->setMovedTemporarily(request, "/expired.htm");
+      pResponse->setMovedTemporarily(request, "/expired.htm", server::options().wwwUrlPathPrefix());
       return false;
    }
    else
