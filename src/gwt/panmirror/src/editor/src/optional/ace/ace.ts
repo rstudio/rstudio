@@ -41,6 +41,8 @@ import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 import { ExtensionContext } from '../../api/extension';
 import { DispatchEvent, ResizeEvent } from '../../api/event-types';
+import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
+import { handleArrowToAdjacentNode } from '../../api/cursor';
 
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
@@ -50,8 +52,6 @@ import { AcePlaceholder } from './ace-placeholder';
 import { AceNodeViews } from './ace-node-views';
 
 import './ace.css';
-import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
-
 
 const plugin = new PluginKey('ace');
 
@@ -722,66 +722,8 @@ export class AceNodeView implements NodeView {
     // ensure we are focused
     this.view.focus();
 
-    // get the current position
-    const $pos = this.view.state.doc.resolve(this.getPos());
-
-    // helpers to figure out if the previous or next nodes are selectable
-    const prevNodeSelectable = () => {
-      return $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable;
-    };
-    const nextNodeSelectable = () => {
-      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
-      return nextNode?.type.spec.selectable;
-    };
-    const prevNodeTextBlock = () => {
-      return $pos.nodeBefore && $pos.nodeBefore.isTextblock;
-    };
-    const nextNodeTextBlock = () => {
-      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
-      return nextNode?.isTextblock;
-    };
-
-    // see if we can get a new selection
-    const tr = this.view.state.tr;
-    let selection: Selection | undefined;
-
-    // if we are going backwards and there is no previous position, then return a gap cursor
-    if (dir < 0 && !$pos.nodeBefore) {
-      selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
-
-      // if we are going backwards and the previous node can take node selections then select it
-    } else if (dir < 0 && prevNodeSelectable()) {
-      const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
-      selection = NodeSelection.create(tr.doc, prevNodePos);
-
-      // if we are going forwards and the next node can take node selections then select it
-    } else if (dir >= 0 && nextNodeSelectable()) {
-      const nextNodePos = this.getPos() + this.node.nodeSize;
-      selection = NodeSelection.create(tr.doc, nextNodePos);
-
-      // if we are going backwards and the previous node is not a text block then create a gap cursor
-    } else if (dir < 0 && !prevNodeTextBlock()) {
-      selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
-
-      // if we are going forwards and the next node is not a text block then create a gap cursor
-    } else if (dir >= 0 && !nextNodeTextBlock()) {
-      const endPos = this.getPos() + this.node.nodeSize;
-      selection = new GapCursor(tr.doc.resolve(endPos), tr.doc.resolve(endPos));
-
-      // otherwise use text selection handling (handles forward/backward text selections)
-    } else {
-      const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
-      const targetNode = this.view.state.doc.nodeAt(targetPos);
-      if (targetNode) {
-        selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
-      }
-    }
-
-    // set selection if we've got it
-    if (selection) {
-      tr.setSelection(selection).scrollIntoView();
-      this.view.dispatch(tr);
-    }
+    // handle arrow key
+    handleArrowToAdjacentNode(this.getPos(), dir, this.view.state, this.view.dispatch);
 
     // set focus
     this.view.focus();
@@ -861,6 +803,7 @@ export class AceNodeView implements NodeView {
     }
   }
 }
+
 
 function computeChange(oldVal: string, newVal: string) {
   if (oldVal === newVal) {
