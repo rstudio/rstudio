@@ -733,12 +733,12 @@ export class AceNodeView implements NodeView {
       const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
       return nextNode?.type.spec.selectable;
     };
-    const prevNodeCode = () => {
-      return $pos.nodeBefore && $pos.nodeBefore.type.spec.code;
+    const prevNodeTextBlock = () => {
+      return $pos.nodeBefore && $pos.nodeBefore.isTextblock;
     };
-    const nextNodeCode = () => {
+    const nextNodeTextBlock = () => {
       const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
-      return nextNode?.type.spec.code;
+      return nextNode?.isTextblock;
     };
 
     // see if we can get a new selection
@@ -759,12 +759,12 @@ export class AceNodeView implements NodeView {
       const nextNodePos = this.getPos() + this.node.nodeSize;
       selection = NodeSelection.create(tr.doc, nextNodePos);
 
-      // if we are going backwards and the previous node is a code node then create a gap cursor
-    } else if (dir < 0 && prevNodeCode()) {
+      // if we are going backwards and the previous node is not a text block then create a gap cursor
+    } else if (dir < 0 && !prevNodeTextBlock()) {
       selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
 
-      // if we are going forwards and the next node is a code node then create a gap cursor
-    } else if (dir >= 0 && nextNodeCode()) {
+      // if we are going forwards and the next node is not a text block then create a gap cursor
+    } else if (dir >= 0 && !nextNodeTextBlock()) {
       const endPos = this.getPos() + this.node.nodeSize;
       selection = new GapCursor(tr.doc.resolve(endPos), tr.doc.resolve(endPos));
 
