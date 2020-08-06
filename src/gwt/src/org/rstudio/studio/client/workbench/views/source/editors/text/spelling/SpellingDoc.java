@@ -16,25 +16,24 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+
 
 public interface SpellingDoc
-{ 
+{  
    // words
-   Iterable<Range> getWords(TokenPredicate tokenPredicate,
-                            CharClassifier charClassifier,
-                            Position start,
-                            Position end);
+   Iterable<Range> getSpellingWords(Position start, Position end);
    boolean shouldCheckSpelling(Range range);
    String getTextForRange(Range range);
    
    // selection
    void setSelectionRange(Range range);
    void replaceSelection(String code);
+   Position getSelectionStart();
    Position getSelectionEnd();
+   Anchor createAnchor(Position pos);
    
    // cursor
    Rectangle getCursorBounds(); 
@@ -68,6 +67,7 @@ public interface SpellingDoc
    
    int getCursorPosition();
    void replaceSelection(String text);
+   int getSelectionStart();
    int getSelectionEnd();
    
    Rectangle getCursorBounds(); 

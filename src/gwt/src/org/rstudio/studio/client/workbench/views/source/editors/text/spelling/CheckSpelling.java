@@ -33,7 +33,6 @@ import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -79,19 +78,19 @@ public class CheckSpelling
    }
 
    public CheckSpelling(TypoSpellChecker spellChecker,
-                        DocDisplay docDisplay,
+                        SpellingDoc spellingDoc,
                         Display view,
                         ProgressDisplay progressDisplay,
                         ResultCallback<Void, Exception> callback)
    {
       typoSpellChecker_ = spellChecker;
-      docDisplay_ = docDisplay;
+      spellingDoc_ = spellingDoc;
       view_ = view;
       progressDisplay_ = progressDisplay;
       callback_ = callback;
 
-      currentPos_ = docDisplay_.getSelectionStart();
-      initialCursorPos_ = docDisplay_.createAnchor(currentPos_);
+      currentPos_ = spellingDoc_.getSelectionStart();
+      initialCursorPos_ = spellingDoc_.createAnchor(currentPos_);
       wrapped_ = false;
 
       view_.getChangeButton().addClickHandler((ClickEvent event) ->
@@ -113,21 +112,21 @@ public class CheckSpelling
 
       view_.getSkipButton().addClickHandler((ClickEvent event) ->
       {
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition();
          findNextMisspelling();
       });
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition();
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition();
          findNextMisspelling();
       });
 
@@ -157,8 +156,8 @@ public class CheckSpelling
 
    private void doReplacement(String replacement)
    {
-      docDisplay_.replaceSelection(replacement);
-      currentPos_ = docDisplay_.getSelectionEnd();
+      spellingDoc_.replaceSelection(replacement);
+      currentPos_ = spellingDoc_.getSelectionEnd();
    }
 
    private void findNextMisspelling()
@@ -170,9 +169,7 @@ public class CheckSpelling
 
          showProgress();
 
-         Iterable<Range> wordSource = docDisplay_.getWords(
-               docDisplay_.getFileType().getSpellCheckTokenPredicate(),
-               docDisplay_.getFileType().getCharPredicate(),
+         Iterable<Range> wordSource = spellingDoc_.getSpellingWords(
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : null);
 
@@ -181,11 +178,11 @@ public class CheckSpelling
 
          for (Range r : wordSource)
          {
-            if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
+            if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, r))
                continue;
 
             wordRanges.add(r);
-            words.add(docDisplay_.getTextForRange(r));
+            words.add(spellingDoc_.getTextForRange(r));
 
             // Check a maximum of N words at a time
             if (wordRanges.size() == 100)
@@ -280,12 +277,12 @@ public class CheckSpelling
    {
       try
       {
-         docDisplay_.setSelectionRange(range);
-         docDisplay_.moveCursorNearTop();
+         spellingDoc_.setSelectionRange(range);
+         spellingDoc_.moveCursorNearTop();
          view_.clearSuggestions();
          view_.getReplacement().setText("");
 
-         final String word = docDisplay_.getTextForRange(range);
+         final String word = spellingDoc_.getTextForRange(range);
 
          if (changeAll_.containsKey(word))
          {
@@ -303,7 +300,7 @@ public class CheckSpelling
          // meaning we'll be avoiding a completely incorrect region.
          Scheduler.get().scheduleFixedDelay(() ->
          {
-            showDialog(docDisplay_.getCursorBounds());
+            showDialog(spellingDoc_.getCursorBounds());
 
             view_.focusReplacement();
 
@@ -360,7 +357,7 @@ public class CheckSpelling
    }
 
    private final TypoSpellChecker typoSpellChecker_;
-   private final DocDisplay docDisplay_;
+   private final SpellingDoc spellingDoc_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;
    private final ResultCallback<org.rstudio.studio.client.server.Void, Exception> callback_;

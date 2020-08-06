@@ -1572,6 +1572,15 @@ public class AceEditor implements DocDisplay,
                               start,
                               end);
    }
+   
+   @Override
+   public Iterable<Range> getSpellingWords(Position start, Position end)
+   {
+      return getWords(fileType_.getSpellCheckTokenPredicate(),
+                      fileType_.getCharPredicate(),
+                      start,
+                      end);
+   }
 
    @Override
    public String getTextForRange(Range range)
@@ -4452,5 +4461,6 @@ public class AceEditor implements DocDisplay,
    private static AceEditor s_lastFocusedEditor = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
+
 
 }
