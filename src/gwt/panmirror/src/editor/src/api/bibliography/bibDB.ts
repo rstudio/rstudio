@@ -49,123 +49,143 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
     Object.keys(enumerableCSL).forEach(key => {
       const value: any = enumerableCSL[key];
 
-      const bibFieldData = bibFieldForValue(key, csl.type);
-      if (bibFieldData) {
-        const bibFieldKey = bibFieldData[0];
-        const bibField = bibFieldData[1];
-        const type = bibField.type;
-        let nodeValue: any;
-        switch (type) {
-          case ('f_date'):
-            // f_date = // EDTF 1.0 level 0/1 compliant string. (2000-12-31)
-            const cslDate = value as CSLDate;
-            if (cslDate) {
-              const edtfDate = cslDateToEDTFDate(cslDate);
-              if (edtfDate) {
-                nodeValue = edtfDate;
-              }
-            }
-            break;
-          case ('f_integer'):
-          case ('f_literal'):
-          case ('f_long_literal'):
-          case ('f_title'):
-            // f_integer, f_literal, f_long_literal, f_title = [nodeValue]
-            // l_literal = [nodeValue]
-            if (value) {
-              nodeValue = textNodes(value);
-            }
-            break;
-          case ('l_literal'):
-            // l_literal = [NodeArray]
-            if (value) {
-              nodeValue = [textNodes(value)];
-            }
-            break;
-          case ('f_key'):
-            // f_key: string | NodeArray (string points to another key 
-            // name in BibObject whose value is used for this key)
-            if (bibField.options) {
-              const options = bibField.options as any;
-              Object.keys(options).find(optionKey => {
-                const optionValue: any = options[optionKey];
-                if (optionValue.csl === value) {
-                  nodeValue = optionKey;
-                  return true;
-                }
-              });
+      const bibFieldDatas = bibFieldForValue(key, csl.type);
 
-              if (!nodeValue) {
+      bibFieldDatas?.forEach(bibFieldData => {
+        if (bibFieldData) {
+          const bibFieldKey = bibFieldData[0];
+          const bibField = bibFieldData[1];
+          const type = bibField.type;
+          let nodeValue: any;
+          switch (type) {
+            case ('f_date'):
+              // f_date = // EDTF 1.0 level 0/1 compliant string. (2000-12-31)
+              const cslDate = value as CSLDate;
+              if (cslDate) {
+                const edtfDate = cslDateToEDTFDate(cslDate);
+                if (edtfDate) {
+                  nodeValue = edtfDate;
+                }
+              }
+              break;
+            case ('f_integer'):
+            case ('f_literal'):
+            case ('f_long_literal'):
+            case ('f_title'):
+              // f_integer, f_literal, f_long_literal, f_title = [nodeValue]
+              // l_literal = [nodeValue]
+              if (value) {
                 nodeValue = textNodes(value);
               }
-            }
+              break;
+            case ('l_literal'):
+              // l_literal = [NodeArray]
+              if (value) {
+                nodeValue = [textNodes(value)];
+              }
+              break;
+            case ('f_key'):
+              // f_key: string | NodeArray (string points to another key 
+              // name in BibObject whose value is used for this key)
+              if (bibField.options) {
+                const options = bibField.options as any;
+                Object.keys(options).find(optionKey => {
+                  const optionValue: any = options[optionKey];
+                  if (optionValue.csl === value) {
+                    nodeValue = optionKey;
+                    return true;
+                  }
+                });
 
-            break;
-          case ('l_key'):
-            // l_key, list of [string | NodeArray]
-            if (bibField.options) {
-              const options = bibField.options as any;
-              Object.keys(options).find(optionKey => {
-                const optionValue: any = options[optionKey];
-                if (optionValue.csl === value) {
-                  nodeValue = [optionKey];
-                  return true;
+                if (!nodeValue) {
+                  nodeValue = textNodes(value);
                 }
+              }
+
+              break;
+            case ('l_key'):
+              // l_key, list of [string | NodeArray]
+              if (bibField.options) {
+                const options = bibField.options as any;
+                Object.keys(options).find(optionKey => {
+                  const optionValue: any = options[optionKey];
+                  if (optionValue.csl === value) {
+                    nodeValue = [optionKey];
+                    return true;
+                  }
+                });
+
+                if (!nodeValue) {
+                  nodeValue = textNodes(value);
+                }
+              }
+              break;
+            case ('l_range'):
+              // l_range Array<RangeArray>
+              const valueStr = value as string;
+              const parts = valueStr.split('-');
+              const range = rangeArray(parts);
+              if (range) {
+                nodeValue = [range];
+              }
+              break;
+            case ('f_uri'):
+            case ('f_verbatim'):
+              // f_uri, f_verbatim: string
+              nodeValue = value;
+              break;
+            case ('l_name'):
+              // l_name Array<NameDictObject>
+              const names = value as CSLName[];
+              nodeValue = names.map(name => {
+                const nameDict: NameDictObject = {
+                  family: textNodes(name.family),
+                  given: textNodes(name.given),
+                  literal: name.literal ? textNodes(name.literal) : undefined,
+                };
+                return nameDict;
               });
 
-              if (!nodeValue) {
-                nodeValue = textNodes(value);
-              }
+              break;
+            case ('l_tag'):
+              // l_tag: string[]
+              nodeValue = [value];
+              break;
+          }
+
+          if (nodeValue) {
+            if (shouldIncludeField(bibFieldKey, bibType[1])) {
+              bibObject.fields[bibFieldKey] = nodeValue;
             }
-            break;
-          case ('l_range'):
-            // l_range Array<RangeArray>
-            const valueStr = value as string;
-            const parts = valueStr.split('-');
-            const range = rangeArray(parts);
-            if (range) {
-              nodeValue = [range];
-            }
-            break;
-          case ('f_uri'):
-          case ('f_verbatim'):
-            // f_uri, f_verbatim: string
-            nodeValue = value;
-            break;
-          case ('l_name'):
-            // l_name Array<NameDictObject>
-            const names = value as CSLName[];
-            nodeValue = names.map(name => {
-              const nameDict: NameDictObject = {
-                family: textNodes(name.family),
-                given: textNodes(name.given),
-                literal: name.literal ? textNodes(name.literal) : undefined,
-              };
-              return nameDict;
-            });
-
-            break;
-          case ('l_tag'):
-            // l_tag: string[]
-            nodeValue = [value];
-            break;
+          }
         }
-
-        // TODO: Should we be filtering fields to only the permissable fields?
-        // e.g. BibType.required / eitheror /  optional?
-
-        if (nodeValue) {
-          bibObject.fields[bibFieldKey] = nodeValue;
-        }
-      }
+      });
     });
 
     const bibDB: BibDB = {
       'item': bibObject
     };
     return bibDB;
+
   }
 }
+
+function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
+  if (bibType.required.includes(bibDBFieldName)) {
+    return true;
+  }
+
+  if (bibType.optional.includes(bibDBFieldName)) {
+    return true;
+  }
+
+  if (bibType.eitheror.includes(bibDBFieldName)) {
+    return true;
+  }
+
+  return false;
+}
+
 
 function textNodes(str: string): NodeArray {
   // TODO: Need to parse text and add marks
@@ -199,7 +219,7 @@ function bibTypeForCSL(cslType: string): [string, BibType] | undefined {
   }
 }
 
-function bibFieldForValue(cslKey: string, cslType: string): [string, BibField] | undefined {
+function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibField]> | undefined {
   // Special case the following fields:
   // article-journal issue
   // patent number
@@ -214,11 +234,11 @@ function bibFieldForValue(cslKey: string, cslType: string): [string, BibField] |
       biblatex: 'number',
       csl: cslKey
     };
-    return ['number', bibField];
+    return [['number', bibField]];
   }
 
   // Find the key that corresponds to this CSL key
-  const key = Object.keys(BibFieldTypes).find(bibFieldKey => {
+  const keys = Object.keys(BibFieldTypes).filter(bibFieldKey => {
     const bibField = BibFieldTypes[bibFieldKey];
     const cslFieldName = bibField.csl;
     if (cslFieldName && cslFieldName === cslKey) {
@@ -227,10 +247,10 @@ function bibFieldForValue(cslKey: string, cslType: string): [string, BibField] |
   });
 
   // Get the field and return
-  if (key) {
-    const bibField = BibFieldTypes[key];
-    if (bibField) {
+  if (keys) {
+    return keys.map(key => {
+      const bibField = BibFieldTypes[key];
       return [key, bibField];
-    }
+    });
   }
 }
