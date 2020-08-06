@@ -17,12 +17,11 @@ import { Transaction } from 'prosemirror-state';
 
 import { PandocServer } from "../pandoc";
 
-import { expandPaths, getExtension } from "../path";
+import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
 import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
-import { join } from 'path';
 
 export const kLocalItemType = 'Local';
 
@@ -120,7 +119,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return bibliographyFilesFromDocument(doc, ui)?.map(path => {
       return {
         displayPath: path,
-        fullPath: join(ui.context.getDefaultResourceDir(), path),
+        fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
         isProject: false,
         writable: kPermissableFileExtensions.includes(getExtension(path))
       };

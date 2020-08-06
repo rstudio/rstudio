@@ -38,8 +38,8 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
-import { join } from 'path';
 import { toBibLaTeX } from '../../api/bibliography/bibDB';
+import { joinPaths } from '../../api/path';
 
 const kCiteCitationsIndex = 0;
 
@@ -651,7 +651,7 @@ export async function insertCitation(
 
         const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
         const project = thisWritableBiblio?.isProject || false;
-        const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+        const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
         // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
         const cslToWrite = sanitizeForCiteproc(result.csl);
