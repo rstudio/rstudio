@@ -24,6 +24,7 @@
 #include <core/ProgramOptions.hpp>
 #include <core/system/Xdg.hpp>
 #include <session/SessionConstants.hpp>
+#include <core/http/Cookie.hpp>
 
 
 namespace rstudio {
@@ -54,7 +55,8 @@ protected:
                 boost::program_options::options_description* pGit,
                 boost::program_options::options_description* pUser,
                 boost::program_options::options_description* pMisc,
-                std::string* pSaveActionDefault)
+                std::string* pSaveActionDefault,
+                int* wwwSameSite)
 {
    using namespace rstudio::core;
    using namespace boost::program_options;
@@ -179,12 +181,9 @@ protected:
       (kUseSecureCookiesSessionOption,
       value<bool>(&useSecureCookies_)->default_value(false),
       "Indicates whether or not to mark cookies as secure.")
-      (kIFrameEmbeddingSessionOption,
-      value<bool>(&iFrameEmbedding_)->default_value(false),
-      "Indicates whether or not to mark cookies as samesite=none for iFrame embedding.")
-      (kLegacyCookiesSessionOption,
-      value<bool>(&legacyCookies_)->default_value(false),
-      "Indicates whether or not RStudio should revert to legacy behavior by not setting the SameSite cookie attribute and to emit a second legacy cookie when iFrame embedding is in use.")
+      (kSameSiteSessionOption,
+      value<int>(wwwSameSite)->default_value(0),
+      "The value of the SameSite attribute used in cookie issued by the session.")
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
@@ -413,9 +412,7 @@ public:
    int webSocketHandshakeTimeoutMs() const { return webSocketHandshakeTimeoutMs_; }
    bool packageOutputInPackageFolder() const { return packageOutputToPackageFolder_; }
    bool useSecureCookies() const { return useSecureCookies_; }
-   bool iFrameEmbedding() const { return iFrameEmbedding_; }
-   bool legacyCookies() const { return legacyCookies_; }
-   bool iFrameLegacyCookies() const { return iFrameEmbedding_ && legacyCookies_; }
+   rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
    std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
@@ -508,8 +505,7 @@ protected:
    int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    bool useSecureCookies_;
-   bool iFrameEmbedding_;
-   bool legacyCookies_;
+   rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;

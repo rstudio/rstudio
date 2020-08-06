@@ -28,6 +28,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 #include <monitor/MonitorConstants.hpp>
+#include <core/http/Cookie.hpp>
 
 
 namespace rstudio {
@@ -50,6 +51,7 @@ protected:
                 boost::program_options::options_description* pDatabase,
                 boost::program_options::options_description* pAuth,
                 boost::program_options::options_description* pMonitor,
+                std::string* wwwSameSite,
                 std::vector<std::string>* pWwwAllowedOrigins,
                 std::string* pAuthLoginPageHtml,
                 std::string* pAuthRdpLoginPageHtml,
@@ -120,12 +122,9 @@ protected:
       ("www-verify-user-agent",
       value<bool>(&wwwVerifyUserAgent_)->default_value(true),
       "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server.")
-      ("www-iframe-embedding",
-      value<bool>(&wwwIFrameEmbedding_)->default_value(false),
-      "Indicates whether or not RStudio is embedded into an iFrame so cookies' SameSite behavior can be adjusted.")
-      ("www-legacy-cookies",
-      value<bool>(&wwwLegacyCookies_)->default_value(false),
-      "Indicates whether or not RStudio should revert to legacy behavior by not setting the SameSite cookie attribute and to emit a second legacy cookie when iFrame embedding is in use.")
+      ("www-same-site",
+      value<std::string>(wwwSameSite)->default_value(""),
+      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
       ("www-frame-origin",
       value<std::string>(&wwwFrameOrigin_)->default_value("none"),
       "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled.")
@@ -249,9 +248,7 @@ public:
    int wwwThreadPoolSize() const { return wwwThreadPoolSize_; }
    bool wwwProxyLocalhost() const { return wwwProxyLocalhost_; }
    bool wwwVerifyUserAgent() const { return wwwVerifyUserAgent_; }
-   bool wwwIFrameEmbedding() const { return wwwIFrameEmbedding_; }
-   bool wwwLegacyCookies() const { return wwwLegacyCookies_; }
-   bool wwwIFrameLegacyCookies() const { return wwwIFrameEmbedding_ && wwwLegacyCookies_; }
+   rstudio::core::http::Cookie::SameSite wwwSameSite() const { return wwwSameSite_; }
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
@@ -299,8 +296,7 @@ protected:
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
-   bool wwwIFrameEmbedding_;
-   bool wwwLegacyCookies_;
+   rstudio::core::http::Cookie::SameSite wwwSameSite_;
    std::string wwwFrameOrigin_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;

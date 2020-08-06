@@ -189,7 +189,7 @@ const Fields& Request::queryParams() const
    return queryParams_;
 }
    
-std::string Request::cookieValue(const std::string& name, bool iFrameLegacyCookies) const
+std::string Request::cookieValue(const std::string& name) const
 {
    // parse cookies on demand
    if ( !parsedCookies_ )
@@ -207,7 +207,7 @@ std::string Request::cookieValue(const std::string& name, bool iFrameLegacyCooki
 
    // when embedded into an iFrame a legacy cookie
    // may be present for old, non-conforming browsers
-   if (cookie.empty() && iFrameLegacyCookies)
+   if (cookie.empty())
    {
       cookie = util::fieldValue(cookies_, name + kLegacyCookieSuffix);
    }

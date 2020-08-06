@@ -20,6 +20,8 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <core/http/Cookie.hpp>
+
 #define kCSRFTokenHeader "X-CSRF-Token"
 #define kCSRFTokenCookie "csrf-token"
 
@@ -37,21 +39,17 @@ std::string setCSRFTokenCookie(const Request& request,
       const std::string& token,
       const std::string& path,
       bool secure,
-      bool iFrameEmbedding,
-      bool legacyCookies,
-      bool iFrameLegacyCookies,
+      core::http::Cookie::SameSite sameSite,
       core::http::Response* pResponse);
 
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.
 bool validateCSRFForm(const Request& request,
-                      Response* response,
-                      bool iFrameLegacyCookies);
+                      Response* response);
 
 // Validates any other HTTP request by ensuring that the CSRF HTTP header matches the accompanying
 // token cookie.
-bool validateCSRFHeaders(const Request& request,
-                         bool iFrameLegacyCookies);
+bool validateCSRFHeaders(const Request& request);
 
 } // namespace http
 } // namespace core
