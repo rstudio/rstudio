@@ -109,7 +109,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeSpelling_ = new VisualModeSpelling();
+      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_);
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
@@ -140,6 +140,11 @@ public class VisualMode implements VisualModeEditorSync,
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
+   }
+   
+   public void onDismiss()
+   {
+      
    }
    
    private void initWidgets()

@@ -1633,20 +1633,10 @@ public class AceEditor implements DocDisplay,
                   public WordRange next()
                   {
                      Range range = ranges.next(); 
-                     return new WordRange() {
-
-                        @Override
-                        public int getStart()
-                        {
-                           return indexFromPosition(range.getStart());
-                        }
-
-                        @Override
-                        public int getEnd()
-                        {
-                           return indexFromPosition(range.getEnd());
-                        }
-                     };
+                     return new WordRange(
+                        indexFromPosition(range.getStart()),
+                        indexFromPosition(range.getEnd())
+                     ); 
                   }
                };
             }
@@ -1753,8 +1743,8 @@ public class AceEditor implements DocDisplay,
       
       private Range toAceRange(WordRange wordRange)
       {
-         Position startPos = positionFromIndex(wordRange.getStart());
-         Position endPos = positionFromIndex(wordRange.getEnd());
+         Position startPos = positionFromIndex(wordRange.start);
+         Position endPos = positionFromIndex(wordRange.end);
          return Range.create(
             startPos.getRow(), 
             startPos.getColumn(), 

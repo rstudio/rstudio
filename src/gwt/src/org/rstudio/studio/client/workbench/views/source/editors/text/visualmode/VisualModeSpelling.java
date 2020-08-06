@@ -16,37 +16,57 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import java.util.Iterator;
+
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordSource;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
-public class VisualModeSpelling
+
+public class VisualModeSpelling extends SpellingContext
 {
-   public VisualModeSpelling()
+   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel)
    {
-     
+     super(docUpdateSentinel);  
    }
-   
-   public void checkSpelling(PanmirrorSpellingDoc doc)
+    
+   public void checkSpelling(PanmirrorSpellingDoc doc)   
    {
-      
-   }
-   
-   
-   
-   // shim the SpellingDoc interface over the panmirror js interface
-   private SpellingDoc spellingDoc(PanmirrorSpellingDoc doc)
-   {
-      return new SpellingDoc() {
+      checkSpelling(new SpellingDoc() {
 
          @Override
          public Iterable<WordRange> getWordSource(int start, Integer end)
          {
-            // TODO Auto-generated method stub
-            return null;
+            return new Iterable<WordRange>() {
+
+               @Override
+               public Iterator<WordRange> iterator()
+               {
+                  PanmirrorWordSource source = doc.getWordSource(start, end);
+                  return new Iterator<WordRange>() {
+
+                     @Override
+                     public boolean hasNext()
+                     {
+                        return source.hasNext();
+                     }
+
+                     @Override
+                     public WordRange next()
+                     {
+                        PanmirrorWordRange range = source.next();
+                        return new WordRange(range.start, range.end);
+                     } 
+                  };
+               }
+            };
+           
          }
 
          @Override
@@ -63,38 +83,33 @@ public class VisualModeSpelling
          }
 
          @Override
-         public boolean shouldCheck(WordRange range)
+         public boolean shouldCheck(WordRange wordRange)
          {
-            // TODO Auto-generated method stub
-            return false;
+            return doc.shouldCheck(toRange(wordRange));
          }
 
          @Override
-         public void setSelection(WordRange range)
+         public void setSelection(WordRange wordRange)
          {
-            // TODO Auto-generated method stub
-            
+            doc.setSelection(toRange(wordRange));
          }
 
          @Override
-         public String getText(WordRange range)
+         public String getText(WordRange wordRange)
          {
-            // TODO Auto-generated method stub
-            return null;
+            return doc.getText(toRange(wordRange));
          }
 
          @Override
          public int getCursorPosition()
          {
-            // TODO Auto-generated method stub
-            return 0;
+            return doc.getCursorPosition();
          }
 
          @Override
          public void replaceSelection(String text)
          {
-            // TODO Auto-generated method stub
-            
+            doc.replaceSelection(text);
          }
 
          @Override
@@ -114,7 +129,6 @@ public class VisualModeSpelling
          {
             PanmirrorRect rect = doc.getCursorBounds();
             return new Rectangle(rect.x, rect.y, rect.width, rect.height);
-            
          }
 
          @Override
@@ -123,11 +137,38 @@ public class VisualModeSpelling
             doc.moveCursorNearTop();
          }
          
+         private PanmirrorWordRange toRange(WordRange wordRange)
+         {
+            PanmirrorWordRange range = new PanmirrorWordRange();
+            range.start = wordRange.start;
+            range.end = wordRange.end;
+            return range;
+         }
          
-         
-      };
+      });
    }
    
+
+   @Override
+   public void invalidateAllWords()
+   {
+      
+   }
+
+   @Override
+   public void invalidateMisspelledWords()
+   {
+      
+   }
+
+   @Override
+   public void invalidateWord(String word)
+   {
+      
+      
+   }
+
+
    
 }
 

@@ -3100,6 +3100,9 @@ public class TextEditingTarget implements
 
       if (spelling_ != null)
          spelling_.onDismiss();
+      
+      if (visualMode_ != null)
+         visualMode_.onDismiss();
 
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
@@ -3419,7 +3422,7 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            spelling_.checkSpelling();
+            spelling_.checkSpelling(docDisplay_.getSpellingDoc());
          });
       }
       

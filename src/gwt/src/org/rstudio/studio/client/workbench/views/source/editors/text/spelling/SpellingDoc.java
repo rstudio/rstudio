@@ -24,10 +24,15 @@ public interface SpellingDoc
       int getPosition();
    }
    
-   public interface WordRange
+   public class WordRange
    {
-      int getStart();
-      int getEnd();
+      public WordRange(int start, int end)
+      {
+         this.start = start;
+         this.end = end;
+      }
+      public int start;
+      public int end;
    }
    
    Iterable<WordRange> getWordSource(int start, Integer end);

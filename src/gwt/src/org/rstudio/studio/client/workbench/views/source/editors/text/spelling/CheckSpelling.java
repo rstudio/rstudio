@@ -208,7 +208,7 @@ public class CheckSpelling
                   }
 
                   SpellingDoc.WordRange lastCheckedWord = checkWords.get(checkWords.size() - 1);
-                  currentPos_ = lastCheckedWord.getEnd();
+                  currentPos_ = lastCheckedWord.end;
                   // Everything spelled correctly, continue
                   Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
                }

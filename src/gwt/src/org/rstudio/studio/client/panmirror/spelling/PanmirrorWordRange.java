@@ -17,10 +17,10 @@ package org.rstudio.studio.client.panmirror.spelling;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true)
+@JsType
 public class PanmirrorWordRange
 {
-   public native int getStart();
-   public native int getEnd();
+   public int start;
+   public int end;
 }
 
