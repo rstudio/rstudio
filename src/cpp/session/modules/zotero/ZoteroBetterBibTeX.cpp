@@ -162,7 +162,7 @@ void betterBibtexProvideIds(const collections::ZoteroCollections& collections,
           }
           return itemObject;
       });
-      collections::ZoteroCollection updatedCollection(collections::ZoteroCollectionSpec(collection.name, collection.version));
+      collections::ZoteroCollection updatedCollection(collections::ZoteroCollectionSpec(collection.name, collection.key, collection.parentKey, collection.version));
       updatedCollection.items = updatedItems;
       return updatedCollection;
    });
