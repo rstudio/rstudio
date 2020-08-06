@@ -587,7 +587,7 @@ public class PaneManager
           window.getNormal() == null ||
           !window.getNormal().getName().contains(SourceColumnManager.COLUMN_PREFIX))
       {
-         Debug.log("Attempted focusSourceColumnSeparator when source column not active.");
+         Debug.logWarning("Attempted focusSourceColumnSeparator when source column not active.");
          return;
       }
       panel_.focusSplitter(window.getNormal());
