@@ -41,3 +41,40 @@ public interface SpellingDoc
    Position getCursorPosition();
    void moveCursorNearTop();
 }
+
+/*
+
+
+package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
+
+import org.rstudio.core.client.Rectangle;
+
+public interface SpellingDoc
+{ 
+   public interface Anchor
+   {
+      int getPosition();
+   }
+   
+   public interface Word
+   {
+      boolean shouldCheck();
+      String getText();
+      void select();
+   }
+   
+   Iterable<Word> getSpellingWords(int start, int end);
+   Anchor createAnchor(int position);
+   
+   int getCursorPosition();
+   void replaceSelection(String text);
+   int getSelectionEnd();
+   
+   Rectangle getCursorBounds(); 
+   void moveCursorNearTop();
+}
+ 
+  
+  
+  
+*/
