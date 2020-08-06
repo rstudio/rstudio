@@ -1,5 +1,5 @@
 /*
- * SpellingWordSource.java
+ * SpellingDoc.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -21,8 +21,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
-public interface SpellingWordSource
-{
+public interface SpellingDoc
+{ 
    // words
    Iterable<Range> getWords(TokenPredicate tokenPredicate,
                             CharClassifier charClassifier,

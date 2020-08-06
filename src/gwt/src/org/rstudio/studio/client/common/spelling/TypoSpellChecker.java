@@ -42,7 +42,7 @@ import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingWordSource;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -436,7 +436,7 @@ public class TypoSpellChecker
       }
    }
 
-   public boolean shouldCheckSpelling(SpellingWordSource source, Range r)
+   public boolean shouldCheckSpelling(SpellingDoc source, Range r)
    {
       String word = source.getTextForRange(r);
       // Don't worry about pathologically long words
