@@ -81,13 +81,7 @@ declare module 'biblatex-csl-converter'
     options?: string[] | undefined;
   }
 
-  export const TAGS: {
-    [key: string]: TagMark
-  }
-
-  export type TagMark = {
-    open: string;
-    close: string;
-    verbatim: boolean;
+  export type MarkObject = {
+    type: string;
   }
 }

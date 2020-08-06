@@ -19,8 +19,6 @@ import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemir
 import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
-import { BibLatexExporter, BibDB, BibFieldTypes, EntryObject, TextNodeObject } from 'biblatex-csl-converter';
-
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
@@ -41,7 +39,7 @@ import { citePopupPlugin } from './cite-popup';
 import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
 import { join } from 'path';
-import { toBibLaTeX } from '../../api/bibliography/bibDb';
+import { toBibLaTeX } from '../../api/bibliography/bibDB';
 
 const kCiteCitationsIndex = 0;
 

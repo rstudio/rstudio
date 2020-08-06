@@ -15,6 +15,8 @@
 import { BibDB, EntryObject, BibFieldTypes, NameDictObject, NodeArray, RangeArray, BibField, BibLatexExporter, BibTypes, BibType } from "biblatex-csl-converter";
 
 import { CSL, CSLDate, cslDateToEDTFDate, CSLName } from "../csl";
+import { cslTextToProsemirrorNode } from "../csl-text";
+import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
 
 // Generates bibLaTeX for a given CSL object / id
 export function toBibLaTeX(id: string, csl: CSL) {
@@ -162,6 +164,9 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
       });
     });
 
+
+    console.log(bibObject);
+
     const bibDB: BibDB = {
       'item': bibObject
     };
@@ -188,13 +193,27 @@ function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
 
 
 function textNodes(str: string): NodeArray {
-  // TODO: Need to parse text and add marks
-  return [{
-    type: 'text',
-    text: str,
-    marks: [],
-    attrs: {}
-  }];
+
+  const pmNode = cslTextToProsemirrorNode(str);
+  if (pmNode) {
+    const nodes: NodeArray = [];
+    pmNode.forEach((node: ProsemirrorNode) => {
+      nodes.push({
+        type: 'text',
+        text: node.textContent,
+        marks: node.marks.map((mark: Mark) => { return { type: mark.type.name }; })
+      });
+    });
+    return nodes;
+  } else {
+    return [{
+      type: 'text',
+      text: str,
+      marks: [],
+      attrs: {}
+    }];
+  }
+
 }
 
 function rangeArray(parts: string[]): RangeArray | undefined {
@@ -254,3 +273,4 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
     });
   }
 }
+
