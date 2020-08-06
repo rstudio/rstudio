@@ -34,8 +34,6 @@ import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -43,10 +41,8 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingWordSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -440,40 +436,18 @@ public class TypoSpellChecker
       }
    }
 
-   public boolean shouldCheckSpelling(DocDisplay dd, Range r)
+   public boolean shouldCheckSpelling(SpellingWordSource source, Range r)
    {
-      String word = dd.getTextForRange(r);
+      String word = source.getTextForRange(r);
       // Don't worry about pathologically long words
       if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
          return false;
 
       if (isWordIgnored(word))
          return false;
-
-      // Don't spellcheck yaml
-      Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
-      if (s != null && s.isYaml())
-         return false;
-
-      // This will capture all braced text in a way that the
-      // highlight rules don't and shouldn't.
-      int start = r.getStart().getColumn();
-      int end = start + word.length();
-      String line = dd.getLine(r.getStart().getRow());
-      Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
-      Match m = p.match(line, 0);
-      while (m != null)
-      {
-         // ensure that the match is the specific word we're looking
-         // at to fix edge cases such as {asdf}asdf
-         if (m.getIndex() < start &&
-             (m.getIndex() + m.getValue().length()) > end)
-            return false;
-
-         m = m.nextMatch();
-      }
-
-      return true;
+      
+      // source-specific knowledge of whether to check
+      return source.shouldCheckSpelling(r);
    }
 
    /*

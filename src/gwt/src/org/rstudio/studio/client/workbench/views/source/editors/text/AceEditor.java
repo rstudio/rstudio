@@ -4010,6 +4010,36 @@ public class AceEditor implements DocDisplay,
       it.moveToPosition(position);
       return it;
    }
+   
+   @Override
+   public boolean shouldCheckSpelling(Range range)
+   {
+      // Don't spellcheck yaml
+      Scope s = getScopeAtPosition(range.getStart());
+      if (s != null && s.isYaml())
+         return false;
+
+      // This will capture all braced text in a way that the
+      // highlight rules don't and shouldn't.
+      String word = getTextForRange(range);
+      int start = range.getStart().getColumn();
+      int end = start + word.length();
+      String line = getLine(range.getStart().getRow());
+      Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
+      Match m = p.match(line, 0);
+      while (m != null)
+      {
+         // ensure that the match is the specific word we're looking
+         // at to fix edge cases such as {asdf}asdf
+         if (m.getIndex() < start &&
+             (m.getIndex() + m.getValue().length()) > end)
+            return false;
+
+         m = m.nextMatch();
+      }
+
+      return true;
+   }
 
    @Override
    public void beginCollabSession(CollabEditStartParams params, 
@@ -4422,4 +4452,5 @@ public class AceEditor implements DocDisplay,
    private static AceEditor s_lastFocusedEditor = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
+
 }
