@@ -109,6 +109,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
+      visualModeSpelling_ = new VisualModeSpelling();
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
@@ -633,6 +634,11 @@ public class VisualMode implements VisualModeEditorSync,
    public ToolbarButton getFindReplaceButton()
    {
       return findReplaceButton_;
+   }
+   
+   public void checkSpelling()
+   {
+      visualModeSpelling_.checkSpelling(panmirror_.getSpellingDoc());
    }
 
    public boolean isVisualModePosition(SourcePosition position)
@@ -1210,6 +1216,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
    private final VisualModeNavigation visualModeNavigation_;
+   private final VisualModeSpelling visualModeSpelling_;
    
    private VisualModeReloadChecker panmirrorFormatConfig_;
    

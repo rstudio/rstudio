@@ -56,6 +56,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocat
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
@@ -411,6 +412,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public HasFindReplace getFindReplace()
    {
       return findReplace_;
+   }
+   
+   public PanmirrorSpellingDoc getSpellingDoc()
+   {
+      return editor_.getSpellingDoc();
    }
    
    public void showOutline(boolean show, double width)
