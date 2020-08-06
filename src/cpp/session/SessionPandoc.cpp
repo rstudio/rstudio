@@ -38,7 +38,7 @@ std::string pandocBinary(const std::string& binary)
 #else
    std::string target = binary + ".exe";
 #endif
-  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(target);
+  FilePath pandocPath = session::options().pandocPath().completeChildPath(target);
   return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
 }
 
