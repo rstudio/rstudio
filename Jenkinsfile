@@ -379,6 +379,7 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
           trigger_external_build('IDE/macos-v1.4')
+          trigger_external_build('IDE/qa-opensource-automation')
         }
 
         else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
