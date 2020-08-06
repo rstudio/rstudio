@@ -2,6 +2,7 @@
 
 ### Python
 
+* The default version of Python used by `reticulate` can now be customized via the Global Options pane.
 * Python indentation rules are now applied to Python code within R Markdown documents. (#5945)
 * Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
