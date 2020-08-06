@@ -1134,3 +1134,18 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    cap <- capabilities(what)
    length(cap) && cap
 })
+
+.rs.addFunction("initTools", function()
+{
+   ostype <- .Platform$OS.type
+   info <- Sys.info()
+   envir <- .rs.toolsEnv()
+   
+   assign(".rs.platform.isUnix",    ostype == "unix",              envir = envir)
+   assign(".rs.platform.isWindows", ostype == "windows",           envir = envir)
+   assign(".rs.platform.isLinux",   info[["sysname"]] == "Linux",  envir = envir)
+   assign(".rs.platform.isMacos",   info[["sysname"]] == "Darwin", envir = envir)
+   
+})
+
+.rs.initTools()

@@ -601,7 +601,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private VerticalPanel rightTopPanel_;
    private VerticalPanel rightBottomPanel_;
 
-   private int additionalColumnCount_;
+   private int additionalColumnCount_ = 0;
    private int displayColumnCount_ = 0;
    private FlexTable grid_;
 
