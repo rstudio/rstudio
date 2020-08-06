@@ -35,22 +35,28 @@ public class PythonInterpreterListEntryUi extends Composite
    private final Image createUiIcon()
    {
       ImageResource resource;
+      String altText;
       
       String type = interpreter_.getType();
       if (StringUtil.equals(type, "conda"))
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.conda2x());
+         altText = "Conda Environment";
       }
       else if (StringUtil.equals(type, "virtualenv"))
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.virtualenv2x());
+         altText = "Virtual Environment";
       }
       else
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.python2x());
+         altText = "Python Interpreter";
       }
       
-      return new Image(resource);
+      Image image = new Image(resource);
+      image.setAltText(altText);
+      return image;
    }
    
    private final Label createUiVersion()

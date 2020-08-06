@@ -59,7 +59,7 @@ public class PythonPreferencesPane extends PreferencesPane
       
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
-            "(No interpreter selected)",
+            PYTHON_PLACEHOLDER_TEXT,
             "Select...",
             null,
             ElementIds.TextBoxButtonId.PYTHON_DEFAULT_INTERPRETER,
@@ -305,9 +305,7 @@ public class PythonPreferencesPane extends PreferencesPane
    private final TextBoxWithButton tbPythonInterpreter_;
    private final SimplePanel container_ = new SimplePanel();
    
-   private PythonInterpreter activeInterpreter_;
-   
-   private static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreted selected)";
+   private static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreter selected)";
 
    private static Resources RES = GWT.create(Resources.class);
    static
