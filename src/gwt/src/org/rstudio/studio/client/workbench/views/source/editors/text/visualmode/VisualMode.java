@@ -22,7 +22,7 @@ import org.rstudio.core.client.BrowseCap;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
-import org.rstudio.core.client.PriorityTaskQueue;
+import org.rstudio.core.client.PreemptiveTaskQueue;
 import org.rstudio.core.client.Rendezvous;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -377,7 +377,7 @@ public class VisualMode implements VisualModeEditorSync,
           
          // serialize these calls (they are expensive on both the server side for the call(s)
          // to pandoc, and on the client side for initialization of the editor (esp. ace editors)
-         setMarkdownQueue_.addTask(new PriorityTaskQueue.Task()
+         setMarkdownQueue_.addTask(new PreemptiveTaskQueue.Task()
          {
             @Override
             public String getLabel()
@@ -386,7 +386,7 @@ public class VisualMode implements VisualModeEditorSync,
             }
             
             @Override
-            public boolean hasPriority()
+            public boolean shouldPreempt()
             {
                return target_.isActiveDocument();
             }
@@ -1238,7 +1238,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    // priority task queue for expensive calls to panmirror_.setMarkdown
    // (currently active tab bumps itself up in priority)
-   private static PriorityTaskQueue setMarkdownQueue_ = new PriorityTaskQueue(true, false);
+   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
      
 }
 

@@ -1,5 +1,5 @@
 /*
- * PriorityTaskQueue.java
+ * PreemptiveTaskQueue.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -19,31 +19,32 @@ package org.rstudio.core.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 
-// Task queue that allows tasks to bump themselves up in priority (even after
+// Task queue that allows tasks to preempt others in the queue (even after
 // they have been added to the queue).
 
-public class PriorityTaskQueue
+public class PreemptiveTaskQueue
 {
    public interface Task
    {
       String getLabel(); // used for debug/log output 
-      boolean hasPriority();
+      boolean shouldPreempt();
       void execute(Command done);
    }
    
-   public PriorityTaskQueue()
+   public PreemptiveTaskQueue()
    {
       this(true, false);
    }
    
-   public PriorityTaskQueue(boolean safe)
+   public PreemptiveTaskQueue(boolean safe)
    {
       this(safe, false);
    }
    
-   public PriorityTaskQueue(boolean safe, boolean log)
+   public PreemptiveTaskQueue(boolean safe, boolean log)
    {
       log_ = log;
       safe_ = safe;
@@ -53,10 +54,10 @@ public class PriorityTaskQueue
    {
       log("adding " + task.getLabel());
       taskQueue_.add(task);
-      processQueue();
+      processTasks();
    }
    
-   private void processQueue()
+   private void processTasks()
    {
       if (processing_)
       {
@@ -83,7 +84,7 @@ public class PriorityTaskQueue
       Task nextTask = null;
       for (Task task : taskQueue_)
       {
-         if (task.hasPriority())
+         if (task.shouldPreempt())
          {
             nextTask = task;
             log("executing " + nextTask.getLabel() + " [Priority]");
@@ -107,7 +108,12 @@ public class PriorityTaskQueue
       {
          nextTask.execute(() -> {
             log("continuation");
-            processNextTask(); 
+            // defer next task to give event loop a chance
+            // to process other user input/actions
+            Scheduler.get().scheduleDeferred(() -> {
+               processNextTask(); 
+            });
+           
          });
       }
       catch(Exception e)
