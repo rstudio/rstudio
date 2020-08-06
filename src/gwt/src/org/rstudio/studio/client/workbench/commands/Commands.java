@@ -633,7 +633,8 @@ public abstract class
    public abstract AppCommand focusLeftSeparator();
    public abstract AppCommand focusRightSeparator();
    public abstract AppCommand focusCenterSeparator();
-   
+   public abstract AppCommand focusSourceColumnSeparator();
+
 
    // Main menu (server)
    public abstract AppCommand showFileMenu();

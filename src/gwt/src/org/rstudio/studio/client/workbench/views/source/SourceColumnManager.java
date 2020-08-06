@@ -570,6 +570,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return columnList_;
    }
 
+   public Element getActiveElement()
+   {
+      if (activeColumn_ == null)
+         return null;
+      return activeColumn_.asWidget().getElement();
+   }
+
    public Widget getWidget(String name)
    {
       return getByName(name) == null ? null : getByName(name).asWidget();
@@ -669,6 +676,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (windowManager_.areSourceWindowsOpen())
          commands_.saveAllSourceDocs().setEnabled(saveAllEnabled);
 
+      if (activeColumn_ != null &&
+          !StringUtil.equals(activeColumn_.getName(), MAIN_SOURCE_NAME))
+         commands_.focusSourceColumnSeparator().setEnabled(true);
+      else
+         commands_.focusSourceColumnSeparator().setEnabled(false);
       manageSourceNavigationCommands();
    }
 
