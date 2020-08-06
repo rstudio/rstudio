@@ -660,7 +660,7 @@ export async function insertCitation(
         await bibManager.load(ui, view.state.doc);
         if (!bibManager.findIdInLocalBibliography(result.id)) {
 
-          const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(result.id, result.csl, provider);
+          const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, result.id, result.csl, provider);
           await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
         }
 

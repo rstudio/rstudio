@@ -103,7 +103,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return this.bibliography?.project_biblios || [];
   }
 
-  public generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined> {
+  public generateBibLaTeX(_ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
     return Promise.resolve(toBibLaTeX(id, csl));
   }
 

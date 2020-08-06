@@ -14,7 +14,7 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
@@ -47,7 +47,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // Don't send the items back through to the server
         const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
 
+        // TODO:useCache = true
         const useCache = false;
+
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
         if (result.status === "ok") {
@@ -98,11 +100,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return [];
   }
 
-  public async generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined> {
-    console.log(csl);
-    if (csl.key) {
-      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, 0);
-      console.log(bibLaTeX);
+  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
+    if (csl.key && ui.prefs.zoteroUseBetterBibtex) {
+      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, kZoteroMyLibrary);
       if (bibLaTeX) {
         return Promise.resolve(bibLaTeX.message);
       }

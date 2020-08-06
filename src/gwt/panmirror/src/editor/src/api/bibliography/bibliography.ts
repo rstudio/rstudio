@@ -41,7 +41,7 @@ export interface BibliographyDataProvider {
   containers(doc: ProsemirrorNode, ui: EditorUI): string[];
   items(): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
-  generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined>;
+  generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
 }
 
 export interface Bibliography {
@@ -153,10 +153,10 @@ export class BibliographyManager {
   // superior BibLaTeX using things like stable citekeys with custom rules, and more.
   // 
   // If the provider doesn't provide BibLaTeX, we can generate it ourselves
-  public async generateBibLaTeX(id: string, csl: CSL, provider?: string): Promise<string | undefined> {
+  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
     const dataProvider = this.providers.find(prov => prov.name === provider);
     if (dataProvider) {
-      const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(id, csl);
+      const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(ui, id, csl);
       if (dataProviderBibLaTeX) {
         return dataProviderBibLaTeX;
       }
