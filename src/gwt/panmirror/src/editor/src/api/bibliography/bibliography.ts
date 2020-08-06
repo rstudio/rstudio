@@ -25,6 +25,7 @@ import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero, kZoteroItemProvider } from './bibliography-provider_zotero';
+import { toBibLaTeX } from './bibDB';
 
 export interface BibliographyFile {
   displayPath: string;
@@ -40,6 +41,7 @@ export interface BibliographyDataProvider {
   containers(doc: ProsemirrorNode, ui: EditorUI): string[];
   items(): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
+  generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined>;
 }
 
 export interface Bibliography {
@@ -144,6 +146,22 @@ export class BibliographyManager {
 
   public localProviders(): BibliographyDataProvider[] {
     return this.providers;
+  }
+
+  // Allows providers to generate bibLaTeX, if needed. This is useful in contexts
+  // like Zotero where a user may be using the Better Bibtex plugin which can generate
+  // superior BibLaTeX using things like stable citekeys with custom rules, and more.
+  // 
+  // If the provider doesn't provide BibLaTeX, we can generate it ourselves
+  public async generateBibLaTeX(id: string, csl: CSL, provider?: string): Promise<string | undefined> {
+    const dataProvider = this.providers.find(prov => prov.name === provider);
+    if (dataProvider) {
+      const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(id, csl);
+      if (dataProviderBibLaTeX) {
+        return dataProviderBibLaTeX;
+      }
+    }
+    return Promise.resolve(toBibLaTeX(id, csl));
   }
 
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {

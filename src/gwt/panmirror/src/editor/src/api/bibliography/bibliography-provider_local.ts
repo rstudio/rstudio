@@ -22,6 +22,8 @@ import { EditorUI } from "../ui";
 
 import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
+import { toBibLaTeX } from './bibDB';
+import { CSL } from '../csl';
 
 export const kLocalItemType = 'Local';
 
@@ -40,7 +42,6 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.server = server;
     this.etag = '';
   }
-
   public name: string = "Local Bibliography";
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
@@ -100,6 +101,10 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
   public projectBibios(): string[] {
     return this.bibliography?.project_biblios || [];
+  }
+
+  public generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined> {
+    return Promise.resolve(toBibLaTeX(id, csl));
   }
 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {

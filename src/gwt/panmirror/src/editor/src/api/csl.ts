@@ -28,6 +28,9 @@ export interface CSL {
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
 
+  // An item key that may be used to identify this item
+  key?: string;
+
   // Name of work's publisher
   publisher?: string;
 

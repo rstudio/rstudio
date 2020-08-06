@@ -659,7 +659,8 @@ export async function insertCitation(
         // Write entry to a bibliography file if it isn't already present
         await bibManager.load(ui, view.state.doc);
         if (!bibManager.findIdInLocalBibliography(result.id)) {
-          const sourceAsBibLaTeX = toBibLaTeX(result.id, result.csl);
+
+          const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(result.id, result.csl, provider);
           await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
         }
 

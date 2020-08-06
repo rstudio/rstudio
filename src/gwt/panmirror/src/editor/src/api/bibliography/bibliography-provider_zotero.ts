@@ -14,13 +14,15 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
 import { BibliographyDataProvider, BibliographySource, BibliographyFile } from "./bibliography";
 import { EditorUI } from '../ui';
+import { CSL } from '../csl';
+import { toBibLaTeX } from './bibDB';
 
 export const kZoteroItemProvider = 'Zotero';
 
@@ -45,7 +47,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // Don't send the items back through to the server
         const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
 
-        const useCache = true;
+        const useCache = false;
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
         if (result.status === "ok") {
@@ -66,11 +68,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
             this.collections = newCollections;
           }
         } else {
-          // console.log(result.status);
+          console.log(result.status);
         }
       }
       catch (err) {
-        // console.log(err);
+        console.log(err);
       }
     } else {
       // Zotero is disabled, clear any already loaded bibliography
@@ -95,6 +97,19 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     return [];
   }
+
+  public async generateBibLaTeX(id: string, csl: CSL): Promise<string | undefined> {
+    console.log(csl);
+    if (csl.key) {
+      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, 0);
+      console.log(bibLaTeX);
+      if (bibLaTeX) {
+        return Promise.resolve(bibLaTeX.message);
+      }
+    }
+    return Promise.resolve(toBibLaTeX(id, csl));
+  }
+
 
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
 
