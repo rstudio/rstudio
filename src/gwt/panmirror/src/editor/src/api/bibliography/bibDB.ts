@@ -164,9 +164,6 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
       });
     });
 
-
-    console.log(bibObject);
-
     const bibDB: BibDB = {
       'item': bibObject
     };

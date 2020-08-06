@@ -26,7 +26,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const addCitation = () => {
-    console.log("Add");
   };
 
 
