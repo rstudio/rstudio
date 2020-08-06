@@ -15,7 +15,6 @@
 
 import { Schema } from 'prosemirror-model';
 
-import { kYamlBlocksRegex } from '../../api/yaml';
 import { ProsemirrorWriter } from '../../api/pandoc';
 import { uuidv4 } from '../../api/util';
 import {
@@ -25,6 +24,8 @@ import {
   blockCapsuleParagraphTokenHandler,
   blockCapsuleTextHandler,
 } from '../../api/pandoc_capsule';
+
+const kYamlBlocksRegex = /(^)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n(?:---|\.\.\.))([ \t]*)$/gm;
 
 export function yamlMetadataBlockCapsuleFilter() {
   const kYamlMetadataCapsuleType = 'E1819605-0ACD-4FAE-8B99-9C1B7BD7C0F1'.toLowerCase();

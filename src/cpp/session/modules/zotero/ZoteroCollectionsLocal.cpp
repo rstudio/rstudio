@@ -33,6 +33,7 @@
 
 #include "ZoteroCSL.hpp"
 #include "ZoteroUtil.hpp"
+#include "ZoteroBetterBibTeX.hpp"
 
 #include "session-config.h"
 
@@ -435,7 +436,7 @@ void getLocalLibrary(std::string key,
    if (error)
    {
       LOG_ERROR(error);
-      handler(error, { ZoteroCollection(cacheSpec) });
+      handler(error, { ZoteroCollection(cacheSpec) }, "");
    }
 
    // get the library version and reflect the cache back if it's exactly the same
@@ -443,14 +444,19 @@ void getLocalLibrary(std::string key,
    // which would make the cache version much higher than the actual version)
    else if (getLibraryVersion(pConnection) == cacheSpec.version)
    {
-      handler(error, { ZoteroCollection(cacheSpec) });
+      handler(error, { ZoteroCollection(cacheSpec) }, "");
    }
 
    // otherwise fetch the library
    else
    {
       ZoteroCollection library = getLibrary(pConnection);
-      handler(Success(), std::vector<ZoteroCollection>{ library });
+
+      // enhance w/ better bibtex if requested
+      if (betterBibtexEnabled())
+         betterBibtexProvideIds(std::vector<ZoteroCollection>{ library }, handler);
+      else
+         handler(Success(), std::vector<ZoteroCollection>{ library }, "");
    }
 }
 
@@ -484,7 +490,7 @@ void getLocalCollections(std::string key,
       ZoteroCollections cachedCollections;
       std::transform(cacheSpecs.begin(), cacheSpecs.end(), std::back_inserter(cachedCollections),
                      [](const ZoteroCollectionSpec& spec) { return ZoteroCollection(spec); });
-      handler(error, cachedCollections);
+      handler(error, cachedCollections, "");
       return;
    }
 
@@ -538,7 +544,10 @@ void getLocalCollections(std::string key,
       resultCollections.push_back(coll);
    }
 
-   handler(Success(), resultCollections);
+   if (betterBibtexEnabled())
+      betterBibtexProvideIds(resultCollections, handler);
+   else
+      handler(Success(), resultCollections, "");
 }
 
 
@@ -575,10 +584,11 @@ FilePath defaultZoteroDataDir()
    return homeDir.completeChildPath("Zotero");
 }
 
-FilePath detectZoteroDataDir()
+DetectedLocalZoteroConfig detectLocalZoteroConfig()
 {
    // we'll fall back to the default if we can't find another dir in the profile
-   FilePath dataDir = defaultZoteroDataDir();
+   DetectedLocalZoteroConfig config;
+   config.dataDirectory = defaultZoteroDataDir();
 
    // find the zotero profiles dir
    FilePath profilesDir = zoteroProfilesDir();
@@ -614,14 +624,17 @@ FilePath detectZoteroDataDir()
                // set dataDir only if the path exists
                FilePath profileDataDir(dataDirMatch);
                if (profileDataDir.exists())
-                  dataDir = profileDataDir;
+                  config.dataDirectory = profileDataDir;
             }
+
+            // look for better bibtex in the config
+            config.betterBibtex = betterBibtexInConfig(prefs);
          }
       }
    }
 
    // return the data dir
-   return dataDir;
+   return config;
 }
 
 
@@ -646,19 +659,15 @@ bool localZoteroAvailable()
 }
 
 // Detect the Zotero data directory and return it if it exists
-FilePath detectedZoteroDataDirectory()
+DetectedLocalZoteroConfig detectedLocalZoteroConfig()
 {
    if (localZoteroAvailable())
    {
-      FilePath dataDir = detectZoteroDataDir();
-      if (dataDir.exists())
-         return dataDir;
-      else
-         return FilePath();
+      return detectLocalZoteroConfig();
    }
    else
    {
-      return FilePath();
+      return DetectedLocalZoteroConfig();
    }
 }
 
@@ -673,7 +682,7 @@ FilePath zoteroDataDirectory()
    if (!dataDir.empty())
       return module_context::resolveAliasedPath(dataDir);
    else
-      return detectedZoteroDataDirectory();
+      return detectedLocalZoteroConfig().dataDirectory;
 }
 
 

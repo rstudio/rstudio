@@ -27,6 +27,7 @@
 #include "ZoteroCollections.hpp"
 #include "ZoteroCollectionsWeb.hpp"
 #include "ZoteroCollectionsLocal.hpp"
+#include "ZoteroBetterBibTeX.hpp"
 
 using namespace rstudio::core;
 
@@ -41,6 +42,7 @@ namespace {
 
 const char * const kStatus = "status";
 const char * const kMessage = "message";
+const char * const kWarning = "warning";
 const char * const kError = "error";
 
 const char * const kStatusOK = "ok";
@@ -48,12 +50,16 @@ const char * const kStatusNoHost = "nohost";
 const char * const kStatusNotFound = "notfound";
 const char * const kStatusError = "error";
 
-Error zoteroDetectDataDirectory(const json::JsonRpcRequest&,
-                                json::JsonRpcResponse* pResponse)
+Error zoteroDetectLocalConfig(const json::JsonRpcRequest&,
+                             json::JsonRpcResponse* pResponse)
 {
-   FilePath dataDirPath = collections::detectedZoteroDataDirectory();
-   std::string dataDir = !dataDirPath.isEmpty() ? module_context::createAliasedPath(dataDirPath) : "";
-   pResponse->setResult(dataDir);
+   auto detectedConfig = collections::detectedLocalZoteroConfig();
+   json::Object configJson;
+   configJson["dataDirectory"] = !detectedConfig.dataDirectory.isEmpty()
+      ?  module_context::createAliasedPath(detectedConfig.dataDirectory)
+      : "";
+   configJson["betterBibtex"] = detectedConfig.betterBibtex;
+   pResponse->setResult(configJson);
    return Success();
 }
 
@@ -125,11 +131,12 @@ void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs
 
 }
 
-void handleGetCollections(Error error, ZoteroCollections collections, const json::JsonRpcFunctionContinuation& cont)
+void handleGetCollections(Error error, ZoteroCollections collections, std::string warning, const json::JsonRpcFunctionContinuation& cont)
 {
    // result defaults
    json::Object resultJson;
    resultJson[kMessage] = json::Value();
+   resultJson[kWarning] = "";
    resultJson[kError] = "";
 
    // handle success & error
@@ -147,6 +154,7 @@ void handleGetCollections(Error error, ZoteroCollections collections, const json
          collectionsJson.push_back(collectionJson);
       }
       resultJson[kStatus] = kStatusOK;
+      resultJson[kWarning] = warning;
       resultJson[kMessage] = collectionsJson;
    }
    else
@@ -247,7 +255,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    if (collections.size() == 0 && !allCollections)
    {
       ZoteroCollections noCollections;
-      handleGetCollections(Success(), noCollections, cont);
+      handleGetCollections(Success(), noCollections, "", cont);
       return;
    }
 
@@ -264,7 +272,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    });
 
    // create handler for request
-   auto handler =  boost::bind(handleGetCollections, _1, _2, cont);
+   auto handler =  boost::bind(handleGetCollections, _1, _2, _3, cont);
 
    // allCollections is a request for the library
    if (allCollections)
@@ -301,7 +309,8 @@ Error initialize()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
-       (boost::bind(registerRpcMethod, "zotero_detect_data_directory", zoteroDetectDataDirectory))
+       (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
+       (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))
    ;
    return initBlock.execute();
 }

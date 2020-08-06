@@ -116,27 +116,27 @@ public class UserPrefsAccessor extends Prefs
       protected CranMirror() {} 
 
       public final native String getName() /*-{
-         return this.name;
+         return this && this.name || "Global (CDN)";
       }-*/;
 
       public final native String getHost() /*-{
-         return this.host;
+         return this && this.host || "RStudio";
       }-*/;
 
       public final native String getUrl() /*-{
-         return this.url;
+         return this && this.url || "https://cran.rstudio.com/";
       }-*/;
 
       public final native String getRepos() /*-{
-         return this.repos;
+         return this && this.repos || "";
       }-*/;
 
       public final native String getCountry() /*-{
-         return this.country;
+         return this && this.country || "us";
       }-*/;
 
       public final native String getSecondary() /*-{
-         return this.secondary;
+         return this && this.secondary || "";
       }-*/;
 
    }
@@ -377,34 +377,31 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this.quadrants;
+         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this.tabSet1;
+         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this.tabSet2;
+         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
-         return this.hiddenTabSet;
+         return this && this.hiddenTabSet || [];
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
-         return this.console_left_on_top;
+         return this && this.console_left_on_top || false;
       }-*/;
 
       public final native boolean getConsoleRightOnTop() /*-{
-         return this.console_right_on_top;
+         return this && this.console_right_on_top || true;
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
-         if (!this.additional_source_columns)
-           return 0;
-
-         return this.additional_source_columns;
+         return this && this.additional_source_columns || 0;
       }-*/;
 
    }
@@ -2480,15 +2477,15 @@ public class UserPrefsAccessor extends Prefs
       protected DefaultRVersion() {} 
 
       public final native String getVersion() /*-{
-         return this.version;
+         return this && this.version || "";
       }-*/;
 
       public final native String getRHome() /*-{
-         return this.r_home;
+         return this && this.r_home || "";
       }-*/;
 
       public final native String getLabel() /*-{
-         return this.label;
+         return this && this.label || "";
       }-*/;
 
    }
@@ -2658,25 +2655,34 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   public PrefValue<Boolean> visualMarkdownEditingWrapAuto()
+   public PrefValue<String> visualMarkdownEditingWrap()
    {
-      return bool(
-         "visual_markdown_editing_wrap_auto",
+      return enumeration(
+         "visual_markdown_editing_wrap",
          "Wrap text in visual markdown editing mode", 
          "Whether to automatically wrap text when writing markdown", 
-         false);
+         new String[] {
+            VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+            VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+            VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+         },
+         "none");
    }
+
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_NONE = "none";
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_COLUMN = "column";
+   public final static String VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE = "sentence";
 
    /**
     * The column to wrap text at when writing markdown
     */
-   public PrefValue<Integer> visualMarkdownEditingWrapColumn()
+   public PrefValue<Integer> visualMarkdownEditingWrapAtColumn()
    {
       return integer(
-         "visual_markdown_editing_wrap_column",
+         "visual_markdown_editing_wrap_at_column",
          "Wrap column for visual markdown editing mode", 
          "The column to wrap text at when writing markdown", 
-         80);
+         72);
    }
 
    /**
@@ -2722,6 +2728,18 @@ public class UserPrefsAccessor extends Prefs
          "Show document outline in visual markdown editing mode", 
          "Whether to show the document outline by default when opening R Markdown documents in visual mode.", 
          true);
+   }
+
+   /**
+    * Whether to show the margin guide in the visual mode code blocks.
+    */
+   public PrefValue<Boolean> visualMarkdownEditingShowMargin()
+   {
+      return bool(
+         "visual_markdown_editing_show_margin",
+         "Show margin in visual mode code blocks", 
+         "Whether to show the margin guide in the visual mode code blocks.", 
+         false);
    }
 
    /**
@@ -2773,6 +2791,18 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String ZOTERO_CONNECTION_TYPE_LOCAL = "local";
    public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   public PrefValue<Boolean> zoteroUseBetterBibtex()
+   {
+      return bool(
+         "zotero_use_better_bibtex",
+         "Use Better BibTeX for citation keys and BibLaTeX export", 
+         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
+         false);
+   }
 
    /**
     * Preferred emoji skintone
@@ -3289,22 +3319,26 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("visual_markdown_editing_is_default"))
          visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
-      if (source.hasKey("visual_markdown_editing_wrap_auto"))
-         visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
-      if (source.hasKey("visual_markdown_editing_wrap_column"))
-         visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_wrap"))
+         visualMarkdownEditingWrap().setValue(layer, source.getString("visual_markdown_editing_wrap"));
+      if (source.hasKey("visual_markdown_editing_wrap_at_column"))
+         visualMarkdownEditingWrapAtColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_at_column"));
       if (source.hasKey("visual_markdown_editing_references_location"))
          visualMarkdownEditingReferencesLocation().setValue(layer, source.getString("visual_markdown_editing_references_location"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
          visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
       if (source.hasKey("visual_markdown_editing_show_doc_outline"))
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
+      if (source.hasKey("visual_markdown_editing_show_margin"))
+         visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
       if (source.hasKey("zotero_connection_type"))
          zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
+      if (source.hasKey("zotero_use_better_bibtex"))
+         zoteroUseBetterBibtex().setValue(layer, source.getBool("zotero_use_better_bibtex"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3512,14 +3546,16 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());
-      prefs.add(visualMarkdownEditingWrapAuto());
-      prefs.add(visualMarkdownEditingWrapColumn());
+      prefs.add(visualMarkdownEditingWrap());
+      prefs.add(visualMarkdownEditingWrapAtColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
+      prefs.add(visualMarkdownEditingShowMargin());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroConnectionType());
+      prefs.add(zoteroUseBetterBibtex());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

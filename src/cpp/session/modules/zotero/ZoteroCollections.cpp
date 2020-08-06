@@ -47,10 +47,15 @@ const char * const kFile = "file";
 
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
+   // cache dir name (depends on whether bbt is enabled as when that changes it should invalidate all cache entries)
+   std::string dirName = "collections-v2";
+   if (session::prefs::userPrefs().zoteroUseBetterBibtex())
+      dirName += "-bbt";
+
    // ~/.local/share/rstudio/zotero-collections
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero")
-      .completeChildPath("collections-v2")
+      .completeChildPath(dirName)
       .completeChildPath(type)
       .completeChildPath(context);
    Error error = cachePath.ensureDirectory();
@@ -335,7 +340,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
    {    
       // use server cache if directed
       ZoteroCollectionSpec serverCacheSpec = useCache ? cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary) : ZoteroCollectionSpec();
-      conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary) {
+      conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary, std::string warning) {
 
          ZoteroCollection collection;
          if (error)
@@ -346,12 +351,12 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
                collection = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
                if (collection.empty())
                {
-                  handler(error, std::vector<ZoteroCollection>());
+                  handler(error, std::vector<ZoteroCollection>(), warning);
                }
             }
             else
             {
-               handler(error, std::vector<ZoteroCollection>());
+               handler(error, std::vector<ZoteroCollection>(), warning);
             }
          }
          else
@@ -369,7 +374,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
             TRACE("Updating server cache for <library>", collection.items.getSize());
             updateCachedCollection(conn.type, conn.cacheContext, collection.name, collection);
             TRACE("Returning server cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ collection });
+            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
          }
 
          // see if the client already has the version we are serving. in that case
@@ -378,7 +383,7 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
          {
             ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.key, cacheSpec.parentKey, cacheSpec.version);
             TRACE("Using client cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) });
+            handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) }, warning);
          }
 
          // otherwise return the server cache (it's guaranteed to exist and be >=
@@ -388,13 +393,13 @@ void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollections
             ZoteroCollection serverCache = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
             collection.items = serverCache.items;
             TRACE("Returning server cache for <library>", collection.items.getSize());
-            handler(Success(), std::vector<ZoteroCollection>{ collection });
+            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
          }
       });
    }
    else
    {
-      handler(Success(), std::vector<ZoteroCollection>());
+      handler(Success(), std::vector<ZoteroCollection>(), "");
    }
 }
 
@@ -449,7 +454,8 @@ void getCollections(std::vector<std::string> collections,
       }
 
       // get collections
-      conn.source.getCollections(conn.context, collections, serverCacheSpecs, [conn, collections, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections) {
+      conn.source.getCollections(conn.context, collections, serverCacheSpecs,
+                                 [conn, collections, cacheSpecs, serverCacheSpecs, handler](Error error, ZoteroCollections webCollections, std::string warning) {
 
          // process response -- for any collection returned w/ a version higher than that in the
          // cache, update the cache. for any collection available (from cache or web) with a version
@@ -491,7 +497,7 @@ void getCollections(std::vector<std::string> collections,
                }
             }
 
-            handler(Success(), responseCollections);
+            handler(Success(), responseCollections, warning);
 
          // for host errors try to serve from the cache
          } else if (isHostError(core::errorDescription(error))) {
@@ -503,11 +509,11 @@ void getCollections(std::vector<std::string> collections,
                if (!cached.empty())
                   responseCollections.push_back(cached);
             }
-            handler(Success(),responseCollections);
+            handler(Success(),responseCollections, warning);
 
          // report error
          } else {
-            handler(error, std::vector<ZoteroCollection>());
+            handler(error, std::vector<ZoteroCollection>(), warning);
          }
 
 
@@ -515,7 +521,7 @@ void getCollections(std::vector<std::string> collections,
    }
    else
    {
-      handler(Success(), std::vector<ZoteroCollection>());
+      handler(Success(), std::vector<ZoteroCollection>(), "");
    }
 
 }

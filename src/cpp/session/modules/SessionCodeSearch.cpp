@@ -1584,7 +1584,7 @@ void fillFromBookdownRefs(const std::string& term,
    //     "file": "01-intro.Rmd",
    //     "type": "h1",
    //     "id": "intro",
-   //     "title": "Introduction"
+   //     "title": "Introduction" (optional)
    // }
    
    for (const json::Value& bookdownRef : bookdownRefs)
@@ -1592,19 +1592,23 @@ void fillFromBookdownRefs(const std::string& term,
       if (!bookdownRef.isObject())
          continue;
       
-      std::string file, type, id, title;
+      std::string file, type, id;
       Error error = core::json::readObject(
                bookdownRef.getObject(),
                "file", file,
                "type", type,
-               "id", id,
-               "title", title);
+               "id", id);
       
       if (error)
       {
          LOG_ERROR(error);
          continue;
       }
+
+      // title is optional
+      std::string title;
+      if (bookdownRef.getObject().hasMember("title"))
+         title = bookdownRef.getObject()["title"].getString();
       
       // figure out appropriate source item type
       SourceItem::Type sourceType = SourceItem::None;

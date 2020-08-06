@@ -59,10 +59,19 @@ struct User::Impl
       int result = in_getPasswdFunc(in_value, &pwd, &(buffer[0]), buffSize, &tempPtrPwd);
       if (tempPtrPwd == nullptr)
       {
-         if (result == 0) // will happen if user is simply not found. Return EACCES (not found error).
-            result = EACCES;
+         Error error;
+         if (result == 0)
+         {
+            // A successful result code but no user details means that we couldn't find the user.
+            // This could stem from a permissions issue but is more likely just an incorrectly
+            // formed username.
+            error = systemError(ENOENT, "User not found.", ERROR_LOCATION);
+         }
+         else
+         {
+            error = systemError(result, "Failed to get user details.", ERROR_LOCATION);
+         }
 
-         Error error = systemError(result, "Failed to get user details.", ERROR_LOCATION);
          error.addProperty("user-value", safe_convert::numberToString(in_value));
          return error;
       }

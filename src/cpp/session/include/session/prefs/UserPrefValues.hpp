@@ -326,14 +326,18 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
-#define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
-#define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingWrap "visual_markdown_editing_wrap"
+#define kVisualMarkdownEditingWrapNone "none"
+#define kVisualMarkdownEditingWrapColumn "column"
+#define kVisualMarkdownEditingWrapSentence "sentence"
+#define kVisualMarkdownEditingWrapAtColumn "visual_markdown_editing_wrap_at_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
+#define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -341,6 +345,7 @@ namespace prefs {
 #define kZoteroConnectionType "zotero_connection_type"
 #define kZoteroConnectionTypeLocal "local"
 #define kZoteroConnectionTypeWeb "web"
+#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1496,14 +1501,14 @@ public:
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   bool visualMarkdownEditingWrapAuto();
-   core::Error setVisualMarkdownEditingWrapAuto(bool val);
+   std::string visualMarkdownEditingWrap();
+   core::Error setVisualMarkdownEditingWrap(std::string val);
 
    /**
     * The column to wrap text at when writing markdown
     */
-   int visualMarkdownEditingWrapColumn();
-   core::Error setVisualMarkdownEditingWrapColumn(int val);
+   int visualMarkdownEditingWrapAtColumn();
+   core::Error setVisualMarkdownEditingWrapAtColumn(int val);
 
    /**
     * Placement of footnotes within markdown output.
@@ -1524,6 +1529,12 @@ public:
    core::Error setVisualMarkdownEditingShowDocOutline(bool val);
 
    /**
+    * Whether to show the margin guide in the visual mode code blocks.
+    */
+   bool visualMarkdownEditingShowMargin();
+   core::Error setVisualMarkdownEditingShowMargin(bool val);
+
+   /**
     * The default visual editing mode font size, in points
     */
    int visualMarkdownEditingFontSizePoints();
@@ -1540,6 +1551,12 @@ public:
     */
    std::string zoteroConnectionType();
    core::Error setZoteroConnectionType(std::string val);
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   bool zoteroUseBetterBibtex();
+   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Preferred emoji skintone

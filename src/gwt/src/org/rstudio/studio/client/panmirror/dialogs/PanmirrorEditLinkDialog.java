@@ -50,6 +50,8 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
          // cancel returns null
          operation.execute(null);
       });
+      
+      initialLink_ = link;
    
       VerticalTabPanel linkTab = new VerticalTabPanel(ElementIds.VISUAL_MD_LINK_TAB_LINK);
       linkTab.addStyleName(RES.styles().dialog());
@@ -103,7 +105,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       href_.addTypeChangedHandler((event) -> {
         manageVisibility();
       });
-      href_.setHRef(link.type, link.href);
+      href_.setHRef(link.type, link.type == PanmirrorLinkType.Heading ? link.heading : link.href);
       manageVisibility();
     
       
@@ -163,7 +165,10 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       }
       else
       {
-         result.link.text = result.link.href;
+         if (result.link.href.equalsIgnoreCase(initialLink_.text))
+            result.link.text = initialLink_.text;
+         else
+            result.link.text = result.link.href;
          result.link.heading = result.link.href;
       }
       return result;
@@ -199,6 +204,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
    
+   private final PanmirrorLinkProps initialLink_;
    private final Widget mainWidget_;
    
    private final PanmirrorHRefSelect href_;

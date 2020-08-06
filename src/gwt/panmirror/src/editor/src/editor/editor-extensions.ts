@@ -66,6 +66,7 @@ import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
+import behaviorEscapeMark from '../behaviors/escape_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
@@ -107,6 +108,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { acePlugins } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
+import { codeViewClipboardPlugin } from '../api/code';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
   // create extension manager
@@ -143,6 +145,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorEmptyMark,
+    behaviorEscapeMark,
     behaviorOutline,
     beahviorCodeBlockInput,
     behaviorPasteText,
@@ -199,10 +202,12 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   ]);
 
   // additional plugins derived from extensions
+  const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
   if (context.options.codeEditor === "ace") {
-    plugins.push(...acePlugins(manager.codeViews(), context));
+    plugins.push(...acePlugins(codeViews, context));
   }
+  plugins.push(codeViewClipboardPlugin(codeViews));
 
   // register plugins
   manager.registerPlugins(plugins);

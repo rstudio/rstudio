@@ -35,7 +35,7 @@ export interface XRef {
   file: string;
   type: string;
   id: string;
-  title: string;
+  title?: string;
 }
 
 export function xrefKey(xref: XRef, headingType = false) {
@@ -178,7 +178,10 @@ function headingLocator() {
   return {
     nodeTypes: ['heading'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
-      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
+      // note we use default pandoc auto id semantics here no matter what the documnet
+      // happens to use b/c our xref indexing code also does this (so only ids generated
+      // using the 'standard' rules will be in the index)
+      return node.attrs.id === id || pandocAutoIdentifier(node.textContent, false) === id;
     }
   };
 }

@@ -16,9 +16,13 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+
+import elemental2.core.JsObject;
+import jsinterop.base.Js;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -27,12 +31,12 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroLocalConfig;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -179,7 +183,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       CheckBox visualMarkdownIsDefault = checkboxPref(
             "Use visual editing by default for new documents",
             prefs_.visualMarkdownEditingIsDefault());
-      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(7, Unit.PX);
       visualMode.add(visualMarkdownIsDefault);
 
       HelpLink visualModeHelpLink = new HelpLink(
@@ -188,7 +192,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false // no version info
       );
       nudgeRight(visualModeHelpLink);
-      mediumSpaced(visualModeHelpLink);
+      spaced(visualModeHelpLink);
       visualMode.add(visualModeHelpLink);
 
       VerticalPanel visualModeOptions = new VerticalPanel();
@@ -203,6 +207,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
+      
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      lessSpaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
 
       // content width
       visualModeContentWidth_ = numericPref(
@@ -237,20 +249,32 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(headerLabel("Markdown"));
 
       // auto wrap
-      CheckBox checkBoxAutoWrap = checkboxPref(
-         "Auto-wrap text (break lines at specified column)",
-         prefs.visualMarkdownEditingWrapAuto(),
-         false
-      );
-      visualModeOptions.add(checkBoxAutoWrap);
+      String[] wrapValues = {
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      };
+      visualModeWrap_ = new SelectWidget("Automatic text wrapping (line breaks): ", wrapValues, wrapValues, false, true, false);
+      if (!visualModeWrap_.setValue(prefs_.visualMarkdownEditingWrap().getGlobalValue()))
+         visualModeWrap_.getListBox().setSelectedIndex(0);
+      HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", "Learn more about automatic line wrapping", 0);
+      visualModeWrap_.addStyleName(res.styles().visualModeWrapSelectWidget());
+      visualModeOptions.add(visualModeWrap_);
+      
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Wrap column:", 1, UserPrefs.MAX_WRAP_COLUMN,
-          prefs.visualMarkdownEditingWrapColumn()
+          "Wrap text at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          prefs.visualMarkdownEditingWrapAtColumn()
       )));
+      visualModeWrapColumn_.getElement().getStyle().setMarginBottom(8, Unit.PX);
       visualModeWrapColumn_.setWidth("36px");
-      visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
-      checkBoxAutoWrap.addValueChangeHandler((value) -> {
-         visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
+      Command manageWrapColumn = () -> {
+         boolean wrapAtColumn = visualModeWrap_.getValue().equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN);
+         visualModeWrapColumn_.setVisible(wrapAtColumn);
+         visualModeWrap_.getElement().getStyle().setMarginBottom(wrapAtColumn ? 2 : 8, Unit.PX);
+      };
+      manageWrapColumn.execute();
+      visualModeWrap_.addChangeHandler((arg) -> {
+         manageWrapColumn.execute();
       });
       spaced(visualModeWrapColumn_);
 
@@ -303,18 +327,28 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (!dataDir.isEmpty())
          zoteroDataDir_.setText(dataDir);
       visualModeOptions.add(zoteroDataDir_);
+      
+      zoteroUseBetterBibtex_ = checkboxPref(
+         "Use Better BibTeX for citation keys and BibLaTeX export",
+         prefs_.zoteroUseBetterBibtex(),
+         false);
+      lessSpaced(zoteroUseBetterBibtex_);
+      visualModeOptions.add(zoteroUseBetterBibtex_);
        
       visualMode.add(visualModeOptions);
       
       // kickoff query for detected zotero data directory
-      zoteroServer.zoteroDetectDataDirectory(new ServerRequestCallback<String>() {
+      zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {
 
          @Override
-         public void onResponseReceived(String directory)
+         public void onResponseReceived(JsObject response)
          {
-            detectedZoteroDataDir_ = directory;
+            zoteroLocalConfig_ = Js.uncheckedCast(response);
+            
             if (zoteroDataDir_.getText().isEmpty())
-               zoteroDataDir_.setText(detectedZoteroDataDir_);
+               zoteroDataDir_.setText(zoteroLocalConfig_.dataDirectory);
+            
+            manageZoteroUI();
          }
          
          @Override
@@ -342,28 +376,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
    @Override
    public boolean validate()
-   {
-      GlobalDisplay globalDislay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      
-      boolean valid =  visualModeWrapColumn_.validate() &&
-                       visualModeContentWidth_.validate();
-      
-      if (valid)
-      {
-         if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB))
-         {
-            if ((zoteroApiKey_.getKey().trim().isEmpty()))
-            {
-               globalDislay.showErrorMessage(
-                  "Error", "You must provide a Zotero API Key for access to web libraries."
-               );
-               zoteroApiKey_.focus();
-               valid = false;
-            } 
-         }
-      }
-      
-      return valid;
+   {  
+      return visualModeWrapColumn_.validate() && visualModeContentWidth_.validate();
    }
 
    @Override
@@ -381,6 +395,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
       
+      visualModeWrap_.setValue(prefs.visualMarkdownEditingWrap().getGlobalValue());
+      visualModeReferences_.setValue(prefs.visualMarkdownEditingReferencesLocation().getGlobalValue());
+      
       zoteroConnection_.setType(prefs.zoteroConnectionType().getValue());
       manageZoteroUI();
       zoteroConnection_.addChangeHandler((event) -> { manageZoteroUI(); });
@@ -393,6 +410,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB));
       zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
+      zoteroUseBetterBibtex_.setVisible(zoteroDataDir_.isVisible() && zoteroLocalConfig_.betterBibtex);
    }
 
    @Override
@@ -412,6 +430,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
             Integer.parseInt(visualModeFontSize_.getValue()));
 
+      prefs_.visualMarkdownEditingWrap().setGlobalValue(
+            visualModeWrap_.getValue());
+      
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
 
@@ -425,7 +446,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // if the zotero data dir is same as the detected data dir then 
       // set it to empty (allowing the server to always get the right default)
-      if (zoteroDataDir_.getText().equals(detectedZoteroDataDir_))
+      if (zoteroDataDir_.getText().equals(zoteroLocalConfig_.dataDirectory))
          state_.zoteroDataDir().setGlobalValue("");
       else
          state_.zoteroDataDir().setGlobalValue(zoteroDataDir_.getText());
@@ -448,10 +469,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+   private final SelectWidget visualModeWrap_;
    private final SelectWidget visualModeReferences_;   
    
    private final ZoteroConnectionWidget zoteroConnection_;
    private final DirectoryChooserTextBox zoteroDataDir_;
    private final ZoteroApiKeyWidget zoteroApiKey_;
-   private String detectedZoteroDataDir_ = "";
+   private final CheckBox zoteroUseBetterBibtex_;
+   private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
 }

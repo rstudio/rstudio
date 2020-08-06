@@ -2457,27 +2457,27 @@ core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 /**
  * Whether to automatically wrap text when writing markdown
  */
-bool UserPrefValues::visualMarkdownEditingWrapAuto()
+std::string UserPrefValues::visualMarkdownEditingWrap()
 {
-   return readPref<bool>("visual_markdown_editing_wrap_auto");
+   return readPref<std::string>("visual_markdown_editing_wrap");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapAuto(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrap(std::string val)
 {
-   return writePref("visual_markdown_editing_wrap_auto", val);
+   return writePref("visual_markdown_editing_wrap", val);
 }
 
 /**
  * The column to wrap text at when writing markdown
  */
-int UserPrefValues::visualMarkdownEditingWrapColumn()
+int UserPrefValues::visualMarkdownEditingWrapAtColumn()
 {
-   return readPref<int>("visual_markdown_editing_wrap_column");
+   return readPref<int>("visual_markdown_editing_wrap_at_column");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrapAtColumn(int val)
 {
-   return writePref("visual_markdown_editing_wrap_column", val);
+   return writePref("visual_markdown_editing_wrap_at_column", val);
 }
 
 /**
@@ -2520,6 +2520,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowDocOutline(bool val)
 }
 
 /**
+ * Whether to show the margin guide in the visual mode code blocks.
+ */
+bool UserPrefValues::visualMarkdownEditingShowMargin()
+{
+   return readPref<bool>("visual_markdown_editing_show_margin");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
+{
+   return writePref("visual_markdown_editing_show_margin", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2556,6 +2569,19 @@ std::string UserPrefValues::zoteroConnectionType()
 core::Error UserPrefValues::setZoteroConnectionType(std::string val)
 {
    return writePref("zotero_connection_type", val);
+}
+
+/**
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ */
+bool UserPrefValues::zoteroUseBetterBibtex()
+{
+   return readPref<bool>("zotero_use_better_bibtex");
+}
+
+core::Error UserPrefValues::setZoteroUseBetterBibtex(bool val)
+{
+   return writePref("zotero_use_better_bibtex", val);
 }
 
 /**
@@ -2852,14 +2878,16 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,
-      kVisualMarkdownEditingWrapAuto,
-      kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingWrap,
+      kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
+      kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroConnectionType,
+      kZoteroUseBetterBibtex,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

@@ -48,7 +48,10 @@ bool isBookdownRmd(const FileInfo& fileInfo)
 {
    FilePath filePath(fileInfo.absolutePath());
    FilePath bookDir = projects::projectContext().buildTargetPath();
-   return filePath.isWithin(bookDir) && (filePath.getExtensionLowerCase() == ".rmd");
+   if (bookDir.exists())
+      return filePath.isWithin(bookDir) && (filePath.getExtensionLowerCase() == ".rmd");
+   else
+      return false;
 }
 
 std::vector<std::string> bookdownSourceFiles()
@@ -396,7 +399,10 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    }
 }
 
-
+bool isBookdownContext()
+{
+   return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
+}
 
 void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -428,15 +434,22 @@ void onAllSourceDocsRemoved()
    s_unsavedIndex.removeAllUnsaved();
 }
 
-bool isBookdownContext()
-{
-   return module_context::isBookdownProject() && module_context::isPackageInstalled("bookdown");
-}
-
 void onDeferredInit(bool)
 {
    if (isBookdownContext())
-   {
+   {     
+      // index docs
+      std::vector<boost::shared_ptr<source_database::SourceDocument> > pDocs;
+      Error error = source_database::list(&pDocs);
+      if (error)
+         LOG_ERROR(error);
+      std::for_each(pDocs.begin(), pDocs.end(), onSourceDocUpdated);
+
+      // hookup source doc events
+      source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+      source_database::events().onDocRemoved.connect(onSourceDocRemoved);
+      source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+
       // create an incremental file change handler (on the heap so that it
       // survives the call to this function and is never deleted)
       IncrementalFileChangeHandler* pFileChangeHandler =
@@ -447,7 +460,7 @@ void onDeferredInit(bool)
             boost::posix_time::milliseconds(500),
             true
          );
-      pFileChangeHandler->subscribeToFileMonitor("Bookdown Cross References");
+      pFileChangeHandler->subscribeToFileMonitor("Bookdown Cross References");   
    }
 
 }
@@ -566,11 +579,6 @@ namespace xrefs {
 
 Error initialize()
 {
-   // subscribe to source docs events for maintaining the unsaved files list
-   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
-   source_database::events().onDocRemoved.connect(onSourceDocRemoved);
-   source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
-
    // deferred init (build xref file index)
    module_context::events().onDeferredInit.connect(onDeferredInit);
 

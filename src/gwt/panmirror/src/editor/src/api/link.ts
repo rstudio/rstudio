@@ -16,6 +16,13 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { findChildren, findChildrenByType } from 'prosemirror-utils';
 
+export const kLinkTargetUrl = 0;
+export const kLinkTargetTitle = 1;
+
+export const kLinkAttr = 0;
+export const kLinkChildren = 1;
+export const kLinkTarget = 2;
+
 export enum LinkType {
   URL = 0,
   Heading = 1,

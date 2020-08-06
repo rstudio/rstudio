@@ -1795,12 +1795,13 @@ public class Source implements InsertSourceHandler,
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      doOpenSourceFile(event.getFile(),
-                     event.getFileType(),
-                     event.getPosition(),
-                     null, 
-                     event.getNavigationMethod(),
-                     false);
+      doOpenSourceFile(
+            event.getFile(),
+            event.getFileType(),
+            event.getPosition(),
+            null, 
+            event.getNavigationMethod(),
+            false);
    }
    
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
@@ -1898,6 +1899,19 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget target)
          {
+            // helper command to focus after navigation has completed
+            final Command onNavigationCompleted = () ->
+            {
+               if (file.focusOnNavigate())
+               {
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     target.focus();
+                  });
+               }
+            };
+      
+            
             // the rstudioapi package can use the proxy (-1, -1) position to
             // indicate that source navigation should not occur; ie, we should
             // preserve whatever position was used in the document earlier
@@ -1918,12 +1932,19 @@ public class Source implements InsertSourceHandler,
                   
                   if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
+                  {
                       Desktop.getFrame().bringMainFrameToFront();
+                  }
                }
+               
+               SourcePosition startPosition = SourcePosition.create(
+                     position.getLine() - 1,
+                     position.getColumn() - 1);
+               
                navigate(target, 
-                        SourcePosition.create(position.getLine() - 1,
-                                              position.getColumn() - 1),
-                        endPosition);
+                        startPosition,
+                        endPosition,
+                        onNavigationCompleted);
             }
             else if (pattern != null)
             {
@@ -1932,14 +1953,20 @@ public class Source implements InsertSourceHandler,
                {
                   navigate(target, 
                            SourcePosition.create(pos.getRow(), 0),
-                           null);
+                           null,
+                           onNavigationCompleted);
                }
+            }
+            else
+            {
+               onNavigationCompleted.execute();
             }
          }
          
          private void navigate(final EditingTarget target,
                                final SourcePosition srcPosition,
-                               final SourcePosition srcEndPosition)
+                               final SourcePosition srcEndPosition,
+                               final Command onNavigationCompleted)
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1967,9 +1994,12 @@ public class Source implements InsertSourceHandler,
                      boolean highlight = 
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !userPrefs_.highlightSelectedLine().getValue();
-                     target.navigateToPosition(srcPosition,
-                                               false,
-                                               highlight);
+                     
+                     target.navigateToPosition(
+                           srcPosition,
+                           false,
+                           highlight,
+                           onNavigationCompleted);
                   }
                }
             });

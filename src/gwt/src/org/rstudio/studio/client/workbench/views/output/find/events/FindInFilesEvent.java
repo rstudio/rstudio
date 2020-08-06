@@ -24,10 +24,9 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
       void onFindInFiles(FindInFilesEvent event);
    }
 
-   public FindInFilesEvent(String searchPattern, boolean restoreFocus)
+   public FindInFilesEvent(String searchPattern)
    {
       searchPattern_ = searchPattern;
-      restoreFocus_ = restoreFocus;
    }
 
    public String getSearchPattern()
@@ -43,11 +42,6 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    public String getReplacePattern()
    {
       return replacePattern_;
-   }
-   
-   public boolean getRestoreFocus()
-   {
-      return restoreFocus_;
    }
 
    @Override
@@ -65,7 +59,6 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    private final String searchPattern_;
    private String replacePattern_;
    private boolean replace_;
-   private boolean restoreFocus_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

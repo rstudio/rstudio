@@ -330,6 +330,17 @@ public class FileSystemItem extends JavaScriptObject
    private final native String getMimeTypeInternal() /*-{
       return this.mime_type;
    }-*/;
+   
+   // NOTE: This isn't really the proper place to tag this metadata
+   // but it was the least intrusive way to propagate this state through
+   // all plumbing used when attempting to open a file.
+   public final native void setFocusOnNavigate(boolean focusOnNavigate) /*-{
+      this.focus_on_navigate = focusOnNavigate;
+   }-*/;
+   
+   public final native boolean focusOnNavigate() /*-{
+      return this.focus_on_navigate || false;
+   }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp
    private final static HashMap<String,String> MIME_TYPES =

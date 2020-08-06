@@ -36,16 +36,20 @@ import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI, ChunkEditor } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
+import { EditorEvents } from '../../api/events';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 import { ExtensionContext } from '../../api/extension';
-import { DispatchEvent } from '../../api/event-types';
+import { DispatchEvent, ResizeEvent } from '../../api/event-types';
+import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
+import { handleArrowToAdjacentNode } from '../../api/cursor';
 
 import { selectAll } from '../../behaviors/select_all';
 import { findPluginState } from '../../behaviors/find';
 
 import { AceRenderQueue } from './ace-render-queue';
 import { AcePlaceholder } from './ace-placeholder';
+import { AceNodeViews } from './ace-node-views';
 
 import './ace.css';
 
@@ -55,15 +59,19 @@ export function acePlugins(
   codeViews: { [key: string]: CodeViewOptions },
   context: ExtensionContext
 ): Plugin[] {
+
+  // shared services
+  const aceRenderQueue = new AceRenderQueue();
+  const aceNodeViews = new AceNodeViews();
+
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
-  const renderQueue = new AceRenderQueue();
   const nodeViews: {
     [name: string]: (node: ProsemirrorNode<any>, view: EditorView<any>, getPos: boolean | (() => number)) => NodeView;
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, context, codeViews[name], renderQueue);
+      return new AceNodeView(node, view, getPos as () => number, context, codeViews[name], aceRenderQueue, aceNodeViews);
     };
   });
 
@@ -72,6 +80,9 @@ export function acePlugins(
       key: plugin,
       props: {
         nodeViews,
+        handleDOMEvents: {
+          click: aceNodeViews.handleClick.bind(aceNodeViews)
+        }
       }
     }),
     // arrow in and out of editor
@@ -84,28 +95,47 @@ export function acePlugins(
   ];
 }
 
-export class CodeBlockNodeView implements NodeView {
+/**
+ * Represents a selection that was applied prior to the editor rendering (needs
+ * to be applied when the editor rendering completes)
+ */
+class QueuedSelection {
+  constructor(
+    public readonly anchor: number,
+    public readonly head: number
+  ) {
+  }
+}
+
+export class AceNodeView implements NodeView {
+
+  public readonly getPos: () => number;
+  public node: ProsemirrorNode;
   public readonly dom: HTMLElement;
+
   private readonly view: EditorView;
-  private readonly getPos: () => number;
   private readonly ui: EditorUI;
+  private readonly nodeViews: AceNodeViews;
   private readonly renderQueue: AceRenderQueue;
   private chunk?: ChunkEditor;
   private aceEditor?: AceAjax.Editor;
   private editSession?: AceAjax.IEditSession;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
+  private readonly events: EditorEvents;
 
   private readonly runChunkToolbar: HTMLDivElement;
 
-  private node: ProsemirrorNode;
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
   private findMarkers: number[];
   private selectionMarker: number | null;
+  private queuedSelection: QueuedSelection | null;
+  private resizeTimer: number;
+  private renderedWidth: number;
 
-  private dispatchUnsubscribe: VoidFunction;
+  private readonly subscriptions: VoidFunction[];
 
   constructor(
     node: ProsemirrorNode,
@@ -113,23 +143,31 @@ export class CodeBlockNodeView implements NodeView {
     getPos: () => number,
     context: ExtensionContext,
     options: CodeViewOptions,
-    renderQueue: AceRenderQueue
+    renderQueue: AceRenderQueue,
+    nodeViews: AceNodeViews,
   ) {
     // context
     const ui = context.ui;
-    const events = context.events;
     const editorOptions = context.options;
 
     // Store for later
     this.node = node;
     this.view = view;
     this.ui = context.ui;
+    this.events = context.events;
     this.getPos = getPos;
+
+    // Initialize values
     this.mode = "";
     this.escaping = false;
     this.findMarkers = [];
     this.selectionMarker = null;
     this.renderQueue = renderQueue;
+    this.nodeViews = nodeViews;
+    this.queuedSelection = null;
+    this.subscriptions = [];
+    this.resizeTimer = 0;
+    this.renderedWidth = 0;
 
     // options
     this.editorOptions = editorOptions;
@@ -162,11 +200,11 @@ export class CodeBlockNodeView implements NodeView {
     this.updateMode();
 
     // observe all editor dispatches
-    this.dispatchUnsubscribe = events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
+    this.subscriptions.push(this.events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
       if (tr) {
         this.onEditorDispatch(tr);
       }
-    });
+    }));
 
     // This flag is used to avoid an update loop between the outer and
     // inner editor
@@ -181,16 +219,22 @@ export class CodeBlockNodeView implements NodeView {
       // Rendering is not complete; add to the queue
       renderQueue.add(this);
     }
+
+    // add ourselves to the list of all ace node views
+    this.nodeViews.add(this);
   }
 
   public destroy() {
     // Unsubscribe from events
-    this.dispatchUnsubscribe();
+    this.subscriptions.forEach((unsub) => unsub());
 
     // Clean up attached editor instance when it's removed from the DOM
     if (this.chunk) {
       this.chunk.destroy();
     }
+
+    // remove ourselves from the list of all ace node views
+    this.nodeViews.remove(this);
   }
 
   public update(node: ProsemirrorNode, _decos: Decoration[]) {
@@ -253,7 +297,10 @@ export class CodeBlockNodeView implements NodeView {
   }
 
   public setSelection(anchor: number, head: number) {
+    // We haven't drawn the editor yet, so queue the selection until we can
+    // apply it.
     if (!this.aceEditor || !this.editSession) {
+      this.queuedSelection = new QueuedSelection(anchor, head);
       return;
     }
     if (!this.escaping) {
@@ -275,6 +322,10 @@ export class CodeBlockNodeView implements NodeView {
   }
 
   public stopEvent() {
+    return true;
+  }
+
+  public ignoreMutation(_mutation: MutationRecord | { type: 'selection'; target: Element }) {
     return true;
   }
 
@@ -373,7 +424,7 @@ export class CodeBlockNodeView implements NodeView {
     this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
-    this.aceEditor.on("changeCursor", () => {
+    this.aceEditor.on("changeSelection", () => {
       if (!this.updating) {
         this.forwardSelection();
       }
@@ -381,7 +432,6 @@ export class CodeBlockNodeView implements NodeView {
     this.aceEditor.on('change', () => {
       if (!this.updating) {
         this.valueChanged();
-        this.forwardSelection();
       }
     });
 
@@ -458,7 +508,6 @@ export class CodeBlockNodeView implements NodeView {
         if (redo(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-
       }
     });
 
@@ -480,10 +529,7 @@ export class CodeBlockNodeView implements NodeView {
     // ProseMirror
     this.aceEditor.commands.addCommand({
       name: "exitCodeBlock",
-      bindKey: {
-        win: "Ctrl-Enter|Shift-Enter",
-        mac: "Ctrl-Enter|Shift-Enter|Command-Enter"
-      },
+      bindKey: "Shift-Enter",
       exec: () => {
         if (exitCode(this.view.state, this.view.dispatch)) {
           this.view.focus();
@@ -505,6 +551,33 @@ export class CodeBlockNodeView implements NodeView {
       }
     });
 
+
+    // Line-by-line execution
+    this.aceEditor.commands.addCommand({
+      name: "executeSelection",
+      bindKey: {
+        win: "Ctrl-Enter",
+        mac: "Ctrl-Enter|Command-Enter"
+      },
+      exec: () => {
+        if (this.chunk && this.aceEditor) {
+          // Record the position prior to execution
+          const pos = this.aceEditor.getCursorPosition();
+
+          // Execute the selection
+          this.chunk.executeSelection();
+
+          // If the cursor stayed on the last line, step out of the code block
+          // if we're not at the end of the doc (this is a no-op when not on the
+          // last line, and mirrors the behavior when stepping past the end of
+          // chunks in the code editor)
+          if (pos.row === this.aceEditor.getCursorPosition().row) {
+            this.arrowMaybeEscape('line', 1);
+          }
+        }
+      }
+    });
+
     // If an attribute editor function was supplied, bind it to F4
     if (this.options.attrEditFn) {
       this.aceEditor.commands.addCommand({
@@ -521,6 +594,11 @@ export class CodeBlockNodeView implements NodeView {
 
     // Disconnect font metrics system after render loop
     (this.aceEditor.renderer as any).on("afterRender", () => {
+      // Update known rendered width
+      if (this.chunk) {
+        this.renderedWidth = this.chunk.element.offsetWidth;
+      }
+
       window.setTimeout(() => {
         if (this.aceEditor) {
           const metrics = (this.aceEditor.renderer as any).$fontMetrics;
@@ -537,6 +615,42 @@ export class CodeBlockNodeView implements NodeView {
     if (container.parentElement) {
       this.renderQueue.setContainer(container);
     }
+
+    // Forward selection, if we have one (this can be set while the editor is
+    // waiting to render)
+    if (this.queuedSelection) {
+      this.setSelection(this.queuedSelection.anchor, this.queuedSelection.head);
+      this.queuedSelection = null;
+    }
+
+    // Subscribe to resize event; will reflow the editor to wrap properly at the
+    // new width
+    this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
+      this.debounceResize();
+    }));
+  }
+
+  /**
+   * Debounced version of editor resize; ensures we don't aggressively resize
+   * while size is still changing.
+   */
+  private debounceResize() {
+    // Clear any previously running resize timer
+    if (this.resizeTimer !== 0) {
+      window.clearTimeout(this.resizeTimer);
+    }
+
+    // Create a new resize timer 
+    this.resizeTimer = window.setTimeout(() => {
+      if (this.chunk && this.aceEditor) {
+        // If the width we last rendered is different than our current width,
+        // trigger an Ace resize event (causes editor to reflow wrapped text)
+        if (this.renderedWidth !== this.chunk.element.offsetWidth) {
+          this.aceEditor.resize();
+        }
+      }
+      this.resizeTimer = 0;
+    }, 500);
   }
 
   private updateMode() {
@@ -584,7 +698,7 @@ export class CodeBlockNodeView implements NodeView {
   // Checks to see whether an arrow key should escape the editor or not. If so,
   // sends the focus to the right node; if not, executes the given Ace command
   // (to perform the arrow key's usual action)
-  private arrowMaybeEscape(unit: string, dir: number, command: string) {
+  private arrowMaybeEscape(unit: string, dir: number, command?: string) {
     if (!this.aceEditor || !this.editSession) {
       return;
     }
@@ -595,7 +709,9 @@ export class CodeBlockNodeView implements NodeView {
       (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command
-      this.aceEditor.execCommand(command);
+      if (command) {
+        this.aceEditor.execCommand(command);
+      }
       return;
     }
 
@@ -606,62 +722,8 @@ export class CodeBlockNodeView implements NodeView {
     // ensure we are focused
     this.view.focus();
 
-    // get the current position
-    const $pos = this.view.state.doc.resolve(this.getPos());
-
-    // helpers to figure out if the previous or next nodes are selectable
-    const prevNodeSelectable = () => {
-      return $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable;
-    };
-    const nextNodeSelectable = () => {
-      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
-      return nextNode?.type.spec.selectable;
-    };
-    const prevNodeCode = () => {
-      return $pos.nodeBefore && $pos.nodeBefore.type.spec.code;
-    };
-    const nextNodeCode = () => {
-      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
-      return nextNode?.type.spec.code;
-    };
-
-    // see if we can get a new selection
-    const tr = this.view.state.tr;
-    let selection: Selection | undefined;
-
-    // if we are going backwards and the previous node can take node selections then select it
-    if (dir < 0 && prevNodeSelectable()) {
-      const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
-      selection = NodeSelection.create(tr.doc, prevNodePos);
-
-      // if we are going forwards and the next node can take node selections then select it
-    } else if (dir >= 0 && nextNodeSelectable()) {
-      const nextNodePos = this.getPos() + this.node.nodeSize;
-      selection = NodeSelection.create(tr.doc, nextNodePos);
-
-      // if we are going backwards and the previous node is a code node then create a gap cursor
-    } else if (dir < 0 && prevNodeCode()) {
-      selection = new GapCursor(tr.doc.resolve(this.getPos()), tr.doc.resolve(this.getPos()));
-
-      // if we are going forwards and the next node is a code node then create a gap cursor
-    } else if (dir >= 0 && nextNodeCode()) {
-      const endPos = this.getPos() + this.node.nodeSize;
-      selection = new GapCursor(tr.doc.resolve(endPos), tr.doc.resolve(endPos));
-
-      // otherwise use text selection handling (handles forward/backward text selections)
-    } else {
-      const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
-      const targetNode = this.view.state.doc.nodeAt(targetPos);
-      if (targetNode) {
-        selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
-      }
-    }
-
-    // set selection if we've got it
-    if (selection) {
-      tr.setSelection(selection).scrollIntoView();
-      this.view.dispatch(tr);
-    }
+    // handle arrow key
+    handleArrowToAdjacentNode(this.getPos(), dir, this.view.state, this.view.dispatch);
 
     // set focus
     this.view.focus();
@@ -742,6 +804,7 @@ export class CodeBlockNodeView implements NodeView {
   }
 }
 
+
 function computeChange(oldVal: string, newVal: string) {
   if (oldVal === newVal) {
     return null;
@@ -765,11 +828,15 @@ function computeChange(oldVal: string, newVal: string) {
 
 function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+    if (state.selection.empty && !(state.selection instanceof GapCursor) && view && view.endOfTextblock(dir)) {
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
       const $head = state.selection.$head;
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
       if (nextPos.$head && nodeTypes.includes(nextPos.$head.parent.type.name)) {
+        // check for e.g. math where you can advance across embedded newlines
+        if ((dir === 'up' || dir === 'down') && verticalArrowCanAdvanceWithinTextBlock(state.selection, dir)) {
+          return false;
+        }
         if (dispatch) {
           dispatch(state.tr.setSelection(nextPos));
         }

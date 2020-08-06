@@ -22,6 +22,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
@@ -82,6 +83,15 @@ public class VisualModeChunks
          chunk.setMode = (String mode) ->
          {
             setMode(editor, mode);
+         };
+         
+         // Provide a callback to have the code at the cursor executed
+         final EditingTargetCodeExecution executor = new EditingTargetCodeExecution(
+               editor, sentinel_.getId());
+         executor.setAppendLinesAtEnd(false);
+         chunk.executeSelection = () ->
+         {
+            executor.executeSelection(false);
          };
          
          // Register pref handlers, so that the new editor instance responds to

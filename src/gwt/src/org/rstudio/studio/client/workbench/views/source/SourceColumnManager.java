@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -25,13 +26,16 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -268,6 +272,25 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       };
 
       setActive(column.getName());
+      
+      // register custom focus handler for case where ProseMirror
+      // instance (or element within) had focus
+      ModalDialogBase.registerReturnFocusHandler((Element el) ->
+      {
+         final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
+         Element sourceEl = DomUtils.findParentElement(el, (Element parent) ->
+         {
+            return parent.hasClassName(sourceClass);
+         });
+         
+         if (sourceEl != null)
+         {
+            commands_.activateSource().execute();
+            return true;
+         }
+         
+         return false;
+      });
    }
 
    public String add()
@@ -459,7 +482,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    // where it is better for the column to be the main column than null.
    public SourceColumn getActive()
    {
-      if (activeColumn_ != null)
+      if (activeColumn_ != null &&
+         (!columnList_.get(0).asWidget().isAttached() ||
+          activeColumn_.asWidget().isAttached() &&
+          activeColumn_.asWidget().getOffsetWidth() > 0))
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 
@@ -507,7 +533,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public int getTabCount()
    {
-      return activeColumn_.getTabCount();
+      return getActive().getTabCount();
    }
 
    public int getPhysicalTabIndex()
@@ -622,7 +648,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       for (SourceColumn column : columnList_)
       {
          if (column.isInitialized() &&
-            !StringUtil.equals(activeColumn_.getName(), column.getName()))
+            !StringUtil.equals(getActive().getName(), column.getName()))
             column.manageCommands(forceSync, activeColumn_);
 
          // if one document is dirty then we are enabled
@@ -657,7 +683,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
       if (column == null)
-         column = activeColumn_;
+         column = getActive();
       return column.addTab(doc, mode);
    }
 
@@ -665,7 +691,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                int mode, SourceColumn column)
    {
       if (column == null)
-         column = activeColumn_;
+         column = getActive();
       return column.addTab(doc, atEnd, mode);
    }
 
@@ -825,7 +851,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
-               activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+               getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
    }
@@ -833,7 +859,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void showOverflowPopout()
    {
       ensureVisible(false);
-      activeColumn_.showOverflowPopout();
+      getActive().showOverflowPopout();
    }
 
    public void showDataItem(DataItem data)
@@ -863,7 +889,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
-               activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+               getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
    }
@@ -874,39 +900,39 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
       Command onCancelled)
    {
-      activeColumn_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
+      getActive().showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
 
    public boolean insertSource(String code, boolean isBlock)
    {
       if (!hasActiveEditor())
          return false;
-      return activeColumn_.insertCode(code, isBlock);
+      return getActive().insertCode(code, isBlock);
    }
 
    @Handler
    public void onMoveTabRight()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(), 1);
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(), 1);
    }
 
    @Handler
    public void onMoveTabLeft()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(), -1);
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(), -1);
    }
 
    @Handler
    public void onMoveTabToFirst()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(),
          activeColumn_.getPhysicalTabIndex() * -1);
    }
 
    @Handler
    public void onMoveTabToLast()
    {
-      activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
+      getActive().moveTab(activeColumn_.getPhysicalTabIndex(),
          (activeColumn_.getTabCount() -
             activeColumn_.getPhysicalTabIndex()) - 1);
    }
@@ -914,7 +940,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onSwitchToTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
       showOverflowPopout();
    }
@@ -922,12 +948,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onFirstTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
 
       ensureVisible(false);
-      if (activeColumn_.getTabCount() > 0)
-         activeColumn_.setPhysicalTabIndex(0);
+      if (getActive().getTabCount() > 0)
+         getActive().setPhysicalTabIndex(0);
    }
 
    @Handler
@@ -945,7 +971,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Handler
    public void onLastTab()
    {
-      if (activeColumn_.getTabCount() == 0)
+      if (getActive().getTabCount() == 0)
          return;
 
       activeColumn_.ensureVisible(false);
@@ -963,8 +989,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onFindInFiles()
    {
       String searchPattern = "";
-      boolean restoreFocus = true;
-      
       if (hasActiveEditor() && activeColumn_.getActiveEditor() instanceof TextEditingTarget)
       {
          TextEditingTarget textEditor = (TextEditingTarget) activeColumn_.getActiveEditor();
@@ -973,18 +997,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
          if ((selection.length() != 0) && !multiLineSelection)
             searchPattern = selection;
-         
-         // if a visual editor is active then don't restore focus - we observed that just
-         // for the Find in Files dialog that this resulted in the editor selection being
-         // popped up to the top of the document. no idea why this is happening but it 
-         // appears to be triggered by a dom mutation observer that modifies the selection
-         // when the editor has it's focus restored. it's generally fine to suppress the 
-         // restoration of focus for the find in files dialog b/c unless the user hits 
-         // cancel the focus is moving to the find results pane anyway
-         restoreFocus = !textEditor.isVisualModeActivated();
       }
 
-      events_.fireEvent(new FindInFilesEvent(searchPattern, restoreFocus));
+      events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
 
    @Override
@@ -1044,7 +1059,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void doActivateSource(final Command afterActivation)
    {
-      activeColumn_.ensureVisible(false);
+      getActive().ensureVisible(false);
       if (hasActiveEditor())
       {
          activeColumn_.getActiveEditor().focus();
@@ -1194,7 +1209,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void startDebug()
    {
-      activeColumn_.setPendingDebugSelection();
+      getActive().setPendingDebugSelection();
    }
 
    private EditingTarget selectTabWithDocPath(String path)
@@ -1313,7 +1328,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void closeTab(boolean interactive)
    {
-      closeTab(activeColumn_.getActiveEditor(), interactive);
+      if (hasActiveEditor())
+         closeTab(activeColumn_.getActiveEditor(), interactive);
    }
 
    public void closeTab(EditingTarget target, boolean interactive)
@@ -1342,7 +1358,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void execute(EditingTarget target, Command continuation)
                {
-                  if (excludeActive && target == activeColumn_.getActiveEditor())
+                  if (excludeActive &&
+                     (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
                   {
                      continuation.execute();
                      return;

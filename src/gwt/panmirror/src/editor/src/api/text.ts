@@ -55,3 +55,7 @@ export function mergedTextNodes(
 export function stripQuotes(text: string) {
   return text.replace(/["']/g, '');
 }
+
+export function equalsIgnoreCase(str1: string, str2: string) {
+  return str1.localeCompare(str2, undefined, { sensitivity: 'accent' }) === 0;
+}

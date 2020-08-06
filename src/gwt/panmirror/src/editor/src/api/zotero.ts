@@ -21,6 +21,7 @@ export interface ZoteroResult {
   "nohost" |        // no internet connectivity
   "error";          // unexpected error (details in 'error')
   message: any | null;
+  warning: string;
   error: string;
 }
 
@@ -39,15 +40,32 @@ export interface ZoteroCSL extends CSL {
   collectionKeys?: string[];
 }
 
+export const kZoteroMyLibrary = 1;
+
+// https://github.com/retorquere/zotero-better-bibtex/blob/master/translators/Better%20BibLaTeX.json
+export const kZoteroBibLaTeXTranslator = 'f895aa0d-f28e-47fe-b247-2ea77c6ed583';
+
 export interface ZoteroServer {
+
   validateWebAPIKey: (key: string) => Promise<boolean>;
+
   getCollections: (
     file: string | null,
     collections: string[] | null,
     cached: ZoteroCollectionSpec[],
     useCache: boolean
   ) => Promise<ZoteroResult>;
+
   getCollectionSpecs: ()
     => Promise<ZoteroResult>;
+
+  // Return status: nohost w/ warning text if it fails to 
+  // communciate w/ Better BibTeX. Otherwise returns 
+  // status: ok with exported text in message.
+  betterBibtexExport: (
+    itemKeys: string[],
+    translatorId: string,
+    libraryId: number
+  ) => Promise<ZoteroResult>;
 }
 

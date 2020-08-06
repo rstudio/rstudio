@@ -25,7 +25,9 @@ import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui';
+import { EditorUI } from '../api/ui';
+import { attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui-dialogs';
+
 import { Extension } from '../api/extension';
 import { PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
@@ -71,6 +73,8 @@ import { EditorEvents } from '../api/events';
 import { insertRmdChunk } from '../api/rmd';
 import { EditorServer } from '../api/server';
 import { pandocAutoIdentifier } from '../api/pandoc_id';
+import { wrapSentences } from '../api/wrap';
+import { yamlFrontMatter, applyYamlFrontMatter } from '../api/yaml';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 import { getOutline } from '../behaviors/outline';
@@ -113,6 +117,9 @@ export interface EditorSetMarkdownResult {
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
+
+  // unparsed meta
+  unparsed_meta: { [key: string]: any };
 }
 
 export interface EditorContext {
@@ -187,7 +194,7 @@ export class UITools {
     this.attr = {
       propsToInput: attrPropsToInput,
       inputToProps: attrInputToProps,
-      pandocAutoIdentifier
+      pandocAutoIdentifier: (text: string) => pandocAutoIdentifier(text, false)
     };
 
     this.image = {
@@ -454,8 +461,8 @@ export class Editor {
     emitUpdate: boolean,
   ): Promise<EditorSetMarkdownResult> {
     // get the result
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
-    const { doc, unrecognized } = result;
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
+    const { doc, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
@@ -503,6 +510,7 @@ export class Editor {
     return {
       canonical,
       unrecognized,
+      unparsed_meta
     };
   }
 
@@ -577,7 +585,7 @@ export class Editor {
   // source mode is configured to save a canonical version of markdown)
   public async getCanonical(markdown: string, options: PandocWriterOptions): Promise<string> {
     // convert to prosemirror doc
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
 
     // create a state for this doc
     const state = EditorState.create({
@@ -592,6 +600,20 @@ export class Editor {
 
     // return markdown (will apply save fixups)
     return this.getMarkdownCode(tr, options);
+  }
+
+  public getYamlFrontMatter() {
+    if (this.schema.nodes.yaml_metadata) {
+      return yamlFrontMatter(this.view.state.doc);
+    } else {
+      return '';
+    }
+  }
+
+  public applyYamlFrontMatter(yaml: string) {
+    if (this.schema.nodes.yaml_metadata) {
+      applyYamlFrontMatter(this.view, yaml);
+    }
   }
 
   public focus() {
@@ -928,6 +950,11 @@ export class Editor {
 
     // apply save fixups 
     this.extensionFixups(tr, FixupContext.Save);
+
+    // apply sentence wrapping if requested
+    if (options.wrap === "sentence") {
+      wrapSentences(tr);
+    }
 
     // get code
     return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);

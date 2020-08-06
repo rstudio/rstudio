@@ -14,14 +14,39 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { NodeWithPos } from 'prosemirror-utils';
+import { EditorView } from 'prosemirror-view';
+
+import yaml from 'js-yaml';
 
 import { findTopLevelBodyNodes } from './node';
 
-import yaml from 'js-yaml';
-import { NodeWithPos } from 'prosemirror-utils';
-
 export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
-export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+
+// return yaml front matter (w/o enclosing --)
+export function yamlFrontMatter(doc: ProsemirrorNode) {
+  const firstYaml = firstYamlNode(doc);
+  if (firstYaml) {
+    return stripYamlDelimeters(firstYaml.node.textContent);
+  } else {
+    return '';
+  }
+}
+
+// set yaml front matter (w/o enclosing ---)
+export function applyYamlFrontMatter(view: EditorView, yamlText: string) {
+  const schema = view.state.schema;
+  const updatedYaml = `---\n${yamlText}---`;
+  const updatedYamlNode = schema.nodes.yaml_metadata.createAndFill({}, schema.text(updatedYaml));
+  const tr = view.state.tr;
+  const firstYaml = firstYamlNode(view.state.doc);
+  if (firstYaml) {
+    tr.replaceRangeWith(firstYaml.pos, firstYaml.pos + firstYaml.node.nodeSize, updatedYamlNode);
+  } else {
+    tr.insert(1, updatedYamlNode);
+  }
+  view.dispatch(tr);
+}
 
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
@@ -84,7 +109,9 @@ export function toYamlCode(obj: any): string | null {
 }
 
 export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode.replace(/^\s*---/, '').replace(/(?:---|\.\.\.)([ \t]*)$/, '');
+  return yamlCode
+    .replace(/^[\s-]+/, '')
+    .replace(/[\s-\.]+$/, '');
 }
 
 function logException(e: Error) {
@@ -107,6 +134,15 @@ export function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
     return { yamlCode, yaml: parseYaml(yamlCode), node };
   });
   return parsedYamlNodes;
+}
+
+function firstYamlNode(doc: ProsemirrorNode) {
+  const yamlNodes = yamlMetadataNodes(doc);
+  if (yamlNodes && yamlNodes.length > 0) {
+    return yamlNodes[0];
+  } else {
+    return '';
+  }
 }
 
 

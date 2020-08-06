@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -218,6 +219,19 @@ public class PanmirrorDialogs {
             dialog.showModal(false);
          }
       );
+   }
+   
+   public Promise<Boolean> htmlDialog(String title, String okText, 
+                                      PanmirrorHTMLDialog.CreateFn create,
+                                      JsVoidFunction focus,
+                                      PanmirrorHTMLDialog.ValidateFn validate)
+   {
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         PanmirrorHTMLDialog dialog = new PanmirrorHTMLDialog(title, okText, create, focus, validate, (result) -> {
+            resolve.onInvoke(result);
+         });
+         dialog.showModal();   
+      });
    }
    
    private GlobalDisplay globalDisplay_; 

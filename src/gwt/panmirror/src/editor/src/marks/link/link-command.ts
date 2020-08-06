@@ -14,7 +14,8 @@
  */
 
 import { MarkType } from 'prosemirror-model';
-import { LinkEditorFn, LinkProps, EditorUI } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { LinkEditorFn, LinkProps } from '../../api/ui-dialogs';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findChildren } from 'prosemirror-utils';
@@ -23,6 +24,7 @@ import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from 
 
 import { linkTargets, LinkCapabilities, LinkType } from '../../api/link';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { equalsIgnoreCase } from '../../api/text';
 
 export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabilities: LinkCapabilities) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
@@ -93,7 +95,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             if (result.link.type === LinkType.Heading) {
               const heading = findChildren(
                 tr.doc,
-                node => node.type === state.schema.nodes.heading && node.textContent === result.link.heading,
+                node => node.type === state.schema.nodes.heading && equalsIgnoreCase(node.textContent, result.link.heading || ''),
               );
               if (heading.length > 0) {
                 tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {

@@ -6234,11 +6234,21 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void zoteroDetectDataDirectory(ServerRequestCallback<String> callback)
+   public void zoteroDetectLocalConfig(ServerRequestCallback<elemental2.core.JsObject> callback)
    {
-      sendRequest(RPC_SCOPE, ZOTERO_DETECT_DATA_DIRECTORY, callback);
+      sendRequest(RPC_SCOPE, ZOTERO_DETECT_LOCAL_CONFIG, callback);  
    }
    
+   @Override
+   public void zoteroBetterBibtexExport(JsArrayString itemKeys, String translatorId, int libraryID,
+                                        ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(itemKeys));
+      params.set(1, new JSONString(translatorId));
+      params.set(2, new JSONNumber(libraryID));
+      sendRequest(RPC_SCOPE, ZOTERO_BETTER_BIBTEX_EXPORT, params, callback);
+   }
    
    @Override
    public void doiFetchCSL(String doi, ServerRequestCallback<JavaScriptObject> callback)
@@ -6766,13 +6776,13 @@ public class RemoteServer implements Server
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
    private static final String ZOTERO_GET_COLLECTIONSPECS = "zotero_get_collection_specs";
    private static final String ZOTERO_VALIDATE_WEB_API_KEY = "zotero_validate_web_api_key";
-   private static final String ZOTERO_DETECT_DATA_DIRECTORY = "zotero_detect_data_directory";
+   private static final String ZOTERO_DETECT_LOCAL_CONFIG = "zotero_detect_local_config";
+   private static final String ZOTERO_BETTER_BIBTEX_EXPORT = "zotero_better_bibtex_export";
    
    private static final String DOI_FETCH_CSL = "doi_fetch_csl";
    
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-  
   
   
 }

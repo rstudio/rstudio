@@ -23,6 +23,7 @@ import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';
 import { kCodeText } from '../../api/code';
+import { kMathContent, kMathType, delimiterForType, MathType } from '../../api/math';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
@@ -33,20 +34,11 @@ import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
-
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
 
 const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
 const kSingleLineDisplayMathRegex = new RegExp(kSingleLineDisplayMathPattern);
-
-export enum MathType {
-  Inline = 'InlineMath',
-  Display = 'DisplayMath',
-}
-
-const MATH_TYPE = 0;
-const MATH_CONTENT = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui, format, math, events } = context;
@@ -85,7 +77,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
           toDOM(mark: Mark) {
             return [
-              'div',
+              'span',
               {
                 class: 'math pm-fixedwidth-font pm-light-text-color',
                 'data-type': mark.attrs.type,
@@ -101,12 +93,12 @@ const extension = (context: ExtensionContext): Extension | null => {
               mark: 'math',
               getAttrs: (tok: PandocToken) => {
                 return {
-                  type: tok.c[MATH_TYPE].t,
+                  type: tok.c[kMathType].t,
                 };
               },
               getText: (tok: PandocToken) => {
-                const delimter = delimiterForType(tok.c[MATH_TYPE].t);
-                return delimter + tok.c[MATH_CONTENT] + delimter;
+                const delimter = delimiterForType(tok.c[kMathType].t);
+                return delimter + tok.c[kMathContent] + delimter;
               },
             },
             // extract math from backtick code for blogdown
@@ -316,14 +308,6 @@ function displayMathIsActive(state: EditorState) {
     markIsActive(state, schema.marks.math) &&
     getMarkAttrs(state.doc, state.selection, schema.marks.math).type === MathType.Display
   );
-}
-
-export function delimiterForType(type: string) {
-  if (type === MathType.Inline) {
-    return '$';
-  } else {
-    return '$$';
-  }
 }
 
 export default extension;

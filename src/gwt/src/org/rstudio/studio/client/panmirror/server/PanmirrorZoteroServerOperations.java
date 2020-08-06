@@ -15,17 +15,20 @@
 
 package org.rstudio.studio.client.panmirror.server;
 
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import elemental2.core.JsObject;
+
 
 
 public interface PanmirrorZoteroServerOperations 
 {
-   void zoteroDetectDataDirectory(ServerRequestCallback<String> callback);
+   void zoteroDetectLocalConfig(ServerRequestCallback<JsObject> callback);
    
    void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback);
    
@@ -36,5 +39,11 @@ public interface PanmirrorZoteroServerOperations
                              ServerRequestCallback<JavaScriptObject> callback);
    
    void zoteroGetCollectionSpecs(ServerRequestCallback<JavaScriptObject> callback);
+
+   void zoteroBetterBibtexExport(JsArrayString itemKeys, 
+                                 String translatorId, 
+                                 int libraryID,
+                                 ServerRequestCallback<JavaScriptObject> callback);
+   
 
 }

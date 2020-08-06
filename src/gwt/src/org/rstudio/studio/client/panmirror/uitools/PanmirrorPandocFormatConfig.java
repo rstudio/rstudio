@@ -31,7 +31,7 @@ public class PanmirrorPandocFormatConfig
    public String[] doctypes;
    
    // markdown writing
-   public int wrapColumn;
+   public String wrap;
    public String references_location;
    public String references_prefix;
    public boolean canonical;
@@ -59,7 +59,7 @@ public class PanmirrorPandocFormatConfig
    
    public static boolean markdownWritingConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
-      return a.wrapColumn == b.wrapColumn &&
+      return StringUtil.equals(a.wrap, b.wrap) &&
              a.references_location == b.references_location &&
              a.references_prefix == b.references_prefix;         
    }

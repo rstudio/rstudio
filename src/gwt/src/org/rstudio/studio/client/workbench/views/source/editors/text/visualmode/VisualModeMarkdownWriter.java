@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
@@ -26,23 +27,25 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
+
 
 public class VisualModeMarkdownWriter
 {
    
    public class Options
    {
-      public Options(PanmirrorWriterOptions options, boolean wrapColumnChanged)
+      public Options(PanmirrorWriterOptions options, boolean wrapChanged)
       {
          this.options = options;
-         this.wrapColumnChanged = wrapColumnChanged;
+         this.wrapChanged = wrapChanged;
       }
       
       public final PanmirrorWriterOptions options;
-      public final boolean wrapColumnChanged;
+      public final boolean wrapChanged;
       
    }
    
@@ -75,20 +78,36 @@ public class VisualModeMarkdownWriter
       // always write atx headers (e.g. ##)
       options.atxHeaders = true;
       
-      // use user pref for wrapColumn
-      if (prefs_.visualMarkdownEditingWrapAuto().getValue())
-         options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+      // use user pref for wrap 
+      String wrapPref = prefs_.visualMarkdownEditingWrap().getValue();
+      if (wrapPref.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN))
+         options.wrap = prefs_.visualMarkdownEditingWrapAtColumn().getValue().toString();
       else
-         options.wrapColumn = 0;
-      
+         options.wrap = wrapPref;
+         
       // use user pref for references location
       PanmirrorWriterReferencesOptions references = new PanmirrorWriterReferencesOptions();
       references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
       options.references = references;
       
       // layer in format config
-      if (formatConfig.wrapColumn > 0)
-         options.wrapColumn = formatConfig.wrapColumn;
+      if (formatConfig.wrap != null)
+      {
+         if (formatConfig.wrap.equals(PanmirrorWriterOptions.kWrapNone) || 
+             formatConfig.wrap.equals(PanmirrorWriterOptions.kWrapSentence))
+         {
+            options.wrap = formatConfig.wrap;
+         }
+         else
+         {
+            int column = StringUtil.parseInt(formatConfig.wrap, 0);
+            if (column > 0)
+               options.wrap = Integer.toString(column);
+            else
+               options.wrap = PanmirrorWriterOptions.kWrapNone;
+         }
+      }
+      
       if (formatConfig.references_location != null)
          options.references.location = formatConfig.references_location;
       if (formatConfig.references_prefix != null)
@@ -112,14 +131,14 @@ public class VisualModeMarkdownWriter
       }
       
       // check if this represents a line wrapping change
-      boolean wrapColumnChanged = lastUsedWriterOptions_ != null &&
-                                  lastUsedWriterOptions_.wrapColumn != options.wrapColumn;
+      boolean wrapChanged = lastUsedWriterOptions_ != null &&
+                            !lastUsedWriterOptions_.wrap.equals(options.wrap);
       
       // set last used
       lastUsedWriterOptions_ = options;
       
       // return context
-      return new Options(options, wrapColumnChanged);
+      return new Options(options, wrapChanged);
    }
 
    

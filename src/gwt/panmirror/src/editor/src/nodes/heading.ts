@@ -26,10 +26,8 @@ import { uuidv4 } from '../api/util';
 import { EditorUI } from '../api/ui';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 import { emptyNodePlaceholderPlugin } from '../api/placeholder';
+import { kHeadingLevel, kHeadingAttr, kHeadingChildren } from '../api/heading';
 
-const HEADING_LEVEL = 0;
-const HEADING_ATTR = 1;
-const HEADING_CHILDREN = 2;
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
@@ -95,11 +93,11 @@ const extension = (context: ExtensionContext): Extension => {
               token: PandocTokenType.Header,
               block: 'heading',
               getAttrs: (tok: PandocToken) => ({
-                level: tok.c[HEADING_LEVEL],
+                level: tok.c[kHeadingLevel],
                 navigation_id: uuidv4(),
-                ...(headingAttr ? pandocAttrReadAST(tok, HEADING_ATTR) : {}),
+                ...(headingAttr ? pandocAttrReadAST(tok, kHeadingAttr) : {}),
               }),
-              getChildren: (tok: PandocToken) => tok.c[HEADING_CHILDREN],
+              getChildren: (tok: PandocToken) => tok.c[kHeadingChildren],
             },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {

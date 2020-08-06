@@ -565,7 +565,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void navigateToPosition(final SourcePosition position,
                                   final boolean recordCurrent)
    {
-      navigateToPosition(position, recordCurrent, false);
+      navigateToPosition(position, recordCurrent, false, null);
    }
 
    @Override
@@ -573,15 +573,24 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                   final boolean recordCurrent,
                                   final boolean highlightLine)
    {
-      ensureContext(position.getContext(), new Command() {
-         @Override
-         public void execute()
-         {
-            docDisplay_.navigateToPosition(position,
-                                           recordCurrent,
-                                           highlightLine);
-            view_.scrollToLeft();
-         }
+      navigateToPosition(position, recordCurrent, highlightLine, null);
+   }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  Command onNavigationCompleted)
+   {
+      ensureContext(position.getContext(), () ->
+      {
+         docDisplay_.navigateToPosition(
+               position,
+               recordCurrent,
+               highlightLine);
+         
+         if (onNavigationCompleted != null)
+            onNavigationCompleted.execute();
       });
    }
 

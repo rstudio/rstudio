@@ -119,7 +119,7 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
       } else {
         scroller.to(node, 0);
       }
-    }, 50);
+    }, 200);
 
     return { pos, prevPos };
 

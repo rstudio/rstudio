@@ -17,25 +17,14 @@
 
 .rs.addJsonRpcHandler("renv_init", function(project)
 {
-   # the project directory should already exist, but be extra careful
-   # and create it if necessary
-   dir.create(project, showWarnings = FALSE, recursive = TRUE)
-   owd <- setwd(project)
-   on.exit(setwd(owd), add = TRUE)
+   # run script in child process (done so that `renv::init()` doesn't
+   # change the state of the running session)
+   .rs.executeFunctionInChildProcess(
+      callback   = .rs.renv.initCallback,
+      data       = list(repos = getOption("repos")),
+      workingDir = project
+   )
    
-   # set library paths to be inherited by child process
-   libs <- paste(.libPaths(), collapse = .Platform$path.sep)
-   renv:::renv_scope_envvars(R_LIBS = libs)
-   
-   # form path to R
-   exe <- if (Sys.info()[["sysname"]] == "Windows") "R.exe" else "R"
-   r <- file.path(R.home("bin"), exe)
-   
-   # form command line arguments
-   args <- c("--vanilla", "--slave", "-e", shQuote("renv::init()"))
-   
-   # invoke R
-   system2(r, args)
 })
 
 .rs.addJsonRpcHandler("renv_actions", function(action)
@@ -163,4 +152,17 @@
       all.y = TRUE
    )
    
+})
+
+.rs.addFunction("renv.initCallback", function(repos)
+{
+   # set active repos
+   options(repos = repos)
+   
+   # avoid timeouts when querying unresponsive R package repositories
+   options(renv.config.connect.timeout = 0L)
+   options(renv.config.connect.retry = 0L)
+   
+   # initialize project
+   renv::init()
 })
