@@ -144,9 +144,19 @@ export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
   return undefined;
 }
 
+// Converts a csl date to an EDTF date.
+// See https://www.loc.gov/standards/datetime/
+// Currently omits time component so this isn't truly level 0
 export function cslDateToEDTFDate(date: CSLDate) {
   if (date["date-parts"]) {
-    return date["date-parts"][0].join('-');
+    const paddedParts = date["date-parts"][0].map(part => {
+      const partStr = part?.toString();
+      if (partStr?.length === 1) {
+        return `0${partStr}`;
+      }
+      return partStr;
+    });
+    return paddedParts.join('-');
   }
 }
 

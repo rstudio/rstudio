@@ -18,6 +18,16 @@ import { CSL, CSLDate, cslDateToEDTFDate, CSLName } from "../csl";
 import { cslTextToProsemirrorNode } from "../csl-text";
 import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
 
+// This is our wrapper of a typescript BibLaTeX exporter
+// https://github.com/fiduswriter/biblatex-csl-converter
+
+// Traditional Form Looks Like:
+// author = {{Abbas}, {Osma Ahmed} and {Ibrahim}, {Issa Ghada} and {Ismail}, {Abdel-Gawad Eman}}
+//
+// Non traditional form looks like:
+// author = {given={Osma Ahmed}, family={Abbas} and given={Issa Ghada}, family={Ibrahim} and given={Abdel-Gawad Eman}, family={Ismail}}
+const kUseTraditionalNameForm = false;
+
 // Generates bibLaTeX for a given CSL object / id
 export function toBibLaTeX(id: string, csl: CSL) {
 
@@ -26,7 +36,7 @@ export function toBibLaTeX(id: string, csl: CSL) {
   const bibDB = cslToBibDB(id, csl);
   if (bibDB) {
     // Use the exported to parse the bibDB and generate bibLaTeX
-    const exporter: BibLatexExporter = new BibLatexExporter(bibDB);
+    const exporter: BibLatexExporter = new BibLatexExporter(bibDB, false, { traditionalNames: kUseTraditionalNameForm });
     const sourceAsBibLaTeX = exporter.parse();
 
     // Indent any , new lines
@@ -172,23 +182,20 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
   }
 }
 
+
+// For a given type, we filter out any fields that aren't required, 
+// eitheror, or optional. 
 function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
-  if (bibType.required.includes(bibDBFieldName)) {
-    return true;
-  }
-
-  if (bibType.optional.includes(bibDBFieldName)) {
-    return true;
-  }
-
-  if (bibType.eitheror.includes(bibDBFieldName)) {
-    return true;
-  }
-
-  return false;
+  return (
+    bibType.required.includes(bibDBFieldName) ||
+    bibType.optional.includes(bibDBFieldName) ||
+    bibType.eitheror.includes(bibDBFieldName)
+  );
 }
 
-
+// Returns text nodes for a given CSL string. This implements
+// support for the basic CSL marks that are outlined here:
+// https://citeproc-js.readthedocs.io/en/latest/csl-json/markup.html#html-like-formatting-tags
 function textNodes(str: string): NodeArray {
 
   const pmNode = cslTextToProsemirrorNode(str);
@@ -210,9 +217,9 @@ function textNodes(str: string): NodeArray {
       attrs: {}
     }];
   }
-
 }
 
+// Useful for things like page ranges
 function rangeArray(parts: string[]): RangeArray | undefined {
   if (parts.length === 1) {
     return [textNodes(parts[0])];
@@ -221,6 +228,7 @@ function rangeArray(parts: string[]): RangeArray | undefined {
   }
 }
 
+// Returns the bibDB type for a given CSL type.
 function bibTypeForCSL(cslType: string): [string, BibType] | undefined {
   const key = Object.keys(BibTypes).find(bibTypeKey => {
     const bibType = BibTypes[bibTypeKey];
