@@ -197,7 +197,8 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    for (path in paths) {
       
-      pythonPath <- file.path(path, "python")
+      pythonExe <- if (.rs.platform.isWindows) "python.exe" else "python"
+      pythonPath <- file.path(path, pythonExe)
       if (!file.exists(pythonPath))
          next
       
