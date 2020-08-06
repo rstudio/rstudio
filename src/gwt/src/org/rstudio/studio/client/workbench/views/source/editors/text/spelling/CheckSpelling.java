@@ -33,9 +33,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -169,27 +167,28 @@ public class CheckSpelling
 
          showProgress();
 
-         Iterable<Range> wordSource = spellingDoc_.getSpellingWords(
+         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc_.getWordSource(
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : null);
 
          final ArrayList<String> words = new ArrayList<String>();
-         final ArrayList<Range> wordRanges = new ArrayList<Range>();
+         final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<SpellingDoc.WordRange>();
 
-         for (Range r : wordSource)
+         for (SpellingDoc.WordRange w : wordSource)
          {
-            if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, r))
+            
+            if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
                continue;
 
-            wordRanges.add(r);
-            words.add(spellingDoc_.getTextForRange(r));
+            checkWords.add(w);
+            words.add(spellingDoc_.getText(w));
 
             // Check a maximum of N words at a time
-            if (wordRanges.size() == 100)
+            if (checkWords.size() == 100)
                break;
          }
 
-         if (wordRanges.size() > 0)
+         if (checkWords.size() > 0)
          {
             typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
@@ -203,12 +202,13 @@ public class CheckSpelling
                   {
                      if (response.getIncorrect().contains(words.get(i)))
                      {
-                        handleMisspelledWord(wordRanges.get(i));
+                        handleMisspelledWord(checkWords.get(i));
                         return;
                      }
                   }
 
-                  currentPos_ = wordRanges.get(wordRanges.size()-1).getEnd();
+                  SpellingDoc.WordRange lastCheckedWord = checkWords.get(checkWords.size() - 1);
+                  currentPos_ = lastCheckedWord.getEnd();
                   // Everything spelled correctly, continue
                   Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
                }
@@ -229,7 +229,7 @@ public class CheckSpelling
             else
             {
                wrapped_ = true;
-               currentPos_ = Position.create(0, 0);
+               currentPos_ = 0;
                findNextMisspelling();
             }
          }
@@ -273,16 +273,16 @@ public class CheckSpelling
       view_.hideProgress();
    }
 
-   private void handleMisspelledWord(Range range)
+   private void handleMisspelledWord(SpellingDoc.WordRange misspelledWord)
    {
       try
       {
-         spellingDoc_.setSelectionRange(range);
+         spellingDoc_.setSelection(misspelledWord);
          spellingDoc_.moveCursorNearTop();
          view_.clearSuggestions();
          view_.getReplacement().setText("");
 
-         final String word = spellingDoc_.getTextForRange(range);
+         final String word = spellingDoc_.getText(misspelledWord);
 
          if (changeAll_.containsKey(word))
          {
@@ -361,11 +361,11 @@ public class CheckSpelling
    private final Display view_;
    private final ProgressDisplay progressDisplay_;
    private final ResultCallback<org.rstudio.studio.client.server.Void, Exception> callback_;
-   private final Anchor initialCursorPos_;
+   private final SpellingDoc.Anchor initialCursorPos_;
 
    private final HashMap<String, String> changeAll_ = new HashMap<>();
 
-   private Position currentPos_;
+   private int currentPos_;
 
    private boolean wrapped_;
    private boolean canceled_;

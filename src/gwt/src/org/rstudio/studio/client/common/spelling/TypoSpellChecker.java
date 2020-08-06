@@ -41,7 +41,6 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
 import java.util.ArrayList;
@@ -436,18 +435,18 @@ public class TypoSpellChecker
       }
    }
 
-   public boolean shouldCheckSpelling(SpellingDoc source, Range r)
+   public boolean shouldCheckSpelling(SpellingDoc spellingDoc, SpellingDoc.WordRange wordRange)
    {
-      String word = source.getTextForRange(r);
+      String word = spellingDoc.getText(wordRange);
       // Don't worry about pathologically long words
-      if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+      if (word.length() > 250)
          return false;
 
       if (isWordIgnored(word))
          return false;
       
       // source-specific knowledge of whether to check
-      return source.shouldCheckSpelling(r);
+      return spellingDoc.shouldCheck(wordRange);
    }
 
    /*

@@ -32,7 +32,6 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -40,10 +39,10 @@ import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -84,43 +83,42 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          prefs_.realTimeSpellchecking().setGlobalValue(false);
          return lint;
       }
-
-      TextFileType fileType = docDisplay_.getFileType();
-
-      // only spell check comments in code files
-      TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
-
+      
+      SpellingDoc spellingDoc = docDisplay_.getSpellingDoc();
+      
       // only get tokens for the visible screen
-      Iterable<Range> wordSource = docDisplay_.getWords(
-         tokenPredicate,
-         docDisplay_.getFileType().getCharPredicate(),
-         Position.create(docDisplay_.getFirstVisibleRow(), 0),
-         Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow())));
+      Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWordSource(
+         docDisplay_.indexFromPosition(Position.create(docDisplay_.getFirstVisibleRow(), 0)),
+         docDisplay_.indexFromPosition(Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow()))));
 
-      final ArrayList<Range> wordRanges = new ArrayList<>();
+      final ArrayList<SpellingDoc.WordRange> wordRanges = new ArrayList<>();
       ArrayList<String> prefetchWords = new ArrayList<>();
 
-      for (Range r : wordSource)
+     
+      for (SpellingDoc.WordRange wordRange : wordSource)
       {
-         if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
+         if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc, wordRange))
             continue;
 
-         wordRanges.add(r);
+         wordRanges.add(wordRange);
 
          // only check a certain number of words at once to not overwhelm the system
          if (wordRanges.size() > prefs_.maxSpellcheckWords().getValue())
             break;
 
-         String word = docDisplay_.getTextForRange(r);
+         String word = spellingDoc.getText(wordRange);
          if (!typoSpellChecker_.checkSpelling(word)) {
             if (prefetchWords.size() < prefs_.maxSpellcheckPrefetch().getValue())
                prefetchWords.add(word);
 
+            Position wordStart = docDisplay_.positionFromIndex(wordRange.getStart());
+            Position wordEnd = docDisplay_.positionFromIndex(wordRange.getEnd());
+            
             lint.push(LintItem.create(
-               r.getStart().getRow(),
-               r.getStart().getColumn(),
-               r.getEnd().getRow(),
-               r.getEnd().getColumn(),
+               wordStart.getRow(),
+               wordStart.getColumn(),
+               wordEnd.getRow(),
+               wordEnd.getColumn(),
                "Spellcheck",
                "spelling"));
          }
@@ -138,7 +136,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       if (isSpellChecking_)
          return;
       isSpellChecking_ = true;
-      new CheckSpelling(typoSpellChecker_, docDisplay_,
+      new CheckSpelling(typoSpellChecker_, docDisplay_.getSpellingDoc(),
                         new SpellingDialog(),
                         new InitialProgressDialog(1000),
                         new ResultCallback<Void, Exception>()
@@ -226,37 +224,41 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          // If we have a selection, just return as the user likely wants to cut/copy/paste
          if (!prefs_.realTimeSpellchecking().getValue() || docDisplay_.hasSelection())
             return;
+         
+         SpellingDoc spellingDoc = docDisplay_.getSpellingDoc();
 
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
-         TextFileType fileType = docDisplay_.getFileType();
-         TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
          Position endOfLine = Position.create(pos.getRow()+1, 0);
-         Iterable<Range> wordSource = docDisplay_.getWords(
-            tokenPredicate,
-            docDisplay_.getFileType().getCharPredicate(),
-            pos,
-            endOfLine);
+         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWordSource(
+            docDisplay_.indexFromPosition(pos),
+            docDisplay_.indexFromPosition(endOfLine)
+         );
 
-         Iterator<Range> wordsIterator = wordSource.iterator();
+         Iterator<SpellingDoc.WordRange> wordsIterator = wordSource.iterator();
 
          if (!wordsIterator.hasNext())
             return;
 
          String word;
-         Range wordRange = wordsIterator.next();
+         SpellingDoc.WordRange nextWord = wordsIterator.next();
+         
+         Range wordRange = Range.fromPoints(
+            docDisplay_.positionFromIndex(nextWord.getStart()), 
+            docDisplay_.positionFromIndex(nextWord.getEnd())
+         );
 
          while (!wordRange.contains(pos))
          {
             if (wordsIterator.hasNext())
-               wordRange = wordsIterator.next();
+               nextWord = wordsIterator.next();
             else
                break;
          }
-         word = docDisplay_.getTextForRange(wordRange);
+         word = spellingDoc.getText(nextWord);
 
          if (word == null ||
-             !typoSpellChecker_.shouldCheckSpelling(docDisplay_, wordRange) ||
+             !typoSpellChecker_.shouldCheckSpelling(spellingDoc, nextWord) ||
              typoSpellChecker_.checkSpelling(word))
          {
             return;

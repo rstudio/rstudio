@@ -16,37 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-
-
-public interface SpellingDoc
-{  
-   // words
-   Iterable<Range> getSpellingWords(Position start, Position end);
-   boolean shouldCheckSpelling(Range range);
-   String getTextForRange(Range range);
-   
-   // selection
-   void setSelectionRange(Range range);
-   void replaceSelection(String code);
-   Position getSelectionStart();
-   Position getSelectionEnd();
-   Anchor createAnchor(Position pos);
-   
-   // cursor
-   Rectangle getCursorBounds(); 
-   Position getCursorPosition();
-   void moveCursorNearTop();
-}
-
-/*
-
-
-package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
-
-import org.rstudio.core.client.Rectangle;
 
 public interface SpellingDoc
 { 
@@ -55,15 +24,18 @@ public interface SpellingDoc
       int getPosition();
    }
    
-   public interface Word
+   public interface WordRange
    {
-      boolean shouldCheck();
-      String getText();
-      void select();
+      int getStart();
+      int getEnd();
    }
    
-   Iterable<Word> getSpellingWords(int start, int end);
+   Iterable<WordRange> getWordSource(int start, Integer end);
    Anchor createAnchor(int position);
+   
+   boolean shouldCheck(WordRange range);
+   void setSelection(WordRange range);
+   String getText(WordRange range);
    
    int getCursorPosition();
    void replaceSelection(String text);
@@ -76,5 +48,4 @@ public interface SpellingDoc
  
   
   
-  
-*/
+
