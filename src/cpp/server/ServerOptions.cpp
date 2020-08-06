@@ -218,7 +218,6 @@ ProgramStatus Options::read(int argc,
 
    if (sameSite != kSameSiteOmitOption && 
       sameSite != kSameSiteNoneOption &&
-      //sameSite != kSameSiteStrictOption &&
       sameSite != kSameSiteLaxOption)
    {
       program_options::reportError("Invalid SameSite option: " + sameSite, ERROR_LOCATION);
