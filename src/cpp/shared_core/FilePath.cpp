@@ -416,7 +416,7 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
        in_userHomePath.m_impl->Path.generic_path();
 
    if (samePath)
-      return s_homePathLeafAlias;
+      return homePathLeafAlias();
 #endif
 
    // if the path is contained within the home path then alias it
