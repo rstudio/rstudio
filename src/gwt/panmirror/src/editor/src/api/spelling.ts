@@ -18,11 +18,14 @@ export const kCharClassBoundary = 1;
 export const kCharClassNonWord = 2;
 
 export interface EditorUISpelling {
-
   // realtime interface
   realtimeChecking: () => boolean;
   checkWord: (word: string) => boolean;
   suggestionList: (word: string) => string[];
+
+  // dictionary
+  ignoreWord: (word: string) => void;
+  addToDictionary: (word: string) => void;
 
   // word breaking
   breakWords: (text: string) => EditorWordRange[];

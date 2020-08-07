@@ -31,6 +31,10 @@ public class PanmirrorUISpelling {
    public CheckWord checkWord;
    public SuggestionList suggestionList;
    
+   // dictionary
+   public DictionaryFunction ignoreWord;
+   public DictionaryFunction addToDictionary;
+   
    // word breaking
    public BreakWords breakWords;
    public ClassifyCharacter classifyCharacter;
@@ -51,6 +55,12 @@ public class PanmirrorUISpelling {
    public interface SuggestionList
    {
       JsArray<String> suggest(String word);
+   }
+   
+   @JsFunction
+   public interface DictionaryFunction
+   {
+      void call(String word);
    }
    
    @JsFunction

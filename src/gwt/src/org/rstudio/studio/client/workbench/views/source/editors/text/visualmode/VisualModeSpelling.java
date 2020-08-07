@@ -195,6 +195,14 @@ public class VisualModeSpelling extends SpellingContext
         return new JsArray<String>(suggestions);
       };
       
+      uiSpelling.ignoreWord = (word) -> {
+         typo().addIgnoredWord(word);
+      };
+      
+      uiSpelling.addToDictionary = (word) -> {
+         typo().addToUserDictionary(word);
+      };
+      
       uiSpelling.breakWords = (String text) -> {
       
         
