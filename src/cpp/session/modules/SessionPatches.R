@@ -13,18 +13,6 @@
 #
 #
 
-# NOTE: registered hooks will be run immediately if the
-# package has already been loaded.
-.rs.addFunction("registerPackageLoadHook", function(package, hook)
-{
-   # if the package is already loaded, run the hook;
-   # otherwise, register a load hook
-   if (package %in% loadedNamespaces())
-      hook()
-   else
-      setHook(packageEvent(package, "onLoad"), hook)
-})
-
 .rs.registerPackageLoadHook("rstudioapi", function(...)
 {
    # bail if we're not version 0.7

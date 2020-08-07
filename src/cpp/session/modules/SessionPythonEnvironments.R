@@ -273,3 +273,9 @@
    info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
    .rs.scalarListFromList(info)
 })
+
+.rs.registerPackageLoadHook("reticulate", function(...)
+{
+   python <- .rs.readUiPref("python_default_interpreter")
+   .rs.reticulate.usePython(python)
+})
