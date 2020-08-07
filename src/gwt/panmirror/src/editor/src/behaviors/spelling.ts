@@ -112,14 +112,15 @@ export function getSpellingDoc(view: EditorView, marks: readonly PandocMark[], w
       return word.replace(/’/g, '\'');
     },
 
-    getCursorPosition: (): number => {
-      return view.state.selection.head;
-    },
-
     replaceSelection: (text: string) => {
       const tr = view.state.tr;
+      text = text.replace(/'/g, '’');
       tr.replaceSelectionWith(view.state.schema.text(text), true);
       view.dispatch(tr);
+    },
+
+    getCursorPosition: (): number => {
+      return view.state.selection.head;
     },
 
     getSelectionStart: (): number => {
