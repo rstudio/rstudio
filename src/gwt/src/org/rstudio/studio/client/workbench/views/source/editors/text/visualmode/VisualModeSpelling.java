@@ -24,16 +24,23 @@ import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordSource;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import elemental2.core.JsArray;
+
 
 public class VisualModeSpelling extends SpellingContext
 {
-   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel)
+   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
    {
      super(docUpdateSentinel);  
+     docDisplay_ = docDisplay;
    }
     
    public void checkSpelling(PanmirrorSpellingDoc doc)   
@@ -41,14 +48,14 @@ public class VisualModeSpelling extends SpellingContext
       checkSpelling(new SpellingDoc() {
 
          @Override
-         public Iterable<WordRange> getWordSource(int start, Integer end)
+         public Iterable<WordRange> getWords(int start, Integer end)
          {
             return new Iterable<WordRange>() {
 
                @Override
                public Iterator<WordRange> iterator()
                {
-                  PanmirrorWordSource source = doc.getWordSource(start, end);
+                  PanmirrorWordSource source = doc.getWords(start, end);
                   return new Iterator<WordRange>() {
 
                      @Override
@@ -78,6 +85,12 @@ public class VisualModeSpelling extends SpellingContext
                public int getPosition()
                {
                   return anchor.getPosition();
+               }
+
+               @Override
+               public void detach()
+               {
+                  anchor.detach();
                }
             };
          }
@@ -148,6 +161,55 @@ public class VisualModeSpelling extends SpellingContext
       });
    }
    
+   public PanmirrorUISpelling uiSpelling()
+   {
+      PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
+      uiSpelling.breakWords = (String text) -> {
+      
+         CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
+         JsArray<PanmirrorWordRange> words = new JsArray<PanmirrorWordRange>();
+         
+         int pos = 0;
+         while (pos < text.length()) 
+         {
+            // advance pos until we get past non-word characters
+            while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.Word)
+            {
+               pos++;
+            }
+            
+            // break out of the loop if we got to the end
+            if (pos == text.length())
+               break;
+            
+            // set start of word
+            int wordStart = pos++;
+            
+            // consume until a non-word is encourted
+            while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.NonWord)
+            {
+               pos++;
+            }
+            
+            // back over boundary (e.g. apostrophie) characters
+            while (classifier.classify(text.charAt(pos - 1)) == CharClass.Boundary)
+            {
+               pos--;
+            }
+            
+            // add word
+            PanmirrorWordRange word = new PanmirrorWordRange();
+            word.start = wordStart;
+            word.end = pos;
+            words.push(word);
+         }
+                  
+         return words;
+         
+      };
+      return uiSpelling;
+   }
+   
 
    @Override
    public void invalidateAllWords()
@@ -169,7 +231,7 @@ public class VisualModeSpelling extends SpellingContext
    }
 
 
-   
+   private final DocDisplay docDisplay_;
 }
 
 

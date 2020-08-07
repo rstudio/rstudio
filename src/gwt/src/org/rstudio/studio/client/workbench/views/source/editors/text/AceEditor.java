@@ -1606,7 +1606,7 @@ public class AceEditor implements DocDisplay,
    private final SpellingDoc spellingDoc_ = new SpellingDoc() {
 
       @Override
-      public Iterable<WordRange> getWordSource(int start, Integer end)
+      public Iterable<WordRange> getWords(int start, Integer end)
       {
          return new Iterable<WordRange>() {
 
@@ -1614,7 +1614,7 @@ public class AceEditor implements DocDisplay,
             public Iterator<WordRange> iterator()
             {
                // get underlying iterator
-               Iterator<Range> ranges = getWords(
+               Iterator<Range> ranges = AceEditor.this.getWords(
                      fileType_.getSpellCheckTokenPredicate(),
                      fileType_.getCharPredicate(),
                      positionFromIndex(start),
@@ -1656,6 +1656,12 @@ public class AceEditor implements DocDisplay,
             public int getPosition()
             {
                return indexFromPosition(anchor.getPosition());
+            }
+
+            @Override
+            public void detach()
+            {
+               anchor.detach();
             }
          };
       }

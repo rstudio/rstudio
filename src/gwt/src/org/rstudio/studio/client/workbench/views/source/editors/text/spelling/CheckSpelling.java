@@ -148,6 +148,7 @@ public class CheckSpelling
 
    private void cancel()
    {
+      initialCursorPos_.detach();
       canceled_ = true;
       callback_.onCancelled();
    }
@@ -167,7 +168,7 @@ public class CheckSpelling
 
          showProgress();
 
-         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc_.getWordSource(
+         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc_.getWords(
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : null);
 

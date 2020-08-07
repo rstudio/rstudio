@@ -79,7 +79,7 @@ public class TextEditingTargetSpelling extends SpellingContext
       SpellingDoc spellingDoc = docDisplay_.getSpellingDoc();
       
       // only get tokens for the visible screen
-      Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWordSource(
+      Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWords(
          docDisplay_.indexFromPosition(Position.create(docDisplay_.getFirstVisibleRow(), 0)),
          docDisplay_.indexFromPosition(Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow()))));
 
@@ -156,7 +156,7 @@ public class TextEditingTargetSpelling extends SpellingContext
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
          Position endOfLine = Position.create(pos.getRow()+1, 0);
-         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWordSource(
+         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc.getWords(
             docDisplay_.indexFromPosition(pos),
             docDisplay_.indexFromPosition(endOfLine)
          );

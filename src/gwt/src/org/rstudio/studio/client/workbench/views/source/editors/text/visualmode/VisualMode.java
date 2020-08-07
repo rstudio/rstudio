@@ -104,12 +104,18 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
       visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
-      visualModeContext_ = new VisualModePanmirrorContext(
-            docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_);
+      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay_);
+      visualModeContext_ = new VisualModePanmirrorContext(
+         docUpdateSentinel_, 
+         target_, 
+         visualModeExec_, 
+         visualModeChunks_, 
+         visualModeFormat_,
+         visualModeSpelling_
+      );
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();

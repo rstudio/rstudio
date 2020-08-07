@@ -22,6 +22,7 @@ public interface SpellingDoc
    public interface Anchor
    {
       int getPosition();
+      void detach();
    }
    
    public class WordRange
@@ -35,7 +36,7 @@ public interface SpellingDoc
       public int end;
    }
    
-   Iterable<WordRange> getWordSource(int start, Integer end);
+   Iterable<WordRange> getWords(int start, Integer end);
    Anchor createAnchor(int position);
    
    boolean shouldCheck(WordRange range);

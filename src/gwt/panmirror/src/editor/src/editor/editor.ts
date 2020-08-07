@@ -75,6 +75,7 @@ import { EditorServer } from '../api/server';
 import { pandocAutoIdentifier } from '../api/pandoc_id';
 import { wrapSentences } from '../api/wrap';
 import { yamlFrontMatter, applyYamlFrontMatter } from '../api/yaml';
+import { EditorSpellingDoc } from '../api/spelling';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 import { getOutline } from '../behaviors/outline';
@@ -93,6 +94,8 @@ import {
 
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
+
+import { getSpellingDoc } from '../behaviors/spelling';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -578,6 +581,10 @@ export class Editor {
       replaceAll: (text: string) => replaceAll(this.view, text),
       clear: () => clear(this.view),
     };
+  }
+
+  public getSpellingDoc(): EditorSpellingDoc {
+    return getSpellingDoc(this.view, this.context.ui.spelling.breakWords);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the

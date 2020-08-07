@@ -169,7 +169,7 @@ export function detectAndApplyMarks(
   text?: (match: RegExpMatchArray) => string,
 ) {
   re.lastIndex = 0;
-  const textNodes = mergedTextNodes(node, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
+  const textNodes = mergedTextNodes(node, (_node: ProsemirrorNode, _pos: number, parentNode: ProsemirrorNode) =>
     parentNode.type.allowsMarkType(markType),
   );
   textNodes.forEach(textNode => {

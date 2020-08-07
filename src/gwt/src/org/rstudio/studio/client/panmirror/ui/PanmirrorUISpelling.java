@@ -1,5 +1,5 @@
 /*
- * PanmirrorAnchor.java
+ * PanmirrorUISpelling.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,14 +13,24 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.spelling;
 
+
+package org.rstudio.studio.client.panmirror.ui;
+
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
+
+import elemental2.core.JsArray;
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true)
-public class PanmirrorAnchor
-{
-   public native int getPosition();
-   public native void detach();
+@JsType
+public class PanmirrorUISpelling {
+   
+   public BreakWords breakWords;
+   
+   @JsFunction
+   public interface BreakWords
+   {
+      JsArray<PanmirrorWordRange> breakWords(String text);
+   }
 }
-

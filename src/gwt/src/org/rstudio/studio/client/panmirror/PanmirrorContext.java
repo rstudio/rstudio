@@ -21,6 +21,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -31,9 +32,10 @@ public class PanmirrorContext
    public PanmirrorContext(PanmirrorUIContext uiContext, 
                            PanmirrorUIDisplay uiDisplay,
                            PanmirrorUIChunks uiChunks,
-                           PanmirrorUIExecute uiExecute)
+                           PanmirrorUIExecute uiExecute,
+                           PanmirrorUISpelling uiSpelling)
    {
-      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute, uiChunks); 
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute, uiChunks, uiSpelling); 
    }
    
    public PanmirrorUI ui;
