@@ -173,7 +173,28 @@ class SpellingPlugin extends Plugin<DecorationSet> {
         init: () => {
           return DecorationSet.empty;
         },
-        apply: (tr: Transaction) => {
+        apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
+
+          // transactionsChangeSet
+
+          // modify 'old' to remove any decorations that were in ranges that were either removed or modified
+          // then map: old = old.map(tr.mapping, tr.doc);
+
+          // look at modified and newly inserted ranges from the ChangeSet
+          // spell check those nodes and add decorations
+
+          // when walking, find a character or "invalidator/boundary":
+          //     space
+          //     block level boundary
+          //     disqualifying mark
+
+          // generally, I only get positions so I will need to dedude the enclosing node(s)
+
+          // we could discover the "range" by walking forwards and backwards from the changed range 
+          // (stop at block end)
+
+          // realtime: don't spell check words that are at the cursor
+
 
           if (this.checking) {
 
