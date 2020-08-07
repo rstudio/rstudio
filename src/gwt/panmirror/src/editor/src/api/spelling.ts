@@ -13,6 +13,17 @@
  *
  */
 
+export const kCharClassWord = 0;
+export const kCharClassBoundary = 1;
+export const kCharClassNonWord = 2;
+
+export interface EditorUISpelling {
+  realtimeChecking: () => boolean;
+  breakWords: EditorWordBreaker;
+  classifyCharacter: (ch: number) => number;
+  checkWord: (word: string) => string[];
+}
+
 export interface EditorAnchor {
   getPosition: () => number;
 }

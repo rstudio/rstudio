@@ -19,18 +19,23 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.Iterator;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordSource;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+
+import com.google.inject.Inject;
 
 import elemental2.core.JsArray;
 
@@ -40,7 +45,14 @@ public class VisualModeSpelling extends SpellingContext
    public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
    {
      super(docUpdateSentinel);  
+     RStudioGinjector.INSTANCE.injectMembers(this);
      docDisplay_ = docDisplay;
+   }
+   
+   @Inject
+   void initialize(UserPrefs prefs)
+   {
+      prefs_ = prefs;
    }
     
    public void checkSpelling(PanmirrorSpellingDoc doc)   
@@ -163,10 +175,17 @@ public class VisualModeSpelling extends SpellingContext
    
    public PanmirrorUISpelling uiSpelling()
    {
+      CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
+      
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
+      
+      uiSpelling.realtimeChecking = () -> {
+         return prefs_.realTimeSpellchecking().getValue() && TypoSpellChecker.isLoaded(); 
+      };
+      
       uiSpelling.breakWords = (String text) -> {
       
-         CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
+        
          JsArray<PanmirrorWordRange> words = new JsArray<PanmirrorWordRange>();
          
          int pos = 0;
@@ -207,6 +226,19 @@ public class VisualModeSpelling extends SpellingContext
          return words;
          
       };
+      
+      uiSpelling.classifyCharacter = (ch) -> {
+         switch(classifier.classify(ch)) {
+         case Word:
+            return 0;
+         case Boundary:
+            return 1;
+         case NonWord:
+         default:
+            return 2;
+         }
+      };
+      
       return uiSpelling;
    }
    
@@ -232,6 +264,7 @@ public class VisualModeSpelling extends SpellingContext
 
 
    private final DocDisplay docDisplay_;
+   private UserPrefs prefs_;
 }
 
 

@@ -92,10 +92,6 @@ export interface EditorUIMath {
   typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
 }
 
-export interface EditorUISpelling {
-  breakWords: EditorWordBreaker;
-}
-
 export interface EditorDisplay {
   openURL: (url: string) => void;
   navigateToXRef: (file: string, xref: XRef) => void;
