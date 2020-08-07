@@ -598,27 +598,19 @@ std::string safeLocation(const std::string& location)
 
 
 void Response::setMovedPermanently(const http::Request& request,
-                                   const std::string& location,
-                                   const std::string& pathPrefix /*= "/"*/)
+                                   const std::string& location)
 {
-   std::string baseUri = (request.rootPath(pathPrefix) != "/")
-      ? request.proxiedUri()
-      : request.absoluteUri();
-   std::string uri = URL::complete(baseUri,
-                                   request.rootPath(pathPrefix) + '/' + safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedPermanently, uri);
    setHeader("Location", uri);
 }
 
 void Response::setMovedTemporarily(const http::Request& request,
-                                   const std::string& location,
-                                   const std::string& pathPrefix /*= "/"*/)
+                                   const std::string& location)
 {
-   std::string baseUri = (request.rootPath(pathPrefix) != "/")
-      ? request.proxiedUri()
-      : request.absoluteUri();
-   std::string uri = URL::complete(baseUri,
-                                   request.rootPath(pathPrefix) + '/' + safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedTemporarily, uri);
    setHeader("Location", uri);
 }

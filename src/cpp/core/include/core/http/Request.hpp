@@ -20,9 +20,16 @@
 #include "Util.hpp"
 #include "Cookie.hpp"
 
+#define kRequestDefaultRootPath "/"
+
 namespace rstudio {
 namespace core {
 namespace http {
+
+enum class BaseUriUse {
+   Internal, // The default, includes internal addresses
+   External  // Omit internal addresses, returning blank
+};
 
 class Request : public Message
 {
@@ -53,10 +60,27 @@ public:
    const std::string& uri() const { return uri_; }
    void setUri(const std::string& uri) { uri_ = uri; }
 
+   // Whether or not the request is server via HTTPS
+   // either directly by the server or via a proxy
    bool isSecure() const;
-   std::string absoluteUri() const;
-   std::string proxiedUri(const std::string& prefix = "/") const;
-   std::string rootPath(const std::string& prefix = "/") const;
+
+   // Use the proxied URI when you need the closest guessing
+   // of the address shown in the browser's address bar.
+   // The host/port/protocol information returned here is always
+   // correct but to get the path 100% right, a root path must
+   // have been defined in the request or in an external header
+   std::string proxiedUri() const;
+
+   // The base URI will return:
+   // - The internal URI when the root path is the default ("/")
+   //   empty is returned when `use = BaseUriUse::External`
+   // - The proxied URI when the root path is defined as something else
+   std::string baseUri(BaseUriUse use = BaseUriUse::Internal) const;
+
+   // The path of the server as seen by the browsers, by default "/"
+   // This is path to be used for cookies or along with other path
+   std::string rootPath() const;
+   void setRootPath(const std::string& rootPath) { rootPath_ = rootPath; }
    
    bool acceptsContentType(const std::string& contentType) const;
 
@@ -124,6 +148,9 @@ public:
    void debugPrintUri(const std::string& caption) const;
 
 private:
+   // Use the internal URI when you need the "behind the proxy" URI
+   std::string internalUri() const;
+
    virtual void appendFirstLineBuffers(
          std::vector<boost::asio::const_buffer>& buffers) const;
    
@@ -135,6 +162,7 @@ private:
                             const std::string& value) const;
 
 private:
+   std::string rootPath_;
 
    // IMPORTANT NOTE: when adding data members be sure to update
    // the implementation of the assign method!!!!!

@@ -9,8 +9,7 @@
       function getBaseUri()
       {
          var baseUri = "#!base_uri#";
-         var rootPath = "#!root_path#";
-         if (rootPath === "/")
+         if (!baseUri)
          {
             baseUri = window.location.href;
          }
@@ -50,7 +49,7 @@
 
    <div class="header-box">
        <img class="logo-image" alt id="logo" src="/images/rstudio-logo.png" />
-       <h2>RStudio Server</h2>
+       <h2>RStudio Server Pro</h2>
    </div>
      
    <p>The requested page was not found.</p>

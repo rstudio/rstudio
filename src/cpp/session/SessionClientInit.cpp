@@ -119,13 +119,13 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
 
-   std::string path = ptrConnection->request().rootPath(options().urlPathPrefix());
+   std::string path = ptrConnection->request().rootPath();
 
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
    // specific to this session's URL since it's possible for different sessions (paths) to use
    // different tokens on the same server. This won't be done if the path was passed by the server
    std::size_t pos = baseURL.find('/', 9);
-   if (pos != std::string::npos && path == "/")
+   if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
       path = baseURL.substr(pos);
    }
@@ -253,7 +253,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
  
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
-   
+
    // propagate RETICULATE_PYTHON if set
    sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    

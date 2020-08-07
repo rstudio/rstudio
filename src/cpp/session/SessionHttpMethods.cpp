@@ -835,7 +835,6 @@ void registerGwtHandlers()
    // set default handler
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
                                                   "/",
-                                                  options.urlPathPrefix(),
                                                   http::UriFilterFunction(),
                                                   initJs);
 }

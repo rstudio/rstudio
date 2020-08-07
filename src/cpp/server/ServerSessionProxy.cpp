@@ -249,9 +249,7 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    else if (boost::algorithm::starts_with(address, proxiedAddress))
    {
       // find the base url from the original request
-      std::string baseUri = (originalRequest.rootPath(server::options().wwwUrlPathPrefix()) != "/")
-         ? originalRequest.proxiedUri()
-         : originalRequest.absoluteUri();
+      std::string baseUri = originalRequest.baseUri();
       std::string::size_type pos = baseUri.find(portPath);
       if (pos != std::string::npos) // precaution, should always be true
       {

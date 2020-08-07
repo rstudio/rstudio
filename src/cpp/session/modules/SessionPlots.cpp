@@ -673,7 +673,7 @@ void handleGraphicsRequest(const http::Request& request,
                                      imageFilename;
                                  
          // redirect to it
-         pResponse->setMovedTemporarily(request, imageLocation, session::options().urlPathPrefix());
+         pResponse->setMovedTemporarily(request, imageLocation);
       }
       else
       {

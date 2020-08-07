@@ -49,8 +49,7 @@ void handleOfflineRequest(const http::Request& request,
       std::ostringstream os;
       std::map<std::string, std::string> vars;
       vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
-      vars["root_path"] = string_utils::jsLiteralEscape(request.rootPath(options().wwwUrlPathPrefix()));
-      vars["base_uri"] = string_utils::jsLiteralEscape(request.proxiedUri(options().wwwUrlPathPrefix()));
+      vars["base_uri"] = string_utils::jsLiteralEscape(request.baseUri(core::http::BaseUriUse::External));
 
       FilePath offlineTemplate = FilePath(options().wwwLocalPath()).completeChildPath("offline.htm");
       core::Error err = core::text::renderTemplate(offlineTemplate, vars, os);
@@ -89,8 +88,7 @@ Error httpServerAddHandlers()
    
    uri_handlers::addBlocking("/images",
                              gwt::fileHandlerFunction(options.wwwLocalPath(),
-                                                      "/",
-                                                      options.wwwUrlPathPrefix()));
+                                                      "/"));
    
    // default handler sends back offline page or json error as appropriate
    uri_handlers::setBlockingDefault(handleOfflineRequest);

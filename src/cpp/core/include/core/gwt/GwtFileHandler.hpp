@@ -25,7 +25,6 @@ namespace gwt {
 http::UriHandlerFunction fileHandlerFunction(
       const std::string& wwwLocalPath,
       const std::string& baseUri = std::string(),
-      const std::string& wwwPathPrefix = "/",
       http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
       const std::string& initJs = std::string(),
       const std::string& gwtPrefix = std::string(),

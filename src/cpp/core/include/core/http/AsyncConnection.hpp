@@ -41,10 +41,7 @@ typedef boost::function<void(boost::asio::io_service&,
                              Request*,
                              RequestFilterContinuation)> RequestFilter;
 
-typedef boost::function<void(const std::string&,
-                             const std::string&,
-                             const std::string&,
-                             Response*)> ResponseFilter;
+typedef boost::function<void(const Request& request, Response*)> ResponseFilter;
 
 // abstract base (insulate clients from knowledge of protocol-specifics)
 class AsyncConnection : public Socket

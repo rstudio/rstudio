@@ -142,7 +142,7 @@ std::string generateLoginPath(const core::http::Request& request,
      core::http::util::buildQueryString(fields, &queryString);
 
    // generate url
-   std::string signInPath = core::http::URL::uncomplete(request.uri(), auth::handler::kSignIn);
+   std::string signInPath = core::http::URL::uncomplete(request.baseUri(), auth::handler::kSignIn);
    if (!queryString.empty())
      signInPath += ("?" + queryString);
    return signInPath;
@@ -155,8 +155,7 @@ void redirectToLoginPage(const core::http::Request& request,
 {
    pResponse->setMovedTemporarily(
                          request,
-                         generateLoginPath(request, appUri, error),
-                         server::options().wwwUrlPathPrefix());
+                         generateLoginPath(request, appUri, error));
 }
 
 } // namespace server

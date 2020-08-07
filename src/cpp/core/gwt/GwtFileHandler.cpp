@@ -38,7 +38,6 @@ struct FileRequestOptions
 {
    std::string wwwLocalPath;
    std::string baseUri;
-   std::string pathPrefix;
    core::http::UriFilterFunction mainPageFilter;
    std::string initJs;
    std::string gwtPrefix;
@@ -59,7 +58,7 @@ void handleFileRequest(const FileRequestOptions& options,
    // request for one-character short of root location redirects to root
    if (uri == options.baseUri.substr(0, options.baseUri.size()-1))
    {
-      pResponse->setMovedPermanently(request, options.baseUri, options.pathPrefix);
+      pResponse->setMovedPermanently(request, options.baseUri);
       return;
    }
    
@@ -176,15 +175,14 @@ void handleFileRequest(const FileRequestOptions& options,
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
                                        const std::string& baseUri,
-                                       const std::string& wwwPathPrefix,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
                                        const std::string& gwtPrefix,
                                        bool useEmulatedStack,
                                        const std::string& frameOptions)
 {
-   FileRequestOptions options { wwwLocalPath, baseUri, wwwPathPrefix, mainPageFilter, 
-                                initJs, gwtPrefix, useEmulatedStack, frameOptions };
+   FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
+                                gwtPrefix, useEmulatedStack, frameOptions };
 
    return boost::bind(handleFileRequest,
                       options,
