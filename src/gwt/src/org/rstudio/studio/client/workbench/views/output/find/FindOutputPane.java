@@ -33,7 +33,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -323,7 +323,7 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler)
+   public HandlerRegistration addSelectionChangedHandler(SelectionChangedEvent.Handler handler)
    {
       return table_.addSelectionChangedHandler(handler);
    }
