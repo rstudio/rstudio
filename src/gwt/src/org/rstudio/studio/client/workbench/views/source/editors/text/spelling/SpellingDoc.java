@@ -39,11 +39,12 @@ public interface SpellingDoc
    Anchor createAnchor(int position);
    
    boolean shouldCheck(WordRange range);
+   
    void setSelection(WordRange range);
    String getText(WordRange range);
+   void replaceSelection(String text);
    
    int getCursorPosition();
-   void replaceSelection(String text);
    int getSelectionStart();
    int getSelectionEnd();
    
