@@ -584,7 +584,7 @@ export class Editor {
   }
 
   public getSpellingDoc(): EditorSpellingDoc {
-    return getSpellingDoc(this.view, this.context.ui.spelling.breakWords);
+    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling.breakWords);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the

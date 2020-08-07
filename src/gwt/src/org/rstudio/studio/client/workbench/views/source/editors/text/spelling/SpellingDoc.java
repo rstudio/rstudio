@@ -22,7 +22,6 @@ public interface SpellingDoc
    public interface Anchor
    {
       int getPosition();
-      void detach();
    }
    
    public class WordRange
@@ -50,6 +49,8 @@ public interface SpellingDoc
    
    Rectangle getCursorBounds(); 
    void moveCursorNearTop();
+   
+   void dispose();
 }
  
   

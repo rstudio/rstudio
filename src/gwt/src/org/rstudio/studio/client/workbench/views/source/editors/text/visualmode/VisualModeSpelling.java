@@ -86,12 +86,6 @@ public class VisualModeSpelling extends SpellingContext
                {
                   return anchor.getPosition();
                }
-
-               @Override
-               public void detach()
-               {
-                  anchor.detach();
-               }
             };
          }
 
@@ -148,6 +142,12 @@ public class VisualModeSpelling extends SpellingContext
          public void moveCursorNearTop()
          {
             doc.moveCursorNearTop();
+         }
+         
+         @Override
+         public void dispose()
+         {
+            doc.dispose();
          }
          
          private PanmirrorWordRange toRange(WordRange wordRange)

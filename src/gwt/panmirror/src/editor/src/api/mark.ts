@@ -25,6 +25,7 @@ export interface PandocMark {
   readonly name: string;
   readonly spec: MarkSpec;
   readonly noInputRules?: boolean;
+  readonly noSpelling?: boolean;
   readonly pandoc: {
     readonly readers: readonly PandocTokenReader[];
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;

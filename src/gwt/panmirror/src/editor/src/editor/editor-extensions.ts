@@ -59,6 +59,7 @@ import behaviorHistory from '../behaviors/history';
 import behaviorSelectAll from '../behaviors/select_all';
 import behaviorCursor from '../behaviors/cursor';
 import behaviorFind from '../behaviors/find';
+import behaviorSpelling from '../behaviors/spelling';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
@@ -135,6 +136,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorSpelling,
     behaviorClearFormatting,
   ]);
 

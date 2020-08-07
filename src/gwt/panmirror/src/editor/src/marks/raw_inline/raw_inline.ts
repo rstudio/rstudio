@@ -46,6 +46,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'raw_inline',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
           excludes: '_',

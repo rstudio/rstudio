@@ -148,7 +148,7 @@ public class CheckSpelling
 
    private void cancel()
    {
-      initialCursorPos_.detach();
+      spellingDoc_.dispose();
       canceled_ = true;
       callback_.onCancelled();
    }

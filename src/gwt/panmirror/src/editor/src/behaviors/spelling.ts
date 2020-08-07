@@ -13,14 +13,42 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorView } from "prosemirror-view";
-import { TextSelection } from 'prosemirror-state';
+import { Schema, MarkType } from 'prosemirror-model';
+import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
+import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
 import { EditorWordBreaker, EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc } from "../api/spelling";
-import { mergedTextNodes } from "../api/text";
+import { TextWithPos } from "../api/text";
+import { scrollIntoView } from '../api/scroll';
+import { ExtensionContext } from '../api/extension';
+import { setTextSelection } from 'prosemirror-utils';
+import { PandocMark } from '../api/mark';
 
-export function getSpellingDoc(view: EditorView, wordBreaker: EditorWordBreaker): EditorSpellingDoc {
+
+// TODO: janky auto-scroll
+// TODO: more testing with edge conditions, footnotes, etc.
+
+
+const extension = (context: ExtensionContext) => {
+  return {
+    plugins: (schema: Schema) => {
+      return [new SpellingPlugin()];
+    }
+  };
+};
+
+export function getSpellingDoc(view: EditorView, marks: readonly PandocMark[], wordBreaker: EditorWordBreaker): EditorSpellingDoc {
+
+  // alias schema 
+  const schema = view.state.schema;
+
+  // intialize marks we don't want to check
+  const excludedMarks = marks
+    .filter(mark => mark.noSpelling)
+    .map(mark => schema.marks[mark.name]);
+
+  // check begin
+  spellingPlugin(view.state).checkBegin();
 
   return {
 
@@ -28,32 +56,31 @@ export function getSpellingDoc(view: EditorView, wordBreaker: EditorWordBreaker)
 
       // provide default for end
       if (end === null) {
-        end = view.state.doc.nodeSize;
+        end = view.state.doc.nodeSize - 2;
       }
 
-      // examine text nodes in range
-      const textNodes = mergedTextNodes(view.state.doc, (node: ProsemirrorNode, pos: number) => {
-
-        // filter on code nodes
-        if (node.type.spec.code) {
-          return false;
+      // examine every text node
+      const textNodes: TextWithPos[] = [];
+      view.state.doc.nodesBetween(start, end, (node, pos, parent) => {
+        if (node.isText && !parent.type.spec.code) {
+          // filter on marks where we shouldn't check spelling (e.g. url, code)
+          if (!excludedMarks.some((markType: MarkType) => markType.isInSet(node.marks))) {
+            textNodes.push({ text: node.textContent, pos });
+          }
         }
-
-        // filter on nodes overlapping w/ requested range
-        const startPos = pos;
-        const endPos = pos + node.nodeSize;
-        return !((startPos < start && endPos < start) || startPos > end!);
       });
 
       // create word ranges
       const words: EditorWordRange[] = [];
       textNodes.forEach(text => {
-        words.push(...wordBreaker(text.text).map(wordRange => {
-          return {
-            start: text.pos + wordRange.start,
-            end: text.pos + wordRange.end
-          };
-        }));
+        if (text.pos >= start && text.pos < end!) {
+          words.push(...wordBreaker(text.text).map(wordRange => {
+            return {
+              start: text.pos + wordRange.start,
+              end: text.pos + wordRange.end
+            };
+          }));
+        }
       });
 
       // return iterator over word range
@@ -72,19 +99,16 @@ export function getSpellingDoc(view: EditorView, wordBreaker: EditorWordBreaker)
     },
 
     createAnchor: (pos: number): EditorAnchor => {
-      // TODO: use plugin to map pos across transactions
-      return {
-        getPosition: () => pos
-      };
+      return spellingPlugin(view.state).createAnchor(pos);
     },
 
-    shouldCheck: (wordRange: EditorWordRange): boolean => {
+    shouldCheck: (_wordRange: EditorWordRange): boolean => {
       return true;
     },
 
     setSelection: (wordRange: EditorWordRange) => {
       const tr = view.state.tr;
-      tr.setSelection(TextSelection.create(tr.doc, wordRange.start, wordRange.end)).scrollIntoView();
+      tr.setSelection(TextSelection.create(tr.doc, wordRange.start, wordRange.end));
       view.dispatch(tr);
     },
 
@@ -124,11 +148,110 @@ export function getSpellingDoc(view: EditorView, wordBreaker: EditorWordBreaker)
     },
 
     moveCursorNearTop: () => {
-      const tr = view.state.tr;
-      tr.scrollIntoView();
-      view.dispatch(tr);
+      scrollIntoView(view, view.state.selection.from, true, 350);
+    },
+
+    dispose: () => {
+      spellingPlugin(view.state).checkEnd(view);
     }
 
   };
 }
 
+const key = new PluginKey<DecorationSet>('spelling-plugin');
+
+
+function spellingPlugin(state: EditorState) {
+  return key.get(state) as SpellingPlugin;
+}
+
+class SpellingPlugin extends Plugin<DecorationSet> {
+
+  private checking = false;
+  private anchors: SpellingAnchor[] = [];
+
+  constructor() {
+    super({
+      key,
+      state: {
+        init: () => {
+          return DecorationSet.empty;
+        },
+        apply: (tr: Transaction) => {
+
+          if (this.checking) {
+
+            // map anchors
+            this.anchors.forEach(anchor => {
+              anchor.setPosition(tr.mapping.map(anchor.getPosition()));
+            });
+
+            // show selection 
+            if (!tr.selection.empty) {
+              return DecorationSet.create(
+                tr.doc,
+                [Decoration.inline(tr.selection.from, tr.selection.to, { class: 'pm-selected-text' })]
+              );
+            }
+          }
+
+          return DecorationSet.empty;
+        },
+      },
+      view: () => ({
+        update: (view: EditorView, prevState: EditorState) => {
+          // 
+        },
+      }),
+      props: {
+        decorations: (state: EditorState) => {
+          return key.getState(state);
+        },
+      },
+    });
+  }
+
+  public checkBegin() {
+    this.checking = true;
+  }
+
+  public createAnchor(pos: number) {
+    const anchor = new SpellingAnchor(pos);
+    this.anchors.push(anchor);
+    return anchor;
+  }
+
+  public checkEnd(view: EditorView) {
+
+    this.checking = false;
+    this.anchors = [];
+
+    if (!view.state.selection.empty) {
+      const tr = view.state.tr;
+      setTextSelection(tr.selection.to)(tr);
+      view.dispatch(tr);
+    }
+
+  }
+
+}
+
+class SpellingAnchor implements EditorAnchor {
+
+  private pos = 0;
+
+  constructor(pos: number) {
+    this.pos = pos;
+  }
+
+  public getPosition() {
+    return this.pos;
+  }
+
+  public setPosition(pos: number) {
+    this.pos = pos;
+  }
+
+}
+
+export default extension;

@@ -89,6 +89,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     marks: [
       {
         name: 'cite_id',
+        noSpelling: true,
         spec: {
           attrs: {},
           inclusive: true,

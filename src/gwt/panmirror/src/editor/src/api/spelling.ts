@@ -52,6 +52,8 @@ export interface EditorSpellingDoc {
   getCursorBounds: () => EditorRect;
   moveCursorNearTop: () => void;
 
+  dispose: () => void;
+
 }
 
 export type EditorWordBreaker = (text: string) => EditorWordRange[];

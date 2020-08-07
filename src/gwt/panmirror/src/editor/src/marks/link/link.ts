@@ -53,6 +53,7 @@ const extension = (context: ExtensionContext): Extension => {
     marks: [
       {
         name: 'link',
+        noSpelling: true,
         spec: {
           attrs: {
             href: {},

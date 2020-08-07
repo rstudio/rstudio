@@ -56,6 +56,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'math',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           attrs: {
             type: {},

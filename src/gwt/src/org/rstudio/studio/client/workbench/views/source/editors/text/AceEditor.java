@@ -1600,165 +1600,172 @@ public class AceEditor implements DocDisplay,
    @Override
    public SpellingDoc getSpellingDoc()
    {
-      return spellingDoc_;
-   }
-   
-   private final SpellingDoc spellingDoc_ = new SpellingDoc() {
-
-      @Override
-      public Iterable<WordRange> getWords(int start, Integer end)
-      {
-         return new Iterable<WordRange>() {
-
-            @Override
-            public Iterator<WordRange> iterator()
-            {
-               // get underlying iterator
-               Iterator<Range> ranges = AceEditor.this.getWords(
-                     fileType_.getSpellCheckTokenPredicate(),
-                     fileType_.getCharPredicate(),
-                     positionFromIndex(start),
-                     end != null ? positionFromIndex(end) : null).iterator();
-               
-               // shim it on to spelling doc iterator
-               return new Iterator<WordRange>() {
-                  
-                  @Override
-                  public boolean hasNext()
-                  {
-                     return ranges.hasNext();
-                  }
-
-                  @Override
-                  public WordRange next()
-                  {
-                     Range range = ranges.next(); 
-                     return new WordRange(
-                        indexFromPosition(range.getStart()),
-                        indexFromPosition(range.getEnd())
-                     ); 
-                  }
-               };
-            }
-         };
-      }
-
-      @Override
-      public Anchor createAnchor(int position)
-      {
-         // create ace anchor
-         org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor anchor =
-           AceEditor.this.createAnchor(positionFromIndex(position));
-         
-         // shim on spelling doc anchor
-         return new Anchor() {
-            @Override
-            public int getPosition()
-            {
-               return indexFromPosition(anchor.getPosition());
-            }
-
-            @Override
-            public void detach()
-            {
-               anchor.detach();
-            }
-         };
-      }
+      // detach anchors on dispose
+      ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor> 
+        anchors = new ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor>();
       
-      @Override
-      public boolean shouldCheck(WordRange wordRange)
-      {
-         Range range = toAceRange(wordRange);
+      return new SpellingDoc() {
+
          
-         // Don't spellcheck yaml
-         Scope s = getScopeAtPosition(range.getStart());
-         if (s != null && s.isYaml())
-            return false;
-
-         // This will capture all braced text in a way that the
-         // highlight rules don't and shouldn't.
-         String word = getTextForRange(range);
-         int start = range.getStart().getColumn();
-         int end = start + word.length();
-         String line = getLine(range.getStart().getRow());
-         Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
-         Match m = p.match(line, 0);
-         while (m != null)
+         @Override
+         public Iterable<WordRange> getWords(int start, Integer end)
          {
-            // ensure that the match is the specific word we're looking
-            // at to fix edge cases such as {asdf}asdf
-            if (m.getIndex() < start &&
-                (m.getIndex() + m.getValue().length()) > end)
-               return false;
+            return new Iterable<WordRange>() {
 
-            m = m.nextMatch();
+               @Override
+               public Iterator<WordRange> iterator()
+               {
+                  // get underlying iterator
+                  Iterator<Range> ranges = AceEditor.this.getWords(
+                        fileType_.getSpellCheckTokenPredicate(),
+                        fileType_.getCharPredicate(),
+                        positionFromIndex(start),
+                        end != null ? positionFromIndex(end) : null).iterator();
+                  
+                  // shim it on to spelling doc iterator
+                  return new Iterator<WordRange>() {
+                     
+                     @Override
+                     public boolean hasNext()
+                     {
+                        return ranges.hasNext();
+                     }
+
+                     @Override
+                     public WordRange next()
+                     {
+                        Range range = ranges.next(); 
+                        return new WordRange(
+                           indexFromPosition(range.getStart()),
+                           indexFromPosition(range.getEnd())
+                        ); 
+                     }
+                  };
+               }
+            };
          }
 
-         return true;
-      }
-
-      @Override
-      public void setSelection(WordRange wordRange)
-      {
-         setSelectionRange(toAceRange(wordRange)); 
+         @Override
+         public Anchor createAnchor(int position)
+         {
+            // create ace anchor
+            org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor anchor =
+              AceEditor.this.createAnchor(positionFromIndex(position));
+            
+            // track anchors for disposal
+            anchors.add(anchor);
+            
+            // shim on spelling doc anchor
+            return new Anchor() {
+               @Override
+               public int getPosition()
+               {
+                  return indexFromPosition(anchor.getPosition());
+               }
+            };
+         }
          
-      }
+         @Override
+         public boolean shouldCheck(WordRange wordRange)
+         {
+            Range range = toAceRange(wordRange);
+            
+            // Don't spellcheck yaml
+            Scope s = getScopeAtPosition(range.getStart());
+            if (s != null && s.isYaml())
+               return false;
 
-      @Override
-      public String getText(WordRange wordRange)
-      {
-         return getTextForRange(toAceRange(wordRange));
-      }
+            // This will capture all braced text in a way that the
+            // highlight rules don't and shouldn't.
+            String word = getTextForRange(range);
+            int start = range.getStart().getColumn();
+            int end = start + word.length();
+            String line = getLine(range.getStart().getRow());
+            Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
+            Match m = p.match(line, 0);
+            while (m != null)
+            {
+               // ensure that the match is the specific word we're looking
+               // at to fix edge cases such as {asdf}asdf
+               if (m.getIndex() < start &&
+                   (m.getIndex() + m.getValue().length()) > end)
+                  return false;
 
-      @Override
-      public int getCursorPosition()
-      {
-         return indexFromPosition(AceEditor.this.getCursorPosition());
-      }
+               m = m.nextMatch();
+            }
 
-      @Override
-      public void replaceSelection(String text)
-      {
-         AceEditor.this.replaceSelection(text);
-      }
+            return true;
+         }
 
-      @Override
-      public int getSelectionStart()
-      {
-         return indexFromPosition(AceEditor.this.getSelectionStart());
-      }
+         @Override
+         public void setSelection(WordRange wordRange)
+         {
+            setSelectionRange(toAceRange(wordRange)); 
+         }
 
-      @Override
-      public int getSelectionEnd()
-      {
-         return indexFromPosition(AceEditor.this.getSelectionEnd());
-      }
+         @Override
+         public String getText(WordRange wordRange)
+         {
+            return getTextForRange(toAceRange(wordRange));
+         }
 
-      @Override
-      public Rectangle getCursorBounds()
-      {
-         return AceEditor.this.getCursorBounds();
-      }
+         @Override
+         public int getCursorPosition()
+         {
+            return indexFromPosition(AceEditor.this.getCursorPosition());
+         }
 
-      @Override
-      public void moveCursorNearTop()
-      {
-         AceEditor.this.moveCursorNearTop();
-      }
-      
-      private Range toAceRange(WordRange wordRange)
-      {
-         Position startPos = positionFromIndex(wordRange.start);
-         Position endPos = positionFromIndex(wordRange.end);
-         return Range.create(
-            startPos.getRow(), 
-            startPos.getColumn(), 
-            endPos.getRow(), 
-            endPos.getColumn()
-         );
-      }
-   };
+         @Override
+         public void replaceSelection(String text)
+         {
+            AceEditor.this.replaceSelection(text);
+         }
+
+         @Override
+         public int getSelectionStart()
+         {
+            return indexFromPosition(AceEditor.this.getSelectionStart());
+         }
+
+         @Override
+         public int getSelectionEnd()
+         {
+            return indexFromPosition(AceEditor.this.getSelectionEnd());
+         }
+
+         @Override
+         public Rectangle getCursorBounds()
+         {
+            return AceEditor.this.getCursorBounds();
+         }
+
+         @Override
+         public void moveCursorNearTop()
+         {
+            AceEditor.this.moveCursorNearTop();
+         }
+         
+         private Range toAceRange(WordRange wordRange)
+         {
+            Position startPos = positionFromIndex(wordRange.start);
+            Position endPos = positionFromIndex(wordRange.end);
+            return Range.create(
+               startPos.getRow(), 
+               startPos.getColumn(), 
+               endPos.getRow(), 
+               endPos.getColumn()
+            );
+         }
+
+         @Override
+         public void dispose()
+         {
+            anchors.forEach((anchor) -> { anchor.detach(); });
+         }
+      };
+   }
+   
+ 
 
 
    @Override

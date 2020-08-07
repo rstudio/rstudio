@@ -34,4 +34,6 @@ public class PanmirrorSpellingDoc
    
    public native PanmirrorRect getCursorBounds();
    public native void moveCursorNearTop();
+   
+   public native void dispose();
 }
