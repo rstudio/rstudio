@@ -24,11 +24,6 @@ import { ExtensionContext } from '../api/extension';
 import { setTextSelection } from 'prosemirror-utils';
 import { PandocMark } from '../api/mark';
 
-
-// TODO: janky auto-scroll
-// TODO: more testing with edge conditions, footnotes, etc.
-
-
 const extension = (context: ExtensionContext) => {
   return {
     plugins: (schema: Schema) => {
@@ -113,7 +108,8 @@ export function getSpellingDoc(view: EditorView, marks: readonly PandocMark[], w
     },
 
     getText: (wordRange: EditorWordRange): string => {
-      return view.state.doc.textBetween(wordRange.start, wordRange.end);
+      const word = view.state.doc.textBetween(wordRange.start, wordRange.end);
+      return word.replace(/’/g, '\'');
     },
 
     getCursorPosition: (): number => {
@@ -148,7 +144,7 @@ export function getSpellingDoc(view: EditorView, marks: readonly PandocMark[], w
     },
 
     moveCursorNearTop: () => {
-      scrollIntoView(view, view.state.selection.from, true, 350);
+      scrollIntoView(view, view.state.selection.from, false, undefined, 100);
     },
 
     dispose: () => {
