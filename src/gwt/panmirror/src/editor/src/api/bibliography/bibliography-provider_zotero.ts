@@ -47,8 +47,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // Don't send the items back through to the server
         const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
 
-        // TODO:useCache = true
-        const useCache = false;
+        const useCache = true;
 
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
@@ -70,11 +69,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
             this.collections = newCollections;
           }
         } else {
-          console.log(result.status);
+          // console.log(result.status);
         }
       }
       catch (err) {
-        console.log(err);
+        // console.log(err);
       }
     } else {
       // Zotero is disabled, clear any already loaded bibliography

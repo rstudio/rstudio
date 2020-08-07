@@ -26,6 +26,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const addCitation = () => {
+    window.alert("Add!");
   };
 
 
@@ -35,18 +36,16 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
         <div className="pm-cite-panel-cite-selection">
           <div className="pm-cite-panel-cite-selection-sources">
-
-
-
-
+            Sources
           </div>
 
 
           <div className="pm-cite-panel-cite-selection-items">
-
+            Items
           </div>
         </div>
         <div className="pm-cite-panel-selected-cites">
+          Cites
         </div>
 
         <div className="pm-cite-panel-buttons">
