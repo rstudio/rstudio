@@ -1134,3 +1134,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    cap <- capabilities(what)
    length(cap) && cap
 })
+
+# NOTE: registered hooks will be run immediately if the
+# package has already been loaded.
+.rs.addFunction("registerPackageLoadHook", function(package, hook)
+{
+   if (package %in% loadedNamespaces())
+      return(hook())
+   
+   setHook(
+      hookName = packageEvent(package, "onLoad"),
+      value    = hook,
+      action   = "append"
+   )
+      
+})
+
+.rs.addFunction("initTools", function()
+{
+   ostype <- .Platform$OS.type
+   info <- Sys.info()
+   envir <- .rs.toolsEnv()
+   
+   assign(".rs.platform.isUnix",    ostype == "unix",              envir = envir)
+   assign(".rs.platform.isWindows", ostype == "windows",           envir = envir)
+   assign(".rs.platform.isLinux",   info[["sysname"]] == "Linux",  envir = envir)
+   assign(".rs.platform.isMacos",   info[["sysname"]] == "Darwin", envir = envir)
+   
+})
+
+.rs.initTools()

@@ -2943,6 +2943,18 @@ public class UserPrefsAccessor extends Prefs
          JsArrayUtil.createStringArray("Andale Mono", "Bitstream Vera Sans Mono", "Cascadia Code", "Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Droid Sans Mono", "Fira Code", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Lucida Sans Typewriter", "Menlo", "Monaco", "Monoid", "Operator Mono", "Pragmata", "SF Mono", "Source Code Pro", "Vera Sans Mono", "Victor Mono", "Ubuntu Mono"));
    }
 
+   /**
+    * The path to the default Python interpreter
+    */
+   public PrefValue<String> pythonDefaultInterpreter()
+   {
+      return string(
+         "python_default_interpreter",
+         "Default Python interpreter", 
+         "The path to the default Python interpreter", 
+         "");
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3355,6 +3367,8 @@ public class UserPrefsAccessor extends Prefs
          graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
       if (source.hasKey("browser_fixed_width_fonts"))
          browserFixedWidthFonts().setValue(layer, source.getObject("browser_fixed_width_fonts"));
+      if (source.hasKey("python_default_interpreter"))
+         pythonDefaultInterpreter().setValue(layer, source.getString("python_default_interpreter"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3564,6 +3578,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(graphicsBackend());
       prefs.add(graphicsAntialiasing());
       prefs.add(browserFixedWidthFonts());
+      prefs.add(pythonDefaultInterpreter());
       return prefs;
    }
    

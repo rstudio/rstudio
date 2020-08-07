@@ -46,6 +46,7 @@ endif()
 
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
+   set(GWT_COPY Yes)
 
    # invoke ant to build
    add_custom_target(gwt_build ALL)
@@ -57,6 +58,12 @@ if(GWT_BUILD)
                   -Dextras.dir="${GWT_EXTRAS_DIR}"
                   -Dlib.dir="${GWT_LIB_DIR}"
                   -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
+endif()
+if(NOT DEFINED GWT_COPY)
+   set(GWT_COPY Yes)
+endif()
+if(GWT_COPY)
+   message(STATUS "Configured to install GWT")
 
    # create test script and copy to binary directory with executable permissions
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
