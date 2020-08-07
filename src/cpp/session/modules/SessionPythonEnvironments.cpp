@@ -17,6 +17,8 @@
 
 #include <core/Exec.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserPrefValues.hpp>
 
@@ -31,27 +33,23 @@ namespace python_environments {
 
 namespace {
 
-// the last-known Python path as provided via preferences
-std::string s_defaultPythonInterpreterPath;
-
 void onPrefsChanged(const std::string& /* layerName */,
                     const std::string& prefName)
 {
    if (prefName == kPythonDefaultInterpreter)
    {
-      // get new preference value
-      std::string defaultPythonInterpreterPath =
-         prefs::userPrefs().pythonDefaultInterpreter();
-
-      // only update RETICULATE_PYTHON if it has not been modified by the user
-      std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-      if (reticulatePython == s_defaultPythonInterpreterPath)
+      std::string interpreterPath =
+            prefs::userPrefs().pythonDefaultInterpreter();
+      
+      if (!interpreterPath.empty())
       {
-         core::system::setenv("RETICULATE_PYTHON", defaultPythonInterpreterPath);
-      }
+         Error error = r::exec::RFunction(".rs.reticulate.usePython")
+               .addParam(interpreterPath)
+               .call();
 
-      // update our last-known preference value
-      s_defaultPythonInterpreterPath = defaultPythonInterpreterPath;
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 }
 
@@ -63,15 +61,6 @@ Error initialize()
    
    prefs::userPrefs().onChanged.connect(onPrefsChanged);
 
-   // initialize last known Python path
-   s_defaultPythonInterpreterPath = prefs::userPrefs().pythonDefaultInterpreter();
-
-   // if RETICULATE_PYTHON has not yet been set, initialize it
-   // via the value stored in preferences (if any)
-   std::string pythonPath = core::system::getenv("RETICULATE_PYTHON");
-   if (pythonPath.empty() && !s_defaultPythonInterpreterPath.empty())
-      core::system::setenv("RETICULATE_PYTHON", s_defaultPythonInterpreterPath);
-   
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPythonEnvironments.R"));

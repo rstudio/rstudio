@@ -273,3 +273,15 @@
    info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
    .rs.scalarListFromList(info)
 })
+
+.rs.registerPackageLoadHook("reticulate", function(...)
+{
+   python <- .rs.readUiPref("python_default_interpreter")
+   
+   if (is.character(python) &&
+       length(python) == 1 &&
+       file.exists(python))
+   {
+      reticulate::use_python(python, required = TRUE)
+   }
+})
