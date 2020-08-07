@@ -2572,6 +2572,19 @@ core::Error UserPrefValues::setZoteroConnectionType(std::string val)
 }
 
 /**
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ */
+bool UserPrefValues::zoteroUseBetterBibtex()
+{
+   return readPref<bool>("zotero_use_better_bibtex");
+}
+
+core::Error UserPrefValues::setZoteroUseBetterBibtex(bool val)
+{
+   return writePref("zotero_use_better_bibtex", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2874,6 +2887,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroConnectionType,
+      kZoteroUseBetterBibtex,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

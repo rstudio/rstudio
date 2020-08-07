@@ -2793,6 +2793,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
 
    /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   public PrefValue<Boolean> zoteroUseBetterBibtex()
+   {
+      return bool(
+         "zotero_use_better_bibtex",
+         "Use Better BibTeX for citation keys and BibLaTeX export", 
+         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
+         false);
+   }
+
+   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -3325,6 +3337,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
       if (source.hasKey("zotero_connection_type"))
          zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
+      if (source.hasKey("zotero_use_better_bibtex"))
+         zoteroUseBetterBibtex().setValue(layer, source.getBool("zotero_use_better_bibtex"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3541,6 +3555,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroConnectionType());
+      prefs.add(zoteroUseBetterBibtex());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

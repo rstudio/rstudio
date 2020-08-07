@@ -102,5 +102,6 @@ export interface EditorUIPrefs {
   tabKeyMoveFocus: () => boolean;
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;
+  zoteroUseBetterBibtex: () => boolean;
 }
 

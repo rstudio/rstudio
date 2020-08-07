@@ -345,6 +345,7 @@ namespace prefs {
 #define kZoteroConnectionType "zotero_connection_type"
 #define kZoteroConnectionTypeLocal "local"
 #define kZoteroConnectionTypeWeb "web"
+#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1550,6 +1551,12 @@ public:
     */
    std::string zoteroConnectionType();
    core::Error setZoteroConnectionType(std::string val);
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   bool zoteroUseBetterBibtex();
+   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Preferred emoji skintone
