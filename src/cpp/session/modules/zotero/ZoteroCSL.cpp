@@ -20,7 +20,6 @@
 #include <core/Algorithm.hpp>
 #include <core/RegexUtils.hpp>
 
-#include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 #include <shared_core/SafeConvert.hpp>
 
@@ -1086,8 +1085,9 @@ std::string cslType(const std::string& zoteroType) {
    }
 }
 
-
 } // end anonymous namespace
+
+
 
 // Convert the items and creators read from SQLite into a CSL Object
 json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const ZoteroCreatorsByKey& creators)
@@ -1120,37 +1120,10 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
             fieldName = cslName;
          }
 
-         // Pinned Citation Keys can either be in the 'extra' field or might be the
-         // WEB:
-         // Pinned key is stored as 'extra' in JSON raw format (not CSL)
-         // Will need to use the following format URL to get data:
-         //
-         // https://api.zotero.org/users/6706487/items/773M89Q2?format=json&include=csljson,data
-         // "csljson" contains the CSL json
-         // "data" contains the data, including the 'extra' field
-         //
-         // LOCAL:
-         // Pinned key is stored as Collection Key in 'extra' field
-         // Extra is a field that contains special additional data about items
-         // Most importantly, it stores any pinned citation keys
-         if (zoteroFieldName == "extra")
-         {
-            const std::string citeKey = citeKeyForExtra(fieldValue);
-            if (citeKey.length() > 0)
-            {
-               // There is a citekey
-               cslJson["id"] = citeKey;
-            }
-            else
-            {
-               // There is no citekey, just pass this through
-               cslJson[fieldName] = transformValue(fieldName, fieldValue);
-            }
-         }
          // Type is a special global property that is used to deduce the
          // right name mapping for properties, so it is written above.
          // Just skip it when writing the fields.
-         else if (zoteroFieldName != "type")
+         if (zoteroFieldName != "type")
          {
             // Write any value that isn't one of our special cases
             cslJson[fieldName] = transformValue(fieldName, fieldValue);
@@ -1200,30 +1173,69 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
          }
       }
    }
+   convertCheaterKeysToCSL(cslJson);
+
    return cslJson;
 }
 
-std::string citeKeyForExtra(std::string extraFieldValue)
+std::string cheaterKeyToCSLKey(std::string cheaterKey)
 {
-   const std::string citeKeyStr = "Citation Key: ";
-   const std::string::size_type keyPosition = extraFieldValue.find(citeKeyStr);
-   if (keyPosition != std::string::npos)
+   if (cheaterKey == "Citation Key")
    {
-      const std::string restOfExtra = extraFieldValue.substr(keyPosition + citeKeyStr.length());
-      boost::smatch match;
-      if (regex_utils::match(restOfExtra, match, boost::regex("^\\S*")))
-      {
-         // There is a citekey
-         return match[0];
-      }
-      return "";
+      return "id";
    }
    else
    {
-      // There is no citekey
-      return "";
+      return cheaterKey;
    }
 }
+
+void convertCheaterKeysToCSLForValue(json::Object &csl, const std::string &fieldValue)
+{
+   boost::smatch matches;
+   boost::sregex_iterator it{ begin(fieldValue), end(fieldValue), boost::regex(R"((.*?)\s*:\s*([^\s]+))") }, itEnd;
+   std::for_each( it, itEnd, [&csl]( const boost::smatch& match ){
+     if (match.size() > 2)
+     {
+        std::string key = match[1];
+        boost::algorithm::trim(key);
+
+        std::string value = match[2];
+        boost::algorithm::trim(value);
+
+        if (key.length() > 0 && value.length() > 0)
+        {
+           std::string cslKey = cheaterKeyToCSLKey(key);
+           if (!cslKey.empty())
+           {
+              csl.insert(cslKey, value);
+           }
+        }
+     }
+   });
+}
+
+void convertCheaterKeysToCSLForField(json::Object &csl, const std::string &fieldName)
+{
+   if (csl.hasMember(fieldName))
+   {
+      const json::Value valueJson = csl[fieldName];
+      if (valueJson.isString())
+      {
+         convertCheaterKeysToCSLForValue(csl, valueJson.getString());
+      }
+   }
+}
+
+// CSL Supports 'Cheater' syntax for field values.
+// The suggested form and additional information can be found here
+// https://citeproc-js.readthedocs.io/en/latest/csl-json/markup.html#cheater-syntax-for-odd-fields
+void convertCheaterKeysToCSL(json::Object &csl)
+{
+   convertCheaterKeysToCSLForField(csl, "extra");
+   convertCheaterKeysToCSLForField(csl, "note");
+}
+
 
 
 } // end namespace zotero
