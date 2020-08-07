@@ -26,9 +26,32 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUISpelling {
    
-   public BoolPref realtimeChecking;
+   // realtime interface
+   public GetBool realtimeChecking;
+   public CheckWord checkWord;
+   public SuggestionList suggestionList;
+   
+   // word breaking
    public BreakWords breakWords;
    public ClassifyCharacter classifyCharacter;
+   
+   @JsFunction
+   public interface GetBool
+   {
+      boolean get();
+   }
+   
+   @JsFunction
+   public interface CheckWord
+   {
+      boolean check(String word);
+   }
+   
+   @JsFunction
+   public interface SuggestionList
+   {
+      JsArray<String> suggest(String word);
+   }
    
    @JsFunction
    public interface BreakWords
@@ -41,10 +64,5 @@ public class PanmirrorUISpelling {
    {
       int classify(char ch);
    }
-   
-   @JsFunction
-   public interface BoolPref
-   {
-      boolean getPref();
-   }
+      
 }

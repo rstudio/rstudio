@@ -183,6 +183,18 @@ public class VisualModeSpelling extends SpellingContext
          return prefs_.realTimeSpellchecking().getValue() && TypoSpellChecker.isLoaded(); 
       };
       
+      uiSpelling.checkWord = (word) -> {
+         if (typo().shouldCheckWord(word))
+            return typo().checkSpelling(word);
+         else
+            return true;
+      };
+      
+      uiSpelling.suggestionList = (word) -> {
+        String[] suggestions = typo().suggestionList(word);
+        return new JsArray<String>(suggestions);
+      };
+      
       uiSpelling.breakWords = (String text) -> {
       
         

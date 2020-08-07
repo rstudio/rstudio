@@ -19,7 +19,7 @@ import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';
 import { EditorDialogs } from './ui-dialogs';
-import { EditorWordBreaker } from './spelling';
+import { EditorUISpelling } from './spelling';
 
 export interface EditorUI {
   dialogs: EditorDialogs;

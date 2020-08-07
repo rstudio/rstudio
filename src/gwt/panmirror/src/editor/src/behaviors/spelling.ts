@@ -13,26 +13,32 @@
  *
  */
 
-import { Schema, MarkType } from 'prosemirror-model';
+import { MarkType } from 'prosemirror-model';
 import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
 import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
-import { EditorWordBreaker, EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc } from "../api/spelling";
+import { EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc } from "../api/spelling";
 import { TextWithPos } from "../api/text";
 import { scrollIntoView } from '../api/scroll';
 import { ExtensionContext } from '../api/extension';
 import { setTextSelection } from 'prosemirror-utils';
 import { PandocMark } from '../api/mark';
 
+// TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
+
 const extension = (context: ExtensionContext) => {
   return {
-    plugins: (schema: Schema) => {
+    plugins: () => {
       return [new SpellingPlugin()];
     }
   };
 };
 
-export function getSpellingDoc(view: EditorView, marks: readonly PandocMark[], wordBreaker: EditorWordBreaker): EditorSpellingDoc {
+export function getSpellingDoc(
+  view: EditorView,
+  marks: readonly PandocMark[],
+  wordBreaker: (text: string) => EditorWordRange[]
+): EditorSpellingDoc {
 
   // alias schema 
   const schema = view.state.schema;

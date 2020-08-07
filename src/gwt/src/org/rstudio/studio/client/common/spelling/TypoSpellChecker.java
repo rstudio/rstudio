@@ -438,6 +438,15 @@ public class TypoSpellChecker
    public boolean shouldCheckSpelling(SpellingDoc spellingDoc, SpellingDoc.WordRange wordRange)
    {
       String word = spellingDoc.getText(wordRange);
+      if (!shouldCheckWord(word))
+         return false;
+        
+      // source-specific knowledge of whether to check
+      return spellingDoc.shouldCheck(wordRange);
+   }
+   
+   public boolean shouldCheckWord(String word)
+   {
       // Don't worry about pathologically long words
       if (word.length() > 250)
          return false;
@@ -445,8 +454,7 @@ public class TypoSpellChecker
       if (isWordIgnored(word))
          return false;
       
-      // source-specific knowledge of whether to check
-      return spellingDoc.shouldCheck(wordRange);
+      return true;
    }
 
    /*
