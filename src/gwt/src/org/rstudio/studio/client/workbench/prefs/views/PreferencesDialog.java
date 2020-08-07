@@ -54,6 +54,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
                             AccessibilityPreferencesPane accessibility,
+                            PythonPreferencesPane python,
                             ApplicationQuit quit,
                             GlobalDisplay globalDisplay,
                             UserPrefs userPrefs,
@@ -75,7 +76,8 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                                    sourceControl,
                                    publishing,
                                    terminal,
-                                   accessibility});
+                                   accessibility,
+                                   python});
       session_ = session;
       server_ = server;
       state_ = userState;
@@ -126,12 +128,15 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                state_.writeState();
 
                progressIndicator.onCompleted();
+               
                if (onCompleted != null)
                   onCompleted.execute();
-               if (restartRequirement.getDesktopRestartRequired())
-                  restart(globalDisplay_, quit_, session_);
-               if (restartRequirement.getUiReloadRequired())
-                  reload();
+               
+               handleRestart(
+                     globalDisplay_,
+                     quit_,
+                     session_,
+                     restartRequirement);
             }
 
             @Override

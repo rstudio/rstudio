@@ -112,7 +112,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       String initialBuildType = initialConfig_.getBuildType();
       String selectedBuildType = buildTypeSelect_.getValue();
 
-      return new RestartRequirement(initialBuildType != selectedBuildType, false);
+      return new RestartRequirement(initialBuildType != selectedBuildType, false, false);
    }
 
 

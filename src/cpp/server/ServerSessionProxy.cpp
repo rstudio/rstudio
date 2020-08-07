@@ -225,7 +225,7 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    if (portNum)
    {
       // for numeric ports, use the port token to translate them to opaque identifiers
-      std::string portToken = originalRequest.cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
+      std::string portToken = originalRequest.cookieValue(kPortTokenCookie);
       if (portToken.empty())
       {
          // we'll try the default token if no token was supplied on the request
@@ -759,7 +759,7 @@ http::Headers getAuthCookies(const http::Response& response)
       kCSRFTokenCookie,
       kUserIdCookie,
       kUserListCookie,
-      kPersistAuthCookie }, options().wwwIFrameLegacyCookies()))
+      kPersistAuthCookie }))
    {
       authCookies.push_back(cookie);
    }
@@ -996,7 +996,7 @@ void proxyLocalhostRequest(
    }
 
    // extract the port token
-   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
+   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie);
    if (portToken.empty())
    {
       // we'll try the default token if no token was supplied on the request

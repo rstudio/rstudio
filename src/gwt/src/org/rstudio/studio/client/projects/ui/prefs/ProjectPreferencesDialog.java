@@ -18,6 +18,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -68,7 +69,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             new ProjectPreferencesPane[] {general, editing, compilePdf, build,
                                           source, renv, sharing});
 
-      session_ = session;
+      pSession_ = session;
       server_ = server;
       pUIPrefs_ = pUIPrefs;
       pEventBus_ = pEventBus;
@@ -83,10 +84,10 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
       renvOptions_ = options.getRenvOptions();
 
-      if (!session_.get().getSessionInfo().getAllowVcs())
+      if (!pSession_.get().getSessionInfo().getAllowVcs())
          hidePane(VCS);
 
-      if (!session_.get().getSessionInfo().projectSupportsSharing())
+      if (!pSession_.get().getSessionInfo().projectSupportsSharing())
          hidePane(SHARING);
    }
 
@@ -139,10 +140,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
                 if (onCompleted != null)
                    onCompleted.execute();
-                if (restartRequirement.getDesktopRestartRequired())
-                   restart(pGlobalDisplay_.get(), pQuit_.get(), session_.get());
-                if (restartRequirement.getUiReloadRequired())
-                   reload();
+                
+                handleRestart(
+                      pGlobalDisplay_.get(),
+                      pQuit_.get(),
+                      pSession_.get(),
+                      restartRequirement);
              }
 
              @Override
@@ -166,7 +169,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       pEventBus_.get().fireEvent(new SendToConsoleEvent(renvAction, true, true));
    }
 
-   private final Provider<Session> session_;
+   private final Provider<Session> pSession_;
    private final ProjectsServerOperations server_;
    private final Provider<UserPrefs> pUIPrefs_;
    private final Provider<EventBus> pEventBus_;

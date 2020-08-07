@@ -135,12 +135,11 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
             kPortTokenCookie, 
             persistentState().portToken(), 
             path,
-            http::Cookie::selectSameSite(options().legacyCookies(),
-                                         options().iFrameEmbedding()),
+            options().sameSite(),
             true, // HTTP only -- client doesn't get to read this token
-            baseURL.substr(0, 5) == "https" // secure if using HTTPS
+            options().useSecureCookies()
          );
-   response.addCookie(cookie, options().iFrameLegacyCookies());
+   response.addCookie(cookie);
 
    return Success();
 }
@@ -156,7 +155,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // check for valid CSRF headers in server mode 
    if (options.programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request(), options.iFrameLegacyCookies()))
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
@@ -253,6 +252,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
  
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
+   
+   // propagate RETICULATE_PYTHON if set
+   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";

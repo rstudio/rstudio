@@ -85,14 +85,8 @@ Error httpServerAddHandlers()
    // alias options
    Options& options = server::options();
    
-   // use default gwt handling for image urls (required to render 
-   // embedded images in offline page)
-   bool useSecureCookies = options.authCookiesForceSecure() ||
-                           options.getOverlayOption("ssl-enabled") == "1";
    uri_handlers::addBlocking("/images",
                              gwt::fileHandlerFunction(options.wwwLocalPath(),
-                                                      useSecureCookies,
-                                                      options.wwwIFrameLegacyCookies(),
                                                       "/"));
    
    // default handler sends back offline page or json error as appropriate

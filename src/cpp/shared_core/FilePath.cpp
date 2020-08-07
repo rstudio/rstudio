@@ -203,8 +203,16 @@ MimeType s_mimeTypes[] =
       { nullptr,        nullptr }
    };
 
-const std::string s_homePathAlias = "~/";
-const std::string s_homePathLeafAlias = "~";
+const std::string& homePathAlias()
+{
+   static const std::string homePathAlias = "~/";
+   return homePathAlias;
+}
+const std::string& homePathLeafAlias()
+{
+   static const std::string homePathLeafAlias = "~";
+   return homePathLeafAlias;
+}
 
 // We use boost::filesystem in one of two ways:
 // - On Windows, we use Filesystem v3 with wide character paths. This is
@@ -398,7 +406,7 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
 {
    // Special case for "~"
    if (in_filePath == in_userHomePath)
-      return s_homePathLeafAlias;
+      return homePathLeafAlias();
 
 #ifdef _WIN32
    // Also check for case where paths are identical
@@ -408,14 +416,14 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
        in_userHomePath.m_impl->Path.generic_path();
 
    if (samePath)
-      return s_homePathLeafAlias;
+      return homePathLeafAlias();
 #endif
 
    // if the path is contained within the home path then alias it
    if (in_filePath.isWithin(in_userHomePath))
    {
       std::string homeRelativePath = in_filePath.getRelativePath(in_userHomePath);
-      std::string aliasedPath = s_homePathAlias + homeRelativePath;
+      std::string aliasedPath = homePathAlias() + homeRelativePath;
       return aliasedPath;
    }
    else  // no aliasing
@@ -473,11 +481,11 @@ Error FilePath::makeCurrent(const std::string& in_filePath)
 FilePath FilePath::resolveAliasedPath(const std::string& in_aliasedPath, const FilePath& in_userHomePath)
 {
    // Special case for empty string or "~"
-   if (in_aliasedPath.empty() || (in_aliasedPath == s_homePathLeafAlias))
+   if (in_aliasedPath.empty() || (in_aliasedPath == homePathLeafAlias()))
       return in_userHomePath;
 
    // if the path starts with the home alias then substitute the home path
-   if (in_aliasedPath.find(s_homePathAlias) == 0)
+   if (in_aliasedPath.find(homePathAlias()) == 0)
    {
       std::string resolvedPath = in_userHomePath.getAbsolutePath() +
                                  in_aliasedPath.substr(1);
