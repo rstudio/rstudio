@@ -27,6 +27,7 @@ import { PandocMark } from '../api/mark';
 // TODO: excluded marktypes
 // TODO: words w/ apostrophies marked as misspelled
 // TODO: context menu
+// TODO: themed underline color
 // TODO: more efficient / incremntal chekcing
 // TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
 
@@ -285,19 +286,27 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
   private spellingDecorations(state: EditorState, spelling: EditorUISpelling): Decoration[] {
 
+    const start = performance.now();
+
     const decorations: Decoration[] = [];
 
     const words = getWords(state, 2, null, spelling.breakWords, []);
 
+    let checked = 0;
     while (words.hasNext()) {
       const word = words.next()!;
       if (word.end !== state.selection.head) { // exclude words w/ active cursor
+        checked++;
         const wordText = state.doc.textBetween(word.start, word.end);
         if (!spelling.checkWord(wordText)) {
           decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
         }
       }
     }
+
+    const end = performance.now();
+
+    // console.log('spell checked ' + checked + ' words in ' + (end - start) + 'ms');
 
     return decorations;
   }
