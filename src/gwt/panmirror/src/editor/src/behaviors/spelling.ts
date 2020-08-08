@@ -13,7 +13,7 @@
  *
  */
 
-import { MarkType } from 'prosemirror-model';
+import { MarkType, Schema } from 'prosemirror-model';
 import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
 import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
@@ -24,14 +24,18 @@ import { ExtensionContext } from '../api/extension';
 import { setTextSelection } from 'prosemirror-utils';
 import { PandocMark } from '../api/mark';
 
+// TODO: excluded marktypes
+// TODO: words w/ apostrophies marked as misspelled
+// TODO: context menu
+// TODO: more efficient / incremntal chekcing
 // TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
 
 const extension = (context: ExtensionContext) => {
   return {
-    plugins: () => {
+    plugins: (schema: Schema) => {
       return [
         new SpellingDocPlugin(),
-        new SpellingRealtimePlugin(context.ui.spelling)
+        new SpellingRealtimePlugin(schema, context.ui.spelling)
       ];
     }
   };
@@ -57,49 +61,13 @@ export function getSpellingDoc(
   return {
 
     getWords: (start: number, end: number | null): EditorWordSource => {
-
-      // provide default for end
-      if (end === null) {
-        end = view.state.doc.nodeSize - 2;
-      }
-
-      // examine every text node
-      const textNodes: TextWithPos[] = [];
-      view.state.doc.nodesBetween(start, end, (node, pos, parent) => {
-        if (node.isText && !parent.type.spec.code) {
-          // filter on marks where we shouldn't check spelling (e.g. url, code)
-          if (!excludedMarks.some((markType: MarkType) => markType.isInSet(node.marks))) {
-            textNodes.push({ text: node.textContent, pos });
-          }
-        }
-      });
-
-      // create word ranges
-      const words: EditorWordRange[] = [];
-      textNodes.forEach(text => {
-        if (text.pos >= start && text.pos < end!) {
-          words.push(...wordBreaker(text.text).map(wordRange => {
-            return {
-              start: text.pos + wordRange.start,
-              end: text.pos + wordRange.end
-            };
-          }));
-        }
-      });
-
-      // return iterator over word range
-      return {
-        hasNext: () => {
-          return words.length > 0;
-        },
-        next: () => {
-          if (words.length > 0) {
-            return words.shift()!;
-          } else {
-            return null;
-          }
-        }
-      };
+      return getWords(
+        view.state,
+        start,
+        end,
+        wordBreaker,
+        excludedMarks
+      );
     },
 
     createAnchor: (pos: number): EditorAnchor => {
@@ -118,12 +86,12 @@ export function getSpellingDoc(
 
     getText: (wordRange: EditorWordRange): string => {
       const word = view.state.doc.textBetween(wordRange.start, wordRange.end);
-      return word.replace(/’/g, '\'');
+      return spellcheckerWord(word);
     },
 
     replaceSelection: (text: string) => {
       const tr = view.state.tr;
-      text = text.replace(/'/g, '’');
+      text = editorWord(text);
       tr.replaceSelectionWith(view.state.schema.text(text), true);
       view.dispatch(tr);
     },
@@ -186,27 +154,6 @@ class SpellingDocPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-
-          // transactionsChangeSet
-
-          // modify 'old' to remove any decorations that were in ranges that were either removed or modified
-          // then map: old = old.map(tr.mapping, tr.doc);
-
-          // look at modified and newly inserted ranges from the ChangeSet
-          // spell check those nodes and add decorations
-
-          // generally, I only get positions so I will need to dedude the enclosing node(s)
-
-          // we could discover the "range" by walking forwards and backwards from the changed range 
-          // (stop at block end)
-
-          // when walking, find a character or "invalidator/boundary":
-          //     space
-          //     block level boundary
-          //     disqualifying mark
-
-          // realtime: don't spell check words that are at the cursor
-
 
           if (this.checking) {
 
@@ -284,14 +231,27 @@ function spellingRealtimePlugin(state: EditorState) {
 
 class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
-  constructor(spelling: EditorUISpelling) {
+  constructor(schema: Schema, spelling: EditorUISpelling) {
+
+    /*
+    // intialize marks we don't want to check
+    const excludedMarks = marks
+      .filter(mark => mark.noSpelling)
+      .map(mark => schema.marks[mark.name]);
+    */
+
     super({
       key: spellingRealtimeKey,
       state: {
-        init: () => {
-          return DecorationSet.empty;
+        init: (_config, state: EditorState) => {
+          return DecorationSet.create(state.doc, this.spellingDecorations(state, spelling));
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
+          if (tr.docChanged) {
+            return DecorationSet.create(newState.doc, this.spellingDecorations(newState, spelling));
+          } else {
+            return old;
+          }
 
           // transactionsChangeSet
 
@@ -322,7 +282,87 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
       },
     });
   }
+
+  private spellingDecorations(state: EditorState, spelling: EditorUISpelling): Decoration[] {
+
+    const decorations: Decoration[] = [];
+
+    const words = getWords(state, 2, null, spelling.breakWords, []);
+
+    while (words.hasNext()) {
+      const word = words.next()!;
+      if (word.end !== state.selection.head) { // exclude words w/ active cursor
+        const wordText = state.doc.textBetween(word.start, word.end);
+        if (!spelling.checkWord(wordText)) {
+          decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
+        }
+      }
+    }
+
+    return decorations;
+  }
 }
+
+function getWords(
+  state: EditorState,
+  start: number,
+  end: number | null,
+  wordBreaker: (text: string) => EditorWordRange[],
+  excludedMarks: MarkType[]
+): EditorWordSource {
+
+  // provide default for end
+  if (end === null) {
+    end = state.doc.nodeSize - 2;
+  }
+
+  // examine every text node
+  const textNodes: TextWithPos[] = [];
+  state.doc.nodesBetween(start, end, (node, pos, parent) => {
+    if (node.isText && !parent.type.spec.code) {
+      // filter on marks where we shouldn't check spelling (e.g. url, code)
+      if (!excludedMarks.some((markType: MarkType) => markType.isInSet(node.marks))) {
+        textNodes.push({ text: node.textContent, pos });
+      }
+    }
+  });
+
+  // create word ranges
+  const words: EditorWordRange[] = [];
+  textNodes.forEach(text => {
+    if (text.pos >= start && text.pos < end!) {
+      words.push(...wordBreaker(text.text).map(wordRange => {
+        return {
+          start: text.pos + wordRange.start,
+          end: text.pos + wordRange.end
+        };
+      }));
+    }
+  });
+
+  // return iterator over word range
+  return {
+    hasNext: () => {
+      return words.length > 0;
+    },
+    next: () => {
+      if (words.length > 0) {
+        return words.shift()!;
+      } else {
+        return null;
+      }
+    }
+  };
+}
+
+function spellcheckerWord(word: string) {
+  return word.replace(/’/g, '\'');
+}
+
+function editorWord(word: string) {
+  return word.replace(/'/g, '’');
+}
+
 
 
 export default extension;
