@@ -17,7 +17,7 @@ import { MarkType } from 'prosemirror-model';
 import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
 import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
-import { EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc } from "../api/spelling";
+import { EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc, EditorUISpelling } from "../api/spelling";
 import { TextWithPos } from "../api/text";
 import { scrollIntoView } from '../api/scroll';
 import { ExtensionContext } from '../api/extension';
@@ -29,7 +29,10 @@ import { PandocMark } from '../api/mark';
 const extension = (context: ExtensionContext) => {
   return {
     plugins: () => {
-      return [new SpellingPlugin()];
+      return [
+        new SpellingDocPlugin(),
+        new SpellingRealtimePlugin(context.ui.spelling)
+      ];
     }
   };
 };
@@ -49,7 +52,7 @@ export function getSpellingDoc(
     .map(mark => schema.marks[mark.name]);
 
   // check begin
-  spellingPlugin(view.state).checkBegin();
+  spellingDocPlugin(view.state).checkBegin();
 
   return {
 
@@ -100,7 +103,7 @@ export function getSpellingDoc(
     },
 
     createAnchor: (pos: number): EditorAnchor => {
-      return spellingPlugin(view.state).createAnchor(pos);
+      return spellingDocPlugin(view.state).createAnchor(pos);
     },
 
     shouldCheck: (_wordRange: EditorWordRange): boolean => {
@@ -155,27 +158,29 @@ export function getSpellingDoc(
     },
 
     dispose: () => {
-      spellingPlugin(view.state).checkEnd(view);
+      spellingDocPlugin(view.state).checkEnd(view);
     }
 
   };
 }
 
-const key = new PluginKey<DecorationSet>('spelling-plugin');
+// companion plugin for SpellingDoc provided above (shows 'fake' selection during
+// interactive spell check dialog and maintains anchor position(s) across 
+// transactions that occur while the dialog/doc is active)
+const spellingDocKey = new PluginKey<DecorationSet>('spelling-doc-plugin');
 
-
-function spellingPlugin(state: EditorState) {
-  return key.get(state) as SpellingPlugin;
+function spellingDocPlugin(state: EditorState) {
+  return spellingDocKey.get(state) as SpellingDocPlugin;
 }
 
-class SpellingPlugin extends Plugin<DecorationSet> {
+class SpellingDocPlugin extends Plugin<DecorationSet> {
 
   private checking = false;
   private anchors: SpellingAnchor[] = [];
 
   constructor() {
     super({
-      key,
+      key: spellingDocKey,
       state: {
         init: () => {
           return DecorationSet.empty;
@@ -190,15 +195,15 @@ class SpellingPlugin extends Plugin<DecorationSet> {
           // look at modified and newly inserted ranges from the ChangeSet
           // spell check those nodes and add decorations
 
-          // when walking, find a character or "invalidator/boundary":
-          //     space
-          //     block level boundary
-          //     disqualifying mark
-
           // generally, I only get positions so I will need to dedude the enclosing node(s)
 
           // we could discover the "range" by walking forwards and backwards from the changed range 
           // (stop at block end)
+
+          // when walking, find a character or "invalidator/boundary":
+          //     space
+          //     block level boundary
+          //     disqualifying mark
 
           // realtime: don't spell check words that are at the cursor
 
@@ -222,14 +227,9 @@ class SpellingPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
       },
-      view: () => ({
-        update: (view: EditorView, prevState: EditorState) => {
-          // 
-        },
-      }),
       props: {
         decorations: (state: EditorState) => {
-          return key.getState(state);
+          return spellingDocKey.getState(state);
         },
       },
     });
@@ -255,9 +255,7 @@ class SpellingPlugin extends Plugin<DecorationSet> {
       setTextSelection(tr.selection.to)(tr);
       view.dispatch(tr);
     }
-
   }
-
 }
 
 class SpellingAnchor implements EditorAnchor {
@@ -275,7 +273,56 @@ class SpellingAnchor implements EditorAnchor {
   public setPosition(pos: number) {
     this.pos = pos;
   }
-
 }
+
+
+const spellingRealtimeKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
+
+function spellingRealtimePlugin(state: EditorState) {
+  return spellingRealtimeKey.get(state) as SpellingRealtimePlugin;
+}
+
+class SpellingRealtimePlugin extends Plugin<DecorationSet> {
+
+  constructor(spelling: EditorUISpelling) {
+    super({
+      key: spellingRealtimeKey,
+      state: {
+        init: () => {
+          return DecorationSet.empty;
+        },
+        apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
+
+          // transactionsChangeSet
+
+          // modify 'old' to remove any decorations that were in ranges that were either removed or modified
+          // then map: old = old.map(tr.mapping, tr.doc);
+
+          // look at modified and newly inserted ranges from the ChangeSet
+          // spell check those nodes and add decorations
+
+          // generally, I only get positions so I will need to dedude the enclosing node(s)
+
+          // we could discover the "range" by walking forwards and backwards from the changed range 
+          // (stop at block end)
+
+          // when walking, find a character or "invalidator/boundary":
+          //     space
+          //     block level boundary
+          //     disqualifying mark
+
+          // realtime: don't spell check words that are at the cursor
+          return old;
+        }
+      },
+      props: {
+        decorations: (state: EditorState) => {
+          return spellingRealtimeKey.getState(state);
+        },
+      },
+    });
+  }
+}
+
 
 export default extension;
