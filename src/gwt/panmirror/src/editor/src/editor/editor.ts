@@ -95,7 +95,7 @@ import {
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
-import { getSpellingDoc } from '../behaviors/spelling';
+import { getSpellingDoc, spellingRealtimePlugin } from '../behaviors/spelling';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -361,6 +361,11 @@ export class Editor {
     // completion handlers require access to the initializezd commands that
     // carry omni insert info)
     this.registerCompletionExtension();
+
+    // register realtime spellchecking (done in a separate step b/c it 
+    // requires access to PandocMark definitions to determine which 
+    // marks to exclude from spellchecking)
+    this.registerRealtimeSpellchecking();
 
     // create state
     this.state = EditorState.create({
@@ -792,6 +797,17 @@ export class Editor {
     // register completion extension
     this.extensions.register([
       completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events),
+    ]);
+  }
+
+  private registerRealtimeSpellchecking() {
+    this.extensions.registerPlugins([
+      spellingRealtimePlugin(
+        this.schema,
+        this.extensions.pandocMarks(),
+        this.context.ui.spelling,
+        this.events
+      )
     ]);
   }
 

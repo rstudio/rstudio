@@ -27,8 +27,6 @@ import { PandocMark } from '../api/mark';
 import { EditorEvents } from '../api/events';
 import { kAddToHistoryTransaction, kInitRealtimeSpellingTransaction } from '../api/transaction';
 
-// TODO: excluded marktypes
-// TODO: words w/ apostrophies marked as misspelled
 // TODO: context menu
 // TODO: themed underline color
 // TODO: more efficient / incremntal chekcing
@@ -39,7 +37,6 @@ const extension = (context: ExtensionContext) => {
     plugins: (schema: Schema) => {
       return [
         new SpellingDocPlugin(),
-        new SpellingRealtimePlugin(schema, context.ui.spelling, context.events)
       ];
     }
   };
@@ -55,9 +52,7 @@ export function getSpellingDoc(
   const schema = view.state.schema;
 
   // intialize marks we don't want to check
-  const excludedMarks = marks
-    .filter(mark => mark.noSpelling)
-    .map(mark => schema.marks[mark.name]);
+  const excluded = excludedMarks(schema, marks);
 
   // check begin
   spellingDocPlugin(view.state).checkBegin();
@@ -70,7 +65,7 @@ export function getSpellingDoc(
         start,
         end,
         wordBreaker,
-        excludedMarks
+        excluded
       );
     },
 
@@ -227,25 +222,23 @@ class SpellingAnchor implements EditorAnchor {
 }
 
 
-const spellingRealtimeKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
-
-function spellingRealtimePlugin(state: EditorState) {
-  return spellingRealtimeKey.get(state) as SpellingRealtimePlugin;
+export function spellingRealtimePlugin(
+  schema: Schema,
+  marks: readonly PandocMark[],
+  spelling: EditorUISpelling,
+  events: EditorEvents) {
+  return new SpellingRealtimePlugin(schema, excludedMarks(schema, marks), spelling, events);
 }
+
+const spellingRealtimeKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
 
 class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
   private view: EditorView | null = null;
   private intialized = false;
+  private readonly excluded: MarkType[];
 
-  constructor(schema: Schema, spelling: EditorUISpelling, events: EditorEvents) {
-
-    /*
-    // intialize marks we don't want to check
-    const excludedMarks = marks
-      .filter(mark => mark.noSpelling)
-      .map(mark => schema.marks[mark.name]);
-    */
+  constructor(schema: Schema, excluded: MarkType[], spelling: EditorUISpelling, events: EditorEvents) {
 
     super({
       key: spellingRealtimeKey,
@@ -293,6 +286,9 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
       },
     });
 
+    // set excluded marks
+    this.excluded = excluded;
+
     // trigger realtime spell check on initial focus
     const focusUnsubscribe = events.subscribe(FocusEvent, () => {
       if (this.view && !this.intialized) {
@@ -322,7 +318,7 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
     const decorations: Decoration[] = [];
 
-    const words = getWords(state, 2, null, spelling.breakWords, []);
+    const words = getWords(state, 2, null, spelling.breakWords, this.excluded);
 
     while (words.hasNext()) {
       const word = words.next()!;
@@ -345,7 +341,7 @@ function getWords(
   start: number,
   end: number | null,
   wordBreaker: (text: string) => EditorWordRange[],
-  excludedMarks: MarkType[]
+  excluded: MarkType[]
 ): EditorWordSource {
 
   // provide default for end
@@ -358,7 +354,7 @@ function getWords(
   state.doc.nodesBetween(start, end, (node, pos, parent) => {
     if (node.isText && !parent.type.spec.code) {
       // filter on marks where we shouldn't check spelling (e.g. url, code)
-      if (!excludedMarks.some((markType: MarkType) => markType.isInSet(node.marks))) {
+      if (!excluded.some((markType: MarkType) => markType.isInSet(node.marks))) {
         textNodes.push({ text: node.textContent, pos });
       }
     }
@@ -400,6 +396,11 @@ function editorWord(word: string) {
   return word.replace(/'/g, '’');
 }
 
+function excludedMarks(schema: Schema, marks: readonly PandocMark[]): MarkType[] {
+  return marks
+    .filter(mark => mark.noSpelling)
+    .map(mark => schema.marks[mark.name]);
+}
 
 
 export default extension;
