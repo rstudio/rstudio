@@ -320,17 +320,13 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
       return [];
     }
 
-    const start = performance.now();
-
     const decorations: Decoration[] = [];
 
     const words = getWords(state, 2, null, spelling.breakWords, []);
 
-    let checked = 0;
     while (words.hasNext()) {
       const word = words.next()!;
       if (word.end !== state.selection.head) { // exclude words w/ active cursor
-        checked++;
         const wordText = state.doc.textBetween(word.start, word.end);
         if (!spelling.checkWord(spellcheckerWord(wordText))) {
           decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
@@ -339,8 +335,6 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
     }
 
     const end = performance.now();
-
-    // console.log('spell checked ' + checked + ' words in ' + (end - start) + 'ms');
 
     return decorations;
   }
