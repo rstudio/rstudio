@@ -332,7 +332,7 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
       if (word.end !== state.selection.head) { // exclude words w/ active cursor
         checked++;
         const wordText = state.doc.textBetween(word.start, word.end);
-        if (!spelling.checkWord(wordText)) {
+        if (!spelling.checkWord(spellcheckerWord(wordText))) {
           decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
         }
       }
