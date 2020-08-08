@@ -343,7 +343,8 @@ public class TypoSpellChecker
    }
    private boolean isWordIgnored(String word)
    {
-      return (allIgnoredWords_.contains(word) ||
+      return (domainSpecificWords_.contains(word.toLowerCase()) ||
+              allIgnoredWords_.contains(word) ||
               ignoreUppercaseWord(word) ||
               ignoreWordWithNumbers(word));
    }
