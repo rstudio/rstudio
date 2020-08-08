@@ -95,7 +95,8 @@ import {
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
-import { getSpellingDoc, realtimeSpellingPlugin } from '../behaviors/spelling';
+import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
+import { realtimeSpellingPlugin } from '../behaviors/spelling/spelling-realtime';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
