@@ -16,13 +16,16 @@
 import { MarkType, Schema } from 'prosemirror-model';
 import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
 import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
+import { setTextSelection } from 'prosemirror-utils';
 
 import { EditorWordSource, EditorWordRange, EditorAnchor, EditorRect, EditorSpellingDoc, EditorUISpelling } from "../api/spelling";
 import { TextWithPos } from "../api/text";
 import { scrollIntoView } from '../api/scroll';
 import { ExtensionContext } from '../api/extension';
-import { setTextSelection } from 'prosemirror-utils';
+import { FocusEvent } from '../api/event-types';
 import { PandocMark } from '../api/mark';
+import { EditorEvents } from '../api/events';
+import { kAddToHistoryTransaction, kInitRealtimeSpellingTransaction } from '../api/transaction';
 
 // TODO: excluded marktypes
 // TODO: words w/ apostrophies marked as misspelled
@@ -36,7 +39,7 @@ const extension = (context: ExtensionContext) => {
     plugins: (schema: Schema) => {
       return [
         new SpellingDocPlugin(),
-        new SpellingRealtimePlugin(schema, context.ui.spelling)
+        new SpellingRealtimePlugin(schema, context.ui.spelling, context.events)
       ];
     }
   };
@@ -232,7 +235,10 @@ function spellingRealtimePlugin(state: EditorState) {
 
 class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
-  constructor(schema: Schema, spelling: EditorUISpelling) {
+  private view: EditorView | null = null;
+  private intialized = false;
+
+  constructor(schema: Schema, spelling: EditorUISpelling, events: EditorEvents) {
 
     /*
     // intialize marks we don't want to check
@@ -243,12 +249,16 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
 
     super({
       key: spellingRealtimeKey,
+      view: (view: EditorView) => {
+        this.view = view;
+        return {};
+      },
       state: {
         init: (_config, state: EditorState) => {
           return DecorationSet.create(state.doc, this.spellingDecorations(state, spelling));
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          if (tr.docChanged) {
+          if (tr.docChanged || tr.getMeta(kInitRealtimeSpellingTransaction)) {
             return DecorationSet.create(newState.doc, this.spellingDecorations(newState, spelling));
           } else {
             return old;
@@ -282,9 +292,33 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
         },
       },
     });
+
+    // trigger realtime spell check on initial focus
+    const focusUnsubscribe = events.subscribe(FocusEvent, () => {
+      if (this.view && !this.intialized) {
+        this.intialized = true;
+        const tr = this.view.state.tr;
+        tr.setMeta(kInitRealtimeSpellingTransaction, true);
+        tr.setMeta(kAddToHistoryTransaction, false);
+        this.view.dispatch(tr);
+      }
+      focusUnsubscribe();
+    });
+
   }
 
   private spellingDecorations(state: EditorState, spelling: EditorUISpelling): Decoration[] {
+
+    // auto-initialize if we ever have focus (in case our FocusEvent somehow fails
+    // to fire, we don't want to be stuck w/o spell-checking)
+    if (this.view?.hasFocus()) {
+      this.intialized = true;
+    }
+
+    // no-op if we aren't intialized
+    if (!this.intialized) {
+      return [];
+    }
 
     const start = performance.now();
 
