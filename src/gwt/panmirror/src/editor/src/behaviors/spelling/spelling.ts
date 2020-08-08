@@ -20,13 +20,16 @@ import { EditorWordSource, EditorWordRange } from "../../api/spelling";
 import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
 
-
-// TODO: realtime and dialog appear to be using a different ignore list / dictionary list
-// (see behavior at top of scaling-testing.Rmd)
 // TODO: context menu
+
 // TODO: themed underline color
+
 // TODO: more efficient / incremntal chekcing
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
+
+
+// TODO: respect realtime pref
+// TODO: deal with loaded state of typo library (defer?)
 // TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
 
 export function getWords(
