@@ -86,7 +86,26 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
         decorations: (state: EditorState) => {
           return realtimeSpellingKey.getState(state);
         },
+        handleDOMEvents: {
+          contextmenu: (view: EditorView, event: Event) => {
+            if (event.target && event.target instanceof Node) {
+              const pos = view.posAtDOM(event.target, 0);
+              const deco = this.getState(view.state).find(pos, pos);
+              if (deco.length) {
+                const word = view.state.doc.textBetween(deco[0].from, deco[0].to);
+                console.log(word);
+                event.stopPropagation();
+                event.preventDefault();
+                return true;
+              }
+            }
+
+            return false;
+          }
+        }
       },
+
+
     });
 
     // set excluded marks
