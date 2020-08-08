@@ -806,7 +806,7 @@ export class Editor {
       realtimeSpellingPlugin(
         this.schema,
         this.extensions.pandocMarks(),
-        this.context.ui.spelling,
+        this.context.ui,
         this.events
       )
     ]);

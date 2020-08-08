@@ -20,7 +20,8 @@ import { EditorWordSource, EditorWordRange } from "../../api/spelling";
 import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
 
-// TODO: context menu
+
+// TODO: invalidate / re-check after ignore or add of word
 
 // TODO: themed underline color
 
@@ -29,6 +30,7 @@ import { PandocMark } from '../../api/mark';
 
 
 // TODO: respect realtime pref
+// TODO: disable realtime if no context menu
 // TODO: deal with loaded state of typo library (defer?)
 // TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
 

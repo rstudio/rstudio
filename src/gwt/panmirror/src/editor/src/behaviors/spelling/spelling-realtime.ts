@@ -14,7 +14,7 @@
  */
 
 import { Schema, MarkType } from "prosemirror-model";
-import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
 
 import { FocusEvent } from '../../api/event-types';
@@ -23,14 +23,16 @@ import { EditorUISpelling } from "../../api/spelling";
 import { EditorEvents } from "../../api/events";
 import { kInitRealtimeSpellingTransaction, kAddToHistoryTransaction } from "../../api/transaction";
 
-import { excludedMarks, getWords, spellcheckerWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
+import { EditorUI, EditorMenuItem } from "../../api/ui";
+import { setTextSelection } from "prosemirror-utils";
 
 export function realtimeSpellingPlugin(
   schema: Schema,
   marks: readonly PandocMark[],
-  spelling: EditorUISpelling,
+  ui: EditorUI,
   events: EditorEvents) {
-  return new RealtimeSpellingPlugin(excludedMarks(schema, marks), spelling, events);
+  return new RealtimeSpellingPlugin(excludedMarks(schema, marks), ui, events);
 }
 
 const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
@@ -41,7 +43,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
   private intialized = false;
   private readonly excluded: MarkType[];
 
-  constructor(excluded: MarkType[], spelling: EditorUISpelling, events: EditorEvents) {
+  constructor(excluded: MarkType[], ui: EditorUI, events: EditorEvents) {
 
     super({
       key: realtimeSpellingKey,
@@ -51,11 +53,11 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
       },
       state: {
         init: (_config, state: EditorState) => {
-          return DecorationSet.create(state.doc, this.spellingDecorations(state, spelling));
+          return DecorationSet.create(state.doc, this.spellingDecorations(state, ui.spelling));
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
           if (tr.docChanged || tr.getMeta(kInitRealtimeSpellingTransaction)) {
-            return DecorationSet.create(newState.doc, this.spellingDecorations(newState, spelling));
+            return DecorationSet.create(newState.doc, this.spellingDecorations(newState, ui.spelling));
           } else {
             return old;
           }
@@ -89,11 +91,53 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
         handleDOMEvents: {
           contextmenu: (view: EditorView, event: Event) => {
             if (event.target && event.target instanceof Node) {
+              const schema = view.state.schema;
               const pos = view.posAtDOM(event.target, 0);
               const deco = this.getState(view.state).find(pos, pos);
               if (deco.length) {
-                const word = view.state.doc.textBetween(deco[0].from, deco[0].to);
-                console.log(word);
+                const { from, to } = deco[0];
+                const word = view.state.doc.textBetween(from, to);
+
+                const kMaxSuggetions = 5;
+                const suggestions = ui.spelling.suggestionList(spellcheckerWord(word));
+                const menuItems: EditorMenuItem[] = suggestions.slice(0, kMaxSuggetions).map(suggestion => {
+                  suggestion = editorWord(suggestion);
+                  return {
+                    text: suggestion,
+                    exec: () => {
+                      const tr = view.state.tr;
+                      tr.setSelection(TextSelection.create(tr.doc, from, to));
+                      tr.replaceSelectionWith(schema.text(suggestion), true);
+                      setTextSelection(from + suggestion.length)(tr);
+                      view.dispatch(tr);
+                      view.focus();
+                    }
+                  };
+                });
+                if (menuItems.length) {
+                  menuItems.push({ separator: true });
+                }
+                menuItems.push(
+                  {
+                    text: ui.context.translateText('Ignore Word'),
+                    exec: () => {
+                      ui.spelling.ignoreWord(word);
+                      // TODO: invalidate
+                    }
+                  },
+                  { separator: true },
+                  {
+                    text: ui.context.translateText('Add to Dictionary'),
+                    exec: () => {
+                      ui.spelling.addToDictionary(word);
+                      // TODO: invalidate
+                    }
+                  }
+                );
+
+                const { clientX, clientY } = event as MouseEvent;
+                ui.display.showContextMenu!(menuItems, clientX, clientY);
+
                 event.stopPropagation();
                 event.preventDefault();
                 return true;
