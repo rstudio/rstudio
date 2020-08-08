@@ -95,7 +95,7 @@ import {
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
-import { getSpellingDoc, spellingRealtimePlugin } from '../behaviors/spelling';
+import { getSpellingDoc, realtimeSpellingPlugin } from '../behaviors/spelling';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -365,7 +365,7 @@ export class Editor {
     // register realtime spellchecking (done in a separate step b/c it 
     // requires access to PandocMark definitions to determine which 
     // marks to exclude from spellchecking)
-    this.registerRealtimeSpellchecking();
+    this.registerRealtimeSpelling();
 
     // create state
     this.state = EditorState.create({
@@ -800,9 +800,9 @@ export class Editor {
     ]);
   }
 
-  private registerRealtimeSpellchecking() {
+  private registerRealtimeSpelling() {
     this.extensions.registerPlugins([
-      spellingRealtimePlugin(
+      realtimeSpellingPlugin(
         this.schema,
         this.extensions.pandocMarks(),
         this.context.ui.spelling,

@@ -30,6 +30,7 @@ import { kAddToHistoryTransaction, kInitRealtimeSpellingTransaction } from '../a
 // TODO: context menu
 // TODO: themed underline color
 // TODO: more efficient / incremntal chekcing
+// TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 // TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
 
 const extension = (context: ExtensionContext) => {
@@ -55,7 +56,7 @@ export function getSpellingDoc(
   const excluded = excludedMarks(schema, marks);
 
   // check begin
-  spellingDocPlugin(view.state).checkBegin();
+  spellingDocPlugin(view.state).onCheckBegin();
 
   return {
 
@@ -125,7 +126,7 @@ export function getSpellingDoc(
     },
 
     dispose: () => {
-      spellingDocPlugin(view.state).checkEnd(view);
+      spellingDocPlugin(view.state).onCheckEnd(view);
     }
 
   };
@@ -181,17 +182,17 @@ class SpellingDocPlugin extends Plugin<DecorationSet> {
     });
   }
 
-  public checkBegin() {
-    this.checking = true;
-  }
-
   public createAnchor(pos: number) {
     const anchor = new SpellingAnchor(pos);
     this.anchors.push(anchor);
     return anchor;
   }
 
-  public checkEnd(view: EditorView) {
+  public onCheckBegin() {
+    this.checking = true;
+  }
+
+  public onCheckEnd(view: EditorView) {
 
     this.checking = false;
     this.anchors = [];
@@ -222,17 +223,17 @@ class SpellingAnchor implements EditorAnchor {
 }
 
 
-export function spellingRealtimePlugin(
+export function realtimeSpellingPlugin(
   schema: Schema,
   marks: readonly PandocMark[],
   spelling: EditorUISpelling,
   events: EditorEvents) {
-  return new SpellingRealtimePlugin(schema, excludedMarks(schema, marks), spelling, events);
+  return new RealtimeSpellingPlugin(schema, excludedMarks(schema, marks), spelling, events);
 }
 
-const spellingRealtimeKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
+const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
 
-class SpellingRealtimePlugin extends Plugin<DecorationSet> {
+class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
   private view: EditorView | null = null;
   private intialized = false;
@@ -241,7 +242,7 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
   constructor(schema: Schema, excluded: MarkType[], spelling: EditorUISpelling, events: EditorEvents) {
 
     super({
-      key: spellingRealtimeKey,
+      key: realtimeSpellingKey,
       view: (view: EditorView) => {
         this.view = view;
         return {};
@@ -281,7 +282,7 @@ class SpellingRealtimePlugin extends Plugin<DecorationSet> {
       },
       props: {
         decorations: (state: EditorState) => {
-          return spellingRealtimeKey.getState(state);
+          return realtimeSpellingKey.getState(state);
         },
       },
     });
