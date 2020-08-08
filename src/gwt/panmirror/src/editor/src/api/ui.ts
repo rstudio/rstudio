@@ -76,10 +76,11 @@ export interface EditorUIContext {
 }
 
 export interface EditorMenuItem {
+  text?: string;
+  exec?: VoidFunction;
   command?: string;
   separator?: boolean;
   subMenu?: {
-    text: string;
     items: EditorMenuItem[];
   };
 }
