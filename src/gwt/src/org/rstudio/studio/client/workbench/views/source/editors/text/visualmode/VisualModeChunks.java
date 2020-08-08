@@ -25,8 +25,13 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.dom.client.DivElement;
@@ -37,16 +42,21 @@ import jsinterop.base.Js;
 
 public class VisualModeChunks
 {
-   public VisualModeChunks(DocUpdateSentinel sentinel, CompletionContext rCompletionContext)
+   public VisualModeChunks(DocUpdateSentinel sentinel,
+                           DocDisplay display,
+                           TextEditingTargetNotebook notebook, 
+                           CompletionContext rCompletionContext)
    {
       rContext_ = rCompletionContext;
       sentinel_ = sentinel;
+      notebook_ = notebook;
+      parent_ = display;
    }
 
    public PanmirrorUIChunks uiChunks()
    {
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
-      chunks.createChunkEditor = (type) -> {
+      chunks.createChunkEditor = (type, index) -> {
 
          // only know how to create ace instances right now
          if (!type.equals("ace"))
@@ -55,6 +65,20 @@ public class VisualModeChunks
             return null;
          }
          
+         ChunkOutputUi output = null; 
+         if (index >= 0)
+         {
+            Position pos = parent_.positionFromIndex(index);
+            Scope scope = parent_.getScopeAtPosition(parent_.positionFromIndex(index));
+            Debug.devlog("create chunk for position " + index + " (" + pos.getRow() + ", " + pos.getColumn() + ")");
+            Debug.logObject(scope);
+            output = notebook_.getOutputUi(scope);
+            if (output != null)
+            {
+               Debug.devlog("found output ui " + output.getChunkId() + " (" + output.getChunkLabel() + ")");
+            }
+         }
+
          PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
          
          final ArrayList<HandlerRegistration> releaseOnDismiss = new ArrayList<HandlerRegistration>();
@@ -76,6 +100,12 @@ public class VisualModeChunks
          // host element which hosts chunk output
          DivElement ele = Document.get().createDivElement();
          ele.appendChild(chunkEditor.getContainer());
+         
+         if (output != null)
+         {
+            ele.appendChild(output.getOutputWidget().getElement());
+         }
+
          chunk.element = ele;
          
          // Provide a callback to set the file's mode; this needs to happen in
@@ -207,4 +237,6 @@ public class VisualModeChunks
    
    private final CompletionContext rContext_;
    private final DocUpdateSentinel sentinel_;
+   private final DocDisplay parent_;
+   private final TextEditingTargetNotebook notebook_;
 }

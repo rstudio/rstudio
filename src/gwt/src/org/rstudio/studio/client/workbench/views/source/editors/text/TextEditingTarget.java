@@ -2473,7 +2473,16 @@ public class TextEditingTarget implements
    {
       if (isVisualModeActivated())
       {
-         visualMode_.focus();
+         visualMode_.focus(() ->
+         {
+            // Initialize notebook after activation if present (and notebook is
+            // uninitialized)
+            if (notebook_ != null && 
+                notebook_.getState() == TextEditingTargetNotebook.STATE_NONE)
+            {
+               notebook_.onRenderFinished(null);
+            }
+         });
       }
       else
       {

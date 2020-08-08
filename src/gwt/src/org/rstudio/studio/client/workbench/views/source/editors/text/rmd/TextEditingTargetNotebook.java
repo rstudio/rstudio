@@ -1365,6 +1365,22 @@ public class TextEditingTargetNotebook
       }
    }
    
+   public ChunkOutputUi getOutputUi(Scope scope)
+   {
+      String id = getRowChunkId(scope.getPreamble().getRow());
+      if (id == null)
+      {
+         return null;
+      }
+      
+      return outputs_.get(id);
+   }
+   
+   public int getState()
+   {
+      return state_;
+   }
+   
    // Private methods --------------------------------------------------------
 
    private void closeAllSatelliteChunks()
@@ -1561,6 +1577,8 @@ public class TextEditingTargetNotebook
       outputs_.put(def.getChunkId(), 
              new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
                                def, this));
+      Debug.devlog("create chunk output at row " + def.getRow() + " (" + 
+         outputs_.get(def.getChunkId()).getScope().getPreamble().getRow() + ")");
    }
    
    private boolean needsSetupChunkExecuted()
@@ -1889,13 +1907,13 @@ public class TextEditingTargetNotebook
    private String currentPlotsReplayId_ = null;
    
    // no chunk state
-   private final static int STATE_NONE = 0;
+   public final static int STATE_NONE = 0;
    
    // synchronizing chunk state from server
-   private final static int STATE_INITIALIZING = 0;
+   public final static int STATE_INITIALIZING = 1;
    
    // chunk state synchronized
-   private final static int STATE_INITIALIZED = 1;
+   public final static int STATE_INITIALIZED = 2;
    
    private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
    public final static String SETUP_CHUNK_ID = "csetup_chunk";

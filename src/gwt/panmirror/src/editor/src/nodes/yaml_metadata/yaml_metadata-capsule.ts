@@ -52,7 +52,11 @@ export function yamlMetadataBlockCapsuleFilter() {
 
     // write as yaml_metadata
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-      writer.openNode(schema.nodes.yaml_metadata, { navigation_id: uuidv4() });
+      writer.openNode(schema.nodes.yaml_metadata,
+        {
+          navigation_id: uuidv4(),
+          md_index: capsule.position
+        });
       // write the lines w/o the source-level prefix
       writer.writeText(blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix));
       writer.closeNode();

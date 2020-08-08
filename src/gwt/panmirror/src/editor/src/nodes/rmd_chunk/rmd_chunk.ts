@@ -47,6 +47,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           ...codeNodeSpec(),
           attrs: {
             navigation_id: { default: null },
+            md_index: { default: 0 },
           },
           parseDOM: [
             {

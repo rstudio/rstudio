@@ -25,6 +25,6 @@ public class PanmirrorUIChunks
    @JsFunction
    public interface CreateChunkEditor
    {
-      PanmirrorUIChunkEditor create(String type);
+      PanmirrorUIChunkEditor create(String type, int position);
    }
 }

@@ -83,6 +83,8 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: PandocFormat): Promise<PandocToProsemirrorResult> {
+    // save original markdown (for aligning capsule positions)
+    const original = markdown;
 
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
@@ -101,7 +103,7 @@ export class PandocConverter {
 
     // create source capsules
     this.blockCapsuleFilters.forEach(filter => {
-      markdown = pandocMarkdownWithBlockCapsules(markdown, filter);
+      markdown = pandocMarkdownWithBlockCapsules(original, markdown, filter);
     });
 
     const ast = await this.pandoc.markdownToAst(markdown, targetFormat, []);

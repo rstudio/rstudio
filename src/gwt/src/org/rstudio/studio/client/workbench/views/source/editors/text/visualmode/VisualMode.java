@@ -103,7 +103,8 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_.getNotebook(), 
+            target_.getRCompletionContext());
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -745,9 +746,16 @@ public class VisualMode implements VisualModeEditorSync,
       return panmirror_.getCommandPaletteItems();
    }
 
-   public void focus()
+   public void focus(Command onComplete)
    {
-      activate(() -> panmirror_.focus());
+      activate(() ->
+      {
+         panmirror_.focus(); 
+         if (onComplete != null)
+         {
+            onComplete.execute();
+         }
+      });
    }
    
    private void manageUI(boolean activate, boolean focus)
