@@ -20,16 +20,11 @@ import { EditorWordSource, EditorWordRange } from "../../api/spelling";
 import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
 
-
-// TODO: themed underline color
-
 // TODO: more efficient / incremntal chekcing
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
+// TODO: deal with checking across mark boundaries
 
-// TODO: respect realtime pref
-// TODO: disable realtime if no context menu
-// TODO: deal with loaded state of typo library (defer?)
-// TODO: implement the rest of the TypeSpellChecker.Context (where does this play into viz mode?)
+// TODO: themed underline color
 
 export function getWords(
   state: EditorState,

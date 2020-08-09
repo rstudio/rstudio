@@ -19,15 +19,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.Iterator;
 
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordSource;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
@@ -35,24 +32,23 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.Sp
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
-import com.google.inject.Inject;
-
 import elemental2.core.JsArray;
 
 
 public class VisualModeSpelling extends SpellingContext
 {
-   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
+   public interface Context
    {
-     super(docUpdateSentinel);  
-     RStudioGinjector.INSTANCE.injectMembers(this);
-     docDisplay_ = docDisplay;
+      void updateRealtimeSpelling();
    }
    
-   @Inject
-   void initialize(UserPrefs prefs)
+   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, 
+                             DocDisplay docDisplay,
+                             Context context)
    {
-      prefs_ = prefs;
+     super(docUpdateSentinel);  
+     docDisplay_ = docDisplay;
+     context_ = context;
    }
     
    public void checkSpelling(PanmirrorSpellingDoc doc)   
@@ -179,8 +175,8 @@ public class VisualModeSpelling extends SpellingContext
       
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
       
-      uiSpelling.realtimeChecking = () -> {
-         return prefs_.realTimeSpellchecking().getValue() && TypoSpellChecker.isLoaded(); 
+      uiSpelling.realtimeEnabled = () -> {
+         return typo().realtimeSpellcheckEnabled(); 
       };
       
       uiSpelling.checkWord = (word) -> {
@@ -266,25 +262,23 @@ public class VisualModeSpelling extends SpellingContext
    @Override
    public void invalidateAllWords()
    {
-      
+      context_.updateRealtimeSpelling();
    }
 
    @Override
    public void invalidateMisspelledWords()
    {
-      
+      context_.updateRealtimeSpelling();
    }
 
    @Override
    public void invalidateWord(String word)
    {
-      
-      
+      context_.updateRealtimeSpelling();
    }
-
-
+   
    private final DocDisplay docDisplay_;
-   private UserPrefs prefs_;
+   private final Context context_;
 }
 
 

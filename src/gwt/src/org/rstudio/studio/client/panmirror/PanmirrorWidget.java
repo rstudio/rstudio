@@ -419,6 +419,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getSpellingDoc();
    }
    
+   public void updateRealtimeSpelling()
+   {
+      editor_.updateRealtimeSpelling();
+   }
+   
    public void showOutline(boolean show, double width)
    {
       showOutline(show, width, false);

@@ -19,7 +19,7 @@ export const kCharClassNonWord = 2;
 
 export interface EditorUISpelling {
   // realtime interface
-  realtimeChecking: () => boolean;
+  realtimeEnabled: () => boolean;
   checkWord: (word: string) => boolean;
   suggestionList: (word: string) => string[];
 

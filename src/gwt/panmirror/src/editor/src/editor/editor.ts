@@ -96,7 +96,7 @@ import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
 import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
-import { realtimeSpellingPlugin } from '../behaviors/spelling/spelling-realtime';
+import { realtimeSpellingPlugin, updateRealtimeSpelling } from '../behaviors/spelling/spelling-realtime';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -591,6 +591,10 @@ export class Editor {
 
   public getSpellingDoc(): EditorSpellingDoc {
     return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling.breakWords);
+  }
+
+  public updateRealtimeSpelling() {
+    updateRealtimeSpelling(this.view);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the

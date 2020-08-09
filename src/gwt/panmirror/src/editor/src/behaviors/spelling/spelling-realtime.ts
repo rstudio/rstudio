@@ -17,15 +17,22 @@ import { Schema, MarkType } from "prosemirror-model";
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
 
+import { setTextSelection } from "prosemirror-utils";
+
 import { FocusEvent } from '../../api/event-types';
 import { PandocMark } from "../../api/mark";
 import { EditorUISpelling } from "../../api/spelling";
 import { EditorEvents } from "../../api/events";
 import { kAddToHistoryTransaction } from "../../api/transaction";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
-import { setTextSelection } from "prosemirror-utils";
+
+import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
+
+const kUpdateSpellingTransaction = 'updateSpelling';
+
+const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
+
 
 export function realtimeSpellingPlugin(
   schema: Schema,
@@ -35,15 +42,14 @@ export function realtimeSpellingPlugin(
   return new RealtimeSpellingPlugin(excludedMarks(schema, marks), ui, events);
 }
 
-const kUpdateSpellingTransaction = 'realtimeSpelling';
-
-const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
+export function updateRealtimeSpelling(view: EditorView) {
+  updateSpelling(view);
+}
 
 class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
   private view: EditorView | null = null;
-  private intialized = false;
-  private readonly excluded: MarkType[];
+  private readonly ui: EditorUI;
 
   constructor(excluded: MarkType[], ui: EditorUI, events: EditorEvents) {
 
@@ -55,27 +61,32 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
       },
       state: {
         init: (_config, state: EditorState) => {
-          return DecorationSet.create(state.doc, this.spellingDecorations(state, ui.spelling));
+          return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          if (tr.getMeta(kUpdateSpellingTransaction)) {
 
-            const { from = null, to = null } = tr.getMeta(kUpdateSpellingTransaction);
-            if (from && to) {
-              old = old.map(tr.mapping, tr.doc);
-              old = old.remove(old.find(from, to));
-              old = old.add(tr.doc, this.spellingDecorations(newState, ui.spelling, from, to));
-              return old;
-            } else {
-              return DecorationSet.create(newState.doc, this.spellingDecorations(newState, ui.spelling));
-            }
+          // collect explicit update request
+          const update = tr.getMeta(kUpdateSpellingTransaction);
 
+          // focused state is logical (either actually focused or the update is forcing that state)
+          const focused = this.view?.hasFocus() || (update && update.focused);
 
-          } else if (tr.docChanged) {
-            // TODO: incremental
-            return DecorationSet.create(newState.doc, this.spellingDecorations(newState, ui.spelling));
+          // check for disabled state
+          if (this.disabled(focused)) {
+            return DecorationSet.empty;
+          }
+
+          // update if this was either an explicit request or if the doc changed
+          if (update || tr.docChanged) {
+
+            // TODO: incremental (see below)
+            return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
+
           } else {
+
+            // TODO: handle cursor moved away from misspelled word
             return old;
+
           }
 
           // transactionsChangeSet
@@ -110,53 +121,54 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
       },
     });
 
-    // set excluded marks
-    this.excluded = excluded;
+    // save reference to ui
+    this.ui = ui;
 
-    // trigger realtime spell check on initial focus
-    const focusUnsubscribe = events.subscribe(FocusEvent, () => {
-      if (this.view && !this.intialized) {
-        this.intialized = true;
-        updateSpellcheck(this.view);
+    // trigger spelling update on focus
+    events.subscribe(FocusEvent, () => {
+      if (this.view) {
+        updateSpelling(this.view, true);
       }
-      focusUnsubscribe();
     });
-
   }
 
-  private spellingDecorations(state: EditorState, spelling: EditorUISpelling, from?: number | null, to?: number | null): Decoration[] {
+  private disabled(focused: boolean) {
+    return !this.ui.spelling.realtimeEnabled() ||
+      !this.ui.display.showContextMenu ||
+      !focused;
+  }
 
-    // auto-initialize if we ever have focus (in case our FocusEvent somehow fails
-    // to fire, we don't want to be stuck w/o spell-checking)
-    if (this.view?.hasFocus()) {
-      this.intialized = true;
-    }
+}
 
-    // no-op if we aren't intialized
-    if (!this.intialized) {
-      return [];
-    }
+function spellingDecorations(
+  state: EditorState,
+  spelling: EditorUISpelling,
+  excluded: MarkType[],
+  from?: number,
+  to?: number
+): Decoration[] {
 
-    // defaults from from and to
-    from = from || 2;
-    to = to || null;
+  const decorations: Decoration[] = [];
 
-    const decorations: Decoration[] = [];
+  const words = getWords(
+    state,
+    from || 2,
+    to || null,
+    spelling.breakWords,
+    excluded
+  );
 
-    const words = getWords(state, from, to, spelling.breakWords, this.excluded);
-
-    while (words.hasNext()) {
-      const word = words.next()!;
-      if (word.end !== state.selection.head) { // exclude words w/ active cursor
-        const wordText = state.doc.textBetween(word.start, word.end);
-        if (!spelling.checkWord(spellcheckerWord(wordText))) {
-          decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
-        }
+  while (words.hasNext()) {
+    const word = words.next()!;
+    if (word.end !== state.selection.head) { // exclude words w/ active cursor
+      const wordText = state.doc.textBetween(word.start, word.end);
+      if (!spelling.checkWord(spellcheckerWord(wordText))) {
+        decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
       }
     }
-
-    return decorations;
   }
+
+  return decorations;
 }
 
 function spellingSuggestionContextMenuHandler(ui: EditorUI) {
@@ -191,7 +203,7 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
               tr.setSelection(TextSelection.create(tr.doc, from, to));
               tr.replaceSelectionWith(schema.text(suggestion), true);
               setTextSelection(from + suggestion.length)(tr);
-              tr.setMeta(kUpdateSpellingTransaction, { from, to: from + suggestion.length });
+              setUpdateSpellingTransaction(tr, true);
               view.dispatch(tr);
               view.focus();
             }
@@ -201,26 +213,19 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
           menuItems.push({ separator: true });
         }
 
+        const menuAction = (text: string, action: VoidFunction) => {
+          return {
+            text: ui.context.translateText(text),
+            exec: () => {
+              view.focus();
+              setTimeout(action, 0);
+            }
+          };
+        };
+
         // add other menu actions
-        menuItems.push(
-          {
-            text: ui.context.translateText('Ignore Word'),
-            exec: () => {
-              ui.spelling.ignoreWord(word);
-              updateSpellcheck(view);
-              view.focus();
-            }
-          },
-          { separator: true },
-          {
-            text: ui.context.translateText('Add to Dictionary'),
-            exec: () => {
-              ui.spelling.addToDictionary(word);
-              updateSpellcheck(view);
-              view.focus();
-            }
-          }
-        );
+        menuItems.push(menuAction('Ignore Word', () => ui.spelling.ignoreWord(word)));
+        menuItems.push(menuAction('Add to Dictionary', () => ui.spelling.addToDictionary(word)));
 
         // show context menu
         const { clientX, clientY } = event as MouseEvent;
@@ -237,13 +242,13 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
   };
 }
 
-function updateSpellcheck(view: EditorView, from?: number | null, to?: number | null) {
+function updateSpelling(view: EditorView, focused = false) {
   const tr = view.state.tr;
-  setUpdateSpellingTransaction(tr, from, to);
+  setUpdateSpellingTransaction(tr, focused);
   view.dispatch(tr);
 }
 
-function setUpdateSpellingTransaction(tr: Transaction, from?: number | null, to?: number | null) {
-  tr.setMeta(kUpdateSpellingTransaction, { from, to });
+function setUpdateSpellingTransaction(tr: Transaction, focused = false) {
+  tr.setMeta(kUpdateSpellingTransaction, { focused });
   tr.setMeta(kAddToHistoryTransaction, false);
 }

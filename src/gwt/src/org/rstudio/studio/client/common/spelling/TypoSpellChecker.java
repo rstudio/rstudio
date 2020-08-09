@@ -241,6 +241,13 @@ public class TypoSpellChecker
       if (customDictionaries.length() > 0)
          loadCustomDictionaries(customDictionaries);
    }
+   
+   public boolean realtimeSpellcheckEnabled()
+   {
+      return userPrefs_.realTimeSpellchecking().getValue() &&
+             typoNative_ != null && loadedDict_ != null &&
+             canRealtimeSpellcheckDict(loadedDict_);
+   }
 
    // Check the spelling of a single word, directly returning an
    // array of suggestions for corrections. The array is empty if the
