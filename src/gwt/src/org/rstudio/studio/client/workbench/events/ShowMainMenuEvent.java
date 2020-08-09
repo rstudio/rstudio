@@ -29,7 +29,7 @@ public class ShowMainMenuEvent extends CrossWindowEvent<ShowMainMenuEvent.Handle
       // keep in sync with mainMenu declared in Commands.cmd.xml
       File, Edit, Code, View, Plots, Session, Build, Debug, Profile, Tools, Help
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onShowMainMenu(ShowMainMenuEvent event);

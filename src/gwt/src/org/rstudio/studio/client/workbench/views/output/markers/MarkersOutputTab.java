@@ -22,7 +22,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -31,7 +30,7 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSta
 
 public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresenter>
 {
-   public abstract static class Shim 
+   public abstract static class Shim
             extends DelayLoadTabShim<MarkersOutputPresenter, MarkersOutputTab>
             implements MarkersChangedEvent.Handler
    {
@@ -51,23 +50,19 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
       super("Markers", shim);
       shim_ = shim;
 
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
+         MarkersState state = session.getSessionInfo().getMarkersState();
+         if (state.hasMarkers())
          {
-            MarkersState state = session.getSessionInfo().getMarkersState();
-            if (state.hasMarkers())
-            {
-               // don't talk to the shim unless there are existing markers, doing so will
-               // unnecessarily trigger downloading and loading the deferred-load tab
-               shim_.showInitialMarkers(state);
-            }
+            // don't talk to the shim unless there are existing markers, doing so will
+            // unnecessarily trigger downloading and loading the deferred-load tab
+            shim_.showInitialMarkers(state);
          }
       });
 
       GWT.<Binder>create(Binder.class).bind(commands, shim_);
-      
+
       events.addHandler(MarkersChangedEvent.TYPE, shim_);
    }
 
@@ -76,18 +71,18 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.onClosing();
       onConfirmed.execute();
    }
-   
+
    public void onDismiss()
    {
    }
-  
-   
+
+
    private final Shim shim_;
 }

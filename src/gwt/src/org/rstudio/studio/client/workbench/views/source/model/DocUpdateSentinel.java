@@ -43,7 +43,6 @@ import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -68,13 +67,13 @@ public class DocUpdateSentinel
       public ReopenFileCallback()
       {
       }
-      
+
       public ReopenFileCallback(Command onCompleted, boolean ignoreDeletes)
       {
          onCompleted_ = onCompleted;
          ignoreDeletes_ = ignoreDeletes;
       }
-      
+
       @Override
       public void onResponseReceived(
             SourceDocument response)
@@ -85,7 +84,7 @@ public class DocUpdateSentinel
 
          if (progress_ != null)
             progress_.onCompleted();
-         
+
          if (onCompleted_ != null)
             onCompleted_.execute();
       }
@@ -106,11 +105,11 @@ public class DocUpdateSentinel
                progress_.onError(error.getUserMessage());
             }
          }
-         
+
          if (onCompleted_ != null)
             onCompleted_.execute();
       }
-      
+
       private Command onCompleted_ = null;
       private boolean ignoreDeletes_ = false;
    }
@@ -131,7 +130,7 @@ public class DocUpdateSentinel
       eventBus_ = events;
       prefs_ = prefs;
       changeTracker_ = docDisplay.getChangeTracker();
-      propertyChangeHandlers_ = 
+      propertyChangeHandlers_ =
             new HashMap<String, ValueChangeHandlerManager<String>>();
 
       prefs_.autoSaveOnIdle().bind((String behavior) ->
@@ -149,7 +148,7 @@ public class DocUpdateSentinel
             autosaver_ = null;
          }
       });
-      prefs_.autoSaveIdleMs().bind((Integer ms) -> 
+      prefs_.autoSaveIdleMs().bind((Integer ms) ->
       {
          // If we have an auto-saver, re-create it with the new idle timeout
          if (autosaver_ != null)
@@ -183,7 +182,7 @@ public class DocUpdateSentinel
       {
          lastChanceSaveHandlerReg_ = events.addHandler(
                LastChanceSaveEvent.TYPE,
-               new LastChanceSaveHandler() {
+               new LastChanceSaveEvent.Handler() {
                   public void onLastChanceSave(LastChanceSaveEvent event)
                   {
                      // We're quitting. Save one last time.
@@ -234,8 +233,8 @@ public class DocUpdateSentinel
    {
       withSavedDoc(onSaved, null);
    }
-   
-   public void withSavedDoc(final Command onSaved, 
+
+   public void withSavedDoc(final Command onSaved,
          final CommandWithArg<String> onError)
    {
       if (changeTracker_.hasChanged())
@@ -246,10 +245,10 @@ public class DocUpdateSentinel
             public void onCompleted()
             {
                if (onSaved != null)
-                  onSaved.execute(); 
+                  onSaved.execute();
             }
-   
-            @Override public void onError(String message) 
+
+            @Override public void onError(String message)
             {
                if (onError != null)
                   onError.execute(message);
@@ -259,7 +258,7 @@ public class DocUpdateSentinel
             @Override public void onProgress(String message, Operation onCancel) {}
             @Override public void clearProgress() {}
          });
-         
+
          if (!saved)
             onSaved.execute();
       }
@@ -274,22 +273,22 @@ public class DocUpdateSentinel
       {
          return doSave(null, null, null, new ProgressIndicator()
          {
-            
+
             @Override
             public void onProgress(String message, Operation onCancel)
             {
                if (progress_ != null)
                   progress_.onProgress(message, onCancel);
             }
-            
+
             @Override
             public void onProgress(String message)
             {
                if (progress_ != null)
                   progress_.onProgress(message);
-               
+
             }
-            
+
             @Override
             public void onError(String message)
             {
@@ -303,19 +302,19 @@ public class DocUpdateSentinel
                         "RStudio was unable to autosave this file. You may need " +
                         "to restart RStudio.");
                }
-               
+
                // Use regular completed callback for indicator.
                if (progress_ != null)
                   progress_.onCompleted();
             }
-            
+
             @Override
             public void onCompleted()
             {
                if (progress_ != null)
                   progress_.onCompleted();
             }
-            
+
             @Override
             public void clearProgress()
             {
@@ -356,20 +355,20 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
-      
+
       doSave(path, fileType, encoding, new ProgressIndicator()
       {
          public void onProgress(String message)
          {
             onProgress(message, null);
          }
-         
+
          public void onProgress(String message, Operation onCancel)
          {
             if (progress != null)
                progress.onProgress(message, onCancel);
          }
-         
+
          public void clearProgress()
          {
             if (autosaver_ != null)
@@ -395,7 +394,7 @@ public class DocUpdateSentinel
          }
       });
    }
-   
+
    private boolean doSave(String path,
                           String fileType,
                           String encoding,
@@ -412,7 +411,7 @@ public class DocUpdateSentinel
          // indicators, even if present, will report it)
          Debug.log("Exception occurred during save: ");
          Debug.logException(ex);
-         
+
          // report error to progress indicator if present
          if (progress != null)
          {
@@ -420,7 +419,7 @@ public class DocUpdateSentinel
                              ex.getMessage());
          }
       }
-      
+
       // Update marks after document save
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -439,7 +438,7 @@ public class DocUpdateSentinel
             }
          }
       });
-      
+
       return didSave;
    }
 
@@ -461,18 +460,18 @@ public class DocUpdateSentinel
 
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
-      
+
       final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
-      JsArray<ChunkDefinition> oldChunkDefs = 
+      JsArray<ChunkDefinition> oldChunkDefs =
             sourceDoc_.getNotebookDoc().getChunkDefs();
-      
+
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isValid() && diff.isEmpty()
-          && foldSpec == oldFoldSpec 
-          && (newChunkDefs == null || 
+          && foldSpec == oldFoldSpec
+          && (newChunkDefs == null ||
               ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
          changesPending_ = false;
@@ -491,7 +490,7 @@ public class DocUpdateSentinel
          changesPending_ = false;
          return false;
       }
-      
+
 
       try
       {
@@ -525,7 +524,7 @@ public class DocUpdateSentinel
                {
                   // Always log save errors.
                   Debug.logError(error);
-                  
+
                   // Report errors to indicator.
                   if (progress != null)
                   {
@@ -535,7 +534,7 @@ public class DocUpdateSentinel
 
                      progress.onError(errorMessage);
                   }
-                  
+
                   // Attempt to report save error.
                   try
                   {
@@ -548,7 +547,7 @@ public class DocUpdateSentinel
                   {
                      Debug.logException(e);
                   }
-                  
+
                   changesPending_ = false;
                }
 
@@ -563,13 +562,13 @@ public class DocUpdateSentinel
                      {
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
-                        
-                        // update the foldSpec and newChunkDefs so we 
+
+                        // update the foldSpec and newChunkDefs so we
                         // can use them for change detection the next
                         // time around
                         sourceDoc_.setFoldSpec(foldSpec);
                         sourceDoc_.getNotebookDoc().setChunkDefs(newChunkDefs);
-                        
+
                         onSuccessfulUpdate(newContents,
                                            newHash,
                                            path,
@@ -580,13 +579,13 @@ public class DocUpdateSentinel
                      {
                         // log exception, but continue (we want to guarantee the
                         // progress indicator is updated)
-                        Debug.log("Exception in post-save update " + path + 
+                        Debug.log("Exception in post-save update " + path +
                                   " to " + newHash + ": " + ex.getMessage());
                      }
                      if (progress != null)
                         progress.onCompleted();
-                     
-                     // let anyone interested know we just saved 
+
+                     // let anyone interested know we just saved
                      SaveFileEvent saveEvent = new SaveFileEvent(path, fileType, encoding);
                      docDisplay_.fireEvent(saveEvent);
                      eventBus_.fireEvent(saveEvent);
@@ -649,7 +648,7 @@ public class DocUpdateSentinel
    {
       if (sourceDoc_.sourceOnSave() == shouldSourceOnSave)
          return;
-      
+
       server_.setSourceDocumentOnSave(
             sourceDoc_.getId(),
             shouldSourceOnSave,
@@ -667,15 +666,15 @@ public class DocUpdateSentinel
                public void onResponseReceived(Void response)
                {
                   sourceDoc_.setSourceOnSave(shouldSourceOnSave);
-                  
+
                   eventBus_.fireEvent(new SourceOnSaveChangedEvent());
-                  
+
                   if (progress != null)
                      progress.onCompleted();
                }
             });
    }
-   
+
    public boolean hasProperty(String propertyName)
    {
       return sourceDoc_.getProperties().hasKey(propertyName);
@@ -686,26 +685,26 @@ public class DocUpdateSentinel
       JsObject properties = sourceDoc_.getProperties();
       return properties.getString(propertyName);
    }
-   
+
    public String getProperty(String propertyName, String defaultValue)
    {
       if (hasProperty(propertyName))
          return getProperty(propertyName);
       return defaultValue;
    }
-   
+
    public boolean getBoolProperty(String propertyName, boolean defaultValue)
    {
       if (hasProperty(propertyName))
          return getProperty(propertyName) == PROPERTY_TRUE;
       return defaultValue;
    }
-   
+
    public void setBoolProperty(String propertyName, boolean value)
    {
       setProperty(propertyName, value ? PROPERTY_TRUE : PROPERTY_FALSE);
    }
-   
+
    public void setProperty(String name,
                            String value,
                            ProgressIndicator progress)
@@ -714,7 +713,7 @@ public class DocUpdateSentinel
       props.put(name, value);
       modifyProperties(props, progress);
    }
-   
+
    public void setProperty(String name, String value)
    {
       setProperty(name, value, null);
@@ -752,12 +751,12 @@ public class DocUpdateSentinel
                }
             });
    }
-   
+
    public void modifyProperties(final HashMap<String, String> properties)
    {
       modifyProperties(properties, null);
    }
-   
+
    public HandlerRegistration addPropertyValueChangeHandler(
          final String propertyName,
          final ValueChangeHandler<String> handler)
@@ -781,12 +780,12 @@ public class DocUpdateSentinel
          if (propertyChangeHandlers_.containsKey(entry.getKey()))
          {
             ValueChangeEvent.fire(
-                  propertyChangeHandlers_.get(entry.getKey()), 
+                  propertyChangeHandlers_.get(entry.getKey()),
                   entry.getValue());
          }
       }
    }
-   
+
    public void withChangeDetectionSuspended(Command command)
    {
       try
@@ -799,12 +798,12 @@ public class DocUpdateSentinel
          suspendDetectChanges_ -= 1;
       }
    }
-   
+
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       if (suspendDetectChanges_ > 0)
          return;
-      
+
       changesPending_ = true;
       if (autosaver_ != null)
          autosaver_.nudge();
@@ -815,22 +814,22 @@ public class DocUpdateSentinel
    {
       if (suspendDetectChanges_ > 0)
          return;
-      
+
       changesPending_ = true;
       if (autosaver_ != null)
          autosaver_.nudge();
    }
-   
+
    public String getPath()
    {
       return sourceDoc_.getPath();
    }
-   
+
    public String getContents()
    {
       return sourceDoc_.getContents();
    }
-   
+
    public SourceDocument getDoc()
    {
       return sourceDoc_;
@@ -840,13 +839,13 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
-      
+
       if (closeHandlerReg_ != null)
       {
          closeHandlerReg_.removeHandler();
          closeHandlerReg_ = null;
       }
-      
+
       if (lastChanceSaveHandlerReg_ != null)
       {
          lastChanceSaveHandlerReg_.removeHandler();
@@ -858,7 +857,7 @@ public class DocUpdateSentinel
    {
       revert(null, false);
    }
-   
+
    public void revert(Command onCompleted, boolean ignoreDeletes)
    {
       server_.revertDocument(
@@ -896,12 +895,12 @@ public class DocUpdateSentinel
             return false;
       return true;
    }
-   
+
    public String getId()
    {
       return sourceDoc_.getId();
    }
-   
+
    private void createAutosaver()
    {
       if (autosaver_ == null)
@@ -916,7 +915,7 @@ public class DocUpdateSentinel
          };
       }
    }
-   
+
    private int suspendDetectChanges_ = 0;
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
@@ -930,12 +929,12 @@ public class DocUpdateSentinel
    private final UserPrefs prefs_;
    private HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
-   private final HashMap<String, ValueChangeHandlerManager<String>> 
+   private final HashMap<String, ValueChangeHandlerManager<String>>
                  propertyChangeHandlers_;
    private boolean loggedAutosaveError_ = false;
-   
+
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
-   
-   
+
+
 }

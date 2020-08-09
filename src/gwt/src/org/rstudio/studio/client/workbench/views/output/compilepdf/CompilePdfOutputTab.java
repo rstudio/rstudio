@@ -24,16 +24,15 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
-public class CompilePdfOutputTab 
+public class CompilePdfOutputTab
    extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
    implements ProvidesBusy
 {
@@ -41,7 +40,7 @@ public class CompilePdfOutputTab
                 DelayLoadTabShim<CompilePdfOutputPresenter, CompilePdfOutputTab>
       implements CompilePdfEvent.Handler,
                  CompilePdfStartedEvent.Handler,
-                 CompilePdfOutputEvent.Handler, 
+                 CompilePdfOutputEvent.Handler,
                  CompilePdfErrorsEvent.Handler,
                  CompilePdfCompletedEvent.Handler,
                  ProvidesBusy
@@ -63,16 +62,13 @@ public class CompilePdfOutputTab
       events.addHandler(CompilePdfErrorsEvent.TYPE, shim);
       events.addHandler(CompilePdfStartedEvent.TYPE, shim);
       events.addHandler(CompilePdfCompletedEvent.TYPE, shim);
-      
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
-         {    
-            SessionInfo sessionInfo = session.getSessionInfo();
-            CompilePdfState compilePdfState = sessionInfo.getCompilePdfState();
-            if (compilePdfState.isTabVisible())
-               shim_.initialize(compilePdfState);
-         }
+
+      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         SessionInfo sessionInfo = session.getSessionInfo();
+         CompilePdfState compilePdfState = sessionInfo.getCompilePdfState();
+         if (compilePdfState.isTabVisible())
+            shim_.initialize(compilePdfState);
       });
    }
 
@@ -81,19 +77,19 @@ public class CompilePdfOutputTab
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
+
    @Override
-   public void addBusyHandler(BusyHandler handler)
+   public void addBusyHandler(BusyEvent.Handler handler)
    {
       shim_.addBusyHandler(handler);
    }
-   
-   private Shim shim_;
-  
+
+   private final Shim shim_;
+
 }
