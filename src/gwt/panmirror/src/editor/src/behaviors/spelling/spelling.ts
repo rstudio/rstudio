@@ -31,6 +31,8 @@ import { PandocMark } from '../../api/mark';
 
 // TODO: themed underline color
 
+// TODO: gdocs style spelling text popup
+
 export function getWords(
   state: EditorState,
   start: number,
