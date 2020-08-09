@@ -20,7 +20,12 @@ import { EditorWordSource, EditorWordRange } from "../../api/spelling";
 import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
 
-// TODO: more efficient / incremntal chekcing
+// TODO: using the focus trigger makes things more complicated b/c we need to
+// force focus due to UI interacting w/ spelling (e.g. context menus) actaully
+// having focus. may want to go back to an 'initially suspended' workflow. could
+// also have an 'invalidate' transaction that just clears existing decorations?
+
+// TODO: more efficient / incremntal checking
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 // TODO: deal with checking across mark boundaries
 
