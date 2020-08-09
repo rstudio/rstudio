@@ -20,7 +20,6 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -32,31 +31,25 @@ import java.util.List;
 public class AddinsCommandManager
 {
    @Inject
-   public AddinsCommandManager(EventBus events, 
+   public AddinsCommandManager(EventBus events,
                                FilesServerOperations server,
                                final Session session)
    {
       events_ = events;
-     
+
       bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             server,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());
-      
+
       // load addin bindings on session init
-      events_.addHandler(
-            SessionInitEvent.TYPE,
-            new SessionInitHandler()
-            {
-               @Override
-               public void onSessionInit(SessionInitEvent sie)
-               {
-                  MainWindowObject.rAddins().set(session.getSessionInfo().getAddins());
-                  loadBindings();
-               }
-            });
-      
+      events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         MainWindowObject.rAddins().set(session.getSessionInfo().getAddins());
+         loadBindings();
+      });
+
       // set bindings when updated (e.g. through ModifyKeyboardShortcuts widget)
       events_.addHandler(
             AddinsKeyBindingsChangedEvent.TYPE,
@@ -68,7 +61,7 @@ public class AddinsCommandManager
                   registerBindings(event.getBindings(), null);
                }
             });
-      
+
       // update addin bindings when registry populated
       events_.addHandler(
             AddinRegistryUpdatedEvent.TYPE,
@@ -85,7 +78,7 @@ public class AddinsCommandManager
                }
             });
    }
-   
+
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
                                   final CommandWithArg<EditorKeyBindings> onLoad)
    {
@@ -106,12 +99,12 @@ public class AddinsCommandManager
          }
       });
    }
-   
+
    public void loadBindings()
    {
       loadBindings(null);
    }
-   
+
    public void loadBindings(final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
@@ -123,13 +116,13 @@ public class AddinsCommandManager
          }
       });
    }
-   
+
    private void registerBindings(final EditorKeyBindings bindings,
                                  final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       List<Pair<List<KeySequence>, CommandBinding>> commands =
             new ArrayList<Pair<List<KeySequence>, CommandBinding>>();
-   
+
       RAddins rAddins = MainWindowObject.rAddins().get();
       for (String id : bindings.iterableKeys())
       {
@@ -140,7 +133,7 @@ public class AddinsCommandManager
          CommandBinding binding = new AddinCommandBinding(addin);
          commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
       }
-   
+
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);
       for (int i = 0; i < commands.size(); i++)
       {
@@ -148,16 +141,16 @@ public class AddinsCommandManager
                commands.get(i).first,
                commands.get(i).second);
       }
-   
+
       if (afterLoad != null)
          afterLoad.execute(bindings);
    }
-   
+
    public void resetBindings()
    {
       resetBindings(null);
    }
-   
+
    public void resetBindings(final Command afterReset)
    {
       bindings_.set(EditorKeyBindings.create(), new Command()
@@ -170,16 +163,16 @@ public class AddinsCommandManager
          }
       });
    }
-   
+
    public RAddins getRAddins()
    {
       return MainWindowObject.rAddins().get();
    }
-   
+
    private final ConfigFileBacked<EditorKeyBindings> bindings_;
    private static final String KEYBINDINGS_PATH = "keybindings/addins.json";
-   
-   
+
+
    // Injected ----
    private EventBus events_;
 }

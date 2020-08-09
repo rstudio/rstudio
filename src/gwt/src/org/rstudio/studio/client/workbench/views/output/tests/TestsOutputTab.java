@@ -22,7 +22,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -31,8 +31,8 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 
-public class TestsOutputTab 
-   extends DelayLoadWorkbenchTab<TestsOutputPresenter> 
+public class TestsOutputTab
+   extends DelayLoadWorkbenchTab<TestsOutputPresenter>
    implements ProvidesBusy
 {
    public abstract static class Shim extends
@@ -68,18 +68,18 @@ public class TestsOutputTab
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
+
    @Override
-   public void addBusyHandler(BusyHandler handler)
+   public void addBusyHandler(BusyEvent.Handler handler)
    {
       shim_.addBusyHandler(handler);
    }
-   
-   private Shim shim_;
+
+   private final Shim shim_;
 }
