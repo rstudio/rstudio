@@ -28,7 +28,6 @@ export const kRestoreLocationTransaction = 'restoreLocation';
 export const kNavigationTransaction = 'navigationTransaction';
 export const kInsertSymbolTransaction = 'insertSymbol';
 export const kInsertCompletionTransaction = 'insertCompletion';
-export const kInitRealtimeSpellingTransaction = 'initRealtimeSpelling';
 
 export type TransactionsFilter = (transactions: Transaction[], oldState: EditorState, newState: EditorState) => boolean;
 

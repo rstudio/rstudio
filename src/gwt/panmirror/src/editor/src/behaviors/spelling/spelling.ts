@@ -21,13 +21,10 @@ import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
 
 
-// TODO: invalidate / re-check after ignore or add of word
-
 // TODO: themed underline color
 
 // TODO: more efficient / incremntal chekcing
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
-
 
 // TODO: respect realtime pref
 // TODO: disable realtime if no context menu
