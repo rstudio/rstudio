@@ -85,3 +85,10 @@ export function excludedMarks(schema: Schema, marks: readonly PandocMark[]): Mar
     .filter(mark => mark.noSpelling)
     .map(mark => schema.marks[mark.name]);
 }
+
+export function hasExcludedMark(state: EditorState, from: number, to: number, excluded: MarkType[]) {
+  const $from = state.doc.resolve(from);
+  const $to = state.doc.resolve(to);
+  const rangeMarks = $from.marksAcross($to) || [];
+  return rangeMarks.some(mark => excluded.includes(mark.type));
+}
