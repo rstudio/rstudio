@@ -213,8 +213,16 @@ public class CheckSpelling
                      }
                   }
 
-                  currentPos_ = endCheckedPos;
-                  Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  int initialCursorPos = initialCursorPos_.getPosition();
+                  if (wrapped_ && (endCheckedPos >= initialCursorPos))
+                  {
+                     onSpellingComplete();
+                  }
+                  else
+                  {
+                     currentPos_ = endCheckedPos + 1;
+                     Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  }
                }
             });
          }
@@ -223,12 +231,7 @@ public class CheckSpelling
             // No misspellings
             if (wrapped_)
             {
-               close();
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                     GlobalDisplay.MSG_INFO,
-                     "Check Spelling",
-                     "Spell check is complete.");
-               callback_.onSuccess(Void.create());
+               onSpellingComplete();
             }
             else
             {
@@ -247,6 +250,16 @@ public class CheckSpelling
                "An error has occurred:\n\n" + e.getMessage());
          callback_.onFailure(e);
       }
+   }
+   
+   private void onSpellingComplete()
+   {
+      close();
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+            GlobalDisplay.MSG_INFO,
+            "Check Spelling",
+            "Spell check is complete.");
+      callback_.onSuccess(Void.create());
    }
 
    private void close()
