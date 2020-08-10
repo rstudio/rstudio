@@ -99,7 +99,7 @@ void signIn(const core::http::Request& request,
    csrfToken = core::http::setCSRFTokenCookie(request,
                                               getCookieExpiry(false),
                                               csrfToken,
-                                              server::options().wwwUrlPathPrefix(),
+                                              request.rootPath(),
                                               isSecureCookie(request),
                                               server::options().wwwSameSite(),
                                               pResponse);
@@ -250,7 +250,7 @@ std::string signOut(const core::http::Request& request,
    // adjust sign out url point internally
    if (!signOutUrl.empty() && signOutUrl[0] == '/')
    {
-      signOutUrl = core::http::URL::uncomplete(request.uri(), signOutUrl);
+      signOutUrl = core::http::URL::uncomplete(request.baseUri(), signOutUrl);
    }
    pResponse->setMovedTemporarily(request, signOutUrl);
    return username;
@@ -268,7 +268,7 @@ void clearSignInCookies(const core::http::Request& request,
                         core::http::Response* pResponse)
 {
    bool secureCookie = isSecureCookie(request);
-   std::string path = server::options().wwwUrlPathPrefix();
+   std::string path = request.rootPath();
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    core::http::secure_cookie::remove(request,
@@ -335,7 +335,7 @@ void setSignInCookies(const core::http::Request& request,
    bool secureCookie = isSecureCookie(request);
    boost::posix_time::time_duration validity = getCookieExpiry(true).get();
    boost::optional<boost::posix_time::time_duration> expiry = getCookieExpiry(staySignedIn);
-   std::string path = server::options().wwwUrlPathPrefix();
+   std::string path = request.rootPath();
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    // set the secure user id cookie

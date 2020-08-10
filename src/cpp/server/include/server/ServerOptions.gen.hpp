@@ -28,6 +28,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 #include <monitor/MonitorConstants.hpp>
+#include <core/http/Request.hpp>
 #include <core/http/Cookie.hpp>
 
 
@@ -101,8 +102,8 @@ protected:
       ("www-port",
       value<std::string>(&wwwPort_)->default_value(""),
       "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL).")
-      ("www-url-path-prefix",
-      value<std::string>(&wwwUrlPathPrefix_)->default_value("/"),
+      ("www-root-path",
+      value<std::string>(&wwwRootPath_)->default_value(kRequestDefaultRootPath),
       "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL.")
       ("www-local-path",
       value<std::string>(&wwwLocalPath_)->default_value("www"),
@@ -241,7 +242,7 @@ public:
    core::FilePath serverDataDir() const { return core::FilePath(serverDataDir_); }
    std::vector<std::string> serverAddHeaders() const { return serverAddHeaders_; }
    std::string wwwAddress() const { return wwwAddress_; }
-   std::string wwwUrlPathPrefix() const { return wwwUrlPathPrefix_; }
+   std::string wwwRootPath() const { return wwwRootPath_; }
    std::string wwwLocalPath() const { return wwwLocalPath_; }
    core::FilePath wwwSymbolMapsPath() const { return core::FilePath(wwwSymbolMapsPath_); }
    bool wwwUseEmulatedStack() const { return wwwUseEmulatedStack_; }
@@ -289,7 +290,7 @@ protected:
    std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_;
    std::string wwwPort_;
-   std::string wwwUrlPathPrefix_;
+   std::string wwwRootPath_;
    std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;
    bool wwwUseEmulatedStack_;

@@ -183,6 +183,7 @@ void pageNotFoundHandler(const http::Request& request,
    std::ostringstream os;
    std::map<std::string, std::string> vars;
    vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
+   vars["base_uri"] = string_utils::jsLiteralEscape(request.baseUri(core::http::BaseUriUse::External));
 
    FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).completeChildPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
@@ -202,6 +203,18 @@ void pageNotFoundHandler(const http::Request& request,
 
    // set 404 status even if there was an error showing the proper not found page
    pResponse->setStatusCode(core::http::status::NotFound);
+}
+
+void rootPathRequestFilter(
+            boost::asio::io_service& ioService,
+            http::Request* pRequest,
+            http::RequestFilterContinuation continuation)
+{
+   // for all requests, be sure to inject the configured root path
+   // this way proxied requests will redirect correctly and cookies
+   // will have the correct path
+   pRequest->setRootPath(options().wwwRootPath());
+   continuation(boost::shared_ptr<http::Response>());
 }
 
 void httpServerAddHandlers()
@@ -664,6 +677,13 @@ int main(int argc, char * const argv[])
             monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
       }
 
+      // overlay may replace this
+      if (server::options().wwwRootPath() != kRequestDefaultRootPath) 
+      {
+         // inject the path prefix as the root path for all requests
+         uri_handlers::setRequestFilter(rootPathRequestFilter);
+      }
+
       // call overlay initialize
       error = overlay::initialize();
       if (error)
@@ -759,5 +779,3 @@ int main(int argc, char * const argv[])
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE;
 }
-
-

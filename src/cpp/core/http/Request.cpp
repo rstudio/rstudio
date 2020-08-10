@@ -50,11 +50,47 @@ bool Request::isSecure() const
    return URL(proxiedUri()).protocol() == "https";
 }
 
-std::string Request::absoluteUri() const
+std::string Request::baseUri(BaseUriUse use /*= BaseUriUse::Internal*/) const
+{
+   // When the root path is defined as other than the default ("/")
+   // we can guess with precision the actual URL show by the browser's
+   // address bar when we return the proxied URI. Without it either
+   // it doesn't matter because there's no proxy and the internal
+   // URI is the same address visible in the browser or the proxy is
+   // taking care of the path-rewrite which is something we asked
+   // customers to do before v1.4
+   if (rootPath() != kRequestDefaultRootPath)
+      return proxiedUri();
+   if (use == BaseUriUse::Internal)
+      return internalUri();
+   // When BaseUriUse::External, we omit the internal URI
+   return "";
+}
+
+std::string Request::internalUri() const
 {
    // ignore the proxy for the most part except by the scheme
    std::string scheme = URL(proxiedUri()).protocol();
    return scheme + "://" + host() + uri();
+}
+
+std::string Request::rootPath() const
+{
+   // if there's no proxy defining the header resort
+   // to the externally defined value for root path
+   std::string rootPathHeader = headerValue("X-RStudio-Root-Path");
+   if (rootPathHeader == "")
+   {
+      rootPathHeader = rootPath_;
+   }
+
+   // be sure the root path start with slash but doesn't end with one (unless literally only "/")
+   if (rootPathHeader.empty() || rootPathHeader[0] != '/')
+      rootPathHeader = '/' + rootPathHeader;
+   if (rootPathHeader.length() > 1 && rootPathHeader[rootPathHeader.length() - 1] == '/')
+      rootPathHeader = rootPathHeader.substr(0, rootPathHeader.length() - 1);
+
+   return rootPathHeader;
 }
 
 std::string Request::proxiedUri() const
@@ -66,6 +102,16 @@ std::string Request::proxiedUri() const
    if (!overrideHeader.empty())
    {
       return overrideHeader;
+   }
+
+   std::string root = rootPath();
+
+   // multi-session includes additional path elements in the URL
+   // this should show up only on internal requests
+   std::string sessionContextHeader = headerValue("X-RStudio-SessionContext");
+   if (sessionContextHeader != "")
+   {
+      root += sessionContextHeader;
    }
 
    // might be using new Forwarded header
@@ -83,7 +129,7 @@ std::string Request::proxiedUri() const
       if (boost::regex_search(forwarded, matches, reProto))
          protocol = matches[1];
 
-      return URL::complete(protocol + "://" + forwardedHost, uri());
+      return URL::complete(protocol + "://" + forwardedHost, root + '/' + uri());
    }
 
    // get the protocol that was specified in the request
@@ -113,11 +159,11 @@ std::string Request::proxiedUri() const
          }
       }
 
-      return URL::complete(protocol + "://" + forwardedHost, uri());
+      return URL::complete(protocol + "://" + forwardedHost, root + '/' + uri());
    }
 
    // use the protocol that may have been set by X-Forwarded-Proto
-   return URL::complete(protocol + "://" + host(), uri());
+   return URL::complete(protocol + "://" + host(), root + '/' + uri());
 }
 
 bool Request::acceptsContentType(const std::string& contentType) const
