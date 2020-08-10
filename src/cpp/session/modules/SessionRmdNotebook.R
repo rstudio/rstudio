@@ -1138,6 +1138,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalarListFromList(defaultOptions)
 })
 
+.rs.addFunction("executeChunkCallback", function(chunkName)
+{
+  if (!exists(".rs.notebookChunkCallbacks"))
+    return(NULL);
+
+  handles <- ls(.rs.notebookChunkCallbacks)
+  for (handle in handles) {
+    callback <- get(handle, envir = .rs.notebookChunkCallbacks)
+    if (grepl(chunkName, handle)) {
+      return(callback())
+    }
+  }
+  return(NULL);
+})
+
 # a list mapping file extensions to its associated output handler
 .rs.setVar("rnb.outputHandlers", list(
    "png"  = .rs.rnb.outputSourcePng,

@@ -129,14 +129,15 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
 }
 
 void emitOutputFinished(const std::string& docId, const std::string& chunkId,
-      int scope)
+      const std::string& htmlOutput, int scope)
 {
    json::Object result;
-   result["doc_id"]     = docId;
-   result["request_id"] = "";
-   result["chunk_id"]   = chunkId;
-   result["type"]       = kFinishedInteractive;
-   result["scope"]      = scope;
+   result["doc_id"]      = docId;
+   result["request_id"]  = "";
+   result["chunk_id"]    = chunkId;
+   result["html_output"] = htmlOutput;
+   result["type"]        = kFinishedInteractive;
+   result["scope"]       = scope;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
@@ -174,7 +175,20 @@ void onChunkExecCompleted(const std::string& docId,
                           const std::string& chunkId,
                           const std::string& nbCtxId)
 {
-   emitOutputFinished(docId, chunkId, ExecScopeChunk);
+   r::sexp::Protect rProtect;
+   SEXP outputSEXP = R_NilValue;
+   std::string output;
+
+   r::exec::RFunction func(".rs.executeChunkCallback");
+   func.addParam(chunkId);
+
+   core::Error error = func.call(&outputSEXP, &rProtect);
+   if (error)
+      LOG_ERROR(error);
+   else
+      output = r::sexp::asString(outputSEXP);
+   
+   emitOutputFinished(docId, chunkId, output, ExecScopeChunk);
 }
 
 void onDeferredInit(bool)
