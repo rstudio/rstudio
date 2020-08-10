@@ -13,6 +13,16 @@
  *
  */
 
+
+// TODO: more efficient / incremntal checking
+// TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
+// TODO: deal with checking across mark boundaries
+
+// TODO: themed underline color
+
+// TODO: gdocs style spelling text popup
+
+
 import { Schema, MarkType } from "prosemirror-model";
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
@@ -48,6 +58,9 @@ export function updateRealtimeSpelling(view: EditorView) {
 
 class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
+  // track whether we've ever had the focus (don't do any spelling operaitons until then)
+  private hasBeenFocused = true;
+
   private view: EditorView | null = null;
   private readonly ui: EditorUI;
 
@@ -65,27 +78,35 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
 
-          // collect explicit update request
-          const update = tr.getMeta(kUpdateSpellingTransaction);
-
-          // focused state is logical (either actually focused or the update is forcing that state)
-          const focused = this.view?.hasFocus() || (update && update.focused);
+          // if we somehow manage to get focus w/o our FocusEvent (below) being called then also 
+          // flip the hasBeenFocused bit here
+          if (this.view?.hasFocus()) {
+            this.hasBeenFocused = true;
+          }
 
           // check for disabled state
-          if (this.disabled(focused)) {
+          if (this.disabled()) {
             return DecorationSet.empty;
           }
 
-          // update if this was either an explicit request or if the doc changed
-          if (update || tr.docChanged) {
+          // explicit update request invalidates any existing decorations (this can happen when
+          // dictionaries change or when focus is restored after 'missing' a bunch of other
+          // invalidations due to not beign the active tab)
+          if (tr.getMeta(kUpdateSpellingTransaction)) {
+
+            return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
+
+            // 
+          } else if (tr.docChanged) {
 
             // TODO: incremental (see below)
-            return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
+            return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded, true));
 
           } else {
 
             // TODO: handle cursor moved away from misspelled word
-            return old;
+
+            return old.map(tr.mapping, tr.doc);
 
           }
 
@@ -124,18 +145,19 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
     // save reference to ui
     this.ui = ui;
 
-    // trigger spelling update on focus
+    // trigger update whenever we get the focus (updates are suspended while we aren't the active tab)
     events.subscribe(FocusEvent, () => {
       if (this.view) {
-        updateSpelling(this.view, true);
+        this.hasBeenFocused = true;
+        updateSpelling(this.view);
       }
     });
   }
 
-  private disabled(focused: boolean) {
-    return !this.ui.spelling.realtimeEnabled() ||
-      !this.ui.display.showContextMenu ||
-      !focused;
+  private disabled() {
+    return !this.hasBeenFocused ||
+      !this.ui.context.isActiveTab() ||
+      !this.ui.spelling.realtimeEnabled();
   }
 
 }
@@ -144,6 +166,7 @@ function spellingDecorations(
   state: EditorState,
   spelling: EditorUISpelling,
   excluded: MarkType[],
+  excludeCursor = false,
   from?: number,
   to?: number
 ): Decoration[] {
@@ -160,7 +183,7 @@ function spellingDecorations(
 
   while (words.hasNext()) {
     const word = words.next()!;
-    if (word.end !== state.selection.head) { // exclude words w/ active cursor
+    if (!excludeCursor || word.end !== state.selection.head) {
       const wordText = state.doc.textBetween(word.start, word.end);
       if (!spelling.checkWord(spellcheckerWord(wordText))) {
         decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
@@ -174,6 +197,10 @@ function spellingDecorations(
 function spellingSuggestionContextMenuHandler(ui: EditorUI) {
 
   return (view: EditorView, event: Event) => {
+
+    if (!ui.display.showContextMenu) {
+      return false;
+    }
 
     if (event.target && event.target instanceof Node) {
 
@@ -203,7 +230,6 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
               tr.setSelection(TextSelection.create(tr.doc, from, to));
               tr.replaceSelectionWith(schema.text(suggestion), true);
               setTextSelection(from + suggestion.length)(tr);
-              setUpdateSpellingTransaction(tr, true);
               view.dispatch(tr);
               view.focus();
             }
@@ -213,18 +239,18 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
           menuItems.push({ separator: true });
         }
 
+        // add other menu actions
         const menuAction = (text: string, action: VoidFunction) => {
           return {
             text: ui.context.translateText(text),
             exec: () => {
+              action();
               view.focus();
-              setTimeout(action, 0);
             }
           };
         };
-
-        // add other menu actions
         menuItems.push(menuAction('Ignore Word', () => ui.spelling.ignoreWord(word)));
+        menuItems.push({ separator: true });
         menuItems.push(menuAction('Add to Dictionary', () => ui.spelling.addToDictionary(word)));
 
         // show context menu
@@ -242,13 +268,9 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
   };
 }
 
-function updateSpelling(view: EditorView, focused = false) {
+function updateSpelling(view: EditorView) {
   const tr = view.state.tr;
-  setUpdateSpellingTransaction(tr, focused);
-  view.dispatch(tr);
-}
-
-function setUpdateSpellingTransaction(tr: Transaction, focused = false) {
-  tr.setMeta(kUpdateSpellingTransaction, { focused });
+  tr.setMeta(kUpdateSpellingTransaction, true);
   tr.setMeta(kAddToHistoryTransaction, false);
+  view.dispatch(tr);
 }
