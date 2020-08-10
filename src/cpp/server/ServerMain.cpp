@@ -678,7 +678,8 @@ int main(int argc, char * const argv[])
       }
 
       // overlay may replace this
-      if (server::options().wwwRootPath() != kRequestDefaultRootPath) {
+      if (server::options().wwwRootPath() != kRequestDefaultRootPath) 
+      {
          // inject the path prefix as the root path for all requests
          uri_handlers::setRequestFilter(rootPathRequestFilter);
       }
@@ -778,5 +779,3 @@ int main(int argc, char * const argv[])
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE;
 }
-
-
