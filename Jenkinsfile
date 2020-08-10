@@ -386,7 +386,10 @@ try {
           trigger_external_build('IDE/windows-v1.3')
         }
         parallel parallel_containers
-        trigger_external_build('IDE/qa-opensource-automation')
+
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/qa-opensource-automation')
+        }
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants
