@@ -841,6 +841,29 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .Call("rs_systemUsername", PACKAGE = "(embedding)")
 })
 
+# store callback functions to be executed after a specified chunk
+# and return a handle to unregister the chunk
+.rs.addApiFunction("registerChunkCallback", function(chunkName, chunkCode, result, callback = list()) {
+
+   # if one does not already exist, add an environment which will host registered callbacks
+   if (!exists(".rs.notebookChunkCallbacks"))
+      assign(".rs.notebookChunkCallbacks",
+             value = new.env(parent = emptyenv()),
+             envir = .rs.toolsEnv())
+
+   data <- list(chunkName, chunkCode, result, callback)
+   handler <- paste(chunkName, chunkCode,
+                    .Call("rs_createUUID"),
+                    sep="_")
+   assign(handler, value = data, envir = .rs.notebookChunkCallbacks)
+
+   return(handler)
+})
+
+# unregister a chunk callback functions
+.rs.addApiFunction("unregisterChunkCallback", function(id) {
+})
+
 # Tutorial ----
 
 # invoked by rstudioapi to instruct RStudio to open a particular
