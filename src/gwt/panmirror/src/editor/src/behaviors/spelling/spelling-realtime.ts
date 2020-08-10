@@ -175,7 +175,7 @@ function spellingDecorations(
 
   const words = getWords(
     state,
-    from || 2,
+    from || 1,
     to || null,
     spelling.breakWords,
     excluded
