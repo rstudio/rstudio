@@ -14,10 +14,10 @@
  */
 
 
-// TODO: ignoreAll is doing a skip, we need an 'Ignore All' for realtime
-
 // TODO: interactive version of getWords isn't working anymore. perhaps it has some
 // implicit assumption about being on a node boundary? 
+
+// TODO: ignoreAll is doing a skip, we need an 'Ignore All' for realtime
 
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 
@@ -43,6 +43,7 @@ import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
 import { excludedMarks, getWords, spellcheckerWord, editorWord, beginDocPos, endDocPos, findBeginWord, findEndWord } from "./spelling";
+import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 
@@ -107,24 +108,43 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             // start w/ previous state
             let decos = old;
 
+            // collect ranges that had mark changes
+            const markRanges: Array<{ from: number, to: number }> = [];
+            for (const step of tr.steps) {
+              if (step instanceof AddMarkStep || step instanceof RemoveMarkStep) {
+                const markStep = step as any;
+                markRanges.push({ from: markStep.from, to: markStep.to });
+              }
+            }
+
             // create change set from transaction
             let changeSet = ChangeSet.create(oldState.doc);
             changeSet = changeSet.addSteps(newState.doc, tr.mapping.maps);
 
+            // remove ranges are mark ranges + deleted ranges
+            const removeRanges = markRanges.concat(changeSet.changes.map(change =>
+              ({ from: change.fromA, to: change.toA })
+            ));
+
             // remove decorations from deleted ranges (expanding ranges to word boundaries)
-            for (const change of changeSet.changes) {
-              const fromPos = findBeginWord(oldState, change.fromA, ui.spelling.classifyCharacter);
-              const toPos = findEndWord(oldState, change.toA, ui.spelling.classifyCharacter);
+            for (const range of removeRanges) {
+              const fromPos = findBeginWord(oldState, range.from, ui.spelling.classifyCharacter);
+              const toPos = findEndWord(oldState, range.to, ui.spelling.classifyCharacter);
               decos = decos.remove(decos.find(fromPos, toPos));
             }
 
             // map decoration positions to new document
             decos = decos.map(tr.mapping, tr.doc);
 
+            // add ranges are mark ranges + inserted ranges
+            const addRanges = markRanges.concat(changeSet.changes.map(change =>
+              ({ from: change.fromB, to: change.toB })
+            ));
+
             // scan inserted ranges for spelling decorations (don't need to find word boundaries 
             // b/c spellingDecorations already does that)
-            for (const change of changeSet.changes) {
-              decos = decos.add(tr.doc, spellingDecorations(newState, ui.spelling, excluded, change.fromB, change.toB));
+            for (const range of addRanges) {
+              decos = decos.add(tr.doc, spellingDecorations(newState, ui.spelling, excluded, range.from, range.to));
             }
 
             // return decorators
