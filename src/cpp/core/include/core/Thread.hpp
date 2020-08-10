@@ -36,6 +36,11 @@
    {                                                                           \
       boost::lock_guard<boost::recursive_mutex> lock(m);
 
+#define UNIQUE_LOCK_MUTEX(m, lockvar)                                          \
+   try                                                                         \
+   {                                                                           \
+      boost::unique_lock<boost::mutex> lockvar(m);                             \
+
 #define END_LOCK_MUTEX                                                         \
    }                                                                           \
    catch (const boost::thread_resource_error& e)                               \
@@ -45,6 +50,7 @@
       LOG_ERROR(threadError);                                                  \
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
+
 
 namespace rstudio {
 namespace core {
