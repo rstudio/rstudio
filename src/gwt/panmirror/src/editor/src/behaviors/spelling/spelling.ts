@@ -49,11 +49,11 @@ export function getWords(
   let words: EditorWordRange[] = [];
   textNodes.forEach(text => {
 
-    // we need to extend the range forward and back to capture all words (otherwise we could end up
-    // checking 'half words'), so if we are inside a word scan for begin and end
-    const inWord = insideWord(state.doc, text.pos, spelling.classifyCharacter);
-    const beginPos = inWord ? findBeginWord(state, text.pos, spelling.classifyCharacter) : text.pos;
-    const endPos = inWord ? findEndWord(state, text.pos, spelling.classifyCharacter) : text.pos + text.text.length;
+    // we need to extend the range forward and back to capture all word characters (otherwise we 
+    // could end up checking 'half words' if the word included a mark or the cursor started out
+    // in the middle of a word)
+    const beginPos = findBeginWord(state, text.pos, spelling.classifyCharacter);
+    const endPos = findEndWord(state, text.pos, spelling.classifyCharacter);
 
     // verify it overlaps w/ the original range
     if (beginPos >= start && beginPos < end! || endPos >= start && endPos < end!) {
@@ -151,12 +151,6 @@ function findEndWord(state: EditorState, pos: number, classifier: (ch: number) =
   return pos;
 }
 
-
-// detect if we are not at an exact word boundary
-function insideWord(doc: ProsemirrorNode, pos: number, classifier: (ch: number) => number) {
-  return classifier(charAt(doc, pos)) === kCharClassWord &&
-    classifier(charAt(doc, pos - 1)) === kCharClassWord;
-}
 
 // get the chracter code at the specified position, returning character code 32 (a space)
 // for begin/end of document, block boundaries, and non-text leaf nodes
