@@ -1137,4 +1137,36 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("Part One Other Part", vc.toString());
    }
+
+   public void testInverse256FgHandling()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput = inverseOn() + setForegroundIndex(196 /*red*/) +
+         "Inverted with red background " + setCsiCode(AnsiCode.RESET_FOREGROUND) +
+         "Inverted with default background" + inverseOff();
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermInvertColor xtermBgColor196\">Inverted with red background </span>" +
+         "<span class=\"xtermInvertColor xtermInvertBgColor\">Inverted with default background</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("Inverted with red background Inverted with default background", vc.toString());
+   }
+
+   public void testInverse256FgBgHandling()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput = inverseOn() + setForegroundIndex(196 /*red*/) + setBackgroundIndex(228 /*yellow*/) +
+         "Inverted with red background yellow foreground " + setCsiCode(AnsiCode.RESET_FOREGROUND) +
+         setCsiCode(AnsiCode.RESET_BACKGROUND) + "Inverted with default colors" + inverseOff();
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermBgColor196 xtermColor228\">Inverted with red background yellow foreground </span>" +
+         "<span class=\"xtermInvertBgColor xtermInvertColor\">Inverted with default colors</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("Inverted with red background yellow foreground Inverted with default colors", vc.toString());
+   }
 }

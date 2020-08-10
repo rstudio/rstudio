@@ -355,14 +355,13 @@ public class AnsiCode
                }
                else
                {
-                  if (extendedColor == FOREGROUND_EXT)
+                  if ((!inverted_ && extendedColor == FOREGROUND_EXT) || (inverted_ && (extendedColor == BACKGROUND_EXT)))
                   {
                      if (codeVal >= 0 && codeVal <= 255)
                      {
                         currentColor_.setExtended(codeVal);
                         resetForeground();
-                        clazzes_.add(Color.clazzForColorIndex(codeVal,
-                              false /*background*/));
+                        clazzes_.add(Color.clazzForColorIndex(codeVal, false /*background*/));
                      }
                   }
                   else
@@ -371,8 +370,7 @@ public class AnsiCode
                      {
                         currentBgColor_.setExtended(codeVal);
                         resetBackground();
-                        clazzes_.add(Color.clazzForColorIndex(codeVal,
-                              true /*background*/));
+                        clazzes_.add(Color.clazzForColorIndex(codeVal, true /*background*/));
                      }
                   }
                   extendedColor = 0;
@@ -632,16 +630,16 @@ public class AnsiCode
          clazzes_.add(Color.clazzForColorIndex(currentBgColor_.code(), false /*background*/));
          return new Color(true /*extended*/, currentBgColor_.code());
       }
-      else if (currentBgColor_.code() >= BACKGROUND_MIN && currentBgColor_.code() <= BACKGROUND_MAX)
+      else if (Color.isNormalBgColorCode(currentBgColor_.code()))
       {
          int newFg = currentBgColor_.code() - (BACKGROUND_MIN - FOREGROUND_MIN);
-         clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg - FOREGROUND_MIN));
+         clazzes_.add(FOREGROUND_STYLE + (newFg - FOREGROUND_MIN));
          return new Color(false /*extended*/, newFg);
       }
       else
       {
          int newFg = currentBgColor_.code() - (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
-         clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg + 8 - FOREGROUND_INTENSE_MIN));
+         clazzes_.add(FOREGROUND_STYLE + (newFg + 8 - FOREGROUND_INTENSE_MIN));
          return new Color(false /*extended*/, newFg);
       }
    }
@@ -751,6 +749,6 @@ public class AnsiCode
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;
 
-   private Set<String> clazzes_ = new LinkedHashSet<String>();
-   private Set<String> blockClazzes_ = new LinkedHashSet<String>();
+   private final Set<String> clazzes_ = new LinkedHashSet<>();
+   private final Set<String> blockClazzes_ = new LinkedHashSet<>();
 }
