@@ -13,49 +13,69 @@
  *
  */
 
-import { MarkType, Schema } from 'prosemirror-model';
+import { MarkType, Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 
-import { EditorWordSource, EditorWordRange } from "../../api/spelling";
+import uniqby from 'lodash.uniqby';
+
+import { EditorWordSource, EditorWordRange, EditorUISpelling, kCharClassNonWord, kCharClassBoundary, kCharClassWord } from "../../api/spelling";
 import { TextWithPos } from "../../api/text";
 import { PandocMark } from '../../api/mark';
+
+export const beginDocPos = () => 1;
+export const endDocPos = (doc: ProsemirrorNode) => doc.nodeSize - 2;
 
 export function getWords(
   state: EditorState,
   start: number,
   end: number | null,
-  wordBreaker: (text: string) => EditorWordRange[],
-  excluded: MarkType[]
+  spelling: EditorUISpelling,
+  excluded: MarkType[],
 ): EditorWordSource {
 
   // provide default for end
   if (end === null) {
-    end = state.doc.nodeSize - 2;
+    end = endDocPos(state.doc);
   }
-
-  // examine every text node
+  // examine every text node in the range
   const textNodes: TextWithPos[] = [];
   state.doc.nodesBetween(start, end, (node, pos, parent) => {
     if (node.isText && !parent.type.spec.code) {
-      // filter on marks where we shouldn't check spelling (e.g. url, code)
-      if (!excluded.some((markType: MarkType) => markType.isInSet(node.marks))) {
-        textNodes.push({ text: node.textContent, pos });
-      }
+      textNodes.push({ text: node.textContent, pos });
     }
   });
 
   // create word ranges
-  const words: EditorWordRange[] = [];
+  let words: EditorWordRange[] = [];
   textNodes.forEach(text => {
-    if (text.pos >= start && text.pos < end!) {
-      words.push(...wordBreaker(text.text).map(wordRange => {
-        return {
-          start: text.pos + wordRange.start,
-          end: text.pos + wordRange.end
-        };
-      }));
+
+    // we need to extend the range forward and back to capture all words (otherwise we could end up
+    // checking 'half words'), so if we are inside a word scan for begin and end
+    const inWord = insideWord(state.doc, text.pos, spelling.classifyCharacter);
+    const beginPos = inWord ? findBeginWord(state, text.pos, spelling.classifyCharacter) : text.pos;
+    const endPos = inWord ? findEndWord(state, text.pos, spelling.classifyCharacter) : text.pos + text.text.length;
+
+    // verify it overlaps w/ the original range
+    if (beginPos >= start && beginPos < end! || endPos >= start && endPos < end!) {
+      // add the word so long as it's range doesn't overlap w/ an excluded mark
+      if (!excluded.some(markType => state.doc.rangeHasMark(beginPos, endPos, markType))) {
+        const wordsText = state.doc.textBetween(beginPos, endPos);
+        words.push(...spelling.breakWords(wordsText).map(wordRange => {
+          return {
+            start: beginPos + wordRange.start,
+            end: beginPos + wordRange.end
+          };
+        }));
+      }
     }
+
+
+
   });
+
+  // remove duplicate words (could occur due to a word being split into 2 text
+  // nodes b/c of a mark right in the middle of the word)
+  words = uniqby(words, word => word.start);
 
   // return iterator over word range
   return {
@@ -91,4 +111,59 @@ export function hasExcludedMark(state: EditorState, from: number, to: number, ex
   const $to = state.doc.resolve(to);
   const rangeMarks = $from.marksAcross($to) || [];
   return rangeMarks.some(mark => excluded.includes(mark.type));
+}
+
+
+function findBeginWord(state: EditorState, pos: number, classifier: (ch: number) => number) {
+
+  // scan backwards until a non-word character is encountered
+  while (true) {
+    const prevChar = charAt(state.doc, pos - 1);
+    if (classifier(prevChar) === kCharClassNonWord) {
+      break;
+    } else {
+      pos--;
+    }
+  }
+
+  // return the position
+  return pos;
+}
+
+function findEndWord(state: EditorState, pos: number, classifier: (ch: number) => number) {
+
+  // scan forwards until a non-word character is encountered
+  while (true) {
+    const nextChar = charAt(state.doc, pos);
+    if (classifier(nextChar) === kCharClassNonWord) {
+      break;
+    } else {
+      pos++;
+    }
+  }
+
+  // back over boundary characters
+  while (charAt(state.doc, pos - 1) === kCharClassBoundary) {
+    pos--;
+  }
+
+  // return the position
+  return pos;
+}
+
+
+// detect if we are not at an exact word boundary
+function insideWord(doc: ProsemirrorNode, pos: number, classifier: (ch: number) => number) {
+  return classifier(charAt(doc, pos)) === kCharClassWord &&
+    classifier(charAt(doc, pos - 1)) === kCharClassWord;
+}
+
+// get the chracter code at the specified position, returning character code 32 (a space)
+// for begin/end of document, block boundaries, and non-text leaf nodes
+function charAt(doc: ProsemirrorNode, pos: number) {
+  if (pos < beginDocPos() || pos >= (endDocPos(doc))) {
+    return 32; // space for doc boundary
+  } else {
+    return (doc.textBetween(pos, pos + 1, ' ', ' ') || ' ').charCodeAt(0);
+  }
 }

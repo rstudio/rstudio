@@ -19,7 +19,7 @@ import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from "pros
 import { setTextSelection } from "prosemirror-utils";
 
 import { PandocMark } from "../../api/mark";
-import { EditorWordRange, EditorSpellingDoc, EditorWordSource, EditorAnchor, EditorRect } from "../../api/spelling";
+import { EditorWordRange, EditorSpellingDoc, EditorWordSource, EditorAnchor, EditorRect, EditorUISpelling } from "../../api/spelling";
 import { scrollIntoView } from "../../api/scroll";
 
 import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
@@ -29,7 +29,7 @@ import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spellin
 export function getSpellingDoc(
   view: EditorView,
   marks: readonly PandocMark[],
-  wordBreaker: (text: string) => EditorWordRange[]
+  spelling: EditorUISpelling
 ): EditorSpellingDoc {
 
   // alias schema 
@@ -48,7 +48,7 @@ export function getSpellingDoc(
         view.state,
         start,
         end,
-        wordBreaker,
+        spelling,
         excluded
       );
     },

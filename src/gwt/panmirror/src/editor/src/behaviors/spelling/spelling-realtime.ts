@@ -16,11 +16,12 @@
 
 // TODO: more efficient / incremntal checking
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
-// TODO: deal with checking across mark boundaries
 
 // TODO: themed underline color
 
 // TODO: gdocs style spelling text popup
+
+// TODO: editing of document and user dictionary lists
 
 
 import { Schema, MarkType } from "prosemirror-model";
@@ -37,7 +38,7 @@ import { kAddToHistoryTransaction } from "../../api/transaction";
 
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, editorWord, beginDocPos, endDocPos } from "./spelling";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 
@@ -175,9 +176,9 @@ function spellingDecorations(
 
   const words = getWords(
     state,
-    from || 1,
-    to || null,
-    spelling.breakWords,
+    from || beginDocPos(),
+    to || endDocPos(state.doc),
+    spelling,
     excluded
   );
 

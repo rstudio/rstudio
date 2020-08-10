@@ -175,9 +175,13 @@ public class CheckSpelling
          final ArrayList<String> words = new ArrayList<String>();
          final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<SpellingDoc.WordRange>();
 
+         SpellingDoc.WordRange lastWord = null;
          for (SpellingDoc.WordRange w : wordSource)
          {
-            
+            // update last (so that whenever the loop terminates we know the location
+            // of the last word that we iterated over)
+            lastWord = w;
+          
             if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
                continue;
 
@@ -191,6 +195,7 @@ public class CheckSpelling
 
          if (checkWords.size() > 0)
          {
+            final int endCheckedPos = lastWord.end;
             typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
                @Override
@@ -208,9 +213,7 @@ public class CheckSpelling
                      }
                   }
 
-                  SpellingDoc.WordRange lastCheckedWord = checkWords.get(checkWords.size() - 1);
-                  currentPos_ = lastCheckedWord.end;
-                  // Everything spelled correctly, continue
+                  currentPos_ = endCheckedPos;
                   Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
                }
             });
