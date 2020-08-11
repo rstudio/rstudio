@@ -25,17 +25,17 @@ public class EditorThemeChangedEvent extends GwtEvent<EditorThemeChangedEvent.Ha
    {
       void onEditorThemeChanged(EditorThemeChangedEvent event);
    }
-   
+
    public EditorThemeChangedEvent(AceTheme theme)
    {
       theme_ = theme;
    }
-   
+
    public AceTheme getTheme()
    {
       return theme_;
    }
-   
+
    private final AceTheme theme_;
 
    @Override
@@ -50,5 +50,5 @@ public class EditorThemeChangedEvent extends GwtEvent<EditorThemeChangedEvent.Ha
       handler.onEditorThemeChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

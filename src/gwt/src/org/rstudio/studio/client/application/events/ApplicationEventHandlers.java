@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 
 public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
                                                   UnauthorizedEvent.Handler,
@@ -31,7 +31,7 @@ public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
                                                   InvalidClientVersionEvent.Handler,
                                                   ServerOfflineEvent.Handler,
                                                   InvalidSessionEvent.Handler,
-                                                  SessionInitHandler,
+                                                  SessionInitEvent.Handler,
                                                   RestartStatusEvent.Handler,
                                                   FileUploadEvent.Handler,
                                                   AriaLiveStatusEvent.Handler

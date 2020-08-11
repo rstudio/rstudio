@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -76,6 +78,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -92,7 +95,6 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
-import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
@@ -170,8 +172,6 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEv
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocHandler;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
@@ -214,7 +214,8 @@ public class Source implements InsertSourceHandler,
                                RequestDocumentCloseEvent.Handler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
-                               NewDocumentWithCodeEvent.Handler
+                               NewDocumentWithCodeEvent.Handler,
+                               MouseNavigateSourceHistoryEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -248,6 +249,11 @@ public class Source implements InsertSourceHandler,
                      FileIcon icon,
                      String value,
                      String tooltip);
+      void resetDocTabs(String activeId,
+                         String[] ids,
+                         FileIcon[] icons,
+                         String[] names,
+                         String[] paths);
 
       void setDirty(Widget widget, boolean dirty);
 
@@ -284,7 +290,6 @@ public class Source implements InsertSourceHandler,
                  AriaLiveService ariaLive,
                  final Session session,
                  WorkbenchContext workbenchContext,
-                 Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  DependencyManager dependencyManager,
@@ -323,20 +328,10 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
+      if (Desktop.hasDesktopFrame())
+         events_.addHandler(MouseNavigateSourceHistoryEvent.TYPE, this);
 
-      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
-      {
-         public void onSwitchToDoc(SwitchToDocEvent event)
-         {
-            columnManager_.ensureVisible(false);
-            
-            // Fire an activation event just to ensure the activated
-            // tab gets focus
-            commands_.activateSource().execute();
-         }
-      });
-
-      events_.addHandler(SourcePathChangedEvent.TYPE, 
+      events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
       {
          
@@ -370,7 +365,7 @@ public class Source implements InsertSourceHandler,
          }
       });
 
-      events_.addHandler(SourceNavigationEvent.TYPE, 
+      events_.addHandler(SourceNavigationEvent.TYPE,
                         new SourceNavigationHandler() {
          @Override
          public void onSourceNavigation(SourceNavigationEvent event)
@@ -382,7 +377,7 @@ public class Source implements InsertSourceHandler,
          }
       });
 
-      events_.addHandler(CollabEditStartedEvent.TYPE, 
+      events_.addHandler(CollabEditStartedEvent.TYPE,
             new CollabEditStartedEvent.Handler() 
       {
          @Override
@@ -474,6 +469,38 @@ public class Source implements InsertSourceHandler,
    {
       restoreDocuments(session_);
 
+
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!SourceWindowManager.isMainSourceWindow())
+         activeTabKey += "SourceWindow" +
+            pWindowManager_.get().getSourceWindowOrdinal();
+
+      new IntStateValue(MODULE_SOURCE, activeTabKey,
+         ClientState.PROJECT_PERSISTENT,
+         session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value == null)
+               return;
+
+            columnManager_.initialSelect(value);
+
+            // clear the history manager
+            columnManager_.clearSourceNavigationHistory();
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return columnManager_.getPhysicalTabIndex();
+         }
+      };
+
+      AceEditorNative.syncUiPrefs(userPrefs_);
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
       columnManager_.manageCommands(false);
@@ -541,6 +568,10 @@ public class Source implements InsertSourceHandler,
          }
       });
       
+      //  handle mouse button navigations
+      if (!Desktop.hasDesktopFrame())
+         handleMouseButtonNavigations();
+      
       // on macOS, we need to aggressively re-sync commands when a new
       // window is selected (since the main menu applies to both main
       // window and satellites)
@@ -549,40 +580,8 @@ public class Source implements InsertSourceHandler,
          WindowEx.addFocusHandler(
              (FocusEvent event) -> columnManager_.manageCommands(true));
       }
-
-      // get the key to use for active tab persistence; use ordinal-based key
-      // for source windows rather than their ID to avoid unbounded accumulation
-      String activeTabKey = KEY_ACTIVETAB;
-      if (!SourceWindowManager.isMainSourceWindow())
-         activeTabKey += "SourceWindow" + 
-                         pWindowManager_.get().getSourceWindowOrdinal();
-
-      new IntStateValue(MODULE_SOURCE, activeTabKey, 
-                        ClientState.PROJECT_PERSISTENT,
-                        session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Integer value)
-         { 
-            if (value == null)
-               return;
-
-            columnManager_.initialSelect(value);
-
-            // clear the history manager
-            columnManager_.clearSourceNavigationHistory();
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return columnManager_.getPhysicalTabIndex();
-         }
-      };
-      
-      AceEditorNative.syncUiPrefs(userPrefs_);
    }
-   
+
    /**
     * Process the save_files_before_build user preference.
     * If false, ask the user how to handle unsaved changes and act accordingly.
@@ -637,11 +636,6 @@ public class Source implements InsertSourceHandler,
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
       return columnManager_.getCommandPaletteItems();
-   }
-
-   public SourceColumnManager getColumnManager()
-   {
-      return columnManager_;
    }
 
    private boolean consoleEditorHadFocusLast()
@@ -713,6 +707,7 @@ public class Source implements InsertSourceHandler,
          }
       }
       columnManager_.setDocsRestored();
+      columnManager_.beforeShow();
    }
    
    private void openEditPublishedDocs()
@@ -1355,7 +1350,7 @@ public class Source implements InsertSourceHandler,
       // give the window manager a chance to activate the last source pane
       if (pWindowManager_.get().activateLastFocusedSource())
          return;
-      columnManager_.activateColumns(afterActivation);
+      columnManager_.activateColumn("", afterActivation);
    }
    
    @Handler
@@ -1659,11 +1654,6 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   public Display getActiveView()
-   {
-      return (Display)columnManager_.getActive();
-   }
-
    @Handler
    public void onOpenSourceDoc()
    {
@@ -1693,9 +1683,18 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
+
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
+      // The document should only be opened in the last focused window, unless this window is a
+      // satellite that has already been closed. When this is the case, open the new doc in the
+      // main source window.
+      String lastFocusedWindow = pWindowManager_.get().getLastFocusedSourceWindowId();
+      if (!SourceWindowManager.getSourceWindowId().equals(lastFocusedWindow) &&
+          (!SourceWindowManager.isMainSourceWindow() ||
+           pWindowManager_.get().isSourceWindowOpen(lastFocusedWindow)))
+            return;
+
       // determine the type
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
@@ -1756,7 +1755,19 @@ public class Source implements InsertSourceHandler,
                                           newDocCommand);
       }
    }
-   
+
+   @Override
+   public void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event)
+   {
+      if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
+      {
+         if (event.getForward())
+            onSourceNavigateForward();
+         else
+            onSourceNavigateBack();
+      }
+   }
+
    @Handler
    public void onNewRPlumberDoc()
    {
@@ -1784,12 +1795,13 @@ public class Source implements InsertSourceHandler,
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      doOpenSourceFile(event.getFile(),
-                     event.getFileType(),
-                     event.getPosition(),
-                     null, 
-                     event.getNavigationMethod(),
-                     false);
+      doOpenSourceFile(
+            event.getFile(),
+            event.getFileType(),
+            event.getPosition(),
+            null, 
+            event.getNavigationMethod(),
+            false);
    }
    
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
@@ -1821,26 +1833,28 @@ public class Source implements InsertSourceHandler,
                }
          });
    }
-   
+
    @Override
    public void onXRefNavigation(XRefNavigationEvent event)
    {
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(event.getSourceFile());
-      
+
       columnManager_.openFile(
-         event.getSourceFile(), 
-         fileType,
-         new CommandWithArg<EditingTarget>() {
-            @Override
-            public void execute(final EditingTarget editor)
+            event.getSourceFile(),
+            fileType,
+            (final EditingTarget editor) ->
             {
-               TextEditingTarget target = (TextEditingTarget)editor;
-               target.navigateToXRef(event.getXRef());
-            }
-      });
-      
+               // NOTE: we defer execution here as otherwise we might attempt navigation
+               // before the underlying Ace editor has been fully initialized
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  TextEditingTarget target = (TextEditingTarget) editor;
+                  target.navigateToXRef(event.getXRef(), event.getForceVisualMode());
+               });
+            });
+
    }
-   
+
    public void forceLoad()
    {
       AceEditor.preload();
@@ -1885,6 +1899,19 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget target)
          {
+            // helper command to focus after navigation has completed
+            final Command onNavigationCompleted = () ->
+            {
+               if (file.focusOnNavigate())
+               {
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     target.focus();
+                  });
+               }
+            };
+      
+            
             // the rstudioapi package can use the proxy (-1, -1) position to
             // indicate that source navigation should not occur; ie, we should
             // preserve whatever position was used in the document earlier
@@ -1905,12 +1932,19 @@ public class Source implements InsertSourceHandler,
                   
                   if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
+                  {
                       Desktop.getFrame().bringMainFrameToFront();
+                  }
                }
+               
+               SourcePosition startPosition = SourcePosition.create(
+                     position.getLine() - 1,
+                     position.getColumn() - 1);
+               
                navigate(target, 
-                        SourcePosition.create(position.getLine() - 1,
-                                              position.getColumn() - 1),
-                        endPosition);
+                        startPosition,
+                        endPosition,
+                        onNavigationCompleted);
             }
             else if (pattern != null)
             {
@@ -1919,14 +1953,20 @@ public class Source implements InsertSourceHandler,
                {
                   navigate(target, 
                            SourcePosition.create(pos.getRow(), 0),
-                           null);
+                           null,
+                           onNavigationCompleted);
                }
+            }
+            else
+            {
+               onNavigationCompleted.execute();
             }
          }
          
          private void navigate(final EditingTarget target,
                                final SourcePosition srcPosition,
-                               final SourcePosition srcEndPosition)
+                               final SourcePosition srcEndPosition,
+                               final Command onNavigationCompleted)
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1954,9 +1994,12 @@ public class Source implements InsertSourceHandler,
                      boolean highlight = 
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !userPrefs_.highlightSelectedLine().getValue();
-                     target.navigateToPosition(srcPosition,
-                                               false,
-                                               highlight);
+                     
+                     target.navigateToPosition(
+                           srcPosition,
+                           false,
+                           highlight,
+                           onNavigationCompleted);
                   }
                }
             });
@@ -2121,7 +2164,7 @@ public class Source implements InsertSourceHandler,
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateBack());
    }
-   
+
    @Handler
    public void onSourceNavigateForward()
    {
@@ -2130,6 +2173,67 @@ public class Source implements InsertSourceHandler,
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
    
+   // handle mouse forward and back buttons if the mouse is within a source pane
+   private native final void handleMouseButtonNavigations() /*-{
+   try {
+      if ($wnd.addEventListener) {
+         var self = this;
+         function handler(nav) {
+            return $entry(function(evt) {
+               if ((evt.button === 3 || evt.button === 4) &&
+                   self.@org.rstudio.studio.client.workbench.views.source.Source::isMouseEventInSourcePane(Lcom/google/gwt/dom/client/NativeEvent;)(evt)) {  
+                                  
+                  // perform navigation
+                  if (nav) {
+                     if (evt.button === 3) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateBack()();
+                     } else if (evt.button === 4) {
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateForward()(); 
+                     }
+                  }
+                 
+                  // prevent other handling
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                  evt.stopImmediatePropagation()
+                  return false;
+               }
+            });
+         }
+         
+         // mask mousedown from ace to prevent selection, mask mouseup from chrome 
+         // to prevent navigation of the entire browser
+         $wnd.addEventListener('mousedown', handler(false), false);
+         $wnd.addEventListener('mouseup', handler(true), false);
+      }
+   } catch(err) {
+      console.log(err);
+   }
+   }-*/;
+
+   private boolean isPointInSourcePane(int x, int y)
+   {
+      ArrayList<Widget> sourceWidgets = columnManager_.getWidgets(false);
+      for (Widget sourceWidget : sourceWidgets)
+      {
+         Element sourceEl = sourceWidget.getElement();
+         boolean inPane = x > sourceEl.getAbsoluteLeft() &&
+                          x < sourceEl.getAbsoluteRight() &&
+                          y > sourceEl.getAbsoluteTop() &&
+                          y < sourceEl.getAbsoluteBottom();
+         if (inPane)
+            return true;
+      }
+      return false;
+   }
+
+   private boolean isMouseEventInSourcePane(NativeEvent event)
+   {
+      return isPointInSourcePane(event.getClientX(), event.getClientY());
+   }
+
+   
+  
    @Handler
    public void onOpenNextFileOnFilesystem()
    {
@@ -2239,8 +2343,8 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
-   
+
+
    private void attemptSourceNavigation(final SourceNavigation navigation,
                                         final AppCommand retryCommand)
    {
@@ -2271,7 +2375,7 @@ public class Source implements InsertSourceHandler,
             }
          }
       }
-      
+
       // check for code browser navigation
       else if ((navigation.getPath() != null) &&
                navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
@@ -2283,22 +2387,22 @@ public class Source implements InsertSourceHandler,
                                                       navigation.getPosition(),
                                                       retryCommand));
       }
-      
+
       // check for file path navigation
-      else if ((navigation.getPath() != null) && 
+      else if ((navigation.getPath() != null) &&
                !navigation.getPath().startsWith(DataItem.URI_PREFIX) &&
                !navigation.getPath().startsWith(ObjectExplorerHandle.URI_PREFIX))
       {
          FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
-         
+
          // open the file and restore the position
          columnManager_.openFile(file,
                                  fileType,
                                  new SourceNavigationResultCallback<EditingTarget>(
                                                                   navigation.getPosition(),
                                                                   retryCommand));
-      } 
+      }
       else
       {
          // couldn't navigate to this item, retry
@@ -2416,7 +2520,7 @@ public class Source implements InsertSourceHandler,
             executing);
    }
 
-   private class SourceNavigationResultCallback<T extends EditingTarget> 
+   private class SourceNavigationResultCallback<T extends EditingTarget>
                         extends ResultCallback<T,ServerError>
    {
       public SourceNavigationResultCallback(SourcePosition restorePosition,
@@ -2426,7 +2530,7 @@ public class Source implements InsertSourceHandler,
          restorePosition_ = restorePosition;
          retryCommand_ = retryCommand;
       }
-      
+
       @Override
       public void onSuccess(final T target)
       {
@@ -2454,13 +2558,13 @@ public class Source implements InsertSourceHandler,
          if (retryCommand_.isEnabled())
             retryCommand_.execute();
       }
-      
+
       @Override
       public void onCancelled()
       {
          suspendSourceNavigationAdding_ = false;
       }
-      
+
       private final SourcePosition restorePosition_;
       private final AppCommand retryCommand_;
    }
@@ -2751,5 +2855,4 @@ public class Source implements InsertSourceHandler,
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
-  
 }

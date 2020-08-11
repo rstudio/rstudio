@@ -13,17 +13,22 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+// TODO: it may be that we need to not do full re-requests from the filter 
+// when we have streamed results (as they can cause reset of the allCompletions)
 
-import { setTextSelection } from 'prosemirror-utils';
+
+import { Plugin, PluginKey, Transaction, Selection, EditorState } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
 import {
   CompletionHandler,
-  CompletionResult,
   selectionAllowsCompletions,
   kCompletionDefaultMaxVisible,
+  completionsShareScope,
+  performCompletionReplacement,
+  CompletionResult,
+  Completions,
+  CompletionsStream
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -32,7 +37,15 @@ import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } 
 import { EditorUI } from '../../api/ui';
 import { PromiseQueue } from '../../api/promise';
 import { MarkInputRuleFilter } from '../../api/input_rule';
-import { kInsertCompletionTransaction } from '../../api/transaction';
+import { kInsertCompletionTransaction, kPasteTransaction } from '../../api/transaction';
+
+interface CompletionState {
+  handler?: CompletionHandler;
+  result?: CompletionResult;
+  prevToken?: string;
+  isPaste?: boolean;
+}
+
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -43,12 +56,6 @@ export function completionExtension(
   return {
     plugins: () => [new CompletionPlugin(handlers, inputRuleFilter, ui, events)],
   };
-}
-
-interface CompletionState {
-  handler?: CompletionHandler;
-  result?: CompletionResult;
-  prevToken?: string;
 }
 
 const key = new PluginKey<CompletionState>('completion');
@@ -115,6 +122,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
+          const isPaste = tr.getMeta(kPasteTransaction) === true;
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
             // first check if the handler is enabled (null means use inputRuleFilter)
@@ -123,12 +132,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
               if (result) {
                 // check if the previous state had a completion from the same handler
                 let prevToken: string | undefined;
-                if (handler.id === prevState.handler?.id) {
-                  // suppress this handler if the last transaction was a completion result
-                  if (tr.getMeta(kInsertCompletionTransaction)) {
-                    continue;
-                  }
 
+                // If this completion shares scope with the previous completion
+                // and this is a completion transaction, skip
+                if (tr.getMeta(kInsertCompletionTransaction) && completionsShareScope(handler, prevState.handler)) {
+                  continue;
+                }
+
+                if (handler.id === prevState.handler?.id) {
                   // pass the prevToken on if the completion was for the same position
                   if (result.pos === prevState.result?.pos) {
                     prevToken = prevState.result.token;
@@ -136,7 +147,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                 }
 
                 // return state
-                return { handler, result, prevToken };
+                return { handler, result, prevToken, isPaste };
               }
             }
           }
@@ -155,7 +166,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.view = view;
 
           // update completions
-          this.updateCompletions(view);
+          this.updateCompletions(view, true);
         },
 
         destroy: () => {
@@ -191,6 +202,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'Enter':
+                case 'Tab':
                   this.insertCompletion(view, this.selectedIndex);
                   handled = true;
                   break;
@@ -252,10 +264,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
     window.document.addEventListener('focusin', this.clearCompletions);
   }
 
-  private updateCompletions(view: EditorView) {
+  private updateCompletions(view: EditorView, resetSelection: boolean) {
     const state = key.getState(view.state);
 
     if (state?.handler && state?.result) {
+
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
@@ -264,62 +277,89 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // and then apply any filter we have (allows the completer to just return
       // everything from the aysnc query and fall back to the filter for refinement)
       const requestAllCompletions = async () => {
-        return state.result!.completions(view.state).then(completions => {
-          // if we don't have a handler or result then return
-          if (!state.handler || !state.result) {
-            return;
-          }
+
+        // fetch completions
+        const completions = await state.result!.completions(view.state, { isPaste: state.isPaste === true });
+
+        // if we don't have a handler or result then return
+        if (!state.handler || !state.result) {
+          return;
+        }
+
+        // function to update completions
+        const updateCompletions = (updatedCompletions: any[]) => {
 
           // save completions
-          this.setAllCompletions(completions, state.handler.view.horizontal);
+          this.setAllCompletions(updatedCompletions, !!state.handler?.view.horizontal, resetSelection);
 
           // display if the request still maps to the current state
-          if (this.version === requestVersion) {
+          if (state.handler && state.result && this.version === requestVersion) {
             // if there is a filter then call it and update displayed completions
             const displayedCompletions = state.handler.filter
-              ? state.handler.filter(completions, view.state, state.result.token)
+              ? state.handler.filter(this.allCompletions, view.state, state.result.token)
               : null;
             if (displayedCompletions) {
-              this.setDisplayedCompletions(displayedCompletions, state.handler.view.horizontal);
+              this.setDisplayedCompletions(displayedCompletions, !!state.handler.view.horizontal, resetSelection);
             }
 
             this.renderCompletions(view);
           }
-        });
+
+        };
+
+        // if we got an array, just set it. if we got a stream then poll it for it's update
+        if (Array.isArray(completions)) {
+          updateCompletions(completions);
+        } else {
+          const completionStream = completions as CompletionsStream;
+          updateCompletions(completionStream.items);
+          const pollingInterval = setInterval(() => {
+            // if the document has been updated then invalidate
+            if (this.version !== requestVersion) {
+              clearInterval(pollingInterval);
+            } else {
+              // otherwise check the stream
+              const result = completionStream.stream();
+              if (result) {
+                clearInterval(pollingInterval);
+                updateCompletions(result);
+              }
+            }
+          }, 300);
+        }
       };
 
       // first see if we can do this exclusively via filter
-
       if (state.prevToken && state.handler.filter) {
-        this.completionQueue.enqueue(
-          () =>
-            new Promise(resolve => {
-              // display if the request still maps to the current state
-              if (state.handler && state.result && this.version === requestVersion) {
-                const filteredCompletions = state.handler.filter!(
-                  this.allCompletions,
-                  view.state,
-                  state.result.token,
-                  state.prevToken,
-                );
+        this.completionQueue.enqueue(async () => {
 
-                // got a hit from the filter!
-                if (filteredCompletions) {
-                  this.setDisplayedCompletions(filteredCompletions, state.handler.view.horizontal);
-                  this.renderCompletions(view);
+          // display if the request still maps to the current state
+          if (state.handler && state.result && this.version === requestVersion) {
+            const filteredCompletions = state.handler.filter!(
+              this.allCompletions,
+              view.state,
+              state.result.token,
+              state.prevToken,
+            );
 
-                  // couldn't use the filter, do a full request for all completions
-                } else {
-                  return this.completionQueue.enqueue(requestAllCompletions);
-                }
-              }
+            // got a hit from the filter!
+            if (filteredCompletions) {
+              this.setDisplayedCompletions(filteredCompletions, !!state.handler.view.horizontal, resetSelection);
+              this.renderCompletions(view);
 
-              resolve();
-            }),
-        );
+              // couldn't use the filter, do a full request for all completions (so long as we aren't
+              // already waiting on a strea,)
+            } else {
+              await requestAllCompletions();
+            }
+          }
+        });
+
       } else {
+
         // no prevToken or no filter for this handler, request everything
         this.completionQueue.enqueue(requestAllCompletions);
+
       }
     } else {
       // no handler/result for this document state
@@ -380,30 +420,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
         // get replacement from handler
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
         if (replacement) {
-          // create transaction
           const tr = view.state.tr;
-
-          // set selection to area we will be replacing
-          tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-
-          // ensure we have a node
-          if (replacement instanceof ProsemirrorNode) {
-            // combine it's marks w/ whatever is active at the selection
-            const marks = view.state.selection.$head.marks();
-
-            // set selection and replace it
-            tr.replaceSelectionWith(replacement, false);
-
-            // propapate marks
-            marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
-          } else {
-            tr.insertText(replacement);
-          }
-
-          // mark the transaction as an completion insertin
-          tr.setMeta(kInsertCompletionTransaction, true);
-
-          // dispatch
+          performCompletionReplacement(tr, result.pos, replacement);
           view.dispatch(tr);
         }
       }
@@ -433,7 +451,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private clearCompletions() {
-    this.setAllCompletions([]);
+    this.setAllCompletions([], false, true);
     this.hideCompletionPopup();
   }
 
@@ -448,15 +466,19 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setAllCompletions(completions: any[], horizontal = false) {
+  private setAllCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.allCompletions = completions;
-    this.setDisplayedCompletions(completions, horizontal);
+    this.setDisplayedCompletions(completions, horizontal, resetSelection);
   }
 
-  private setDisplayedCompletions(completions: any[], horizontal = false) {
+  private setDisplayedCompletions(completions: any[], horizontal: boolean, resetSelection: boolean) {
     this.completions = completions;
     this.horizontal = !!horizontal;
-    this.selectedIndex = 0;
+
+    // reset selection if requested or if the current index exceeds the # of completions
+    if (resetSelection || this.selectedIndex > (this.completions.length - 1)) {
+      this.selectedIndex = 0;
+    }
   }
 
   private completionPageSize() {
@@ -468,6 +490,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
     }
   }
 }
+
+
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

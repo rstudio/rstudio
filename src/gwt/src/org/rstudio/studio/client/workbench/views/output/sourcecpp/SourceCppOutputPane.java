@@ -66,7 +66,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    { 
       compilePanel_.clearAll();
    }
-   
+
    @Override
    public void showResults(SourceCppState state)
    {

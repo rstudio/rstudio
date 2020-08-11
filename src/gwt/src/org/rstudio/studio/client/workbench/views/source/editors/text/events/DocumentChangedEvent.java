@@ -25,21 +25,21 @@ public class DocumentChangedEvent extends GwtEvent<DocumentChangedEvent.Handler>
    {
       event_ = event;
    }
-   
+
    public AceDocumentChangeEventNative getEvent()
    {
       return event_;
    }
-   
+
    private final AceDocumentChangeEventNative event_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onDocumentChanged(DocumentChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -52,5 +52,5 @@ public class DocumentChangedEvent extends GwtEvent<DocumentChangedEvent.Handler>
       handler.onDocumentChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

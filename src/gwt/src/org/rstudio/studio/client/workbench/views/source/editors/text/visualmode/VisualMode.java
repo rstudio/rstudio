@@ -18,8 +18,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.PreemptiveTaskQueue;
 import org.rstudio.core.client.Rendezvous;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -31,7 +34,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -52,14 +54,14 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -77,7 +79,8 @@ import jsinterop.base.Js;
 
 
 public class VisualMode implements VisualModeEditorSync,
-                                   CommandPaletteEntrySource
+                                   CommandPaletteEntrySource,
+                                   SourceDocAddedEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -100,13 +103,25 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeContext_ = new VisualModePanmirrorContext(docUpdateSentinel_, target_, visualModeExec_, visualModeFormat_);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
-      visualModeWriterOptions_ = new VisualModeMarkdownWriter();
+      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
+      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay_);
+      visualModeContext_ = new VisualModePanmirrorContext(
+         docUpdateSentinel_, 
+         target_, 
+         visualModeExec_, 
+         visualModeChunks_, 
+         visualModeFormat_,
+         visualModeSpelling_
+      );
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
+      
+      // subscribe to source doc added
+      releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
              
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
@@ -120,26 +135,22 @@ public class VisualMode implements VisualModeEditorSync,
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
       }));
-      
-      // sync to user pref changed
-      releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
-         view_.manageCommandUI();
-      }));
    } 
    
    
    @Inject
-   public void initialize(GlobalDisplay globalDisplay,
-                          Commands commands, 
+   public void initialize(Commands commands, 
                           UserPrefs prefs, 
-                          SourceServerOperations source,
-                          Session session)
+                          SourceServerOperations source)
    {
-      globalDisplay_ = globalDisplay;
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
-      sessionInfo_ = session.getSessionInfo();
+   }
+   
+   public void onDismiss()
+   {
+      
    }
    
    private void initWidgets()
@@ -160,6 +171,12 @@ public class VisualMode implements VisualModeEditorSync,
       return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
+   
+   public boolean isVisualEditorActive()
+   {
+      return view_.editorContainer().isWidgetActive(panmirror_);
+   }
+   
    public void activate(ScheduledCommand completed)
    {
       if (!isActivated())
@@ -176,7 +193,7 @@ public class VisualMode implements VisualModeEditorSync,
          completed.execute();
       }
    }
-  
+   
    public void deactivate(ScheduledCommand completed)
    {
       if (isActivated())
@@ -254,7 +271,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
       });
 
-      if (isPanmirrorActive() && (activatingEditor || isDirty_)) {
+      if (isVisualEditorActive() && (activatingEditor || isDirty_)) {
          // set flags
          isDirty_ = false;
          
@@ -275,7 +292,7 @@ public class VisualMode implements VisualModeEditorSync,
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
-                     if (!writerOptions.wrapColumnChanged) 
+                     if (!writerOptions.wrapChanged) 
                      {
                         TextEditorContainer.Changes changes = toEditorChanges(markdown);
                         getSourceEditor().applyChanges(changes, activatingEditor); 
@@ -321,6 +338,14 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (isActivated()) 
       {
+         // new editor content about to be sent to prosemirror, validate that we can edit it
+         String invalid = validateActivation();
+         if (invalid != null)
+         {
+            deactivateForInvalidSource(invalid);
+            return;
+         }
+         
          // get reference to the editing container 
          TextEditorContainer editorContainer = view_.editorContainer();
          
@@ -341,7 +366,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    @Override
-   public void syncFromEditor(CommandWithArg<Boolean> done, boolean focus)
+   public void syncFromEditor(final CommandWithArg<Boolean> done, boolean focus)
    {      
       // flag to prevent the document being set to dirty when loading
       // from source mode
@@ -358,85 +383,126 @@ public class VisualMode implements VisualModeEditorSync,
       
       withPanmirror(() -> {
          
-         String editorCode = getEditorCode();
+         final String editorCode = getEditorCode();
          
-         VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromCode(editorCode);
-         
-         panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
-                                new CommandWithArg<JsObject>() {
+         final VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromCode(editorCode);
+          
+         // serialize these calls (they are expensive on both the server side for the call(s)
+         // to pandoc, and on the client side for initialization of the editor (esp. ace editors)
+         setMarkdownQueue_.addTask(new PreemptiveTaskQueue.Task()
+         {
             @Override
-            public void execute(JsObject obj)
+            public String getLabel()
             {
-               // get result
-               PanmirrorSetMarkdownResult result = Js.uncheckedCast(obj);
-               
-               // bail on error
-               if (result == null)
-               {
+               return target_.getTitle();
+            }
+            
+            @Override
+            public boolean shouldPreempt()
+            {
+               return target_.isActiveDocument();
+            }
+           
+            @Override
+            public void execute(final Command taskDone)
+            {
+               // join done commands
+               final CommandWithArg<Boolean> allDone = (result) -> {
+                  taskDone.execute();
                   if (done != null)
-                     done.execute(false);
-                  return;
-               }
+                     done.execute(result);
+               };
                
-               // update flags
-               isDirty_ = false;
-               loadingFromSource_ = false;
+               panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
+                     new CommandWithArg<JsObject>() {
+                  @Override
+                  public void execute(JsObject obj)
+                  {
+                     // get result
+                     PanmirrorSetMarkdownResult result = Js.uncheckedCast(obj);
+
+                     // bail on error
+                     if (result == null)
+                     {
+                        allDone.execute(false);
+                        return;
+                     }
+
+                     // show warning and terminate if there was unparsed metadata. note that the other 
+                     // option here would be to have setMarkdown send the unparsed metadata back to the
+                     // server to generate yaml, and then include the metadata as yaml at end the of the
+                     // document. this could be done using the method outlined here: 
+                     //   https://github.com/jgm/pandoc/issues/2019 
+                     // specifically using this template:
+                     /*
+                         $if(titleblock)$
+                         $titleblock$
+                         $else$
+                         --- {}
+                         $endif$
+                      */
+                     /// ...with this command line: 
+                     /*
+                         pandoc -t markdown --template=yaml.template foo.md
+                      */
+                     if (JsObject.keys(result.unparsed_meta).length > 0)
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
+                        allDone.execute(false);
+                        return;
+                     }
+
+                     // update flags
+                     isDirty_ = false;
+                     loadingFromSource_ = false;
+
+                     // if pandoc's view of the document doesn't match the editor's we 
+                     // need to reset the editor's code (for both dirty state and 
+                     // so that diffs are efficient)
+                     if (result.canonical != editorCode)
+                     {
+                        getSourceEditor().setCode(result.canonical);
+                        markDirty();
+                     }
+
+                     // completed
+                     allDone.execute(true);
+
+                     Scheduler.get().scheduleDeferred(() -> {
+
+                        // if we are being focused it means we are switching from source mode, in that
+                        // case sync our editing location to what it is in source 
+                        if (focus)
+                        { 
+                           panmirror_.focus();
+                           panmirror_.setEditingLocation(
+                                 visualModeLocation_.getSourceOutlneLocation(), 
+                                 visualModeLocation_.savedEditingLocation()
+                                 ); 
+                        }
+
+                        // show any warnings
+                        PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+                        if (result.unrecognized.length > 0) 
+                        {
+                           view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                        } 
+                        else if (format.warnings.invalidFormat.length() > 0)
+                        {
+                           view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                        }
+                        else if (format.warnings.invalidOptions.length > 0)
+                        {
+                           view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                        }
+                     });          
+                  }
+               });
                
-               // if pandoc's view of the document doesn't match the editor's we 
-               // need to reset the editor's code (for both dirty state and 
-               // so that diffs are efficient)
-               if (result.canonical != editorCode)
-               {
-                  getSourceEditor().setCode(result.canonical);
-                  markDirty();
-               }
-               
-               // completed
-               if (done != null)
-                  done.execute(true);
-               
-               Scheduler.get().scheduleDeferred(() -> {
-                      
-                  // if we are being focused it means we are switching from source mode, in that
-                  // case sync our editing location to what it is in source 
-                  if (focus)
-                  { 
-                     panmirror_.focus();
-                     panmirror_.setEditingLocation(
-                        visualModeLocation_.getSourceOutlneLocation(), 
-                        visualModeLocation_.savedEditingLocation()
-                     ); 
-                  }
-                  
-                  // show any warnings
-                  PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-                  if (result.unrecognized.length > 0) 
-                  {
-                     view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
-                  } 
-                  else if (format.warnings.invalidFormat.length() > 0)
-                  {
-                     view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-                  }
-                  else if (format.warnings.invalidOptions.length > 0)
-                  {
-                     view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
-                  }
-                  else if (visualModeFormat_.isBookdownProjectDocument() && 
-                           !sessionInfo_.getBookdownHasRenumberFootnotes() &&
-                           !bookdownVersionWarningShown)
-                  {
-                     view_.showWarningBar(
-                       "Bookdown package update required for compatibility with visual mode.",
-                       "Learn more", () -> {
-                          globalDisplay_.openRStudioLink("visual_markdown_editing-bookdown-upgrade", false);                   
-                       });
-                     bookdownVersionWarningShown = true;
-                  }
-                  
-               });          
             }
          });
+         
+         
       });
    }
 
@@ -448,7 +514,7 @@ public class VisualMode implements VisualModeEditorSync,
                                  (markdown) -> {
             if  (markdown != null) 
             {
-               if (!writerOptions.wrapColumnChanged)
+               if (!writerOptions.wrapChanged)
                {
                   PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
                   TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
@@ -549,6 +615,16 @@ public class VisualMode implements VisualModeEditorSync,
       panmirror_.execCommand(PanmirrorCommands.ExecutePreviousRmdChunks);
    }
    
+   public void goToNextSection()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToNextSection);
+   }
+   
+   public void goToPreviousSection()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToPreviousSection);
+   }
+   
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {
@@ -569,6 +645,11 @@ public class VisualMode implements VisualModeEditorSync,
    public ToolbarButton getFindReplaceButton()
    {
       return findReplaceButton_;
+   }
+   
+   public void checkSpelling()
+   {
+      visualModeSpelling_.checkSpelling(panmirror_.getSpellingDoc());
    }
 
    public boolean isVisualModePosition(SourcePosition position)
@@ -609,11 +690,44 @@ public class VisualMode implements VisualModeEditorSync,
             
    }
    
+   public String getYamlFrontMatter()
+   {
+      return panmirror_.getYamlFrontMatter();
+   }
+   
+   public boolean applyYamlFrontMatter(String yaml)
+   {
+      panmirror_.applyYamlFrontMatter(yaml);
+      return true;
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {
          panmirror_.activateDevTools();
       });
+   }
+   
+   @Override
+   public void onSourceDocAdded(SourceDocAddedEvent e)
+   {
+      if (e.getDoc().getId() != docUpdateSentinel_.getId())
+         return;
+      
+      // when interactively adding a visual mode doc, make sure we set the focus
+      // (special handling required b/c initialization of visual mode docs is
+      // async so can miss the normal setting of focus)
+      if (e.getMode() == Source.OPEN_INTERACTIVE &&  isActivated() && target_.isActiveDocument())
+      {
+         if (panmirror_ != null) 
+         {
+            panmirror_.focus();
+         }
+         else if (isLoading_)
+         {
+            onReadyHandlers_.add(() -> panmirror_.focus());
+         }
+      }
    }
    
    public void onClosing()
@@ -631,6 +745,10 @@ public class VisualMode implements VisualModeEditorSync,
       return panmirror_.getCommandPaletteItems();
    }
 
+   public void focus()
+   {
+      activate(() -> panmirror_.focus());
+   }
    
    private void manageUI(boolean activate, boolean focus)
    {
@@ -643,12 +761,11 @@ public class VisualMode implements VisualModeEditorSync,
       if (activate)
       {
          String invalid = validateActivation();
-         if (invalid != null) 
+         if (invalid != null)
          {
-            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
-            view_.showWarningBar(invalid);
+            deactivateWithMessage(invalid);
             return;
-         }
+         } 
       }
       
       // manage commands
@@ -711,7 +828,7 @@ public class VisualMode implements VisualModeEditorSync,
          withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
-            if (!isPanmirrorActive()) 
+            if (!isVisualEditorActive()) 
             {
                syncFromEditor(done, focus);
             }
@@ -725,8 +842,7 @@ public class VisualMode implements VisualModeEditorSync,
       // visual mode not enabled (source editor)
       else 
       {
-         // sync any pending edits, then activate the editor
-         syncToEditor(true, () -> {
+         Command activateSourceEditor = () -> {
             
             unmanageCommands();
             
@@ -743,7 +859,20 @@ public class VisualMode implements VisualModeEditorSync,
             
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
-         });  
+         };
+         
+         // if we are deactivating to allow the user to edit invalid source code then don't sync
+         // back to the source editor (as this would have happended b/c we inspected the contents
+         // of the source editor in syncFromEditorIfActivated() and decided we couldn't edit it)
+         if (deactivatingForInvalidSource_)
+         {
+            deactivatingForInvalidSource_ = false;
+            activateSourceEditor.execute();
+         }
+         else
+         {
+            syncToEditor(true, activateSourceEditor);
+         }
       }
    }
 
@@ -773,10 +902,15 @@ public class VisualMode implements VisualModeEditorSync,
       // return changes w/ cursor
       return new TextEditorContainer.Changes(
          changes, 
-         panmirrorCode.cursor != null 
-            ? new TextEditorContainer.Cursor(
-                  panmirrorCode.cursor.row, panmirrorCode.cursor.column
-              )
+         panmirrorCode.location != null 
+            ? new TextEditorContainer.Navigator()
+            {
+               @Override
+               public void onNavigate(DocDisplay docDisplay)
+               {
+                  visualModeLocation_.setSourceOutlineLocation(panmirrorCode.location); 
+               }
+            }
             : null
       );
    }
@@ -917,12 +1051,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return VisualModeUtil.getEditorCode(view_);
    }   
-   
-   // is our widget active in the editor container
-   private boolean isPanmirrorActive()
-   {
-      return view_.editorContainer().isWidgetActive(panmirror_);
-   }
+
    
    private TextEditorContainer.Editor getSourceEditor()
    {
@@ -1032,7 +1161,7 @@ public class VisualMode implements VisualModeEditorSync,
       PanmirrorOptions options = new PanmirrorOptions();
       
       // use embedded codemirror for code blocks
-      options.codemirror = true;
+      options.codeEditor = prefs_.visualMarkdownCodeEditor().getValue();
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
@@ -1054,26 +1183,36 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    private String validateActivation()
-   {
+   { 
       if (this.docDisplay_.hasActiveCollabSession())
       {
          return "You cannot enter visual mode while using realtime collaboration.";
       }
-      else if (visualModeFormat_.isXaringanDocument())
+      else if (BrowseCap.isInternetExplorer())
       {
-         return "Xaringan presentations cannot be edited in visual mode.";
+         return "Visual mode is not supported in Internet Explorer.";
       }
-      else
+      else 
       {
-         return null;
+         return visualModeFormat_.validateSourceForVisualMode();
       }
+   }
+   
+   private void deactivateForInvalidSource(String invalid)
+   {
+      deactivatingForInvalidSource_ = true;
+      deactivateWithMessage(invalid);     
+   }
+
+   private void deactivateWithMessage(String message)
+   {
+      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+      view_.showWarningBar(message);
    }
    
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
-   private SessionInfo sessionInfo_;
-   private GlobalDisplay globalDisplay_;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
@@ -1083,10 +1222,12 @@ public class VisualMode implements VisualModeEditorSync,
    
    private final VisualModePanmirrorFormat visualModeFormat_;
    private final VisualModeChunkExec visualModeExec_;
+   private final VisualModeChunks visualModeChunks_;
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
    private final VisualModeNavigation visualModeNavigation_;
+   private final VisualModeSpelling visualModeSpelling_;
    
    private VisualModeReloadChecker panmirrorFormatConfig_;
    
@@ -1095,6 +1236,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean deactivatingForInvalidSource_ = false;
    
    private PanmirrorWidget panmirror_;
   
@@ -1109,12 +1251,13 @@ public class VisualMode implements VisualModeEditorSync,
    private boolean isLoading_ = false;
    private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<ScheduledCommand>(); 
    
-   
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;
    
-   private static boolean bookdownVersionWarningShown = false;
-  
+   // priority task queue for expensive calls to panmirror_.setMarkdown
+   // (currently active tab bumps itself up in priority)
+   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
+     
 }
 
 

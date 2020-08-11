@@ -13,15 +13,13 @@
  *
  */
 
-import { ListCapabilities } from './list';
-import { LinkTargets, LinkCapabilities, LinkType } from './link';
-import { TableCapabilities } from './table';
-import { ImageDimensions } from './image';
-import { EditorUIImages } from './ui-images';
-
-import { kStyleAttrib } from './pandoc_attr';
-import { EditorRmdChunk } from './rmd';
 import { SkinTone } from './emoji';
+import { EditorRmdChunk } from './rmd';
+import { XRef } from './xref';
+
+import { EditorUIImages } from './ui-images';
+import { EditorDialogs } from './ui-dialogs';
+import { EditorWordBreaker } from './spelling';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -31,23 +29,28 @@ export interface EditorUI {
   context: EditorUIContext;
   prefs: EditorUIPrefs;
   images: EditorUIImages;
+  chunks: EditorUIChunks;
+  spelling: EditorUISpelling;
 }
 
-export interface EditorDialogs {
-  alert: AlertFn;
-  editLink: LinkEditorFn;
-  editImage: ImageEditorFn;
-  editCodeBlock: CodeBlockEditorFn;
-  editList: ListEditorFn;
-  editAttr: AttrEditorFn;
-  editSpan: AttrEditorFn;
-  editDiv: DivAttrEditorFn;
-  editRawInline: RawFormatEditorFn;
-  editRawBlock: RawFormatEditorFn;
-  insertTable: InsertTableFn;
+export interface EditorUIChunks {
+  // create a code chunk editor
+  createChunkEditor: (type: string) => ChunkEditor;
 }
+
+export interface ChunkEditor {
+  editor: unknown;
+  setMode(mode: string): void;
+  executeSelection(): void;
+  element: HTMLElement;
+  destroy(): void;
+}
+
 
 export interface EditorUIContext {
+  // check if we are the active tab
+  isActiveTab: () => boolean;
+
   // get the path to the current document
   getDocumentPath: () => string | null;
 
@@ -86,12 +89,16 @@ export interface EditorUIExecute {
 }
 
 export interface EditorUIMath {
-  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+  typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
+}
+
+export interface EditorUISpelling {
+  breakWords: EditorWordBreaker;
 }
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
-  navigateToXRef: (file: string, xref: string) => void;
+  navigateToXRef: (file: string, xref: XRef) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
@@ -101,230 +108,6 @@ export interface EditorUIPrefs {
   tabKeyMoveFocus: () => boolean;
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;
+  zoteroUseBetterBibtex: () => boolean;
 }
 
-export enum AlertType {
-  Info,
-  Warning,
-  Error,
-}
-
-export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<boolean>;
-
-export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
-
-export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
-
-export type LinkEditorFn = (
-  link: LinkProps,
-  targets: LinkTargets,
-  capabilities: LinkCapabilities,
-) => Promise<LinkEditResult | null>;
-
-export type ImageEditorFn = (
-  image: ImageProps,
-  dims: ImageDimensions | null,
-  editAttributes: boolean,
-) => Promise<ImageEditResult | null>;
-
-export type CodeBlockEditorFn = (
-  codeBlock: CodeBlockProps,
-  attributes: boolean,
-  languages: string[],
-) => Promise<CodeBlockEditResult | null>;
-
-export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
-
-export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
-
-export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
-
-export interface AttrProps {
-  readonly id?: string;
-  readonly classes?: string[];
-  readonly keyvalue?: Array<[string, string]>;
-}
-
-export interface AttrEditResult {
-  readonly action: 'edit' | 'remove';
-  readonly attr: AttrProps;
-}
-
-export interface LinkProps extends AttrProps {
-  readonly type: LinkType;
-  readonly text: string;
-  readonly href: string;
-  readonly heading?: string;
-  readonly title?: string;
-}
-
-export interface LinkEditResult {
-  readonly action: 'edit' | 'remove';
-  readonly link: LinkProps;
-}
-
-export enum ImageType {
-  Image,
-  Figure,
-}
-
-export interface ImageProps extends AttrProps {
-  src: string | null;
-  title?: string;
-  alt?: string;
-  linkTo?: string;
-  width?: number;
-  height?: number;
-  units?: string;
-  lockRatio?: boolean;
-}
-
-export type ImageEditResult = ImageProps;
-
-export interface CodeBlockProps extends AttrProps {
-  lang: string;
-}
-
-export type CodeBlockEditResult = CodeBlockProps;
-
-export enum ListType {
-  Ordered = 'OrderedList',
-  Bullet = 'BulletList',
-}
-
-export interface ListProps {
-  type: ListType;
-  tight: boolean;
-  order: number;
-  number_style: string;
-  number_delim: string;
-}
-
-export type ListEditResult = ListProps;
-
-export interface InsertTableResult {
-  rows: number;
-  cols: number;
-  header: boolean;
-  caption?: string;
-}
-
-export interface RawFormatProps {
-  content: string;
-  format: string;
-}
-
-export interface RawFormatResult {
-  readonly action: 'edit' | 'remove';
-  readonly raw: RawFormatProps;
-}
-
-export interface AttrEditInput {
-  id?: string;
-  classes?: string;
-  style?: string;
-  keyvalue?: string;
-}
-
-export interface AttrKeyvaluePartitioned {
-  base: Array<[string, string]>;
-  partitioned: Array<[string, string]>;
-}
-
-export function attrPropsToInput(attr: AttrProps): AttrEditInput {
-  let style: string | undefined;
-  let keyvalue: string | undefined;
-  if (attr.keyvalue) {
-    const partitionedKeyvalue = attrPartitionKeyvalue([kStyleAttrib], attr.keyvalue);
-    if (partitionedKeyvalue.partitioned.length > 0) {
-      style = partitionedKeyvalue.partitioned[0][1];
-    }
-    keyvalue = attrTextFromKeyvalue(partitionedKeyvalue.base);
-  }
-
-  return {
-    id: asHtmlId(attr.id) || undefined,
-    classes: attr.classes ? attr.classes.map(asHtmlClass).join(' ') : undefined,
-    style,
-    keyvalue,
-  };
-}
-
-export function attrInputToProps(attr: AttrEditInput): AttrProps {
-  const classes = attr.classes ? attr.classes.split(/\s+/) : [];
-  let keyvalue: Array<[string, string]> | undefined;
-  if (attr.keyvalue || attr.style) {
-    let text = attr.keyvalue || '';
-    if (attr.style) {
-      text += `\nstyle=${attr.style}\n`;
-    }
-    keyvalue = attrKeyvalueFromText(text);
-  }
-  return {
-    id: asPandocId(attr.id || ''),
-    classes: classes.map(asPandocClass),
-    keyvalue,
-  };
-}
-
-export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>): AttrKeyvaluePartitioned {
-  const base = new Array<[string, string]>();
-  const partitioned = new Array<[string, string]>();
-
-  keyvalue.forEach(kv => {
-    if (partition.includes(kv[0])) {
-      partitioned.push(kv);
-    } else {
-      base.push(kv);
-    }
-  });
-
-  return {
-    base,
-    partitioned,
-  };
-}
-
-function attrTextFromKeyvalue(keyvalue: Array<[string, string]>) {
-  return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
-}
-
-function attrKeyvalueFromText(text: string): Array<[string, string]> {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
-    const parts = line.trim().split('=');
-    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
-  });
-}
-
-function asHtmlId(id: string | undefined) {
-  if (id) {
-    if (id.startsWith('#')) {
-      return id;
-    } else {
-      return '#' + id;
-    }
-  } else {
-    return id;
-  }
-}
-
-function asHtmlClass(clz: string | undefined) {
-  if (clz) {
-    if (clz.startsWith('.')) {
-      return clz;
-    } else {
-      return '.' + clz;
-    }
-  } else {
-    return clz;
-  }
-}
-
-function asPandocId(id: string) {
-  return id.replace(/^#/, '');
-}
-
-function asPandocClass(clz: string) {
-  return clz.replace(/^\./, '');
-}

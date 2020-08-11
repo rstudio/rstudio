@@ -80,7 +80,7 @@ namespace prefs {
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kPanesAdditionalSourceColumns "additional_source_columns"
-#define kEnableAdditionalColumns "enable_additional_columns"
+#define kAllowSourceColumns "allow_source_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -314,6 +314,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kShowFocusRectangles "show_focus_rectangles"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -325,16 +326,27 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
-#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
-#define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
-#define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
+#define kVisualMarkdownEditingWrap "visual_markdown_editing_wrap"
+#define kVisualMarkdownEditingWrapNone "none"
+#define kVisualMarkdownEditingWrapColumn "column"
+#define kVisualMarkdownEditingWrapSentence "sentence"
+#define kVisualMarkdownEditingWrapAtColumn "visual_markdown_editing_wrap_at_column"
 #define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
+#define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
+#define kVisualMarkdownCodeEditorAce "ace"
+#define kVisualMarkdownCodeEditorCodemirror "codemirror"
+#define kZoteroConnectionType "zotero_connection_type"
+#define kZoteroConnectionTypeLocal "local"
+#define kZoteroConnectionTypeWeb "web"
+#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -360,6 +372,7 @@ namespace prefs {
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
 #define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
+#define kPythonDefaultInterpreter "python_default_interpreter"
 
 class UserPrefValues: public Preferences
 {
@@ -486,10 +499,10 @@ public:
    core::Error setPanes(core::json::Object val);
 
    /**
-    * Temporary flag to enable additional source columns.
+    * Whether to enable the ability to add source columns to display.
     */
-   bool enableAdditionalColumns();
-   core::Error setEnableAdditionalColumns(bool val);
+   bool allowSourceColumns();
+   core::Error setAllowSourceColumns(bool val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
@@ -1452,6 +1465,12 @@ public:
    core::Error setTabKeyMoveFocus(bool val);
 
    /**
+    * Control with keyboard focus displays a visual focus indicator.
+    */
+   bool showFocusRectangles();
+   core::Error setShowFocusRectangles(bool val);
+
+   /**
     * How to deal with changes to documents on idle.
     */
    std::string autoSaveOnIdle();
@@ -1482,22 +1501,22 @@ public:
    core::Error setFullProjectPathInWindowTitle(bool val);
 
    /**
-    * Whether to enable experimental visual markdown editing
+    * Whether to enable visual editing by default for new markdown documents
     */
-   bool enableVisualMarkdownEditingMode();
-   core::Error setEnableVisualMarkdownEditingMode(bool val);
+   bool visualMarkdownEditingIsDefault();
+   core::Error setVisualMarkdownEditingIsDefault(bool val);
 
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   bool visualMarkdownEditingWrapAuto();
-   core::Error setVisualMarkdownEditingWrapAuto(bool val);
+   std::string visualMarkdownEditingWrap();
+   core::Error setVisualMarkdownEditingWrap(std::string val);
 
    /**
     * The column to wrap text at when writing markdown
     */
-   int visualMarkdownEditingWrapColumn();
-   core::Error setVisualMarkdownEditingWrapColumn(int val);
+   int visualMarkdownEditingWrapAtColumn();
+   core::Error setVisualMarkdownEditingWrapAtColumn(int val);
 
    /**
     * Placement of footnotes within markdown output.
@@ -1518,10 +1537,34 @@ public:
    core::Error setVisualMarkdownEditingShowDocOutline(bool val);
 
    /**
+    * Whether to show the margin guide in the visual mode code blocks.
+    */
+   bool visualMarkdownEditingShowMargin();
+   core::Error setVisualMarkdownEditingShowMargin(bool val);
+
+   /**
     * The default visual editing mode font size, in points
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * The name of the editor to use to provide code editing in visual mode
+    */
+   std::string visualMarkdownCodeEditor();
+   core::Error setVisualMarkdownCodeEditor(std::string val);
+
+   /**
+    * Zotero connection type (local or web)
+    */
+   std::string zoteroConnectionType();
+   core::Error setZoteroConnectionType(std::string val);
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   bool zoteroUseBetterBibtex();
+   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Preferred emoji skintone
@@ -1570,6 +1613,12 @@ public:
     */
    core::json::Array browserFixedWidthFonts();
    core::Error setBrowserFixedWidthFonts(core::json::Array val);
+
+   /**
+    * The path to the default Python interpreter
+    */
+   std::string pythonDefaultInterpreter();
+   core::Error setPythonDefaultInterpreter(std::string val);
 
 };
 

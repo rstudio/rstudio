@@ -14,7 +14,7 @@
  */
 
 const { task, context } = require("fuse-box/sparky");
-const { FuseBox, JSONPlugin, CSSPlugin, CSSResourcePlugin, ImageBase64Plugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
+const { FuseBox, CSSPlugin, CSSResourcePlugin, ImageBase64Plugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
 
 const path = require('path');
 const fs = require('fs');
@@ -34,12 +34,11 @@ context(
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
-        sourceMaps: { inline: true , project: true, vendor: vendorSrcMap && !this.isProduction },
+        sourceMaps: { inline: true, project: true, vendor: vendorSrcMap && !this.isProduction },
         plugins: [
           webIndex && WebIndexPlugin({ template: "dev/index.html" }),
-          [ CSSResourcePlugin({ inline: true }), CSSPlugin() ],
+          [CSSResourcePlugin({ inline: true }), CSSPlugin()],
           ImageBase64Plugin(),
-          JSONPlugin(),
           this.isProduction && QuantumPlugin({ uglify: { es6: true }, bakeApiIntoBundle: true, containedAPI: true }),
         ],
       });
@@ -51,7 +50,7 @@ const bundle = (fuse) => {
   return fuse
     .bundle(kLibraryNameLower)
     .instructions("> index.ts")
-} 
+}
 
 const copyDevTools = (outputDir) => {
   // copy prosemirror-devtools
@@ -70,13 +69,13 @@ const watch = (fuse, hmrReload) => {
 }
 
 const dev = (context, webIndex, watchChanges, hmrReload, outputDir) => {
-  
+
   // setup fuse for development
   const fuse = context.getConfig(outputDir, webIndex, true);
   const bdl = bundle(fuse)
   if (watchChanges)
     watch(bdl, hmrReload)
-  
+
   // copy prosemirror-devtools
   copyDevTools(outputDir)
 
@@ -101,7 +100,7 @@ task("ide-dev-watch", async context => {
   await fuse.run();
 })
 
-task("ide-dist",async context => {
+task("ide-dist", async context => {
   await dist(context, kIdeOutputDir).run();
 });
 

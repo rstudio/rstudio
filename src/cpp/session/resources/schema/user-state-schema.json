@@ -200,6 +200,18 @@
             "type": "boolean",
             "default": false,
             "description": "Whether or not the MinGW compiler with GCC 4.9 is used."
+        },
+        "zotero_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero API Key",
+            "description": "Key for making Zotero API calls"  
+        },
+        "zotero_data_dir": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero Data Directory",
+            "description": "Directory containing Zotero data files" 
         }
     }
 }

@@ -156,6 +156,8 @@ public class BuildPane extends WorkbenchPane
       return toolbar;
    }
 
+
+
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
@@ -315,5 +317,4 @@ public class BuildPane extends WorkbenchPane
    private String errorsBuildType_;
 
    private final CompilePanel compilePanel_;
-
 }

@@ -86,7 +86,9 @@ import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
@@ -134,6 +136,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
+import org.rstudio.studio.client.workbench.prefs.views.PythonServerOperations;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchScreen;
@@ -462,6 +465,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PanmirrorPandocServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorCrossrefServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorXRefServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorDOIServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorZoteroServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
       bind(RenvServerOperations.class).to(RemoteServer.class);
@@ -478,6 +483,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SecondaryReposServerOperations.class).to(RemoteServer.class);
       bind(ThemeServerOperations.class).to(RemoteServer.class);
       bind(TutorialServerOperations.class).to(RemoteServer.class);
+      bind(PythonServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class);
 

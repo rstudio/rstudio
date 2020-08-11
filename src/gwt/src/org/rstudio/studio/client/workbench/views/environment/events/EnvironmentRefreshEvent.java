@@ -40,5 +40,5 @@ public class EnvironmentRefreshEvent extends GwtEvent<EnvironmentRefreshEvent.Ha
       handler.onEnvironmentRefresh(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

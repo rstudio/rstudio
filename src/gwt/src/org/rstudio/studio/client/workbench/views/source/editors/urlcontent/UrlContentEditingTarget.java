@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -42,6 +44,7 @@ import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
@@ -56,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -235,6 +239,9 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public void focus()
    {
+      ArrayList<Element> focusableElements = DomUtils.getFocusableElements(asWidget().getElement());
+      if (!focusableElements.isEmpty());
+         focusableElements.get(0).focus();
    }
 
    public void onActivate()
@@ -284,6 +291,14 @@ public class UrlContentEditingTarget implements EditingTarget
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine)
+   {
+   }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  Command onNavigationCompleted)
    {
    }
 
@@ -398,11 +413,13 @@ public class UrlContentEditingTarget implements EditingTarget
       onCompleted.execute();
    }
 
-   public void initialize(SourceDocument document,
+   public void initialize(SourceColumn column,
+                          SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           EditingTargetNameProvider defaultNameProvider)
    {
+      column_ = column;
       doc_ = document;
       view_ = createDisplay();
       name_.addValueChangeHandler(event -> view_.setAccessibleName(name_.getValue()));
@@ -413,7 +430,8 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       return new UrlContentEditingTargetWidget("URL Browser",
             commands_,
-            getContentUrl());
+            getContentUrl(),
+            column_);
    }
 
    public long getFileSizeLimit()
@@ -484,6 +502,7 @@ public class UrlContentEditingTarget implements EditingTarget
       return (ContentItem)doc_.getProperties().cast();
    }
 
+   protected SourceColumn column_;
    protected SourceDocument doc_;
    private Value<Boolean> dirtyState_ = new Value<Boolean>(false);
 

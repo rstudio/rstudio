@@ -104,10 +104,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
-         if (Desktop.isDesktop())
-            restartRequirement.setDesktopRestartRequired(true);
-         else
-            restartRequirement.setUiReloadRequired(true);
+         restartRequirement.setRestartRequired();
       }
       if (!restartRequirement.getDesktopRestartRequired() && !restartRequirement.getUiReloadRequired())
       {

@@ -36,5 +36,5 @@ public class PdfJsLoadEvent extends GwtEvent<PdfJsLoadEvent.Handler>
       handler.onPdfJsLoad(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

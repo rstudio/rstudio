@@ -41,6 +41,8 @@ constexpr const char* kSqliteDatabaseDirectory = "directory";
 constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
+constexpr const char* kDatabaseName = "database";
+constexpr const char* kDefaultDatabaseName = "rstudio";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUser = "user";
@@ -106,7 +108,7 @@ Error readOptions(const std::string& databaseConfigFile,
    else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
       PostgresqlConnectionOptions options;
-      options.database = "rstudio";
+      options.database = settings.get(kDatabaseName, kDefaultDatabaseName);
       options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
       options.user = settings.get(kDatabaseUser, kDefaultPostgresqlDatabaseUser);
       options.password = settings.get(kDatabasePassword, std::string());

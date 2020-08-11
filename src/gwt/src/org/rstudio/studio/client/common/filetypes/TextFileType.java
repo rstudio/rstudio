@@ -507,7 +507,7 @@ public class TextFileType extends EditableFileType
          {
             if (UnicodeLetters.isLetter(c))
                return CharClass.Word;
-            else if (c == '\'')
+            else if (c == '\'' || c == '’')
                return CharClass.Boundary;
             else
                return CharClass.NonWord;

@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -24,6 +25,8 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
@@ -44,16 +47,16 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
 
 
-@JsType
-enum AlertType {
-   Info,
-   Warning,
-   Error
-}
 
 @JsType
 public class PanmirrorDialogs {
    
+   public static class AlertType
+   {
+      public static final int Info = 1;
+      public static final int Warning = 2;
+      public static final int Error = 3;
+   }
   
    public PanmirrorDialogs(PanmirrorUIContext uiContext) {
       this.uiContext_ = uiContext;
@@ -66,19 +69,18 @@ public class PanmirrorDialogs {
       this.globalDisplay_ = globalDisplay;
    }
    
-   public Promise<Boolean> alert(String message, String title, AlertType type) 
-   {   
+   public Promise<Boolean> alert(String message, String title, int type) 
+   {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
-         
          int alertType = MessageDisplay.MSG_INFO;
          switch(type) {
-            case Info:
+            case AlertType.Info:
               alertType = MessageDisplay.MSG_INFO;
               break;
-            case Warning:
+            case AlertType.Warning:
               alertType = MessageDisplay.MSG_WARNING;
               break;
-            case Error:
+            case AlertType.Error:
               alertType = MessageDisplay.MSG_ERROR;
               break;
          }
@@ -206,7 +208,31 @@ public class PanmirrorDialogs {
          }
       );
    }
-
+   
+   public Promise<PanmirrorInsertCiteResult> insertCite(PanmirrorInsertCiteProps citeProps)
+   {
+      return new Promise<PanmirrorInsertCiteResult>(
+         (ResolveCallbackFn<PanmirrorInsertCiteResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorInsertCiteDialog dialog = new PanmirrorInsertCiteDialog(citeProps, (result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal(false);
+         }
+      );
+   }
+   
+   public Promise<Boolean> htmlDialog(String title, String okText, 
+                                      PanmirrorHTMLDialog.CreateFn create,
+                                      JsVoidFunction focus,
+                                      PanmirrorHTMLDialog.ValidateFn validate)
+   {
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         PanmirrorHTMLDialog dialog = new PanmirrorHTMLDialog(title, okText, create, focus, validate, (result) -> {
+            resolve.onInvoke(result);
+         });
+         dialog.showModal();   
+      });
+   }
    
    private GlobalDisplay globalDisplay_; 
    private PanmirrorUIContext uiContext_;

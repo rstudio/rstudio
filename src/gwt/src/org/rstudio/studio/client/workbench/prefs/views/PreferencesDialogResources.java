@@ -20,11 +20,13 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface PreferencesDialogResources extends ClientBundle
 {
+
    interface Styles extends CssResource
    {
       String panelContainer();
       String panelContainerNoChooser();
       String paneLayoutTable();
+      String label();
       String themeChooser();
       String sshKeyWidget();
       String usingVcsHelp();
@@ -32,6 +34,9 @@ public interface PreferencesDialogResources extends ClientBundle
       String alwaysCompletePanel();
       String themeInfobar();
       String themeInfobarShowing();
+      String selectWidgetHelp();
+      String smallerText();
+      String visualModeWrapSelectWidget();
    }
 
    @Source("PreferencesDialog.css")
@@ -55,8 +60,12 @@ public interface PreferencesDialogResources extends ClientBundle
    @Source("iconAccessibility_2x.png")
    ImageResource iconAccessibility2x();
 
-   @Source("iconAddSourcePane_2x.png")
-   ImageResource iconAddSourcePane2x();
+   @Source("iconAddSourcePane.png")
+   ImageResource iconAddSourcePane();
+
+   @Source("iconRemoveSourcePane.png")
+   ImageResource iconRemoveSourcePane();
+
    @Source("iconConsole_2x.png")
    ImageResource iconConsole2x();
 }

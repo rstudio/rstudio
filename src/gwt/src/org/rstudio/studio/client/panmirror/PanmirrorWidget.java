@@ -56,6 +56,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocat
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
@@ -413,6 +414,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return findReplace_;
    }
    
+   public PanmirrorSpellingDoc getSpellingDoc()
+   {
+      return editor_.getSpellingDoc();
+   }
+   
    public void showOutline(boolean show, double width)
    {
       showOutline(show, width, false);
@@ -486,6 +492,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getHTML();
    }
    
+   public PanmirrorFormat getEditorFormat()
+   {
+      return editor_.getEditorFormat();
+   }
+   
    public PanmirrorPandocFormat getPandocFormat()
    {
       return editor_.getPandocFormat();
@@ -540,6 +551,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             }
          });
       });
+   }
+   
+   public String getYamlFrontMatter()
+   {
+      return editor_.getYamlFrontMatter();
+   }
+
+   public void applyYamlFrontMatter(String yaml)
+   {
+      editor_.applyYamlFrontMatter(yaml);
    }
    
    public void activateDevTools() 

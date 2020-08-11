@@ -23,8 +23,9 @@ import * as React from 'react';
 import { EditorUI } from '../../api/ui';
 import { AttrEditOptions } from '../../api/attr_edit';
 import { CommandFn } from '../../api/command';
-import { AttrProps } from '../../api/ui';
+import { AttrProps } from '../../api/ui-dialogs';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
+import { PandocExtensions } from '../../api/pandoc';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
@@ -50,16 +51,16 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
     <div className="pm-attr-edit-decoration pm-surface-widget-text-color " style={props.style}>
       {props.tags.length
         ? props.tags.map(tag => {
-            return (
-              <span
-                key={tag}
-                className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
-                onClick={onClick}
-              >
-                {tag}
-              </span>
-            );
-          })
+          return (
+            <span
+              key={tag}
+              className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
+              onClick={onClick}
+            >
+              {tag}
+            </span>
+          );
+        })
         : null}
       {props.editFn(props.view.state) ? (
         <span
@@ -77,7 +78,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
 export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
-  constructor(ui: EditorUI, editors: AttrEditOptions[]) {
+  constructor(ui: EditorUI, pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) {
     super({
       key,
       state: {
@@ -119,7 +120,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           editor.offset = editor.offset || { top: 0, right: 0 };
 
           // get editFn
-          const editFn = (editorUI: EditorUI) => attrEditCommandFn(editorUI, editors);
+          const editFn = (editorUI: EditorUI) => attrEditCommandFn(editorUI, pandocExtensions, editors);
 
           // get attrs/tags
           const node = parentWithAttrs.node;

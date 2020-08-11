@@ -9,7 +9,9 @@
       "outputDocFile": "/dev/null",
       "additionalIncludes": [
          "<core/system/Xdg.hpp>",
-         "<session/SessionConstants.hpp>"
+         "<session/SessionConstants.hpp>",
+         "<core/http/Request.hpp>",
+         "<core/http/Cookie.hpp>"
       ]
    },
    "options": {
@@ -274,6 +276,14 @@
             "description": "Specifies whether or not package builds output to the package project folder."
          },
          {
+            "name": {"constant": "kRootPathSessionOption", "value": "session-url-path-prefix"},
+            "memberName": "rootPath_",
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
+            "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
+         },
+         {
             "name": {"constant": "kUseSecureCookiesSessionOption", "value": "session-use-secure-cookies"},
             "type": "bool",
             "isHidden": true,
@@ -282,25 +292,14 @@
             "description": "Indicates whether or not to mark cookies as secure."
          },
          {
-            "name": {"constant": "kIFrameEmbeddingSessionOption", "value": "session-iframe-embedding"},
+            "name": {"constant": "kSameSiteSessionOption", "value": "session-same-site"},
             "isHidden": true,
-            "type": "bool",
-            "memberName": "iFrameEmbedding_",
-            "defaultValue": false,
-            "description": "Indicates whether or not to mark cookies as samesite=none for iFrame embedding."
-         },
-         {
-            "name": {"constant": "kLegacyCookiesSessionOption", "value": "session-legacy-cookies"},
-            "isHidden": true,
-            "type": "bool",
-            "memberName": "legacyCookies_",
-            "defaultValue": false,
-            "description": "Indicates whether or not RStudio should revert to legacy behavior by not setting the SameSite cookie attribute and to emit a second legacy cookie when iFrame embedding is in use."
-         },
-         {
-            "type": "bool",
-            "accessorName": "iFrameLegacyCookies",
-            "accessorValue": {"code": "return iFrameEmbedding_ && legacyCookies_;"}
+            "memberName": "sameSite_",
+            "type": "rstudio::core::http::Cookie::SameSite",
+            "tempName": "wwwSameSite",
+            "tempType": "int",
+            "defaultValue": 0,
+            "description": "The value of the SameSite attribute used in cookie issued by the session."
          },
          {
             "name": "restrict-directory-view",
@@ -498,7 +497,7 @@
             "name": "r-compatible-graphics-engine-version",
             "type": "int",
             "memberName": "rCompatibleGraphicsEngineVersion_",
-            "defaultValue": 12,
+            "defaultValue": 13,
             "description": "Specifies the maximum graphics engine version that this version of RStudio is compatible with."
          },
          {

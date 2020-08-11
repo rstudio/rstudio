@@ -174,6 +174,17 @@ var VirtualScroller;
     },
 
     _scrolledToBottom: function() {
+      return Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 1;
+    },
+
+    // this BOUND callback function
+    _jumpToBottom: function() {
+      var i;
+
+      if (this.buckets.length <= this._MAX_VISIBLE_BUCKETS)
+        return;
+
+      // hide the current shown window
       for (i = 0; i < this.visibleBuckets.length; i++) {
         this._hideBucket(this.visibleBuckets[i]);
       }

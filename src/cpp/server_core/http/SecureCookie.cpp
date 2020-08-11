@@ -30,7 +30,6 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Util.hpp>
-#include <core/http/Cookie.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/Crypto.hpp>
@@ -91,17 +90,16 @@ Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
       return error;
 
    // base 64 encode it
-   return core::system::crypto::base64Encode(hmac, pHMAC);
+   return core::system::crypto::base64Encode(hmac, *pHMAC);
 }
 
 http::Cookie createSecureCookie(const std::string& name,
                                 const std::string& value,
                                 const core::http::Request& request,
                                 const boost::posix_time::time_duration& validDuration,
-                                const std::string& path,
-                                bool secure,
-                                bool iFrameEmbedding,
-                                bool legacyCookies)
+                                const std::string& path /* = "/"*/,
+                                bool secure /*= false*/,
+                                http::Cookie::SameSite sameSite /*= SameSite::Undefined*/)
 {
    // generate expires string
    std::string expires = http::util::httpDate(
@@ -133,17 +131,16 @@ http::Cookie createSecureCookie(const std::string& name,
                        name,
                        signedCookieValue,
                        path,
-                       http::Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
+                       sameSite,
                        true, // HTTP only
                        secure);
 }
 
 std::string readSecureCookie(const core::http::Request& request,
-                             const std::string& name,
-                             bool iFrameLegacyCookies)
+                             const std::string& name)
 {
    // get the signed cookie value
-   std::string signedCookieValue = request.cookieValue(name, iFrameLegacyCookies);
+   std::string signedCookieValue = request.cookieValue(name);
    if (signedCookieValue.empty())
       return std::string();
 
@@ -214,9 +211,7 @@ void set(const std::string& name,
          const std::string& path,
          http::Response* pResponse,
          bool secure,
-         bool iFrameEmbedding,
-         bool legacyCookies,
-         bool iFrameLegacyCookies)
+         http::Cookie::SameSite sameSite)
 {
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
@@ -225,15 +220,14 @@ void set(const std::string& name,
                                             validDuration,
                                             path,
                                             secure,
-                                            iFrameEmbedding,
-                                            legacyCookies);
+                                            sameSite);
 
    // expire from browser as requested
    if (expiresFromNow.is_initialized())
       cookie.setExpires(*expiresFromNow);
 
    // add to response
-   pResponse->addCookie(cookie, iFrameLegacyCookies);
+   pResponse->addCookie(cookie);
 }
 
 void remove(const http::Request& request,
@@ -241,9 +235,7 @@ void remove(const http::Request& request,
             const std::string& path,
             core::http::Response* pResponse,
             bool secure,
-            bool iFrameEmbedding,
-            bool legacyCookies,
-            bool iFrameLegacyCookies)
+            http::Cookie::SameSite sameSite)
 {
    // create cookie
    http::Cookie cookie(request, name, std::string(), path);
@@ -262,10 +254,10 @@ void remove(const http::Request& request,
       cookie.setSecure();
    }
 
-   cookie.setSameSite(http::Cookie::selectSameSite(legacyCookies, iFrameEmbedding));
+   cookie.setSameSite(sameSite);
 
    // add to response
-   pResponse->addCookie(cookie, iFrameLegacyCookies);
+   pResponse->addCookie(cookie);
 }
 
 const std::string& getKey()

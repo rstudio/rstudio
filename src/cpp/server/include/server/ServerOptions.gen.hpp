@@ -28,6 +28,8 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 #include <monitor/MonitorConstants.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Cookie.hpp>
 
 
 namespace rstudio {
@@ -50,6 +52,7 @@ protected:
                 boost::program_options::options_description* pDatabase,
                 boost::program_options::options_description* pAuth,
                 boost::program_options::options_description* pMonitor,
+                std::string* wwwSameSite,
                 std::vector<std::string>* pWwwAllowedOrigins,
                 std::string* pAuthLoginPageHtml,
                 std::string* pAuthRdpLoginPageHtml,
@@ -99,8 +102,8 @@ protected:
       ("www-port",
       value<std::string>(&wwwPort_)->default_value(""),
       "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL).")
-      ("www-url-path-prefix",
-      value<std::string>(&wwwUrlPathPrefix_)->default_value("/"),
+      ("www-root-path",
+      value<std::string>(&wwwRootPath_)->default_value(kRequestDefaultRootPath),
       "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL.")
       ("www-local-path",
       value<std::string>(&wwwLocalPath_)->default_value("www"),
@@ -120,12 +123,9 @@ protected:
       ("www-verify-user-agent",
       value<bool>(&wwwVerifyUserAgent_)->default_value(true),
       "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server.")
-      ("www-iframe-embedding",
-      value<bool>(&wwwIFrameEmbedding_)->default_value(false),
-      "Indicates whether or not RStudio is embedded into an iFrame so cookies' SameSite behavior can be adjusted.")
-      ("www-legacy-cookies",
-      value<bool>(&wwwLegacyCookies_)->default_value(false),
-      "Indicates whether or not RStudio should revert to legacy behavior by not setting the SameSite cookie attribute and to emit a second legacy cookie when iFrame embedding is in use.")
+      ("www-same-site",
+      value<std::string>(wwwSameSite)->default_value(""),
+      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
       ("www-frame-origin",
       value<std::string>(&wwwFrameOrigin_)->default_value("none"),
       "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled.")
@@ -242,16 +242,14 @@ public:
    core::FilePath serverDataDir() const { return core::FilePath(serverDataDir_); }
    std::vector<std::string> serverAddHeaders() const { return serverAddHeaders_; }
    std::string wwwAddress() const { return wwwAddress_; }
-   std::string wwwUrlPathPrefix() const { return wwwUrlPathPrefix_; }
+   std::string wwwRootPath() const { return wwwRootPath_; }
    std::string wwwLocalPath() const { return wwwLocalPath_; }
    core::FilePath wwwSymbolMapsPath() const { return core::FilePath(wwwSymbolMapsPath_); }
    bool wwwUseEmulatedStack() const { return wwwUseEmulatedStack_; }
    int wwwThreadPoolSize() const { return wwwThreadPoolSize_; }
    bool wwwProxyLocalhost() const { return wwwProxyLocalhost_; }
    bool wwwVerifyUserAgent() const { return wwwVerifyUserAgent_; }
-   bool wwwIFrameEmbedding() const { return wwwIFrameEmbedding_; }
-   bool wwwLegacyCookies() const { return wwwLegacyCookies_; }
-   bool wwwIFrameLegacyCookies() const { return wwwIFrameEmbedding_ && wwwLegacyCookies_; }
+   rstudio::core::http::Cookie::SameSite wwwSameSite() const { return wwwSameSite_; }
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
@@ -292,15 +290,14 @@ protected:
    std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_;
    std::string wwwPort_;
-   std::string wwwUrlPathPrefix_;
+   std::string wwwRootPath_;
    std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
-   bool wwwIFrameEmbedding_;
-   bool wwwLegacyCookies_;
+   rstudio::core::http::Cookie::SameSite wwwSameSite_;
    std::string wwwFrameOrigin_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;

@@ -190,9 +190,11 @@
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
 #include "modules/panmirror/SessionPanmirror.hpp"
+#include "modules/zotero/SessionZotero.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
+#include "modules/SessionPythonEnvironments.hpp"
 #include "modules/SessionCrashHandler.hpp"
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
@@ -574,11 +576,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
       (modules::panmirror::initialize)
+      (modules::zotero::initialize)
       (modules::rstudioapi::initialize)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
       (modules::reticulate::initialize)
+      (modules::python_environments::initialize)
       (modules::tests::initialize)
       (modules::jobs::initialize)
       (modules::themes::initialize)

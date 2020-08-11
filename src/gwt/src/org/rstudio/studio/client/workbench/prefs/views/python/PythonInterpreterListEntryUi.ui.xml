@@ -1,0 +1,40 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+   <ui:style>
+
+   .iconContainer {
+      width: 24px;
+      height: 24px;
+      text-align: center;
+      vertical-align: middle;
+   }
+   
+   .icon {
+   }
+   
+   .version {
+      padding: 4px;
+      min-width: 100px;
+   }
+   
+   .path {
+      padding: 4px;
+   }
+   
+   </ui:style>
+
+   <g:HorizontalPanel>
+
+      <g:FlowPanel styleName='{style.iconContainer}'>
+         <g:Image styleName='{style.icon}' ui:field="uiIcon_"></g:Image>
+      </g:FlowPanel>
+
+      <g:Label styleName='{style.version}' ui:field="uiVersion_"></g:Label>
+
+      <g:Label styleName='{style.path}' ui:field="uiPath_"></g:Label>
+
+   </g:HorizontalPanel>
+
+</ui:UiBinder> 

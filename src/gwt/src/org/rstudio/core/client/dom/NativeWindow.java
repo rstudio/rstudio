@@ -20,7 +20,7 @@ import com.google.gwt.dom.client.Document;
 public class NativeWindow extends JavaScriptObject
 {
    protected NativeWindow() {}
-   
+
    public static final native NativeWindow get() /*-{
       return $wnd;
    }-*/;
@@ -28,7 +28,7 @@ public class NativeWindow extends JavaScriptObject
    public static final native NativeWindow get(Document doc) /*-{
       return doc.defaultView || doc.parentWindow;
    }-*/;
-   
+
    public final native Document getDocument() /*-{
       return this.document;
    }-*/;
@@ -60,7 +60,7 @@ public class NativeWindow extends JavaScriptObject
    public final native void focus() /*-{
       this.focus();
    }-*/;
-   
+
    public final native void print() /*-{
       this.print();
    }-*/;

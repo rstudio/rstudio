@@ -45,9 +45,10 @@ export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
   rmdExtensions?: string;
-  wrapColumn?: number;
+  wrap?: string;
   doctypes?: string[];
-  references?: string;
+  references_location?: string;
+  references_prefix?: string;
   canonical?: boolean;
 }
 
@@ -166,10 +167,10 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
     }
   };
 
-  const readWrapColumn = () => {
-    const wrapColumn = source.wrap_column || source['fill-column'];
-    if (wrapColumn) {
-      return parseInt(asString(wrapColumn), 10) || undefined;
+  const readWrap = () => {
+    const wrap = source.wrap || source.wrap_column || source['fill-column'];
+    if (wrap) {
+      return asString(wrap);
     } else {
       return undefined;
     }
@@ -185,14 +186,19 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   if (source.rmd_extensions) {
     formatConfig.rmdExtensions = asString(source.rmd_extensions);
   }
-  formatConfig.wrapColumn = readWrapColumn();
+  formatConfig.wrap = readWrap();
   if (source.doctype) {
     formatConfig.doctypes = asString(source.doctype)
       .split(',')
       .map(str => str.trim());
   }
   if (source.references) {
-    formatConfig.references = asString(source.references);
+    if (typeof source.references === 'string') {
+      formatConfig.references_location = source.references;
+    } else {
+      formatConfig.references_location = source.references.location;
+      formatConfig.references_prefix = source.references.prefix;
+    }
   }
   if (source.canonical) {
     formatConfig.canonical = asBoolean(source.canonical);
@@ -328,6 +334,11 @@ export function splitPandocFormatString(format: string) {
 
 export function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
   return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
+}
+
+// e.g. [My Heading] to link to ## My Heading
+export function hasShortcutHeadingLinks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.implicit_header_references && pandocExtensions.shortcut_reference_links;
 }
 
 function commonmarkExtensions() {

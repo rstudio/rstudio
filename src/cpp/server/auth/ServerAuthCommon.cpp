@@ -43,18 +43,18 @@ namespace common {
 
 std::string getUserIdentifier(const core::http::Request& request)
 {
-   return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie, options().wwwIFrameLegacyCookies());
+   return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
 }
 
 bool mainPageFilter(const core::http::Request& request,
-                    core::http::Response* pResponse,
-                    UserIdentifierGetter userIdentifierGetter)
+                    core::http::Response* pResponse)
 {
    // check for user identity, if we have one then allow the request to proceed
-   std::string userIdentifier = userIdentifierGetter(request);
+   std::string userIdentifier = auth::handler::getUserIdentifier(request, true);
    if (userIdentifier.empty())
    {
       // otherwise redirect to sign-in
+      clearSignInCookies(request, pResponse);
       redirectToLoginPage(request, pResponse, request.uri());
       return false;
    }
@@ -86,24 +86,22 @@ void signIn(const core::http::Request& request,
             const std::string& formAction,
             std::map<std::string,std::string> variables /*= {}*/)
 {
-   // any attempt to load the sign in page with a valid cookie is sent back
-   std::string cookieUsername = core::http::secure_cookie::readSecureCookie(request, kUserIdCookie, options().wwwIFrameLegacyCookies());
-   if (!cookieUsername.empty())
+   // any attempt to load the sign in page with a valid cookie is sent back (multi-tab sign in)
+   std::string username = auth::handler::getUserIdentifier(request, true);
+   if (!username.empty())
    {
       pResponse->setMovedTemporarily(request, "./");
       return;
    }
 
    // re-use existing cookie refreshing its expiration or set new if not present
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options().wwwIFrameLegacyCookies());
+   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
    csrfToken = core::http::setCSRFTokenCookie(request,
                                               getCookieExpiry(false),
                                               csrfToken,
-                                              server::options().wwwUrlPathPrefix(),
+                                              request.rootPath(),
                                               isSecureCookie(request),
-                                              server::options().wwwIFrameEmbedding(),
-                                              server::options().wwwLegacyCookies(),
-                                              server::options().wwwIFrameLegacyCookies(),
+                                              server::options().wwwSameSite(),
                                               pResponse);
    // add the token to the sign-in form
    variables["csrf_token"] = csrfToken;
@@ -115,7 +113,7 @@ bool validateSignIn(const core::http::Request& request,
                     core::http::Response* pResponse)
 {
    // a csrf token should always be present on the sign in form
-   if (!core::http::validateCSRFForm(request, pResponse, server::options().wwwIFrameLegacyCookies()))
+   if (!core::http::validateCSRFForm(request, pResponse))
    {
       return false;
    }
@@ -227,7 +225,7 @@ std::string signOut(const core::http::Request& request,
                     std::string signOutUrl)
 {
    // validate sign-out request
-   if (!core::http::validateCSRFForm(request, pResponse, server::options().wwwIFrameLegacyCookies()))
+   if (!core::http::validateCSRFForm(request, pResponse))
    {
       return "";
    }
@@ -247,12 +245,12 @@ std::string signOut(const core::http::Request& request,
 
    // invalidate the auth cookie so that it can no longer be used
    clearSignInCookies(request, pResponse);
-   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie, options().wwwIFrameLegacyCookies()));
+   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
 
    // adjust sign out url point internally
    if (!signOutUrl.empty() && signOutUrl[0] == '/')
    {
-      signOutUrl = core::http::URL::uncomplete(request.uri(), signOutUrl);
+      signOutUrl = core::http::URL::uncomplete(request.baseUri(), signOutUrl);
    }
    pResponse->setMovedTemporarily(request, signOutUrl);
    return username;
@@ -270,28 +268,22 @@ void clearSignInCookies(const core::http::Request& request,
                         core::http::Response* pResponse)
 {
    bool secureCookie = isSecureCookie(request);
-   std::string path = server::options().wwwUrlPathPrefix();
-   bool iFrameEmbedding = server::options().wwwIFrameEmbedding();
-   bool legacyCookies = server::options().wwwLegacyCookies();
-   bool iFrameLegacyCookies = server::options().wwwIFrameLegacyCookies();
+   std::string path = request.rootPath();
+   core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    core::http::secure_cookie::remove(request,
                                      kUserIdCookie,
                                      path,
                                      pResponse,
                                      secureCookie,
-                                     iFrameEmbedding,
-                                     legacyCookies,
-                                     iFrameLegacyCookies);
+                                     sameSite);
 
    core::http::secure_cookie::remove(request,
                                      kUserListCookie,
                                      path,
                                      pResponse,
                                      secureCookie,
-                                     iFrameEmbedding,
-                                     legacyCookies,
-                                     iFrameLegacyCookies);
+                                     sameSite);
 
    if (options().authTimeoutMinutes() > 0)
    {
@@ -301,9 +293,7 @@ void clearSignInCookies(const core::http::Request& request,
                                         path,
                                         pResponse,
                                         secureCookie,
-                                        iFrameEmbedding,
-                                        legacyCookies,
-                                        iFrameLegacyCookies);
+                                        sameSite);
    }
 }
 
@@ -341,14 +331,12 @@ void setSignInCookies(const core::http::Request& request,
                       bool staySignedIn,
                       core::http::Response* pResponse)
 {
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options().wwwIFrameLegacyCookies());
+   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
    bool secureCookie = isSecureCookie(request);
    boost::posix_time::time_duration validity = getCookieExpiry(true).get();
    boost::optional<boost::posix_time::time_duration> expiry = getCookieExpiry(staySignedIn);
-   std::string path = server::options().wwwUrlPathPrefix();
-   bool iFrameEmbedding = server::options().wwwIFrameEmbedding();
-   bool legacyCookies = server::options().wwwLegacyCookies();
-   bool iFrameLegacyCookies = server::options().wwwIFrameLegacyCookies();
+   std::string path = request.rootPath();
+   core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    // set the secure user id cookie
    core::http::secure_cookie::set(kUserIdCookie,
@@ -359,9 +347,7 @@ void setSignInCookies(const core::http::Request& request,
                                   path,
                                   pResponse,
                                   secureCookie,
-                                  iFrameEmbedding,
-                                  legacyCookies,
-                                  iFrameLegacyCookies);
+                                  sameSite);
 
    // set a cookie that is tied to the specific user list we have written
    // if the user list ever has conflicting changes (e.g. a user is locked),
@@ -374,9 +360,7 @@ void setSignInCookies(const core::http::Request& request,
                                   path,
                                   pResponse,
                                   secureCookie,
-                                  iFrameEmbedding,
-                                  legacyCookies,
-                                  iFrameLegacyCookies);
+                                  sameSite);
 
    if (options().authTimeoutMinutes() > 0)
    {
@@ -386,11 +370,11 @@ void setSignInCookies(const core::http::Request& request,
                                        kPersistAuthCookie,
                                        staySignedIn ? "1" : "0",
                                        path,
-                                       core::http::Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
+                                       sameSite,
                                        true,
                                        secureCookie);
       persistCookie.setExpires(validity);
-      pResponse->addCookie(persistCookie, options().wwwIFrameLegacyCookies());
+      pResponse->addCookie(persistCookie);
    }
    // set or refresh the forgery detection cookie
    // if the csrf token was set on the sign-in page, 
@@ -403,9 +387,7 @@ void setSignInCookies(const core::http::Request& request,
                                   csrfToken,
                                   path,
                                   secureCookie,
-                                  iFrameEmbedding,
-                                  legacyCookies,
-                                  iFrameLegacyCookies,
+                                  sameSite,
                                   pResponse);
 }
 
@@ -421,7 +403,7 @@ void prepareHandler(handler::Handler& handler,
    }
    handler.getUserIdentifier = boost::bind(getUserIdentifierArg, _1);
    handler.userIdentifierToLocalUsername = userIdentifierToLocalUsernameArg;
-   handler.mainPageFilter = boost::bind(mainPageFilter, _1, _2, getUserIdentifierArg);
+   handler.mainPageFilter = boost::bind(mainPageFilter, _1, _2);
    handler.signInThenContinue = signInThenContinue;
    handler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    handler.signIn = signInArg;

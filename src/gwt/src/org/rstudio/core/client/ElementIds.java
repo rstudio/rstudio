@@ -228,6 +228,7 @@ public class ElementIds
       BUILD_SCRIPT("build_Script"),
       CA_BUNDLE("ca_bundle"),
       DEFAULT_WORKING_DIR("default_working_dir"),
+      ZOTERO_DATA_DIRECTORY("zotero_data_directory"),
       EXISTING_PROJECT_DIR("existing_project_dir"),
       FIND_IN("find_in"),
       GIT("git"),
@@ -257,7 +258,8 @@ public class ElementIds
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
-      CHOOSE_IMAGE("choose_image");
+      CHOOSE_IMAGE("choose_image"),
+      PYTHON_DEFAULT_INTERPRETER("python_default_interpreter");
 
       TextBoxButtonId(String value)
       {
@@ -517,6 +519,15 @@ public class ElementIds
    public static String getVisualMdListNumberDelim() { return getElementId(VISUAL_MD_LIST_NUMBER_DELIM); }
    public final static String VISUAL_MD_LIST_NUMBER_DELIM_NOTE = "visual_md_list_number_delim_note";
    public static String getVisualMdListNumberDelimNote() { return getElementId(VISUAL_MD_LIST_NUMBER_DELIM_NOTE); }
+   public final static String VISUAL_MD_LIST_INSERT_CITE_ID = "visual_md_insert_cite_id";
+   public static String getVisualMdInsertCiteId() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_ID); }
+   public final static String VISUAL_MD_LIST_INSERT_CITE_PREVIEW = "visual_md_insert_cite_preview";
+   public static String getVisualMdInsertCitePreview() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_PREVIEW); }
+   public final static String VISUAL_MD_LIST_INSERT_CITE_BIB = "visual_md_insert_cite_bib";
+   public static String getVisualMdInsertCiteBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_BIB); }
+   public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB = "visual_md_insert_cite_create_bib";
+   public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
+
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";

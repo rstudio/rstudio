@@ -17,7 +17,6 @@ import { InputRule } from 'prosemirror-inputrules';
 import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { EditorUI } from '../api/ui';
 import { ProsemirrorCommand } from '../api/command';
 import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
@@ -60,6 +59,7 @@ import behaviorHistory from '../behaviors/history';
 import behaviorSelectAll from '../behaviors/select_all';
 import behaviorCursor from '../behaviors/cursor';
 import behaviorFind from '../behaviors/find';
+import behaviorSpelling from '../behaviors/spelling';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
@@ -67,12 +67,15 @@ import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
+import behaviorEscapeMark from '../behaviors/escape_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugin-symbol';
 import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
+import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
+import behaviorNbsp from '../behaviors/nbsp';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -104,8 +107,9 @@ import nodeDefinitionList from '../nodes/definition_list/definition_list';
 import nodeShortcodeBlock from '../nodes/shortcode_block';
 
 // extension/plugin factories
-import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
+import { acePlugins } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
+import { codeViewClipboardPlugin } from '../api/code';
 
 export function initExtensions(context: ExtensionContext, extensions?: readonly Extension[]): ExtensionManager {
   // create extension manager
@@ -132,6 +136,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorSpelling,
     behaviorClearFormatting,
   ]);
 
@@ -142,12 +147,15 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorEmptyMark,
+    behaviorEscapeMark,
     behaviorOutline,
     beahviorCodeBlockInput,
     behaviorPasteText,
     behaviorBottomPadding,
     behaviorInsertSymbol,
     behaviorInsertSymbolEmoji,
+    beahviorInsertSpecialCharacters,
+    behaviorNbsp,
 
     // nodes
     nodeDiv,
@@ -196,10 +204,12 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   ]);
 
   // additional plugins derived from extensions
+  const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
-  if (context.options.codemirror) {
-    plugins.push(...codeMirrorPlugins(manager.codeViews(), context.ui, context.options));
+  if (context.options.codeEditor === "ace") {
+    plugins.push(...acePlugins(codeViews, context));
   }
+  plugins.push(codeViewClipboardPlugin(codeViews));
 
   // register plugins
   manager.registerPlugins(plugins);

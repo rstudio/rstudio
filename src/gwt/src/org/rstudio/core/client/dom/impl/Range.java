@@ -26,8 +26,8 @@ class Range extends JavaScriptObject
 
    public static native Range create(Document doc) /*-{
       return doc.createRange();
-   }-*/; 
-   
+   }-*/;
+
    public final native boolean isCollapsed() /*-{
       return this.collapsed;
    }-*/;
@@ -59,12 +59,12 @@ class Range extends JavaScriptObject
    public final native Range cloneRange() /*-{
       return this.cloneRange();
    }-*/;
-   
+
    public final native void collapse(boolean toStart) /*-{
       return this.collapse(toStart);
    }-*/;
-   
-   public final native short compareBoundaryPoints(short how, 
+
+   public final native short compareBoundaryPoints(short how,
                                                    Range sourceRange) /*-{
       return this.compareBoundaryPoints(how, sourceRange);
    }-*/;
@@ -72,10 +72,10 @@ class Range extends JavaScriptObject
    public final native void deleteContents() /*-{
       return this.deleteContents();
    }-*/;
-   
+
    public final native void detach() /*-{
       return this.detach();
-   }-*/; 
+   }-*/;
 
    public final native JavaScriptObject extractContents() /*-{
       return this.extractContents();
@@ -84,7 +84,7 @@ class Range extends JavaScriptObject
    public final native void insertNode(Node newNode) /*-{
       return this.insertNode(newNode);
    }-*/;
-   
+
    public final native void selectNode(Node refNode) /*-{
       return this.selectNode(refNode);
    }-*/;

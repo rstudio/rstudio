@@ -69,6 +69,7 @@
 
 #include <session/http/SessionRequest.hpp>
 
+#include "SessionRpc.hpp"
 #include "SessionClientEventQueue.hpp"
 #include "SessionMainProcess.hpp"
 
@@ -527,6 +528,13 @@ SEXP rs_getPersistentValue(SEXP nameSEXP)
    {
       return R_NilValue;
    }
+}
+
+SEXP rs_setRpcDelay(SEXP delayMsSEXP)
+{
+   int delayMs = r::sexp::asInteger(delayMsSEXP);
+   rstudio::session::rpc::setRpcDelay(delayMs);
+   return delayMsSEXP;
 }
 
 } // anonymous namespace
@@ -1661,7 +1669,7 @@ SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
 
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
 {
-   std::string path = r::sexp::asString(pathSEXP);
+   std::string path = r::sexp::asUtf8String(pathSEXP);
    FilePath resolved = module_context::resolveAliasedPath(path);
    r::sexp::Protect protect;
    return r::sexp::create(resolved.getAbsolutePath(), &protect);
@@ -1897,7 +1905,8 @@ bool isRScriptInPackageBuildTarget(const FilePath &filePath)
 SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
 {
    r::sexp::Protect protect;
-   FilePath filePath = module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
+   FilePath filePath = module_context::resolveAliasedPath(
+      r::sexp::asUtf8String(filePathSEXP));
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 
@@ -2795,6 +2804,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
+   RS_REGISTER_CALL_METHOD(rs_setRpcDelay);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

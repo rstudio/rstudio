@@ -21,14 +21,14 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class VcsViewOnGitHubEvent 
+public class VcsViewOnGitHubEvent
              extends CrossWindowEvent<VcsViewOnGitHubEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onVcsViewOnGitHub(VcsViewOnGitHubEvent event);
    }
-   
+
    public VcsViewOnGitHubEvent()
    {
    }
@@ -37,12 +37,12 @@ public class VcsViewOnGitHubEvent
    {
       viewRequest_ = viewRequest;
    }
-   
+
    public GitHubViewRequest getViewRequest()
    {
       return viewRequest_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -55,7 +55,7 @@ public class VcsViewOnGitHubEvent
       handler.onVcsViewOnGitHub(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private GitHubViewRequest viewRequest_;
 }

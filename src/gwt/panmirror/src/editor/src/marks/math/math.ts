@@ -23,12 +23,14 @@ import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';
 import { kCodeText } from '../../api/code';
+import { kMathContent, kMathType, delimiterForType, MathType } from '../../api/math';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
-import { MathPreviewPlugin } from './math-preview';
+import { MathPopupPlugin } from './math-popup';
+import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
@@ -38,16 +40,8 @@ const kInlineMathRegex = new RegExp(kInlineMathPattern);
 const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
 const kSingleLineDisplayMathRegex = new RegExp(kSingleLineDisplayMathPattern);
 
-export enum MathType {
-  Inline = 'InlineMath',
-  Display = 'DisplayMath',
-}
-
-const MATH_TYPE = 0;
-const MATH_CONTENT = 1;
-
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, ui, format, events } = context;
+  const { pandocExtensions, ui, format, math, events } = context;
 
   if (!pandocExtensions.tex_math_dollars) {
     return null;
@@ -62,6 +56,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'math',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           attrs: {
             type: {},
@@ -99,74 +94,74 @@ const extension = (context: ExtensionContext): Extension | null => {
               mark: 'math',
               getAttrs: (tok: PandocToken) => {
                 return {
-                  type: tok.c[MATH_TYPE].t,
+                  type: tok.c[kMathType].t,
                 };
               },
               getText: (tok: PandocToken) => {
-                const delimter = delimiterForType(tok.c[MATH_TYPE].t);
-                return delimter + tok.c[MATH_CONTENT] + delimter;
+                const delimter = delimiterForType(tok.c[kMathType].t);
+                return delimter + tok.c[kMathContent] + delimter;
               },
             },
             // extract math from backtick code for blogdown
             ...(blogdownMathInCode
               ? [
-                  {
-                    token: PandocTokenType.Code,
-                    mark: 'math',
-                    match: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
-                    },
-                    getAttrs: (tok: PandocToken) => {
-                      const text = tok.c[kCodeText];
-                      return {
-                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
-                      };
-                    },
-                    getText: (tok: PandocToken) => {
-                      return tok.c[kCodeText];
-                    },
+                {
+                  token: PandocTokenType.Code,
+                  mark: 'math',
+                  match: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
                   },
-                ]
+                  getAttrs: (tok: PandocToken) => {
+                    const text = tok.c[kCodeText];
+                    return {
+                      type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                    };
+                  },
+                  getText: (tok: PandocToken) => {
+                    return tok.c[kCodeText];
+                  },
+                },
+              ]
               : []),
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect math content
-              let math = '';
-              parent.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
+              let mathText = '';
+              parent.forEach((node: ProsemirrorNode) => (mathText = mathText + node.textContent));
 
               // if this is blogdownMathInCode just write the content in a code mark
               if (blogdownMathInCode) {
                 output.writeToken(PandocTokenType.Code, () => {
                   output.writeAttr();
-                  output.write(math);
+                  output.write(mathText);
                 });
               } else {
                 // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
-                if (math.startsWith(delimiter) && math.endsWith(delimiter)) {
+                if (mathText.startsWith(delimiter) && mathText.endsWith(delimiter)) {
                   // remove delimiter
-                  math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
+                  mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
-                  if (math.trim().length === 0) {
-                    output.writeText(delimiter + math + delimiter);
+                  if (mathText.trim().length === 0) {
+                    output.writeText(delimiter + mathText + delimiter);
                   } else {
                     output.writeToken(PandocTokenType.Math, () => {
                       // write type
                       output.writeToken(
                         mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
                       );
-                      output.write(math);
+                      output.write(mathText);
                     });
                   }
                 } else {
                   // user removed the delimiter so write the content literally. when it round trips
                   // back into editor it will no longer be parsed by pandoc as math
-                  output.writeRawMarkdown(math);
+                  output.writeRawMarkdown(mathText);
                 }
               }
             },
@@ -253,8 +248,9 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
         mathHighlightPlugin(schema),
       ];
-      if (ui.math) {
-        plugins.push(new MathPreviewPlugin(ui, events));
+      if (math) {
+        plugins.push(new MathPopupPlugin(ui, math, events, false));
+        plugins.push(...mathViewPlugins(schema, ui, math));
       }
       return plugins;
     },
@@ -275,6 +271,8 @@ function handlePasteIntoMath() {
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.math)) {
       const tr = view.state.tr;
+      tr.setMeta('paste', true);
+      tr.setMeta('uiEvent', 'paste');
       let math = '';
       slice.content.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
       tr.replaceSelectionWith(schema.text(math));
@@ -311,14 +309,6 @@ function displayMathIsActive(state: EditorState) {
     markIsActive(state, schema.marks.math) &&
     getMarkAttrs(state.doc, state.selection, schema.marks.math).type === MathType.Display
   );
-}
-
-export function delimiterForType(type: string) {
-  if (type === MathType.Inline) {
-    return '$';
-  } else {
-    return '$$';
-  }
 }
 
 export default extension;

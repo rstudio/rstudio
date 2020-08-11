@@ -117,7 +117,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             }
           },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            if (!pandocExtensions.raw_attribute) {
+            if (!pandocExtensions.raw_attribute || node.textContent.trim() === '<!-- -->') {
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });

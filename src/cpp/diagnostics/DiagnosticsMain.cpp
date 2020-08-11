@@ -22,6 +22,7 @@
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -33,20 +34,11 @@ using namespace rstudio::core;
 
 namespace {
 
-FilePath homePath()
-{
-   return core::system::userHomePath("R_USER|HOME");
-}
-
 // NOTE: this code is duplicated in diagnostics as well (and also in
 // SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
-   FilePath logPath = core::system::userSettingsPath(
-      homePath(),
-      "RStudio-Desktop"
-   ).completeChildPath("log");
-   return logPath;
+   return core::system::xdg::userDataDir().completePath("log");
 }
 
 void writeFile(const std::string& description, const core::FilePath& path, std::ostream& ostr)

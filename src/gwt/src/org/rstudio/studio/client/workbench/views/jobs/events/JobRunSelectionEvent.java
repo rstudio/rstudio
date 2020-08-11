@@ -32,7 +32,7 @@ public class JobRunSelectionEvent extends CrossWindowEvent<JobRunSelectionEvent.
       code_ = "";
       path_ = "";
    }
-   
+
    public JobRunSelectionEvent(String path, String code)
    {
       path_ = path;
@@ -43,12 +43,12 @@ public class JobRunSelectionEvent extends CrossWindowEvent<JobRunSelectionEvent.
    {
       return code_;
    }
-   
+
    public String path()
    {
       return path_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -64,5 +64,5 @@ public class JobRunSelectionEvent extends CrossWindowEvent<JobRunSelectionEvent.
    private final String code_;
    private final String path_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

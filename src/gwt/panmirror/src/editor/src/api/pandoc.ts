@@ -15,28 +15,48 @@
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 
-import { PandocAttr } from './pandoc_attr';
+import { PandocAttr, pandocAttrReadAST, kSpanChildren, kSpanAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
-import { Bibliography, BibliographyResult, BibliographySource } from './bibliography';
+import { BibliographyResult } from './bibliography/bibliography-provider_local';
+import { kEmojiAttr } from './emoji';
+import { stringifyMath } from './math';
+import { kCodeText } from './code';
 
 export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
+  listExtensions(format: string): Promise<string>;
   getBibliography(
     file: string | null,
     bibliography: string[],
     refBlock: string | null,
     etag: string | null,
   ): Promise<BibliographyResult>;
-  listExtensions(format: string): Promise<string>;
+  addToBibliography(
+    bibliography: string,
+    project: boolean,
+    id: string,
+    sourceAsJson: string
+  ): Promise<boolean>;
+  citationHTML(
+    file: string | null,
+    sourceAsJson: string,
+    csl: string | null
+  ): Promise<string>;
+
+}
+
+export interface PandocWriterReferencesOptions {
+  location?: string; // block | section | document
+  prefix?: string;
 }
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
-  references?: string; // block | section | document
-  wrapColumn?: boolean | number;
+  references?: PandocWriterReferencesOptions;
+  wrap?: string;
   dpi?: number;
 }
 
@@ -130,6 +150,7 @@ export interface PandocAst {
   blocks: PandocToken[];
   'pandoc-api-version': PandocApiVersion;
   meta: any;
+  heading_ids?: string[]; // used only for reading not writing
 }
 
 export type PandocApiVersion = number[];
@@ -307,19 +328,33 @@ export interface PandocOutput {
 // elements (ignores marks, useful for ast elements
 // that support marks but whose prosemirror equivalent
 // does not, e.g. image alt text)
-export function tokensCollectText(c: PandocToken[]): string {
+// https://github.com/jgm/pandoc/blob/83880b0dbc318703babfbb6905b1046fa48f1216/src/Text/Pandoc/Shared.hs#L439
+export function stringifyTokens(c: PandocToken[], unemoji = false): string {
   return c
     .map(elem => {
       if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === PandocTokenType.Space || elem.t === PandocTokenType.SoftBreak) {
+      } else if (elem.t === PandocTokenType.Space ||
+        elem.t === PandocTokenType.SoftBreak ||
+        elem.t === PandocTokenType.LineBreak) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Span) {
+        const attr = pandocAttrReadAST(elem, kSpanAttr);
+        if (unemoji && attr.classes && attr.classes[0] === 'emoji') {
+          return attr.keyvalue[0][1];
+        } else {
+          return stringifyTokens(elem.c[kSpanChildren]);
+        }
       } else if (elem.t === PandocTokenType.Quoted) {
         const type = elem.c[kQuoteType].t;
         const quote = type === QuoteType.SingleQuote ? "'" : '"';
-        return quote + tokensCollectText(elem.c[kQuoteChildren]) + quote;
+        return quote + stringifyTokens(elem.c[kQuoteChildren]) + quote;
+      } else if (elem.t === PandocTokenType.Math) {
+        return stringifyMath(elem);
+      } else if (elem.t === PandocTokenType.Code) {
+        return elem.c[kCodeText];
       } else if (elem.c) {
-        return tokensCollectText(elem.c);
+        return stringifyTokens(elem.c);
       } else {
         return '';
       }
@@ -370,4 +405,20 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
+}
+
+
+// sort marks by priority (in descending order)
+export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {
+  return marks.sort((a: Mark, b: Mark) => {
+    const aPriority = markWriters[a.type.name].priority;
+    const bPriority = markWriters[b.type.name].priority;
+    if (aPriority < bPriority) {
+      return 1;
+    } else if (bPriority < aPriority) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
 }

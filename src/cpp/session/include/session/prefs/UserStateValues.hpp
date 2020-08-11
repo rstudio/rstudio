@@ -77,6 +77,8 @@ namespace prefs {
 #define kErrorHandlerTypeNotebook "notebook"
 #define kErrorHandlerTypeCustom "custom"
 #define kUsingMingwGcc49 "using_mingw_gcc49"
+#define kZoteroApiKey "zotero_api_key"
+#define kZoteroDataDir "zotero_data_dir"
 
 class UserStateValues: public Preferences
 {
@@ -183,6 +185,18 @@ public:
     */
    bool usingMingwGcc49();
    core::Error setUsingMingwGcc49(bool val);
+
+   /**
+    * Key for making Zotero API calls
+    */
+   std::string zoteroApiKey();
+   core::Error setZoteroApiKey(std::string val);
+
+   /**
+    * Directory containing Zotero data files
+    */
+   std::string zoteroDataDir();
+   core::Error setZoteroDataDir(std::string val);
 
 };
 

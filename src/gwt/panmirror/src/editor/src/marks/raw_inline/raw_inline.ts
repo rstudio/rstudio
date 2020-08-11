@@ -22,7 +22,8 @@ import { Extension, ExtensionContext } from '../../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocOutput, PandocToken, PandocTokenType } from '../../api/pandoc';
 import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
-import { EditorUI, RawFormatProps } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { RawFormatProps } from '../../api/ui-dialogs';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
 import { OmniInsertGroup } from '../../api/omni_insert';
@@ -45,6 +46,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'raw_inline',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
           excludes: '_',
@@ -86,7 +88,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // get raw content
               const raw = fragmentText(parent);

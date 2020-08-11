@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
@@ -193,8 +194,19 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // last one in the tabset.
       if (ts1.get(ts1.length() - 1) != "Presentation")
       {
-         Debug.logToConsole("Invaliding tabset config (Presentation index)");
-         return false;
+         // 1.3 released with a bug where Tutorial would be added at the end; autocorrect
+         // https://github.com/rstudio/rstudio/issues/7246
+         if (StringUtil.equals(ts1.get(ts1.length() - 1), "Tutorial") &&
+             StringUtil.equals(ts1.get(ts1.length() - 2), "Presentation"))
+         {
+            ts1.set(ts1.length() - 1, "Presentation");
+            ts1.set(ts1.length() - 2, "Tutorial");
+         }
+         else
+         {
+            Debug.logToConsole("Invaliding tabset config (Presentation index)");
+            return false;
+         }
       }
       
       // Check for any unknown tabs

@@ -18,18 +18,18 @@ package org.rstudio.studio.client.projects.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ProjectAccessRevokedEvent 
+public class ProjectAccessRevokedEvent
    extends GwtEvent<ProjectAccessRevokedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onProjectAccessRevoked(ProjectAccessRevokedEvent event);
    }
-   
+
    public ProjectAccessRevokedEvent()
    {
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -41,6 +41,6 @@ public class ProjectAccessRevokedEvent
    {
       handler.onProjectAccessRevoked(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

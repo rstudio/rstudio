@@ -78,7 +78,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
         tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.mapping.map(state.selection.from) - rmdNode.nodeSize + offsetChars;
+        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars;
         setTextSelection(selPos)(tr);
       }
 
@@ -132,9 +132,9 @@ export function previousRmdChunks(state: EditorState, pos: number, filter?: (chu
 }
 
 export function rmdChunk(code: string): EditorRmdChunk | null {
-  const lines = code.split('\n');
+  const lines = code.trimLeft().split('\n');
   if (lines.length > 0) {
-    const meta = lines[0].replace(/^.*?\{([^}]*)\}.*?$/, '$1');
+    const meta = lines[0].replace(/^[\s`\{]*(.*?)\}?\s*$/, '$1');
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
     return {
@@ -156,6 +156,18 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
     };
     chunks.forEach(chunk => (merged.code += chunk.code + '\n'));
     return merged;
+  } else {
+    return null;
+  }
+}
+
+export function rmdChunkEngineAndLabel(text: string) {
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
+  if (match) {
+    return {
+      engine: match[1],
+      label: match[2]
+    };
   } else {
     return null;
   }

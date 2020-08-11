@@ -18,8 +18,7 @@ import { findChildrenByMark } from 'prosemirror-utils';
 
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { AppendMarkTransactionHandler, MarkTransaction } from '../../api/transaction';
-
-import { delimiterForType, MathType } from './math';
+import { delimiterForType, MathType } from '../../api/math';
 
 export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
   return {

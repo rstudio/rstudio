@@ -33,11 +33,11 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
    }
 
    // Supported values for Data.message
-   
+
    // API request failed
    // {"message": "error": "api": "<APINAME>", "result": "<API-SPECIFIC>", "callerID": "caller-supplied"}
    public static final String API_ERROR = "error";
-   
+
    // API request succeeded
    // {"message": "success": "api": "<APINAME>", "callerID": "caller-supplied"}
    public static final String API_SUCCESS = "success";
@@ -107,13 +107,13 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
    {
       handler.onApplicationTutorialEvent(this);
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-  
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>(); 
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -37,6 +37,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'shortcode',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
           excludes: '_',
@@ -53,7 +54,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         pandoc: {
           readers: [],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },

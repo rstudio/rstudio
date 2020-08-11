@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import org.rstudio.core.client.widget.GlassAttacher;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
-import org.rstudio.core.client.widget.events.GlassVisibilityHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
@@ -28,12 +27,9 @@ public class AutoGlassAttacher extends GlassAttacher
       super(panel);
 
       EventBus eventBus = RStudioGinjector.INSTANCE.getEventBus();
-      eventBus.addHandler(GlassVisibilityEvent.TYPE, new GlassVisibilityHandler()
+      eventBus.addHandler(GlassVisibilityEvent.TYPE, glassVisibilityEvent ->
       {
-         public void onGlass(GlassVisibilityEvent event)
-         {
-            setGlass(event.isShow());
-         }
+         setGlass(glassVisibilityEvent.isShow());
       });
       setGlass(false);
    }

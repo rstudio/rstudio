@@ -13,8 +13,10 @@
  *
  */
 
-import kEmojisJson from './emojis-all.json';
-const kEmojis = kEmojisJson as EmojiRaw[];
+import kEmojis from './emojis-all';
+
+export const kEmojiAttr = 0;
+export const kEmojiContent = 1;
 
 // A raw emoji which doesn't include skin tone information
 export interface EmojiRaw {
@@ -22,7 +24,7 @@ export interface EmojiRaw {
   aliases: string[];
   category: string;
   description: string;
-  supportsSkinTone: boolean;
+  supportsSkinTone?: boolean;
   hasMarkdownRepresentation: boolean;
 }
 

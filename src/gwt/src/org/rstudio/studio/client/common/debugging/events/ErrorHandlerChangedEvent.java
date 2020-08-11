@@ -25,29 +25,29 @@ public class ErrorHandlerChangedEvent
    {
       void onErrorHandlerChanged(ErrorHandlerChangedEvent event);
    }
-   
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
       {
       }
-      
+
       public final native String getType() /*-{
          return this.type;
       }-*/;
-      
+
    }
 
    public ErrorHandlerChangedEvent(Data type)
    {
       type_ = type;
    }
-   
+
    public String getHandlerType()
    {
       return type_.getType();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -60,7 +60,7 @@ public class ErrorHandlerChangedEvent
       handler.onErrorHandlerChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private Data type_;
 }

@@ -69,10 +69,13 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorInsertCiteDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -108,6 +111,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
+import org.rstudio.studio.client.workbench.ui.polyfill.FocusVisiblePolyfill;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
@@ -305,11 +309,14 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    void injectMembers(PanmirrorPandocServer panmirrorPandocServer);
    void injectMembers(PanmirrorCrossrefServer panmirrorCrossrefServer);
-   void injectMembers(PanmirrorXRefServer panmirrorXrefServer);
+   void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
+   void injectMembers(PanmirrorXRefServer panmirrorXRefServer);
+   void injectMembers(PanmirrorZoteroServer panmirrorZoteroServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
+   void injectMembers(PanmirrorInsertCiteDialog panmirrorInsertCiteDialog);
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(PanmirrorUIPrefs panmirrorUIPrefs);
    void injectMembers(VisualMode visualMode);
@@ -346,6 +353,7 @@ public interface RStudioGinjector extends Ginjector
    Session getSession();
    HelpStrategy getHelpStrategy();
    ShortcutViewer getShortcutViewer();
+   SourceColumnManager getSourceColumnManager();
    Satellite getSatellite();
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
@@ -365,6 +373,7 @@ public interface RStudioGinjector extends Ginjector
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
+   FocusVisiblePolyfill getFocusVisiblePolyfill();
    AriaLiveService getAriaLiveService();
 
    // Pro-only below here

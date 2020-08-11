@@ -21,6 +21,12 @@
    list(ready = .rs.scalar(ready), packages = packages)
 })
 
+.rs.addFunction("stopf", function(fmt, ..., call. = FALSE)
+{
+   msg <- sprintf(fmt, ...)
+   stop(msg, call. = call.)
+})
+
 .rs.addFunction("error", function(...)
 {
    list(
@@ -925,28 +931,36 @@
 
 .rs.addFunction("getDollarNamesMethod", function(object,
                                                  excludeBaseClasses = FALSE,
-                                                 envir = parent.frame())
+                                                 envir = globalenv())
 {
    classAndSuper <- function(cl)
    {
-      # selectSuperClasses throws and error if the class is unknown
-      super <- tryCatch(methods::selectSuperClasses(cl),
-                        error = function(e) NULL)
+      # selectSuperClasses throws an error if the class is unknown
+      super <- tryCatch(
+         methods::selectSuperClasses(cl),
+         error = function(e) NULL
+      )
+      
       c(cl, super)
    }
    
    # interleave super classes after the corresponding original classes
    classes <- unlist(lapply(class(object), classAndSuper), recursive = TRUE)
    # either remove or add an explicit (=non-mode) list/environment class
-   classes <-
-      if (excludeBaseClasses)
-         setdiff(classes, c("list", "environment"))
-      else
-         c(classes, mode(object))
+   classes <- if (excludeBaseClasses)
+      setdiff(classes, c("list", "environment"))
+   else
+      c(classes, mode(object))
    
    for (class in classes)
    {
-      method <- utils::getS3method(".DollarNames", class, optional = TRUE)
+      method <- utils::getS3method(
+         f = ".DollarNames",
+         class = class,
+         envir = envir,
+         optional = TRUE
+      )
+      
       if (!is.null(method))
          return(method)
    }

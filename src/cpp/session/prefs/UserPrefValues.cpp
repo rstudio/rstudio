@@ -284,16 +284,16 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
- * Temporary flag to enable additional source columns.
+ * Whether to enable the ability to add source columns to display.
  */
-bool UserPrefValues::enableAdditionalColumns()
+bool UserPrefValues::allowSourceColumns()
 {
-   return readPref<bool>("enable_additional_columns");
+   return readPref<bool>("allow_source_columns");
 }
 
-core::Error UserPrefValues::setEnableAdditionalColumns(bool val)
+core::Error UserPrefValues::setAllowSourceColumns(bool val)
 {
-   return writePref("enable_additional_columns", val);
+   return writePref("allow_source_columns", val);
 }
 
 /**
@@ -2377,6 +2377,19 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
+ * Control with keyboard focus displays a visual focus indicator.
+ */
+bool UserPrefValues::showFocusRectangles()
+{
+   return readPref<bool>("show_focus_rectangles");
+}
+
+core::Error UserPrefValues::setShowFocusRectangles(bool val)
+{
+   return writePref("show_focus_rectangles", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2442,42 +2455,42 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
- * Whether to enable experimental visual markdown editing
+ * Whether to enable visual editing by default for new markdown documents
  */
-bool UserPrefValues::enableVisualMarkdownEditingMode()
+bool UserPrefValues::visualMarkdownEditingIsDefault()
 {
-   return readPref<bool>("enable_visual_markdown_editing_mode");
+   return readPref<bool>("visual_markdown_editing_is_default");
 }
 
-core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 {
-   return writePref("enable_visual_markdown_editing_mode", val);
+   return writePref("visual_markdown_editing_is_default", val);
 }
 
 /**
  * Whether to automatically wrap text when writing markdown
  */
-bool UserPrefValues::visualMarkdownEditingWrapAuto()
+std::string UserPrefValues::visualMarkdownEditingWrap()
 {
-   return readPref<bool>("visual_markdown_editing_wrap_auto");
+   return readPref<std::string>("visual_markdown_editing_wrap");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapAuto(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrap(std::string val)
 {
-   return writePref("visual_markdown_editing_wrap_auto", val);
+   return writePref("visual_markdown_editing_wrap", val);
 }
 
 /**
  * The column to wrap text at when writing markdown
  */
-int UserPrefValues::visualMarkdownEditingWrapColumn()
+int UserPrefValues::visualMarkdownEditingWrapAtColumn()
 {
-   return readPref<int>("visual_markdown_editing_wrap_column");
+   return readPref<int>("visual_markdown_editing_wrap_at_column");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrapAtColumn(int val)
 {
-   return writePref("visual_markdown_editing_wrap_column", val);
+   return writePref("visual_markdown_editing_wrap_at_column", val);
 }
 
 /**
@@ -2520,6 +2533,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowDocOutline(bool val)
 }
 
 /**
+ * Whether to show the margin guide in the visual mode code blocks.
+ */
+bool UserPrefValues::visualMarkdownEditingShowMargin()
+{
+   return readPref<bool>("visual_markdown_editing_show_margin");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
+{
+   return writePref("visual_markdown_editing_show_margin", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2530,6 +2556,45 @@ int UserPrefValues::visualMarkdownEditingFontSizePoints()
 core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 {
    return writePref("visual_markdown_editing_font_size_points", val);
+}
+
+/**
+ * The name of the editor to use to provide code editing in visual mode
+ */
+std::string UserPrefValues::visualMarkdownCodeEditor()
+{
+   return readPref<std::string>("visual_markdown_code_editor");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
+{
+   return writePref("visual_markdown_code_editor", val);
+}
+
+/**
+ * Zotero connection type (local or web)
+ */
+std::string UserPrefValues::zoteroConnectionType()
+{
+   return readPref<std::string>("zotero_connection_type");
+}
+
+core::Error UserPrefValues::setZoteroConnectionType(std::string val)
+{
+   return writePref("zotero_connection_type", val);
+}
+
+/**
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ */
+bool UserPrefValues::zoteroUseBetterBibtex()
+{
+   return readPref<bool>("zotero_use_better_bibtex");
+}
+
+core::Error UserPrefValues::setZoteroUseBetterBibtex(bool val)
+{
+   return writePref("zotero_use_better_bibtex", val);
 }
 
 /**
@@ -2636,6 +2701,19 @@ core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
    return writePref("browser_fixed_width_fonts", val);
 }
 
+/**
+ * The path to the default Python interpreter
+ */
+std::string UserPrefValues::pythonDefaultInterpreter()
+{
+   return readPref<std::string>("python_default_interpreter");
+}
+
+core::Error UserPrefValues::setPythonDefaultInterpreter(std::string val)
+{
+   return writePref("python_default_interpreter", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2659,7 +2737,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
-      kEnableAdditionalColumns,
+      kAllowSourceColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
@@ -2820,18 +2898,23 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kShowFocusRectangles,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
-      kEnableVisualMarkdownEditingMode,
-      kVisualMarkdownEditingWrapAuto,
-      kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingIsDefault,
+      kVisualMarkdownEditingWrap,
+      kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
+      kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
+      kVisualMarkdownCodeEditor,
+      kZoteroConnectionType,
+      kZoteroUseBetterBibtex,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
@@ -2840,6 +2923,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGraphicsBackend,
       kGraphicsAntialiasing,
       kBrowserFixedWidthFonts,
+      kPythonDefaultInterpreter,
    });
 }
    

@@ -334,6 +334,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getBookdownHasRenumberFootnotes() /*-{
       return this.bookdown_has_renumber_footnotes;
    }-*/;
+   
+   public final native boolean getIsBookdownProject() /*-{
+      return this.is_bookdown_project;
+   }-*/;
 
    public final native boolean getIsDistillProject() /*-{
       return this.is_distill_project;
@@ -430,6 +434,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getAllowOpenSharedProjects() /*-{
       return this.allow_open_shared_projects;
+   }-*/;
+
+   public final native boolean getProjectSharingEnumerateServerUsers() /*-{
+      return this.project_sharing_enumerate_server_users;
    }-*/;
 
    public final native boolean getLauncherSession() /*-{
@@ -646,4 +654,12 @@ public class SessionInfo extends JavaScriptObject
       return this.python_initialized;
    }-*/;
 
+   public final native String getSessionNode() /*-{
+      return this.session_node;
+   }-*/;
+   
+   public final native String getReticulatePython() /*-{
+      return this.reticulate_python;
+   }-*/;
+   
 }

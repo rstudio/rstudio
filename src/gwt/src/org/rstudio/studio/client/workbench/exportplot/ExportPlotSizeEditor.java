@@ -494,6 +494,15 @@ public class ExportPlotSizeEditor extends Composite
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
    }
    
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+      
+      // ensure image preview is updated after dialog is shown
+      updatePreview();
+   }
+   
    private static final int IMAGE_INSET = 6;
    
    private final Observer observer_;

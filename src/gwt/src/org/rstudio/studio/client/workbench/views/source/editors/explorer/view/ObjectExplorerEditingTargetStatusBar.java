@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
-import org.rstudio.core.client.widget.events.SelectionChangedEvent;
-import org.rstudio.core.client.widget.events.SelectionChangedHandler;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -31,57 +28,53 @@ public class ObjectExplorerEditingTargetStatusBar extends Composite
    {
       widget_ = widget;
       grid_ = grid;
-      
+
       panel_ = new FlowPanel();
       label_ = new Label(NO_SELECTION);
-      
+
       panel_.setSize("100%", "100%");
       panel_.addStyleName("rstudio-themes-background");
       panel_.addStyleName(RES.styles().panel());
       panel_.add(label_);
-      
+
       label_.addStyleName(RES.styles().label());
-      
+
       initWidget(panel_);
-      
+
       initializeHandlers();
    }
-   
+
    public void setText(String text)
    {
       label_.setText(text);
    }
-   
+
    private void initializeHandlers()
    {
-      grid_.addSelectionChangedHandler(new SelectionChangedHandler()
+      grid_.addSelectionChangedHandler(selectionChangedEvent ->
       {
-         @Override
-         public void onSelectionChanged(SelectionChangedEvent event)
+         ObjectExplorerDataGrid.Data data = grid_.getCurrentSelection();
+         if (data == null)
          {
-            ObjectExplorerDataGrid.Data data = grid_.getCurrentSelection();
-            if (data == null)
-            {
-               label_.setText(NO_SELECTION);
-               return;
-            }
-            
-            String accessor = ObjectExplorerDataGrid.generateExtractingCode(
-                  data,
-                  widget_.getHandle().getTitle());
-            
-            label_.setText(accessor);
+            label_.setText(NO_SELECTION);
+            return;
          }
+
+         String accessor = ObjectExplorerDataGrid.generateExtractingCode(
+               data,
+               widget_.getHandle().getTitle());
+
+         label_.setText(accessor);
       });
    }
-   
+
    private final ObjectExplorerEditingTargetWidget widget_;
    private final ObjectExplorerDataGrid grid_;
    private final FlowPanel panel_;
    private final Label label_;
-   
+
    private static final String NO_SELECTION = "(No selection)";
-   
+
    // Boilerplate ----
 
    public interface Styles extends CssResource

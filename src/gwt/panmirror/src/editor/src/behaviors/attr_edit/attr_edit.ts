@@ -37,15 +37,15 @@ export function attrEditExtension(
   return {
     commands: (_schema: Schema) => {
       if (hasAttr) {
-        return [new AttrEditCommand(ui, editors)];
+        return [new AttrEditCommand(ui, pandocExtensions, editors)];
       } else {
         return [];
       }
     },
 
-    plugins: (schema: Schema) => {
+    plugins: (_schema: Schema) => {
       if (hasAttr) {
-        return [new AttrEditDecorationPlugin(ui, editors)];
+        return [new AttrEditDecorationPlugin(ui, pandocExtensions, editors)];
       } else {
         return [];
       }

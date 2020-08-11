@@ -33,6 +33,7 @@ const extension = (context: ExtensionContext): Extension => {
       {
         name: 'code',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           attrs: codeAttrs ? pandocAttrSpec : {},
           parseDOM: [
@@ -51,12 +52,12 @@ const extension = (context: ExtensionContext): Extension => {
             const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
-                  ...mark.attrs,
-                  classes: [...mark.attrs.classes, fontClass],
-                })
+                ...mark.attrs,
+                classes: [...mark.attrs.classes, fontClass],
+              })
               : {
-                  class: fontClass,
-                };
+                class: fontClass,
+              };
             return ['code', attrs];
           },
         },
@@ -76,7 +77,9 @@ const extension = (context: ExtensionContext): Extension => {
             },
           ],
           writer: {
-            priority: 20,
+            // lowest possible mark priority since it doesn't call writeInlines
+            // (so will 'eat' any other marks on the stack)
+            priority: 0,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect code and trim it (pandoc will do this on parse anyway)
               let code = '';

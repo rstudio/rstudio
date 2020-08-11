@@ -13,6 +13,7 @@
  *
  */
 #include "ServerPAMAuth.hpp"
+#include "ServerPAMAuthOverlay.hpp"
 
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
@@ -39,12 +40,6 @@ namespace server {
 namespace pam_auth {
 
 using namespace rstudio::core;
-
-bool canSetSignInCookies();
-void onUserAuthenticated(const std::string& username,
-                         const std::string& password);
-void onUserUnauthenticated(const std::string& username,
-                           bool signedOut = false);
 
 namespace {
 
@@ -190,7 +185,7 @@ void doSignIn(const http::Request& request,
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
-   onUserUnauthenticated(username);
+   overlay::onUserPasswordUnavailable(username);
 
    bool authenticated = pamLogin(username, password);
    if (!auth::common::doSignIn(request,
@@ -202,7 +197,7 @@ void doSignIn(const http::Request& request,
    {
       return;
    }
-   onUserAuthenticated(username, password);
+   overlay::onUserPasswordAvailable(username, password);
 }
 
 void signOut(const http::Request& request,
@@ -211,7 +206,7 @@ void signOut(const http::Request& request,
    std::string username = auth::common::signOut(request, pResponse, getUserIdentifier, auth::handler::kSignIn);
    if (!username.empty())
    {
-      onUserUnauthenticated(username, true);
+      overlay::onUserPasswordUnavailable(username, true);
    }
 }
 
@@ -274,7 +269,7 @@ Error initialize()
                                 userIdentifierToLocalUsername,
                                 getUserIdentifier);
    pamHandler.signOut = signOut;
-   if (canSetSignInCookies())
+   if (overlay::canSetSignInCookies())
       pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4);
    auth::handler::registerHandler(pamHandler);
 

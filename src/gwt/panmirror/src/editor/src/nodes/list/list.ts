@@ -324,7 +324,6 @@ function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI
   return () => {
     return {
       type: (schema: Schema) => schema.nodes[type],
-      noDecorator: true,
       editFn: () => editListPropertiesCommandFn(ui, capabilities),
     };
   };

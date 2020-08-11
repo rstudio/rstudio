@@ -1,7 +1,5 @@
 package org.rstudio.core.client.command;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -11,7 +9,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.server.remote.RegisterUserCommandEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,37 +24,19 @@ public class UserCommandManager
          name_ = name;
          command_ = command;
       }
-      
+
       public String getName() { return name_; }
       public void execute() { command_.execute(); }
-      
+
       private final String name_;
       private final Command command_;
    }
-   
-   public static class UserCommandResult extends JavaScriptObject
-   {
-      protected UserCommandResult() {}
-      
-      public native final String getAction() /*-{ return this.action; }-*/;
-      public native final String getText() /*-{ return this.text; }-*/;
-      private native final JsArrayInteger getRangeVector() /*-{ return this.range; }-*/;
-      public final Range getRange()
-      {
-         JsArrayInteger rangeVector = getRangeVector();
-         return Range.create(
-               rangeVector.get(0),
-               rangeVector.get(1),
-               rangeVector.get(2),
-               rangeVector.get(3));
-      }
-   }
-   
+
    public UserCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       commandMap_ = new HashMap<KeyboardShortcut, UserCommand>();
-      
+
       events_.addHandler(
             RegisterUserCommandEvent.TYPE,
             new RegisterUserCommandEvent.Handler()
@@ -69,13 +48,13 @@ public class UserCommandManager
                }
             });
    }
-   
+
    @Inject
    public void initialize(EventBus events)
    {
       events_ = events;
    }
-   
+
    public boolean dispatch(KeyboardShortcut shortcut)
    {
       if (commandMap_.containsKey(shortcut))
@@ -84,21 +63,21 @@ public class UserCommandManager
          command.execute();
          return true;
       }
-      
+
       return false;
    }
-   
+
    private void onRegisterUserCommand(RegisterUserCommandEvent event)
    {
       final String name = event.getData().getName();
       JsArrayString shortcutStrings = event.getData().getShortcuts();
-      
+
       for (int i = 0; i < shortcutStrings.length(); i++)
       {
          String shortcutString = shortcutStrings.get(i);
          KeySequence sequence = KeySequence.fromShortcutString(shortcutString);
          assert sequence != null : "Failed to parse string '" + shortcutString + "'";
-         
+
          KeyboardShortcut shortcut = new KeyboardShortcut(sequence);
          UserCommand command = new UserCommand(name, new Command()
          {
@@ -108,23 +87,23 @@ public class UserCommandManager
                events_.fireEvent(new ExecuteUserCommandEvent(name));
             }
          });
-         
+
          commandMap_.put(shortcut, command);
       }
    }
-   
+
    public Set<KeyboardShortcut> getKeyboardShortcuts()
    {
       return commandMap_.keySet();
    }
-   
+
    public Map<KeyboardShortcut, UserCommand> getCommands()
    {
       return commandMap_;
    }
-   
+
    private final Map<KeyboardShortcut, UserCommand> commandMap_;
-   
+
    // Injected ----
    private EventBus events_;
 }

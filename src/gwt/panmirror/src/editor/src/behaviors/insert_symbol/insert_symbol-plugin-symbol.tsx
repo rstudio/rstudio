@@ -25,7 +25,7 @@ import { OmniInsertGroup } from '../../api/omni_insert';
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacterGroup, SymbolCharacter } from './insert_symbol-dataprovider';
 
-import untypedSymbolData from './symbols.json';
+import symbolData from './symbols';
 
 const key = new PluginKey<boolean>('insert-symbol');
 
@@ -44,8 +44,8 @@ const extension = (context: ExtensionContext): Extension => {
 function symbolOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Symbol...'),
-    keywords: ['unicode'],
-    description: ui.context.translateText('Unicode graphical symbol'),
+    keywords: ['unicode', 'special', 'character'],
+    description: ui.context.translateText('Unicode symbol / special character'),
     group: OmniInsertGroup.Content,
     priority: 6,
     image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.symbol_dark! : ui.images.omni_insert?.symbol!),
@@ -54,7 +54,7 @@ function symbolOmniInsert(ui: EditorUI) {
 
 class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {
-    this.symbolGroups = (untypedSymbolData as SymbolCharacterGroup[]).sort((a, b) => a.name.localeCompare(b.name));
+    this.symbolGroups = symbolData.sort((a, b) => a.name.localeCompare(b.name));
   }
   private readonly symbolGroups: SymbolCharacterGroup[];
 

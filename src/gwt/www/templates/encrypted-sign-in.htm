@@ -66,7 +66,7 @@ body, td {
    margin: 0 auto;
 }
 
-#caption {
+.caption {
   text-align: center;
   font-size: 14px;
   margin-right: 0;
@@ -82,7 +82,7 @@ input[type=text], input[type=password] {
   -webkit-border-radius: 4px;
 }
 
-#buttonpanel {
+.buttonpanel {
   text-align: center;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -204,9 +204,9 @@ function submitRealForm() {
 <table role="presentation" id="border">
   <tr>
     <td>
-      <div role="group" aria-labelledby="caption">
+      <div role="group" aria-labelledby="caption_header">
          <div id="controls">
-            <h1 id="caption">Sign in to RStudio</h1>
+            <h1 id="caption_header" class="caption">Sign in to RStudio</h1>
             <p>
                <label for="username">Username:</label><br />
                <input type='text'
@@ -240,14 +240,14 @@ function submitRealForm() {
             </div>
             <input type="hidden" name="csrf-token" value="#csrf_token#" />
             <input type="hidden" name="appUri" value="#appUri#"/>
-            <div id="buttonpanel">
+            <div class="buttonpanel">
                <button id="signinbutton" class="fancy" type="submit">Sign In</button>
             </div>
          </div>
          <div id="goback" class="signinhidden">
-            <h1 id="caption">Signed Out</h1>
+            <h1 class="caption">Signed Out</h1>
             <p role="alert" aria-atomic="true">This browser was signed out from RStudio due to inactivity or by a manual sign out initiated from another tab. A new sign in was detected and you may now return to RStudio using the button below.</p>
-            <div id="buttonpanel"><button class="fancy" type="button" onclick="window.location = responseURL;">Return to RStudio</button></div>
+            <div class="buttonpanel"><button class="fancy" type="button" onclick="window.location = responseURL;">Return to RStudio</button></div>
          </div>
       </div>
     </td>
@@ -304,12 +304,20 @@ setInterval(function() {
     try {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
-          var url = xhr.responseURL.split('?')[0];
-          var href = location.href.split('?')[0];
-
+          var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
+          var isSignIn = false;
+          if (isIE11) {
+            isSignIn = xhr.response.indexOf('signinhidden') !== -1;
+            var url = location.href.split('?')[0];
+            responseURL = url.replace('/auth-sign-in', '');
+          } else {
+            var url = xhr.responseURL.split('?')[0];
+            var href = location.href.split('?')[0];
+            isSignIn = url === href;
+          }
           var controls = document.getElementById("controls");
           var goback = document.getElementById("goback");
-          if (url !== href) {
+          if (!isSignIn) {
             responseURL = url;
             controls.classList.add('signinhidden');
             goback.classList.remove('signinhidden');

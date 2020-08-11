@@ -14,17 +14,23 @@
  */
 package org.rstudio.core.client.prefs;
 
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
+
 public class RestartRequirement
 {
    public RestartRequirement()
    {
-      this(false, false);
+      this(false, false, false);
    }
 
-   public RestartRequirement(boolean uiReloadRequired, boolean desktopRestartRequired)
+   public RestartRequirement(boolean uiReloadRequired,
+                             boolean desktopRestartRequired,
+                             boolean sessionRestartRequired)
    {
       uiReloadRequired_ = uiReloadRequired;
       desktopRestartRequired_ = desktopRestartRequired;
+      sessionRestartRequired_ = sessionRestartRequired;
    }
 
    /**
@@ -58,15 +64,38 @@ public class RestartRequirement
    {
       return desktopRestartRequired_;
    }
+   
+   public void setSessionRestartRequired(boolean required)
+   {
+      sessionRestartRequired_ = required;
+   }
+   
+   public boolean getSessionRestartRequired()
+   {
+      return sessionRestartRequired_;
+   }
 
    public void mergeRequirements(RestartRequirement requirement)
    {
       if (requirement.getDesktopRestartRequired())
          setDesktopRestartRequired(true);
+      
       if (requirement.getUiReloadRequired())
          setUiReloadRequired(true);
+      
+      if (requirement.getSessionRestartRequired())
+         setSessionRestartRequired(true);
    }
 
+   public void setRestartRequired()
+   {
+      if (Desktop.isDesktop())
+         setDesktopRestartRequired(true);
+      else
+         setUiReloadRequired(true);
+   }
+   
    private boolean uiReloadRequired_;
    private boolean desktopRestartRequired_;
+   private boolean sessionRestartRequired_;
 }

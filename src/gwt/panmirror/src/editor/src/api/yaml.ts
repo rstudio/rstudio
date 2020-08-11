@@ -14,10 +14,39 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { NodeWithPos } from 'prosemirror-utils';
+import { EditorView } from 'prosemirror-view';
+
+import yaml from 'js-yaml';
 
 import { findTopLevelBodyNodes } from './node';
 
-import yaml from 'js-yaml';
+export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
+
+// return yaml front matter (w/o enclosing --)
+export function yamlFrontMatter(doc: ProsemirrorNode) {
+  const firstYaml = firstYamlNode(doc);
+  if (firstYaml) {
+    return stripYamlDelimeters(firstYaml.node.textContent);
+  } else {
+    return '';
+  }
+}
+
+// set yaml front matter (w/o enclosing ---)
+export function applyYamlFrontMatter(view: EditorView, yamlText: string) {
+  const schema = view.state.schema;
+  const updatedYaml = `---\n${yamlText}---`;
+  const updatedYamlNode = schema.nodes.yaml_metadata.createAndFill({}, schema.text(updatedYaml));
+  const tr = view.state.tr;
+  const firstYaml = firstYamlNode(view.state.doc);
+  if (firstYaml) {
+    tr.replaceRangeWith(firstYaml.pos, firstYaml.pos + firstYaml.node.nodeSize, updatedYamlNode);
+  } else {
+    tr.insert(1, updatedYamlNode);
+  }
+  view.dispatch(tr);
+}
 
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
@@ -27,7 +56,18 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
 }
 
-export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
+export function titleFromYamlMetadataNode(node: ProsemirrorNode) {
+  const titleMatch = node.textContent.match(kYamlMetadataTitleRegex);
+  if (titleMatch) {
+    let title = titleMatch[1].trim();
+    title = title.replace(/^["']|["']$/g, '');
+    title = title.replace(/\\"/g, '"');
+    title = title.replace(/''/g, "'");
+    return title;
+  } else {
+    return null;
+  }
+}
 
 const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
 
@@ -69,10 +109,42 @@ export function toYamlCode(obj: any): string | null {
 }
 
 export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode.replace(/^\s*---/, '').replace(/(?:---|\.\.\.)([ \t]*)$/, '');
+  return yamlCode
+    .replace(/^[\s-]+/, '')
+    .replace(/[\s-\.]+$/, '');
 }
 
 function logException(e: Error) {
   // TODO: log exceptions (we don't want to use console.log in production code, so this would
   // utilize some sort of external logging facility)
 }
+
+export interface ParsedYaml {
+  yamlCode: string;
+  yaml: any;
+  node: NodeWithPos;
+}
+
+export function parseYamlNodes(doc: ProsemirrorNode): ParsedYaml[] {
+  const yamlNodes = yamlMetadataNodes(doc);
+
+  const parsedYamlNodes = yamlNodes.map<ParsedYaml>(node => {
+    const yamlText = node.node.textContent;
+    const yamlCode = stripYamlDelimeters(yamlText);
+    return { yamlCode, yaml: parseYaml(yamlCode), node };
+  });
+  return parsedYamlNodes;
+}
+
+function firstYamlNode(doc: ProsemirrorNode) {
+  const yamlNodes = yamlMetadataNodes(doc);
+  if (yamlNodes && yamlNodes.length > 0) {
+    return yamlNodes[0];
+  } else {
+    return '';
+  }
+}
+
+
+
+

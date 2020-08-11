@@ -41,6 +41,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 import java.util.ArrayList;
 
@@ -199,6 +200,15 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    {
       String value = event.getValue();
       menu_.filter(value);
+   }
+
+   public void resetDocTabs(String activeId,
+                            String[] ids,
+                            FileIcon[] icons,
+                            String[] names,
+                            String[] paths)
+   {
+      menu_.updateDocs(activeId, ids, icons, names, paths);
    }
 
    @Override

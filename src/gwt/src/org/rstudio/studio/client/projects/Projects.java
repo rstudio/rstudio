@@ -75,7 +75,6 @@ import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -148,70 +147,68 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
 
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-         public void onSessionInit(SessionInitEvent sie)
+      eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         SessionInfo sessionInfo = session.getSessionInfo();
+
+         // ensure mru is initialized
+         ProjectMRUList mruList = pMRUList_.get();
+
+         // enable/disable commands
+         String activeProjectFile = sessionInfo.getActiveProjectFile();
+         boolean hasProject = activeProjectFile != null;
+         commands.closeProject().setEnabled(hasProject);
+         commands.projectOptions().setEnabled(hasProject);
+         if (!hasProject)
          {
-            SessionInfo sessionInfo = session.getSessionInfo();
+            commands.setWorkingDirToProjectDir().remove();
+            commands.showDiagnosticsProject().remove();
+         }
+         boolean enableProjectSharing = hasProject &&
+               sessionInfo.projectSupportsSharing();
+         commands.shareProject().setEnabled(enableProjectSharing);
+         commands.shareProject().setVisible(enableProjectSharing);
 
-            // ensure mru is initialized
-            ProjectMRUList mruList = pMRUList_.get();
+         // remove version control commands if necessary
+         if (!sessionInfo.isVcsEnabled())
+         {
+            commands.activateVcs().remove();
+            commands.layoutZoomVcs().remove();
+            commands.vcsCommit().remove();
+            commands.vcsShowHistory().remove();
+            commands.vcsPull().remove();
+            commands.vcsPush().remove();
+            commands.vcsCleanup().remove();
+         }
+         else
+         {
+            commands.activateVcs().setMenuLabel(
+                                 "Show _" + sessionInfo.getVcsName());
+            commands.layoutZoomVcs().setMenuLabel(
+                                 "Zoom _" + sessionInfo.getVcsName());
 
-            // enable/disable commands
-            String activeProjectFile = sessionInfo.getActiveProjectFile();
-            boolean hasProject = activeProjectFile != null;
-            commands.closeProject().setEnabled(hasProject);
-            commands.projectOptions().setEnabled(hasProject);
-            if (!hasProject)
+            // customize for svn if necessary
+            if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             {
-               commands.setWorkingDirToProjectDir().remove();
-               commands.showDiagnosticsProject().remove();
-            }
-            boolean enableProjectSharing = hasProject &&
-                  sessionInfo.projectSupportsSharing();
-            commands.shareProject().setEnabled(enableProjectSharing);
-            commands.shareProject().setVisible(enableProjectSharing);
-
-            // remove version control commands if necessary
-            if (!sessionInfo.isVcsEnabled())
-            {
-               commands.activateVcs().remove();
-               commands.layoutZoomVcs().remove();
-               commands.vcsCommit().remove();
-               commands.vcsShowHistory().remove();
-               commands.vcsPull().remove();
                commands.vcsPush().remove();
+               commands.vcsPull().setButtonLabel("Update");
+               commands.vcsPull().setMenuLabel("_Update");
+            }
+
+            // customize for git if necessary
+            if (sessionInfo.getVcsName() == VCSConstants.GIT_ID)
+            {
                commands.vcsCleanup().remove();
             }
-            else
-            {
-               commands.activateVcs().setMenuLabel(
-                                    "Show _" + sessionInfo.getVcsName());
-               commands.layoutZoomVcs().setMenuLabel(
-                                    "Zoom _" + sessionInfo.getVcsName());
-
-               // customize for svn if necessary
-               if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
-               {
-                  commands.vcsPush().remove();
-                  commands.vcsPull().setButtonLabel("Update");
-                  commands.vcsPull().setMenuLabel("_Update");
-               }
-
-               // customize for git if necessary
-               if (sessionInfo.getVcsName() == VCSConstants.GIT_ID)
-               {
-                  commands.vcsCleanup().remove();
-               }
-            }
-
-            // disable the open project in new window if necessary
-            if (!Desktop.hasDesktopFrame() || !sessionInfo.getMultiSession())
-               commands.openProjectInNewWindow().remove();
-
-            // maintain mru
-            if (hasProject)
-               mruList.add(activeProjectFile);
          }
+
+         // disable the open project in new window if necessary
+         if (!Desktop.hasDesktopFrame() || !sessionInfo.getMultiSession())
+            commands.openProjectInNewWindow().remove();
+
+         // maintain mru
+         if (hasProject)
+            mruList.add(activeProjectFile);
       });
    }
 

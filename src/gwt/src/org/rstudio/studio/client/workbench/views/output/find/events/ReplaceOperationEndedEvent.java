@@ -48,5 +48,5 @@ public class ReplaceOperationEndedEvent extends GwtEvent<ReplaceOperationEndedEv
 
    private final String handle_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

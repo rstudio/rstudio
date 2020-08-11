@@ -94,18 +94,19 @@
 })
 
 .rs.addApiFunction("diagnosticsReport", function() {
-  invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
+   invisible(.Call("rs_sourceDiagnostics", PACKAGE = "(embedding)"))
 })
 
 
 .rs.addApiFunction("previewRd", function(rdFile) {
-
-  if (!is.character(rdFile) || (length(rdFile) != 1))
-    stop("rdFile must be a single element character vector.")
-  if (!file.exists(rdFile))
-    stop("The specified rdFile ' ", rdFile, "' does not exist.")
-
-  invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
+   
+   if (!is.character(rdFile) || (length(rdFile) != 1))
+      stop("rdFile must be a single element character vector.")
+   if (!file.exists(rdFile))
+      stop("The specified rdFile ' ", rdFile, "' does not exist.")
+   
+   invisible(.Call("rs_previewRd", rdFile, PACKAGE = "(embedding)"))
+   
 })
 
 .rs.addApiFunction("viewer", function(url, height = NULL) {
@@ -119,7 +120,7 @@
   if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
      stop("height must be a single element numeric vector or 'maximize'.")
 
-  invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))
+  invisible(.Call("rs_viewer", url, height, PACKAGE = "(embedding)"))
 })
 
 
@@ -135,7 +136,8 @@
       stop("width argument mut be numeric", call. = FALSE)
    if (!is.numeric(height))
       stop("height argument mut be numeric", call. = FALSE)
-   invisible(.Call("rs_savePlotAsImage", file, format, width, height))
+   
+   invisible(.Call("rs_savePlotAsImage", file, format, width, height, PACKAGE = "(embedding)"))
 })
 
 .rs.addApiFunction("sourceMarkers", function(name,
@@ -208,7 +210,7 @@
    else if (!is.character(basePath))
       stop("basePath parameter is not of type character", call. = FALSE)
 
-   invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
+   invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect, PACKAGE = "(embedding)"))
 })
 
 .rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
@@ -234,7 +236,7 @@
    }
 
    # expand and alias for client
-   filePath <- .rs.normalizePath(filePath, winslash="/", mustWork = TRUE)
+   filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
    homeDir <- path.expand("~")
    if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
       filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
@@ -363,19 +365,19 @@
 # of the 'rstudioapi' package -- it is superceded by
 # '.rs.getLastActiveEditorContext()'.
 .rs.addApiFunction("getActiveDocumentContext", function() {
-   .Call("rs_getEditorContext", 0L)
+   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getLastActiveEditorContext", function() {
-   .Call("rs_getEditorContext", 0L)
+   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getConsoleEditorContext", function() {
-   .Call("rs_getEditorContext", 1L)
+   .Call("rs_getEditorContext", 1L, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getSourceEditorContext", function() {
-   .Call("rs_getEditorContext", 2L)
+   .Call("rs_getEditorContext", 2L, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getActiveProject", function() {
@@ -407,13 +409,20 @@
    .rs.askForPassword(prompt)
 })
 
-.rs.addFunction("dialogIcon", function(name) {
-  list(
-    info = 1,
-    warning = 2,
-    error = 3,
-    question = 4
-  )
+.rs.addFunction("dialogIcon", function(name = NULL) {
+  
+   icons <- list(
+      info = 1,
+      warning = 2,
+      error = 3,
+      question = 4
+   )
+   
+   if (is.null(name))
+      icons
+   else
+      icons[[name]]
+   
 })
 
 .rs.addApiFunction("showDialog", function(title, message, url = "") {
@@ -425,12 +434,13 @@
    .Call("rs_showDialog",
       title = title,
       message = message,
-      dialogIcon = .rs.dialogIcon()$info,
+      dialogIcon = .rs.dialogIcon("info"),
       prompt = FALSE,
       promptDefault = "",
       ok = "OK",
       cancel = "Cancel",
-      url = url)
+      url = url,
+      PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("updateDialog", function(...)
@@ -450,12 +460,13 @@
    .Call("rs_showDialog",
       title = title,
       message = message,
-      dialogIcon = .rs.dialogIcon()$info,
+      dialogIcon = .rs.dialogIcon("info"),
       prompt = TRUE,
       promptDefault = default,
       ok = "OK",
       cancel = "Cancel",
-      url = "")
+      url = "",
+      PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("showQuestion", function(title, message, ok = "OK", cancel = "Cancel") {
@@ -470,12 +481,13 @@
    .Call("rs_showDialog",
       title = title,
       message = message,
-      dialogIcon = .rs.dialogIcon()$question,
+      dialogIcon = .rs.dialogIcon("question"),
       prompt = FALSE,
       promptDefault = NULL,
       ok = ok,
       cancel = cancel,
-      url = NULL)
+      url = NULL,
+      PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("writePreference", function(name, value) {
@@ -673,14 +685,14 @@
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalExecute", command, workingDir, env, show)
+   .Call("rs_terminalExecute", command, workingDir, env, show, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalExitCode", function(id) {
    if (is.null(id) || !is.character(id) || (length(id) != 1))
       stop("'id' must be a single element character vector")
 
-   .Call("rs_terminalExitCode", id)
+   .Call("rs_terminalExitCode", id, PACKAGE = "(embedding)")
 })
 
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,

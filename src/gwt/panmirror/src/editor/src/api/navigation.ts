@@ -13,7 +13,6 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'prosemirror-utils';
@@ -21,7 +20,6 @@ import { setTextSelection, Predicate, findChildren, findDomRefAtPos } from 'pros
 import zenscroll from 'zenscroll';
 
 import { editingRootNode } from './node';
-import { pandocAutoIdentifier } from './pandoc_id';
 import { kNavigationTransaction } from './transaction';
 import { xrefPosition } from './xref';
 
@@ -121,7 +119,7 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
       } else {
         scroller.to(node, 0);
       }
-    }, 50);
+    }, 200);
 
     return { pos, prevPos };
 

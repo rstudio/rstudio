@@ -19,9 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RmdChunkOutputFinishedEvent 
+public class RmdChunkOutputFinishedEvent
              extends GwtEvent<RmdChunkOutputFinishedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event);
@@ -30,30 +30,30 @@ public class RmdChunkOutputFinishedEvent
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getDocId() /*-{
          return this.doc_id;
       }-*/;
-      
+
       public final native String getChunkId() /*-{
          return this.chunk_id;
       }-*/;
-      
+
       public final native String getRequestId() /*-{
          return this.request_id;
       }-*/;
-      
+
       public final native int getType() /*-{
          return this.type;
       }-*/;
-      
+
       public final native int getScope() /*-{
          return this.scope;
       }-*/;
    }
-   
+
    public RmdChunkOutputFinishedEvent(Data data)
    {
       data_ = data;
@@ -75,11 +75,11 @@ public class RmdChunkOutputFinishedEvent
    {
       handler.onRmdChunkOutputFinished(this);
    }
-   
+
    private Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public static final int TYPE_REPLAY      = 0;
    public static final int TYPE_INTERACTIVE = 1;
 }

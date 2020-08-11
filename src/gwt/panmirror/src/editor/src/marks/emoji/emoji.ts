@@ -32,12 +32,12 @@ import {
   emojiForAllSkinTones,
   Emoji,
   emojiWithSkinTonePreference,
+  kEmojiAttr,
+  kEmojiContent,
 } from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
 
-const kEmojiAttr = 0;
-const kEmojiContent = 1;
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { ui } = context;
@@ -97,7 +97,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            priority: 16,
+            priority: 2,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // look for a matching emoji
               const char = fragmentText(parent);
@@ -157,7 +157,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           // create mark transation wrapper
           const markTr = new MarkTransaction(tr);
 
-          const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
+          const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, _pos: number, parentNode: ProsemirrorNode) =>
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 

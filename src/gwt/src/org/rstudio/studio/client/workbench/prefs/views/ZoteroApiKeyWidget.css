@@ -1,0 +1,12 @@
+@charset "UTF-8";
+
+.apiKey {
+  font-family: monospace !important;
+  margin-right: 6px;
+}
+
+.apiKeyPanel {
+	margin-top: 4px;
+}
+
+

@@ -846,11 +846,15 @@ bool usingMingwGcc49();
 
 bool isWebsiteProject();
 bool isBookdownWebsite();
+bool isBookdownProject();
 bool isBlogdownProject();
 bool isDistillProject();
 std::string websiteOutputDir();
 std::vector<core::FilePath> bookdownBibliographies();
 std::vector<std::string> bookdownBibliographiesRelative();
+std::vector<std::string> bookdownZoteroCollections();
+core::json::Value bookdownXRefIndex();
+core::FilePath bookdownCSL();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);

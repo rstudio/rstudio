@@ -15,7 +15,7 @@
 
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands';
 import { MarkType, Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
-import { wrapInList } from 'prosemirror-schema-list';
+import { wrapInList, liftListItem } from 'prosemirror-schema-list';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNode, findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
@@ -105,6 +105,9 @@ export enum EditorCommandId {
   DefinitionDescription = 'F0738D83-8E11-4CB5-B958-390190A2D7DD',
   Symbol = '1419765F-6E4A-4A4C-8670-D9E8578EA996',
   Emoji = 'F73896A2-02CC-4E5D-A596-78444A1D2A37',
+  EmDash = '5B0DD33B-6209-4713-B8BB-60B5CA0BC3B3',
+  EnDash = 'C32AFE32-0E57-4A16-9C39-88EB1D82B8B4',
+  NonBreakingSpace = 'CF6428AB-F36E-446C-8661-2781B2CD1169',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -125,6 +128,10 @@ export enum EditorCommandId {
   StanCodeChunk = '65D33344-CBE9-438C-B337-A538F8D7FCE5',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
+
+  // outline
+  GoToNextSection = 'AE827BDA-96F8-4E84-8030-298D98386765',
+  GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF'
 }
 
 export interface EditorCommand {
@@ -226,6 +233,31 @@ export class WrapCommand extends NodeCommand {
   }
 }
 
+export class InsertCharacterCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, ch: string, keymap: string[]) {
+    super(
+      id,
+      keymap,
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+        // enable/disable command
+        const schema = state.schema;
+        if (!canInsertNode(state, schema.nodes.text)) {
+          return false;
+        }
+        if (dispatch) {
+          const tr = state.tr;
+          tr.replaceSelectionWith(schema.text(ch), true).scrollIntoView();
+          dispatch(tr);
+        }
+
+        return true;
+      }
+    );
+  }
+}
+
+
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
@@ -242,14 +274,16 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
 
     if (range.depth >= 1 && parentList && range.depth - parentList.depth <= 1) {
       if (isList(parentList.node) && listType.validContent(parentList.node.content)) {
-        const tr: Transaction = state.tr;
-        tr.setNodeMarkup(parentList.pos, listType);
-
-        if (dispatch) {
-          dispatch(tr);
+        if (parentList.node.type !== listType) {
+          if (dispatch) {
+            const tr: Transaction = state.tr;
+            tr.setNodeMarkup(parentList.pos, listType);
+            dispatch(tr);
+          }
+          return true;
+        } else {
+          return liftListItem(itemType)(state, dispatch);
         }
-
-        return true;
       }
     }
 

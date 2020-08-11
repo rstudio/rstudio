@@ -20,18 +20,18 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class TestsStartedEvent extends GwtEvent<TestsStartedEvent.Handler>
-{  
+{
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getTargetFile() /*-{
          return this.target_file;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onTestsStarted(TestsStartedEvent event);
@@ -46,7 +46,7 @@ public class TestsStartedEvent extends GwtEvent<TestsStartedEvent.Handler>
    {
       return data_.getTargetFile();
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -58,8 +58,8 @@ public class TestsStartedEvent extends GwtEvent<TestsStartedEvent.Handler>
    {
       handler.onTestsStarted(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

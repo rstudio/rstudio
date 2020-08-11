@@ -15,7 +15,11 @@
 
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { findChildrenByMark } from 'prosemirror-utils';
+
 import { pandocAutoIdentifier } from './pandoc_id';
+import { rmdChunkEngineAndLabel } from './rmd';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
@@ -31,39 +35,67 @@ export interface XRef {
   file: string;
   type: string;
   id: string;
-  title: string;
+  title?: string;
 }
 
-export function xrefKey(xref: XRef) {
-  return xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
+export function xrefKey(xref: XRef, headingType = false) {
+  // headings don't include their type in the key
+  return !headingType && /^h\d$/.test(xref.type)
+    ? xref.id
+    // no colon if there is no type
+    : xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
 }
 
 export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
 
-  // alias schema
-  const schema = doc.type.schema;
+  // -1 if not found
+  let xrefPos = -1;
 
   // get type and id
-  const { type, id } = xrefTypeAndId(xref);
+  const xrefInfo = xrefTypeAndId(xref);
+  if (xrefInfo) {
 
-  // search all descendents recursively for the xref
-  let xrefPos = -1;
-  doc.descendants((node, pos) => {
-
-    // bail if we already found it
-    if (xrefPos !== -1) {
-      return false;
-    }
-
-    // see if we have a locator for this type that can handle this node type
+    const { type, id } = xrefInfo;
     const locator = xrefPositionLocators[type];
-    if (locator && locator.nodeTypes.includes(node.type.name)) {
-      if (locator.hasXRef(node, id)) {
-        xrefPos = pos;
-        return false;
+    if (locator) {
+      // if this locator finds by mark then look at doc for marks
+      if (locator.markType) {
+        const schema = doc.type.schema;
+        const markType = schema.marks[locator.markType];
+        const markedNodes = findChildrenByMark(doc, markType, true);
+        markedNodes.forEach(markedNode => {
+          // bail if we already found it
+          if (xrefPos !== -1) {
+            return false;
+          }
+          // see if we can locate the xref
+          if (locator.hasXRef(markedNode.node, id)) {
+            xrefPos = markedNode.pos;
+          }
+        });
+
+      } else if (locator.nodeTypes) {
+        // otherwise recursively examine nodes to find the xref
+        doc.descendants((node, pos) => {
+          // bail if we already found it
+          if (xrefPos !== -1) {
+            return false;
+          }
+          // see if we can locate the xref
+          if (locator.nodeTypes!.includes(node.type.name) &&
+            locator.hasXRef(node, id)) {
+            xrefPos = pos;
+            return false;
+          }
+        });
       }
+
+
+
+
     }
-  });
+
+  }
 
   // return the position
   return xrefPos;
@@ -79,25 +111,23 @@ function xrefTypeAndId(xref: string) {
       id: xref.substring(colonPos + 1)
     };
   } else {
-    return {
-      type: 'heading',
-      id: xref
-    };
+    return null;
   }
 }
 
 interface XRefPositionLocator {
-  nodeTypes: string[];
+  markType?: string;
+  nodeTypes?: string[];
   hasXRef: (node: ProsemirrorNode, id: string) => boolean;
 }
 
 const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
-  'heading': {
-    nodeTypes: ['heading'],
-    hasXRef: (node: ProsemirrorNode, id: string) => {
-      return node.attrs.id === id || pandocAutoIdentifier(node.textContent) === id;
-    }
-  },
+  'h1': headingLocator(),
+  'h2': headingLocator(),
+  'h3': headingLocator(),
+  'h4': headingLocator(),
+  'h5': headingLocator(),
+  'h6': headingLocator(),
   'fig': {
     nodeTypes: ['rmd_chunk'],
     hasXRef: (node: ProsemirrorNode, id: string) => rmdChunkHasXRef(node, 'r', id, /^\{.*[ ,].*fig\.cap\s*=.*\}\s*\n/m)
@@ -116,6 +146,13 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
       }
     }
   },
+  'eq': {
+    markType: 'math',
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      const match = node.textContent.match(/^.*\(\\#eq:([a-zA-Z0-9\/-]+)\).*$/m);
+      return !!match && match[1].localeCompare(id, undefined, { sensitivity: 'accent' }) === 0;
+    }
+  },
   'thm': thereomLocator('theorem'),
   'lem': thereomLocator('lemma'),
   'cor': thereomLocator('corollary'),
@@ -126,14 +163,27 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
 };
 
 function rmdChunkHasXRef(node: ProsemirrorNode, engine: string, label: string, pattern?: RegExp) {
+  const chunk = rmdChunkEngineAndLabel(node.textContent);
   const match = node.textContent.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
-  if (match) {
-    return match[1].localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
-      match[2] === label &&
+  if (chunk) {
+    return chunk.engine.localeCompare(engine, undefined, { sensitivity: 'accent' }) === 0 &&
+      chunk.label === label &&
       (!pattern || !!node.textContent.match(pattern));
   } else {
     return false;
   }
+}
+
+function headingLocator() {
+  return {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      // note we use default pandoc auto id semantics here no matter what the documnet
+      // happens to use b/c our xref indexing code also does this (so only ids generated
+      // using the 'standard' rules will be in the index)
+      return node.attrs.id === id || pandocAutoIdentifier(node.textContent, false) === id;
+    }
+  };
 }
 
 function thereomLocator(engine: string) {

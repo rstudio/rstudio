@@ -23,17 +23,17 @@ public class EditorModeChangedEvent extends GwtEvent<EditorModeChangedEvent.Hand
    {
       void onEditorModeChanged(EditorModeChangedEvent event);
    }
-   
+
    public EditorModeChangedEvent(String modeName)
    {
       modeName_ = modeName;
    }
-   
+
    public String getMode()
    {
       return modeName_;
    }
-   
+
    private final String modeName_;
 
    @Override
@@ -48,5 +48,5 @@ public class EditorModeChangedEvent extends GwtEvent<EditorModeChangedEvent.Hand
       handler.onEditorModeChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -26,15 +26,17 @@ import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { AttrEditOptions } from '../../api/attr_edit';
-import { pandocAutoIdentifier } from '../../api/pandoc_id';
+import { pandocAutoIdentifier, gfmAutoIdentifier } from '../../api/pandoc_id';
+import { PandocExtensions } from '../../api/pandoc';
+import { fragmentText } from '../../api/fragment';
 
 export class AttrEditCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI, editors: AttrEditOptions[]) {
-    super(EditorCommandId.AttrEdit, [kEditAttrShortcut], attrEditCommandFn(ui, editors));
+  constructor(ui: EditorUI, pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) {
+    super(EditorCommandId.AttrEdit, [kEditAttrShortcut], attrEditCommandFn(ui, pandocExtensions, editors));
   }
 }
 
-export function attrEditCommandFn(ui: EditorUI, editors: AttrEditOptions[]) {
+export function attrEditCommandFn(ui: EditorUI, pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     // see if there is an active mark with attrs or a parent node with attrs
     const marks = state.storedMarks || state.selection.$head.marks();
@@ -75,7 +77,7 @@ export function attrEditCommandFn(ui: EditorUI, editors: AttrEditOptions[]) {
         if (mark) {
           await editMarkAttrs(mark, state, dispatch, ui);
         } else {
-          await editNodeAttrs(node!, pos, state, dispatch, ui);
+          await editNodeAttrs(node!, pos, state, dispatch, ui, pandocExtensions);
         }
         if (view) {
           view.focus();
@@ -120,9 +122,10 @@ async function editNodeAttrs(
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
+  pandocExtensions: PandocExtensions
 ): Promise<void> {
   const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node));
+  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
   if (result) {
     dispatch(
       state.tr.setNodeMarkup(pos, node.type, {
@@ -134,11 +137,19 @@ async function editNodeAttrs(
 }
 
 
-function idHint(node: ProsemirrorNode) {
+function idHint(node: ProsemirrorNode, pandocExtensions: PandocExtensions) {
 
   if (node.type === node.type.schema.nodes.heading) {
 
-    return pandocAutoIdentifier(node.textContent);
+    const unemoji = pandocExtensions.gfm_auto_identifiers;
+    const text = fragmentText(node.content, unemoji);
+
+    if (pandocExtensions.gfm_auto_identifiers) {
+      return gfmAutoIdentifier(text, pandocExtensions.ascii_identifiers);
+    } else {
+      return pandocAutoIdentifier(text, pandocExtensions.ascii_identifiers);
+    }
+
 
   } else {
 

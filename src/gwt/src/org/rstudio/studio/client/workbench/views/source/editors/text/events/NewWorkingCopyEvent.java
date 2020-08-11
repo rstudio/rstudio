@@ -27,29 +27,29 @@ public class NewWorkingCopyEvent extends GwtEvent<NewWorkingCopyEvent.Handler>
       void onNewWorkingCopy(NewWorkingCopyEvent event);
    }
 
-   public NewWorkingCopyEvent(EditableFileType type, String path, 
+   public NewWorkingCopyEvent(EditableFileType type, String path,
          String contents)
    {
       type_ = type;
       path_ = path;
       contents_ = contents;
    }
-   
+
    public EditableFileType getType()
    {
       return type_;
    }
-   
+
    public String getPath()
    {
       return path_;
    }
-   
+
    public String getContents()
    {
       return contents_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -62,7 +62,7 @@ public class NewWorkingCopyEvent extends GwtEvent<NewWorkingCopyEvent.Handler>
       handler.onNewWorkingCopy(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private final EditableFileType type_;
    private final String path_;

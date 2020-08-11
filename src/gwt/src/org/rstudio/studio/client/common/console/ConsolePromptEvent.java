@@ -55,5 +55,5 @@ public class ConsolePromptEvent extends GwtEvent<Handler>
 
    private final String prompt_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

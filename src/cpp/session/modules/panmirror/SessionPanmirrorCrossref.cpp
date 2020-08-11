@@ -35,12 +35,13 @@ namespace crossref {
 
 namespace {
 
-const char * const kCrossrefApiHost = "https://api.crossref.org";
-const char * const kCrossrefWorks = "works";
-
-
-void crossrefRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
+void crossrefContentRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
 {
+   pResponse->setResult(value);
+}
+
+void crossrefApiRequestHandler(const core::json::Value& value, core::json::JsonRpcResponse* pResponse)
+{   
    if (json::isType<json::Object>(value))
    {
       json::Object responseJson = value.getObject();
@@ -75,17 +76,22 @@ void crossrefRequestHandler(const core::json::Value& value, core::json::JsonRpcR
 
 void crossrefRequest(const std::string& resource,
                      const http::Fields& params,
+                     const session::JsonRpcResponseHandler& handler,
                      const json::JsonRpcFunctionContinuation& cont)
 {
    // build query string
    std::string queryString;
    core::http::util::buildQueryString(params, &queryString);
+   if (queryString.length() > 0)
+      queryString = "?" + queryString;
 
    // build the url and make the request
-   boost::format fmt("%s/%s?%s");
+   boost::format fmt("%s/%s%s");
    const std::string url = boost::str(fmt % kCrossrefApiHost % resource % queryString);
-   asyncJsonRpcRequest(url, crossrefRequestHandler, cont);
+
+   asyncJsonRpcRequest(url, handler, cont);
 }
+
 
 void crossrefWorks(const json::JsonRpcRequest& request,
                    const json::JsonRpcFunctionContinuation& cont)
@@ -106,7 +112,32 @@ void crossrefWorks(const json::JsonRpcRequest& request,
    params.push_back(std::make_pair("query", query));
 
    // make the request
-   crossrefRequest(kCrossrefWorks, params, cont);
+   crossrefRequest(kCrossrefWorks, params, crossrefApiRequestHandler, cont);
+}
+
+void crossrefDoi(const json::JsonRpcRequest& request,
+                 const json::JsonRpcFunctionContinuation& cont)
+{
+    std::string doi;
+    Error error = json::readParams(request.params, &doi);
+    if (error)
+    {
+      json::JsonRpcResponse response;
+      setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+    }
+    
+    // Path to DOI metadata works/{doi}/transform/{format} (see: https://citation.crosscite.org/docs.html#sec-5)
+    const char * const kCitationFormat = "application/vnd.citationstyles.csl+json";
+    boost::format fmt("%s/%s/transform/%s");
+    const std::string resourcePath = boost::str(fmt % kCrossrefWorks % doi % kCitationFormat);
+    
+    // No parameters
+    core::http::Fields params;
+
+    // make the request
+    crossrefRequest(resourcePath, params, crossrefContentRequestHandler, cont);
 }
 
 
@@ -117,6 +148,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::registerAsyncRpcMethod, "crossref_works", crossrefWorks))
+      (boost::bind(module_context::registerAsyncRpcMethod, "crossref_doi", crossrefDoi))
    ;
    return initBlock.execute();
 }

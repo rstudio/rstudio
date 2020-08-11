@@ -19,6 +19,7 @@
 #include <shared_core/Error.hpp>
 
 #include <core/Exec.hpp>
+#include <core/Algorithm.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Process.hpp>
@@ -110,21 +111,80 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    }
 }
 
-void endJsonObjectRequest(const json::JsonRpcFunctionContinuation& cont,
-                          const core::system::ProcessResult& result)
+void endHeadingIds(json::Object astJson,
+                   const core::system::ProcessResult& result,
+                   const json::JsonRpcFunctionContinuation& cont)
+{
+   json::JsonRpcResponse response;
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      std::vector<std::string> lines;
+      boost::algorithm::split(lines, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+      json::Array jsonHeadingsIds;
+      std::for_each(lines.begin(), lines.end(), [&jsonHeadingsIds](std::string line) {
+         boost::algorithm::trim(line);
+         if (!line.empty())
+            jsonHeadingsIds.push_back(line);
+      });
+      astJson["heading_ids"] = jsonHeadingsIds;
+      response.setResult(astJson);
+      cont(Success(), &response);
+   }
+   else
+   {
+      json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
+      cont(Success(), &response);
+   }
+}
+
+void endMarkdownToAst(std::string markdown,
+                      std::string format,
+                      const core::system::ProcessResult& result,
+                      const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
    if (result.exitStatus == EXIT_SUCCESS)
    {
       json::Object jsonObject;
       if (json::parseJsonForResponse(result.stdOut, &jsonObject, &response))
-        response.setResult(jsonObject);
+      {
+         // got ast, now extract heading ids
+
+         // disable auto identifiers so we can discover *only* explicit ids
+         format += "-auto_identifiers-gfm_auto_identifiers";
+
+         // path to lua filter
+         FilePath resPath = session::options().rResourcesPath();
+         FilePath headingIdsLuaPath = resPath.completePath("heading_ids.lua");
+         std::string headingIdsLua = string_utils::utf8ToSystem(headingIdsLuaPath.getAbsolutePath());
+
+         // build args
+         std::vector<std::string> args;
+         args.push_back("--from");
+         args.push_back(format);
+         args.push_back("--to");
+         args.push_back(headingIdsLua);
+
+         // run pandoc
+         core::system::ProcessResult result;
+         Error error = module_context::runPandocAsync(args, markdown, boost::bind(endHeadingIds, jsonObject, _1, cont));
+         if (error)
+         {
+            json::setErrorResponse(error, &response);
+            cont(Success(), &response);
+         }
+      }
+      else
+      {
+         cont(Success(), &response);
+      }
    }
    else
    {
       json::setProcessErrorResponse(result, ERROR_LOCATION, &response);
+      cont(Success(), &response);
    }
-   cont(Success(), &response);
+
 }
 
 void pandocMarkdownToAst(const json::JsonRpcRequest& request,
@@ -162,7 +222,7 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
 
    // run pandoc
    core::system::ProcessResult result;
-   error = module_context::runPandocAsync(args, markdown, boost::bind(endJsonObjectRequest, cont, _1));
+   error = module_context::runPandocAsync(args, markdown, boost::bind(endMarkdownToAst, markdown, format, _1, cont));
    if (error)
    {
       json::setErrorResponse(error, &response);

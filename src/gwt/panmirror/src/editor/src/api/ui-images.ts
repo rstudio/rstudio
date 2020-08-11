@@ -1,5 +1,5 @@
 /*
- * images.ts
+ * ui-images.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -116,5 +116,6 @@ export interface EditorUIImages {
     song_dark?: string;
     web?: string;
     web_dark?: string;
+    zoteroOverlay?: string;
   };
 }

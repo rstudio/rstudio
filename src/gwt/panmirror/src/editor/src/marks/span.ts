@@ -22,10 +22,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { EditorUI } from '../api/ui';
 import { markIsActive, getMarkAttrs, getSelectionMarkRange } from '../api/mark';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrReadAST, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
-
-const SPAN_ATTR = 0;
-const SPAN_CHILDREN = 1;
+import { pandocAttrSpec, pandocAttrReadAST, pandocAttrParseDom, pandocAttrToDomAttr, kSpanAttr, kSpanChildren } from '../api/pandoc_attr';
 
 const extension = (context: ExtensionContext) => {
   const { pandocExtensions, ui } = context;
@@ -70,9 +67,9 @@ const extension = (context: ExtensionContext) => {
               token: PandocTokenType.Span,
               mark: 'span',
               getAttrs: (tok: PandocToken) => {
-                return pandocAttrReadAST(tok, SPAN_ATTR);
+                return pandocAttrReadAST(tok, kSpanAttr);
               },
-              getChildren: (tok: PandocToken) => tok.c[SPAN_CHILDREN],
+              getChildren: (tok: PandocToken) => tok.c[kSpanChildren],
             },
           ],
           writer: {

@@ -23,9 +23,9 @@ import com.google.gwt.user.cellview.client.ColumnSortList;
 public class ColumnSortInfo extends JavaScriptObject
 {
    protected ColumnSortInfo()
-   {  
+   {
    }
-   
+
    public static native ColumnSortInfo create(int columnIndex,
                                               boolean ascending) /*-{
       var sortInfo = new Object();
@@ -33,11 +33,11 @@ public class ColumnSortInfo extends JavaScriptObject
       sortInfo.ascending = ascending;
       return sortInfo;
    }-*/;
-   
+
    public final native int getColumnIndex() /*-{
       return this.columnIndex;
    }-*/;
-   
+
    public final native boolean getAscending() /*-{
       return this.ascending;
    }-*/;

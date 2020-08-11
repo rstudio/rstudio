@@ -1,0 +1,17 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "rstudio.exe (desktop\\rstudio.exe)",
+      "name": "rstudio.exe (desktop\\rstudio.exe)",
+      "env": {
+        "RS_CRASH_HANDLER_PATH": "@RS_CRASH_HANDLER_PATH@",
+        "QT_PLUGIN_PATH": "@QT_PLUGIN_PATH@",
+        "PATH": "@QT_BINARY_PATH@;${env.PATH}"
+      }
+    }
+  ]
+}

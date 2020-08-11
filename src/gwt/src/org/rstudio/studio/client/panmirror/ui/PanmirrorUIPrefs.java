@@ -59,6 +59,11 @@ public class PanmirrorUIPrefs {
       return pUIPrefs_.get().tabKeyMoveFocus().getValue();
    }
    
+   public Boolean zoteroUseBetterBibtex()
+   {
+      return pUIPrefs_.get().zoteroUseBetterBibtex().getValue();
+   }
+   
    public double emojiSkinTone() 
    {
 	   String emojiSkinTone = pUIPrefs_.get().emojiSkintone().getValue();
@@ -103,6 +108,8 @@ public class PanmirrorUIPrefs {
 	   pUIPrefs_.get().emojiSkintone().setGlobalValue(skinToneStr);
 	   pUIPrefs_.get().writeUserPrefs();
    }
+   
+   
    
    Provider<UserPrefs> pUIPrefs_;
    Provider<UserState> pUserState_;

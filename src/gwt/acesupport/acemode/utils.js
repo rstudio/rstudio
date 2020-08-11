@@ -63,8 +63,17 @@ var unicode = require("ace/unicode");
    this.primaryState = function(states)
    {
       if (that.isArray(states))
-         return states[0];
-      return states;
+      {
+         for (var i = 0; i < states.length; i++)
+         {
+            var state = states[i];
+            if (state === "#tmp")
+               continue;
+            return state || "start";
+         }
+      }
+
+      return states || "start";
    };
 
    this.activeMode = function(state, major)

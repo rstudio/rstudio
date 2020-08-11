@@ -24,7 +24,7 @@ import * as https from 'https';
 const maxUnicodeAge = 6.0;
 
 // The file that should be generated holding the symbol data
-const outputFile = './src/behaviors/insert_symbol/symbols.json';
+const outputFile = './src/behaviors/insert_symbol/symbols.ts';
 
 // The names of blocks of unicode characters to be scan for characters to include.
 // Blocks will only be included if characters from that block are selected (e.g. characters)
@@ -46,7 +46,10 @@ const groupToBlockMapping = [
   },
   {
     alias: 'Punctuation',
-    blocks: ['Supplemental Punctuation'],
+    blocks: [
+      'General Punctuation',
+      'Supplemental Punctuation'
+    ],
   },
   {
     alias: 'Technical',
@@ -89,32 +92,33 @@ const groupToBlockMapping = [
 // These characters are excluded because they don't render properly in the default font. 
 // Consider re-enabling them as address font issues with unicode.
 const excludedChars = [
-  160, // no-break space
-  65860,65861,65910,65911,65912,65923,65927,65928,65929,65931,65932,65933,65934, // Ancient Characters
-  11094,11095,11096,11097, // Arrows
-  10190,10191,120778,120779, // Mathematical
-  9885,9886,9887,9907,9908,9909,9910,9911,9912,9913,9914,9915,9916,9919,9920,9921,
-  9922,9923,9926,9927,9929,9930,9932,9933,9936,9938,9941,9942,9943,9944,9945,9946,
-  9947,9948,9949,9950,9951,9952,9953,9955,9956,9957,9958,9959,9960,9963,9964,9965,
-  9966,9967,9974,9979,9980,9982,9983,10079,10080, // Miscellaneous
+  65860, 65861, 65910, 65911, 65912, 65923, 65927, 65928, 65929, 65931, 65932, 65933, 65934, // Ancient Characters
+  11094, 11095, 11096, 11097, // Arrows
+  10190, 10191, 120778, 120779, // Mathematical
+  9885, 9886, 9887, 9907, 9908, 9909, 9910, 9911, 9912, 9913, 9914, 9915, 9916, 9919, 9920, 9921,
+  9922, 9923, 9926, 9927, 9929, 9930, 9932, 9933, 9936, 9938, 9941, 9942, 9943, 9944, 9945, 9946,
+  9947, 9948, 9949, 9950, 9951, 9952, 9953, 9955, 9956, 9957, 9958, 9959, 9960, 9963, 9964, 9965,
+  9966, 9967, 9974, 9979, 9980, 9982, 9983, 10079, 10080, // Miscellaneous
   9192, // technical
   11801, // punctuation
-  119049,119050,119051,119052,119053,119054,119055,119059,119060,119061,119062,119063,
-  119064,119065,119066,119067,119068,119069,119071,119072,119075,119076,119077,119078,
-  119081,119084,119085,119086,119087,119088,119089,119090,119091,119092,119093,119094,
-  119095,119096,119097,119098,119099,119100,119101,119102,119103,119104,119105,119106,
-  119107,119108,119109,119110,119111,119112,119113,119114,119115,119116,119117,119118,
-  119119,119120,119121,119122,119123,119124,119125,119126,119127,119128,119129,119130,
-  119131,119132,119133,119134,119135,119136,119137,119138,119139,119140,119141,119142,
-  119143,119144,119145,119146,119147,119148,119149,119150,119151,119152,119153,119154,
-  119163,119164,119165,119166,119167,119168,119169,119170,119171,119172,119173,119174,
-  119175,119176,119177,119178,119179,119180,119181,119182,119183,119184,119185,119188,
-  119189,119190,119191,119192,119193,119194,119195,119196,119197,119198,119199,119200,
-  119201,119202,119203,119204,119205,119209,119210,119211,119212,119213,119214,
-  119215,119216,119217,119218,119219,119220,119221,119222,119223,119224,119225,119226,
-  119227,119228,119229,119230,119231,119232,119233,119234,119235,119236,119237,119238,
-  119247,119248,119249,119250,119251,119252,119253,119254,119255,119256,119257,119258,
-  119259,119260,119261, // musical symbols
+  119049, 119050, 119051, 119052, 119053, 119054, 119055, 119059, 119060, 119061, 119062, 119063,
+  119064, 119065, 119066, 119067, 119068, 119069, 119071, 119072, 119075, 119076, 119077, 119078,
+  119081, 119084, 119085, 119086, 119087, 119088, 119089, 119090, 119091, 119092, 119093, 119094,
+  119095, 119096, 119097, 119098, 119099, 119100, 119101, 119102, 119103, 119104, 119105, 119106,
+  119107, 119108, 119109, 119110, 119111, 119112, 119113, 119114, 119115, 119116, 119117, 119118,
+  119119, 119120, 119121, 119122, 119123, 119124, 119125, 119126, 119127, 119128, 119129, 119130,
+  119131, 119132, 119133, 119134, 119135, 119136, 119137, 119138, 119139, 119140, 119141, 119142,
+  119143, 119144, 119145, 119146, 119147, 119148, 119149, 119150, 119151, 119152, 119153, 119154,
+  119163, 119164, 119165, 119166, 119167, 119168, 119169, 119170, 119171, 119172, 119173, 119174,
+  119175, 119176, 119177, 119178, 119179, 119180, 119181, 119182, 119183, 119184, 119185, 119188,
+  119189, 119190, 119191, 119192, 119193, 119194, 119195, 119196, 119197, 119198, 119199, 119200,
+  119201, 119202, 119203, 119204, 119205, 119209, 119210, 119211, 119212, 119213, 119214,
+  119215, 119216, 119217, 119218, 119219, 119220, 119221, 119222, 119223, 119224, 119225, 119226,
+  119227, 119228, 119229, 119230, 119231, 119232, 119233, 119234, 119235, 119236, 119237, 119238,
+  119247, 119248, 119249, 119250, 119251, 119252, 119253, 119254, 119255, 119256, 119257, 119258,
+  119259, 119260, 119261, // musical symbols
+  8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, // en/em and other multicharacter spaces
+  8232, 8233 // separator characters
 ];
 
 const excludedEmoji = [
@@ -372,7 +376,7 @@ const unicodeDownloadUrl = `https://www.unicode.org/Public/UCD/latest/ucdxml/${t
 
 // The set of emoji + metadata used by Github
 const emojiDownloadUrl = 'https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json';
-const emojiPath = './src/api/emojis-all.json';
+const emojiPath = './src/api/emojis-all.ts';
 
 // The set of emoji that has markdown rendering in pandoc.
 import kPandocEmojis from './emojis-pandoc.json';
@@ -390,9 +394,9 @@ downloadFile(unicodeDownloadUrl, targetZipFile)
   .then(jsonResult => jsonToSymbolGroups(jsonResult))
   .then(symbolGroups => symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0))
   .then(symbolGroups => writeSymbolsFile(symbolGroups))
-  .then(()=>heading("GENERATING EMOJI"))
+  .then(() => heading("GENERATING EMOJI"))
   .then(() => downloadFile(emojiDownloadUrl, emojiPath))
-  .then((targetFile) => filterEmoji(targetFile)) 
+  .then((targetFile) => filterEmoji(targetFile))
   .catch((message: any) => {
     error(message);
     process.exit(1);
@@ -517,6 +521,7 @@ function unzipSingleZipFile(zipFile: string, fileToExtract: string, outputDirect
           resolve(outputFilePath);
         });
 
+
         entry.pipe(outputStream);
       } else {
         entry.autodrain();
@@ -574,17 +579,23 @@ function jsonToSymbolGroups(jsonResult: any) {
 }
 
 function writeSymbolsFile(symbolGroups: Group[]) {
-    // Write the output file
-    info('Writing output', outputFile);
-    cleanupFiles([outputFile], false);
-    const finalJson = JSON.stringify(symbolGroups, null, 2);
-    fs.writeFileSync(outputFile, finalJson);
+  // Write the output file
+  info('Writing output', outputFile);
+  cleanupFiles([outputFile], false);
+  const finalJson = JSON.stringify(symbolGroups, null, 2);
 
-    const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
-      return count + symbolGroup.symbols.length;
-    }, 0);
-    info(countSymbols + ' total symbols generated');
-    info('done', '');
+  fs.writeFileSync(outputFile, `import { SymbolCharacterGroup } from \"./insert_symbol-dataprovider\";
+
+const symbols: SymbolCharacterGroup[] = ${finalJson};
+
+export default symbols;
+`);
+
+  const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
+    return count + symbolGroup.symbols.length;
+  }, 0);
+  info(countSymbols + ' total symbols generated');
+  info('done', '');
 }
 
 function filterEmoji(filePath: string) {
@@ -618,7 +629,13 @@ function filterEmoji(filePath: string) {
 
   info(thinnedEmoji.length + ' emoji generated');
   const finalJson = JSON.stringify(thinnedEmoji, null, 2);
-  fs.writeFileSync(filePath, finalJson);
+
+  fs.writeFileSync(emojiPath, `import { EmojiRaw } from "./emoji";
+
+const emjois: EmojiRaw[] = ${finalJson};
+
+export default emjois;
+`);
   info('done');
 }
 
@@ -640,7 +657,7 @@ interface Character {
 }
 
 function heading(message: string) {
-  info('','','****************************************************************',message,'****************************************************************');
+  info('', '', '****************************************************************', message, '****************************************************************');
 }
 
 function info(...message: any[]) {

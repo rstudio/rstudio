@@ -143,6 +143,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -1073,28 +1074,43 @@ public class TextEditingTarget implements
    @Handler
    void onGoToNextSection()
    {
-      if (docDisplay_.getFileType().canGoNextPrevSection())
+      if (visualMode_.isActivated())
       {
-         if (!moveCursorToNextSectionOrChunk(true))
-            docDisplay_.gotoPageDown();
+         visualMode_.goToNextSection();
       }
       else
       {
-         docDisplay_.gotoPageDown();
+         if (docDisplay_.getFileType().canGoNextPrevSection())
+         {
+            if (!moveCursorToNextSectionOrChunk(true))
+               docDisplay_.gotoPageDown();
+         }
+         else
+         {
+            docDisplay_.gotoPageDown();
+         }
       }
+      
    }
 
    @Handler
    void onGoToPrevSection()
    {
-      if (docDisplay_.getFileType().canGoNextPrevSection())
+      if (visualMode_.isActivated())
       {
-         if (!moveCursorToPreviousSectionOrChunk(true))
-            docDisplay_.gotoPageUp();
+         visualMode_.goToPreviousSection();
       }
       else
       {
-         docDisplay_.gotoPageUp();
+         if (docDisplay_.getFileType().canGoNextPrevSection())
+         {
+            if (!moveCursorToPreviousSectionOrChunk(true))
+               docDisplay_.gotoPageUp();
+         }
+         else
+         {
+            docDisplay_.gotoPageUp();
+         }
       }
    }
 
@@ -1130,6 +1146,34 @@ public class TextEditingTarget implements
         
       });
    }
+   
+   public void navigateToXRef(XRef xref, boolean forceVisualMode)
+   {
+      if (isVisualModeActivated() || forceVisualMode)
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToXRef(xref.getXRefString(), false);
+            });
+         });
+      }
+      else
+      {
+         String title = xref.getTitle();
+         for (int i = 0, n = docDisplay_.getRowCount(); i < n; i++)
+         {
+            String line = docDisplay_.getLine(i);
+            int index = line.indexOf(title);
+            if (index == -1)
+               continue;
+            
+            navigateToPosition(
+                  SourcePosition.create(i, index),
+                  false);
+         }
+      }
+      
+   }
 
    // the navigateToPosition methods are called by modules that explicitly
    // want the text editor active (e.g. debugging, find in files, etc.) so they
@@ -1151,6 +1195,21 @@ public class TextEditingTarget implements
    {
       ensureTextEditorActive(() -> {
          docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+      });
+   }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  Command onNavigationCompleted)
+   {
+      ensureTextEditorActive(() -> {
+         
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         if (onNavigationCompleted != null)
+            onNavigationCompleted.execute();
+         
       });
    }
    
@@ -1446,7 +1505,8 @@ public class TextEditingTarget implements
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
-   public void initialize(final SourceDocument document,
+   public void initialize(SourceColumn column,
+                          final SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
                           EditingTargetNameProvider defaultNameProvider)
@@ -1482,7 +1542,8 @@ public class TextEditingTarget implements
                                           fileType_,
                                           extendedType_,
                                           events_,
-                                          session_);
+                                          session_,
+                                          column);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
@@ -1567,7 +1628,8 @@ public class TextEditingTarget implements
          }.schedule(100);
       }
 
-      registerPrefs(releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
+      TextEditingTargetPrefsHelper.registerPrefs(
+            releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
 
       // Initialize sourceOnSave, and keep it in sync. Don't source on save
       // (regardless of preference) in auto save mode, which is mutually
@@ -2409,7 +2471,14 @@ public class TextEditingTarget implements
 
    public void focus()
    {
-      view_.editorContainer().focus();
+      if (isVisualModeActivated())
+      {
+         visualMode_.focus();
+      }
+      else
+      {
+         view_.editorContainer().focus();
+      }
    }
 
    public String getSelectedText()
@@ -2449,6 +2518,11 @@ public class TextEditingTarget implements
    public void fireEvent(GwtEvent<?> event)
    {
       handlers_.fireEvent(event);
+   }
+   
+   public boolean isActivated()
+   {
+      return commandHandlerReg_ != null;
    }
 
    public void onActivate()
@@ -3026,6 +3100,9 @@ public class TextEditingTarget implements
 
       if (spelling_ != null)
          spelling_.onDismiss();
+      
+      if (visualMode_ != null)
+         visualMode_.onDismiss();
 
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
@@ -3336,9 +3413,20 @@ public class TextEditingTarget implements
    @Handler
    void onCheckSpelling()
    {
-      ensureTextEditorActive(() -> {
-         spelling_.checkSpelling();
-      });
+      if (visualMode_.isActivated())
+      {
+         ensureVisualModeActive(() -> {
+            visualMode_.checkSpelling();
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() -> {
+            spelling_.checkSpelling(docDisplay_.getSpellingDoc());
+         });
+      }
+      
+     
    }
 
    @Handler
@@ -4206,18 +4294,32 @@ public class TextEditingTarget implements
                }
             });
    }
-
+   
    private String getRmdFrontMatter()
    {
-      return YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (isVisualEditorActive()) 
+      {
+         return visualMode_.getYamlFrontMatter();
+      } 
+      else 
+      {
+         return YamlFrontMatter.getFrontMatter(docDisplay_);
+      }
    }
 
    private void applyRmdFrontMatter(String yaml)
    {
-      if (YamlFrontMatter.applyFrontMatter(docDisplay_, yaml))
+      boolean applied = false;
+      if (isVisualEditorActive()) 
       {
-         updateRmdFormatList();
+         applied = visualMode_.applyYamlFrontMatter(yaml);
       }
+      else
+      {
+         applied = YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+      }
+      if (applied)
+         updateRmdFormatList();
    }
 
    private RmdSelectedTemplate getSelectedTemplate()
@@ -7015,7 +7117,7 @@ public class TextEditingTarget implements
       return docUpdateSentinel_.getPath() == null;
    }
 
-   private static boolean shouldEnforceHardTabs(FileSystemItem item)
+   public static boolean shouldEnforceHardTabs(FileSystemItem item)
    {
       if (item == null)
          return false;
@@ -7109,197 +7211,10 @@ public class TextEditingTarget implements
             return docUpdateSentinel_.getId();
       }
    };
-
-   // these methods are public static so that other editing targets which
-   // display source code (but don't inherit from TextEditingTarget) can share
-   // their implementation
-
-   public static interface PrefsContext
+   
+   public CompletionContext getRCompletionContext()
    {
-      FileSystemItem getActiveFile();
-   }
-
-   public static void registerPrefs(
-                     ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UserPrefs prefs,
-                     ProjectConfig projectConfig,
-                     DocDisplay docDisplay,
-                     final SourceDocument sourceDoc)
-   {
-      registerPrefs(releaseOnDismiss,
-                    prefs,
-                    projectConfig,
-                    docDisplay,
-                    new PrefsContext() {
-                        @Override
-                        public FileSystemItem getActiveFile()
-                        {
-                           String path = sourceDoc.getPath();
-                           if (path != null)
-                              return FileSystemItem.createFile(path);
-                           else
-                              return null;
-                        }
-                    });
-   }
-
-   public static void registerPrefs(
-                     ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UserPrefs prefs,
-                     final ProjectConfig projectConfig,
-                     final DocDisplay docDisplay,
-                     final PrefsContext context)
-   {
-      releaseOnDismiss.add(prefs.highlightSelectedLine().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setHighlightSelectedLine(arg);
-               }}));
-      releaseOnDismiss.add(prefs.highlightSelectedWord().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setHighlightSelectedWord(arg);
-               }}));
-      releaseOnDismiss.add(prefs.showLineNumbers().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setShowLineNumbers(arg);
-               }}));
-      releaseOnDismiss.add(prefs.useSpacesForTab().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  if (shouldEnforceHardTabs(context.getActiveFile()))
-                  {
-                     docDisplay.setUseSoftTabs(false);
-                  }
-                  else
-                  {
-                     if (projectConfig == null)
-                        docDisplay.setUseSoftTabs(arg);
-                  }
-               }}));
-      releaseOnDismiss.add(prefs.numSpacesForTab().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  if (projectConfig == null)
-                     docDisplay.setTabSize(arg);
-               }}));
-      releaseOnDismiss.add(prefs.autoDetectIndentation().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  if (projectConfig == null)
-                     docDisplay.autoDetectIndentation(arg);
-               }}));
-      releaseOnDismiss.add(prefs.showMargin().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setShowPrintMargin(arg);
-               }}));
-      releaseOnDismiss.add(prefs.blinkingCursor().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setBlinkingCursor(arg);
-               }}));
-      releaseOnDismiss.add(prefs.marginColumn().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay.setPrintMarginColumn(arg);
-               }}));
-      releaseOnDismiss.add(prefs.showInvisibles().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setShowInvisibles(arg);
-               }}));
-      releaseOnDismiss.add(prefs.showIndentGuides().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setShowIndentGuides(arg);
-               }}));
-      releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setScrollPastEndOfDocument(arg);
-               }}));
-      releaseOnDismiss.add(prefs.highlightRFunctionCalls().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setHighlightRFunctionCalls(arg);
-               }}));
-      releaseOnDismiss.add(prefs.rainbowParentheses().bind(
-          new CommandWithArg<Boolean>() {
-             public void execute(Boolean arg) {
-                docDisplay.setRainbowParentheses(arg);
-             }}));
-      releaseOnDismiss.add(prefs.editorKeybindings().bind(
-            new CommandWithArg<String>() {
-               public void execute(String arg) {
-                  docDisplay.setUseVimMode(arg == UserPrefs.EDITOR_KEYBINDINGS_VIM);
-               }}));
-      releaseOnDismiss.add(prefs.editorKeybindings().bind(
-            new CommandWithArg<String>() {
-               public void execute(String arg) {
-                  docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
-               }}));
-      releaseOnDismiss.add(prefs.codeCompletionOther().bind(
-            new CommandWithArg<String>() {
-               public void execute(String arg) {
-                  docDisplay.syncCompletionPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.codeCompletionCharacters().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay.syncCompletionPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.codeCompletionDelay().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay.syncCompletionPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.enableSnippets().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.syncCompletionPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.showDiagnosticsOther().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.syncDiagnosticsPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.diagnosticsOnSave().bind(
-            new CommandWithArg<Boolean>() {
-               @Override
-               public void execute(Boolean arg)
-               {
-                  docDisplay.syncDiagnosticsPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.backgroundDiagnosticsDelayMs().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay.syncDiagnosticsPrefs();
-               }}));
-      releaseOnDismiss.add(prefs.showInlineToolbarForRCodeChunks().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.forceImmediateRender();
-               }}));
-      releaseOnDismiss.add(prefs.foldStyle().bind(
-            new CommandWithArg<String>() {
-               public void execute(String style)
-               {
-                  docDisplay.setFoldStyle(FoldStyle.fromPref(style));
-               }}));
-      releaseOnDismiss.add(prefs.surroundSelection().bind(
-            new CommandWithArg<String>() {
-               public void execute(String string)
-               {
-                  docDisplay.setSurroundSelectionPref(string);
-               }}));
-      releaseOnDismiss.add(prefs.enableTextDrag().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setDragEnabled(arg);
-               }}));
-
+      return rContext_;
    }
 
    public static void syncFontSize(
@@ -7801,10 +7716,18 @@ public class TextEditingTarget implements
       autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
 
-   private boolean isVisualModeActivated()
+   // logical state (may not be physically activated yet due to async loading)
+   public boolean isVisualModeActivated()
    {
       return docUpdateSentinel_.getBoolProperty(RMD_VISUAL_MODE, false);
    }
+   
+   // physical state (guaranteed to be loaded and addressable)
+   private boolean isVisualEditorActive() 
+   {
+      return visualMode_ != null && visualMode_.isVisualEditorActive();
+   }
+
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

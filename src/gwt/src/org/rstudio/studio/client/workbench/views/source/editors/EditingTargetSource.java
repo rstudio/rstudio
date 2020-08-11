@@ -19,6 +19,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
@@ -33,11 +34,24 @@ public interface EditingTargetSource
    {
       public String defaultNamePrefix(EditingTarget target);
    }
-   
+
    EditingTarget getEditingTarget(FileType fileType);
-   EditingTarget getEditingTarget(SourceDocument document,
+   EditingTarget getEditingTarget(SourceColumn column,
+                                  SourceDocument document,
                                   RemoteFileSystemContext fileContext,
                                   EditingTargetNameProvider defaultNameProvider);
+   
+   public static FileType getTypeFromDocument(FileTypeRegistry registry, SourceDocument document)
+   {
+      FileType type = registry.getTypeByTypeName(document.getType());
+      if (type == null)
+      {
+         Debug.log("Unknown document type: " + document.getType());
+         type = FileTypeRegistry.TEXT;
+      }
+      
+      return type;
+   }
 
    public static class Impl implements EditingTargetSource
    {
@@ -77,30 +91,21 @@ public interface EditingTargetSource
             return null;
       }
 
-      public EditingTarget getEditingTarget(final SourceDocument document,
+      public EditingTarget getEditingTarget(SourceColumn column,
+                                            final SourceDocument document,
                                             final RemoteFileSystemContext fileContext,
                                             final EditingTargetNameProvider defaultNameProvider)
       {
-         final FileType type = getTypeFromDocument(document);
+         final FileType type = getTypeFromDocument(registry_, document);
          EditingTarget target = getEditingTarget(type);
-         target.initialize(document,
+         target.initialize(column,
+                           document,
                            fileContext,
                            type,
                            defaultNameProvider);
          return target;
       }
       
-      private FileType getTypeFromDocument(SourceDocument document)
-      {
-         FileType type = registry_.getTypeByTypeName(document.getType());
-         if (type == null)
-         {
-            Debug.log("Unknown document type: " + document.getType());
-            type = FileTypeRegistry.TEXT;
-         }
-         
-         return type;
-      }
 
       private final FileTypeRegistry registry_;
       private final Provider<TextEditingTarget> pTextEditingTarget_;

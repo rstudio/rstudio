@@ -171,10 +171,11 @@ void invokeRequestFilter(http::Request* pRequest)
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler())
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, context);
+      return s_proxyFilter(ptrConnection, context, clientHandler);
    else
       return false;
 }
@@ -224,7 +225,7 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    if (portNum)
    {
       // for numeric ports, use the port token to translate them to opaque identifiers
-      std::string portToken = originalRequest.cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
+      std::string portToken = originalRequest.cookieValue(kPortTokenCookie);
       if (portToken.empty())
       {
          // we'll try the default token if no token was supplied on the request
@@ -248,12 +249,12 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    else if (boost::algorithm::starts_with(address, proxiedAddress))
    {
       // find the base url from the original request
-      std::string absoluteUri = originalRequest.absoluteUri();
-      std::string::size_type pos = absoluteUri.find(portPath);
+      std::string baseUri = originalRequest.baseUri();
+      std::string::size_type pos = baseUri.find(portPath);
       if (pos != std::string::npos) // precaution, should always be true
       {
           // substitute the base url for the proxied address
-         std::string baseUrl = absoluteUri.substr(0, pos + portPath.length());
+         std::string baseUrl = baseUri.substr(0, pos + portPath.length());
          address = baseUrl + address.substr(proxiedAddress.length());
       }
    }
@@ -618,8 +619,6 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
-
-
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
@@ -629,7 +628,7 @@ void proxyRequest(
       const ClientHandler& clientHandler = ClientHandler())
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context))
+   if (applyProxyFilter(ptrConnection, context, clientHandler))
       return;
 
    // modify request
@@ -760,7 +759,7 @@ http::Headers getAuthCookies(const http::Response& response)
       kCSRFTokenCookie,
       kUserIdCookie,
       kUserListCookie,
-      kPersistAuthCookie }, options().wwwIFrameLegacyCookies()))
+      kPersistAuthCookie }))
    {
       authCookies.push_back(cookie);
    }
@@ -997,7 +996,7 @@ void proxyLocalhostRequest(
    }
 
    // extract the port token
-   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
+   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie);
    if (portToken.empty())
    {
       // we'll try the default token if no token was supplied on the request

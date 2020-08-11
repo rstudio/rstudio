@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 
@@ -227,6 +228,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void toggleCommentLines();
    
+   SpellingDoc getSpellingDoc();
+   
    AceCommandManager getCommandManager();
    void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
@@ -329,6 +332,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    int getRowCount();
    String getLine(int row);
    int getPixelWidth();
+   
+   Position positionFromIndex(int index);
+   int indexFromPosition(Position position);
    
    char getCharacterAtCursor();
    char getCharacterBeforeCursor();

@@ -47,6 +47,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'raw_tex',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: true,
           excludes: '_',
@@ -78,7 +79,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },

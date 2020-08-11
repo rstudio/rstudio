@@ -15,7 +15,6 @@
 
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 

@@ -32,7 +32,10 @@ namespace database {
 
 struct SqliteConnectionOptions
 {
+   SqliteConnectionOptions(const std::string& file) : file(file), readonly(false) {}
+   SqliteConnectionOptions() : readonly(false) {}
    std::string file;
+   bool readonly;
 };
 
 struct PostgresqlConnectionOptions

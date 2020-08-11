@@ -36,7 +36,7 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
       public native final String getRememberPrompt() /*-{
          return this.remember_prompt;
       }-*/;
-      
+
       public native final String getWindow() /*-{
          return this.window;
       }-*/;
@@ -58,7 +58,7 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
    {
       return rememberPrompt_;
    }
-   
+
    public String getWindow()
    {
       return window_;
@@ -80,5 +80,5 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
    private final String rememberPrompt_;
    private final String window_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

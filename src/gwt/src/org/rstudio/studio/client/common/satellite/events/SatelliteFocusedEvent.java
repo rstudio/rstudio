@@ -20,28 +20,28 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class SatelliteFocusedEvent 
+public class SatelliteFocusedEvent
              extends CrossWindowEvent<SatelliteFocusedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onSatelliteFocused(SatelliteFocusedEvent event);
    }
-   
+
    public SatelliteFocusedEvent()
    {
    }
-   
+
    public SatelliteFocusedEvent(String name)
    {
       name_ = name;
    }
-   
+
    public String getName()
    {
       return name_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,8 +53,8 @@ public class SatelliteFocusedEvent
    {
       handler.onSatelliteFocused(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    private String name_;
 }

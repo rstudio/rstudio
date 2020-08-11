@@ -42,11 +42,6 @@ struct FileRequestOptions
    std::string initJs;
    std::string gwtPrefix;
    bool useEmulatedStack;
-   struct CookieOptions
-   {
-      bool useSecureCookies;
-      bool iFrameLegacyCookies;
-   } cookies;
    std::string frameOptions;
 };
 
@@ -155,7 +150,7 @@ void handleFileRequest(const FileRequestOptions& options,
 #endif
 
       // read existing CSRF token
-      std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options.cookies.iFrameLegacyCookies);
+      std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
       // don't allow main page to be framed by other domains (clickjacking
@@ -179,8 +174,6 @@ void handleFileRequest(const FileRequestOptions& options,
    
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
-                                       bool useSecureCookies,
-                                       bool iFrameLegacyCookies,
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
@@ -189,11 +182,7 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& frameOptions)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
-                                gwtPrefix, useEmulatedStack, 
-                                FileRequestOptions::CookieOptions {
-                                   useSecureCookies,
-                                   iFrameLegacyCookies
-                                }, frameOptions };
+                                gwtPrefix, useEmulatedStack, frameOptions };
 
    return boost::bind(handleFileRequest,
                       options,
