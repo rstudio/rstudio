@@ -2358,6 +2358,18 @@ public class TextEditingTarget implements
    {
       return 2 * 1024 * 1024;
    }
+   
+   public int getPixelWidth()
+   {
+      if (isVisualEditorActive())
+      {
+         return visualMode_.getPixelWidth();
+      }
+      else
+      {
+         return docDisplay_.getPixelWidth();
+      }
+   }
 
    public void insertCode(String source, boolean blockMode)
    {

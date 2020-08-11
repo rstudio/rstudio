@@ -487,7 +487,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private void syncWidth()
    {
       // check the width and see if it's already synced
-      int width = docDisplay_.getPixelWidth();
+      int width = editingTarget_.getPixelWidth();
       if (pixelWidth_ == width)
          return;
       

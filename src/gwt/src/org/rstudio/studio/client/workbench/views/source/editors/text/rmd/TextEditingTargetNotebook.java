@@ -1316,7 +1316,7 @@ public class TextEditingTargetNotebook
       // space outside the element (here, 2 * (10px margin + 1px border)); since
       // we stretch the plot to fit the space it will scale in unpredictable
       // ways if it doesn't fit exactly
-      return Math.min(Math.max(docDisplay_.getPixelWidth() - 22, 
+      return Math.min(Math.max(editingTarget_.getPixelWidth() - 22, 
                                ChunkOutputUi.MIN_PLOT_WIDTH),
                       ChunkOutputUi.MAX_PLOT_WIDTH);
    }

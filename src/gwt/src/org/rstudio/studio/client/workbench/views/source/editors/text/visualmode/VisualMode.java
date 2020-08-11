@@ -533,6 +533,10 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+   public int getPixelWidth()
+   {
+      return panmirror_.getOffsetWidth();
+   }
    
    public void manageCommands()
    {
