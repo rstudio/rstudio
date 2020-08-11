@@ -99,7 +99,7 @@ export function advanceToWord(state: EditorState, pos: number, classifier: (ch: 
 
 export function findBeginWord(state: EditorState, pos: number, classifier: (ch: number) => number) {
   // scan backwards until a non-word character is encountered
-  while (true) {
+  while (pos >= beginDocPos()) {
     const prevChar = charAt(state.doc, pos - 1);
     if (classifier(prevChar) === kCharClassNonWord) {
       break;
