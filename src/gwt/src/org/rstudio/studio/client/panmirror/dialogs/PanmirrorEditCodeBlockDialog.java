@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 
 public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlockProps>
-{ 
+{
    public PanmirrorEditCodeBlockDialog(
                PanmirrorCodeBlockProps codeBlock,
                boolean attributes,
@@ -45,7 +45,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          // cancel returns null
          operation.execute(null);
       });
-      
+
       // create lang (defer parent until we determine whether we support attributes)
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
@@ -56,7 +56,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       FormLabel langInfo = new FormLabel("(optional)");
       langInfo.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL2));
       langInfo.addStyleName(RES.styles().inlineInfoLabel());
-      
+
       labelPanel.add(langInfo);
       langTab.add(labelPanel);
       lang_ = new PanmirrorLangSuggestBox(languages);
@@ -67,14 +67,14 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       lang_.setText(codeBlock.lang);
       PanmirrorDialogsUtil.setFullWidthStyles(lang_);
       langTab.add(lang_);
-      
+
       // create attr
       VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES);
       attributesTab.addStyleName(RES.styles().dialog());
-      editAttr_ =  new PanmirrorEditAttrWidget();   
+      editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(codeBlock, null);
       attributesTab.add(editAttr_);
-   
+
       if (attributes)
       {
          DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Code Block");
@@ -83,9 +83,6 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
 
-         // the tab panel is the first focusable control in dialog, but the actual focusable
-         // element changes depending which tab is selected
-         tabPanel.addSelectionHandler(selectionEvent -> refreshFocusableElements()); 
          mainWidget_ = tabPanel;
       }
       else
@@ -93,19 +90,19 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          mainWidget_ = langTab;
       }
    }
-   
+
    @Override
    protected Widget createMainWidget()
    {
       return mainWidget_;
    }
-   
+
    @Override
    public void focusInitialControl()
    {
       lang_.setFocus(true);
    }
-   
+
    @Override
    protected PanmirrorCodeBlockProps collectInput()
    {
@@ -124,13 +121,13 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
    {
       return true;
    }
-   
+
 
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
-   
-   private Widget mainWidget_; 
-   
+
+   private Widget mainWidget_;
+
    private SuggestBox lang_;
    private PanmirrorEditAttrWidget editAttr_;
-  
+
 }

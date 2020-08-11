@@ -480,6 +480,8 @@ private:
 
                // get the host header, which indicates the destination for the request
                // we check for proxy values first as any reverse proxies will modify the host header
+               // **Always use proxied URI:** the path may be a little off but the host here is always
+               // correct and that's what we need to use to confirm a cross-origin violation.
                std::string host = URL(pRequest->proxiedUri()).host();
 
                if (!originator.empty() && originator != host)
@@ -588,7 +590,7 @@ private:
          continuation(boost::shared_ptr<http::Response>());
    }
 
-   void connectionResponseFilter(const std::string& absoluteUri,
+   void connectionResponseFilter(const http::Request& originalRequest,
                                  http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
@@ -602,7 +604,7 @@ private:
       }
 
       if (responseFilter_)
-         responseFilter_(absoluteUri, pResponse);
+         responseFilter_(originalRequest, pResponse);
    }
 
    void waitForScheduledCommandTimer()

@@ -24,6 +24,7 @@
 #include <core/ProgramOptions.hpp>
 #include <core/system/Xdg.hpp>
 #include <session/SessionConstants.hpp>
+#include <core/http/Request.hpp>
 #include <core/http/Cookie.hpp>
 
 
@@ -178,6 +179,9 @@ protected:
       (kPackageOutputInPackageFolder,
       value<bool>(&packageOutputToPackageFolder_)->default_value(false),
       "Specifies whether or not package builds output to the package project folder.")
+      (kRootPathSessionOption,
+      value<std::string>(&rootPath_)->default_value(kRequestDefaultRootPath),
+      "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL.")
       (kUseSecureCookiesSessionOption,
       value<bool>(&useSecureCookies_)->default_value(false),
       "Indicates whether or not to mark cookies as secure.")
@@ -411,6 +415,7 @@ public:
    int webSocketLogLevel() const { return webSocketLogLevel_; }
    int webSocketHandshakeTimeoutMs() const { return webSocketHandshakeTimeoutMs_; }
    bool packageOutputInPackageFolder() const { return packageOutputToPackageFolder_; }
+   std::string rootPath() const { return rootPath_; }
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
@@ -504,6 +509,7 @@ protected:
    int webSocketLogLevel_;
    int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
+   std::string rootPath_;
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;

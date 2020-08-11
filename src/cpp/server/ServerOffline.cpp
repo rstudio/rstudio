@@ -49,6 +49,7 @@ void handleOfflineRequest(const http::Request& request,
       std::ostringstream os;
       std::map<std::string, std::string> vars;
       vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
+      vars["base_uri"] = string_utils::jsLiteralEscape(request.baseUri(core::http::BaseUriUse::External));
 
       FilePath offlineTemplate = FilePath(options().wwwLocalPath()).completeChildPath("offline.htm");
       core::Error err = core::text::renderTemplate(offlineTemplate, vars, os);
