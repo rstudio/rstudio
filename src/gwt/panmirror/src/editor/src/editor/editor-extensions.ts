@@ -227,21 +227,30 @@ export class ExtensionManager {
     this.extensions = [];
   }
 
-  public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
+  public register(extensions: ReadonlyArray<Extension | ExtensionFn>, priority = false): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
         const ext = extension(this.context);
         if (ext) {
-          this.extensions.push(ext);
+          if (priority) {
+            this.extensions.unshift(ext);
+          } else {
+            this.extensions.push(ext);
+          }
+
         }
       } else {
-        this.extensions.push(extension);
+        if (priority) {
+          this.extensions.unshift(extension);
+        } else {
+          this.extensions.push(extension);
+        }
       }
     });
   }
 
-  public registerPlugins(plugins: Plugin[]) {
-    this.register([{ plugins: () => plugins }]);
+  public registerPlugins(plugins: Plugin[], priority = false) {
+    this.register([{ plugins: () => plugins }], priority);
   }
 
   public pandocMarks(): readonly PandocMark[] {

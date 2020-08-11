@@ -813,7 +813,7 @@ export class Editor {
         this.context.ui,
         this.events
       )
-    ]);
+    ], true);
   }
 
   private createPlugins(): Plugin[] {
