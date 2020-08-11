@@ -41,6 +41,10 @@ public class RmdChunkOutputFinishedEvent
          return this.chunk_id;
       }-*/;
 
+      public final native String getHtmlOutput() /*-{
+         return this.html_output;
+      }-*/;
+
       public final native String getRequestId() /*-{
          return this.request_id;
       }-*/;

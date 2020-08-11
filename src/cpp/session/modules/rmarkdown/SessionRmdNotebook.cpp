@@ -186,7 +186,12 @@ void onChunkExecCompleted(const std::string& docId,
    if (error)
       LOG_ERROR(error);
    else
+   {
       output = r::sexp::asString(outputSEXP);
+      if (!output.empty())
+      {
+      }
+   }
    
    emitOutputFinished(docId, chunkId, output, ExecScopeChunk);
 }

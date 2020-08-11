@@ -68,6 +68,8 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import static org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit.TYPE_HTML;
+
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputEvent.Handler,
                                           ConsoleWriteErrorEvent.Handler,
@@ -274,7 +276,24 @@ public class ChunkOutputWidget extends Composite
    {
       return expansionState_.addValueChangeHandler(handler);
    }
-    
+
+   public void renderHtml(String htmlOutput)
+   {
+      initializeOutput(TYPE_HTML);
+
+      final RenderTimer widgetTimer = new RenderTimer();
+      presenter_.showHtmlOutput(htmlOutput,
+         null,
+         -1,
+         new Command() {
+            @Override
+            public void execute()
+            {
+               widgetTimer.cancel();
+            }
+         });
+   }
+
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
          boolean complete, boolean ensureVisible)
    {
@@ -610,7 +629,7 @@ public class ChunkOutputWidget extends Composite
       case RmdChunkOutputUnit.TYPE_TEXT:
          presenter_.showConsoleOutput(unit.getArray());
          break;
-      case RmdChunkOutputUnit.TYPE_HTML:
+      case TYPE_HTML:
          final RenderTimer widgetTimer = new RenderTimer();
          presenter_.showHtmlOutput(unit.getString(), 
                (NotebookHtmlMetadata)unit.getMetadata().cast(), 
@@ -649,7 +668,7 @@ public class ChunkOutputWidget extends Composite
          presenter_.showOrdinalOutput(unit.getOrdinal());
          break;
       case RmdChunkOutputUnit.TYPE_DATA:
-         presenter_.showDataOutput(unit.getOuputObject(), 
+         presenter_.showDataOutput(unit.getOutputObject(),
                (NotebookFrameMetadata)unit.getMetadata().cast(),
                unit.getOrdinal());
          break;
@@ -918,7 +937,7 @@ public class ChunkOutputWidget extends Composite
       {
       case RmdChunkOutputUnit.TYPE_PLOT:
       case RmdChunkOutputUnit.TYPE_DATA:
-      case RmdChunkOutputUnit.TYPE_HTML:
+      case TYPE_HTML:
           return true;
       case RmdChunkOutputUnit.TYPE_TEXT:
       case RmdChunkOutputUnit.TYPE_ERROR:

@@ -1140,17 +1140,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("executeChunkCallback", function(chunkName)
 {
-  if (!exists(".rs.notebookChunkCallbacks"))
-    return(NULL);
-
-  handles <- ls(.rs.notebookChunkCallbacks)
-  for (handle in handles) {
-    callback <- get(handle, envir = .rs.notebookChunkCallbacks)
-    if (grepl(chunkName, handle)) {
-      return(callback())
-    }
+  if (exists(".rs.notebookChunkCallbacks"))
+  {
+     browser()
+     handles <- ls(.rs.notebookChunkCallbacks)
+     for (handle in handles) {
+        callback <- get(handle, envir = .rs.notebookChunkCallbacks)
+        if (grepl(chunkName, handle)) {
+           return(callback())
+        }
+     }
   }
-  return(NULL);
+  NULL
 })
 
 # a list mapping file extensions to its associated output handler

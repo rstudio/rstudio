@@ -207,9 +207,15 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       
       // persist metadata
-      metadata_.put(ordinal, metadata);
+      if (ordinal >= 0)
+         metadata_.put(ordinal, metadata);
       
-      final boolean knitrFigure = metadata.getSizingPolicyKnitrFigure();
+      final boolean knitrFigure = ordinal < 0 ? false :
+                                                metadata.getSizingPolicyKnitrFigure();
+      // The ordinal is -1 then we have already processed the chunk output and are adding an HTML
+      // rendering from an API callback.
+      if (ordinal < 0)
+         ordinal = maxOrdinal_ + 1;
       
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy

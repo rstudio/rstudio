@@ -793,6 +793,14 @@ public class TextEditingTargetNotebook
             setDirtyState();
          }
       }
+
+      // !!! rethink where this belongs
+      if (outputs_.containsKey(data.getChunkId()) &&
+          !StringUtil.isNullOrEmpty(data.getHtmlOutput()))
+      {
+         outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlOutput());
+         setDirtyState();
+      }
    }
 
    @Override
