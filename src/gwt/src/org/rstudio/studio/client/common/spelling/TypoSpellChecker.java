@@ -320,7 +320,17 @@ public class TypoSpellChecker
 
    public void addToUserDictionary(final String word)
    {
+      // append to user dictionary (this is async so the in-memory list of 
+      // ignored words won't update immediately)
       userDictionary_.append(word);
+      
+      // add the words to the ignore list (necessary for contexts that 
+      // rely on the word being on the ignore list for correct handling)
+      // (note that allIgnoredWords_ will soon be overwritten after the
+      // userDictioanry_ list changed handler is invoked)
+      allIgnoredWords_.add(word);
+      
+      // invalidate the context
       context_.invalidateWord(word);
    }
 
