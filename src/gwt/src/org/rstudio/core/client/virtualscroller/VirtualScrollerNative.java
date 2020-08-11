@@ -25,5 +25,6 @@ public class VirtualScrollerNative
    public VirtualScrollerNative() {}
    public native void setup(Element ele);
    public native void append(Element ele);
+   public native void clear();
 }
 

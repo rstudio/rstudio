@@ -120,6 +120,8 @@
 
 @external avoid-move-cursor;
 
+@external jump-to-latest-console;
+
 @external ace_paren_color_0,
         ace_paren_color_1,
         ace_paren_color_2,
@@ -2769,3 +2771,25 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .editor_dark .ace_paren_color_4 {color: lightskyblue;}
 .editor_dark .ace_paren_color_5 {color: rgb(150, 94, 255);}
 .editor_dark .ace_paren_color_6 {color: violet;}
+
+/* jump to Latest button for virtualized console */
+.jump-to-latest-console {
+   position: absolute;
+   width: 78px;
+   height: 28px;
+   bottom: 14px;
+   right: 30px;
+   padding-top: 6px;
+   color: white;
+   background: rgba(117,170,219,0.70);
+   border-radius: 2px;
+   display: block;
+
+   text-align: center;
+   font-size: 15px;
+}
+.jump-to-latest-console:hover {
+   cursor: pointer;
+   background: #75AADB;
+}
+

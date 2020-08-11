@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
@@ -52,6 +53,7 @@ public class VirtualConsole
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
       boolean screenReaderEnabled();
+      boolean limitConsoleVisible();
    }
 
    public static class PreferencesImpl extends UserPrefsSubset
@@ -80,31 +82,63 @@ public class VirtualConsole
       {
          return getUserPrefs().enableScreenReader().getValue();
       }
+
+      @Override
+      public boolean limitConsoleVisible()
+      {
+         return getUserPrefs().limitVisibleConsole().getValue();
+      }
    }
 
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
-//      Debug.log("!!! virtual console injected loader !!!");
-//      Debug.log("Parent is: " + (parent == null ? "null" : "not null"));
-
       prefs_ = prefs;
       parent_ = parent;
 
-      if (!VirtualConsole.virtualScrollerInitialized_)
-      {
-         virtualScrollerLoader_.addCallback(() -> {
-            VirtualScrollerNative vs = new VirtualScrollerNative();
-            vs.setup(parent);
-            virtualScrollerNative_ = vs;
-            VirtualConsole.virtualScrollerInitialized_ = true;
-         });
-      }
+      // only load the virtual scroller if enabled in prefs
+      if (prefs_.limitConsoleVisible() &&
+          parent_ != null &&
+          !VirtualConsole.virtualScrollerInitialized_ &&
+          !VirtualConsole.loadingVirtualScroller_)
+         {
+            VirtualConsole.loadingVirtualScroller_ = true;
+            virtualScrollerLoader_.addCallback(() -> {
+               try
+               {
+                  virtualScrollerNative_ = new VirtualScrollerNative();
+                  virtualScrollerNative_.setup(parent_);
+                  VirtualConsole.virtualScrollerInitialized_ = true;
+                  VirtualConsole.loadingVirtualScroller_ = false;
+               } catch (JavaScriptException e)
+               {
+                  // If we get an error initializing the virtualScroller, log
+                  // and no-op the error to continue non-virtualized
+                  Debug.log(e.getMessage());
+               }
+            });
+         }
    }
 
    public void clear()
    {
-      formfeed();
+      if (isVirtualized())
+         clearVirtualScroller();
+      else
+         formfeed();
+   }
+
+   public static boolean isVirtualized()
+   {
+      return virtualScrollerInitialized_;
+   }
+
+   public static void clearVirtualScroller()
+   {
+      if (isVirtualized())
+      {
+         virtualScrollerNative_.clear();
+      }
    }
 
    private void backspace()
@@ -221,34 +255,18 @@ public class VirtualConsole
     */
    private void appendText(String text, String clazz, boolean forceNewRange)
    {
-      if (virtualScrollerInitialized_)
+      Entry<Integer, ClassRange> last = class_.lastEntry();
+      ClassRange range = last.getValue();
+      if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
-         // always just append elements for now
-         // later lets allow the virtualconsole to still have
-         // a reference to the dom element that we pass in to do
-         // micromanagement and the VirtualScroller only controls
-         // what is actually shown in the DOM
-         Element ele = Document.get().createSpanElement();
-
-         if (clazz != null && clazz.length() > 0)
-            ele.addClassName(clazz);
-
-         ele.setInnerText(text);
-         virtualScrollerNative_.append(ele);
-
-//         Entry<Integer, ClassRange> last = class_.lastEntry();
-//         ClassRange range = last.getValue();
-//         if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
-//         {
-//            // just append to the existing output stream
-//            range.appendRight(text, 0);
-//         } else
-//         {
-//            // create a new output range with this class
-//            final ClassRange newRange = new ClassRange(cursor_, clazz, text);
-//            parent_.appendChild(newRange.element);
-//            class_.put(cursor_, newRange);
-//         }
+         // just append to the existing output stream
+         range.appendRight(text, 0);
+      } else
+      {
+         // create a new output range with this class
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
+         appendChild(newRange.element);
+         class_.put(cursor_, newRange);
       }
    }
 
@@ -259,8 +277,6 @@ public class VirtualConsole
     */
    private void insertText(ClassRange range)
    {
-      Debug.log("insertText: " + range.text());
-
       int start = range.start;
       int end = start + range.length;
       
@@ -282,7 +298,7 @@ public class VirtualConsole
       {
          class_.put(start, range);
          if (parent_ != null)
-            parent_.appendChild(range.element);
+            appendChild(range.element);
          return;
       }
 
@@ -363,7 +379,7 @@ public class VirtualConsole
             // this range is fully overwritten, just delete it
             deletions.add(l);
             if (parent_ != null)
-               parent_.removeChild(overlap.element);
+               overlap.element.removeFromParent();
          }
          else if (start > l && end < r)
          {
@@ -416,7 +432,19 @@ public class VirtualConsole
          class_.put(val.start, val);
       }
    }
-   
+
+   /**
+    * Add a child to the parent or the virtual scroller, depending on preference
+    * @param element to add
+    */
+   private void appendChild(Element element)
+   {
+      if (prefs_.limitConsoleVisible() && virtualScrollerInitialized_)
+         virtualScrollerNative_.append(element);
+      else
+         parent_.appendChild(element);
+   }
+
    /**
     * Write text to DOM
     * @param text text to write
@@ -735,6 +763,7 @@ public class VirtualConsole
       new ExternalJavaScriptLoader(VirtualScrollerResources.INSTANCE.virtualscrollerjs().getSafeUri().asString());
    private static VirtualScrollerNative virtualScrollerNative_;
    private static boolean virtualScrollerInitialized_ = false;
+   private static boolean loadingVirtualScroller_ = false;
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
    

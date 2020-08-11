@@ -17,144 +17,271 @@ var VirtualScroller;
 (function () {
   "use strict";
   VirtualScroller = function () {
-
-    // _CONSTANTS
-    this._DEBUG = true;
-    this._SCROLL_DEBOUNCE_MS = 9000;
-    this._BUCKET_MAX_SIZE = 100;
-    this._MAX_VISIBLE_BUCKETS = 5;
-
-    // "global" vars
-    this.LAST_SCROLL_TIME = 0;
-
-    // "local" vars
-    this.scrollerEle = null;
-    this.consoleEle = null;
-    this.buckets = [];
-
-    var self = this;
-
-    VirtualScroller.prototype = {
-      _debug: function(msg) {
-        if (self._DEBUG)
-          console.log(msg);
-      },
-
-      _onParentScroll: function(event) {
-
-        var now = new Date().getTime();
-
-        if (now - self.LAST_SCROLL_TIME < self._SCROLL_DEBOUNCE_MS) {
-          console.log("setting lock scroll: " + self.LOCKED_SCROLL);
-          self.LOCKED_SCROLL = self.scrollerEle.scrollTop;
-          return;
-        }
-
-        // show the previous bucket
-        if (self.scrollerEle.scrollTop === 0) {
-
-          var outOfRangeIndex = self.buckets.length - 1 - self._MAX_VISIBLE_BUCKETS;
-          while (outOfRangeIndex >= 0 && self.scrollerEle.scrollTop === 0) {
-            if (self.buckets[outOfRangeIndex].style.display !== "inline") {
-              self.buckets[outOfRangeIndex].style.display = "inline";
-
-              var offsetHeight = self.buckets[outOfRangeIndex].offsetHeight;
-              if (!!offsetHeight && offsetHeight > 0) {
-                self.scrollerEle.scrollTop += offsetHeight;
-                self.LOCKED_SCROLL = self.scrollerEle.scrollTop;
-              }
-
-              self.LAST_SCROLL_TIME = now;
-
-
-              break;
-            } else {
-              outOfRangeIndex--;
-            }
-          }
-        }
-      },
-
-      setScrollParent: function(ele) {
-        if (!ele)
-          return;
-
-        console.log("setting scroll parent");
-        //ele.addEventListener("scroll", this._onParentScroll);
-        ele.onscroll = this._onParentScroll;
-        self.scrollerEle = ele;
-      },
-
-      setup: function(element) {
-        self.consoleEle = element;
-
-        // set up the initial bucket
-        if (!!element) {
-          self.parentElement = element;
-
-          var initialBucket = document.createElement("span");
-          initialBucket.appendChild(document.createTextNode("Bucket #" + self.buckets.length));
-          self.consoleEle.appendChild(initialBucket);
-          self.buckets.push(initialBucket);
-
-          // traverse up the parents until we find the ace_scroller
-          var ancestor = element.parentElement;
-          while (!self.scrollerEle && !!ancestor) {
-            if (ancestor.className.indexOf("ace_scroller") !== -1) {
-              this.setScrollParent(ancestor);
-              ancestor = null;
-            } else {
-              ancestor = ancestor.parentElement;
-            }
-          }
-        }
-      },
-
-      append: function (element) {
-        //this._debug("append");
-        if (this._getCurBucket().childElementCount >= self._BUCKET_MAX_SIZE) {
-          this._createAndAddNewBucket();
-        }
-        this._addElementToCurrentBucket(element);
-      },
-
-      _addElementToCurrentBucket: function(element) {
-        //this._debug("add element to current bucket");
-        var curBucket = this._getCurBucket();
-        curBucket.appendChild(element);
-      },
-
-      _createAndAddNewBucket: function() {
-        //this._debug("createAndAddNewBucket");
-        var newBucket = document.createElement("span");
-        newBucket.appendChild(document.createTextNode("Bucket #" + self.buckets.length));
-        self.consoleEle.appendChild(newBucket);
-        self.buckets.push(newBucket);
-
-        // hide until only the _MAX_VISIBLE_BUCKETS are showing
-        var outOfRangeIndex = self.buckets.length - 1 - self._MAX_VISIBLE_BUCKETS;
-        while (outOfRangeIndex >= 0 && self.buckets[outOfRangeIndex].style.display !== "none") {
-          this._debug("hiding index: " + outOfRangeIndex);
-          self.buckets[outOfRangeIndex].style.display = "none";
-          outOfRangeIndex--;
-        }
-
-        return newBucket;
-      },
-
-      _getCurBucket: function() {
-        // there should always be a bucket
-        if (self.buckets.length < 1)
-          return this._createAndAddNewBucket();
-
-        return self.buckets[self.buckets.length - 1];
-      }
-    }
   };
+
+  VirtualScroller.prototype = {
+    setup: function(element) {
+      if (!element)
+        return;
+
+      //  *** _CONSTANTS ***
+      this._DEBUG = true;
+      this._SCROLL_DEBOUNCE_MS = 500;
+      this._BUCKET_MAX_SIZE = 50;
+      this._MAX_VISIBLE_BUCKETS = 10;
+
+      // we use this style to keep the elements in the DOM for screen readers
+      this._HIDDEN_STYLE = "org-rstudio-core-client-theme-res-ThemeStyles-visuallyHidden";
+
+      //  *** global vars ***
+      this.LAST_SCROLL_TIME = 0;
+      this.INITIALIZED = false;
+
+      //  *** instance vars ***
+      this.scrollerEle = null;
+      this.consoleEle = element;
+      this.buckets = [];
+      this.visibleBuckets = [];
+
+      var self = this;
+
+      self._createAndAddNewBucket = self._createAndAddNewBucket.bind(self);
+      self._debug = self._debug.bind(self);
+      self._getCurBucket = self._getCurBucket.bind(self);
+      self._hideBucket = self._hideBucket.bind(self);
+      self._isAtBottomBucket = self._isAtBottomBucket.bind(self);
+      self._isAtTopBucket = self._isAtTopBucket.bind(self);
+      self._isBucketHidden = self._isBucketHidden.bind(self);
+      self._jumpToBottom = self._jumpToBottom.bind(self);
+      self._moveWindow = self._moveWindow.bind(self);
+      self._onParentScroll = self._onParentScroll.bind(self);
+      self._showBucket = self._showBucket.bind(self);
+      self.append = self.append.bind(self);
+      self.clear = self.clear.bind(self);
+      self.setScrollParent = self.setScrollParent.bind(self);
+
+      // set up the initial bucket
+      this.append(document.createElement("span"));
+
+      // iterate through all historical elements and put them into buckets
+      while(element.children.length > 0) {
+        var child = element.children[0];
+        element.removeChild(child);
+        this.append(child);
+      }
+
+      // put the bucket into the console
+      for (var i = 0; i < this.buckets.length; i++)
+        this.consoleEle.appendChild(this.buckets[i]);
+
+      // traverse up the parents until we find the ace_scroller and attach to it
+      var ancestor = element.parentElement;
+      while (!self.scrollerEle && !!ancestor) {
+        if (ancestor.className.indexOf("ace_scroller") !== -1) {
+          self.setScrollParent(ancestor);
+          ancestor = null;
+        } else {
+          ancestor = ancestor.parentElement;
+        }
+      }
+
+      // jump to latest button
+      this.jumpToLatestButton = document.createElement("div");
+      this.jumpToLatestButton.classList.add("jump-to-latest-console");
+      this.jumpToLatestButton.innerText = "Latest";
+      this.jumpToLatestButton.style.display = "none";
+      this.jumpToLatestButton.onclick = function() {
+        self._jumpToBottom();
+        self._setJumpToLatestVisible(false);
+        document.getElementById("rstudio_console_output").focus();
+      };
+      this.scrollerEle.parentElement.append(this.jumpToLatestButton);
+
+      this.INITIALIZED = true;
+    },
+
+    _debug: function(msg) {
+      if (this._DEBUG)
+        console.log(msg);
+    },
+
+    _moveWindow: function(up) {
+      if (up && this._isAtTopBucket())
+        return;
+      if (!up && this._isAtBottomBucket())
+        return;
+
+      var indexToShow;
+      var indexToHide;
+      var i;
+      if (up) {
+        indexToShow = this.visibleBuckets[0] - 1;
+        indexToHide = this.visibleBuckets[this.visibleBuckets.length - 1];
+
+        for (i = 0; i < this._MAX_VISIBLE_BUCKETS; i++) {
+          this.visibleBuckets[i]--;
+        }
+      } else {
+        indexToShow = this.visibleBuckets[this.visibleBuckets.length -1] + 1;
+        indexToHide = this.visibleBuckets[0];
+
+        for (i = 0; i < this._MAX_VISIBLE_BUCKETS; i++) {
+          this.visibleBuckets[i]++;
+        }
+      }
+
+      this._showBucket(indexToShow);
+      this._hideBucket(indexToHide);
+
+      // move scrollbar to keep the content in the same location
+      if (this.scrollerEle.scrollTop === 0) {
+        var offsetHeight = this.buckets[indexToShow].offsetHeight;
+
+        if (!!offsetHeight) {
+          // if we're scrolling down, scroll up instead of down
+          if (!up)
+            offsetHeight *= -1;
+
+          this.scrollerEle.scrollTop += offsetHeight;
+        }
+      }
+    },
+
+    _hideBucket: function(index) {
+      if (!!this.buckets[index] && !this._isBucketHidden(index))
+        this.buckets[index].classList.add(this._HIDDEN_STYLE);
+    },
+
+    _showBucket: function(index) {
+      if (!!this.buckets[index] && this._isBucketHidden(index))
+        this.buckets[index].classList.remove(this._HIDDEN_STYLE);
+    },
+
+    _isBucketHidden: function(index) {
+      return !!this.buckets[index] && this.buckets[index].classList.contains(this._HIDDEN_STYLE);
+    },
+
+    _isAtTopBucket: function() {
+      return this.visibleBuckets[0] === 0;
+    },
+
+    _isAtBottomBucket: function() {
+      return this.buckets.length - 1 === this.visibleBuckets[this.visibleBuckets.length - 1];
+    },
+
+    _scrolledToTop: function() {
+      return this.scrollerEle.scrollTop < 1;
+    },
+
+    _scrolledToBottom: function() {
+      for (i = 0; i < this.visibleBuckets.length; i++) {
+        this._hideBucket(this.visibleBuckets[i]);
+      }
+
+      // show the bottom _MAX_VISIBLE_BUCKETS
+      this.visibleBuckets = [];
+      for (i = this.buckets.length - this._MAX_VISIBLE_BUCKETS; i < this.buckets.length; i++) {
+        this.visibleBuckets.push(i);
+        this._showBucket(i);
+      }
+
+      if (this.scrollerEle) {
+        this.scrollerEle.scrollTop = this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight;
+      }
+    },
+
+    _setJumpToLatestVisible: function(visible) {
+      this.jumpToLatestButton.style.display = visible ? "block" : "none";
+    },
+
+    _onParentScroll: function(event) {
+      if (this.buckets.length <= this._MAX_VISIBLE_BUCKETS)
+        return;
+
+      var now = new Date().getTime();
+
+      this._setJumpToLatestVisible(!this._isAtBottomBucket());
+
+      if (now - this.LAST_SCROLL_TIME > this._SCROLL_DEBOUNCE_MS) {
+        // if we scrolled to the top, move the window up
+        if (this._scrolledToTop() && !this._isAtTopBucket()) {
+          this._moveWindow(true);
+        }
+        // if we scrolled to the bottom, move the window down
+        else if (this._scrolledToBottom() && !this._isAtBottomBucket()) {
+          this._moveWindow(false);
+        }
+        else {
+          return;
+        }
+
+        this.LAST_SCROLL_TIME = now;
+
+        // set a timeout to call this function again if the user is holding the scrollbar
+        // at 0 so we know to keep showing more items after the debounce, or just
+        // load in a bit more data so the user knows there's more content above
+        var self = this;
+        setTimeout(function () {
+          if (self._scrolledToBottom() || self._scrolledToTop())
+            self._onParentScroll();
+        }, this._SCROLL_DEBOUNCE_MS + 10);
+      }
+    },
+
+    setScrollParent: function(ele) {
+      if (!ele)
+        return;
+
+      ele.addEventListener("scroll", this._onParentScroll);
+      ele.onscroll = this._onParentScroll;
+      this.scrollerEle = ele;
+    },
+
+    append: function (element) {
+      if (this._getCurBucket().childElementCount >= this._BUCKET_MAX_SIZE) {
+        this._createAndAddNewBucket();
+      }
+      this._getCurBucket().appendChild(element);
+      this._jumpToBottom();
+    },
+
+    clear: function() {
+      // remove all buckets from the DOM
+      for (var i = 0; i < this.buckets.length; i++) {
+        this.buckets[i].remove();
+      }
+
+      this.visibleBuckets = [];
+      this.buckets = [];
+
+      this._createAndAddNewBucket();
+    },
+
+    _createAndAddNewBucket: function() {
+      var newBucket = document.createElement("span");
+
+      // before we're initialized buckets, live in the ether
+      if (this.INITIALIZED)
+        this.consoleEle.appendChild(newBucket);
+
+      this.buckets.push(newBucket);
+
+      // buckets always start visible, add to visible list
+      this.visibleBuckets.push(this.buckets.length - 1);
+
+      return newBucket;
+    },
+
+    _getCurBucket: function() {
+      // there should always be a bucket
+      if (this.buckets.length < 1)
+        return this._createAndAddNewBucket();
+
+      return this.buckets[this.buckets.length - 1];
+    }
+  }
 })();
 
-
-// Support for use as a node.js module.
 if (typeof module !== 'undefined') {
   module.exports = VirtualScroller;
 }

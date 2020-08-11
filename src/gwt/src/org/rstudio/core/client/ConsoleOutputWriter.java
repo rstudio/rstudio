@@ -55,8 +55,12 @@ public class ConsoleOutputWriter
    public void clearConsoleOutput()
    {
       output_.setText("");
-      virtualConsole_ = null;
       lines_ = 0;
+
+      if (VirtualConsole.isVirtualized())
+         VirtualConsole.clearVirtualScroller();
+      else
+         virtualConsole_ = null;
    }
 
    public int getMaxOutputLines()
@@ -105,7 +109,7 @@ public class ConsoleOutputWriter
       int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
 
-      return ignoreLineCount ? true : !trimExcess();
+      return ignoreLineCount || !trimExcess();
    }
 
    public boolean trimExcess()
