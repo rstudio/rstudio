@@ -230,7 +230,11 @@ p.ProseMirror-selectednode {
 }
 
 .pm-spelling-error {
-  background-image: url(data:image/gif;base64,R0lGODlhBAADAIABAP8AAP///yH5BAEAAAEALAAAAAAEAAMAAAIFRB5mGQUAOw==);
+  background-image: url(images/spelling.gif);
   background-position: center bottom;
   background-repeat: repeat-x;
+}
+
+.pm-dark-mode .pm-spelling-error {
+  background-image: url(images/spelling.gif);
 }
