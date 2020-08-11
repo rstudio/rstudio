@@ -18,23 +18,23 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 public class StatusBarPopupRequest
 {
-   public StatusBarPopupRequest(StatusBarPopupMenu menu, 
+   public StatusBarPopupRequest(StatusBarPopupMenu menu,
                                 MenuItem defaultMenuItem)
    {
       menu_ = menu;
       defaultMenuItem_ = defaultMenuItem;
    }
-   
+
    public StatusBarPopupMenu getMenu()
    {
       return menu_;
    }
-   
+
    public MenuItem getDefaultMenuItem()
    {
       return defaultMenuItem_;
    }
-   
+
    private final StatusBarPopupMenu menu_;
    private final MenuItem defaultMenuItem_;
 }
