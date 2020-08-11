@@ -152,7 +152,7 @@ function homeKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?
     const beginDocPos = editingNode.start;
     for (let pos = (selection.from - 1); pos >= beginDocPos; pos--) {
       const posY = view.coordsAtPos(pos).top;
-      if (posY < selectionY) {
+      if (isOnPreviousLine(selectionY, posY) || pos === beginDocPos) {
         const tr = state.tr;
         setTextSelection(pos + 1)(tr);
         dispatch(tr);
@@ -171,7 +171,7 @@ function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?:
     const endDocPos = editingNode.start + editingNode.node.nodeSize;
     for (let pos = (selection.from + 1); pos < endDocPos; pos++) {
       const posY = view.coordsAtPos(pos).top;
-      if (posY > selectionY) {
+      if (isOnNextLine(selectionY, posY)) {
         const tr = state.tr;
         setTextSelection(pos - 1)(tr);
         dispatch(tr);
@@ -180,6 +180,20 @@ function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?:
     }
   }
   return true;
+}
+
+// helpers to check for a y coordinate on a diffent line that the selection
+
+// y coorinates are sometimes off by 1 or 2 due to margin/padding (e.g. for
+// inline code spans or spelling marks) so the comparision only succeeds if 
+// there is sufficint overall distance between the positions
+
+function isOnNextLine(selectionY: number, posY: number) {
+  return Math.abs(posY - selectionY) > 2 && posY > selectionY;
+}
+
+function isOnPreviousLine(selectionY: number, posY: number) {
+  return Math.abs(posY - selectionY) > 2 && posY < selectionY;
 }
 
 
