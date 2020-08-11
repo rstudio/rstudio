@@ -861,7 +861,10 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # unregister a chunk callback functions
-.rs.addApiFunction("unregisterChunkCallback", function(id) {
+.rs.addApiFunction("unregisterChunkCallback", function(handle) {
+  if (exists(".rs.notebookChunkCallbacks") &&
+      !is.null(handle))
+    rm(list = handle, envir = .rs.notebookChunkCallbacks)
 })
 
 # Tutorial ----
