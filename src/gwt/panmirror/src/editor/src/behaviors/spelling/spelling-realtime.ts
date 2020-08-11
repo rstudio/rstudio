@@ -13,9 +13,7 @@
  *
  */
 
-// TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 // TODO: themed underline color
-
 
 // TODO: gdocs style spelling text popup
 // TODO: editing of document and user dictionary lists
@@ -24,7 +22,7 @@
 
 import { Schema, MarkType } from "prosemirror-model";
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
-import { DecorationSet, EditorView, Decoration } from "prosemirror-view";
+import { DecorationSet, EditorView, Decoration, DecorationAttrs } from "prosemirror-view";
 import { ChangeSet } from "prosemirror-changeset";
 
 import { setTextSelection } from "prosemirror-utils";
@@ -40,6 +38,7 @@ import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, f
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
+const kSpellingErrorClass = 'pm-spelling-error';
 
 const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
 
@@ -89,18 +88,24 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             return DecorationSet.empty;
           }
 
-          // explicit update request invalidates any existing decorations (this can happen when
-          // dictionaries change or when focus is restored after 'missing' a bunch of other
-          // invalidations due to not beign the active tab)
           if (tr.getMeta(kUpdateSpellingTransaction)) {
 
+            // explicit update request invalidates any existing decorations (this can happen when
+            // dictionaries change or when focus is restored after 'missing' a bunch of other
+            // invalidations due to not beign the active tab)
             return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
 
-            // incremental update 
           } else if (tr.docChanged) {
+
+            // perform an incremental update of spelling decorations (invalidate and re-scan
+            // for decorations in changed ranges)
 
             // start w/ previous state
             let decos = old;
+
+            // create change set from transaction
+            let changeSet = ChangeSet.create(oldState.doc);
+            changeSet = changeSet.addSteps(newState.doc, tr.mapping.maps);
 
             // collect ranges that had mark changes
             const markRanges: Array<{ from: number, to: number }> = [];
@@ -111,11 +116,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
               }
             }
 
-            // create change set from transaction
-            let changeSet = ChangeSet.create(oldState.doc);
-            changeSet = changeSet.addSteps(newState.doc, tr.mapping.maps);
-
-            // remove ranges are mark ranges + deleted ranges
+            // remove ranges = mark ranges + deleted ranges
             const removeRanges = markRanges.concat(changeSet.changes.map(change =>
               ({ from: change.fromA, to: change.toA })
             ));
@@ -130,7 +131,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             // map decoration positions to new document
             decos = decos.map(tr.mapping, tr.doc);
 
-            // add ranges are mark ranges + inserted ranges
+            // add ranges = mark ranges + inserted ranges
             const addRanges = markRanges.concat(changeSet.changes.map(change =>
               ({ from: change.fromB, to: change.toB })
             ));
@@ -138,7 +139,30 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             // scan inserted ranges for spelling decorations (don't need to find word boundaries 
             // b/c spellingDecorations already does that)
             for (const range of addRanges) {
-              decos = decos.add(tr.doc, spellingDecorations(newState, ui.spelling, excluded, range.from, range.to));
+              decos = decos.add(tr.doc, spellingDecorations(newState, ui.spelling, excluded, true, range.from, range.to));
+            }
+
+            // return decorators
+            return decos;
+
+          } else if (tr.selectionSet) {
+
+            // if we had previously suppressed a decoration due to typing at the cursor, restore it
+            // whenever the selection changes w/o the doc changing
+
+            // start with previous state
+            let decos = old;
+
+            // find any special 'at cursor' errors
+            const cursorDecos = decos.find(undefined, undefined, spec => !!spec.cursor);
+            if (cursorDecos.length) {
+
+              // there will only be one cursor, capture it's position then remove it
+              const { from, to } = cursorDecos[0];
+              decos = decos.remove(cursorDecos);
+
+              // add it back in as a real spelling error
+              decos = decos.add(tr.doc, [Decoration.inline(from, to, { class: kSpellingErrorClass })]);
             }
 
             // return decorators
@@ -146,9 +170,8 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
           } else {
 
-            // TODO: handle cursor moved away from misspelled word
-
-            return old.map(tr.mapping, tr.doc);
+            // no content or selection change, return old w/o mapping
+            return old;
 
           }
 
@@ -188,6 +211,7 @@ function spellingDecorations(
   state: EditorState,
   spelling: EditorUISpelling,
   excluded: MarkType[],
+  excludeCursor = false,
   from = -1,
   to = -1
 ): Decoration[] {
@@ -201,7 +225,14 @@ function spellingDecorations(
     const word = words.next()!;
     const wordText = state.doc.textBetween(word.start, word.end);
     if (!spelling.checkWord(spellcheckerWord(wordText))) {
-      decorations.push(Decoration.inline(word.start, word.end, { class: 'pm-spelling-error' }));
+      const attrs: DecorationAttrs = {};
+      const spec: { [key: string]: any } = {};
+      if (excludeCursor && (state.selection.head === word.end)) {
+        spec.cursor = true;
+      } else {
+        attrs.class = kSpellingErrorClass;
+      }
+      decorations.push(Decoration.inline(word.start, word.end, attrs, spec));
     }
   }
   return decorations;
