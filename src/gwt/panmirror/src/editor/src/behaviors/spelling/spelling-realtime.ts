@@ -15,8 +15,7 @@
 
 // TODO: make sure we shouldn't actually be doing while(true)
 
-// TODO: interactive version of getWords isn't working anymore. perhaps it has some
-// implicit assumption about being on a node boundary? 
+// TODO: addToDictionary doens't immediately invalidate (b/c of async?)
 
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 
@@ -41,7 +40,7 @@ import { EditorEvents } from "../../api/events";
 import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord, beginDocPos, endDocPos, findBeginWord, findEndWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord } from "./spelling";
 import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
