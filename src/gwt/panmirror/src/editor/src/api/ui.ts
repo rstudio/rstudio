@@ -73,6 +73,9 @@ export interface EditorUIContext {
 
   // translate a string
   translateText: (text: string) => string;
+
+  // are we running in windows desktop mode?
+  isWindowsDesktop: () => boolean;
 }
 
 export interface EditorMenuItem {
