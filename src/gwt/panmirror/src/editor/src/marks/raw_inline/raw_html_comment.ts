@@ -42,6 +42,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'raw_html_comment',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           attrs: {
             editing: { default: false },
