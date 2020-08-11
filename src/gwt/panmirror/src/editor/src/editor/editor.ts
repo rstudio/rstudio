@@ -901,7 +901,7 @@ export class Editor {
     // (see: https://github.com/rstudio/rstudio/issues/7142)
     const ctrlKeyCodes: { [key: string]: CommandFn } = {};
     Object.keys(pluginKeys).forEach(keyCombo => {
-      const match = keyCombo.match(/Mod-([a-z\\])/);
+      const match = keyCombo.match(/^Mod-([a-z\\])$/);
       if (match) {
         const key = match[1];
         const keyCode = key === '\\' ? 'Backslash' : `Key${key.toUpperCase()}`;
