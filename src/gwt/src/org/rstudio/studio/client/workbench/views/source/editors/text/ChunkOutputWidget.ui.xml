@@ -95,7 +95,12 @@
    {
       right: 71px;
    }
-
+   
+   .embedded .frame {
+	  border: none;
+	  margin-top: 5px;
+   }
+   
    .frame
    {
       border: 1px solid #e5e5e5;

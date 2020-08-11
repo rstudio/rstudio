@@ -109,6 +109,7 @@ public class ChunkOutputWidget extends Composite
       String fullsize();
       String baresize();
       String noclear();
+      String embedded();
    }
 
    public ChunkOutputWidget(String documentId, String chunkId, 
@@ -587,6 +588,23 @@ public class ChunkOutputWidget extends Composite
    public HTMLPanel getFrame()
    {
       return frame_;
+   }
+   
+   /**
+    * Enable or disable the embedded style (for embedded editor instances)
+    * 
+    * @param embedded Whether to enable the embedded style.
+    */
+   public void setEmbeddedStyle(boolean embedded)
+   {
+      if (embedded)
+      {
+         addStyleName(style.embedded());
+      }
+      else
+      {
+         removeStyleName(style.embedded());
+      }
    }
 
    // Private methods ---------------------------------------------------------

@@ -7401,6 +7401,11 @@ public class TextEditingTarget implements
    {
       return notebook_;
    }
+   
+   public VisualMode getVisualMode()
+   {
+      return visualMode_;
+   }
 
    /**
     * Updates the path of the file loaded in the editor, as though the user

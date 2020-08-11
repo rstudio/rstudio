@@ -1024,8 +1024,15 @@ public class TextEditingTargetNotebook
    @Override
    public void onLineWidgetRemoved(LineWidget widget)
    {
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi outputUi: outputs_.values())
       {
+         // Ignore chunk outputs not associated with an Ace instance (as they
+         // aren't backed by line widgets)
+         if (!(outputUi instanceof ChunkOutputCodeUi))
+            continue;
+         
+         ChunkOutputCodeUi output = (ChunkOutputCodeUi)outputUi;
+         
          // ignore moving widgets -- ACE doesn't have a way to move a line 
          // widget from one row to another, but we occasionally need to do this
          // to keep the output pinned to the end of the chunk
@@ -1054,7 +1061,7 @@ public class TextEditingTargetNotebook
                ChunkDefinition def = (ChunkDefinition)widget.getData();
                def.setRow(terminalLine);
                widget.setRow(terminalLine);
-               ChunkOutputUi newOutput = new ChunkOutputUi(
+               ChunkOutputUi newOutput = new ChunkOutputCodeUi(
                      docUpdateSentinel_.getId(), 
                      docDisplay_, def, this, outputWidget);
                outputs_.put(output.getChunkId(), newOutput);
@@ -1574,11 +1581,20 @@ public class TextEditingTargetNotebook
    
    private void createChunkOutput(ChunkDefinition def)
    {
-      outputs_.put(def.getChunkId(), 
-             new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
-                               def, this));
-      Debug.devlog("create chunk output at row " + def.getRow() + " (" + 
-         outputs_.get(def.getChunkId()).getScope().getPreamble().getRow() + ")");
+      ChunkOutputUi output;
+      if (editingTarget_.isVisualModeActivated())
+      {
+         output = new ChunkOutputPanmirrorUi(docUpdateSentinel_.getId(), 
+               editingTarget_.getVisualMode(), def);
+         Debug.devlog("create visual mode chunk output at row " + def.getRow());
+      }
+      else
+      {
+         output = new ChunkOutputCodeUi(docUpdateSentinel_.getId(), docDisplay_,
+                                  def, this, null);
+         Debug.devlog("create code mode chunk output at row " + def.getRow());
+      }
+      outputs_.put(def.getChunkId(), output);
    }
    
    private boolean needsSetupChunkExecuted()

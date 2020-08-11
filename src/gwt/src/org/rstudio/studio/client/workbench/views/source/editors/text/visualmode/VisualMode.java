@@ -103,8 +103,7 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_.getNotebook(), 
-            target_.getRCompletionContext());
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -738,7 +737,11 @@ public class VisualMode implements VisualModeEditorSync,
       if (saveLocationOnIdle_ != null)
          saveLocationOnIdle_.suspend();
    }
-  
+   
+   public VisualModeChunk getChunkAtRow(int row)
+   {
+      return visualModeChunks_.getChunkAtRow(row);
+   }
 
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
