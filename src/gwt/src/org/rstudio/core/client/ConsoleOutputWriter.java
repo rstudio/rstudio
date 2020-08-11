@@ -54,13 +54,15 @@ public class ConsoleOutputWriter
 
    public void clearConsoleOutput()
    {
-      output_.setText("");
       lines_ = 0;
 
       if (VirtualConsole.isVirtualized())
          VirtualConsole.clearVirtualScroller();
       else
+      {
+         output_.setText("");
          virtualConsole_ = null;
+      }
    }
 
    public int getMaxOutputLines()
