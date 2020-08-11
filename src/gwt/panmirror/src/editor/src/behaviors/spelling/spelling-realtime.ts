@@ -13,17 +13,13 @@
  *
  */
 
-// TODO: make sure we shouldn't actually be doing while(true)
-
-// TODO: addToDictionary doens't immediately invalidate (b/c of async?)
-
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
-
 // TODO: themed underline color
 
-// TODO: gdocs style spelling text popup
 
+// TODO: gdocs style spelling text popup
 // TODO: editing of document and user dictionary lists
+
 
 
 import { Schema, MarkType } from "prosemirror-model";
