@@ -1608,7 +1608,7 @@ public class AceEditor implements DocDisplay,
 
          
          @Override
-         public Iterable<WordRange> getWords(int start, Integer end)
+         public Iterable<WordRange> getWords(int start, int end)
          {
             return new Iterable<WordRange>() {
 
@@ -1620,7 +1620,7 @@ public class AceEditor implements DocDisplay,
                         fileType_.getSpellCheckTokenPredicate(),
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
-                        end != null ? positionFromIndex(end) : null).iterator();
+                        end != -1 ? positionFromIndex(end) : null).iterator();
                   
                   // shim it on to spelling doc iterator
                   return new Iterator<WordRange>() {

@@ -43,7 +43,7 @@ export function getSpellingDoc(
 
   return {
 
-    getWords: (start: number, end: number | null): EditorWordSource => {
+    getWords: (start: number, end: number): EditorWordSource => {
       return getWords(
         view.state,
         start,
@@ -80,7 +80,7 @@ export function getSpellingDoc(
     },
 
     getCursorPosition: (): number => {
-      return view.state.selection.head;
+      return view.state.selection.to;
     },
 
     getSelectionStart: (): number => {

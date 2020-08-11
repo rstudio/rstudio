@@ -56,7 +56,7 @@ public class VisualModeSpelling extends SpellingContext
       checkSpelling(new SpellingDoc() {
 
          @Override
-         public Iterable<WordRange> getWords(int start, Integer end)
+         public Iterable<WordRange> getWords(int start, int end)
          {
             return new Iterable<WordRange>() {
 

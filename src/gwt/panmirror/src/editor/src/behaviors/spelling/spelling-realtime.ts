@@ -13,11 +13,10 @@
  *
  */
 
+// TODO: make sure we shouldn't actually be doing while(true)
 
 // TODO: interactive version of getWords isn't working anymore. perhaps it has some
 // implicit assumption about being on a node boundary? 
-
-// TODO: ignoreAll is doing a skip, we need an 'Ignore All' for realtime
 
 // TODO: node that selection changed can invalidatee the suppresed decoration at the cursor 
 
@@ -194,13 +193,9 @@ function spellingDecorations(
   state: EditorState,
   spelling: EditorUISpelling,
   excluded: MarkType[],
-  from?: number,
-  to?: number
+  from = -1,
+  to = -1
 ): Decoration[] {
-
-  // provide defautls  
-  from = from || beginDocPos();
-  to = to || endDocPos(state.doc);
 
   // break words
   const words = getWords(state, from, to, spelling, excluded);

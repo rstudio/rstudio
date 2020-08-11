@@ -55,7 +55,7 @@ export interface EditorWordSource {
 
 export interface EditorSpellingDoc {
 
-  getWords: (start: number, end: number | null) => EditorWordSource;
+  getWords: (start: number, end: number) => EditorWordSource;
 
   createAnchor: (pos: number) => EditorAnchor;
 

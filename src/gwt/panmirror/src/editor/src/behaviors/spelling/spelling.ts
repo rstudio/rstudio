@@ -25,13 +25,16 @@ export const endDocPos = (doc: ProsemirrorNode) => doc.nodeSize - 2;
 export function getWords(
   state: EditorState,
   start: number,
-  end: number | null,
+  end: number,
   spelling: EditorUISpelling,
   excluded: MarkType[],
 ): EditorWordSource {
 
-  // provide default for end
-  if (end === null) {
+  // provide defaults 
+  if (start === -1) {
+    start = beginDocPos();
+  }
+  if (end === -1) {
     end = endDocPos(state.doc);
   }
 
