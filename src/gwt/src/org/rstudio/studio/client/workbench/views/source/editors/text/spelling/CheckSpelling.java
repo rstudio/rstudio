@@ -110,21 +110,21 @@ public class CheckSpelling
 
       view_.getSkipButton().addClickHandler((ClickEvent event) ->
       {
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
@@ -156,7 +156,7 @@ public class CheckSpelling
    private void doReplacement(String replacement)
    {
       spellingDoc_.replaceSelection(replacement);
-      currentPos_ = spellingDoc_.getSelectionEnd();
+      currentPos_ = spellingDoc_.getSelectionEnd() + 1;
    }
 
    private void findNextMisspelling()
