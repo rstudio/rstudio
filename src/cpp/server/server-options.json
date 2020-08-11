@@ -14,6 +14,7 @@
          "<core/system/PosixSystem.hpp>",
          "<core/system/Xdg.hpp>",
          "<monitor/MonitorConstants.hpp>",
+         "<core/http/Request.hpp>",
          "<core/http/Cookie.hpp>"
       ]
    },
@@ -112,10 +113,10 @@
             "description": "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL)."
          },
          {
-            "name": "www-url-path-prefix",
-            "memberName": "wwwUrlPathPrefix_",
+            "name": "www-root-path",
+            "memberName": "wwwRootPath_",
             "type": "string",
-            "defaultValue": "/",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
             "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
          },
          {

@@ -24,21 +24,21 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class RSConnectDeployOutputTab 
+public class RSConnectDeployOutputTab
    extends DelayLoadWorkbenchTab<RSConnectDeployOutputPresenter>
    implements ProvidesBusy
 {
    public abstract static class Shim extends
-                DelayLoadTabShim<RSConnectDeployOutputPresenter, 
+                DelayLoadTabShim<RSConnectDeployOutputPresenter,
                                  RSConnectDeployOutputTab>
       implements RSConnectDeploymentStartedEvent.Handler,
                  RSConnectDeploymentOutputEvent.Handler,
-                 RSConnectDeploymentCompletedEvent.Handler, 
+                 RSConnectDeploymentCompletedEvent.Handler,
                  RestartStatusEvent.Handler,
                  ProvidesBusy
    {
@@ -64,18 +64,18 @@ public class RSConnectDeployOutputTab
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
+
    @Override
-   public void addBusyHandler(BusyHandler handler)
+   public void addBusyHandler(BusyEvent.Handler handler)
    {
       shim_.addBusyHandler(handler);
    }
 
-   private Shim shim_;
+   private final Shim shim_;
 }

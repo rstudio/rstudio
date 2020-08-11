@@ -54,7 +54,6 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
-import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerHandler;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -83,24 +82,22 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTe
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
-public class Workbench implements BusyHandler,
-                                  ShowErrorMessageHandler,
-                                  UserPromptHandler,
+public class Workbench implements BusyEvent.Handler,
+                                  ShowErrorMessageEvent.Handler,
+                                  UserPromptEvent.Handler,
                                   ShowWarningBarEvent.Handler,
-                                  BrowseUrlHandler,
-                                  QuotaStatusHandler,
-                                  WorkbenchLoadedHandler,
-                                  WorkbenchMetricsChangedHandler,
+                                  BrowseUrlEvent.Handler,
+                                  QuotaStatusEvent.Handler,
+                                  WorkbenchLoadedEvent.Handler,
+                                  WorkbenchMetricsChangedEvent.Handler,
                                   InstallRtoolsEvent.Handler,
                                   ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler,
-                                  AdminNotificationHandler,
+                                  AdminNotificationEvent.Handler,
                                   OpenFileDialogEvent.Handler,
-                                  ShowPageViewerHandler,
+                                  ShowPageViewerEvent.Handler,
                                   TutorialLaunchEvent.Handler,
                                   DeferredInitCompletedEvent.Handler,
                                   ReportShortcutBindingEvent.Handler
@@ -212,15 +209,11 @@ public class Workbench implements BusyHandler,
       if (Desktop.isDesktop() &&
           StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
       {
-         pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
-
-            @Override
-            public void onVcsRefresh(VcsRefreshEvent event)
-            {
-               String title = workbenchContext_.createWindowTitle();
-               if (title != null)
-                  Desktop.getFrame().setWindowTitle(title);
-            }
+         pGitState_.get().addVcsRefreshHandler(vcsRefreshEvent ->
+         {
+            String title = workbenchContext_.createWindowTitle();
+            if (title != null)
+               Desktop.getFrame().setWindowTitle(title);
          });
       }
    }
@@ -801,6 +794,6 @@ public class Workbench implements BusyHandler,
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
-   private WorkbenchNewSession newSession_;
+   private final WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
 }

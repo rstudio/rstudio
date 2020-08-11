@@ -10,6 +10,7 @@
       "additionalIncludes": [
          "<core/system/Xdg.hpp>",
          "<session/SessionConstants.hpp>",
+         "<core/http/Request.hpp>",
          "<core/http/Cookie.hpp>"
       ]
    },
@@ -273,6 +274,14 @@
             "accessorName": "packageOutputInPackageFolder",
             "defaultValue": false,
             "description": "Specifies whether or not package builds output to the package project folder."
+         },
+         {
+            "name": {"constant": "kRootPathSessionOption", "value": "session-url-path-prefix"},
+            "memberName": "rootPath_",
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
+            "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
          },
          {
             "name": {"constant": "kUseSecureCookiesSessionOption", "value": "session-use-secure-cookies"},

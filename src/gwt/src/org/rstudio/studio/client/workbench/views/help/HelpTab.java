@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -73,13 +72,11 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       events.addHandler(ShowHelpEvent.TYPE, shim);
       events.addHandler(ActivateHelpEvent.TYPE, shim);
 
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-         public void onSessionInit(SessionInitEvent sie)
+      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         if (session.getSessionInfo().getShowHelpHome())
          {
-            if (session.getSessionInfo().getShowHelpHome())
-            {
-               shim.bringToFront();
-            }
+            shim.bringToFront();
          }
       });
    }

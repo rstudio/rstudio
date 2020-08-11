@@ -22,7 +22,6 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -45,32 +44,29 @@ public class WorkbenchContext
       session_ = session;
       pGitState_ = pGitState;
       pUserPrefs_ = pUserPrefs;
-      
+
       // track current working dir
       currentWorkingDir_ = FileSystemItem.home();
       defaultFileDialogDir_ = FileSystemItem.home();
-      eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
+      eventBus.addHandler(WorkingDirChangedEvent.TYPE,
                           new WorkingDirChangedEvent.Handler() {
          @Override
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {
             currentWorkingDir_ = FileSystemItem.createDir(event.getPath());
             defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());
-         }      
-      }); 
-      
-      eventBus.addHandler(BusyEvent.TYPE, new BusyHandler() {
-         @Override
-         public void onBusy(BusyEvent event)
-         {
-            isServerBusy_ = event.isBusy();
-            
-            if (Desktop.hasDesktopFrame())
-               Desktop.getFrame().setBusy(isServerBusy_);
-         } 
+         }
       });
-      
-      eventBus.addHandler(RestartStatusEvent.TYPE, 
+
+      eventBus.addHandler(BusyEvent.TYPE, busyEvent ->
+      {
+         isServerBusy_ = busyEvent.isBusy();
+
+         if (Desktop.hasDesktopFrame())
+            Desktop.getFrame().setBusy(isServerBusy_);
+      });
+
+      eventBus.addHandler(RestartStatusEvent.TYPE,
                           new RestartStatusEvent.Handler()
       {
          @Override
@@ -82,7 +78,7 @@ public class WorkbenchContext
             {
                // clear the restart in progress event after a delay
                // (it basically just controls whether errors are displayed
-               // from get_environment_state, list_packages, etc.). we've 
+               // from get_environment_state, list_packages, etc.). we've
                // seen issues where the flag is cleared too soon -- this
                // is likely an underlying logic problem in sendPing, but
                // we don't want to make a change to that late in the v0.98
@@ -98,10 +94,10 @@ public class WorkbenchContext
             }
          }
       });
-      
-      
+
+
       // track R version info
-      eventBus.addHandler(RVersionsChangedEvent.TYPE, 
+      eventBus.addHandler(RVersionsChangedEvent.TYPE,
                           new RVersionsChangedEvent.Handler()
       {
          @Override
@@ -111,12 +107,12 @@ public class WorkbenchContext
          }
       });
    }
-  
+
    public FileSystemItem getCurrentWorkingDir()
    {
       return currentWorkingDir_;
    }
-   
+
    public FileSystemItem getDefaultFileDialogDir()
    {
       if (defaultFileDialogDir_ != null)
@@ -124,7 +120,7 @@ public class WorkbenchContext
       else
          return getCurrentWorkingDir();
    }
-   
+
    public RVersionsInfo getRVersionsInfo()
    {
       if (rVersionsInfo_ != null)
@@ -132,12 +128,12 @@ public class WorkbenchContext
       else
          return session_.getSessionInfo().getRVersionsInfo();
    }
-   
+
    public void setDefaultFileDialogDir(FileSystemItem dir)
    {
       defaultFileDialogDir_ = dir;
    }
-   
+
    // NOTE: mirrors behavior of rEnvironmentDir in SessionMain.cpp
    public String getREnvironmentPath()
    {
@@ -167,12 +163,12 @@ public class WorkbenchContext
          return FileSystemItem.home().completePath(".RData");
       }
    }
-   
+
    public String getActiveProjectFile()
    {
       return session_.getSessionInfo().getActiveProjectFile();
    }
-   
+
    public FileSystemItem getActiveProjectDir()
    {
       if (activeProjectDir_ == null)
@@ -187,7 +183,7 @@ public class WorkbenchContext
       }
       return activeProjectDir_;
    }
-   
+
    public FileSystemItem getDefaultWorkingDir()
    {
       if (defaultWorkingDir_ == null)
@@ -198,33 +194,33 @@ public class WorkbenchContext
       }
       return defaultWorkingDir_;
    }
-   
+
    public boolean isProjectActive()
    {
       SessionInfo sessionInfo = session_.getSessionInfo();
       return sessionInfo != null && sessionInfo.getActiveProjectFile() != null;
    }
-   
+
    public boolean isServerBusy()
    {
       return isServerBusy_;
    }
-   
+
    public boolean isRestartInProgress()
    {
       return isRestartInProgress_;
    }
-   
+
    public boolean isBuildInProgress()
    {
       return isBuildInProgress_;
    }
-   
+
    public void setBuildInProgress(boolean inProgress)
    {
       isBuildInProgress_ = inProgress;
    }
-   
+
    public String createWindowTitle()
    {
       FileSystemItem projDir = getActiveProjectDir();
@@ -259,9 +255,9 @@ public class WorkbenchContext
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem defaultWorkingDir_ = null;
    private FileSystemItem activeProjectDir_ = null;
-   private final Session session_; 
+   private final Session session_;
    private final Provider<GitState> pGitState_;
    private final Provider<UserPrefs> pUserPrefs_;
    private RVersionsInfo rVersionsInfo_ = null;
-   
+
 }

@@ -67,7 +67,7 @@ import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClos
 public class WorkbenchScreen extends Composite
                              implements WorkbenchMainView,
                                         SelectionHandler<Integer>,
-                                        ActivatePaneHandler,
+                                        ActivatePaneEvent.Handler,
                                         RequiresResize
 {
    interface MyCommandBinder extends CommandBinder<Commands, WorkbenchScreen>{}
@@ -131,13 +131,10 @@ public class WorkbenchScreen extends Composite
          }
       };
 
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            prefetch();
-            mruList.get();
-         }
+         prefetch();
+         mruList.get();
       });
 
       eventBus.addHandler(LastSourceDocClosedEvent.TYPE,
