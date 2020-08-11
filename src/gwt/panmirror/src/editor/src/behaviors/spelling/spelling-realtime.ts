@@ -16,6 +16,7 @@
 import { Schema, MarkType } from "prosemirror-model";
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView, Decoration, DecorationAttrs } from "prosemirror-view";
+import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 import { ChangeSet } from "prosemirror-changeset";
 
 import { setTextSelection } from "prosemirror-utils";
@@ -28,7 +29,6 @@ import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
 import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord } from "./spelling";
-import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 const kSpellingErrorClass = 'pm-spelling-error';
