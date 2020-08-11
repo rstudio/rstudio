@@ -13,13 +13,6 @@
  *
  */
 
-// TODO: themed underline color
-
-// TODO: gdocs style spelling text popup
-// TODO: editing of document and user dictionary lists
-
-
-
 import { Schema, MarkType } from "prosemirror-model";
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView, Decoration, DecorationAttrs } from "prosemirror-view";
