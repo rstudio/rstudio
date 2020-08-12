@@ -120,7 +120,8 @@ public class DocUpdateSentinel
                             ProgressIndicator progress,
                             DirtyState dirtyState,
                             EventBus events,
-                            UserPrefs prefs)
+                            UserPrefs prefs,
+                            ChunkDefinition.Provider chunkDefProvider)
    {
       server_ = server;
       docDisplay_ = docDisplay;
@@ -129,6 +130,7 @@ public class DocUpdateSentinel
       dirtyState_ = dirtyState;
       eventBus_ = events;
       prefs_ = prefs;
+      chunkDefProvider_ = chunkDefProvider;
       changeTracker_ = docDisplay.getChangeTracker();
       propertyChangeHandlers_ =
             new HashMap<String, ValueChangeHandlerManager<String>>();
@@ -461,7 +463,9 @@ public class DocUpdateSentinel
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
 
-      final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
+      final JsArray<ChunkDefinition> newChunkDefs = chunkDefProvider_.getChunkDefs();
+      Debug.devlog("write chunk defs");
+      Debug.logObject(newChunkDefs);
       JsArray<ChunkDefinition> oldChunkDefs =
             sourceDoc_.getNotebookDoc().getChunkDefs();
 
@@ -931,6 +935,7 @@ public class DocUpdateSentinel
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>>
                  propertyChangeHandlers_;
+   private final ChunkDefinition.Provider chunkDefProvider_;
    private boolean loggedAutosaveError_ = false;
 
    public final static String PROPERTY_TRUE = "true";

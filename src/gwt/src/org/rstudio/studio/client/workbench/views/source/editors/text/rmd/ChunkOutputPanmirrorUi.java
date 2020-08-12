@@ -36,6 +36,7 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       if (chunk_ != null)
       {
          chunk_.setOutputWidget(widget);
+         chunk_.setDefinition(def);
       }
    }
 

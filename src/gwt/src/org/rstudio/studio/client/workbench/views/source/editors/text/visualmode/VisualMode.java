@@ -61,12 +61,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -746,6 +748,19 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return visualModeChunks_.getChunkAtRow(row);
    }
+   
+   public JsArray<ChunkDefinition> getChunkDefs()
+   {
+      return visualModeChunks_.getChunkDefs();
+   }
+   
+   public ChunkDefinition getChunkDefAtRow(int row)
+   {
+      VisualModeChunk chunk = getChunkAtRow(row);
+      if (chunk == null)
+         return null;
+      return chunk.getDefinition();
+   }
 
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
@@ -877,7 +892,7 @@ public class VisualMode implements VisualModeEditorSync,
          };
          
          // if we are deactivating to allow the user to edit invalid source code then don't sync
-         // back to the source editor (as this would have happended b/c we inspected the contents
+         // back to the source editor (as this would have happened b/c we inspected the contents
          // of the source editor in syncFromEditorIfActivated() and decided we couldn't edit it)
          if (deactivatingForInvalidSource_)
          {

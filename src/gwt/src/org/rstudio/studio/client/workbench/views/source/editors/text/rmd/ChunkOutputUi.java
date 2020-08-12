@@ -144,6 +144,11 @@ public abstract class ChunkOutputUi
    {
       return outputWidget_.hasErrors();
    }
+   
+   public ChunkDefinition getDefinition()
+   {
+      return def_;
+   }
 
    // Private methods ---------------------------------------------------------
 

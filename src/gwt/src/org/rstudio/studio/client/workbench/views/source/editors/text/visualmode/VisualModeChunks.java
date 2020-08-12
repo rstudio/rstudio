@@ -21,10 +21,15 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
-public class VisualModeChunks
+import com.google.gwt.core.client.JsArray;
+
+public class VisualModeChunks implements ChunkDefinition.Provider
 {
    public VisualModeChunks(DocUpdateSentinel sentinel,
                            DocDisplay display,
@@ -90,6 +95,27 @@ public class VisualModeChunks
       return null;
    }
    
+   /**
+    * Make a list of the chunk definitions known in visual mode.
+    */
+   public JsArray<ChunkDefinition> getChunkDefs()
+   {
+      JsArray<ChunkDefinition> defs = JsArray.createArray().cast();
+      ScopeList scopes = new ScopeList(parent_);
+      for (VisualModeChunk chunk: chunks_)
+      {
+         ChunkDefinition def = chunk.getDefinition();
+         Scope scope = chunk.getScope();
+         if (def != null && scope != null)
+         {
+            int row = scope.getEnd().getRow();
+            defs.push(def.with(row, TextEditingTargetNotebook.getKnitrChunkLabel(
+                        row, parent_, scopes)));
+         }
+      }
+      return defs;
+   }
+
    private final List<VisualModeChunk> chunks_;
    private final DocUpdateSentinel sentinel_;
    private final DocDisplay parent_;

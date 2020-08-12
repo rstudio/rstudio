@@ -499,17 +499,25 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    private ChunkDefinition getChunkDefAtRow(int row, String newId)
    {
-      ChunkDefinition chunkDef;
+      ChunkDefinition chunkDef = null;
       
-      // if there is an existing widget just modify it in place
-      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
-      if (widget != null && 
-          widget.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
+      // look for an existing chunk definition
+      if (editingTarget_.isVisualModeActivated())
       {
-         chunkDef = widget.getData();
+         chunkDef = editingTarget_.getVisualMode().getChunkDefAtRow(row);
       }
-      // otherwise create a new one
       else
+      {
+         LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+         if (widget != null && 
+             widget.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
+         {
+            chunkDef = widget.getData();
+         }
+      }
+
+      // if no chunk definition exists, create a new one
+      if (chunkDef == null)
       {
          if (StringUtil.isNullOrEmpty(newId))
             newId = "c" + StringUtil.makeRandomId(12);

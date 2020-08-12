@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -220,6 +221,26 @@ public class VisualModeChunk
       outputHost_.appendChild(widget.getElement());
    }
    
+   /**
+    * Gets the chunk's raw definition.
+    * 
+    * @return The chunk definition
+    */
+   public ChunkDefinition getDefinition()
+   {
+      return def_;
+   }
+   
+   /**
+    * Sets the raw definition of the chunk.
+    * 
+    * @param def The chunk definition
+    */
+   public void setDefinition(ChunkDefinition def)
+   {
+      def_ = def;
+   }
+   
    private void setMode(AceEditor editor, String mode)
    {
       switch(mode)
@@ -281,6 +302,8 @@ public class VisualModeChunk
          break;
       }
    }
+   
+   private ChunkDefinition def_;
    
    private final DivElement outputHost_;
    private final Scope scope_;

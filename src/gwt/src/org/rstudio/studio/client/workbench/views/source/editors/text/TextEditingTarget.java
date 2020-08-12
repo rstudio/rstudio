@@ -1530,7 +1530,19 @@ public class TextEditingTarget implements
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
             events_,
-            prefs_);
+            prefs_,
+            () ->
+            {
+               // Implement chunk definition provider
+               if (visualMode_.isActivated())
+               {
+                  return visualMode_.getChunkDefs();
+               }
+               else
+               {
+                  return docDisplay_.getChunkDefs();
+               }
+            });
 
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
@@ -2487,11 +2499,13 @@ public class TextEditingTarget implements
       {
          visualMode_.focus(() ->
          {
+            Debug.devlog("focusing visual mode complete");
             // Initialize notebook after activation if present (and notebook is
             // uninitialized)
             if (notebook_ != null && 
                 notebook_.getState() == TextEditingTargetNotebook.STATE_NONE)
             {
+               Debug.devlog("render finish notebook");
                notebook_.onRenderFinished(null);
             }
          });
@@ -3828,6 +3842,10 @@ public class TextEditingTarget implements
          {
             docs.get(i).getNotebookDoc().setChunkDefs(
                   docDisplay_.getChunkDefs());
+            if (docDisplay_.getChunkDefs() != null)
+               Debug.devlog("syncing chunk defs of length " + docDisplay_.getChunkDefs().length());
+            else
+               Debug.devlog("no chunk defs to sync");
             docs.get(i).setContents(docDisplay_.getCode());
             docs.get(i).setDirty(dirtyState_.getValue());
             break;
