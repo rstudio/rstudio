@@ -245,6 +245,19 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
 }
 
 /**
+ * The default type for new bibliographies.
+ */
+std::string UserStateValues::bibliographyDefaultType()
+{
+   return readPref<std::string>("bibliography_default_type");
+}
+
+core::Error UserStateValues::setBibliographyDefaultType(std::string val)
+{
+   return writePref("bibliography_default_type", val);
+}
+
+/**
  * Key for making Zotero API calls
  */
 std::string UserStateValues::zoteroApiKey()
@@ -290,6 +303,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kConnectVia,
       kErrorHandlerType,
       kUsingMingwGcc49,
+      kBibliographyDefaultType,
       kZoteroApiKey,
       kZoteroDataDir,
    });

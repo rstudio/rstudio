@@ -18,6 +18,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsCitation;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -42,19 +43,6 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 {
 
    private enum BibliographyType {
-      yaml {
-         @Override
-         public String displayName()
-         {
-            return "YAML";
-         }
-
-         @Override
-         public String fileExtension()
-         {
-            return "yaml";
-         }
-      },
       biblatex {
          @Override
          public String displayName()
@@ -68,11 +56,24 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             return "bib";
          }
       },
+      yaml {
+         @Override
+         public String displayName()
+         {
+            return "CSL-YAML";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "yaml";
+         }
+      },
       json {
          @Override
          public String displayName()
          {
-            return "JSON";
+            return "CSL-JSON";
          }
 
          @Override
@@ -96,15 +97,12 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       RStudioGinjector.INSTANCE.injectMembers(this);
       mainWidget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       citeProps_ = citeProps;
-
-      setBibliographies(citeProps.bibliographyFiles);
-      previewScrollPanel_.setSize("100%", "160px");
-
       
       // Bibliography Types (for when user is creating a new bibliography)
       for (BibliographyType bibType : BibliographyType.values()) {
          createBibliographyTypes_.addItem(bibType.displayName(), bibType.fileExtension());   
       }
+      
       createBibliographyTypes_.addChangeHandler(new ChangeHandler(){
 
          @Override
@@ -112,8 +110,13 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          {
             String extension = createBibliographyTypes_.getSelectedValue();
             String currentFileName = createBibliographyFileName_.getValue();
-            createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension));         
+            createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension)); 
+            userState_.bibliographyDefaultType().setGlobalValue(extension);
          }});
+
+      setBibliographies(citeProps.bibliographyFiles);
+      
+      previewScrollPanel_.setSize("100%", "160px");
 
       if (citeProps_.citeUI != null)
       {
@@ -186,9 +189,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    
 
    @Inject
-   void initialize(PanmirrorDOIServerOperations server)
+   void initialize(PanmirrorDOIServerOperations server, 
+                   UserState userState)
    {
       server_ = server;
+      userState_ = userState;
    }
 
    @Override
@@ -330,9 +335,12 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          // There isn't a currently configured bibliography
          // Show create UI
          createBibliographyPanel_.setVisible(true);
-         addTobibliographyPanel_.setVisible(false);
-         createBibliographyFileName_.setText(ensureExtension("references", BibliographyType.yaml.fileExtension()));
+         addTobibliographyPanel_.setVisible(false);   
          createBibliographyTypes_.setVisible(true);
+         createBibliographyTypes_.setSelectedIndex(
+            createBibliographyTypes_.getIndexFromValue(userState_.bibliographyDefaultType().getValue())
+         );
+         createBibliographyFileName_.setText(ensureExtension("references", createBibliographyTypes_.getSelectedValue()));
       }
       else
       {
@@ -450,6 +458,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 
    private Widget mainWidget_;
    private PanmirrorDOIServerOperations server_;
+   private UserState userState_;
    private boolean canceled_;
    private PanmirrorInsertCiteProps citeProps_;
 
