@@ -17,15 +17,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../api/pandoc';
 import { ExtensionContext } from '../api/extension';
-
-
-const kQuoteType = 0;
-const kQuoteChildren = 1;
-
-enum QuoteType {
-  SingleQuote = 'SingleQuote',
-  DoubleQuote = 'DoubleQuote',
-}
+import { kQuoteType, QuoteType, kQuoteChildren } from '../api/quote';
 
 const extension = (context: ExtensionContext) => {
 
