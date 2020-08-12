@@ -27,6 +27,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 
@@ -70,6 +71,9 @@ public class PanmirrorEditor
    public native PanmirrorOutlineItem[] getOutline();
    
    public native PanmirrorFindReplace getFindReplace();
+   
+   public native PanmirrorSpellingDoc getSpellingDoc();
+   public native void updateRealtimeSpelling();
    
    public native PanmirrorEditingLocation getEditingLocation();
    

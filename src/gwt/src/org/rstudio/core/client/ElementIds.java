@@ -258,7 +258,8 @@ public class ElementIds
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
-      CHOOSE_IMAGE("choose_image");
+      CHOOSE_IMAGE("choose_image"),
+      PYTHON_DEFAULT_INTERPRETER("python_default_interpreter");
 
       TextBoxButtonId(String value)
       {

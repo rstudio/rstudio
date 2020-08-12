@@ -387,6 +387,10 @@ try {
         }
         parallel parallel_containers
 
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/qa-opensource-automation')
+        }
+
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants
         // additionally, run qa-autotest against the version we've just built

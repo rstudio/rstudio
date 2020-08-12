@@ -1,5 +1,5 @@
 /*
- * ActivatePaneHandler.java
+ * PythonInterpreters.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
+package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-public interface ActivatePaneHandler extends EventHandler
+public class PythonInterpreters extends JavaScriptObject
 {
-   void onActivatePane(ActivatePaneEvent event);
+   protected PythonInterpreters()
+   {
+   }
+   
+   public final native JsArray<PythonInterpreter> getPythonInterpreters()
+   /*-{
+      return this["python_interpreters"];
+   }-*/;
+   
+   public final native String getDefaultInterpreter()
+   /*-{
+      return this["default_interpreter"];
+   }-*/;
+   
 }

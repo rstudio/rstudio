@@ -1,5 +1,5 @@
 /*
- * UserPromptHandler.java
+ * PythonDialogResources.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,12 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.prefs.views;
 
-package org.rstudio.studio.client.workbench.events;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
-import com.google.gwt.event.shared.EventHandler;
-
-public interface UserPromptHandler extends EventHandler
+public interface PythonDialogResources extends ClientBundle
 {
-   void onUserPrompt(UserPromptEvent event);
+   @Source("iconPython_2x.png")
+   ImageResource iconPython2x();
 }

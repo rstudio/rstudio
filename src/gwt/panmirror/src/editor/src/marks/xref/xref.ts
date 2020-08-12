@@ -47,6 +47,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'xref',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
           excludes: '_',

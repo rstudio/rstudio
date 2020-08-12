@@ -1,5 +1,5 @@
 /*
- * SessionInitHandler.java
+ * PythonServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
+package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.event.shared.EventHandler;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
-public interface SessionInitHandler extends EventHandler
+public interface PythonServerOperations
 {
-   void onSessionInit(SessionInitEvent sie);
+   void pythonActiveInterpreter(ServerRequestCallback<PythonInterpreter> requestCallback);
+   
+   void pythonFindInterpreters(ServerRequestCallback<PythonInterpreters> requestCallback);
+   
+   void pythonDescribeInterpreter(String interpreterPath,
+                                  ServerRequestCallback<PythonInterpreter> requestCallback);
 }

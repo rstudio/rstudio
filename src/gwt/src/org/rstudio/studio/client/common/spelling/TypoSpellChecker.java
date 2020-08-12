@@ -34,8 +34,6 @@ import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -43,10 +41,7 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -246,6 +241,13 @@ public class TypoSpellChecker
       if (customDictionaries.length() > 0)
          loadCustomDictionaries(customDictionaries);
    }
+   
+   public boolean realtimeSpellcheckEnabled()
+   {
+      return userPrefs_.realTimeSpellchecking().getValue() &&
+             typoNative_ != null && loadedDict_ != null &&
+             canRealtimeSpellcheckDict(loadedDict_);
+   }
 
    // Check the spelling of a single word, directly returning an
    // array of suggestions for corrections. The array is empty if the
@@ -318,16 +320,42 @@ public class TypoSpellChecker
 
    public void addToUserDictionary(final String word)
    {
+      // append to user dictionary (this is async so the in-memory list of 
+      // ignored words won't update immediately)
       userDictionary_.append(word);
+      
+      // add the words to the ignore list (necessary for contexts that 
+      // rely on the word being on the ignore list for correct handling)
+      // (note that allIgnoredWords_ will soon be overwritten after the
+      // userDictioanry_ list changed handler is invoked)
+      allIgnoredWords_.add(word);
+      
+      // invalidate the context
       context_.invalidateWord(word);
+   }
+   
+   public boolean isIgnoredWord(String word)
+   {
+      return contextDictionary_.contains(word);
    }
 
    public void addIgnoredWord(String word)
    {
       contextDictionary_.add(word);
+      writeContextDictionary(word);
+   }
+   
+   public void removeIgnoredWord(String word)
+   {
+      contextDictionary_.remove(word);
+      writeContextDictionary(word);
+   }
+   
+   private void writeContextDictionary(String affectedWord)
+   {
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
-      context_.invalidateWord(word);
+      context_.invalidateWord(affectedWord);
    }
 
    /* Support old style async suggestion calls for blacklisted dictionaries */
@@ -348,7 +376,8 @@ public class TypoSpellChecker
    }
    private boolean isWordIgnored(String word)
    {
-      return (allIgnoredWords_.contains(word) ||
+      return (domainSpecificWords_.contains(word.toLowerCase()) ||
+              allIgnoredWords_.contains(word) ||
               ignoreUppercaseWord(word) ||
               ignoreWordWithNumbers(word));
    }
@@ -440,39 +469,25 @@ public class TypoSpellChecker
       }
    }
 
-   public boolean shouldCheckSpelling(DocDisplay dd, Range r)
+   public boolean shouldCheckSpelling(SpellingDoc spellingDoc, SpellingDoc.WordRange wordRange)
    {
-      String word = dd.getTextForRange(r);
+      String word = spellingDoc.getText(wordRange);
+      if (!shouldCheckWord(word))
+         return false;
+        
+      // source-specific knowledge of whether to check
+      return spellingDoc.shouldCheck(wordRange);
+   }
+   
+   public boolean shouldCheckWord(String word)
+   {
       // Don't worry about pathologically long words
-      if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+      if (word.length() > 250)
          return false;
 
       if (isWordIgnored(word))
          return false;
-
-      // Don't spellcheck yaml
-      Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
-      if (s != null && s.isYaml())
-         return false;
-
-      // This will capture all braced text in a way that the
-      // highlight rules don't and shouldn't.
-      int start = r.getStart().getColumn();
-      int end = start + word.length();
-      String line = dd.getLine(r.getStart().getRow());
-      Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
-      Match m = p.match(line, 0);
-      while (m != null)
-      {
-         // ensure that the match is the specific word we're looking
-         // at to fix edge cases such as {asdf}asdf
-         if (m.getIndex() < start &&
-             (m.getIndex() + m.getValue().length()) > end)
-            return false;
-
-         m = m.nextMatch();
-      }
-
+      
       return true;
    }
 

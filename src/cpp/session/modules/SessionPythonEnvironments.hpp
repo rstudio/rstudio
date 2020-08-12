@@ -1,5 +1,5 @@
 /*
- * WorkbenchMetricsChangedHandler.java
+ * SessionPythonEnvironments.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
+#ifndef SESSION_MODULES_PYTHON_ENVIRONMENTS_HPP
+#define SESSION_MODULES_PYTHON_ENVIRONMENTS_HPP
 
-public interface WorkbenchMetricsChangedHandler extends EventHandler
-{
-   void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent event);
-}
+namespace rstudio {
+namespace core {
+
+class Error;
+
+} // end namespace core
+} // end namespace rstudio
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace python_environments {
+
+core::Error initialize();
+
+} // end namespace python_environments
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
+
+#endif /* SESSION_MODULES_PYTHON_ENVIRONMENTS_HPP */

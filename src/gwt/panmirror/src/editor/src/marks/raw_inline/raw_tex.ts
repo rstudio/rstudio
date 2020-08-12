@@ -47,6 +47,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'raw_tex',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: true,
           excludes: '_',

@@ -383,14 +383,14 @@ void Response::setBrowserCompatible(const Request& request)
       setHeader("X-UA-Compatible", "IE=edge");
 }
 
-void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies) 
+void Response::addCookie(const Cookie& cookie) 
 {
    addHeader("Set-Cookie", cookie.cookieHeaderValue());
 
    // some browsers may swallow a cookie with SameSite=None
    // so create an additional legacy cookie without SameSite
    // which would be swalllowed by a standard-conforming browser
-   if (iFrameLegacyCookies && cookie.sameSite() == Cookie::SameSite::None)
+   if (cookie.sameSite() == Cookie::SameSite::None)
    {
       Cookie legacyCookie = cookie;
       legacyCookie.setName(legacyCookie.name() + kLegacyCookieSuffix);
@@ -399,7 +399,7 @@ void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies)
    }
 }
 
- Headers Response::getCookies(const std::vector<std::string>& names /*= {}*/, bool iFrameLegacyCookies /*= false*/) const
+ Headers Response::getCookies(const std::vector<std::string>& names /*= {}*/) const
  {
     http::Headers headers;
     for (const http::Header& header : headers_)
@@ -416,7 +416,7 @@ void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies)
              {
                if (boost::algorithm::starts_with(header.value, name))
                   headers.push_back(header);
-               else if (iFrameLegacyCookies && boost::algorithm::starts_with(header.value, name + kLegacyCookieSuffix))
+               else if (boost::algorithm::starts_with(header.value, name + kLegacyCookieSuffix))
                   headers.push_back(header);
              }
           }
@@ -600,8 +600,8 @@ std::string safeLocation(const std::string& location)
 void Response::setMovedPermanently(const http::Request& request,
                                    const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(),
-                                   safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedPermanently, uri);
    setHeader("Location", uri);
 }
@@ -609,8 +609,8 @@ void Response::setMovedPermanently(const http::Request& request,
 void Response::setMovedTemporarily(const http::Request& request,
                                    const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(),
-                                   safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedTemporarily, uri);
    setHeader("Location", uri);
 }

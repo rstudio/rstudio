@@ -80,7 +80,8 @@ import jsinterop.base.Js;
 
 public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource,
-                                   SourceDocAddedEvent.Handler
+                                   SourceDocAddedEvent.Handler,
+                                   VisualModeSpelling.Context
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -104,11 +105,18 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
       visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
-      visualModeContext_ = new VisualModePanmirrorContext(
-            docUpdateSentinel_, target_, visualModeExec_, visualModeChunks_, visualModeFormat_);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
+      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
+      visualModeContext_ = new VisualModePanmirrorContext(
+         docUpdateSentinel_, 
+         target_, 
+         visualModeExec_, 
+         visualModeChunks_, 
+         visualModeFormat_,
+         visualModeSpelling_
+      );
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
@@ -139,6 +147,11 @@ public class VisualMode implements VisualModeEditorSync,
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
+   }
+   
+   public void onDismiss()
+   {
+      
    }
    
    private void initWidgets()
@@ -633,6 +646,18 @@ public class VisualMode implements VisualModeEditorSync,
    public ToolbarButton getFindReplaceButton()
    {
       return findReplaceButton_;
+   }
+   
+   public void checkSpelling()
+   {
+      visualModeSpelling_.checkSpelling(panmirror_.getSpellingDoc());
+   }
+
+   @Override
+   public void updateRealtimeSpelling()
+   {
+      if (panmirror_ != null)
+         panmirror_.updateRealtimeSpelling();
    }
 
    public boolean isVisualModePosition(SourcePosition position)
@@ -1210,6 +1235,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
    private final VisualModeNavigation visualModeNavigation_;
+   private final VisualModeSpelling visualModeSpelling_;
    
    private VisualModeReloadChecker panmirrorFormatConfig_;
    

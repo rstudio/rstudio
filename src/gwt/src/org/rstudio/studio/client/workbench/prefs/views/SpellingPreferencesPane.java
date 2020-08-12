@@ -15,17 +15,28 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
@@ -33,8 +44,11 @@ import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWi
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchList;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 
 public class SpellingPreferencesPane extends PreferencesPane
 {
@@ -42,28 +56,39 @@ public class SpellingPreferencesPane extends PreferencesPane
    public SpellingPreferencesPane(GlobalDisplay globalDisplay,
                                   PreferencesDialogResources res,
                                   SpellingService spellingService,
+                                  WorkbenchListManager workbenchListManager,
                                   UserPrefs prefs)
    {
       globalDisplay_ = globalDisplay;
       res_ = res;
       spellingService_ = spellingService;
       uiPrefs_ = prefs;
+      
+      add(headerLabel("Dictionaries"));
 
       languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
       spaced(languageWidget_);
       add(languageWidget_);
 
       customDictsWidget_ =  new SpellingCustomDictionariesWidget();
-      spaced(customDictsWidget_);
+      mediumSpaced(customDictsWidget_);
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
 
+      addUserDictionariesEditor(workbenchListManager);
+      
+      add(headerLabel("Ignore"));
+      
       add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreUppercaseWords()));
-      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers()));
+      add(mediumSpaced(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers(), false)));
 
+      
+      add(headerLabel("Checking"));
+      
       boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
-      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking());
+      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking(), false);
       realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
+      spaced(realtimeSpellcheckingCheckbox_);
       add(realtimeSpellcheckingCheckbox_);
 
       blacklistWarning_ = new Label("Real time spellchecking currently unavailable for this dictionary");
@@ -128,6 +153,64 @@ public class SpellingPreferencesPane extends PreferencesPane
       }
 
    };
+   
+   
+   private void addUserDictionariesEditor(WorkbenchListManager workbenchListManager)
+   {
+      final String kUserDictionary = "User dictionary: ";
+      final Label userDictLabel = new Label(kUserDictionary);
+      final Consumer<Integer> setUserDictLabel = (Integer entries) -> {
+         userDictLabel.setText(kUserDictionary + StringUtil.formatGeneralNumber(entries) + " words");
+      };
+      
+      final ArrayList<String> userDictWords = new ArrayList<String>();
+      WorkbenchList userDict = workbenchListManager.getUserDictionaryList();
+      userDict.addListChangedHandler((e) -> {
+         userDictWords.clear();
+         userDictWords.addAll(e.getList());
+         Collections.sort(userDictWords, String.CASE_INSENSITIVE_ORDER);
+         setUserDictLabel.accept(userDictWords.size());
+      });
+      
+      HorizontalPanel userDictPanel = new HorizontalPanel();
+      userDictPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      userDictPanel.add(userDictLabel);
+      SmallButton editUserDict = new SmallButton("Edit User Dictionary...");
+      editUserDict.addStyleName(res_.styles().userDictEditButton());
+      editUserDict.addClickHandler((e) -> {
+         EditDialog editDialog = new EditDialog(
+            "Edit User Dictionary",
+            "Save",
+            String.join("\n", userDictWords),
+            Roles.getDialogRole(),
+            false,
+            true,
+            new Size(400, 425),
+            (dictionary, progress) -> {
+               if (dictionary != null)
+               {
+                  List<String> dictSplitItems = Arrays.asList(dictionary.split("\n"));
+                  ArrayList<String> dictWords = new ArrayList<String>();
+                  for (String item : dictSplitItems)
+                  {
+                     item = item.trim();
+                     if (!item.isEmpty())
+                        dictWords.add(item);
+                  }
+                  userDict.setContents(dictWords);
+                  setUserDictLabel.accept(dictWords.size());
+               }
+               progress.onCompleted();
+            }      
+         );
+         editDialog.showModal();
+      });
+      userDictPanel.add(editUserDict);
+      
+      mediumSpaced(userDictPanel);
+      add(userDictPanel);
+   }
+   
 
    @Override
    protected void initialize(UserPrefs rPrefs)
@@ -173,7 +256,6 @@ public class SpellingPreferencesPane extends PreferencesPane
    }
 
 
-   @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
 
    private final GlobalDisplay globalDisplay_;

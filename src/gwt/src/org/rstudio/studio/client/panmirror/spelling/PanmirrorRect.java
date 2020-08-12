@@ -1,5 +1,5 @@
 /*
- * BrowseUrlHandler.java
+ * PanmirrorRect.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
+package org.rstudio.studio.client.panmirror.spelling;
 
-public interface BrowseUrlHandler extends EventHandler
+import jsinterop.annotations.JsType;
+
+@JsType(isNative = true)
+public class PanmirrorRect
 {
-   void onBrowseUrl(BrowseUrlEvent event);
+   public int x;
+   public int y;
+   public int width;
+   public int height;
 }
+
+

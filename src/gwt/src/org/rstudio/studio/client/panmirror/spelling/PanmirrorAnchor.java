@@ -1,5 +1,5 @@
 /*
- * SaveClientStateHandler.java
+ * PanmirrorAnchor.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
+package org.rstudio.studio.client.panmirror.spelling;
 
-public interface SaveClientStateHandler extends EventHandler
+import jsinterop.annotations.JsType;
+
+@JsType(isNative = true)
+public class PanmirrorAnchor
 {
-   void onSaveClientState(SaveClientStateEvent event);
+   public native int getPosition();
+   public native void detach();
 }
+

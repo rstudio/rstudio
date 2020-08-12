@@ -59,6 +59,7 @@ import behaviorHistory from '../behaviors/history';
 import behaviorSelectAll from '../behaviors/select_all';
 import behaviorCursor from '../behaviors/cursor';
 import behaviorFind from '../behaviors/find';
+import behaviorSpellingInteractive from '../behaviors/spelling/spelling-interactive';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
@@ -135,6 +136,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorSpellingInteractive,
     behaviorClearFormatting,
   ]);
 
@@ -225,21 +227,30 @@ export class ExtensionManager {
     this.extensions = [];
   }
 
-  public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
+  public register(extensions: ReadonlyArray<Extension | ExtensionFn>, priority = false): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
         const ext = extension(this.context);
         if (ext) {
-          this.extensions.push(ext);
+          if (priority) {
+            this.extensions.unshift(ext);
+          } else {
+            this.extensions.push(ext);
+          }
+
         }
       } else {
-        this.extensions.push(extension);
+        if (priority) {
+          this.extensions.unshift(extension);
+        } else {
+          this.extensions.push(extension);
+        }
       }
     });
   }
 
-  public registerPlugins(plugins: Plugin[]) {
-    this.register([{ plugins: () => plugins }]);
+  public registerPlugins(plugins: Plugin[], priority = false) {
+    this.register([{ plugins: () => plugins }], priority);
   }
 
   public pandocMarks(): readonly PandocMark[] {

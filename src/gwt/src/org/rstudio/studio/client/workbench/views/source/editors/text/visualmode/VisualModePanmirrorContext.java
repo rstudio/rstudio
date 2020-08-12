@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -54,7 +55,8 @@ public class VisualModePanmirrorContext
                                      TextEditingTarget target,
                                      VisualModeChunkExec exec,
                                      VisualModeChunks chunks,
-                                     VisualModePanmirrorFormat format)
+                                     VisualModePanmirrorFormat format,
+                                     VisualModeSpelling spelling)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
@@ -62,6 +64,7 @@ public class VisualModePanmirrorContext
       exec_ = exec;
       chunks_ = chunks;
       format_ = format;
+      spelling_ = spelling;
    }
    
    @Inject
@@ -89,7 +92,8 @@ public class VisualModePanmirrorContext
          uiContext(), 
          uiDisplay(showContextMenu), 
          chunks_.uiChunks(),
-         exec_.uiExecute()
+         exec_.uiExecute(),
+         spelling_.uiSpelling()
       );
    }
    
@@ -159,6 +163,11 @@ public class VisualModePanmirrorContext
       uiContext.translateText = text -> {
          return text;
       };
+      
+      uiContext.isWindowsDesktop = () -> {
+         return BrowseCap.isWindowsDesktop();
+      };
+      
       return uiContext;
    }
    
@@ -266,6 +275,7 @@ public class VisualModePanmirrorContext
    private final VisualModeChunkExec exec_;
    private final VisualModePanmirrorFormat format_;
    private final VisualModeChunks chunks_;
+   private final VisualModeSpelling spelling_;
    
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;

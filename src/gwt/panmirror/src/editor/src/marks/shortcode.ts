@@ -37,6 +37,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       {
         name: 'shortcode',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
           excludes: '_',

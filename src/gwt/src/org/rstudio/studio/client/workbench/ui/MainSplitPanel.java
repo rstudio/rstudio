@@ -254,9 +254,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       deferredSaveWidthPercent();
    }
 
-   public void focusSplitter()
+   public void focusSplitter(Widget widget)
    {
-      Element splitter = getAssociatedSplitterElement(right_);
+      Element splitter = getAssociatedSplitterElement(widget);
       if (splitter != null)
          splitter.focus();
    }

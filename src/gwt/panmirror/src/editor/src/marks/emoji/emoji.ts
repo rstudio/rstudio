@@ -157,7 +157,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           // create mark transation wrapper
           const markTr = new MarkTransaction(tr);
 
-          const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
+          const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, _pos: number, parentNode: ProsemirrorNode) =>
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 

@@ -1903,3 +1903,22 @@ html.heading = _heading
       .rs.setVar(key, reticulate::dict())
    .rs.getVar(key)
 })
+
+.rs.addFunction("reticulate.usePython", function(python)
+{
+   # sanity check value of param
+   ok <-
+      is.character(python) &&
+      length(python) == 1 &&
+      file.exists(python)
+   
+   if (!ok)
+      return(FALSE)
+   
+   # no-op if Python has already been initialized
+   if (reticulate::py_available(initialize = FALSE))
+      return(FALSE)
+   
+   # ok, request use of Python
+   reticulate::use_python(python, required = TRUE)
+})

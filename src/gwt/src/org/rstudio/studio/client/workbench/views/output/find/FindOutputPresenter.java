@@ -36,7 +36,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
-import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -81,7 +80,7 @@ public class FindOutputPresenter extends BasePresenter
 
       void ensureSelectedRowIsVisible();
 
-      HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
+      HandlerRegistration addSelectionChangedHandler(SelectionChangedEvent.Handler handler);
 
       void showOverflow();
 
@@ -135,13 +134,9 @@ public class FindOutputPresenter extends BasePresenter
       workbenchContext_ = workbenchContext;
       fileServer_ = fileServer;
 
-      view_.addSelectionChangedHandler(new SelectionChangedHandler()
+      view_.addSelectionChangedHandler(selectionChangedEvent ->
       {
-         @Override
-         public void onSelectionChanged(SelectionChangedEvent e)
-         {
-            view_.ensureSelectedRowIsVisible();
-         }
+         view_.ensureSelectedRowIsVisible();
       });
 
       view_.addSelectionCommitHandler((SelectionCommitEvent<CodeNavigationTarget> event) ->

@@ -83,9 +83,9 @@
 
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 
+#define kRootPathSessionOption            "session-root-path"
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
-#define kIFrameEmbeddingSessionOption     "session-iframe-embedding"
-#define kLegacyCookiesSessionOption       "session-legacy-cookies"
+#define kSameSiteSessionOption            "session-same-site"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

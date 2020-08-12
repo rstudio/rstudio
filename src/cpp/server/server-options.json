@@ -13,7 +13,9 @@
          "<core/system/PosixUser.hpp>",
          "<core/system/PosixSystem.hpp>",
          "<core/system/Xdg.hpp>",
-         "<monitor/MonitorConstants.hpp>"
+         "<monitor/MonitorConstants.hpp>",
+         "<core/http/Request.hpp>",
+         "<core/http/Cookie.hpp>"
       ]
    },
    "options": {
@@ -111,10 +113,10 @@
             "description": "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL)."
          },
          {
-            "name": "www-url-path-prefix",
-            "memberName": "wwwUrlPathPrefix_",
+            "name": "www-root-path",
+            "memberName": "wwwRootPath_",
             "type": "string",
-            "defaultValue": "/",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
             "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
          },
          {
@@ -160,23 +162,13 @@
             "description": "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server."
          },
          {
-            "name": "www-iframe-embedding",
-            "memberName": "wwwIFrameEmbedding_",
-            "type": "bool",
-            "defaultValue": false,
-            "description": "Indicates whether or not RStudio is embedded into an iFrame so cookies' SameSite behavior can be adjusted."
-         },
-         {
-            "name": "www-legacy-cookies",
-            "memberName": "wwwLegacyCookies_",
-            "type": "bool",
-            "defaultValue": false,
-            "description": "Indicates whether or not RStudio should revert to legacy behavior by not setting the SameSite cookie attribute and to emit a second legacy cookie when iFrame embedding is in use."
-         },
-         {
-            "type": "bool",
-            "accessorName": "wwwIFrameLegacyCookies",
-            "accessorValue": {"code": "return wwwIFrameEmbedding_ && wwwLegacyCookies_;"}
+            "name": "www-same-site",
+            "memberName": "wwwSameSite_",
+            "type": "rstudio::core::http::Cookie::SameSite",
+            "tempName": "wwwSameSite",
+            "tempType": "string",
+            "defaultValue": "",
+            "description": "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used."
          },
          {
             "name": "www-frame-origin",

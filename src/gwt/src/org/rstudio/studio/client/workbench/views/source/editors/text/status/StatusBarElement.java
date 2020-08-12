@@ -20,8 +20,8 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 public interface StatusBarElement extends HasSelectionHandlers<String>,
                                           HasMouseDownHandlers
 {
-   public void setValue(String value);
-   public String getValue();
+   void setValue(String value);
+   String getValue();
 
    void addOptionValue(String label);
    void clearOptions();

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 
 import com.google.gwt.event.shared.HandlerManager;
 
@@ -44,7 +43,7 @@ public abstract class BusyPresenter extends BasePresenter
    }
 
    @Override
-   public void addBusyHandler(BusyHandler handler)
+   public void addBusyHandler(BusyEvent.Handler handler)
    {
       // if a handler is added when we're already busy, invoke the
       // handler immediately
@@ -54,5 +53,5 @@ public abstract class BusyPresenter extends BasePresenter
    }
 
    private boolean isBusy_ = false;
-   private HandlerManager handlerManager_ = new HandlerManager(this);
+   private final HandlerManager handlerManager_ = new HandlerManager(this);
 }

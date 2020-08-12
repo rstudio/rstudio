@@ -139,6 +139,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
+   modules/SessionPythonEnvironments.cpp
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRenv.cpp

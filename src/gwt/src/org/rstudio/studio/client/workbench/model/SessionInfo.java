@@ -657,4 +657,9 @@ public class SessionInfo extends JavaScriptObject
    public final native String getSessionNode() /*-{
       return this.session_node;
    }-*/;
+   
+   public final native String getReticulatePython() /*-{
+      return this.reticulate_python;
+   }-*/;
+   
 }

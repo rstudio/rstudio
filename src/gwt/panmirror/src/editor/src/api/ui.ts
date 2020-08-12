@@ -19,6 +19,7 @@ import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';
 import { EditorDialogs } from './ui-dialogs';
+import { EditorUISpelling } from './spelling';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -29,6 +30,7 @@ export interface EditorUI {
   prefs: EditorUIPrefs;
   images: EditorUIImages;
   chunks: EditorUIChunks;
+  spelling: EditorUISpelling;
 }
 
 export interface EditorUIChunks {
@@ -71,13 +73,17 @@ export interface EditorUIContext {
 
   // translate a string
   translateText: (text: string) => string;
+
+  // are we running in windows desktop mode?
+  isWindowsDesktop: () => boolean;
 }
 
 export interface EditorMenuItem {
+  text?: string;
+  exec?: VoidFunction;
   command?: string;
   separator?: boolean;
   subMenu?: {
-    text: string;
     items: EditorMenuItem[];
   };
 }

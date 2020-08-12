@@ -119,12 +119,13 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
 
+   std::string path = ptrConnection->request().rootPath();
+
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
    // specific to this session's URL since it's possible for different sessions (paths) to use
-   // different tokens on the same server.
+   // different tokens on the same server. This won't be done if the path was passed by the server
    std::size_t pos = baseURL.find('/', 9);
-   std::string path = "/";
-   if (pos != std::string::npos)
+   if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
       path = baseURL.substr(pos);
    }
@@ -135,12 +136,11 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
             kPortTokenCookie, 
             persistentState().portToken(), 
             path,
-            http::Cookie::selectSameSite(options().legacyCookies(),
-                                         options().iFrameEmbedding()),
+            options().sameSite(),
             true, // HTTP only -- client doesn't get to read this token
-            baseURL.substr(0, 5) == "https" // secure if using HTTPS
+            options().useSecureCookies()
          );
-   response.addCookie(cookie, options().iFrameLegacyCookies());
+   response.addCookie(cookie);
 
    return Success();
 }
@@ -156,7 +156,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // check for valid CSRF headers in server mode 
    if (options.programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request(), options.iFrameLegacyCookies()))
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
@@ -253,6 +253,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
  
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
+   
+   // propagate RETICULATE_PYTHON if set
+   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";

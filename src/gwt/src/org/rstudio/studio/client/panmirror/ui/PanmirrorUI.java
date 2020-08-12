@@ -27,7 +27,8 @@ public class PanmirrorUI
    public PanmirrorUI(PanmirrorUIContext context, 
                       PanmirrorUIDisplay display,
                       PanmirrorUIExecute execute,
-                      PanmirrorUIChunks chunks)
+                      PanmirrorUIChunks chunks,
+                      PanmirrorUISpelling spelling)
    {
       this.context = context;
       this.display = display;
@@ -36,6 +37,7 @@ public class PanmirrorUI
       this.prefs = new PanmirrorUIPrefs();
       this.dialogs = new PanmirrorDialogs(this.context);
       this.chunks = chunks;
+      this.spelling = spelling;
    }
    
    public PanmirrorDialogs dialogs;
@@ -45,5 +47,6 @@ public class PanmirrorUI
    public PanmirrorUIPrefs prefs;
    public PanmirrorUIContext context;
    public PanmirrorUIChunks chunks;
+   public PanmirrorUISpelling spelling;
    public JsObject images;
 }

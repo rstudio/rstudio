@@ -37,6 +37,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String selectWidgetHelp();
       String smallerText();
       String visualModeWrapSelectWidget();
+      String userDictEditButton();
    }
 
    @Source("PreferencesDialog.css")

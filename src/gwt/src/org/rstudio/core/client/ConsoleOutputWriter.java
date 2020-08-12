@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 /**
  * Displays R Console output to user, with special behaviors for regular output
@@ -90,11 +91,12 @@ public class ConsoleOutputWriter
 
       Element outEl = output_.getElement();
 
-      // create trailing output console if it doesn't already exist 
+      // create trailing output console if it doesn't already exist
       if (virtualConsole_ == null)
       {
          SpanElement trailing = Document.get().createSpanElement();
          trailing.setTabIndex(-1);
+         trailing.setClassName(ConsoleResources.INSTANCE.consoleStyles().outputChunk());
          Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
@@ -123,7 +125,7 @@ public class ConsoleOutputWriter
       return false;
    }
 
-   // Elements added by last submit call; only captured if 
+   // Elements added by last submit call; only captured if
    // outputToConsole/isError was true for performance reasons
    public List<Element> getNewElements()
    {
@@ -146,7 +148,7 @@ public class ConsoleOutputWriter
          }
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
-      } 
+      }
    }
 
    public int getCurrentLines()

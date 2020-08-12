@@ -1,5 +1,5 @@
 /*
- * ListChangedHandler.java
+ * PanmirrorWordSource.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
+package org.rstudio.studio.client.panmirror.spelling;
 
-public interface ListChangedHandler extends EventHandler
+import jsinterop.annotations.JsType;
+
+@JsType(isNative = true)
+public class PanmirrorWordSource
 {
-   void onListChanged(ListChangedEvent event);
+   public native boolean hasNext();
+   public native PanmirrorWordRange next();
 }
+

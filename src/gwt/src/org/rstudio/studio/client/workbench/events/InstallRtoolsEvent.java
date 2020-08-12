@@ -36,7 +36,6 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
       }-*/;
    }
 
-
    public interface Handler extends EventHandler
    {
       void onInstallRtools(InstallRtoolsEvent event);
@@ -69,7 +68,7 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
       handler.onInstallRtools(this);
    }
 
-   private Data data_;
+   private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }
