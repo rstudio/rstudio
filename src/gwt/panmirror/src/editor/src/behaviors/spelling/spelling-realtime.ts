@@ -23,12 +23,12 @@ import { setTextSelection } from "prosemirror-utils";
 
 import { FocusEvent } from '../../api/event-types';
 import { PandocMark } from "../../api/mark";
-import { EditorUISpelling } from "../../api/spelling";
+import { EditorUISpelling, kCharClassWord } from "../../api/spelling";
 import { EditorEvents } from "../../api/events";
 import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord, charAt } from "./spelling";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 const kSpellingErrorClass = 'pm-spelling-error';
@@ -239,6 +239,28 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
       return false;
     }
 
+    // helper to create a menu action
+    const menuAction = (text: string, action: VoidFunction) => {
+      return {
+        text,
+        exec: () => {
+          action();
+          view.focus();
+        }
+      };
+    };
+
+    // helper to show a context menu and prevetn further event handling
+    const showContextMenu = (menuItems: EditorMenuItem[]) => {
+      // show the menu
+      const { clientX, clientY } = event as MouseEvent;
+      ui.display.showContextMenu!(menuItems, clientX, clientY);
+
+      // prevent default handling
+      event.stopPropagation();
+      event.preventDefault();
+    };
+
     if (event.target && event.target instanceof Node) {
 
       // alias schema
@@ -276,28 +298,32 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
           menuItems.push({ separator: true });
         }
 
-        // add other menu actions
-        const menuAction = (text: string, action: VoidFunction) => {
-          return {
-            text: ui.context.translateText(text),
-            exec: () => {
-              action();
-              view.focus();
-            }
-          };
-        };
-        menuItems.push(menuAction('Ignore All', () => ui.spelling.ignoreWord(word)));
+        menuItems.push(menuAction(ui.context.translateText('Ignore All'), () => ui.spelling.ignoreWord(word)));
         menuItems.push({ separator: true });
-        menuItems.push(menuAction('Add to Dictionary', () => ui.spelling.addToDictionary(word)));
+        menuItems.push(menuAction(ui.context.translateText('Add to Dictionary'), () => ui.spelling.addToDictionary(word)));
 
         // show context menu
-        const { clientX, clientY } = event as MouseEvent;
-        ui.display.showContextMenu!(menuItems, clientX, clientY);
-
-        // prevent default handling
-        event.stopPropagation();
-        event.preventDefault();
+        showContextMenu(menuItems);
         return true;
+      }
+
+      // find the word at this position and see if it's ignored. if so provide an unignore context menu
+      const classify = ui.spelling.classifyCharacter;
+      const mouseEvent = event as MouseEvent;
+      const clickPos = view.posAtCoords({ left: mouseEvent.clientX, top: mouseEvent.clientY });
+      if (clickPos) {
+        const ch = charAt(view.state.doc, clickPos.pos);
+        if (classify(ch) === kCharClassWord) {
+          const from = findBeginWord(view.state, clickPos.pos, classify);
+          const to = findEndWord(view.state, clickPos.pos, classify);
+          const word = spellcheckerWord(view.state.doc.textBetween(from, to));
+          if (ui.spelling.isWordIgnored(word)) {
+            showContextMenu([
+              menuAction(`${ui.context.translateText('Unignore')} \'${word}\'`, () => ui.spelling.unignoreWord(word))
+            ]);
+            return true;
+          }
+        }
       }
     }
 

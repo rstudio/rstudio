@@ -333,13 +333,29 @@ public class TypoSpellChecker
       // invalidate the context
       context_.invalidateWord(word);
    }
+   
+   public boolean isIgnoredWord(String word)
+   {
+      return contextDictionary_.contains(word);
+   }
 
    public void addIgnoredWord(String word)
    {
       contextDictionary_.add(word);
+      writeContextDictionary(word);
+   }
+   
+   public void removeIgnoredWord(String word)
+   {
+      contextDictionary_.remove(word);
+      writeContextDictionary(word);
+   }
+   
+   private void writeContextDictionary(String affectedWord)
+   {
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
-      context_.invalidateWord(word);
+      context_.invalidateWord(affectedWord);
    }
 
    /* Support old style async suggestion calls for blacklisted dictionaries */

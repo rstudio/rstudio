@@ -191,8 +191,16 @@ public class VisualModeSpelling extends SpellingContext
         return new JsArray<String>(suggestions);
       };
       
+      uiSpelling.isWordIgnored = (word) -> {
+        return typo().isIgnoredWord(word); 
+      };
+      
       uiSpelling.ignoreWord = (word) -> {
          typo().addIgnoredWord(word);
+      };
+      
+      uiSpelling.unignoreWord = (word) -> {
+         typo().removeIgnoredWord(word);
       };
       
       uiSpelling.addToDictionary = (word) -> {

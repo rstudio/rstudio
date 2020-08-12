@@ -32,7 +32,9 @@ public class PanmirrorUISpelling {
    public SuggestionList suggestionList;
    
    // dictionary
+   public CheckWord isWordIgnored;
    public DictionaryFunction ignoreWord;
+   public DictionaryFunction unignoreWord;
    public DictionaryFunction addToDictionary;
    
    // word breaking

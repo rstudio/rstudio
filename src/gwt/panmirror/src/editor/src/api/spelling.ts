@@ -24,7 +24,9 @@ export interface EditorUISpelling {
   suggestionList: (word: string) => string[];
 
   // dictionary
+  isWordIgnored: (word: string) => boolean;
   ignoreWord: (word: string) => void;
+  unignoreWord: (word: string) => void;
   addToDictionary: (word: string) => void;
 
   // word breaking

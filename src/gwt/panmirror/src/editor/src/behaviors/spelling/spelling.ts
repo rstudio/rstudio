@@ -128,7 +128,7 @@ export function findEndWord(state: EditorState, pos: number, classifier: (ch: nu
 
 // get the chracter code at the specified position, returning character code 32 (a space)
 // for begin/end of document, block boundaries, and non-text leaf nodes
-function charAt(doc: ProsemirrorNode, pos: number) {
+export function charAt(doc: ProsemirrorNode, pos: number) {
   if (pos < beginDocPos() || pos >= (endDocPos(doc))) {
     return 32; // space for doc boundary
   } else {
