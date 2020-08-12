@@ -887,6 +887,9 @@ public class VisualMode implements VisualModeEditorSync,
             if (saveLocationOnIdle_ != null)
                saveLocationOnIdle_.suspend();
             
+            // move notebook outputs from visual mode
+            target_.getNotebook().migrateVisualModeOutput();
+            
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          };

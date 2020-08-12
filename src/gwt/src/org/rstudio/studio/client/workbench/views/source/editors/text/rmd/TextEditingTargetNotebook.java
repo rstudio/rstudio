@@ -557,6 +557,7 @@ public class TextEditingTargetNotebook
                      if (commands_.interruptR().isEnabled())
                          commands_.interruptR().execute();
                      
+                     
                      clearChunkExecQueue();
                      removeAllChunks();
                   }
@@ -1386,6 +1387,33 @@ public class TextEditingTargetNotebook
    public int getState()
    {
       return state_;
+   }
+   
+   /**
+    * Migrate chunk outputs from visual mode into the editor instance
+    */
+   public void migrateVisualModeOutput()
+   {
+      ArrayList<ChunkOutputCodeUi> migrated = new ArrayList<ChunkOutputCodeUi>();
+      
+      // Iterate over all known chunk outputs
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         // If this chunk output is in visual mode, create a version for code mode
+         if (output instanceof ChunkOutputPanmirrorUi)
+         {
+            ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
+            ChunkOutputCodeUi codeOutput = new ChunkOutputCodeUi(visualOutput, 
+                  docDisplay_, this);
+            migrated.add(codeOutput);
+         }
+      }
+      
+      // Replace all the visual mode outputs with the migrated objects
+      for (ChunkOutputCodeUi chunkOutput: migrated)
+      {
+         outputs_.put(chunkOutput.getChunkId(), chunkOutput);
+      }
    }
    
    // Private methods --------------------------------------------------------

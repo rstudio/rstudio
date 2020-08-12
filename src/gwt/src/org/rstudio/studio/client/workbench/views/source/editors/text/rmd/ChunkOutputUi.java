@@ -149,7 +149,12 @@ public abstract class ChunkOutputUi
    {
       return def_;
    }
-
+   
+   public String getDocId()
+   {
+      return docId_;
+   }
+   
    // Private methods ---------------------------------------------------------
 
    protected final ChunkOutputWidget outputWidget_;

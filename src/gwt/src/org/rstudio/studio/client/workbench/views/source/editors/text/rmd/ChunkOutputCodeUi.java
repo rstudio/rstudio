@@ -42,6 +42,13 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
             display_, outputWidget_, def.getRow(), def, lineWidgetHost);
    }
+   
+   public ChunkOutputCodeUi(ChunkOutputPanmirrorUi visual, DocDisplay display, 
+                            Host lineWidgetHost)
+   {
+      this(visual.getDocId(), display, visual.getDefinition(), 
+            lineWidgetHost, visual.getOutputWidget());
+   }
 
    @Override
    public int getCurrentRow()
