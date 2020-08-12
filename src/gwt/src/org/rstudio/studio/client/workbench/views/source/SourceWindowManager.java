@@ -90,7 +90,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             DocFocusedEvent.Handler,
                                             EditorCommandDispatchEvent.Handler,
-                                            RestartStatusEvent.Handler
+                                            RestartStatusEvent.Handler,
+                                            ScrollToPositionEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -115,7 +116,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       userPrefs_ = uiPrefs;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
-      
+      events_.addHandler(ScrollToPositionEvent.TYPE, this);
+
       if (isMainSourceWindow())
       {
          // most event handlers only make sense on the main window
@@ -827,7 +829,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }
       }
    }
-   
+
+   @Override
+   public void onScrollToPosition(ScrollToPositionEvent event)
+   {
+      if (!StringUtil.isNullOrEmpty(mostRecentSourceWindow_) &&
+          isSourceWindowOpen(mostRecentSourceWindow_))
+         events_.fireEventToSatellite(event, getSourceWindowObject(mostRecentSourceWindow_));
+      else
+         events_.fireEventToMainWindow(event);
+   }
+
    @Override
    public void onDocFocused(final DocFocusedEvent event)
    {

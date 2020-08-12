@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -309,12 +310,13 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onJumpToFunction(JumpToFunctionEvent event)
          {
-            FilePosition pos = FilePosition.create(event.getLineNumber(), 
-                  event.getColumnNumber());
             if (StringUtil.isNullOrEmpty(event.getFileName()))
-               pSourceColumnManager_.get().scrollToPosition(pos);
+               eventBus_.fireEvent(new ScrollToPositionEvent(event.getLineNumber(),
+                  event.getColumnNumber()));
             else
             {
+               FilePosition pos = FilePosition.create(event.getLineNumber(),
+                  event.getColumnNumber());
                FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
                eventBus_.fireEvent(new OpenSourceFileEvent(
