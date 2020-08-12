@@ -326,7 +326,7 @@ function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI
       type: (schema: Schema) => schema.nodes[type],
       editFn: () => editListPropertiesCommandFn(ui, capabilities),
       offset: {
-        top: 5,
+        top: 10,
         right: 5,
       },
     };
