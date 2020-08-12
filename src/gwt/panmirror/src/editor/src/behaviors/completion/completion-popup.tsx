@@ -48,7 +48,7 @@ export interface CompletionListProps {
 export function createCompletionPopup(): HTMLElement {
   const popup = window.document.createElement('div');
   popup.style.position = 'absolute';
-  popup.style.zIndex = '1000';
+  popup.style.zIndex = '900';
   return popup;
 }
 
