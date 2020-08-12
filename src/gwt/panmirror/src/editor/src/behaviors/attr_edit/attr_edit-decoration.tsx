@@ -31,6 +31,7 @@ import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
 
 import './attr_edit-decoration.css';
+import { ImageButton } from '../../api/widgets/button';
 
 interface AttrEditDecorationProps extends WidgetProps {
   tags: string[];
@@ -43,7 +44,7 @@ interface AttrEditDecorationProps extends WidgetProps {
 const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   const buttonTitle = `${props.ui.context.translateText('Edit Attributes')} (${kEditAttrShortcut})`;
 
-  const onClick = (e: React.MouseEvent) => {
+  const onClick = () => {
     props.editFn(props.view.state, props.view.dispatch, props.view);
   };
 
@@ -63,13 +64,12 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
         })
         : null}
       {props.editFn(props.view.state) ? (
-        <span
-          className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color"
+        <ImageButton
+          classes={['attr-edit-button']}
+          image={props.ui.images.properties_deco!}
           title={buttonTitle}
           onClick={onClick}
-        >
-          <span className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</span>
-        </span>
+        />
       ) : null}
     </div>
   );
