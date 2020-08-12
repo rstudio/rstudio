@@ -595,6 +595,20 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
+   public void navigateToPositionWithoutFocus(SourcePosition position,
+                                              boolean highlightLine,
+                                              Command onNavigationCompleted)
+   {
+      ensureContext(position.getContext(), () ->
+      {
+         docDisplay_.navigateToPositionWithoutFocus(position, highlightLine);
+
+         if (onNavigationCompleted != null)
+            onNavigationCompleted.execute();
+      });
+   }
+
+   @Override
    public void restorePosition(final SourcePosition position)
    {
       ensureContext(position.getContext(), new Command() {

@@ -422,6 +422,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    @Override
+   public void navigateToPositionWithoutFocus(SourcePosition position,
+                                              boolean highlightLine,
+                                              Command onNavigationCompleted)
+   {
+   }
+
+   @Override
    public void restorePosition(SourcePosition position)
    {
    }

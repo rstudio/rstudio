@@ -1212,7 +1212,19 @@ public class TextEditingTarget implements
          
       });
    }
-   
+
+   @Override
+   public void navigateToPositionWithoutFocus(SourcePosition position,
+                                              boolean highlightLine,
+                                              Command onNavigationComplete)
+   {
+      ensureTextEditorActive(() -> {
+         docDisplay_.navigateToPositionWithoutFocus(position, highlightLine);
+         if (onNavigationComplete != null)
+            onNavigationComplete.execute();
+      });
+   }
+
    // These methods are called by SourceNavigationHistory and source pane management
    // features (e.g. external source window and source columns) so need to check for
    // and dispatch to visual mode

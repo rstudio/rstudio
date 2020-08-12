@@ -1691,6 +1691,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.fireDocTabsChanged();
    }
 
+   public void scrollToPosition(FilePosition position)
+   {
+      // ensure we have an active source column
+      getActive();
+
+      if (hasActiveEditor())
+      {
+         SourcePosition srcPosition = SourcePosition.create(
+            position.getLine() - 1,
+            position.getColumn() - 1);
+         activeColumn_.getActiveEditor().navigateToPositionWithoutFocus(
+            srcPosition, false, null);
+      }
+   }
+
    private boolean hasDoc()
    {
       for (SourceColumn column : columnList_)

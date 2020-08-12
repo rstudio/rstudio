@@ -34,6 +34,9 @@ public interface NavigableSourceEditor
                            boolean recordCurrentPosition,
                            boolean highlightLine);
 
+   void navigateToPositionWithoutFocus(SourcePosition position,
+                                       boolean highlightLine);
+
    void restorePosition(SourcePosition position);
    
    JsArray<ScopeFunction> getAllFunctionScopes();

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import com.google.inject.Provider;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.RegexUtil;
@@ -84,6 +85,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentSe
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -146,7 +148,8 @@ public class EnvironmentPresenter extends BasePresenter
                                Source source,
                                DebugCommander debugCommander,
                                FileTypeRegistry fileTypeRegistry,
-                               DataImportPresenter dataImportPresenter)
+                               DataImportPresenter dataImportPresenter,
+                               Provider<SourceColumnManager> pSourceColumnManager)
    {
       super(view);
       binder.bind(commands, this);
@@ -169,6 +172,7 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
+      pSourceColumnManager_ = pSourceColumnManager;
       
       requeryContextTimer_ = new Timer()
       {
@@ -307,14 +311,19 @@ public class EnvironmentPresenter extends BasePresenter
          {
             FilePosition pos = FilePosition.create(event.getLineNumber(), 
                   event.getColumnNumber());
-            FileSystemItem destFile = FileSystemItem.createFile(
+            if (StringUtil.isNullOrEmpty(event.getFileName()))
+               pSourceColumnManager_.get().scrollToPosition(pos);
+            else
+            {
+               FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
-            eventBus_.fireEvent(new OpenSourceFileEvent(
+               eventBus_.fireEvent(new OpenSourceFileEvent(
                   destFile,
                   pos,
                   fileTypeRegistry_.getTextTypeForFile(destFile),
                   NavigationMethods.DEFAULT));
             }
+         }
       });
       
       new JSObjectStateValue(
@@ -1010,6 +1019,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
+   private final Provider<SourceColumnManager> pSourceColumnManager_;
    
    private int contextDepth_;
    private boolean refreshingView_;

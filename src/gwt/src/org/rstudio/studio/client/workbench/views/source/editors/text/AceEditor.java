@@ -3076,7 +3076,14 @@ public class AceEditor implements DocDisplay,
       if (recordCurrent)
          recordCurrentNavigationPosition();
 
-      navigate(position, true, highlightLine);
+      navigate(position, true, highlightLine, false);
+   }
+
+   @Override
+   public void navigateToPositionWithoutFocus(SourcePosition position,
+                                              boolean highlightLine)
+   {
+      navigate(position, false, highlightLine, true);
    }
 
    @Override
@@ -3178,12 +3185,13 @@ public class AceEditor implements DocDisplay,
 
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {
-      navigate(srcPosition, addToHistory, false);
+      navigate(srcPosition, addToHistory, false, false);
    }
 
    private void navigate(SourcePosition srcPosition,
                          boolean addToHistory,
-                         boolean highlightLine)
+                         boolean highlightLine,
+                         boolean restoreCursorPosition)
    {
       // get existing cursor position
       Position previousCursorPos = getCursorPosition();
@@ -3211,8 +3219,11 @@ public class AceEditor implements DocDisplay,
       else
          ensureCursorVisible();
 
-      // set focus
-      focus();
+      // restore original cursor position or set focus
+      if (restoreCursorPosition)
+         setCursorPosition(previousCursorPos);
+      else
+         focus();
 
       if (highlightLine)
          applyLineHighlight(position.getRow());

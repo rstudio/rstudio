@@ -213,12 +213,12 @@
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect, PACKAGE = "(embedding)"))
 })
 
-.rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
+.rs.addApiFunction("navigateToFile", function(filePath = character(0), line = 1L, col = 1L) {
    # validate file argument
    if (!is.character(filePath)) {
       stop("filePath must be a character")
    }
-   if (!file.exists(filePath)) {
+   if (!identical(filePath, character(0)) && !file.exists(filePath)) {
       stop(filePath, " does not exist.")
    }
    
@@ -235,11 +235,14 @@
       stop("line and column must be numeric values.")
    }
 
-   # expand and alias for client
-   filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
-   homeDir <- path.expand("~")
-   if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
-      filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+   if (!identical(filePath, character(0)))
+   {
+      # expand and alias for client
+      filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
+      homeDir <- path.expand("~")
+      if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
+         filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+      }
    }
 
    # send event to client
