@@ -87,7 +87,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
       this.popup = window.document.createElement('div');
       this.popup.tabIndex = 0;
       this.popup.style.position = 'absolute';
-      this.popup.style.zIndex = '1000';
+      this.popup.style.zIndex = '900';
 
       applyStyles(this.popup, [], this.panelPositionStylesForCurrentSelection(view, kHeight, kWidth));
       ReactDOM.render(this.insertSymbolPopup(view, [kHeight, kWidth]), this.popup);
