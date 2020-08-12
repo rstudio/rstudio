@@ -63,7 +63,7 @@ import behaviorSpellingInteractive from '../behaviors/spelling/spelling-interact
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
-import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty';
+import behaviorSmarty from '../behaviors/smarty';
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
@@ -82,7 +82,6 @@ import markStrikeout from '../marks/strikeout';
 import markSuperscript from '../marks/superscript';
 import markSubscript from '../marks/subscript';
 import markSmallcaps from '../marks/smallcaps';
-import markQuoted from '../marks/quoted';
 import markRawInline from '../marks/raw_inline/raw_inline';
 import markRawTex from '../marks/raw_inline/raw_tex';
 import markRawHTML from '../marks/raw_inline/raw_html';
@@ -173,7 +172,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     markSuperscript,
     markSubscript,
     markSmallcaps,
-    markQuoted,
     markHTMLComment,
     markRawTex,
     markRawHTML,
@@ -198,9 +196,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   manager.register([
     // bindings to 'Edit Attribute' command and UI adornment
     attrEditExtension(context.pandocExtensions, context.ui, manager.attrEditors()),
-
-    // application of some marks (e.g. code) should cuase reveral of smart quotes
-    reverseSmartQuotesExtension(manager.pandocMarks()),
   ]);
 
   // additional plugins derived from extensions

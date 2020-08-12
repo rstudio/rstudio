@@ -27,7 +27,6 @@ import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
 
-import { fancyQuotesToSimple } from '../../api/quote';
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions } = context;
   return {
@@ -180,8 +179,6 @@ function tagInfo(text: string, endLoc: number) {
 }
 
 function tagStartLoc(text: string, endLoc: number) {
-  // might be smart quotes
-  text = fancyQuotesToSimple(text);
 
   let inSingleQuote = false;
   let inDoubleQuote = false;
