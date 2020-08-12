@@ -233,6 +233,7 @@ p.ProseMirror-selectednode {
   background-image: url("images/spelling.svg");
   background-position: center bottom;
   background-repeat: repeat-x;
+  background-size: 6px 3px;
   display: inline-block;
   padding-bottom: 1px;
   margin-bottom: -1px;
