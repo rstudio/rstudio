@@ -128,6 +128,13 @@ export class PandocConverter {
     return result;
   }
 
+  // NOTE: For a plain markdown file, this is the closest we can come to cannonicalizing w/ just pandoc:
+  //
+  //   pandoc MANUAL.md --to markdown-auto_identifiers-smart -o MANUAL.md --self-contained --atx-headers --wrap=none
+  //
+  // For R Mardown files, we would need to pull out the Rmd chunks before sending to pandoc.
+  //
+
   public async fromProsemirror(
     doc: ProsemirrorNode,
     pandocFormat: PandocFormat,
