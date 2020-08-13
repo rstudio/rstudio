@@ -836,7 +836,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (!StringUtil.isNullOrEmpty(mostRecentSourceWindow_) &&
           isSourceWindowOpen(mostRecentSourceWindow_))
          events_.fireEventToSatellite(event, getSourceWindowObject(mostRecentSourceWindow_));
-      else
+      else if (!isMainSourceWindow())
          events_.fireEventToMainWindow(event);
    }
 
