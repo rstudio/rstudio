@@ -135,6 +135,7 @@ export interface PandocExtensions {
   tex_math_single_backslash: boolean;
   yaml_metadata_block: boolean;
   gutenberg: boolean;
+  // attributes: boolean; (not yet)
   [key: string]: boolean;
 }
 
