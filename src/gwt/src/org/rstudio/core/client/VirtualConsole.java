@@ -23,16 +23,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.TextResource;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.virtualscroller.VirtualScrollerNative;
-import org.rstudio.core.client.virtualscroller.VirtualScrollerResources;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -96,28 +91,7 @@ public class VirtualConsole
       prefs_ = prefs;
       parent_ = parent;
 
-      // only load the virtual scroller if enabled in prefs
-      if (prefs_.limitConsoleVisible() &&
-          parent_ != null &&
-          !VirtualConsole.virtualScrollerInitialized_ &&
-          !VirtualConsole.loadingVirtualScroller_)
-         {
-            VirtualConsole.loadingVirtualScroller_ = true;
-            virtualScrollerLoader_.addCallback(() -> {
-               try
-               {
-                  virtualScrollerNative_ = new VirtualScrollerNative();
-                  virtualScrollerNative_.setup(parent_);
-                  VirtualConsole.virtualScrollerInitialized_ = true;
-                  VirtualConsole.loadingVirtualScroller_ = false;
-               } catch (JavaScriptException e)
-               {
-                  // If we get an error initializing the virtualScroller, log
-                  // and no-op the error to continue non-virtualized
-                  Debug.log(e.getMessage());
-               }
-            });
-         }
+      VirtualScrollerManager.init();
    }
 
    public void clear()
@@ -128,16 +102,17 @@ public class VirtualConsole
          formfeed();
    }
 
-   public static boolean isVirtualized()
+   public boolean isVirtualized()
    {
-      return virtualScrollerInitialized_;
+      return prefs_.limitConsoleVisible() &&
+          VirtualScrollerManager.scrollerForElement(VirtualScrollerManager.getVirtualScrollerAncestor(parent_.getParentElement())) != null;
    }
 
-   public static void clearVirtualScroller()
+   public void clearVirtualScroller()
    {
       if (isVirtualized())
       {
-         virtualScrollerNative_.clear();
+         VirtualScrollerManager.clear(parent_.getParentElement());
       }
    }
 
@@ -449,8 +424,8 @@ public class VirtualConsole
     */
    private void appendChild(Element element)
    {
-      if (prefs_.limitConsoleVisible() && virtualScrollerInitialized_)
-         virtualScrollerNative_.append(element);
+      if (prefs_.limitConsoleVisible())
+         VirtualScrollerManager.append(parent_.getParentElement(), element);
       else
          parent_.appendChild(element);
    }
@@ -760,20 +735,6 @@ public class VirtualConsole
       public int start;
       public final SpanElement element;
    }
-
-   interface Resources extends ClientBundle
-   {
-      @Source("./virtualscroller/virtualscroller.js")
-      TextResource virtualScrollerCode();
-   }
-
-   private static final Resources RES = GWT.create(Resources.class);
-
-   private static final ExternalJavaScriptLoader virtualScrollerLoader_ =
-      new ExternalJavaScriptLoader(VirtualScrollerResources.INSTANCE.virtualscrollerjs().getSafeUri().asString());
-   private static VirtualScrollerNative virtualScrollerNative_;
-   private static boolean virtualScrollerInitialized_ = false;
-   private static boolean loadingVirtualScroller_ = false;
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 

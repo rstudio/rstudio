@@ -18,6 +18,7 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.core.client.widget.PreWidget;
 
 import com.google.gwt.dom.client.Document;
@@ -56,8 +57,8 @@ public class ConsoleOutputWriter
    {
       lines_ = 0;
 
-      if (VirtualConsole.isVirtualized())
-         VirtualConsole.clearVirtualScroller();
+      if (VirtualScrollerManager.scrollerForElement(output_.getElement()) != null)
+         VirtualScrollerManager.clear(output_.getElement());
       else
       {
          output_.setText("");

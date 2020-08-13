@@ -20,18 +20,18 @@ var VirtualScroller;
   };
 
   VirtualScroller.prototype = {
-    setup: function(element) {
+    setup: function(element, visuallyHiddenClass) {
       if (!element)
         return;
 
       //  *** _CONSTANTS ***
-      this._DEBUG = true;
+      this._DEBUG = false;
       this._SCROLL_DEBOUNCE_MS = 500;
       this._BUCKET_MAX_SIZE = 50;
       this._MAX_VISIBLE_BUCKETS = 10;
 
       // we use this style to keep the elements in the DOM for screen readers
-      this._HIDDEN_STYLE = "org-rstudio-core-client-theme-res-ThemeStyles-visuallyHidden";
+      this._HIDDEN_STYLE = visuallyHiddenClass;
 
       //  *** global vars ***
       this.LAST_SCROLL_TIME = 0;
@@ -86,16 +86,18 @@ var VirtualScroller;
       }
 
       // jump to latest button
-      this.jumpToLatestButton = document.createElement("div");
-      this.jumpToLatestButton.classList.add("jump-to-latest-console");
-      this.jumpToLatestButton.innerText = "Latest";
-      this.jumpToLatestButton.style.display = "none";
-      this.jumpToLatestButton.onclick = function() {
-        self._jumpToBottom();
-        self._setJumpToLatestVisible(false);
-        document.getElementById("rstudio_console_output").focus();
-      };
-      this.scrollerEle.parentElement.append(this.jumpToLatestButton);
+      if (this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1) {
+        this.jumpToLatestButton = document.createElement("div");
+        this.jumpToLatestButton.classList.add("jump-to-latest-console");
+        this.jumpToLatestButton.innerText = "Latest";
+        this.jumpToLatestButton.style.display = "none";
+        this.jumpToLatestButton.onclick = function () {
+          self._jumpToBottom();
+          self._setJumpToLatestVisible(false);
+          self.consoleEle.focus();
+        };
+        this.scrollerEle.parentElement.append(this.jumpToLatestButton);
+      }
 
       this.INITIALIZED = true;
     },
@@ -262,6 +264,7 @@ var VirtualScroller;
         this.buckets[i].remove();
       }
 
+      this._setJumpToLatestVisible(false);
       this.visibleBuckets = [];
       this.buckets = [];
 
