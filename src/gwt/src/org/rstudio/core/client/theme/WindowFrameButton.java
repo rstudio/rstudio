@@ -170,6 +170,9 @@ public class WindowFrameButton extends FocusWidget
    private boolean maximized_;
    private boolean exclusive_;
 
+   // class name displayed by Help / Diagnostics / Show DOM Elements command
+   private String helpClassId_;
+
    private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
