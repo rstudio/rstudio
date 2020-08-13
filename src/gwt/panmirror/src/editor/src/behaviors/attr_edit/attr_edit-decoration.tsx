@@ -66,7 +66,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.editFn(props.view.state) ? (
         <ImageButton
           classes={['attr-edit-button']}
-          image={props.ui.images.properties_deco!}
+          image={props.ui.prefs.darkMode() ? props.ui.images.properties_deco_dark! : props.ui.images.properties_deco!}
           title={buttonTitle}
           onClick={onClick}
         />
