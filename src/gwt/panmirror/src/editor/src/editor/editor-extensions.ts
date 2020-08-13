@@ -59,11 +59,11 @@ import behaviorHistory from '../behaviors/history';
 import behaviorSelectAll from '../behaviors/select_all';
 import behaviorCursor from '../behaviors/cursor';
 import behaviorFind from '../behaviors/find';
-import behaviorSpelling from '../behaviors/spelling';
+import behaviorSpellingInteractive from '../behaviors/spelling/spelling-interactive';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
-import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty';
+import behaviorSmarty from '../behaviors/smarty';
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
@@ -76,13 +76,13 @@ import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugi
 import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 import behaviorNbsp from '../behaviors/nbsp';
+import behaviorRemoveSection from '../behaviors/remove_section';
 
 // marks
 import markStrikeout from '../marks/strikeout';
 import markSuperscript from '../marks/superscript';
 import markSubscript from '../marks/subscript';
 import markSmallcaps from '../marks/smallcaps';
-import markQuoted from '../marks/quoted';
 import markRawInline from '../marks/raw_inline/raw_inline';
 import markRawTex from '../marks/raw_inline/raw_tex';
 import markRawHTML from '../marks/raw_inline/raw_html';
@@ -136,7 +136,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
-    behaviorSpelling,
+    behaviorSpellingInteractive,
     behaviorClearFormatting,
   ]);
 
@@ -156,6 +156,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorInsertSymbolEmoji,
     beahviorInsertSpecialCharacters,
     behaviorNbsp,
+    behaviorRemoveSection,
 
     // nodes
     nodeDiv,
@@ -173,7 +174,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     markSuperscript,
     markSubscript,
     markSmallcaps,
-    markQuoted,
     markHTMLComment,
     markRawTex,
     markRawHTML,
@@ -198,9 +198,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   manager.register([
     // bindings to 'Edit Attribute' command and UI adornment
     attrEditExtension(context.pandocExtensions, context.ui, manager.attrEditors()),
-
-    // application of some marks (e.g. code) should cuase reveral of smart quotes
-    reverseSmartQuotesExtension(manager.pandocMarks()),
   ]);
 
   // additional plugins derived from extensions
@@ -227,21 +224,30 @@ export class ExtensionManager {
     this.extensions = [];
   }
 
-  public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
+  public register(extensions: ReadonlyArray<Extension | ExtensionFn>, priority = false): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
         const ext = extension(this.context);
         if (ext) {
-          this.extensions.push(ext);
+          if (priority) {
+            this.extensions.unshift(ext);
+          } else {
+            this.extensions.push(ext);
+          }
+
         }
       } else {
-        this.extensions.push(extension);
+        if (priority) {
+          this.extensions.unshift(extension);
+        } else {
+          this.extensions.push(extension);
+        }
       }
     });
   }
 
-  public registerPlugins(plugins: Plugin[]) {
-    this.register([{ plugins: () => plugins }]);
+  public registerPlugins(plugins: Plugin[], priority = false) {
+    this.register([{ plugins: () => plugins }], priority);
   }
 
   public pandocMarks(): readonly PandocMark[] {

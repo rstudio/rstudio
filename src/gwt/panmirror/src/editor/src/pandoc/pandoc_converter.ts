@@ -90,11 +90,14 @@ export class PandocConverter {
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     // we always need to read with auto_identifiers so we can catch any auto-generated ids 
     // required to fulfill links inside the document (we will strip out heading ids that
-    // aren't explicit or a link target using the heading_ids returned with the ast)
+    // aren't explicit or a link target using the heading_ids returned with the ast). we also 
+    // disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
+    // abbreviations like e.g. rather, we do our own implementation of 'smart' when we read
+    // PandocTokenType.Str from the ast
 
     // determine type of auto_ids
     const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
-    const targetFormat = adjustedFormat(format.fullName, ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds], []);
+    const targetFormat = adjustedFormat(format.fullName, ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds], ['smart']);
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -145,10 +148,12 @@ export class PandocConverter {
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
     // to the source document just the way they came in. for writing markdown from pm we don't 
-    // ever want to generate auto identifiers so we disable them here.
+    // ever want to generate auto identifiers so we disable them here. we also disable smart b/c
+    // we do this manually above in pandocFromProsemirror (so we can avoid pandoc's insertion of 
+    // nbsp's after abbreviations, which is more approriate for final output than editing)
     let format = adjustedFormat(pandocFormat.fullName,
       ['raw_html', 'raw_attribute'],                 // always enable
-      ['auto_identifiers', 'gfm_auto_identifiers']); // always disable
+      ['auto_identifiers', 'gfm_auto_identifiers', 'smart']); // always disable
 
     // disable selected format options
     format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');

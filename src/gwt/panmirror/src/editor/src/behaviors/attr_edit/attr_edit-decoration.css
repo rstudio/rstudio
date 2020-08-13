@@ -34,18 +34,14 @@
   padding-left: 7px;
   padding-right: 7px;
   font-weight: normal;
+  white-space: nowrap;
 }
 
 .pm-attr-edit-decoration .attr-edit-button {
-  border-radius: 50%;
-  padding-left: 0;
-  padding-right: 0;
+  margin-top: 1px;
 }
 
-.pm-attr-edit-decoration .attr-edit-button .attr-edit-button-ellipsis {
-  display: inline-block;
+.pm-attr-edit-decoration .attr-edit-button img {
   width: 18px;
-  transform: scale(0.5, 0.5);
-  font-weight: lighter;
-  letter-spacing: 0;
+  height: 18px;
 }

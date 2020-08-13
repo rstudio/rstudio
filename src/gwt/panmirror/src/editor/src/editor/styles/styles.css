@@ -228,3 +228,23 @@ p.ProseMirror-selectednode {
   padding-right: 4px;
   font-size: 9pt;
 }
+
+.pm-spelling-error {
+  background-image: url("images/spelling.svg");
+  background-position: center bottom;
+  background-repeat: repeat-x;
+  background-size: 6px 3px;
+  display: inline-block;
+  padding-bottom: 1px;
+  margin-bottom: -1px;
+}
+
+.pm-dark-mode .pm-spelling-error {
+  background-image: url("images/spelling-dark.svg");
+}
+
+.pm-nbsp::before {
+  content: '·';
+  position: relative;
+  left: 2px;
+}

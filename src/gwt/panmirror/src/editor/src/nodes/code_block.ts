@@ -265,6 +265,10 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
           }
           return tags;
         },
+        offset: {
+          top: 3,
+          right: 0
+        },
         editFn: () => codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       };
     } else {

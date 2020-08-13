@@ -17,6 +17,8 @@ import { EditorUIImages } from '../api/ui-images';
 
 import copyImage from './images/copy.png';
 import propertiesImage from './images/properties.png';
+import propertiesDecoImage from './images/properties_deco.png';
+import propertiesDecoDarkImage from './images/properties_deco_dark.png';
 import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
 import runprevchunksImage from './images/runprevchunks.png';
@@ -122,6 +124,8 @@ export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
     properties: propertiesImage,
+    properties_deco: propertiesDecoImage,
+    properties_deco_dark: propertiesDecoDarkImage,
     removelink: removelinkImage,
     runchunk: runchunkImage,
     runprevchunks: runprevchunksImage,

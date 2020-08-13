@@ -261,7 +261,22 @@ public class VisualModePanmirrorFormat
    
    private boolean hasBookdownCrossReferences()
    {
-      return isBookdownProjectDocument() || isBlogdownProjectDocument() || isDistillDocument();
+      return isBookdownProjectDocument() || 
+             isBookdownStandaloneDocument() || 
+             isBlogdownProjectDocument() || 
+             isDistillDocument();
+   }
+   
+   private boolean isBookdownStandaloneDocument()
+   {
+      List<String> formats = getOutputFormats();
+      for (String format : formats) 
+      {
+         boolean isBookdown = format.startsWith("bookdown::") && format.endsWith("2");
+         if (isBookdown)
+            return true;
+      }
+      return false;
    }
    
    private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config)

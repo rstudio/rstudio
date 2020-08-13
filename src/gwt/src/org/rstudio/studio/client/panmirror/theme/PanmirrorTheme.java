@@ -39,6 +39,7 @@ public class PanmirrorTheme
    public String lightTextColor;
    public String linkTextColor;
    public String placeholderTextColor;
+   public String invisibleTextColor;
    public String markupTextColor;
    public String findTextBackgroundColor;
    public String findTextBorderColor;

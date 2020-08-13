@@ -37,8 +37,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Em },
     { command: EditorCommandId.Code },
     {
+      text: ui.context.translateText('Text'),
       subMenu: {
-        text: ui.context.translateText('Text'),
         items: [
           { command: EditorCommandId.Strikeout },
           { command: EditorCommandId.Superscript },
@@ -49,8 +49,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     },
     { separator: true },
     {
+      text: ui.context.translateText('Bullets & Numbering'),
       subMenu: {
-        text: ui.context.translateText('Bullets & Numbering'),
         items: [
           { command: EditorCommandId.BulletList },
           { command: EditorCommandId.OrderedList },
@@ -76,8 +76,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Span },
     { separator: true },
     {
+      text: ui.context.translateText('Raw'),
       subMenu: {
-        text: ui.context.translateText('Raw'),
         items: [
           { command: EditorCommandId.HTMLInline },
           { command: EditorCommandId.HTMLBlock },
@@ -104,8 +104,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
       ? [
         { separator: true },
         {
+          text: ui.context.translateText('Code Chunk'),
           subMenu: {
-            text: ui.context.translateText('Code Chunk'),
             items: [
               { command: EditorCommandId.RCodeChunk },
               { separator: true },
@@ -128,8 +128,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
       ? [
         { separator: true },
         {
+          text: ui.context.translateText('Definition'),
           subMenu: {
-            text: ui.context.translateText('Definition'),
             items: [
               { command: EditorCommandId.DefinitionList },
               { separator: true },
@@ -145,8 +145,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.DisplayMath },
     { separator: true },
     {
+      text: ui.context.translateText('Special Characters'),
       subMenu: {
-        text: ui.context.translateText('Special Characters'),
         items: [
           { command: EditorCommandId.Emoji },
           { command: EditorCommandId.Symbol },

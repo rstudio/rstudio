@@ -82,7 +82,8 @@ import jsinterop.base.Js;
 
 public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource,
-                                   SourceDocAddedEvent.Handler
+                                   SourceDocAddedEvent.Handler,
+                                   VisualModeSpelling.Context
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -109,7 +110,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay_);
+      visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
          target_, 
@@ -656,6 +657,13 @@ public class VisualMode implements VisualModeEditorSync,
    public void checkSpelling()
    {
       visualModeSpelling_.checkSpelling(panmirror_.getSpellingDoc());
+   }
+
+   @Override
+   public void updateRealtimeSpelling()
+   {
+      if (panmirror_ != null)
+         panmirror_.updateRealtimeSpelling();
    }
 
    public boolean isVisualModePosition(SourcePosition position)

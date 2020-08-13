@@ -19,7 +19,7 @@ import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';
 import { EditorDialogs } from './ui-dialogs';
-import { EditorWordBreaker } from './spelling';
+import { EditorUISpelling } from './spelling';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -73,13 +73,17 @@ export interface EditorUIContext {
 
   // translate a string
   translateText: (text: string) => string;
+
+  // are we running in windows desktop mode?
+  isWindowsDesktop: () => boolean;
 }
 
 export interface EditorMenuItem {
+  text?: string;
+  exec?: VoidFunction;
   command?: string;
   separator?: boolean;
   subMenu?: {
-    text: string;
     items: EditorMenuItem[];
   };
 }
@@ -90,10 +94,6 @@ export interface EditorUIExecute {
 
 export interface EditorUIMath {
   typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
-}
-
-export interface EditorUISpelling {
-  breakWords: EditorWordBreaker;
 }
 
 export interface EditorDisplay {

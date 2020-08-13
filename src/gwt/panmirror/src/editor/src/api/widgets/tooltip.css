@@ -30,7 +30,7 @@
   transition: opacity 0.4s;
   white-space: nowrap;
   box-shadow: 0 0.5rem 1rem -0.5rem black;
-  z-index: 1000;
+  z-index: 900;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }

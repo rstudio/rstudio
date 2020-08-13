@@ -58,6 +58,11 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             ...link,
             ...getMarkAttrs(state.doc, range, markType),
           };
+        } else {
+          // if the link text is a URL then make it the default
+          if (link.text && link.text.match(/^https?:\/\/.*$/)) {
+            link.href = link.text;
+          }
         }
 
         // determine type

@@ -20,7 +20,7 @@ import jsinterop.annotations.JsType;
 @JsType(isNative = true)
 public class PanmirrorSpellingDoc
 {
-   public native PanmirrorWordSource getWords(int start, Integer end);
+   public native PanmirrorWordSource getWords(int start, int end);
    public native PanmirrorAnchor createAnchor(int position);
    
    public native boolean shouldCheck(PanmirrorWordRange wordRange);

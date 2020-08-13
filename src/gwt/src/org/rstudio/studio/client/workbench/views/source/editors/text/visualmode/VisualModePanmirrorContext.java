@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -162,6 +163,11 @@ public class VisualModePanmirrorContext
       uiContext.translateText = text -> {
          return text;
       };
+      
+      uiContext.isWindowsDesktop = () -> {
+         return BrowseCap.isWindowsDesktop();
+      };
+      
       return uiContext;
    }
    
