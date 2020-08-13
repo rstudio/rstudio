@@ -113,7 +113,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 attrTags.push(`#${editorNode.attrs.id}`);
               }
               if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
-                attrTags.push(`.${editorNode.attrs.classes[0]}`);
+                attrTags.push(`${editorNode.attrs.classes.map((clz: string) => '.' + clz).join(' ')}`);
               }
               return attrTags;
             });
