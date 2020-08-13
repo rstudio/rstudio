@@ -1534,7 +1534,7 @@ public class TextEditingTarget implements
             () ->
             {
                // Implement chunk definition provider
-               if (visualMode_.isActivated())
+               if (visualMode_.isVisualEditorActive())
                {
                   return visualMode_.getChunkDefs();
                }
@@ -2505,7 +2505,6 @@ public class TextEditingTarget implements
             if (notebook_ != null && 
                 notebook_.getState() == TextEditingTargetNotebook.STATE_NONE)
             {
-               Debug.devlog("render finish notebook");
                notebook_.onRenderFinished(null);
             }
          });

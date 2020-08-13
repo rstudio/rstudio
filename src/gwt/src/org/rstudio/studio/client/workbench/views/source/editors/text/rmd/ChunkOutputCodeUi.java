@@ -39,6 +39,9 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       super(docId, def, widget);
       display_ = display;
 
+      ChunkOutputWidget outputWidget = getOutputWidget();
+      outputWidget.setEmbeddedStyle(false);
+
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
             display_, outputWidget_, def.getRow(), def, lineWidgetHost);
    }

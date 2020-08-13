@@ -58,7 +58,8 @@ public class VisualModeChunk
          scope_ = parent.getScopeAtPosition(parent.positionFromIndex(index));
          Debug.devlog("create chunk for position " + index + " (" + pos.getRow() + ", " + pos.getColumn() + ")");
          Debug.logObject(scope_);
-         output = notebook.getOutputUi(scope_);
+         // Migrate output UI from this scope
+         output = notebook.migrateOutput(scope_);
          if (output != null)
          {
             Debug.devlog("found output ui " + output.getChunkId() + " (" + output.getChunkLabel() + ")");

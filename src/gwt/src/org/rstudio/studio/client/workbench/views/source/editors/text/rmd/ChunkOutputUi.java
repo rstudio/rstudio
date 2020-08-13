@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
@@ -78,7 +79,7 @@ public abstract class ChunkOutputUi
       // (until it gets some output)
       if (!hasOutput)
       {
-         // ele.getStyle().setHeight(0, Unit.PX);
+         ele.getStyle().setHeight(0, Unit.PX);
          outputWidget_.setVisible(false);
       }
       

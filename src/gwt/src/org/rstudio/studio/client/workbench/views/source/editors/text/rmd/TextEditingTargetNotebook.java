@@ -1189,6 +1189,9 @@ public class TextEditingTargetNotebook
       // find the chunk corresponding to the row
       for (ChunkOutputUi output: outputs_.values())
       {
+         if (output.getScope() == null)
+            continue;
+         Debug.devlog("looking for chunk at " + preambleRow + " (chunk " + output.getChunkId() + " at " + output.getScope().getPreamble().getRow() + ")");
          if (output.getScope().getPreamble().getRow() == preambleRow)
             return output.getChunkId();
       }
@@ -1373,15 +1376,47 @@ public class TextEditingTargetNotebook
       }
    }
    
-   public ChunkOutputUi getOutputUi(Scope scope)
+   /**
+    * Given a scope, migrate any notebook output associated with the scope.
+    * 
+    * @param scope The scope containing a code chunk
+    * @return A notebook output object containing the chunk's output
+    */
+   public ChunkOutputPanmirrorUi migrateOutput(Scope scope)
    {
+      // Find the ID of the chunk at the given row
       String id = getRowChunkId(scope.getPreamble().getRow());
       if (id == null)
       {
          return null;
       }
       
-      return outputs_.get(id);
+      // Find the chunk output at the given location
+      ChunkOutputUi output = outputs_.get(id);
+      if (output == null)
+      {
+         return null;
+      }
+      
+      if (output instanceof ChunkOutputPanmirrorUi)
+      {
+         // If this output is already in visual mode, return as is
+         return (ChunkOutputPanmirrorUi)output;
+      }
+      else if (output instanceof ChunkOutputCodeUi)
+      {
+         ChunkOutputCodeUi codeOutput = (ChunkOutputCodeUi)output;
+         ChunkOutputPanmirrorUi visualOutput = 
+               new ChunkOutputPanmirrorUi(codeOutput, editingTarget_.getVisualMode());
+         
+         // Clean up the old output and replace it 
+         codeOutput.remove();
+         outputs_.put(id, visualOutput);
+
+         // Return the converted output object
+         return visualOutput;
+      }
+      return null;
    }
    
    public int getState()
@@ -1613,7 +1648,7 @@ public class TextEditingTargetNotebook
       if (editingTarget_.isVisualModeActivated())
       {
          output = new ChunkOutputPanmirrorUi(docUpdateSentinel_.getId(), 
-               editingTarget_.getVisualMode(), def);
+               editingTarget_.getVisualMode(), def, null);
          Debug.devlog("create visual mode chunk output at row " + def.getRow());
       }
       else

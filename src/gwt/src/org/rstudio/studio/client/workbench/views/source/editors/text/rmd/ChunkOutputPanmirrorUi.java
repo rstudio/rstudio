@@ -14,42 +14,61 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 
+import com.google.gwt.dom.client.Style.Unit;
+
 public class ChunkOutputPanmirrorUi extends ChunkOutputUi
 {
-   public ChunkOutputPanmirrorUi(String docId, VisualMode visualMode, ChunkDefinition def)
+   public ChunkOutputPanmirrorUi(String docId, VisualMode visualMode, ChunkDefinition def, 
+                                 ChunkOutputWidget widget)
    {
-      super(docId, def);
+      super(docId, def, widget);
       
       // Find the visual mode chunk editor associated with this row of the document
       chunk_ = visualMode.getChunkAtRow(def.getRow());
       
-      ChunkOutputWidget widget = getOutputWidget();
-      widget.setEmbeddedStyle(true);
+      ChunkOutputWidget outputWidget = getOutputWidget();
+      outputWidget.setEmbeddedStyle(true);
 
       // If we found one, hook it up to the output widget
       if (chunk_ != null)
       {
-         chunk_.setOutputWidget(widget);
+         chunk_.setOutputWidget(outputWidget);
          chunk_.setDefinition(def);
       }
    }
+   
+   public ChunkOutputPanmirrorUi(ChunkOutputCodeUi codeOutput, VisualMode visualMode)
+   {
+      this(codeOutput.getDocId(), visualMode, codeOutput.getDefinition(), 
+            codeOutput.getOutputWidget());
+   }
 
    @Override
-   public void onOutputHeightChanged(ChunkOutputWidget widget, int height, boolean ensureVisible)
+   public void onOutputHeightChanged(ChunkOutputWidget widget, int outputHeight, boolean ensureVisible)
    {
-      
+      // don't process if we aren't attached 
+      if (!attached_)
+         return;
+
+      int height = 
+            widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
+               CHUNK_COLLAPSED_HEIGHT :
+               Math.max(MIN_CHUNK_HEIGHT, outputHeight);
+
+      widget.getElement().getStyle().setHeight(height, Unit.PX);
    }
 
    @Override
    public void onRenderFinished(RenderFinishedEvent event)
    {
-      
+
    }
 
    @Override
