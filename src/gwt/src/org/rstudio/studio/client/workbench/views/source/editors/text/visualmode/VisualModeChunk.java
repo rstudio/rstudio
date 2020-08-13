@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -55,15 +54,10 @@ public class VisualModeChunk
       if (index >= 0)
       {
          Position pos = parent.positionFromIndex(index);
-         scope_ = parent.getScopeAtPosition(parent.positionFromIndex(index));
-         Debug.devlog("create chunk for position " + index + " (" + pos.getRow() + ", " + pos.getColumn() + ")");
-         Debug.logObject(scope_);
+         scope_ = parent.getScopeAtPosition(pos);
+
          // Migrate output UI from this scope
-         output = notebook.migrateOutput(scope_);
-         if (output != null)
-         {
-            Debug.devlog("found output ui " + output.getChunkId() + " (" + output.getChunkLabel() + ")");
-         }
+         output = notebook.migrateOutput(scope_, this);
       }
       else
       {
@@ -89,14 +83,14 @@ public class VisualModeChunk
       // editors)
       editor.setUseWrapMode(true);
 
-      // Provide the editor's container element; in the future this will be a
-      // host element which hosts chunk output
+      // Provide the editor's container element
       DivElement ele = Document.get().createDivElement();
       ele.appendChild(chunkEditor.getContainer());
       
       outputHost_ = Document.get().createDivElement();
-      if (output != null)
+      if (output != null && widget_ == null)
       {
+         widget_ = output.getOutputWidget();
          setOutputWidget(output.getOutputWidget());
       }
       ele.appendChild(outputHost_);
@@ -215,11 +209,14 @@ public class VisualModeChunk
     */
    public void setOutputWidget(ChunkOutputWidget widget)
    {
-      // Destroy any existing content in the output host
-      outputHost_.setInnerHTML("");
+      if (outputHost_ != null)
+      {
+         removeWidget();
 
-      // Append the given output widget
-      outputHost_.appendChild(widget.getElement());
+         // Append the given output widget
+         widget_ = widget;
+         outputHost_.appendChild(widget.getElement());
+      }
    }
    
    /**
@@ -240,6 +237,16 @@ public class VisualModeChunk
    public void setDefinition(ChunkDefinition def)
    {
       def_ = def;
+   }
+   
+   public void reloadWidget()
+   {
+      setOutputWidget(widget_);
+   }
+   
+   public void removeWidget()
+   {
+      outputHost_.setInnerHTML("");
    }
    
    private void setMode(AceEditor editor, String mode)
@@ -305,6 +312,7 @@ public class VisualModeChunk
    }
    
    private ChunkDefinition def_;
+   private ChunkOutputWidget widget_;
    
    private final DivElement outputHost_;
    private final Scope scope_;

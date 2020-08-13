@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Chun
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowRegisteredEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
@@ -92,8 +93,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -141,7 +140,6 @@ public class TextEditingTargetNotebook
       releaseOnDismiss_ = releaseOnDismiss;
       notebookDoc_ = document.getNotebookDoc();
       initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
-      outputs_ = new HashMap<String, ChunkOutputUi>();
       satelliteChunkRequestIds_ = new ArrayList<String>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
@@ -151,6 +149,12 @@ public class TextEditingTargetNotebook
       dependencyManager_ = dependencyManager;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      // Notebook outputs for code (text) editing mode; map of chunk ID to output UI
+      codeOutputs_ = new HashMap<String, ChunkOutputUi>();
+      
+      // Notebook outputs for visual editing mode
+      visualOutputs_ = new HashMap<String, ChunkOutputUi>();
+
       releaseOnDismiss.add(docDisplay_.addEditorFocusHandler(new FocusHandler()
       {
          @Override
@@ -506,9 +510,9 @@ public class TextEditingTargetNotebook
    public void onNotebookToggleExpansion()
    {
       String chunkId = getCurrentChunkId();
-      if (chunkId == null || !outputs_.containsKey(chunkId))
+      if (chunkId == null || !chunkHasOutput(chunkId))
          return;
-     ChunkOutputWidget widget = outputs_.get(chunkId).getOutputWidget();
+     ChunkOutputWidget widget = outputUi(chunkId).getOutputWidget();
      widget.setExpansionState(
            widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ? 
                  ChunkOutputWidget.EXPANDED : ChunkOutputWidget.COLLAPSED);
@@ -616,7 +620,7 @@ public class TextEditingTargetNotebook
          DomUtils.extractCssValue("ace_editor", "color")
       );
       
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          output.getOutputWidget().applyCachedEditorStyle();
       }
@@ -712,15 +716,15 @@ public class TextEditingTargetNotebook
 
          // don't execute any more chunks if this chunk's options includes
          // error = FALSE
-         if (!outputs_.containsKey(chunkId) ||
-             !outputs_.get(chunkId).getOptions().error())
+         if (!outputs().containsKey(chunkId) ||
+             !outputs().get(chunkId).getOptions().error())
          {
             clearChunkExecQueue();
          }
       }
 
       // show output in matching chunk
-      if (outputs_.containsKey(chunkId))
+      if (chunkHasOutput(chunkId))
       {
          // by default, ensure chunks are visible if we aren't replaying them
          // from the cache
@@ -731,7 +735,7 @@ public class TextEditingTargetNotebook
          if (ensureVisible && mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = false;
          
-         outputs_.get(chunkId).getOutputWidget()
+         outputs().get(chunkId).getOutputWidget()
                               .showChunkOutput(event.getOutput(), mode,
                                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
                                   !queue_.isChunkExecuting(chunkId),
@@ -759,9 +763,9 @@ public class TextEditingTargetNotebook
       ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == 
             NotebookQueueUnit.EXEC_MODE_SINGLE;
 
-      if (outputs_.containsKey(data.getChunkId()))
+      if (chunkHasOutput(data.getChunkId()))
       {
-         ChunkOutputUi output = outputs_.get(data.getChunkId());
+         ChunkOutputUi output = outputUi(data.getChunkId());
          if (isSetupChunkScope(output.getScope()))
          {
             writeSetupCrc32(getChunkCrc32(output.getScope()));
@@ -785,9 +789,9 @@ public class TextEditingTargetNotebook
       else if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_INTERACTIVE &&
                data.getDocId() == docUpdateSentinel_.getId())
       {
-         if (outputs_.containsKey(data.getChunkId()))
+         if (chunkHasOutput(data.getChunkId()))
          {
-            outputs_.get(data.getChunkId()).getOutputWidget()
+            outputs().get(data.getChunkId()).getOutputWidget()
                            .onOutputFinished(ensureVisible, data.getScope());
 
             // set dirty state if necessary
@@ -815,7 +819,7 @@ public class TextEditingTargetNotebook
       resizingPlotsRemote_ = false;
 
       // mark any plots as no longer queued for resize
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          output.getOutputWidget().setPlotPending(false);
       }
@@ -834,8 +838,8 @@ public class TextEditingTargetNotebook
       
       // find chunk containing plot and push the new plot in
       String chunkId = event.getData().getChunkId();
-      if (outputs_.containsKey(chunkId))
-         outputs_.get(chunkId).getOutputWidget().updatePlot(
+      if (chunkHasOutput(chunkId))
+         outputs().get(chunkId).getOutputWidget().updatePlot(
                event.getData().getPlotUrl());
    }
 
@@ -898,7 +902,7 @@ public class TextEditingTargetNotebook
       // plots at the new resolution)
       resizePlotsRemote_.schedule(500);
 
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          // throwing exceptions during resize breaks most of the UI and this
          // invokes Javascript from a package downstream, so tolerate 
@@ -1025,13 +1029,8 @@ public class TextEditingTargetNotebook
    @Override
    public void onLineWidgetRemoved(LineWidget widget)
    {
-      for (ChunkOutputUi outputUi: outputs_.values())
+      for (ChunkOutputUi outputUi: codeOutputs_.values())
       {
-         // Ignore chunk outputs not associated with an Ace instance (as they
-         // aren't backed by line widgets)
-         if (!(outputUi instanceof ChunkOutputCodeUi))
-            continue;
-         
          ChunkOutputCodeUi output = (ChunkOutputCodeUi)outputUi;
          
          // ignore moving widgets -- ACE doesn't have a way to move a line 
@@ -1049,7 +1048,7 @@ public class TextEditingTargetNotebook
 
             // clean up old widget
             output.remove();
-            outputs_.remove(output.getChunkId());
+            codeOutputs_.remove(output.getChunkId());
 
             // if the scope is still at the terminal line, then this widget was
             // deleted over-aggressively by Ace (this can happen when e.g. 
@@ -1065,7 +1064,7 @@ public class TextEditingTargetNotebook
                ChunkOutputUi newOutput = new ChunkOutputCodeUi(
                      docUpdateSentinel_.getId(), 
                      docDisplay_, def, this, outputWidget);
-               outputs_.put(output.getChunkId(), newOutput);
+               codeOutputs_.put(output.getChunkId(), newOutput);
                return;
             }
 
@@ -1122,8 +1121,8 @@ public class TextEditingTargetNotebook
               (lastStart_ != null && lastStart_.compareTo(thisStart) == 0)) &&
              ((lastEnd_ == null && thisEnd == null) ||
               (lastEnd_ != null && lastEnd_.compareTo(thisEnd) == 0)) &&
-             ((chunkId != null && outputs_.containsKey(chunkId)) &&
-              outputs_.get(chunkId).getChunkLabel() == thisScope.getLabel()))
+             ((chunkId != null && chunkHasOutput(chunkId)) &&
+              outputUi(chunkId).getChunkLabel() == thisScope.getLabel()))
             return;
 
          lastStart_ = Position.create(thisScope.getBodyStart());
@@ -1135,7 +1134,7 @@ public class TextEditingTargetNotebook
          lastEnd_ = null;
       }
       
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          Scope scope = output.getScope();
          // if the scope associated with this output no longer looks like a 
@@ -1187,11 +1186,10 @@ public class TextEditingTargetNotebook
    public String getRowChunkId(int preambleRow)
    {
       // find the chunk corresponding to the row
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          if (output.getScope() == null)
             continue;
-         Debug.devlog("looking for chunk at " + preambleRow + " (chunk " + output.getChunkId() + " at " + output.getScope().getPreamble().getRow() + ")");
          if (output.getScope().getPreamble().getRow() == preambleRow)
             return output.getChunkId();
       }
@@ -1213,9 +1211,9 @@ public class TextEditingTargetNotebook
       {
          return getSetupChunkScope();
       }
-      else if (outputs_.containsKey(chunkId))
+      else if (chunkHasOutput(chunkId))
       {
-         return outputs_.get(chunkId).getScope();
+         return outputUi(chunkId).getScope();
       }
       return null;
    }
@@ -1236,9 +1234,9 @@ public class TextEditingTargetNotebook
    public void setChunkExecuting(String chunkId, int mode, int execScope)
    {
       // let the chunk widget know it's started executing
-      if (outputs_.containsKey(chunkId))
+      if (chunkHasOutput(chunkId))
       {
-         ChunkOutputUi output = outputs_.get(chunkId);
+         ChunkOutputUi output = outputUi(chunkId);
 
          // expand the chunk if it's in a fold
          Scope scope = output.getScope();
@@ -1307,9 +1305,9 @@ public class TextEditingTargetNotebook
    
    public void setOutputOptions(String chunkId, RmdChunkOptions options)
    {
-      if (outputs_.containsKey(chunkId))
+      if (chunkHasOutput(chunkId))
       {
-         outputs_.get(chunkId).setOptions(options);
+         outputUi(chunkId).setOptions(options);
       }
    }
    
@@ -1380,42 +1378,50 @@ public class TextEditingTargetNotebook
     * Given a scope, migrate any notebook output associated with the scope.
     * 
     * @param scope The scope containing a code chunk
+    * @param chunk The chunk in which to migrate the output
     * @return A notebook output object containing the chunk's output
     */
-   public ChunkOutputPanmirrorUi migrateOutput(Scope scope)
+   public ChunkOutputPanmirrorUi migrateOutput(Scope scope, VisualModeChunk chunk)
    {
-      // Find the ID of the chunk at the given row
-      String id = getRowChunkId(scope.getPreamble().getRow());
-      if (id == null)
+      // Check existing visual outputs
+      for (ChunkOutputUi output: visualOutputs_.values())
       {
-         return null;
+         if (output.getScope() == null)
+            continue;
+         if (output.getScope().getPreamble().getRow() == 
+             scope.getPreamble().getRow())
+         {
+            // Found an existing visual output; reattach it
+            ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
+            visualOutput.reattach();
+            return visualOutput;
+         }
       }
-      
-      // Find the chunk output at the given location
-      ChunkOutputUi output = outputs_.get(id);
-      if (output == null)
-      {
-         return null;
-      }
-      
-      if (output instanceof ChunkOutputPanmirrorUi)
-      {
-         // If this output is already in visual mode, return as is
-         return (ChunkOutputPanmirrorUi)output;
-      }
-      else if (output instanceof ChunkOutputCodeUi)
-      {
-         ChunkOutputCodeUi codeOutput = (ChunkOutputCodeUi)output;
-         ChunkOutputPanmirrorUi visualOutput = 
-               new ChunkOutputPanmirrorUi(codeOutput, editingTarget_.getVisualMode());
-         
-         // Clean up the old output and replace it 
-         codeOutput.remove();
-         outputs_.put(id, visualOutput);
 
-         // Return the converted output object
-         return visualOutput;
+      // No matching visual output; try to convert a code output
+      for (ChunkOutputUi output: codeOutputs_.values())
+      {
+         if (output.getScope() == null)
+            continue;
+         if (output.getScope().getPreamble().getRow() == 
+             scope.getPreamble().getRow())
+         {
+            // Detach the code output from the DOM
+            ChunkOutputCodeUi codeOutput = (ChunkOutputCodeUi)output;
+            codeOutput.detach();
+            
+            // Create a new visual output from the widget
+            ChunkOutputPanmirrorUi visualOutput = 
+                  new ChunkOutputPanmirrorUi(codeOutput, editingTarget_.getVisualMode(), 
+                        chunk);
+            visualOutputs_.put(output.getChunkId(), visualOutput);
+
+            // Return the converted output object
+            return visualOutput;
+         }
       }
+      
+      // No outputs found in the given scope
       return null;
    }
    
@@ -1429,25 +1435,56 @@ public class TextEditingTargetNotebook
     */
    public void migrateVisualModeOutput()
    {
-      ArrayList<ChunkOutputCodeUi> migrated = new ArrayList<ChunkOutputCodeUi>();
-      
-      // Iterate over all known chunk outputs
-      for (ChunkOutputUi output: outputs_.values())
+      // Iterate over all known visual chunk outputs
+      for (ChunkOutputUi output: visualOutputs_.values())
       {
+         // Detach the visual output
+         output.detach();
+
          // If this chunk output is in visual mode, create a version for code mode
-         if (output instanceof ChunkOutputPanmirrorUi)
+         ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
+         
+         if (codeOutputs_.containsKey(output.getChunkId()))
          {
-            ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
+            // Already a output for code view, reattach
+            codeOutputs_.get(output.getChunkId()).reattach();
+         }
+         else
+         {
+            // No output yet, create one
             ChunkOutputCodeUi codeOutput = new ChunkOutputCodeUi(visualOutput, 
                   docDisplay_, this);
-            migrated.add(codeOutput);
+            codeOutputs_.put(output.getChunkId(), codeOutput);
          }
       }
-      
-      // Replace all the visual mode outputs with the migrated objects
-      for (ChunkOutputCodeUi chunkOutput: migrated)
+   }
+
+   /**
+    * Migrate chunk outputs from the editor instance into visual mode
+    */
+   public void migrateCodeModeOutput()
+   {
+      // Iterate over all known code chunk outputs
+      for (ChunkOutputUi output: codeOutputs_.values())
       {
-         outputs_.put(chunkOutput.getChunkId(), chunkOutput);
+         // Detach code output
+         output.detach();
+
+         // If this chunk output is in code mode, create a version for visual mode
+         ChunkOutputCodeUi codeOutput = (ChunkOutputCodeUi)output;
+         
+         if (visualOutputs_.containsKey(output.getChunkId()))
+         {
+            // Already a output for code view, reattach
+            visualOutputs_.get(output.getChunkId()).reattach();
+         }
+         else
+         {
+            // No output yet, create one
+            ChunkOutputPanmirrorUi visualOutput = new ChunkOutputPanmirrorUi(codeOutput, 
+                  editingTarget_.getVisualMode(), null);
+            visualOutputs_.put(output.getChunkId(), visualOutput);
+         }
       }
    }
    
@@ -1474,9 +1511,9 @@ public class TextEditingTargetNotebook
       if (chunkId == null)
          return;
       
-      if (outputs_.containsKey(chunkId))
+      if (chunkHasOutput(chunkId))
       {
-         outputs_.get(chunkId)
+         outputUi(chunkId)
                  .getOutputWidget().onOutputFinished(false, 
                        NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
       }
@@ -1540,7 +1577,7 @@ public class TextEditingTargetNotebook
       if (queue_.isChunkExecuting(chunkId))
          return;
       
-      final ChunkOutputUi output = outputs_.get(chunkId);
+      final ChunkOutputUi output = outputUi(chunkId);
       if (output == null)
       {
          // this case is unexpected; it means that a chunk we don't know about
@@ -1571,7 +1608,8 @@ public class TextEditingTargetNotebook
          {
             // physically remove chunk output
             output.remove();
-            outputs_.remove(chunkId);
+            visualOutputs_.remove(chunkId);
+            codeOutputs_.remove(chunkId);
 
             // mark doc dirty if interactive (this is not undoable)
             if (StringUtil.isNullOrEmpty(requestId))
@@ -1583,7 +1621,7 @@ public class TextEditingTargetNotebook
    
    private void removeAllChunks()
    {
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: codeOutputs_.values())
       {
          // clean any error state still attached to the output's scope
          cleanScopeErrorState(output.getScope());
@@ -1592,7 +1630,8 @@ public class TextEditingTargetNotebook
 
       closeAllSatelliteChunks();
       
-      outputs_.clear();
+      codeOutputs_.clear();
+      visualOutputs_.clear();
    }
    
    private void changeOutputMode(String mode)
@@ -1603,7 +1642,7 @@ public class TextEditingTargetNotebook
       manageCommands();
          
       // if we don't have any inline output, we're done
-      if (outputs_.size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
+      if (outputs().size() == 0 || mode != CHUNK_OUTPUT_CONSOLE)
          return;
       
       // if we do have inline output, offer to clean it up
@@ -1648,7 +1687,8 @@ public class TextEditingTargetNotebook
       if (editingTarget_.isVisualModeActivated())
       {
          output = new ChunkOutputPanmirrorUi(docUpdateSentinel_.getId(), 
-               editingTarget_.getVisualMode(), def, null);
+               editingTarget_.getVisualMode(), def, null, null);
+         visualOutputs_.put(def.getChunkId(), output);
          Debug.devlog("create visual mode chunk output at row " + def.getRow());
       }
       else
@@ -1656,8 +1696,8 @@ public class TextEditingTargetNotebook
          output = new ChunkOutputCodeUi(docUpdateSentinel_.getId(), docDisplay_,
                                   def, this, null);
          Debug.devlog("create code mode chunk output at row " + def.getRow());
+         codeOutputs_.put(def.getChunkId(), output);
       }
-      outputs_.put(def.getChunkId(), output);
    }
    
    private boolean needsSetupChunkExecuted()
@@ -1721,7 +1761,7 @@ public class TextEditingTargetNotebook
    
    private void setAllExpansionStates(int state)
    {
-      for (ChunkOutputUi output: outputs_.values())
+      for (ChunkOutputUi output: outputs().values())
       {
          output.getOutputWidget().setExpansionState(state);
       }
@@ -1744,7 +1784,7 @@ public class TextEditingTargetNotebook
          if (current == null)
             return;
          
-         for (ChunkOutputUi output: outputs_.values())
+         for (ChunkOutputUi output: outputs().values())
          {
             if (output.getScope() == null)
                continue;
@@ -1763,7 +1803,7 @@ public class TextEditingTargetNotebook
       @Override
       public void run()
       {
-         for (ChunkOutputUi output: outputs_.values())
+         for (ChunkOutputUi output: outputs().values())
          {
             output.getOutputWidget().syncHeight(false, false);
          }
@@ -1790,7 +1830,7 @@ public class TextEditingTargetNotebook
          Integer min = null;
          String chunkId = "";
          boolean hasPlots = false;
-         for (ChunkOutputUi output: outputs_.values())
+         for (ChunkOutputUi output: outputs().values())
          {
             int delta = Math.abs(output.getCurrentRow() - row);
             if (min == null || delta < min)
@@ -1827,7 +1867,7 @@ public class TextEditingTargetNotebook
                      lastPlotWidth_ = plotWidth;
                      
                      // mark all plots as queued for resize
-                     for (ChunkOutputUi output: outputs_.values())
+                     for (ChunkOutputUi output: outputs().values())
                         output.getOutputWidget().setPlotPending(true);
                      resizingPlotsRemote_ = true;
                   }
@@ -1849,18 +1889,13 @@ public class TextEditingTargetNotebook
       if (progressClickReg_ == null)
       {
          progressClickReg_ = editingTarget_.getStatusBar()
-               .addProgressClickHandler(new ClickHandler()
+               .addProgressClickHandler((evt) ->
                {
-                  
-                  @Override
-                  public void onClick(ClickEvent arg0)
+                  String chunkId = queue_.getExecutingChunkId();
+                  if (chunkId != null &&
+                      chunkHasOutput(chunkId))
                   {
-                     String chunkId = queue_.getExecutingChunkId();
-                     if (chunkId != null &&
-                         outputs_.containsKey(chunkId))
-                     {
-                        outputs_.get(chunkId).ensureVisible();
-                     }
+                     outputUi(chunkId).ensureVisible();
                   }
                });
          releaseOnDismiss_.add(progressClickReg_);
@@ -1869,19 +1904,15 @@ public class TextEditingTargetNotebook
       if (progressCancelReg_ == null)
       {
          progressCancelReg_ = editingTarget_.getStatusBar()
-               .addProgressCancelHandler(new Command()
-                {
-                  @Override
-                  public void execute()
-                  {
-                     // interrupt R if it's busy
-                     if (commands_.interruptR().isEnabled())
-                         commands_.interruptR().execute();
-                     
-                     // don't execute any more chunks
-                     clearChunkExecQueue();
-                  }
-                });
+               .addProgressCancelHandler(() ->
+               {
+                  // interrupt R if it's busy
+                  if (commands_.interruptR().isEnabled())
+                      commands_.interruptR().execute();
+                  
+                  // don't execute any more chunks
+                  clearChunkExecQueue();
+               });
          releaseOnDismiss_.add(progressCancelReg_);
       }
    }
@@ -1935,8 +1966,28 @@ public class TextEditingTargetNotebook
       return getRowChunkId(chunk.getPreamble().getRow());
    }
    
+   private boolean chunkHasOutput(String id)
+   {
+      return outputs().containsKey(id);
+   }
+   
+   private ChunkOutputUi outputUi(String id)
+   {
+      return outputs().get(id);
+   }
+   
+   private HashMap<String, ChunkOutputUi> outputs()
+   {
+      if (editingTarget_.isVisualEditorActive())
+      {
+         return visualOutputs_;
+      }
+      return codeOutputs_;
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
-   private HashMap<String, ChunkOutputUi> outputs_;
+   private HashMap<String, ChunkOutputUi> codeOutputs_;
+   private HashMap<String, ChunkOutputUi> visualOutputs_;
    private ArrayList<String> satelliteChunkRequestIds_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
@@ -2010,3 +2061,4 @@ public class TextEditingTargetNotebook
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;
 }
+

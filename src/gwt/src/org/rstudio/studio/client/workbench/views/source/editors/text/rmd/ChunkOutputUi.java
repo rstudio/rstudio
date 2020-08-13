@@ -92,6 +92,9 @@ public abstract class ChunkOutputUi
    public abstract void ensureVisible();
    public abstract Scope getScope();
    
+   public abstract void detach();
+   public abstract void reattach();
+   
    public String getChunkId()
    {
       return def_.getChunkId();

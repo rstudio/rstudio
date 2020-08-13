@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -21,6 +22,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -53,7 +57,7 @@ public class PinnedLineWidget
       moving_ = false;
       shiftPending_ = false;
       folded_ = folded();
-
+      
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
 
@@ -95,6 +99,13 @@ public class PinnedLineWidget
       return lineWidget_;
    }
    
+   public void reloadWidget()
+   {
+      parent_.setInnerHTML("");
+      widget_.getElement().removeFromParent();
+      parent_.appendChild(widget_.getElement());
+   }
+   
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -128,6 +139,7 @@ public class PinnedLineWidget
    {
       // add the widget to the document
       display_.addLineWidget(lineWidget_);
+      parent_ = lineWidget_.getElement().getParentElement();
       
       // notify host if available
       if (host_ != null)
@@ -207,6 +219,7 @@ public class PinnedLineWidget
          display_.removeLineWidget(lineWidget_);
          lineWidget_.setRow(startAnchor_.getRow());
          display_.addLineWidget(lineWidget_);
+         parent_ = lineWidget_.getElement().getParentElement();
          createEndAnchor();
 
          // restore state
@@ -254,6 +267,7 @@ public class PinnedLineWidget
    private final Widget widget_;
    private final Host host_;
    private final HandlerRegistrations registrations_;
+   private Element parent_;
    private int lastWidgetRow_;
 
    private Anchor endAnchor_;

@@ -7766,7 +7766,7 @@ public class TextEditingTarget implements
    }
    
    // physical state (guaranteed to be loaded and addressable)
-   private boolean isVisualEditorActive() 
+   public boolean isVisualEditorActive() 
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }

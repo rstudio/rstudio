@@ -27,9 +27,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.SimplePanel;
 
 /**
- * Represents the UI for a notebook chunk output in code view.
+ * A host for notebook chunk output for the code editing mode; it wraps a
+ * ChunkOutputWidget. It is complemented by ChunkOutputPanmirrorUi, which wraps
+ * chunk output in visual editing mode; these classes can both wrap the same
+ * output widget, and trade ownership of it via detach/reattach.
  */
 public class ChunkOutputCodeUi extends ChunkOutputUi
 {
@@ -39,11 +43,14 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       super(docId, def, widget);
       display_ = display;
 
+      wrapper_ = new SimplePanel();
+
       ChunkOutputWidget outputWidget = getOutputWidget();
       outputWidget.setEmbeddedStyle(false);
+      wrapper_.add(outputWidget);
 
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
-            display_, outputWidget_, def.getRow(), def, lineWidgetHost);
+            display_, wrapper_, def.getRow(), def, lineWidgetHost);
    }
    
    public ChunkOutputCodeUi(ChunkOutputPanmirrorUi visual, DocDisplay display, 
@@ -171,8 +178,22 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       return lineWidget_.moving();
    }
 
+   @Override
+   public void reattach()
+   {
+      outputWidget_.setEmbeddedStyle(false);
+      wrapper_.add(outputWidget_);
+   }
+
+   @Override
+   public void detach()
+   {
+      wrapper_.clear();
+   }
+
    private HandlerRegistration renderHandlerReg_ = null;
 
    private final PinnedLineWidget lineWidget_;
    private final DocDisplay display_;
+   private final SimplePanel wrapper_;
 }

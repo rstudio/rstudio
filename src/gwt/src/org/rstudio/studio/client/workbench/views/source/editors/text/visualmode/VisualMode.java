@@ -840,6 +840,9 @@ public class VisualMode implements VisualModeEditorSync,
                syncOnIdle_.resume();
                saveLocationOnIdle_.resume();
                
+               // (re)inject notebook output from the editor
+               target_.getNotebook().migrateCodeModeOutput();
+               
                // execute completed hook
                Scheduler.get().scheduleDeferred(completed);  
                

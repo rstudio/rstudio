@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
@@ -23,15 +22,29 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 
 import com.google.gwt.dom.client.Style.Unit;
 
+/**
+ * A host for notebook chunk output for visual editing mode; it wraps a
+ * ChunkOutputWidget. It is complemented by ChunkOutputCodeUi, which wraps chunk
+ * output in code (raw text) mode; these classes can both wrap the same output
+ * widget, and trade ownership of it via detach/reattach.
+ */
 public class ChunkOutputPanmirrorUi extends ChunkOutputUi
 {
    public ChunkOutputPanmirrorUi(String docId, VisualMode visualMode, ChunkDefinition def, 
-                                 ChunkOutputWidget widget)
+                                 ChunkOutputWidget widget, VisualModeChunk chunk)
    {
       super(docId, def, widget);
       
-      // Find the visual mode chunk editor associated with this row of the document
-      chunk_ = visualMode.getChunkAtRow(def.getRow());
+      if (chunk == null)
+      {
+         // Find the visual mode chunk editor associated with this row of the
+         // document, if unknown
+         chunk_ = visualMode.getChunkAtRow(def.getRow());
+      }
+      else
+      {
+         chunk_ = chunk;
+      }
       
       ChunkOutputWidget outputWidget = getOutputWidget();
       outputWidget.setEmbeddedStyle(true);
@@ -44,10 +57,11 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       }
    }
    
-   public ChunkOutputPanmirrorUi(ChunkOutputCodeUi codeOutput, VisualMode visualMode)
+   public ChunkOutputPanmirrorUi(ChunkOutputCodeUi codeOutput, VisualMode visualMode, 
+                                 VisualModeChunk chunk)
    {
       this(codeOutput.getDocId(), visualMode, codeOutput.getDefinition(), 
-            codeOutput.getOutputWidget());
+            codeOutput.getOutputWidget(), chunk);
    }
 
    @Override
@@ -84,7 +98,31 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    @Override
    public void ensureVisible()
    {
+      // This is used in code view to scroll the widget into view; currently we
+      // don't replicate that behavior in visual mode.
+   }
 
+   @Override
+   public void detach()
+   {
+      if (!attached_)
+         return;
+
+      chunk_.removeWidget();
+
+      attached_ = false;
+   }
+
+   @Override
+   public void reattach()
+   {
+      if (attached_)
+         return;
+      
+      outputWidget_.setEmbeddedStyle(true);
+      chunk_.reloadWidget();
+
+      attached_ = true;
    }
 
    @Override
