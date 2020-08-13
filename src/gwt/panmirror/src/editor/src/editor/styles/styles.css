@@ -242,3 +242,9 @@ p.ProseMirror-selectednode {
 .pm-dark-mode .pm-spelling-error {
   background-image: url("images/spelling-dark.svg");
 }
+
+.pm-nbsp::before {
+  content: '·';
+  position: relative;
+  left: 2px;
+}
