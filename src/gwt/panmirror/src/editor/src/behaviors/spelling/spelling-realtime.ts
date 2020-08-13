@@ -220,7 +220,7 @@ function spellingDecorations(
     if (!spelling.checkWord(spellcheckerWord(wordText))) {
       const attrs: DecorationAttrs = {};
       const spec: { [key: string]: any } = {};
-      if (excludeCursor && (state.selection.head === word.end)) {
+      if (excludeCursor && state.selection.head > word.start && state.selection.head <= word.end) {
         spec.cursor = true;
       } else {
         attrs.class = kSpellingErrorClass;
