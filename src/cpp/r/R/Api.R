@@ -215,8 +215,8 @@
 
 .rs.addApiFunction("navigateToFile", function(filePath = character(0),
                                               line = 1L,
-                                               col = 1L,
-                                               moveCursor = TRUE) {
+                                              col = 1L,
+                                              moveCursor = TRUE) {
    # validate file argument
    if (!is.character(filePath)) {
       stop("filePath must be a character")
