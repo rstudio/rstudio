@@ -255,7 +255,7 @@ public class ToolbarButton extends FocusWidget
 
    public void setClassId(String name)
    {
-      if (StringUtil.isNullOrEmpty(displayClassId_))
+      if (!StringUtil.isNullOrEmpty(displayClassId_))
          ClassIds.removeClassId(getElement(), displayClassId_);
 
       displayClassId_ = ClassIds.TOOLBAR_BTN + "_" + ClassIds.idSafeString(getTitle());

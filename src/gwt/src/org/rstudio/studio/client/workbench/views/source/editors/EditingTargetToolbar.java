@@ -30,11 +30,11 @@ public class EditingTargetToolbar extends Toolbar
 {
    public EditingTargetToolbar(Commands commands, boolean includePopout, SourceColumn column)
    {
-      this("", commands, includePopout, column);
+      this(commands, includePopout, column, "");
    }
 
-   public EditingTargetToolbar(String id, Commands commands, boolean includePopout,
-                               SourceColumn column)
+   public EditingTargetToolbar(Commands commands, boolean includePopout,
+                               SourceColumn column, String id)
    {
       super("Code Editor Tab");
 
@@ -49,18 +49,16 @@ public class EditingTargetToolbar extends Toolbar
       addLeftSeparator();
       if (includePopout)
       {
-         ToolbarButton toolbarBtn = null;
          if (SourceWindowManager.isMainSourceWindow())
          {
-            addLeftWidget(toolbarBtn =
+            addLeftWidget(
                mgr.getSourceCommand(commands.popoutDoc(), column).createToolbarButton());
          }
          else
          {
-            addLeftWidget(toolbarBtn =
+            addLeftWidget(
                mgr.getSourceCommand(commands.returnDocToMain(), column).createToolbarButton());
          }
-         toolbarBtn.setClassId("");
          addLeftSeparator();
       }
    }
@@ -95,5 +93,5 @@ public class EditingTargetToolbar extends Toolbar
       return widget;
    }
 
-   private String id_;
+   private final String id_;
 }
