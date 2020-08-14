@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
@@ -47,7 +48,8 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       }
       
       ChunkOutputWidget outputWidget = getOutputWidget();
-      outputWidget.setEmbeddedStyle(true);
+      setupOutputWidget();
+      outputWidget_.getElement().getStyle().clearHeight();
 
       // If we found one, hook it up to the output widget
       if (chunk_ != null)
@@ -57,6 +59,16 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       }
    }
    
+
+   @Override
+   public void applyHeight(int heightPx)
+   {
+      // This is a no-op for Panmirror chunks as they are naturally sized; we
+      // just cache the height in case the chunk needs to be rendered at a fixed
+      // size later (in code view)
+      height_ = heightPx;
+   }
+
    public ChunkOutputPanmirrorUi(ChunkOutputCodeUi codeOutput, VisualMode visualMode, 
                                  VisualModeChunk chunk)
    {
@@ -76,7 +88,7 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
                CHUNK_COLLAPSED_HEIGHT :
                Math.max(MIN_CHUNK_HEIGHT, outputHeight);
 
-      widget.getElement().getStyle().setHeight(height, Unit.PX);
+      applyHeight(height);
    }
 
    @Override
@@ -103,6 +115,12 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    }
 
    @Override
+   public ChunkOutputSize getChunkOutputSize()
+   {
+      return ChunkOutputSize.Natural;
+   }
+
+   @Override
    public void detach()
    {
       if (!attached_)
@@ -119,7 +137,8 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       if (attached_)
          return;
       
-      outputWidget_.setEmbeddedStyle(true);
+      setupOutputWidget();
+      
       chunk_.reloadWidget();
 
       attached_ = true;
@@ -132,6 +151,11 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
          return null;
       
       return chunk_.getScope();
+   }
+   
+   private void setupOutputWidget()
+   {
+      outputWidget_.setEmbeddedStyle(true);
    }
    
    private final VisualModeChunk chunk_;

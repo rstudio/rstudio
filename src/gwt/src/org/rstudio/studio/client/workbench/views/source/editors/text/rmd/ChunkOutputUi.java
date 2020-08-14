@@ -24,7 +24,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
@@ -48,7 +47,7 @@ public abstract class ChunkOutputUi
          // create the widget
          widget = new ChunkOutputWidget(docId_, def.getChunkId(), 
                def.getOptions(), def.getExpansionState(), true, this, 
-               ChunkOutputSize.Default);
+               getChunkOutputSize());
 
          // sync the widget's expanded/collapsed state to the underlying chunk
          // definition (which is persisted)
@@ -79,7 +78,7 @@ public abstract class ChunkOutputUi
       // (until it gets some output)
       if (!hasOutput)
       {
-         ele.getStyle().setHeight(0, Unit.PX);
+         applyHeight(0);
          outputWidget_.setVisible(false);
       }
       
@@ -94,6 +93,8 @@ public abstract class ChunkOutputUi
    
    public abstract void detach();
    public abstract void reattach();
+   public abstract void applyHeight(int heightPx);
+   public abstract ChunkOutputSize getChunkOutputSize();
    
    public String getChunkId()
    {
@@ -163,6 +164,7 @@ public abstract class ChunkOutputUi
 
    protected final ChunkOutputWidget outputWidget_;
    protected boolean attached_ = false;
+   protected int height_ = 0;
 
    private final String chunkId_;
    private final String docId_;

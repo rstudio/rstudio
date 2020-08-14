@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -97,7 +98,7 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
                CHUNK_COLLAPSED_HEIGHT :
                Math.max(MIN_CHUNK_HEIGHT, outputHeight);
 
-      widget.getElement().getStyle().setHeight(height, Unit.PX);
+      applyHeight(height);
       display_.onLineWidgetChanged(lineWidget_.getLineWidget());
       
       // if we need to ensure that this output is visible, wait for the event
@@ -182,6 +183,7 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
    public void reattach()
    {
       outputWidget_.setEmbeddedStyle(false);
+      applyHeight(height_);
       wrapper_.add(outputWidget_);
    }
 
@@ -189,6 +191,18 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
    public void detach()
    {
       wrapper_.clear();
+   }
+
+   @Override
+   public ChunkOutputSize getChunkOutputSize()
+   {
+      return ChunkOutputSize.Default;
+   }
+
+   public void applyHeight(int heightPx)
+   {
+      outputWidget_.getElement().getStyle().setHeight(heightPx, Unit.PX);
+      height_ = heightPx;
    }
 
    private HandlerRegistration renderHandlerReg_ = null;

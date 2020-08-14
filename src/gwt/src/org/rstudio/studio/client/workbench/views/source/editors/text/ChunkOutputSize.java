@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-public enum ChunkOutputSize {
-   // an ordinary chunk output
+public enum ChunkOutputSize
+{
+   // an ordinary chunk output, manually sized
    Default,
+   
+   // a chunk output which is sized naturally
+   Natural,
    
    // a chunk output which is not associated with a code chunk
    Bare,

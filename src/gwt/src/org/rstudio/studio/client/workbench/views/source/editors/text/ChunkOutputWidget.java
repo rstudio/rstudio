@@ -369,7 +369,8 @@ public class ChunkOutputWidget extends Composite
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       
-      if (chunkOutputSize_ != ChunkOutputSize.Full)
+      if (chunkOutputSize_ != ChunkOutputSize.Full &&
+          chunkOutputSize_ != ChunkOutputSize.Natural)
          frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
       // allocate some extra space so the cursor doesn't touch the output frame
@@ -600,6 +601,7 @@ public class ChunkOutputWidget extends Composite
       if (embedded)
       {
          addStyleName(style.embedded());
+         chunkOutputSize_ = ChunkOutputSize.Natural;
       }
       else
       {
@@ -869,6 +871,7 @@ public class ChunkOutputWidget extends Composite
       getElement().removeClassName(style.collapsed());
       root_.getElement().getStyle().clearOverflow();
       root_.getElement().getStyle().clearOpacity();
+      frame_.getElement().getStyle().clearHeight();
    }
    
    private void attachPresenter(ChunkOutputPresenter presenter)
