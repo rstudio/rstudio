@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
 
-import com.google.inject.Provider;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.RegexUtil;
@@ -85,7 +84,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentSe
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -149,8 +147,7 @@ public class EnvironmentPresenter extends BasePresenter
                                Source source,
                                DebugCommander debugCommander,
                                FileTypeRegistry fileTypeRegistry,
-                               DataImportPresenter dataImportPresenter,
-                               Provider<SourceColumnManager> pSourceColumnManager)
+                               DataImportPresenter dataImportPresenter)
    {
       super(view);
       binder.bind(commands, this);
@@ -173,8 +170,7 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
-      pSourceColumnManager_ = pSourceColumnManager;
-      
+
       requeryContextTimer_ = new Timer()
       {
          @Override
@@ -1021,8 +1017,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
-   private final Provider<SourceColumnManager> pSourceColumnManager_;
-   
+
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;

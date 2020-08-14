@@ -15,12 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import com.google.gwt.event.shared.EventHandler;
+
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 @JavaScriptSerializable
-public class ScrollToPositionEvent
-   extends CrossWindowEvent<ScrollToPositionEvent.Handler>
+public class ScrollToPositionEvent extends CrossWindowEvent<ScrollToPositionEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -63,4 +63,3 @@ public class ScrollToPositionEvent
    private int column_;
    public static final Type<Handler> TYPE = new Type<>();
 }
-
