@@ -39,6 +39,10 @@ function Strong(s)
   return ''
 end
 
+function Underline(s)
+  return ''
+end
+
 function Subscript(s)
   return ''
 end
@@ -158,4 +162,13 @@ end
 function Div(s, attr)
   return ''
 end
+
+-- ignore tokens we don't expect
+local meta = {}
+meta.__index =
+  function(_, key)
+    return function() return "" end
+  end
+setmetatable(_G, meta)
+
 

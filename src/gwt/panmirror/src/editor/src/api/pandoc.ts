@@ -172,6 +172,7 @@ export enum PandocTokenType {
   Subscript = 'Subscript',
   Strikeout = 'Strikeout',
   SmallCaps = 'SmallCaps',
+  Underline = 'Underline',
   Quoted = 'Quoted',
   RawInline = 'RawInline',
   RawBlock = 'RawBlock',
