@@ -213,7 +213,10 @@
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect, PACKAGE = "(embedding)"))
 })
 
-.rs.addApiFunction("navigateToFile", function(filePath = character(0), line = 1L, col = 1L) {
+.rs.addApiFunction("navigateToFile", function(filePath = character(0),
+                                              line = 1L,
+                                               col = 1L,
+                                               moveCursor = TRUE) {
    # validate file argument
    if (!is.character(filePath)) {
       stop("filePath must be a character")
@@ -249,7 +252,8 @@
    .rs.enqueClientEvent("jump_to_function", list(
       file_name     = .rs.scalar(filePath),
       line_number   = .rs.scalar(line),
-      column_number = .rs.scalar(col)))
+      column_number = .rs.scalar(col),
+      move_cursor   = .rs.scalar(moveCursor)))
 
    invisible(NULL)
 })

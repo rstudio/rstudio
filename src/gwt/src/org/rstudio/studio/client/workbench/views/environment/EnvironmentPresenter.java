@@ -308,7 +308,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (StringUtil.isNullOrEmpty(event.getFileName()))
                eventBus_.fireEvent(new ScrollToPositionEvent(event.getLineNumber(),
-                  event.getColumnNumber()));
+                  event.getColumnNumber(), event.getMoveCursor()));
             else
             {
                FilePosition pos = FilePosition.create(event.getLineNumber(),
@@ -319,6 +319,7 @@ public class EnvironmentPresenter extends BasePresenter
                   destFile,
                   pos,
                   fileTypeRegistry_.getTextTypeForFile(destFile),
+                  event.getMoveCursor(),
                   NavigationMethods.DEFAULT));
             }
          }

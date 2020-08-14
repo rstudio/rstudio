@@ -31,10 +31,11 @@ public class ScrollToPositionEvent extends CrossWindowEvent<ScrollToPositionEven
    {
    }
 
-   public ScrollToPositionEvent(int line, int column)
+   public ScrollToPositionEvent(int line, int column, boolean moveCursor)
    {
       line_ = line;
       column_ = column;
+      moveCursor_ = moveCursor;
    }
 
    public int getLine()
@@ -45,6 +46,11 @@ public class ScrollToPositionEvent extends CrossWindowEvent<ScrollToPositionEven
    public int getColumn()
    {
       return column_;
+   }
+
+   public boolean getMoveCursor()
+   {
+      return moveCursor_;
    }
    
    @Override
@@ -61,5 +67,6 @@ public class ScrollToPositionEvent extends CrossWindowEvent<ScrollToPositionEven
 
    private int line_;
    private int column_;
+   private boolean moveCursor_;
    public static final Type<Handler> TYPE = new Type<>();
 }

@@ -3065,25 +3065,19 @@ public class AceEditor implements DocDisplay,
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      navigateToPosition(position, recordCurrent, false);
+      navigateToPosition(position, recordCurrent, false, true);
    }
 
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
-                                  boolean highlightLine)
+                                  boolean highlightLine,
+                                  boolean restoreCursorPosition)
    {
       if (recordCurrent)
          recordCurrentNavigationPosition();
 
-      navigate(position, true, highlightLine, false);
-   }
-
-   @Override
-   public void navigateToPositionWithoutFocus(SourcePosition position,
-                                              boolean highlightLine)
-   {
-      navigate(position, false, highlightLine, true);
+      navigate(position, true, highlightLine, restoreCursorPosition);
    }
 
    @Override

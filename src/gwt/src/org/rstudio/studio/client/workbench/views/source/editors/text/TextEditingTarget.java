@@ -1194,7 +1194,7 @@ public class TextEditingTarget implements
                                   boolean highlightLine)
    {
       ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, false);
       });
    }
    
@@ -1202,26 +1202,13 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine,
+                                  boolean moveCursor,
                                   Command onNavigationCompleted)
    {
       ensureTextEditorActive(() -> {
-         
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, !moveCursor);
          if (onNavigationCompleted != null)
             onNavigationCompleted.execute();
-         
-      });
-   }
-
-   @Override
-   public void navigateToPositionWithoutFocus(SourcePosition position,
-                                              boolean highlightLine,
-                                              Command onNavigationComplete)
-   {
-      ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPositionWithoutFocus(position, highlightLine);
-         if (onNavigationComplete != null)
-            onNavigationComplete.execute();
       });
    }
 

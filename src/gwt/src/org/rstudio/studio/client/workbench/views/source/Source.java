@@ -1693,7 +1693,7 @@ public class Source implements InsertSourceHandler,
          return;
       FilePosition pos = FilePosition.create(event.getLine(),
          event.getColumn());
-      columnManager_.scrollToPosition(pos);
+      columnManager_.scrollToPosition(pos, event.getMoveCursor());
    }
 
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
@@ -1810,7 +1810,8 @@ public class Source implements InsertSourceHandler,
             event.getPosition(),
             null,
             event.getNavigationMethod(),
-            false);
+            false,
+            event.getMoveCursor());
    }
 
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
@@ -1823,6 +1824,7 @@ public class Source implements InsertSourceHandler,
                        event.getPosition(),
                        event.getPattern(),
                        NavigationMethods.HIGHLIGHT_LINE,
+                       true,
                        true);
 
    }
@@ -1884,7 +1886,8 @@ public class Source implements InsertSourceHandler,
                                  final FilePosition position,
                                  final String pattern,
                                  final int navMethod,
-                                 final boolean forceHighlightMode)
+                                 final boolean forceHighlightMode,
+                                 final boolean moveCursor)
    {
       // if the navigation should happen in another window, do that instead
       NavigationResult navResult =
@@ -2008,6 +2011,7 @@ public class Source implements InsertSourceHandler,
                            srcPosition,
                            false,
                            highlight,
+                           moveCursor,
                            onNavigationCompleted);
                   }
                }

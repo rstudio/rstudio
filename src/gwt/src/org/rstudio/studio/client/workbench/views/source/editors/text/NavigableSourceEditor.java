@@ -32,10 +32,8 @@ public interface NavigableSourceEditor
    
    void navigateToPosition(SourcePosition position, 
                            boolean recordCurrentPosition,
-                           boolean highlightLine);
-
-   void navigateToPositionWithoutFocus(SourcePosition position,
-                                       boolean highlightLine);
+                           boolean highlightLine,
+                           boolean restoreCursorPosition);
 
    void restorePosition(SourcePosition position);
    
