@@ -17,7 +17,7 @@ import { MarkType, Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 
 import { EditorWordSource, EditorWordRange, EditorUISpelling, kCharClassNonWord } from "../../api/spelling";
-import { PandocMark } from '../../api/mark';
+import { PandocMark, getMarkRange } from '../../api/mark';
 
 export const beginDocPos = () => 1;
 export const endDocPos = (doc: ProsemirrorNode) => doc.nodeSize - 2;
@@ -56,9 +56,9 @@ export function getWords(
     const endWordPos = findEndWord(state, currentPos, spelling.classifyCharacter);
 
     // add word if it doesn't have an excluded type
-    if (!excluded.some(markType => state.doc.rangeHasMark(currentPos, endWordPos, markType))) {
-      const wordsText = state.doc.textBetween(currentPos, endWordPos);
-      words.push(...spelling.breakWords(wordsText).map(wordRange => {
+    if (!excludeWord(state.doc, currentPos, endWordPos, excluded)) {
+      const wordText = state.doc.textBetween(currentPos, endWordPos);
+      words.push(...spelling.breakWords(wordText).map(wordRange => {
         return {
           start: currentPos + wordRange.start,
           end: currentPos + wordRange.end
@@ -84,6 +84,27 @@ export function getWords(
     }
   };
 }
+
+function excludeWord(doc: ProsemirrorNode, from: number, to: number, excluded: MarkType[]) {
+
+  // does it have one of our excluded mark types?
+  if (excluded.some(markType => doc.rangeHasMark(from, to, markType))) {
+    return true;
+  }
+
+  // it is in a link mark where the link text is a url?
+  const schema = doc.type.schema;
+  if (doc.rangeHasMark(from, to, schema.marks.link)) {
+    const range = getMarkRange(doc.resolve(from), schema.marks.link);
+    if (range && /^[a-z]+:\/\/.*$/.test(doc.textBetween(range.from, range.to))) {
+      return true;
+    }
+  }
+
+  // don't exclude
+  return false;
+}
+
 
 export function advanceToWord(state: EditorState, pos: number, classifier: (ch: number) => number) {
   while (pos < endDocPos(state.doc)) {
