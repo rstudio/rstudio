@@ -107,10 +107,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
       add(PanmirrorCommands.TableNextCell, "Table:::Next Cell");
       add(PanmirrorCommands.TablePreviousCell, "Table:::Previous Cell");
-      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left");
-      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right");
-      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center");
-      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
+      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default", Roles.getMenuitemcheckboxRole());
      
       // insert
       add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
