@@ -218,10 +218,11 @@
                                               col = 1L,
                                               moveCursor = TRUE) {
    # validate file argument
-   if (!is.character(filePath)) {
+   hasFile = !is.null(filePath) && length(filePath) > 0
+   if (hasFile && !is.character(filePath)) {
       stop("filePath must be a character")
    }
-   if (!identical(filePath, character(0)) && !file.exists(filePath)) {
+   if (hasFile && !file.exists(filePath)) {
       stop(filePath, " does not exist.")
    }
    
@@ -238,7 +239,7 @@
       stop("line and column must be numeric values.")
    }
 
-   if (!identical(filePath, character(0)))
+   if (hasFile)
    {
       # expand and alias for client
       filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
