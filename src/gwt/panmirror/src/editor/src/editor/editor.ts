@@ -257,10 +257,6 @@ export class Editor {
   private maxContentWidth = 0;
   private minContentPadding = 0;
 
-  // keep track of whether the last transaction was selection-only
-  // (indicates that we should forward an editing outline location when going to source mode)
-  private lastTrSelectionOnly = false;
-
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
   // initialize the various editor features
@@ -532,9 +528,6 @@ export class Editor {
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
 
-    // do we need to provide an outline location
-    const useOutlineLocation = this.lastTrSelectionOnly;
-
     // get the code
     const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
@@ -542,7 +535,7 @@ export class Editor {
     // return code + perhaps outline location
     return {
       code,
-      location: useOutlineLocation ? getEditingOutlineLocation(this.state) : undefined
+      location: getEditingOutlineLocation(this.state)
     };
   }
 

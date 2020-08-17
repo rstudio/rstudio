@@ -410,7 +410,8 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor and populate with initial content
-    this.chunk = this.ui.chunks.createChunkEditor('ace', this.node.attrs.md_index);
+    this.chunk = this.ui.chunks.createChunkEditor('ace',
+      this.node.attrs.md_index, this.getPos);
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
     this.aceEditor.setValue(this.node.textContent);
     this.aceEditor.clearSelection();

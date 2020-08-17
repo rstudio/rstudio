@@ -44,9 +44,8 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    public PanmirrorUIChunks uiChunks()
    {
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
-      chunks.createChunkEditor = (type, index) ->
+      chunks.createChunkEditor = (type, index, getPos) ->
       {
-
          // only know how to create ace instances right now
          if (!type.equals("ace"))
          {
@@ -55,7 +54,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
          
          VisualModeChunk chunk = new VisualModeChunk(
-               index, sentinel_, parent_, 
+               index, getPos, sentinel_, parent_, 
                target_.getNotebook(), target_.getRCompletionContext());
 
          // Add the chunk to our index, and remove it when the underlying chunk
@@ -88,6 +87,27 @@ public class VisualModeChunks implements ChunkDefinition.Provider
             continue;
          if (row >= scope.getPreamble().getRow() &&
              row <= scope.getEnd().getRow())
+         {
+            return chunk;
+         }
+      }
+      return null;
+   }
+   
+   /**
+    * Find the visual mode chunk editor corresponding to the given visual
+    * position.
+    * 
+    * @param pos The visual position (as reported by prosemirror)
+    * 
+    * @return A visual mode chunk editor at the given position, or null if one
+    *   was not found.
+    */
+   public VisualModeChunk getChunkAtVisualPosition(int pos)
+   {
+      for (VisualModeChunk chunk: chunks_)
+      {
+         if (chunk.getVisualPosition() == pos)
          {
             return chunk;
          }

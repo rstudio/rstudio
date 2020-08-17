@@ -21,6 +21,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -45,11 +46,14 @@ import jsinterop.base.Js;
 public class VisualModeChunk
 {
    public VisualModeChunk(int index,
+                          PanmirrorUIChunks.GetVisualPosition getPos,
                           DocUpdateSentinel sentinel,
                           DocDisplay parent,
                           TextEditingTargetNotebook notebook, 
                           CompletionContext rCompletionContext)
    {
+      getPos_ = getPos;
+
       ChunkOutputUi output = null; 
       if (index >= 0)
       {
@@ -203,6 +207,21 @@ public class VisualModeChunk
    }
    
    /**
+    * Updates the scope of the code chunk in the parent editor
+    * 
+    * @param scope
+    */
+   public void setScope(Scope scope)
+   {
+      scope_ = scope;
+      
+      if (def_ != null)
+      {
+         def_.setRow(scope.getEnd().getRow());
+      }
+   }
+   
+   /**
     * Loads a chunk output widget into the chunk.
     * 
     * @param widget The chunk output widget
@@ -237,6 +256,11 @@ public class VisualModeChunk
    public void setDefinition(ChunkDefinition def)
    {
       def_ = def;
+   }
+   
+   public int getVisualPosition()
+   {
+      return getPos_.getVisualPosition();
    }
    
    public void reloadWidget()
@@ -313,9 +337,10 @@ public class VisualModeChunk
    
    private ChunkDefinition def_;
    private ChunkOutputWidget widget_;
+   private Scope scope_;
    
+   private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
-   private final Scope scope_;
    private final PanmirrorUIChunkEditor editor_;
    private final List<Command> destroyHandlers_;
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;

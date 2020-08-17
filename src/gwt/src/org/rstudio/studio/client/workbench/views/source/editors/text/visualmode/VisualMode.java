@@ -22,6 +22,7 @@ import org.rstudio.core.client.BrowseCap;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.PreemptiveTaskQueue;
 import org.rstudio.core.client.Rendezvous;
 import org.rstudio.core.client.SerializedCommand;
@@ -34,6 +35,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -48,6 +50,10 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItemType;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
@@ -57,6 +63,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
@@ -280,7 +287,8 @@ public class VisualMode implements VisualModeEditorSync,
          
          withPanmirror(() -> {
             
-            VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromConfig(panmirror_.getPandocFormatConfig(true));
+            VisualModeMarkdownWriter.Options writerOptions = 
+                  visualModeWriterOptions_.optionsFromConfig(panmirror_.getPandocFormatConfig(true));
             
             panmirror_.getMarkdown(writerOptions.options, kSerializationProgressDelayMs, 
                                    new CommandWithArg<JsObject>() {
@@ -289,9 +297,23 @@ public class VisualMode implements VisualModeEditorSync,
                {
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
                   rv.arrive(() -> {
-                     if (markdown == null) {
+                     if (markdown == null)
+                     {
                         // note that ready.execute() is never called in the error case
                         return;
+                     }
+                     
+                     // we are about to mutate the document, so create a single
+                     // shot handler that will adjust the known position of
+                     // items in the outline
+                     if (markdown.location != null)
+                     {
+                        final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+                        handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
+                        {
+                           alignScopeOutline(markdown.location);
+                           handler.getValue().removeHandler();
+                        }));
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
@@ -304,7 +326,7 @@ public class VisualMode implements VisualModeEditorSync,
                      {
                         getSourceEditor().setCode(markdown.code);
                      }
-                    
+                     
                      // if the format comment has changed then show the reload prompt
                      if (panmirrorFormatConfig_.requiresReload()) {
                         view_.showPanmirrorFormatChanged(() -> {
@@ -479,7 +501,7 @@ public class VisualMode implements VisualModeEditorSync,
                         { 
                            panmirror_.focus();
                            panmirror_.setEditingLocation(
-                                 visualModeLocation_.getSourceOutlneLocation(), 
+                                 visualModeLocation_.getSourceOutlineLocation(), 
                                  visualModeLocation_.savedEditingLocation()
                                  ); 
                         }
@@ -1252,6 +1274,63 @@ public class VisualMode implements VisualModeEditorSync,
    {
       docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
       view_.showWarningBar(message);
+   }
+   
+   /**
+    * Align the document's scope tree with the code chunks in visual mode.
+    * 
+    * @param location Array of outline locations from visual mode
+    */
+   private void alignScopeOutline(PanmirrorEditingOutlineLocation location)
+   {
+      // Get all of the chunks from the document (code view)
+      ArrayList<Scope> chunkScopes = new ArrayList<Scope>();
+      JsArray<Scope> scopes = docDisplay_.getScopeTree();
+      for (int i = 0; i < scopes.length(); i++)
+      {
+         if (scopes.get(i).isChunk())
+         {
+            chunkScopes.add(scopes.get(i));
+         }
+      }
+      
+      // Get all of the chunks from the outline emitted by visual mode
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = 
+            new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      for (int j = 0; j < location.items.length; j++)
+      {
+         if (location.items[j].type == PanmirrorOutlineItemType.RmdChunk)
+         {
+            chunkItems.add(location.items[j]);
+            Debug.logObject(location.items[j]);
+         }
+      }
+      
+      // Refuse to proceed if cardinality doesn't match (consider: does this
+      // need to account for deeply nested chunks that might appear in one
+      // outline but not the other?)
+      if (chunkScopes.size() != chunkItems.size())
+      {
+         Debug.logWarning(chunkScopes.size() + " chunks in scope tree, but " + 
+                  chunkItems.size() + " chunks in visual editor.");
+         return;
+      }
+
+      for (int k = 0; k < chunkItems.size(); k++)
+      {
+         VisualModeChunk chunk = visualModeChunks_.getChunkAtVisualPosition(
+               chunkItems.get(k).position);
+         if (chunk == null)
+         {
+            // This is normal; it is possible that we haven't created a chunk
+            // editor at this position yet.
+            continue;
+         }
+         Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
+               " moved from" + chunk.getScope().getBodyStart().getRow() + " to " +
+               chunkScopes.get(k).getBodyStart().getRow());
+         chunk.setScope(chunkScopes.get(k));
+      }
    }
    
    private Commands commands_;
