@@ -1003,7 +1003,9 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onBeforeShow()
    {
-      if (getTabCount() == 0 && newTabPending_ == 0)
+      // All columns aside from the main column should open with a document
+      if (!StringUtil.equals(name_, SourceColumnManager.MAIN_SOURCE_NAME) &&
+          getTabCount() == 0 && newTabPending_ == 0)
       {
          // Avoid scenarios where the Source tab comes up but no tabs are
          // in it. (But also avoid creating an extra source tab when there

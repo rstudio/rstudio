@@ -319,22 +319,26 @@ public class PaneManager
       }
       panel_.initialize(sourceColumns, left_, right_);
 
-      // count the number of source docs assigned to this window
-      JsArray<SourceDocument> docs =
-            session_.getSessionInfo().getSourceDocuments();
-      String windowId = SourceWindowManager.getSourceWindowId();
-      int numDocs = 0;
-      for (int i = 0; i < docs.length(); i++)
-      {
-         String docWindowId = docs.get(i).getSourceWindowId();
-         if (docWindowId == windowId)
-         {
-            numDocs++;
-         }
-      }
-
       for (LogicalWindow window : sourceLogicalWindows_)
       {
+         // count the number of source docs assigned to this window
+         JsArray<SourceDocument> docs =
+            session_.getSessionInfo().getSourceDocuments();
+         String windowId = SourceWindowManager.getSourceWindowId();
+         int numDocs = 0;
+         for (int i = 0; i < docs.length(); i++)
+         {
+            String docWindowId = docs.get(i).getSourceWindowId();
+            String columnName = docs.get(i).getSourceDisplayName();
+            LogicalWindow columnWindow =
+               getParentLogicalWindow(sourceColumnManager_.getByName(columnName).asWidget().getElement());
+            if (docWindowId == windowId &&
+                window == columnWindow)
+            {
+               numDocs++;
+            }
+         }
+
          if (numDocs == 0 && window.getState() != WindowState.HIDE)
          {
             window.onWindowStateChange(

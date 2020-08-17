@@ -702,7 +702,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public EditingTarget addTab(SourceDocument doc, boolean atEnd,
                                int mode, SourceColumn column)
    {
-      if (column == null)
+      if (column == null || getByName(column.getName()) == null)
          column = getActive();
       return column.addTab(doc, atEnd, mode);
    }
