@@ -1,0 +1,13 @@
+
+.pm-completion-cite-warning {
+  background: #fdf5e0;
+  margin-top: -5px;
+  margin-left: -5px;
+  margin-right: -5px;
+  margin-bottom: 5px;
+  border-bottom: solid 1px;
+  padding: 4px 4px 4px 16px;
+  text-align: left;
+  font-size: 9pt;
+  opacity: 0.8; 
+}

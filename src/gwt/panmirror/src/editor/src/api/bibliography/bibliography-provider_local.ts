@@ -107,6 +107,10 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return Promise.resolve(toBibLaTeX(id, csl));
   }
 
+  public warningMessage(): string | undefined {
+    return undefined;
+  }
+
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
 
     const kPermissableFileExtensions = ['bib', 'yaml', 'yml', 'json'];

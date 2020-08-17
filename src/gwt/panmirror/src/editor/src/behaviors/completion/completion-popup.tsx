@@ -128,19 +128,26 @@ const CompletionList: React.FC<CompletionListProps> = props => {
 
 function completionsHeader(handler: CompletionHandler, completionCount: number, props: CompletionListProps) {
   if (handler.view.header) {
-    const header = React.createElement(handler.view.header.component, props);
-    return (
-      <thead>
-        <tr>
-          <th
-            style={{ lineHeight: handler.view.header.height + 'px' }}
-            colSpan={props.handler.view.horizontal ? completionCount : undefined}
-          >
-            {header}
-          </th>
-        </tr>
-      </thead>
-    );
+    const completionHeader = handler.view.header();
+    const headerProps = { message: completionHeader?.message, ...props };
+
+    if (completionHeader) {
+      const header = React.createElement(completionHeader.component, headerProps);
+      return (
+        <thead>
+          <tr>
+            <th
+              style={{ lineHeight: completionHeader.height + 'px' }}
+              colSpan={props.handler.view.horizontal ? completionCount : undefined}
+            >
+              {header}
+            </th>
+          </tr>
+        </thead>
+      );
+    } else {
+      return null;
+    }
   } else {
     return null;
   }
@@ -227,7 +234,13 @@ function completionPopupSize(props: CompletionListProps) {
   itemHeight += kBorderPad;
 
   // compute header height
-  const headerHeight = props.handler.view.header ? props.handler.view.header.height + kBorderPad : 0;
+  let headerHeight = 0;
+  if (props.handler.view.header) {
+    const completionHeader = props.handler.view.header();
+    if (completionHeader) {
+      headerHeight = completionHeader.height + kBorderPad;
+    }
+  }
 
   // complete based on horizontal vs. vertical
   if (props.handler.view.horizontal) {

@@ -30,6 +30,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   private collections: ZoteroCollection[] = [];
   private server: ZoteroServer;
+  private warning: string | undefined;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
@@ -47,10 +48,13 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // Don't send the items back through to the server
         const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
 
-        const useCache = true;
+        // If there is a warning, stop using the cache and force a fresh trip
+        // through the whole pipeline to be sure we're trying to clear that warning
+        const useCache = this.warning === undefined;
 
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
+        this.warning = result.warning;
         if (result.status === "ok") {
 
           if (result.message) {
@@ -109,6 +113,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return Promise.resolve(toBibLaTeX(id, csl));
   }
 
+  public warningMessage(): string | undefined {
+    return this.warning;
+  }
 
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
 

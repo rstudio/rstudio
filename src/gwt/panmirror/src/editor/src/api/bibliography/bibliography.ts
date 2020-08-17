@@ -42,6 +42,7 @@ export interface BibliographyDataProvider {
   items(): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
   generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
+  warningMessage(): string | undefined;
 }
 
 export interface Bibliography {
@@ -162,6 +163,13 @@ export class BibliographyManager {
       }
     }
     return Promise.resolve(toBibLaTeX(id, csl));
+  }
+
+  public warning(): string | undefined {
+    const warningProvider = this.providers.find(provider => provider.warningMessage());
+    if (warningProvider) {
+      return warningProvider.warningMessage();
+    }
   }
 
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {

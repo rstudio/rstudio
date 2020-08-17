@@ -21,7 +21,7 @@ import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, CompletionHeaderProps } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
@@ -34,8 +34,11 @@ import { FocusEvent } from '../../api/event-types';
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
 
+import './cite-completion.css';
+
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
+const kHeaderHeight = 20;
 
 export const kCiteCompletionWidth = 400;
 const kCiteCompletionItemPadding = 10;
@@ -89,6 +92,15 @@ export function citationCompletionHandler(
     },
 
     view: {
+      header: () => {
+        if (bibManager.warning()) {
+          return {
+            component: CompletionWarningHeaderView,
+            height: kHeaderHeight,
+            message: bibManager.warning()
+          };
+        }
+      },
       component: BibliographySourceView,
       key: entry => entry.source.id,
       width: kCiteCompletionWidth,
@@ -150,6 +162,8 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           const managerEntries = () => {
             // Filter duplicate sources
             const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
+
+            const warning = manager.warning();
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
@@ -214,3 +228,15 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     />
   );
 };
+
+
+const CompletionWarningHeaderView: React.FC<CompletionHeaderProps> = props => {
+  return (
+    <div className={'pm-completion-cite-warning pm-pane-border-color'}>
+      {props.ui.context.translateText(props.message || 'An unexpected warning occurred.')}
+    </div>
+  );
+};
+
+
+
