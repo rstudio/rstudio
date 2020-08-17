@@ -57,8 +57,9 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
       'fields': {}
     };
 
+
     const enumerableCSL = csl as any;
-    Object.keys(enumerableCSL).forEach(key => {
+    sortedKeys(csl).forEach(key => {
       const value: any = enumerableCSL[key];
 
       const bibFieldDatas = bibFieldForValue(key, csl.type);
@@ -174,6 +175,8 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
       });
     });
 
+
+
     const bibDB: BibDB = {
       'item': bibObject
     };
@@ -277,5 +280,47 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
       return [key, bibField];
     });
   }
+}
+
+function sortedKeys(csl: CSL) {
+  var pos = 0;
+  const keySortOrder: { [id: string]: number; } = {};
+  keySortOrder['title'] = pos++;
+
+  keySortOrder['author'] = pos++;
+  keySortOrder['editor'] = pos++;
+  keySortOrder['director'] = pos++;
+  keySortOrder['illustrator'] = pos++;
+  keySortOrder['collection-editor'] = pos++;
+  keySortOrder['translator'] = pos++;
+
+  keySortOrder['doi'] = pos++;
+
+  keySortOrder['issued'] = pos++;
+  keySortOrder['event-date'] = pos++;
+
+  keySortOrder['container-title'] = pos++;
+  keySortOrder['collection-title'] = pos++;
+
+  keySortOrder['url'] = pos++;
+
+  keySortOrder['page'] = pos++;
+  keySortOrder['publisher'] = pos++;
+
+  const enumerableCSL = csl as any;
+  const keys = Object.keys(enumerableCSL);
+  const sortedKeys = keys.sort((a, b) => {
+    const aOrder = keySortOrder[a.toLowerCase()];
+    const bOrder = keySortOrder[b.toLowerCase()];
+    if (aOrder && bOrder) {
+      return aOrder - bOrder;
+    } else if (aOrder !== undefined) {
+      return -1;
+    } else if (bOrder !== undefined) {
+      return 1;
+    }
+    return a.localeCompare(b);
+  });
+  return sortedKeys;
 }
 
