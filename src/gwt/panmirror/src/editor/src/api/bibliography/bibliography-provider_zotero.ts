@@ -100,7 +100,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
-    if (csl.key && ui.prefs.zoteroUseBetterBibtex) {
+    if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
       const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, kZoteroMyLibrary);
       if (bibLaTeX) {
         return Promise.resolve(bibLaTeX.message);
