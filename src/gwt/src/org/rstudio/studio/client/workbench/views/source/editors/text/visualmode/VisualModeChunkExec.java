@@ -22,6 +22,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.user.client.Command;
@@ -78,7 +79,7 @@ public class VisualModeChunkExec
       
       // execute the chunk
       final String finalChunkLang = chunkLang;
-      sync_.syncToEditor(false, () -> {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () -> {
          // ensure source is synced with server
          docUpdateSentinel_.withSavedDoc(new Command() {
             @Override

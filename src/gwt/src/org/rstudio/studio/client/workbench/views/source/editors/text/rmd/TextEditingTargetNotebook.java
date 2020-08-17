@@ -1607,9 +1607,16 @@ public class TextEditingTargetNotebook
          public void execute()
          {
             // physically remove chunk output
-            output.remove();
-            visualOutputs_.remove(chunkId);
-            codeOutputs_.remove(chunkId);
+            if (visualOutputs_.containsKey(chunkId))
+            {
+               visualOutputs_.get(chunkId).remove();
+               visualOutputs_.remove(chunkId);
+            }
+            if (codeOutputs_.containsKey(chunkId))
+            {
+               codeOutputs_.get(chunkId).remove();
+               codeOutputs_.remove(chunkId);
+            }
 
             // mark doc dirty if interactive (this is not undoable)
             if (StringUtil.isNullOrEmpty(requestId))

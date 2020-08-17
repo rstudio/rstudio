@@ -15,10 +15,9 @@
 
 package org.rstudio.studio.client.panmirror.location;
 
-import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+@JsType
 public class PanmirrorEditingOutlineLocationItem
 {
    public String type; 

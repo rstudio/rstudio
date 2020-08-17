@@ -168,6 +168,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
@@ -3060,14 +3061,14 @@ public class TextEditingTarget implements
 
    private void applyVisualModeFixups(Command onComplete)
    {
-      // are we writing cannonical?
+      // are we writing canonical?
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
       boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
 
-      // if visual mode is active then we need to grab it's edits before proceeding
+      // if visual mode is active then we need to grab its edits before proceeding
       if (visualMode_.isActivated())
       {
-         visualMode_.syncToEditor(false, onComplete);
+         visualMode_.syncToEditor(SyncType.SyncTypeIdle, onComplete);
       }
 
       // if visual mode is not active and we are doing canonical saves

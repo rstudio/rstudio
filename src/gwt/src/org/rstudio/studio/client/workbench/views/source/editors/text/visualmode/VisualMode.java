@@ -50,7 +50,6 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
-import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItemType;
@@ -147,6 +146,21 @@ public class VisualMode implements VisualModeEditorSync,
       }));
    } 
    
+   /**
+    * Classification of synchronization types from the visual editor to the code
+    * editor.
+    */
+   public enum SyncType
+   {
+      // A synchronization performed on idle 
+      SyncTypeIdle,
+      
+      // A synchronization performed prior to executing code
+      SyncTypeExecution,
+      
+      // A synchronization performed in order to activate the code editor
+      SyncTypeActivate
+   }
    
    @Inject
    public void initialize(Commands commands, 
@@ -218,13 +232,13 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    @Override
-   public void syncToEditor(boolean activatingEditor)
+   public void syncToEditor(SyncType syncType)
    {
-      syncToEditor(activatingEditor, null);
+      syncToEditor(syncType, null);
    }
 
    @Override
-   public void syncToEditor(boolean activatingEditor, Command ready)
+   public void syncToEditor(SyncType syncType, Command ready)
    {
       // This is an asynchronous task, that we want to behave in a mostly FIFO
       // way when overlapping calls to syncToEditor are made.
@@ -281,7 +295,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
       });
 
-      if (isVisualEditorActive() && (activatingEditor || isDirty_)) {
+      if (isVisualEditorActive() && (syncType == SyncType.SyncTypeActivate || isDirty_)) {
          // set flags
          isDirty_ = false;
          
@@ -305,8 +319,9 @@ public class VisualMode implements VisualModeEditorSync,
                      
                      // we are about to mutate the document, so create a single
                      // shot handler that will adjust the known position of
-                     // items in the outline
-                     if (markdown.location != null)
+                     // items in the outline (we do this opportunistically
+                     // unless executing code)
+                     if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
                      {
                         final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
                         handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
@@ -320,7 +335,7 @@ public class VisualMode implements VisualModeEditorSync,
                      if (!writerOptions.wrapChanged) 
                      {
                         TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                        getSourceEditor().applyChanges(changes, activatingEditor); 
+                        getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
                      }
                      else
                      {
@@ -328,8 +343,10 @@ public class VisualMode implements VisualModeEditorSync,
                      }
                      
                      // if the format comment has changed then show the reload prompt
-                     if (panmirrorFormatConfig_.requiresReload()) {
-                        view_.showPanmirrorFormatChanged(() -> {
+                     if (panmirrorFormatConfig_.requiresReload())
+                     {
+                        view_.showPanmirrorFormatChanged(() ->
+                        {
                            // dismiss the warning bar
                            view_.hideWarningBar();
                            // this will trigger the refresh b/c the format changed
@@ -338,8 +355,15 @@ public class VisualMode implements VisualModeEditorSync,
                         });
                      }
                      
-                     // callback
-                     if (ready != null) {
+                     if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                     {
+                        // if syncing for execution, force a rebuild of the scope tree 
+                        alignScopeOutline(markdown.location);
+                     }
+
+                     // invoke ready callback if supplied
+                     if (ready != null)
+                     {
                         ready.execute();
                      }
                   }, true);  
@@ -349,7 +373,8 @@ public class VisualMode implements VisualModeEditorSync,
       } else {
          // Even if ready is null, it's important to arrive() so the
          // syncToEditorQueue knows it can continue
-         rv.arrive(() -> {
+         rv.arrive(() ->
+         {
             if (ready != null) {
                ready.execute();
             }
@@ -937,7 +962,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
          else
          {
-            syncToEditor(true, activateSourceEditor);
+            syncToEditor(SyncType.SyncTypeActivate, activateSourceEditor);
          }
       }
    }
@@ -1017,7 +1042,7 @@ public class VisualMode implements VisualModeEditorSync,
                protected void execute()
                {
                   if (isDirty_ && !panmirror_.isInitialDoc())
-                     syncToEditor(false);
+                     syncToEditor(SyncType.SyncTypeIdle);
                }
             };
             
@@ -1318,8 +1343,10 @@ public class VisualMode implements VisualModeEditorSync,
 
       for (int k = 0; k < chunkItems.size(); k++)
       {
+         PanmirrorEditingOutlineLocationItem visualItem = 
+               Js.uncheckedCast(chunkItems.get(k));
          VisualModeChunk chunk = visualModeChunks_.getChunkAtVisualPosition(
-               chunkItems.get(k).position);
+               visualItem.position);
          if (chunk == null)
          {
             // This is normal; it is possible that we haven't created a chunk

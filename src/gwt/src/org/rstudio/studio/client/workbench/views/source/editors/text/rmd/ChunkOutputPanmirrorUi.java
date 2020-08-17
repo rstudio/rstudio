@@ -130,6 +130,12 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
 
       attached_ = false;
    }
+   
+   @Override
+   public void remove()
+   {
+      detach();
+   }
 
    @Override
    public void reattach()
