@@ -106,6 +106,20 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
          return true;
       }
+
+      public final boolean validate()
+      {
+         if (hasSplitterPos() && hasWindowWidth())
+         {
+            for (int i = 0; i < getSplitterPos().length; i++)
+            {
+               if (getSplitterPos()[i] < 0 ||
+                   getSplitterPos()[i] > getPanelWidth())
+                  return false;
+            }
+         }
+         return true;
+      }
    }
 
    @Inject
@@ -138,7 +152,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          {
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
-            if (state != null && state.hasSplitterPos() &&
+            if (state != null &&
+                state.validate() &&
+                state.hasSplitterPos() &&
                 state.getSplitterCount() == leftList_.size() + 1)
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
