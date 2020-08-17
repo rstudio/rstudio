@@ -218,7 +218,7 @@
                                               col = 1L,
                                               moveCursor = TRUE) {
    # validate file argument
-   hasFile = !is.null(filePath) && length(filePath) > 0
+   hasFile <- !is.null(filePath) && length(filePath) > 0
    if (hasFile && !is.character(filePath)) {
       stop("filePath must be a character")
    }
