@@ -39,7 +39,8 @@ public class VisualModeSpelling extends SpellingContext
 {
    public interface Context
    {
-      void updateRealtimeSpelling();
+      void invalidateAllWords();
+      void invalidateWord(String word);
    }
    
    public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, 
@@ -270,19 +271,14 @@ public class VisualModeSpelling extends SpellingContext
    @Override
    public void invalidateAllWords()
    {
-      context_.updateRealtimeSpelling();
+      context_.invalidateAllWords();
    }
 
-   @Override
-   public void invalidateMisspelledWords()
-   {
-      context_.updateRealtimeSpelling();
-   }
 
    @Override
    public void invalidateWord(String word)
    {
-      context_.updateRealtimeSpelling();
+     context_.invalidateWord(word);
    }
    
    private final DocDisplay docDisplay_;

@@ -164,7 +164,6 @@ public class TypoSpellChecker
       void writeDictionary(ArrayList<String> words);
 
       void invalidateAllWords();
-      void invalidateMisspelledWords();
       void invalidateWord(String word);
 
       void releaseOnDismiss(HandlerRegistration handler);

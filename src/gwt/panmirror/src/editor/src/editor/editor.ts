@@ -96,7 +96,7 @@ import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
 import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
-import { realtimeSpellingPlugin, updateRealtimeSpelling } from '../behaviors/spelling/spelling-realtime';
+import { realtimeSpellingPlugin, invalidateAllWords, invalidateWord } from '../behaviors/spelling/spelling-realtime';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -586,8 +586,12 @@ export class Editor {
     return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling);
   }
 
-  public updateRealtimeSpelling() {
-    updateRealtimeSpelling(this.view);
+  public spellingInvalidateAllWords() {
+    invalidateAllWords(this.view);
+  }
+
+  public spellingInvalidateWord(word: string) {
+    invalidateWord(this.view, word);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the

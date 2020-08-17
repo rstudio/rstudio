@@ -77,4 +77,7 @@ public class ClassIds
    public final static String MODIFY_CHUNK = "modify_chunk";
    public final static String RUN_CHUNK = "run_chunk";
    public final static String PREVIEW_CHUNK = "preview_chunk";
+
+   // ToolbarButton
+   public final static String TOOLBAR_BTN = "tlbr_btn";
 }
