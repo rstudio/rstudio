@@ -1890,9 +1890,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
-   public void beforeShow()
+   public void beforeShow(boolean excludeMain)
    {
-      columnList_.forEach((column) -> column.onBeforeShow());
+      columnList_.forEach((column) ->{
+         if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            column.onBeforeShow();
+      });
    }
 
    public void beforeShow(String name)
