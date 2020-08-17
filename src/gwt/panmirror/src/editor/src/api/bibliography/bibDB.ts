@@ -283,7 +283,7 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
 }
 
 function sortedKeys(csl: CSL) {
-  var pos = 0;
+  let pos = 0;
   const keySortOrder: { [id: string]: number; } = {};
   keySortOrder['title'] = pos++;
 
