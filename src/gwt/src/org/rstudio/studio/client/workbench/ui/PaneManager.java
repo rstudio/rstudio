@@ -329,9 +329,14 @@ public class PaneManager
          for (int i = 0; i < docs.length(); i++)
          {
             String docWindowId = docs.get(i).getSourceWindowId();
-            String columnName = docs.get(i).getSourceDisplayName();
-            LogicalWindow columnWindow =
-               getParentLogicalWindow(sourceColumnManager_.getByName(columnName).asWidget().getElement());
+
+            // Check the SourceColumn of the SourceDocument. If for some reason we cannot find
+            // it's column, default to the main source window.
+            SourceColumn column =
+               sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
+            LogicalWindow columnWindow = column == null ? sourceLogicalWindows_.get(0) :
+               getParentLogicalWindow(column.asWidget().getElement());
+
             if (docWindowId == windowId &&
                 window == columnWindow)
             {
