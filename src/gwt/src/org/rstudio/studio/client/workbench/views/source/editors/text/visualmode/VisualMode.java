@@ -654,10 +654,18 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    @Override
-   public void updateRealtimeSpelling()
+   public void invalidateAllWords()
    {
       if (panmirror_ != null)
-         panmirror_.updateRealtimeSpelling();
+         panmirror_.spellingInvalidateAllWords();
+   }
+   
+   @Override
+   public void invalidateWord(String word)
+   {
+      if (panmirror_ != null)
+         panmirror_.spellingInvalidateWord(word);
+      
    }
 
    public boolean isVisualModePosition(SourcePosition position)
@@ -1265,6 +1273,9 @@ public class VisualMode implements VisualModeEditorSync,
    // priority task queue for expensive calls to panmirror_.setMarkdown
    // (currently active tab bumps itself up in priority)
    private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
+
+
+
      
 }
 
