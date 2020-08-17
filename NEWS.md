@@ -88,4 +88,5 @@
 * Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
 * Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
 * Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
+* Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
 
