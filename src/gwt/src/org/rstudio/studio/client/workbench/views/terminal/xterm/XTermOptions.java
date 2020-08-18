@@ -257,7 +257,8 @@ public class XTermOptions
          boolean windowsMode,
          XTermTheme theme,
          String fontFamily,
-         double fontSize)
+         double fontSize,
+         double lineHeight)
    {
       XTermOptions options = new XTermOptions();
       options.bellStyle = bellStyle;
@@ -268,6 +269,7 @@ public class XTermOptions
       options.theme = theme;
       options.fontFamily = fontFamily;
       options.fontSize = fontSize;
+      options.lineHeight = lineHeight;
       return options;
    }
 }
