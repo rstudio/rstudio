@@ -18,6 +18,7 @@ import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
+import { fancyQuotesToSimple } from '../api/quote';
 
 const plugin = new PluginKey('smartypaste');
 
@@ -62,6 +63,9 @@ const extension: Extension = {
 
             // ellipses
             text = text.replace(/\.\.\./g, '…');
+
+            // we explicitly don't want fancy quotes in the editor
+            text = fancyQuotesToSimple(text);
 
             return text;
           },
