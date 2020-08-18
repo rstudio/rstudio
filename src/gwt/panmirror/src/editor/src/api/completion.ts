@@ -127,7 +127,7 @@ export function selectionAllowsCompletions(selection: Selection) {
   }
 
   // must not be in a code mark
-  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+  if (schema.marks.code && !!schema.marks.code.isInSet(selection.$from.marks())) {
     return false;
   }
 
