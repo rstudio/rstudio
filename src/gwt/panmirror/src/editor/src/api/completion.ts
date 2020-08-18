@@ -76,7 +76,7 @@ export interface CompletionHandler<T = any> {
   replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;
 
   // lower level replacement handler (can be passed null if the popup was dismissed)
-  replace?(view: EditorView, pos: number, completion: T | null): void;
+  replace?(view: EditorView, pos: number, completion: T | null): Promise<any>;
 
   // completion view
   view: {

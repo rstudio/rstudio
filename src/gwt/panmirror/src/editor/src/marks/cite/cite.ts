@@ -695,7 +695,6 @@ export async function insertCitation(
       }
     }
   }
-  view.focus();
 }
 
 function isBibLaTeX(bibFile: string): boolean {

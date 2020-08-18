@@ -57,8 +57,9 @@ export function citationDoiCompletionHandler(
         view.dispatch(tr);
       } else if (cslEntry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
+        return insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
+      return Promise.resolve();
     },
 
     view: {

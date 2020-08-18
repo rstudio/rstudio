@@ -79,8 +79,9 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
+        return insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
+      return Promise.resolve();
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
