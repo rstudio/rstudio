@@ -164,7 +164,7 @@ public class TypoSpellChecker
       void writeDictionary(ArrayList<String> words);
 
       void invalidateAllWords();
-      void invalidateWord(String word);
+      void invalidateWord(String word, boolean userDictionary);
 
       void releaseOnDismiss(HandlerRegistration handler);
    }
@@ -330,7 +330,7 @@ public class TypoSpellChecker
       allIgnoredWords_.add(word);
       
       // invalidate the context
-      context_.invalidateWord(word);
+      context_.invalidateWord(word, true);
    }
    
    public boolean isIgnoredWord(String word)
@@ -354,7 +354,7 @@ public class TypoSpellChecker
    {
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
-      context_.invalidateWord(affectedWord);
+      context_.invalidateWord(affectedWord, false);
    }
 
    /* Support old style async suggestion calls for blacklisted dictionaries */
