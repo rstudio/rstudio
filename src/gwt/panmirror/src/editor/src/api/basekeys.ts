@@ -113,7 +113,9 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     commandMap[baseKey] = [];
   }
   pluginKeys.forEach(key => {
-    commandMap[key.key].unshift(key.command);
+    if (key) {
+      commandMap[key.key].unshift(key.command);
+    }
   });
 
   const bindings: { [key: string]: CommandFn } = {};
@@ -179,7 +181,7 @@ function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?:
     const endDocPos = editingNode.start + editingNode.node.nodeSize;
     for (let pos = (selection.from + 1); pos < endDocPos; pos++) {
       const coords = view.coordsAtPos(pos);
-      if (isOnNextLine(head, coords) || pos == endDocPos) {
+      if (isOnNextLine(head, coords) || pos === endDocPos) {
         const tr = state.tr;
         setTextSelection(pos - 1)(tr);
         dispatch(tr);
