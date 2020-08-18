@@ -128,7 +128,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
 
 function completionsHeader(handler: CompletionHandler, completionCount: number, props: CompletionListProps) {
   if (handler.view.header) {
-    const completionHeader = handler.view.header();
+    const completionHeader = handler.view.header ? handler.view.header() : undefined;
     const headerProps = { message: completionHeader?.message, ...props };
 
     if (completionHeader) {
