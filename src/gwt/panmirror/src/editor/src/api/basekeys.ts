@@ -34,6 +34,7 @@ import { setTextSelection } from 'prosemirror-utils';
 import { CommandFn } from './command';
 import { editingRootNodeClosestToPos, editingRootNode } from './node';
 import { selectionIsBodyTopLevel } from './selection';
+import { kPlatformMac } from './platform';
 
 export enum BaseKey {
   Home = 'Home',
@@ -88,8 +89,8 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
     // base home/end key behaviors (Mac desktop default behavior advances to beginning/end of
     // document, so we provide our own implementation rather than relying on contentEditable)
-    { key: BaseKey.Home, command: homeKey },
-    { key: BaseKey.End, command: endKey },
+    kPlatformMac ? { key: BaseKey.Home, command: homeKey } : null,
+    kPlatformMac ? { key: BaseKey.End, command: endKey } : null,
 
     // base arrow key behavior (prevent traversing top-level body notes)
     { key: BaseKey.ArrowLeft, command: arrowBodyNodeBoundary('left') },
@@ -104,7 +105,7 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
     // undoInputRule is always the highest priority backspace key
     { key: BaseKey.Backspace, command: undoInputRule },
-  ];
+  ].filter(x => !!x);
 
   // build arrays for each BaseKey type
   const commandMap: { [key: string]: CommandFn[] } = {};
