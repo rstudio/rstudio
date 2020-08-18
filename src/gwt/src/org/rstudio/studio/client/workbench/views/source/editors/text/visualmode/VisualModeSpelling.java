@@ -19,6 +19,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.Iterator;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
@@ -30,7 +32,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+
+import com.google.inject.Inject;
 
 import elemental2.core.JsArray;
 
@@ -39,16 +44,24 @@ public class VisualModeSpelling extends SpellingContext
 {
    public interface Context
    {
-      void updateRealtimeSpelling();
+      void invalidateAllWords();
+      void invalidateWord(String word);
    }
    
-   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, 
+   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel,
                              DocDisplay docDisplay,
                              Context context)
    {
      super(docUpdateSentinel);  
+     RStudioGinjector.INSTANCE.injectMembers(this);
      docDisplay_ = docDisplay;
      context_ = context;
+   }
+   
+   @Inject
+   void initialize(EventBus eventBus)
+   {
+      eventBus_ = eventBus;
    }
     
    public void checkSpelling(PanmirrorSpellingDoc doc)   
@@ -270,23 +283,21 @@ public class VisualModeSpelling extends SpellingContext
    @Override
    public void invalidateAllWords()
    {
-      context_.updateRealtimeSpelling();
+      context_.invalidateAllWords();
    }
 
    @Override
-   public void invalidateMisspelledWords()
+   public void invalidateWord(String word, boolean userDictionary)
    {
-      context_.updateRealtimeSpelling();
-   }
-
-   @Override
-   public void invalidateWord(String word)
-   {
-      context_.updateRealtimeSpelling();
+      context_.invalidateWord(word);
+      
+      if (userDictionary)
+         eventBus_.fireEvent(new VisualModeSpellingAddToDictionaryEvent(word));
    }
    
    private final DocDisplay docDisplay_;
    private final Context context_;
+   private EventBus eventBus_;
 }
 
 

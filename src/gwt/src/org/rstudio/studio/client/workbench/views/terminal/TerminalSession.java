@@ -186,6 +186,7 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg ->
             {
                updateOption("fontSize", XTermTheme.adjustFontSize(arg));
+               updateOption("lineHeight", XTermTheme.computeLineHeight());
                onResize();
             }));
 

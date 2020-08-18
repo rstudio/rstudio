@@ -66,7 +66,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.editFn(props.view.state) ? (
         <ImageButton
           classes={['attr-edit-button']}
-          image={props.ui.images.properties_deco!}
+          image={props.ui.prefs.darkMode() ? props.ui.images.properties_deco_dark! : props.ui.images.properties_deco!}
           title={buttonTitle}
           onClick={onClick}
         />
@@ -113,7 +113,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 attrTags.push(`#${editorNode.attrs.id}`);
               }
               if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
-                attrTags.push(`.${editorNode.attrs.classes[0]}`);
+                attrTags.push(`${editorNode.attrs.classes.map((clz: string) => '.' + clz).join(' ')}`);
               }
               return attrTags;
             });

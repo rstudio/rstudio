@@ -421,7 +421,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
   const autoIdentifier = extensions.gfm_auto_identifiers ? gfmAutoIdentifier : pandocAutoIdentifier;
 
   // start with ids we know are valid (i.e. ones the user added to the doc)
-  const headingIds = new Set<string>(ast.heading_ids || []);
+  const headingIds = new Set<string>((ast.heading_ids || []).map(id => id.toLocaleLowerCase()));
 
   // find ids referenced in links
   let astBlocks = mapTokens(ast.blocks, tok => {
@@ -438,7 +438,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
         if (
           hasShortcutHeadingLinks(extensions) &&
           equalsIgnoreCase('#' + autoIdentifier(text, extensions.ascii_identifiers), href) &&
-          !headingIds.has(href)
+          !headingIds.has(href.toLocaleLowerCase())
         ) {
 
           // return a version of the link w/o the target
@@ -456,7 +456,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
 
           // otherwise note that it's a valid id
         } else {
-          headingIds.add(href);
+          headingIds.add(href.toLocaleLowerCase());
         }
       }
     }
@@ -468,7 +468,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
   astBlocks = mapTokens(ast.blocks, tok => {
     if (tok.t === PandocTokenType.Header) {
       const attr = pandocAttrReadAST(tok, kHeadingAttr);
-      if (attr.id && !headingIds.has('#' + attr.id)) {
+      if (attr.id && !headingIds.has('#' + attr.id.toLocaleLowerCase())) {
         return {
           t: PandocTokenType.Header,
           c: [

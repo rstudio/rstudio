@@ -116,7 +116,7 @@ class PandocWriter implements PandocOutput {
     const token: PandocToken = {
       t: type,
     };
-    if (content) {
+    if (content !== undefined) {
       if (typeof content === 'function') {
         token.c = [];
         this.fill(token.c, content);
@@ -220,6 +220,19 @@ class PandocWriter implements PandocOutput {
               return p1 + Array(p2.length + 1).join(' ');
             });
           }
+
+          // reverse smart punctuation. pandoc does this autmoatically for markdown
+          // writing w/ +smart, however this also results in nbsp's being inserted
+          // after selected abbreviations like e.g. and Mr., and we don't want that
+          // to happen for editing (b/c the nbsp's weren't put there by the user 
+          // and are not obviously visible)
+          if (this.extensions.smart) {
+            textRun = textRun
+              .replace(/—/g, '---')
+              .replace(/–/g, '--')
+              .replace(/…/g, '...');
+          }
+
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';
         }

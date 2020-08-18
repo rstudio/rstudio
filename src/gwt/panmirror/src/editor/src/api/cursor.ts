@@ -76,7 +76,7 @@ export function handleArrowToAdjacentNode(nodePos: number, dir: number, state: E
     selection = new GapCursor(tr.doc.resolve(nodePos), tr.doc.resolve(nodePos));
 
     // if we are going forwards and the next node is not a text block then create a gap cursor
-  } else if (dir >= 0 && !nextNodeTextBlock() || nextNodeCode()) {
+  } else if (dir >= 0 && (!nextNodeTextBlock() || nextNodeCode())) {
     const endPos = nodePos + node.nodeSize;
     selection = new GapCursor(tr.doc.resolve(endPos), tr.doc.resolve(endPos));
 

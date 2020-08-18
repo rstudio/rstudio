@@ -34,6 +34,11 @@
   padding-left: 7px;
   padding-right: 7px;
   font-weight: normal;
+  white-space: nowrap;
+}
+
+.pm-attr-edit-decoration .attr-edit-button {
+  margin-top: 1px;
 }
 
 .pm-attr-edit-decoration .attr-edit-button img {
