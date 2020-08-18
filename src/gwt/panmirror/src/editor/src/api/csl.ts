@@ -119,6 +119,8 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   cslAny.abstract = undefined;
 
+  cslAny.id = undefined;
+
   return cslAny as CSL;
 }
 

@@ -91,7 +91,7 @@ bool betterBibtexJsonRpcRequest(const std::string& method, const json::Array& pa
    else if (http::isConnectionUnavailableError(error) ||
             (error = systemError(boost::system::errc::timed_out, ErrorLocation())))
    {
-      *pWarning = "Unable to connect to Better BibTeX. Is Zotero running?";
+      *pWarning = "Unable to connect to Better BibTeX. Please ensure that Zotero is running.";
    }
    else
    {

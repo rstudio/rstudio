@@ -172,6 +172,15 @@ export class BibliographyManager {
     }
   }
 
+  public warningForProvider(provider?: string): string | undefined {
+    if (provider) {
+      const warningProvider = this.providers.find(prov => prov.name === provider);
+      if (warningProvider) {
+        return warningProvider.warningMessage();
+      }
+    }
+  }
+
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
@@ -185,6 +194,7 @@ export class BibliographyManager {
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
+
     return this.localSources().find(source => source.id === id);
   }
 
