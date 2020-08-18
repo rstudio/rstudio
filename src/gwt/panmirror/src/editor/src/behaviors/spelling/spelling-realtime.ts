@@ -169,11 +169,17 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             if (cursorDecos.length) {
 
               // there will only be one cursor, capture it's position then remove it
+              const word = cursorDecos[0].spec.word as string;
               const { from, to } = cursorDecos[0];
               decos = decos.remove(cursorDecos);
 
               // add it back in as a real spelling error
-              decos = decos.add(tr.doc, [Decoration.inline(from, to, { class: kSpellingErrorClass })]);
+              decos = decos.add(tr.doc, [Decoration.inline(
+                from,
+                to,
+                { class: kSpellingErrorClass },
+                { word })
+              ]);
             }
 
             // return decorators
