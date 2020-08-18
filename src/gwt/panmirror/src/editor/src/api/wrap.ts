@@ -36,7 +36,7 @@ function wrapSentencesTransform(tr: Transform) {
     const parts = split(paragraph.node.textContent);
     parts.reverse().filter(part => part.type === "Sentence").forEach(sentence => {
       // don't break sentence if at least one mark is active
-      if (tr.doc.resolve(paragraph.pos + sentence.range[1]).marks().length === 0) {
+      if (tr.doc.resolve(paragraph.pos + sentence.range[1] + 1).marks().length === 0) {
         const hardBreak = schema.text("\n");
         const hardBreakPos = paragraph.pos + sentence.range[1] + 2;
         tr.insert(hardBreakPos, hardBreak);
