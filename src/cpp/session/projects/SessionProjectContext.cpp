@@ -708,6 +708,8 @@ void ProjectContext::updatePackageInfo()
 
 json::Object ProjectContext::uiPrefs() const
 {
+   // TODO: add UI prefs for markdown writing here
+
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;

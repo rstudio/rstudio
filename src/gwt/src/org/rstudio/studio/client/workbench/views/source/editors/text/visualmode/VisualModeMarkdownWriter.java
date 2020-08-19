@@ -90,6 +90,8 @@ public class VisualModeMarkdownWriter
       references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
       options.references = references;
       
+      // TODO: project level prefs for wrap and references_location
+      
       // layer in format config
       if (formatConfig.wrap != null)
       {

@@ -134,6 +134,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
+                
+                // TODO: set project level user prefs for markdown editing
 
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());

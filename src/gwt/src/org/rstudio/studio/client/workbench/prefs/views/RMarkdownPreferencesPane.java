@@ -281,6 +281,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualModeReferences_);
       visualModeOptions.add(visualModeReferences_);
 
+      // TODO: add option for canonical mode here
+      
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(
             "Setting markdown options on a per-file basis",

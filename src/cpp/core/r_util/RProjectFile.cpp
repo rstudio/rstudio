@@ -391,6 +391,9 @@ Error readProjectFile(const FilePath& projectFilePath,
                           pUserErrMsg);
 }
 
+// TODO: add visual markdown options, e.g. see:
+// https://github.com/rstudio/rstudio/commit/35126fd3b7f1b2f78dcc8f9df6c77f1a1bd324dc#diff-87efb91b81672d3e9b3a9c9c6e46241c
+
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
                       const RProjectBuildDefaults& buildDefaults,

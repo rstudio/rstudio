@@ -3027,6 +3027,9 @@ public class TextEditingTarget implements
 
    private void applyVisualModeFixups(Command onComplete)
    {
+      // TODO: consult global and project level 'canonical' option
+      
+      
       // are we writing cannonical?
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
       boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
