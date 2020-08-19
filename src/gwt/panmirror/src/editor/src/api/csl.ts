@@ -15,6 +15,9 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
+import { BibDB, EntryObject, BibFieldTypes, TextNodeObject, NameDictObject, NodeArray, RangeArray } from 'biblatex-csl-converter';
+import { convertArrayOfRowsToTableNode } from 'prosemirror-utils';
+
 
 export interface CSL {
 
@@ -24,6 +27,9 @@ export interface CSL {
 
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
+
+  // An item key that may be used to identify this item
+  key?: string;
 
   // Name of work's publisher
   publisher?: string;
@@ -113,6 +119,8 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   cslAny.abstract = undefined;
 
+  cslAny.id = undefined;
+
   return cslAny as CSL;
 }
 
@@ -137,5 +145,23 @@ export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
   }
   return undefined;
 }
+
+// Converts a csl date to an EDTF date.
+// See https://www.loc.gov/standards/datetime/
+// Currently omits time component so this isn't truly level 0
+export function cslDateToEDTFDate(date: CSLDate) {
+  if (date["date-parts"]) {
+    const paddedParts = date["date-parts"][0].map(part => {
+      const partStr = part?.toString();
+      if (partStr?.length === 1) {
+        return `0${partStr}`;
+      }
+      return partStr;
+    });
+    return paddedParts.join('-');
+  }
+}
+
+
 
 

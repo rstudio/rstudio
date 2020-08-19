@@ -410,6 +410,27 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
+    * The default type for new bibliographies.
+    */
+   public PrefValue<String> bibliographyDefaultType()
+   {
+      return enumeration(
+         "bibliography_default_type",
+         "", 
+         "The default type for new bibliographies.", 
+         new String[] {
+            BIBLIOGRAPHY_DEFAULT_TYPE_BIB,
+            BIBLIOGRAPHY_DEFAULT_TYPE_YAML,
+            BIBLIOGRAPHY_DEFAULT_TYPE_JSON
+         },
+         "bib");
+   }
+
+   public final static String BIBLIOGRAPHY_DEFAULT_TYPE_BIB = "bib";
+   public final static String BIBLIOGRAPHY_DEFAULT_TYPE_YAML = "yaml";
+   public final static String BIBLIOGRAPHY_DEFAULT_TYPE_JSON = "json";
+
+   /**
     * Key for making Zotero API calls
     */
    public PrefValue<String> zoteroApiKey()
@@ -469,6 +490,8 @@ public class UserStateAccessor extends Prefs
          errorHandlerType().setValue(layer, source.getString("error_handler_type"));
       if (source.hasKey("using_mingw_gcc49"))
          usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
+      if (source.hasKey("bibliography_default_type"))
+         bibliographyDefaultType().setValue(layer, source.getString("bibliography_default_type"));
       if (source.hasKey("zotero_api_key"))
          zoteroApiKey().setValue(layer, source.getString("zotero_api_key"));
       if (source.hasKey("zotero_data_dir"))
@@ -494,6 +517,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(connectVia());
       prefs.add(errorHandlerType());
       prefs.add(usingMingwGcc49());
+      prefs.add(bibliographyDefaultType());
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
       return prefs;

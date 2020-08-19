@@ -94,7 +94,7 @@ function excludeWord(doc: ProsemirrorNode, from: number, to: number, excluded: M
 
   // it is in a link mark where the link text is a url?
   const schema = doc.type.schema;
-  if (doc.rangeHasMark(from, to, schema.marks.link)) {
+  if (schema.marks.link && doc.rangeHasMark(from, to, schema.marks.link)) {
     const range = getMarkRange(doc.resolve(from), schema.marks.link);
     if (range && /^[a-z]+:\/\/.*$/.test(doc.textBetween(range.from, range.to))) {
       return true;

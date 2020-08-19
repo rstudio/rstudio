@@ -18,10 +18,13 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsCitation;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -39,6 +42,51 @@ import jsinterop.base.JsPropertyMap;
 public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteResult>
 {
 
+   private enum BibliographyType {
+      biblatex {
+         @Override
+         public String displayName()
+         {
+            return "BibLaTeX";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "bib";
+         }
+      },
+      yaml {
+         @Override
+         public String displayName()
+         {
+            return "CSL-YAML";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "yaml";
+         }
+      },
+      json {
+         @Override
+         public String displayName()
+         {
+            return "CSL-JSON";
+         }
+
+         @Override
+         public String fileExtension()
+         {
+            return "json";
+         }
+      };
+      
+      public abstract String displayName();
+      public abstract String fileExtension();
+   }
+   
    public PanmirrorInsertCiteDialog(PanmirrorInsertCiteProps citeProps,
          OperationWithInput<PanmirrorInsertCiteResult> operation)
    {
@@ -49,8 +97,25 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       RStudioGinjector.INSTANCE.injectMembers(this);
       mainWidget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       citeProps_ = citeProps;
+      
+      // Bibliography Types (for when user is creating a new bibliography)
+      for (BibliographyType bibType : BibliographyType.values()) {
+         createBibliographyTypes_.addItem(bibType.displayName(), bibType.fileExtension());   
+      }
+      
+      createBibliographyTypes_.addChangeHandler(new ChangeHandler(){
+
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            String extension = createBibliographyTypes_.getSelectedValue();
+            String currentFileName = createBibliographyFileName_.getValue();
+            createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension)); 
+            userState_.bibliographyDefaultType().setGlobalValue(extension);
+         }});
 
       setBibliographies(citeProps.bibliographyFiles);
+      
       previewScrollPanel_.setSize("100%", "160px");
 
       if (citeProps_.citeUI != null)
@@ -124,9 +189,11 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    
 
    @Inject
-   void initialize(PanmirrorDOIServerOperations server)
+   void initialize(PanmirrorDOIServerOperations server, 
+                   UserState userState)
    {
       server_ = server;
+      userState_ = userState;
    }
 
    @Override
@@ -268,8 +335,12 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          // There isn't a currently configured bibliography
          // Show create UI
          createBibliographyPanel_.setVisible(true);
-         addTobibliographyPanel_.setVisible(false);
-         createBibliographyFileName_.setText("references.bib");
+         addTobibliographyPanel_.setVisible(false);   
+         createBibliographyTypes_.setVisible(true);
+         createBibliographyTypes_.setSelectedIndex(
+            createBibliographyTypes_.getIndexFromValue(userState_.bibliographyDefaultType().getValue())
+         );
+         createBibliographyFileName_.setText(ensureExtension("references", createBibliographyTypes_.getSelectedValue()));
       }
       else
       {
@@ -277,12 +348,13 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
          // Show add UI
          createBibliographyPanel_.setVisible(false);
          addTobibliographyPanel_.setVisible(true);
+         createBibliographyTypes_.setVisible(false);
          for (String file : bibliographyFiles)
          {
             bibliographies_.addItem(file);
          }
       }
-   }
+   } 
 
    private void displayPreview(PanmirrorInsertCiteField[] fields)
    {
@@ -347,6 +419,8 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    VerticalPanel createBibliographyPanel_;
    @UiField
    TextBox createBibliographyFileName_;
+   @UiField
+   FormListBox createBibliographyTypes_;
 
    
    interface Binder extends UiBinder<Widget, PanmirrorInsertCiteDialog>
@@ -366,6 +440,17 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       }
    }
    
+   private static String ensureExtension(String fileName, String extension) {
+      int lastDot = fileName.lastIndexOf(".");
+      if (lastDot == -1) {
+         return fileName + "." + extension;
+      } else {
+         String fileNoExt = fileName.substring(0, lastDot);
+         return fileNoExt + "." + extension;   
+      }           
+
+   }
+   
    private static String kUnknownError = "An error occurred while loading citation data for this DOI.";
    private static String kNoDataError = "Citation data for this DOI couldn't be found.";
    private static String kServerError = "Unable to reach server to load citation data for this DOI.";
@@ -373,6 +458,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
 
    private Widget mainWidget_;
    private PanmirrorDOIServerOperations server_;
+   private UserState userState_;
    private boolean canceled_;
    private PanmirrorInsertCiteProps citeProps_;
 

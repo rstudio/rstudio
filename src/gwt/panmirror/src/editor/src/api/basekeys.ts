@@ -34,6 +34,7 @@ import { setTextSelection } from 'prosemirror-utils';
 import { CommandFn } from './command';
 import { editingRootNodeClosestToPos, editingRootNode } from './node';
 import { selectionIsBodyTopLevel } from './selection';
+import { kPlatformMac } from './platform';
 
 export enum BaseKey {
   Home = 'Home',
@@ -88,8 +89,8 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
     // base home/end key behaviors (Mac desktop default behavior advances to beginning/end of
     // document, so we provide our own implementation rather than relying on contentEditable)
-    { key: BaseKey.Home, command: homeKey },
-    { key: BaseKey.End, command: endKey },
+    kPlatformMac ? { key: BaseKey.Home, command: homeKey } : null,
+    kPlatformMac ? { key: BaseKey.End, command: endKey } : null,
 
     // base arrow key behavior (prevent traversing top-level body notes)
     { key: BaseKey.ArrowLeft, command: arrowBodyNodeBoundary('left') },
@@ -104,7 +105,7 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
 
     // undoInputRule is always the highest priority backspace key
     { key: BaseKey.Backspace, command: undoInputRule },
-  ];
+  ].filter(x => !!x);
 
   // build arrays for each BaseKey type
   const commandMap: { [key: string]: CommandFn[] } = {};
@@ -112,7 +113,9 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     commandMap[baseKey] = [];
   }
   pluginKeys.forEach(key => {
-    commandMap[key.key].unshift(key.command);
+    if (key) {
+      commandMap[key.key].unshift(key.command);
+    }
   });
 
   const bindings: { [key: string]: CommandFn } = {};
@@ -144,15 +147,22 @@ export function verticalArrowCanAdvanceWithinTextBlock(selection: Selection, dir
   return false;
 }
 
+interface Coords {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 function homeKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
   const selection = state.selection;
   const editingNode = editingRootNode(selection);
   if (editingNode && dispatch && view) {
-    const selectionY = view.coordsAtPos(selection.from).top;
+    const head = view.coordsAtPos(selection.head);
     const beginDocPos = editingNode.start;
     for (let pos = (selection.from - 1); pos >= beginDocPos; pos--) {
-      const posY = view.coordsAtPos(pos).top;
-      if (isOnPreviousLine(selectionY, posY) || pos === beginDocPos) {
+      const coords = view.coordsAtPos(pos);
+      if (isOnPreviousLine(head, coords) || pos === beginDocPos) {
         const tr = state.tr;
         setTextSelection(pos + 1)(tr);
         dispatch(tr);
@@ -167,11 +177,11 @@ function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?:
   const selection = state.selection;
   const editingNode = editingRootNode(selection);
   if (editingNode && dispatch && view) {
-    const selectionY = view.coordsAtPos(selection.from).top;
+    const head = view.coordsAtPos(selection.head);
     const endDocPos = editingNode.start + editingNode.node.nodeSize;
     for (let pos = (selection.from + 1); pos < endDocPos; pos++) {
-      const posY = view.coordsAtPos(pos).top;
-      if (isOnNextLine(selectionY, posY)) {
+      const coords = view.coordsAtPos(pos);
+      if (isOnNextLine(head, coords) || pos === endDocPos) {
         const tr = state.tr;
         setTextSelection(pos - 1)(tr);
         dispatch(tr);
@@ -186,14 +196,17 @@ function endKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?:
 
 // y coorinates are sometimes off by 1 or 2 due to margin/padding (e.g. for
 // inline code spans or spelling marks) so the comparision only succeeds if 
-// there is sufficint overall distance between the positions
+// the vertical extents of the two coords don't overlap. If this proves to
+// still have false positives, we could lookahead to the next a few dozen
+// positions to check if we ever "return to" the head's baseline--only a
+// permanent change would indicate that the line has truly changed.
 
-function isOnNextLine(selectionY: number, posY: number) {
-  return Math.abs(posY - selectionY) > 2 && posY > selectionY;
+function isOnNextLine(head: Coords, pos: Coords) {
+  return head.bottom < pos.top;
 }
 
-function isOnPreviousLine(selectionY: number, posY: number) {
-  return Math.abs(posY - selectionY) > 2 && posY < selectionY;
+function isOnPreviousLine(head: Coords, pos: Coords) {
+  return head.top > pos.bottom;
 }
 
 

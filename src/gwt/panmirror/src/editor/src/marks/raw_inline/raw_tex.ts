@@ -154,9 +154,11 @@ function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
       // input rules are active) then bail
       const $head = state.selection.$head;
       const texText = '\\' + $head.parent.textContent.slice($head.parentOffset);
-      const texMatchLength = texLength(texText);
-      if (texMatchLength === 0 || !filter(state, state.selection.from, state.selection.from + texMatchLength)) {
-        return null;
+      if (!texText.startsWith('\\ ')) {
+        const texMatchLength = texLength(texText);
+        if (texMatchLength === 0 || !filter(state, state.selection.from, state.selection.from + texMatchLength)) {
+          return null;
+        }
       }
 
       // create transaction

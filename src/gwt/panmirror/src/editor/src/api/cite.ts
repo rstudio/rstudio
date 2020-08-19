@@ -204,17 +204,29 @@ export function formatForPreview(csl: CSL): CiteField[] {
   Object.keys(csl).forEach(key => {
     if (!kFilteredFields.includes(key)) {
       const value = cslAny[key];
-
-      // Capitalize preview names
-      const name = key.charAt(0).toUpperCase() + key.slice(1);
-      pairs.push({ name, value });
+      // Don't display complex fields or fields that aren't strings
+      if (typeof value === 'string') {
+        // Capitalize preview names
+        const name = key.charAt(0).toUpperCase() + key.slice(1);
+        pairs.push({ name, value });
+      }
     }
   });
 
   return pairs;
 }
 
-const kFilteredFields = ["id", "title", "author", "issued", "container-title", "volume", "page", "abstract", "provider"];
+const kFilteredFields = [
+  "id",
+  "title",
+  "author",
+  "issued",
+  "container-title",
+  "volume",
+  "page",
+  "abstract",
+  "provider"
+];
 
 // Sometimes, data arrives with a null value
 // This function will validate that the year (required) doesn't

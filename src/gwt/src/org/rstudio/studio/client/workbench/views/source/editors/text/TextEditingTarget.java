@@ -1195,7 +1195,7 @@ public class TextEditingTarget implements
                                   boolean highlightLine)
    {
       ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, false);
       });
    }
    
@@ -1203,17 +1203,16 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine,
+                                  boolean moveCursor,
                                   Command onNavigationCompleted)
    {
       ensureTextEditorActive(() -> {
-         
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, !moveCursor);
          if (onNavigationCompleted != null)
             onNavigationCompleted.execute();
-         
       });
    }
-   
+
    // These methods are called by SourceNavigationHistory and source pane management
    // features (e.g. external source window and source columns) so need to check for
    // and dispatch to visual mode

@@ -32,6 +32,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String checkBox();
       String fullWidth();
       String fullWidthSelect();
+      String fullWidthTable();
       String infoLabel();
       String imageDialogTabs();
       String linkDialogTabs();
@@ -48,6 +49,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String flexTablePreviewName();
       String flexTablePreviewValue();
       String disabled();
+      String listBox();
    }
 
    @Source("PanmirrorDialogsStyles.css")

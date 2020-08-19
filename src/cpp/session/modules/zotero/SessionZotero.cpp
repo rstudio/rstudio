@@ -84,6 +84,52 @@ void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
    });
 }
 
+void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs, const json::JsonRpcFunctionContinuation& cont)
+{
+   // result defaults
+   json::Object resultJson;
+   resultJson[kMessage] = json::Value();
+   resultJson[kError] = "";
+
+   // handle success & error
+   if (!error)
+   {
+      json::Array collectionSpecsJson;
+      for (auto collectionSpec : collectionSpecs)
+      {
+         json::Object collectionSpecJson;
+         collectionSpecJson[kName] = collectionSpec.name;
+         collectionSpecJson[kVersion] = collectionSpec.version;
+         collectionSpecJson[kKey] = collectionSpec.key;
+         collectionSpecJson[kParentKey] = collectionSpec.parentKey;
+         collectionSpecsJson.push_back(collectionSpecJson);
+      }
+      resultJson[kStatus] = kStatusOK;
+      resultJson[kMessage] = collectionSpecsJson;
+   }
+   else
+   {
+      std::string err = core::errorDescription(error);
+      if (is404Error(err))
+      {
+         resultJson[kStatus] = kStatusNotFound;
+      }
+      else if (isHostError(err))
+      {
+         resultJson[kStatus] = kStatusNoHost;
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE(err);
+         resultJson[kStatus] = kStatusError;
+      }
+   }
+
+   json::JsonRpcResponse response;
+   response.setResult(resultJson);
+   cont(Success(), &response);
+
+}
 
 void handleGetCollections(Error error, ZoteroCollections collections, std::string warning, const json::JsonRpcFunctionContinuation& cont)
 {
@@ -102,6 +148,8 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
          json::Object collectionJson;
          collectionJson[kName] = collection.name;
          collectionJson[kVersion] = collection.version;
+         collectionJson[kKey] = collection.key;
+         collectionJson[kParentKey] = collection.parentKey;
          collectionJson[kItems] = collection.items;
          collectionsJson.push_back(collectionJson);
       }
@@ -130,7 +178,15 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    json::JsonRpcResponse response;
    response.setResult(resultJson);
    cont(Success(), &response);
+}
 
+void zoteroGetCollectionSpecs(const json::JsonRpcRequest& request,
+                              const json::JsonRpcFunctionContinuation& cont)
+{
+   json::JsonRpcResponse response;
+   auto handler =  boost::bind(handleGetCollectionSpecs, _1, _2, cont);
+
+   getCollectionSpecs(handler);
 }
 
 void zoteroGetCollections(const json::JsonRpcRequest& request,
@@ -210,6 +266,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       ZoteroCollectionSpec cacheSpec;
       cacheSpec.name = jsonSpec[kName].getString();
       cacheSpec.version = jsonSpec[kVersion].getInt();
+      cacheSpec.key = jsonSpec[kKey].getString();
+      cacheSpec.parentKey = jsonSpec[kParentKey].getString();
       return cacheSpec;
    });
 
@@ -249,6 +307,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
        (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))

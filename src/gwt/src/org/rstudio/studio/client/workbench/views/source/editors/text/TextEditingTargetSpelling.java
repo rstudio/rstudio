@@ -130,7 +130,7 @@ public class TextEditingTargetSpelling extends SpellingContext
    }
 
    @Override
-   public void invalidateWord(String word)
+   public void invalidateWord(String word, boolean userDictionary)
    {
       docDisplay_.removeMarkersAtWord(word);
    }

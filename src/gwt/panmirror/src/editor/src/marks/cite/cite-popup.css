@@ -36,5 +36,5 @@
 }
 
 .nocase {
-  text-transform: lowercase;
+  text-transform: none;
 }

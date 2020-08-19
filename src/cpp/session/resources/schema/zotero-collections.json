@@ -32,6 +32,9 @@
           "key": {
             "type": "string"
           },
+          "parentCollection": {
+            "type": "string"
+          },
           "version": {
             "type": "number"
           },

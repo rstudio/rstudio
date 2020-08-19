@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -89,7 +90,8 @@ import jsinterop.base.Js;
 public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource,
                                    SourceDocAddedEvent.Handler,
-                                   VisualModeSpelling.Context
+                                   VisualModeSpelling.Context,
+                                   VisualModeSpellingAddToDictionaryEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
                      TextEditingTarget.Display view,
@@ -131,6 +133,9 @@ public class VisualMode implements VisualModeEditorSync,
       
       // subscribe to source doc added
       releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
+      
+      // subscribe to spelling invalidation event
+      releaseOnDismiss.add(eventBus.addHandler(VisualModeSpellingAddToDictionaryEvent.TYPE, this));
              
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
@@ -718,8 +723,14 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (panmirror_ != null)
          panmirror_.spellingInvalidateWord(word);
-      
    }
+   
+   @Override
+   public void onVisualModeSpellingAddToDictionary(VisualModeSpellingAddToDictionaryEvent event)
+   {
+      if (panmirror_ != null)
+         panmirror_.spellingInvalidateWord(event.getWord());
+   }  
 
    public boolean isVisualModePosition(SourcePosition position)
    {
@@ -1414,11 +1425,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    // priority task queue for expensive calls to panmirror_.setMarkdown
    // (currently active tab bumps itself up in priority)
-   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
-
-
-
-     
+   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);     
 }
 
 

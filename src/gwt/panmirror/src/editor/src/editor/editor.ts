@@ -565,7 +565,7 @@ export class Editor {
   }
 
   public getOutline(): EditorOutline {
-    return getOutline(this.state);
+    return getOutline(this.state) || [];
   }
 
   public getFindReplace(): EditorFindReplace {

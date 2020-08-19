@@ -6194,7 +6194,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson,
+   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibLaTeX,
                                        ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
@@ -6202,6 +6202,7 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(project));
       params.set(2, new JSONString(id));
       params.set(3, new JSONString(sourceAsJson));
+      params.set(4, new JSONString(sourceAsBibLaTeX));
       sendRequest(RPC_SCOPE, PANDOC_ADD_TO_BIBLIOGRAPHY, params, callback);
    }
 
@@ -6237,6 +6238,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
    }
 
+   @Override
+   public void zoteroGetCollectionSpecs(ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONSPECS, callback);
+   }
+   
    @Override
    public void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback)
    {
@@ -6787,6 +6794,7 @@ public class RemoteServer implements Server
    private static final String CROSSREF_WORKS = "crossref_works";
 
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
+   private static final String ZOTERO_GET_COLLECTIONSPECS = "zotero_get_collection_specs";
    private static final String ZOTERO_VALIDATE_WEB_API_KEY = "zotero_validate_web_api_key";
    private static final String ZOTERO_DETECT_LOCAL_CONFIG = "zotero_detect_local_config";
    private static final String ZOTERO_BETTER_BIBTEX_EXPORT = "zotero_better_bibtex_export";

@@ -47,6 +47,7 @@ export interface CompletionResult<T = any> {
 
 export interface CompletionHeaderProps {
   ui: EditorUI;
+  message?: string;
 }
 
 export interface CompletionHandler<T = any> {
@@ -75,15 +76,16 @@ export interface CompletionHandler<T = any> {
   replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;
 
   // lower level replacement handler (can be passed null if the popup was dismissed)
-  replace?(view: EditorView, pos: number, completion: T | null): void;
+  replace?(view: EditorView, pos: number, completion: T | null): Promise<any>;
 
   // completion view
   view: {
     // optional header component (will go inside a <th>)
-    header?: {
+    header?: () => {
       component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>;
       height: number;
-    };
+      message?: string;
+    } | undefined;
 
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
@@ -125,7 +127,7 @@ export function selectionAllowsCompletions(selection: Selection) {
   }
 
   // must not be in a code mark
-  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+  if (schema.marks.code && !!schema.marks.code.isInSet(selection.$from.marks())) {
     return false;
   }
 

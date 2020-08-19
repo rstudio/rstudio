@@ -173,6 +173,25 @@ std::string collectionSQL(const std::string& name = "")
          AND itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
          %2%
+   UNION
+      SELECT
+         items.key as key,
+         items.version,
+         'collectionKeys' as name,
+         group_concat(collections.key) as value,
+         10000 as fieldOrder
+      FROM
+         items
+	 join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         left join collectionItems on items.itemID = collectionItems.itemID
+	 left join collections on collectionItems.collectionID = collections.collectionID
+         join libraries on items.libraryID = libraries.libraryID
+      WHERE
+         libraries.type = 'user'
+         AND itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+         %2%
+      GROUP BY items.key
    ORDER BY
       key ASC,
       fieldOrder ASC   )");
@@ -211,6 +230,7 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
    error = execQuery(pConnection, collectionSQL(tableName),
                      [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
 
+
       std::string key = row.get<std::string>("key");
       std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
 
@@ -235,8 +255,16 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
 
       // read the csl
       std::string name = row.get<std::string>("name");
-      std::string value = readString(row, "value");
-      currentItem[name] = value;
+
+      // If the value is NULL, we should just omit it
+      // null values are meaningless
+      soci::indicator indicator = row.get_indicator("value");
+      if (indicator == soci::i_ok)
+      {
+         std::string value = readString(row, "value");
+         // the data was returned without problems
+         currentItem[name] = value;
+      }
    });
 
    // add the final item (if we had one)
@@ -260,7 +288,9 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
 {
    std::string sql = R"(
       SELECT
-         collectionName,
+         collections.key as collectionKey,
+	 collections.collectionName as collectionName,
+	 parentCollections.key as parentCollectionKey,
          MAX(items.version) AS version
       FROM
          items
@@ -268,20 +298,28 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
          join libraries on libraries.libraryID = collections.libraryID
          join collectionItems on items.itemID = collectionItems.itemID
          join collections on collectionItems.collectionID = collections.collectionID
+	 left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
       WHERE
          libraries.type = 'user'
          AND itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
       GROUP BY
-         collectionName
+	collections.key
    )";
 
    ZoteroCollectionSpecs specs;
    Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
       ZoteroCollectionSpec spec;
       spec.name = row.get<std::string>("collectionName");
+      spec.key = row.get<std::string>("collectionKey");
 
-      std::string versionStr = readString(row, static_cast<std::size_t>(1), "0");
+      const soci::indicator indicator = row.get_indicator("parentCollectionKey");
+      if (indicator == soci::i_ok) {
+         // If the parent key is null, this is a root level collection
+         spec.parentKey = row.get<std::string>("parentCollectionKey");
+      }
+
+      std::string versionStr = readString(row, static_cast<std::size_t>(3), "0");
       spec.version = safe_convert::stringTo<int>(versionStr, 0);
 
       specs.push_back(spec);
@@ -422,6 +460,22 @@ void getLocalLibrary(std::string key,
    }
 }
 
+void getLocalCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handler)
+{
+   // connect to the database (log and return cache on error)
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = connect(key, &pConnection);
+   if (error)
+   {
+      LOG_ERROR(error);
+      handler(error, std::vector<ZoteroCollectionSpec>());
+      return;
+   }
+
+   ZoteroCollectionSpecs userCollections = getCollections(pConnection);
+   handler(Success(), userCollections);
+}
+
 void getLocalCollections(std::string key,
                          std::vector<std::string> collections,
                          ZoteroCollectionSpecs cacheSpecs,
@@ -451,6 +505,8 @@ void getLocalCollections(std::string key,
    {
       std::string name = userCollection.name;
       int version = userCollection.version;
+      std::string key = userCollection.key;
+      std::string parentKey = userCollection.parentKey;
 
       // see if this is a requested collection
       bool requested =
@@ -466,7 +522,7 @@ void getLocalCollections(std::string key,
          );
          if (it != cacheSpecs.end())
          {
-            ZoteroCollectionSpec collectionSpec(name, version);
+            ZoteroCollectionSpec collectionSpec(name, key, parentKey, version);
             if (it->version != version)
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
             else
@@ -474,7 +530,7 @@ void getLocalCollections(std::string key,
          }
          else
          {
-            downloadCollections.push_back(std::make_pair(name, ZoteroCollectionSpec(name, version)));
+            downloadCollections.push_back(std::make_pair(name, ZoteroCollectionSpec(name, key, parentKey, version)));
          }
       }
    }
@@ -635,6 +691,7 @@ ZoteroCollectionSource localCollections()
    ZoteroCollectionSource source;
    source.getLibrary = getLocalLibrary;
    source.getCollections = getLocalCollections;
+   source.getCollectionSpecs = getLocalCollectionSpecs;
    return source;
 }
 
