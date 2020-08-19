@@ -87,6 +87,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -169,7 +170,7 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
-      
+
       requeryContextTimer_ = new Timer()
       {
          @Override
@@ -305,16 +306,23 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onJumpToFunction(JumpToFunctionEvent event)
          {
-            FilePosition pos = FilePosition.create(event.getLineNumber(), 
+            if (StringUtil.isNullOrEmpty(event.getFileName()))
+               eventBus_.fireEvent(new ScrollToPositionEvent(event.getLineNumber(),
+                  event.getColumnNumber(), event.getMoveCursor()));
+            else
+            {
+               FilePosition pos = FilePosition.create(event.getLineNumber(),
                   event.getColumnNumber());
-            FileSystemItem destFile = FileSystemItem.createFile(
+               FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
-            eventBus_.fireEvent(new OpenSourceFileEvent(
+               eventBus_.fireEvent(new OpenSourceFileEvent(
                   destFile,
                   pos,
                   fileTypeRegistry_.getTextTypeForFile(destFile),
+                  event.getMoveCursor(),
                   NavigationMethods.DEFAULT));
             }
+         }
       });
       
       new JSObjectStateValue(
@@ -1010,7 +1018,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
-   
+
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;

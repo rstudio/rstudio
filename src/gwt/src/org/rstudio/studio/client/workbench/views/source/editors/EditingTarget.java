@@ -87,8 +87,9 @@ public interface EditingTarget extends IsWidget,
    void navigateToPosition(SourcePosition position,
                            boolean recordCurrent,
                            boolean highlightLine,
+                           boolean moveCursor,
                            Command onNavigationCompleted);
-   
+
    void restorePosition(SourcePosition position);
    SourcePosition currentPosition();
    boolean isAtSourceRow(SourcePosition position);
