@@ -331,7 +331,7 @@ public class PaneManager
             String docWindowId = docs.get(i).getSourceWindowId();
 
             // Check the SourceColumn of the SourceDocument. If for some reason we cannot find
-            // it's column, default to the main source window.
+            // its column, default to the main source window.
             SourceColumn column =
                sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
             LogicalWindow columnWindow = column == null ? sourceLogicalWindows_.get(0) :
