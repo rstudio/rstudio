@@ -8,11 +8,13 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { WidgetProps } from "../../api/widgets/react";
 
 import { SelectTree, SelectTreeNode } from "./select_tree";
-import { BibliographyManager, BibliographyContainer, BibliographySource } from "../../api/bibliography/bibliography";
+import { BibliographyManager, BibliographyContainer, BibliographySource, BibliographyDataProvider } from "../../api/bibliography/bibliography";
 import { EditorUI } from "../../api/ui";
 
 import './insert_citation-panel.css';
 import { FixedSizeList, ListChildComponentProps } from "react-window";
+import { kLocalItemType } from "../../api/bibliography/bibliography-provider_local";
+import { TagInput } from "./tag_input";
 
 interface InsertCitationPanelProps extends WidgetProps {
   ui: EditorUI;
@@ -109,9 +111,17 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   React.useEffect(() => {
     async function loadData() {
       if (selectedNode) {
-        const provider = bibMgr.localProviders().find(prov => prov.name === selectedNode.type);
-        if (provider) {
-          setItemData(provider.itemsForCollection(selectedNode.key));
+        if (selectedNode.type === kAllLocalType) {
+          setItemData(bibMgr.allSources());
+        } else {
+          const provider = bibMgr.localProviders().find(prov => prov.name === selectedNode.type);
+          if (provider) {
+            if (selectedNode.key === provider.key) {
+              setItemData(provider.items());
+            } else {
+              setItemData(provider.itemsForCollection(selectedNode.key));
+            }
+          }
         }
       }
     }
@@ -126,17 +136,15 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     ...props.style,
   };
 
-  const onClick = () => {
-    const cites = [Math.random().toString(36).substring(7), ...citeIds];
-    setCiteIds(cites);
-    props.onCitationChanged(cites);
-  };
 
   const nodeSelected = (node: SelectTreeNode) => {
     setSelectedNode(node);
   };
 
-
+  const citationAdded = (source: BibliographySource) => {
+    const cites = [source.id, ...citeIds];
+    setCiteIds(cites);
+  };
 
   return (
     <div className='pm-cite-panel-container' style={style}>
@@ -155,21 +163,36 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             width='100%'
             itemCount={itemData.length}
             itemSize={50}
-            itemData={itemData}
+            itemData={{ data: itemData, addCitation: citationAdded }}
           >
             {CitationListItem}
           </FixedSizeList>
         </div>
       </div>
-      <div className='pm-cite-panel-selected-cites' onClick={onClick}>
-        {citeIds}
+      <div className='pm-cite-panel-selected-cites'>
+        <TagInput
+          tags={citeIds} />
       </div>
     </div >
   );
 };
 
+
+interface CitationListData {
+  data: BibliographySource[];
+  addCitation: (source: BibliographySource) => void;
+}
 export const CitationListItem = (props: ListChildComponentProps) => {
-  return (<div style={props.style}>
-    {props.data[props.index].title}
+
+  const citationListData: CitationListData = props.data;
+  const source = citationListData.data[props.index];
+
+  const onClick = (event: React.MouseEvent) => {
+    console.log(citationListData);
+    citationListData.addCitation(source);
+  };
+
+  return (<div style={props.style} onClick={onClick}>
+    {source.title}
   </div>);
 };

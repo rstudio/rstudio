@@ -62,14 +62,12 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
 
   const className = `pm-select-tree-node`;
   const selectedClassName = `${selected ? 'pm-selected-select-tree-item' : ''}`;
-  const element = (
+  return (
     <div key={props.node.key} className={className} onClick={onClick} style={style}>
       <div className={selectedClassName} style={indentStyle}>{props.node.name}</div>
       {props.alwaysOpen || expanded ? props.node.children?.map(childNode => <SelectTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : ''}
     </div>
   );
-
-  return element;
 };
 
 function containsChild(key: string, node: SelectTreeNode): boolean {

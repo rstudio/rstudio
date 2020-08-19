@@ -58,6 +58,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
       // get the bibliography
       try {
         const result = await this.server.getBibliography(docPath, bibliographiesAbsolute, refBlock, this.etag);
+        console.log(result);
 
         // Read bibliography data from files (via server)
         if (!this.bibliography || result.etag !== this.etag) {

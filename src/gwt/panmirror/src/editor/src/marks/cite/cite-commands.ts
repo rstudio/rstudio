@@ -39,7 +39,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
           return false;
         }
 
-        const useNewInsert = false;
+        const useNewInsert = true;
 
         if (useNewInsert && dispatch && view) {
           showInsertCitationPopup(ui, state.doc, bibliographyManager);
