@@ -1506,6 +1506,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             ArrayList<EditingTarget> editors = column.getEditors();
             for (EditingTarget target : editors)
             {
+               if (!target.dirtyState().getValue())
+               {
+                  column.closeTab(target.asWidget(), false);
+                  continue;
+               }
                server_.getSourceDocument(target.getId(),
                   new ServerRequestCallback<SourceDocument>()
                   {
@@ -1892,8 +1897,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void beforeShow(boolean excludeMain)
    {
-      if (!StringUtil.equals(getActive().getName(), MAIN_SOURCE_NAME))
-         activeColumn_.onBeforeShow();
+      columnList_.forEach((column) ->
+      {
+         if (!excludeMain ||
+             !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            column.onBeforeShow();
+      });
    }
 
    public void beforeShow(String name)
