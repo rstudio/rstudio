@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -179,27 +180,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_VISUAL_MODE_PREFS);
 
       visualMode.add(headerLabel("General"));
-
+        
       CheckBox visualMarkdownIsDefault = checkboxPref(
-            "Use visual editing by default for new documents",
+            "Use visual editor by default for new documents",
             prefs_.visualMarkdownEditingIsDefault());
-      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(7, Unit.PX);
-      visualMode.add(visualMarkdownIsDefault);
-
-      HelpLink visualModeHelpLink = new HelpLink(
-            "Learn more about visual markdown editing",
+      HorizontalPanel visualEditingPanel = checkBoxWithHelp(visualMarkdownIsDefault,
             "visual_markdown_editing",
-            false // no version info
-      );
-      nudgeRight(visualModeHelpLink);
-      spaced(visualModeHelpLink);
-      visualMode.add(visualModeHelpLink);
+            "Learn more about visual markdown editing");
+      visualMode.add(visualEditingPanel);
 
       VerticalPanel visualModeOptions = new VerticalPanel();
-      mediumSpaced(visualModeOptions);
-
-      visualModeOptions.add(headerLabel("Display"));
-
+      
       // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
             "Show document outline by default",
@@ -207,18 +198,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
-      
-      // show margin
-      CheckBox visualEditorShowMargin = checkboxPref(
-            "Show margin in code blocks",
-            prefs_.visualMarkdownEditingShowMargin(),
-            false);
-      lessSpaced(visualEditorShowMargin);
-      visualModeOptions.add(visualEditorShowMargin);
 
       // content width
       visualModeContentWidth_ = numericPref(
-            "Editor content width (pixels):",
+            "Editor content width (px):",
             100,
             NumericValueWidget.NoMaximum,
             prefs_.visualMarkdownEditingMaxContentWidth(),
@@ -243,9 +226,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
+      visualModeFontSize_.getElement().getStyle().setMarginBottom(8, Unit.PX);
       visualModeOptions.add(visualModeFontSize_);
 
-
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin column indicator in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      spaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
+      
       visualModeOptions.add(headerLabel("Markdown"));
 
       // auto wrap
