@@ -171,11 +171,6 @@ public class XTermWidget extends Widget
       if (initialized_)
       {
          initialized_ = false;
-
-         for (XTermDisposable unsubscribe : xtermEventUnsubscribe_)
-            unsubscribe.dispose();
-         xtermEventUnsubscribe_.clear();
-
          Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
@@ -183,16 +178,28 @@ public class XTermWidget extends Widget
    @Override
    public void onResize()
    {
-      if (!isVisible())
-      {
-         return;
-      }
-
       // Notify the local terminal UI that it has resized so it computes new
       // dimensions; debounce this slightly as it is somewhat expensive
       if (resizeTerminalLocal_.isRunning())
          resizeTerminalLocal_.cancel();
+      if (!isResizable())
+         return;
       resizeTerminalLocal_.schedule(RESIZE_DELAY);
+   }
+
+   /**
+    * Is the terminal in a state where we can safely compute dimensions?
+    */
+   public boolean isResizable()
+   {
+      if (!isVisible())
+         return false;
+
+      if (!terminalEmulatorLoaded())
+         return false;
+
+      XTermDimensions size = getTerminalSize();
+      return size.getCols() >= 1 && size.getRows() >= 1;
    }
 
    public void resizePTY(int cols, int rows)
@@ -212,7 +219,7 @@ public class XTermWidget extends Widget
          }
 
          // if emulator became invisible since resize was issued, resizing may cause exceptions
-         if (!isVisible())
+         if (!isResizable())
          {
             if (resizeTerminalRemote_.isRunning())
                resizeTerminalRemote_.cancel();
