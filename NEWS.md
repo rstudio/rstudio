@@ -7,6 +7,8 @@
 * Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
+* The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
+* Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
 
 ### Plots
 
