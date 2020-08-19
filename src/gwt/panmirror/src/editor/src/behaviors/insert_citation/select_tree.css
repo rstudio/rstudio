@@ -1,0 +1,10 @@
+.pm-select-tree-node {
+}
+
+.pm-select-tree-node-selected {
+  background-color: blue;
+}
+
+.pm-select-tree-node-indent {
+  margin-left: 10px;
+}

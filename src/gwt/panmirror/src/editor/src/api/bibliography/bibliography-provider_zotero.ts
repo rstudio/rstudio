@@ -14,12 +14,12 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyContainer } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
@@ -29,6 +29,7 @@ export const kZoteroItemProvider = 'Zotero';
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
   private collections: ZoteroCollection[] = [];
+  private allCollectionSpecs: ZoteroCollectionSpec[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
 
@@ -37,6 +38,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public name: string = "Zotero";
+  public key: string = "2509FBBE-5BB0-44C4-B119-6083A81ED673";
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -52,10 +54,16 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // through the whole pipeline to be sure we're trying to clear that warning
         const useCache = this.warning === undefined;
 
+        // Read collection specs. TODO: Consider making this an asynch call elsewhere
+        const allCollectionSpecsResult = await this.server.getCollectionSpecs();
+        if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
+          this.allCollectionSpecs = allCollectionSpecsResult.message;
+        }
+
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
         this.warning = result.warning;
-        if (result.status === "ok") {
+        if (result.status === 'ok') {
 
           if (result.message) {
 
@@ -89,14 +97,27 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return hasUpdates;
   }
 
-  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
-    return this.collections.map(collection => collection.name);
+  public containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[] {
+    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
   }
 
   public items(): BibliographySource[] {
     const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
     const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
     return zoteroEntries;
+  }
+
+  public itemsForCollection(collectionKey?: string): BibliographySource[] {
+    if (!collectionKey) {
+      return this.items();
+    }
+
+    return this.items().filter((item: any) => {
+      if (item.collectionKeys) {
+        return item.collectionKeys.includes(collectionKey);
+      }
+      return false;
+    });
   }
 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {

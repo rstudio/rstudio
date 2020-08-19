@@ -25,9 +25,10 @@ import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { showInsertCitationPopup } from '../../behaviors/insert_citation/insert_citation-popup';
 import { EditorEvents } from '../../api/events';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI, events: EditorEvents) {
+  constructor(ui: EditorUI, events: EditorEvents, bibliographyManager: BibliographyManager) {
     super(
       EditorCommandId.Citation,
       ['Shift-Mod-F8'],
@@ -38,8 +39,11 @@ export class InsertCitationCommand extends ProsemirrorCommand {
           return false;
         }
 
+        const useNewInsert = false;
 
-        if (dispatch) {
+        if (useNewInsert && dispatch && view) {
+          showInsertCitationPopup(ui, state.doc, bibliographyManager);
+        } else if (dispatch) {
           const tr = state.tr;
           const citeMark = schema.marks.cite.create();
           const cite = schema.text(`[@]`, [citeMark]);
@@ -49,13 +53,6 @@ export class InsertCitationCommand extends ProsemirrorCommand {
           setTextSelection(state.selection.from + 2)(tr);
           dispatch(tr);
         }
-
-        /*
-        if (dispatch && view) {
-          showInsertCitationPopup(events);
-        }
-        */
-
         return true;
       },
       {

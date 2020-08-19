@@ -191,6 +191,12 @@ export function applyTheme(theme: EditorTheme) {
       background-color: ${theme.chunkBackgroundColor} !important;
       border: 1px solid transparent !important;
     }
+    .pm-selected-select-tree-item {
+      background-color: ${theme.findTextBorderColor} !important;
+    }
+    .pm-dark-mode .pm-selected-select-tree-item {
+      background-color: ${theme.findTextBorderColor} !important;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }

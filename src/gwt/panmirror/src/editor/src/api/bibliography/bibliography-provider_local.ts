@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyContainer } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -43,6 +43,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.etag = '';
   }
   public name: string = "Local Bibliography";
+  public key: string = "E06068FE-45DA-4D88-ABDA-0DF290624950";
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
@@ -73,21 +74,22 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
+  public containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[] {
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
     }
 
-    if (this.projectBibios().length > 0) {
-      return this.projectBibios();
+    if (this.projectBiblios().length > 0) {
+      return this.projectBiblios().map(biblio => ({ name: biblio, key: biblio }));
     }
 
     const bibliographies = bibliographyFilesFromDocument(doc, ui);
-    return bibliographies || [];
+    return bibliographies ? bibliographies.map(biblio => ({ name: biblio, key: biblio })) : [];
   }
 
 
   public items(): BibliographySource[] {
+
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
     }
@@ -99,7 +101,12 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     }));
   }
 
-  public projectBibios(): string[] {
+  public itemsForCollection(collectionKey: string): BibliographySource[] {
+    console.log(this.bibliography);
+    return [];
+  }
+
+  public projectBiblios(): string[] {
     return this.bibliography?.project_biblios || [];
   }
 

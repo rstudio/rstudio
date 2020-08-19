@@ -35,14 +35,22 @@ export interface BibliographyFile {
 }
 
 export interface BibliographyDataProvider {
+  key: string;
   name: string;
 
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  containers(doc: ProsemirrorNode, ui: EditorUI): string[];
+  containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[];
   items(): BibliographySource[];
+  itemsForCollection(collectionKey: string): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
   generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
   warningMessage(): string | undefined;
+}
+
+export interface BibliographyContainer {
+  name: string;
+  key: string;
+  parentKey?: string;
 }
 
 export interface Bibliography {

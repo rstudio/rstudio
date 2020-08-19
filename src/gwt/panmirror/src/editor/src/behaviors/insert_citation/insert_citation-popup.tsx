@@ -15,85 +15,81 @@
 
 
 import React from 'react';
+import ReactDOM from 'react-dom';
+
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { EditorUI } from '../../api/ui';
+import { ZoteroCollectionSpec } from '../../api/zotero';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPanel } from './insert_citation-panel';
-import { EditorEvents } from '../../api/events';
-import { ResizeEvent } from '../../api/event-types';
-import { WidgetProps } from '../../api/widgets/react';
-import ReactDOM from 'react-dom';
-import debounce from 'lodash.debounce';
 
-export function showInsertCitationPopup(events: EditorEvents) {
+
+interface CitationSourceProvider {
+  name: string;
+}
+
+interface InsertCitationDataProvider {
+  getProviders(): CitationSourceProvider[];
+  getCollections(): ZoteroCollectionSpec[];
+}
+
+
+export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode, bibliographyManager: BibliographyManager) {
+
+  // The citations that the user would like to insert
+  let citations: string[] = [];
+  const onCitationChanged = (cites: string[]) => {
+    citations = cites;
+  };
+
   // Render the element into the window
+  const performInsert = await ui.dialogs.htmlDialog(
+    "Insert Citation",
+    "Insert",
+    (containerWidth: number, containerHeight: number, confirm: VoidFunction, cancel: VoidFunction) => {
 
+      const kMaxHeight = 600;
+      const kMaxHeightProportion = .9;
+      const kWidthProportion = 1.33;
 
+      const windowHeight = containerHeight;
+      const windowWidth = containerWidth;
 
-  const container = window.document.createElement('div');
-  container.tabIndex = 0;
-  container.style.position = 'absolute';
-  container.style.zIndex = '1000';
-  container.style.height = window.innerHeight + 'px';
-  container.style.width = window.innerWidth + 'px';
+      const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion);
+      const width = Math.min(kWidthProportion * height, windowWidth * .9);
 
-  const cancelHandler = () => {
-    container.remove();
-  };
+      const container = window.document.createElement('div');
 
-  ReactDOM.render(
-    <InsertCitePopup
-      events={events}
-      cancelHandler={cancelHandler} />, container);
-  window.document.body.appendChild(container);
+      container.style.height = height + 'px';
+      container.style.width = width + 'px';
+      ReactDOM.render(
+        <InsertCitationPanel
+          doc={doc}
+          ui={ui}
+          bibliographyManager={bibliographyManager}
+          onCitationChanged={onCitationChanged}
+          height={height}
+          width={width} />
+        , container);
+      return container;
+
+    },
+    () => {
+      // TODO: Focus the correct control (text filtering)?
+    },
+    () => {
+      if (citations.length === 0) {
+        return "Please select a citation to insert.";
+      }
+      return null;
+    });
+
+  if (performInsert && citations.length > 0) {
+    console.log(citations);
+    window.alert('Inserting ' + citations.length + ' citations');
+  }
 }
-
-interface InsertCitePopupProps extends WidgetProps {
-  events: EditorEvents;
-  cancelHandler: VoidFunction;
-}
-
-const InsertCitePopup: React.FC<InsertCitePopupProps> = props => {
-
-  const computeSize = () => {
-    const kMaxHeight = 800;
-    const kMaxHeightProportion = .9;
-    const kWidthProportion = .75;
-
-    const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
-
-    const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion);
-    const width = Math.min(kWidthProportion * height, windowWidth * .9);
-    const size: [number, number] = [height, width];
-    return size;
-  };
-
-  // Listen for resize events and update the size and position of the dialog 
-  React.useEffect(() => {
-    return props.events.subscribe(ResizeEvent, debounce(() => {
-      const newSize = computeSize();
-      setPanelSize(newSize);
-    }, 15));
-  });
-
-  const initialSize = computeSize();
-  const [panelSize, setPanelSize] = React.useState<[number, number]>(initialSize);
-
-  const top = (window.innerHeight - panelSize[0]) / 2;
-  const left = (window.innerWidth - panelSize[1]) / 2;
-
-  const popupStyles: React.CSSProperties = {
-    top: top + 'px',
-    left: left + 'px',
-    position: 'absolute',
-    zIndex: 1000
-  };
-  return (
-    <div style={popupStyles} >
-      <InsertCitationPanel
-        size={panelSize}
-        cancel={props.cancelHandler} />
-    </div >);
-};
-
 
 
