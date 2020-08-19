@@ -1145,9 +1145,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
      browser()
      handles <- ls(.rs.notebookChunkCallbacks)
      for (handle in handles) {
-        callback <- get(handle, envir = .rs.notebookChunkCallbacks)
+        chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
         if (grepl(chunkName, handle)) {
-           return(callback())
+           return(chunkCallback)
         }
      }
   }
