@@ -38,6 +38,10 @@ public class JumpToFunctionEvent
       public final native int getColumnNumber() /*-{
          return this.column_number;
       }-*/;
+
+      public final native boolean getMoveCursor() /*-{
+         return this.move_cursor;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -63,6 +67,11 @@ public class JumpToFunctionEvent
    public String getFileName()
    {
       return data_.getFileName();
+   }
+
+   public boolean getMoveCursor()
+   {
+      return data_.getMoveCursor();
    }
 
    @Override
