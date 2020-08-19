@@ -1176,13 +1176,14 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
 }
 
 
-SEXP rs_jumpToFunction(SEXP file, SEXP line, SEXP col) 
+SEXP rs_jumpToFunction(SEXP file, SEXP line, SEXP col, SEXP moveCursor)
 {
    json::Object funcLoc;
    FilePath path(r::sexp::safeAsString(file));
    funcLoc["file_name"] = module_context::createAliasedPath(path);
    funcLoc["line_number"] = r::sexp::asInteger(line);
    funcLoc["column_number"] = r::sexp::asInteger(col);
+   funcLoc["move_cursor"] = r::sexp::asLogical(moveCursor);
    ClientEvent jumpEvent(client_events::kJumpToFunction, funcLoc);
    module_context::enqueClientEvent(jumpEvent);
    return R_NilValue;
