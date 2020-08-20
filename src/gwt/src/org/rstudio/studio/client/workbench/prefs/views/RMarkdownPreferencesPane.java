@@ -281,7 +281,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualModeReferences_);
       visualModeOptions.add(visualModeReferences_);
 
-      // TODO: add option for canonical mode here
+      // canonical mode
+      CheckBox visualModeCanonical = checkboxPref(
+            "Write canonical visual mode markdown in source mode",
+            prefs_.visualMarkdownEditingCanonical(),
+            false);
+      spaced(visualModeCanonical);
+      visualModeOptions.add(visualModeCanonical);
       
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(

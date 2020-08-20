@@ -18,7 +18,6 @@ import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -135,7 +134,25 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
                 
-                // TODO: set project level user prefs for markdown editing
+                // markdown prefs (if they are set to defaults then remove the project prefs, otherwise forward them on)
+                if (!config.getMarkdownWrap().equals(RProjectConfig.MARKDOWN_WRAP_DEFAULT))
+                {
+                   uiPrefs.visualMarkdownEditingWrap().setProjectValue(config.getMarkdownWrap());
+                   uiPrefs.visualMarkdownEditingWrapAtColumn().setProjectValue(config.getMarkdownWrapAtColumn());
+                }
+                else
+                {
+                   uiPrefs.visualMarkdownEditingWrap().removeProjectValue(true);
+                   uiPrefs.visualMarkdownEditingWrapAtColumn().removeProjectValue(true);
+                }
+                if (!config.getMarkdownReferences().equals(RProjectConfig.MARKDOWN_REFERENCES_DEFAULT))
+                   uiPrefs.visualMarkdownEditingReferencesLocation().setProjectValue(config.getMarkdownReferences());
+                else
+                   uiPrefs.visualMarkdownEditingReferencesLocation().removeProjectValue(true);
+                if (config.getMarkdownCanonical() != RProjectConfig.DEFAULT_VALUE)
+                   uiPrefs.visualMarkdownEditingCanonical().setProjectValue(config.getMarkdownCanonical() == RProjectConfig.YES_VALUE);
+                else
+                   uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
 
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());

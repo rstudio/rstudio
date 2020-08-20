@@ -395,6 +395,10 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["tutorial_path"] = config.tutorialPath;
    configJson["quit_child_processes_on_exit"] = config.quitChildProcessesOnExit;
    configJson["disable_execute_rprofile"] = config.disableExecuteRprofile;
+   configJson["markdown_wrap"] = config.markdownWrap;
+   configJson["markdown_wrap_at_column"] = config.markdownWrapAtColumn;
+   configJson["markdown_references"] = config.markdownReferences;
+   configJson["markdown_canonical"] = config.markdownCanonical;
 
    return configJson;
 }
@@ -647,6 +651,15 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = json::readObject(rVersionJson,
                             "number", config.rVersion.number,
                             "arch", config.rVersion.arch);
+   if (error)
+      return error;
+
+   // read markdown options
+   error = json::readObject(configJson,
+                            "markdown_wrap", config.markdownWrap,
+                            "markdown_wrap_at_column", config.markdownWrapAtColumn,
+                            "markdown_references", config.markdownReferences,
+                            "markdown_canonical", config.markdownCanonical);
    if (error)
       return error;
 

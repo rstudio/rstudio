@@ -2494,6 +2494,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingReferencesLocation(std::stri
 }
 
 /**
+ * Whether to write canonical visual mode markdown when saving from source mode.
+ */
+bool UserPrefValues::visualMarkdownEditingCanonical()
+{
+   return readPref<bool>("visual_markdown_editing_canonical");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingCanonical(bool val)
+{
+   return writePref("visual_markdown_editing_canonical", val);
+}
+
+/**
  * Maximum content width for visual editing mode, in pixels
  */
 int UserPrefValues::visualMarkdownEditingMaxContentWidth()
@@ -2894,6 +2907,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingWrap,
       kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
+      kVisualMarkdownEditingCanonical,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,

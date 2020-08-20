@@ -332,4 +332,48 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setTutorialPath(String tutorialPath) /*-{
       this.tutorial_path = tutorialPath;
    }-*/;
+   
+   public static final String MARKDOWN_WRAP_DEFAULT = "Default";
+   public static final String MARKDOWN_WRAP_NONE = "None";
+   public static final String MARKDOWN_WRAP_COLUMN = "Column";
+   public static final String MARKDOWN_WRAP_SENTENCE = "Sentence";
+   
+   public native final String getMarkdownWrap() /*-{
+      return this.markdown_wrap;
+   }-*/;
+   
+   public native final void setMarkdownWrap(String wrap) /*-{
+      this.markdown_wrap = wrap;
+   }-*/;
+   
+   public native final int getMarkdownWrapAtColumn() /*-{
+      return this.markdown_wrap_at_column;
+   }-*/;
+   
+   public native final void setMarkdownWrapAtColumn(int column) /*-{
+      this.markdown_wrap_at_column = column;
+   }-*/;
+   
+   public static final String MARKDOWN_REFERENCES_DEFAULT = "Default";
+   public static final String MARKDOWN_REFERENCES_BLOCK = "Block";
+   public static final String MARKDOWN_REFERENCES_SECTION = "Section";
+   public static final String MARKDOWN_REFERENCES_DOCUMENT = "Document";
+   
+   public native final String getMarkdownReferences() /*-{
+      return this.markdown_references;
+   }-*/;
+   
+   public native final void setMarkdownReferences(String references) /*-{
+      this.markdown_references = references;
+   }-*/;
+   
+   public native final int getMarkdownCanonical() /*-{
+      return this.markdown_canonical;
+   }-*/;
+
+   public native final void setMarkdownCanonical(int canonical) /*-{
+      this.markdown_canonical = canonical;
+   }-*/;
+   
+   
 }

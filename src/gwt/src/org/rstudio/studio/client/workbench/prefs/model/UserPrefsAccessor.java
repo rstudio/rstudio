@@ -2707,6 +2707,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT = "document";
 
    /**
+    * Whether to write canonical visual mode markdown when saving from source mode.
+    */
+   public PrefValue<Boolean> visualMarkdownEditingCanonical()
+   {
+      return bool(
+         "visual_markdown_editing_canonical",
+         "Write canonical visual mode markdown in source mode", 
+         "Whether to write canonical visual mode markdown when saving from source mode.", 
+         false);
+   }
+
+   /**
     * Maximum content width for visual editing mode, in pixels
     */
    public PrefValue<Integer> visualMarkdownEditingMaxContentWidth()
@@ -3337,6 +3349,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapAtColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_at_column"));
       if (source.hasKey("visual_markdown_editing_references_location"))
          visualMarkdownEditingReferencesLocation().setValue(layer, source.getString("visual_markdown_editing_references_location"));
+      if (source.hasKey("visual_markdown_editing_canonical"))
+         visualMarkdownEditingCanonical().setValue(layer, source.getBool("visual_markdown_editing_canonical"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
          visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
       if (source.hasKey("visual_markdown_editing_show_doc_outline"))
@@ -3563,6 +3577,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingWrap());
       prefs.add(visualMarkdownEditingWrapAtColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());
+      prefs.add(visualMarkdownEditingCanonical());
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());

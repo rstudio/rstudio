@@ -1260,6 +1260,12 @@
             "title": "Place visual markdown footnotes in",
             "description": "Placement of footnotes within markdown output."
         },
+        "visual_markdown_editing_canonical": {
+            "type": "boolean",
+            "default": false,
+            "title": "Write canonical visual mode markdown in source mode",
+            "description": "Whether to write canonical visual mode markdown when saving from source mode."
+        },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",
             "default": 700,
