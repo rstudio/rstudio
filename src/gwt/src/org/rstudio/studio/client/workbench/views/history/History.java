@@ -219,8 +219,6 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
          @Override
          public void onConsoleResetHistory(ConsoleResetHistoryEvent event)
          {
-            view_.bringToFront();
-
             // convert to HistoryEntry
             ArrayList<HistoryEntry> commands = toRecentCommandsList(
                                                          event.getHistory());
