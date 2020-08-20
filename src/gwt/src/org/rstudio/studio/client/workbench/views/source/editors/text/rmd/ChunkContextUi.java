@@ -22,11 +22,9 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
@@ -38,19 +36,16 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.
 
 import com.google.gwt.core.client.JsArrayString;
 
-public class ChunkContextUi implements ChunkContextToolbar.Host
+public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 {
-   public ChunkContextUi(TextEditingTarget target, int renderPass, 
-         boolean dark, Scope chunk, PinnedLineWidget.Host lineWidgetHost)
+   public ChunkContextUi(TextEditingTarget target, boolean dark, Scope chunk)
    {
       target_ = target;
       chunk_ = chunk;
       int preambleRow = chunk.getPreamble().getRow();
       preambleRow_ = preambleRow;
       isSetup_ = isSetupChunk(preambleRow);
-      host_ = lineWidgetHost;
       dark_ = dark;
-      renderPass_ = renderPass;
       engine_ = getEngine(preambleRow);
       createToolbar(preambleRow);
    }
@@ -99,7 +94,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
 
    public int getPreambleRow()
    {
-      return lineWidget_.getRow();
+      return getRow();
    }
    
    public void setState(int state)
@@ -107,19 +102,9 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       toolbar_.setState(state);
    }
    
-   public LineWidget getLineWidget()
-   {
-      return lineWidget_.getLineWidget();
-   }
-   
-   public void detach()
-   {
-      lineWidget_.detach();
-   }
-   
    public void syncToChunk()
    {
-      int row = lineWidget_.getRow();
+      int row = getRow();
       boolean isSetup = isSetupChunk(row);
       if (isSetup_ != isSetup)
       {
@@ -133,16 +118,6 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          toolbar_.setEngine(engine);
       }
       toolbar_.setClassId(getLabel(row));
-   }
-
-   public void setRenderPass(int pass)
-   {
-      renderPass_ = pass;
-   }
-   
-   public int getRenderPass()
-   {
-      return renderPass_;
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
@@ -194,7 +169,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
                @Override
                public void execute()
                {
-                  target_.dequeueChunk(lineWidget_.getRow());
+                  target_.dequeueChunk(getRow());
                }
             }, 
             null,  // cancel operation 
@@ -228,12 +203,28 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          }
       }
    }
+   
+   public void setScope(Scope scope)
+   {
+      chunk_ = scope;
+   }
+
+   // Protected methods -------------------------------------------------------
+
+   protected void createToolbar(int row)
+   {
+      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
+      toolbar_.setHeight("0px"); 
+      toolbar_.setClassId(getLabel(row));
+   }
+   
+   protected abstract int getRow();
 
    // Private methods ---------------------------------------------------------
    
    private Position chunkPosition()
    {
-      return Position.create(lineWidget_.getRow(), 0);
+      return Position.create(getRow(), 0);
    }
    
    private boolean isSetupChunk(int row)
@@ -242,15 +233,6 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       return line.contains("r setup");
    }
    
-   private void createToolbar(int row)
-   {
-      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
-      toolbar_.setHeight("0px"); 
-      toolbar_.setClassId(getLabel(row));
-      lineWidget_ = new PinnedLineWidget(
-            ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
-            toolbar_, row, null, host_);
-   }
 
    private String getEngine(int row)
    {
@@ -268,7 +250,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
 
    private ChunkOptionsPopupPanel createPopupPanel()
    {
-      int row = lineWidget_.getRow();
+      int row = getRow();
       if (isSetupChunk(row))
          return new SetupChunkOptionsPopupPanel();
       
@@ -280,16 +262,13 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       return new DefaultChunkOptionsPopupPanel(engine_);
    }
 
-   private final TextEditingTarget target_;
-   private final PinnedLineWidget.Host host_;
+   protected ChunkContextToolbar toolbar_;
+   protected final TextEditingTarget target_;
+   protected Scope chunk_;
+
    private final int preambleRow_;
    private final boolean dark_;
-   private final Scope chunk_;
 
-   private ChunkContextToolbar toolbar_;
-   private PinnedLineWidget lineWidget_;
-   private int renderPass_;
-   
    private boolean isSetup_;
    private String engine_;
 }
