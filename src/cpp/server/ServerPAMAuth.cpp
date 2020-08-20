@@ -151,10 +151,7 @@ std::string applicationSignInURL(const http::Request& request,
 
 std::string getUserIdentifier(const core::http::Request& request)
 {
-   if (server::options().authNone())
-      return core::system::username();
-   else
-      return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
+   return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -262,6 +259,12 @@ void signIn(const http::Request& request,
       return;
    }
 
+   if (server::options().authNone())
+   {
+      auth::handler::setSignInCookies(request, core::system::username(), false, pResponse);
+      pResponse->setMovedTemporarily(request, "./");
+      return;
+   }
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
