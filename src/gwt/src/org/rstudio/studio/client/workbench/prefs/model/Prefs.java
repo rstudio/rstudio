@@ -51,6 +51,7 @@ public abstract class Prefs
       // the other non-uipref project options)
       void setProjectValue(T value);
       void setProjectValue(T value, boolean fireEvents);
+      void removeProjectValue(boolean fireEvents);
       
       // generic set for any layer
       void setValue(String layer, T value);
@@ -172,6 +173,14 @@ public abstract class Prefs
       public void setProjectValue(T value, boolean fireEvents)
       {
          setValue(layers_.get(projectLayer()).getValues(), value, fireEvents);
+      }
+      
+      public void removeProjectValue(boolean fireEvents)
+      {
+         JsObject projValues = layers_.get(projectLayer()).getValues();
+         projValues.unset(name_);
+         if (fireEvents)
+            ValueChangeEvent.fire(this, getValue());
       }
 
       protected abstract void doSetValue(JsObject root, String name, T value);
