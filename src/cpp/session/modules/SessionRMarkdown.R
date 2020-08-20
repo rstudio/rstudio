@@ -525,9 +525,21 @@
    
    # NOTE: binary directory has a single arch-specific subdir;
    # rather than trying to hard-code the architecture we just
-   # infer it directly
+   # infer it directly.
+   #
+   # some users will end up with tinytex installations that
+   # 'exist', but are broken for some reason (no longer have
+   # a 'bin' directory). detect those cases properly
+   #
+   # https://github.com/rstudio/rstudio/issues/7615
    bin <- file.path(root, "bin")
+   if (!file.exists(bin))
+      return(NULL)
+
    subbin <- list.files(bin, full.names = TRUE)
+   if (length(subbin) == 0)
+      return(NULL)
+
    normalizePath(subbin[[1]], mustWork = TRUE)
 })
 
