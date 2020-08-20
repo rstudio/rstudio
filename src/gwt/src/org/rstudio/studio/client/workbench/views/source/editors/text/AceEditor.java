@@ -3065,7 +3065,7 @@ public class AceEditor implements DocDisplay,
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      navigateToPosition(position, recordCurrent, false, true);
+      navigateToPosition(position, recordCurrent, false, false);
    }
 
    @Override
