@@ -39,7 +39,7 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
         return (
           equalsIgnoreCase(heading.node.textContent, linkText) &&
           !attrs.title &&
-          (attrs.href === '#' || attrs.href.substr(1) === heading.node.attrs.id)
+          (attrs.href === '#')
         );
       });
       if (matchedHeading) {

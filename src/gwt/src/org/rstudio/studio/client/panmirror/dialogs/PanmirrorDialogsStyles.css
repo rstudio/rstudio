@@ -59,8 +59,18 @@
    width: 100%;
 }
 
+.dialog .fullWidthTable {
+	width: 100%;
+}
+
 .spaced {
    margin-bottom: 10px;
+}
+
+.listBox {
+	border: solid 1px #a3a8b2;
+	border-radius: 2px;
+	height: 22px;
 }
 
 .dialog .checkBox  input[type="checkbox"] {

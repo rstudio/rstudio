@@ -95,7 +95,8 @@ import {
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
-import { getSpellingDoc } from '../behaviors/spelling';
+import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
+import { realtimeSpellingPlugin, invalidateAllWords, invalidateWord } from '../behaviors/spelling/spelling-realtime';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
@@ -362,6 +363,11 @@ export class Editor {
     // carry omni insert info)
     this.registerCompletionExtension();
 
+    // register realtime spellchecking (done in a separate step b/c it 
+    // requires access to PandocMark definitions to determine which 
+    // marks to exclude from spellchecking)
+    this.registerRealtimeSpelling();
+
     // create state
     this.state = EditorState.create({
       schema: this.schema,
@@ -566,7 +572,7 @@ export class Editor {
   }
 
   public getOutline(): EditorOutline {
-    return getOutline(this.state);
+    return getOutline(this.state) || [];
   }
 
   public getFindReplace(): EditorFindReplace {
@@ -584,7 +590,15 @@ export class Editor {
   }
 
   public getSpellingDoc(): EditorSpellingDoc {
-    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling.breakWords);
+    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling);
+  }
+
+  public spellingInvalidateAllWords() {
+    invalidateAllWords(this.view);
+  }
+
+  public spellingInvalidateWord(word: string) {
+    invalidateWord(this.view, word);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the
@@ -795,6 +809,17 @@ export class Editor {
     ]);
   }
 
+  private registerRealtimeSpelling() {
+    this.extensions.registerPlugins([
+      realtimeSpellingPlugin(
+        this.schema,
+        this.extensions.pandocMarks(),
+        this.context.ui,
+        this.events
+      )
+    ], true);
+  }
+
   private createPlugins(): Plugin[] {
     return [
       baseKeysPlugin(this.extensions.baseKeys(this.schema)),
@@ -875,11 +900,41 @@ export class Editor {
       }
     });
 
+    // for windows desktop, build a list of control key handlers b/c qtwebengine
+    // ends up corrupting ctrl+ keys so they don't hit the ace keybinding 
+    // (see: https://github.com/rstudio/rstudio/issues/7142)
+    const ctrlKeyCodes: { [key: string]: CommandFn } = {};
+    Object.keys(pluginKeys).forEach(keyCombo => {
+      const match = keyCombo.match(/^Mod-([a-z\\])$/);
+      if (match) {
+        const key = match[1];
+        const keyCode = key === '\\' ? 'Backslash' : `Key${key.toUpperCase()}`;
+        ctrlKeyCodes[keyCode] = pluginKeys[keyCombo];
+      }
+    });
+
+    // create default prosemirror handler
+    const prosemirrorKeydownHandler = keydownHandler(pluginKeys);
+
     // return plugin
     return new Plugin({
       key: keybindingsPlugin,
       props: {
-        handleKeyDown: keydownHandler(pluginKeys),
+        handleKeyDown: (view: EditorView, event: Event) => {
+          // workaround for Ctrl+ keys on windows desktop
+          if (this.context.ui.context.isWindowsDesktop()) {
+            const keyEvent = event as KeyboardEvent;
+            if (keyEvent.ctrlKey) {
+              const keyCommand = ctrlKeyCodes[keyEvent.code];
+              if (keyCommand && keyCommand(this.view.state)) {
+                keyCommand(this.view.state, this.view.dispatch, this.view);
+                return true;
+              }
+            }
+          }
+          // default handling
+          return prosemirrorKeydownHandler(view, event);
+        }
       },
     });
   }

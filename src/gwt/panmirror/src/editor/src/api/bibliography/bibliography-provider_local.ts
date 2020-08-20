@@ -17,11 +17,13 @@ import { Transaction } from 'prosemirror-state';
 
 import { PandocServer } from "../pandoc";
 
-import { expandPaths } from "../path";
+import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
+import { toBibLaTeX } from './bibDB';
+import { CSL } from '../csl';
 
 export const kLocalItemType = 'Local';
 
@@ -40,6 +42,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.server = server;
     this.etag = '';
   }
+  public name: string = "Local Bibliography";
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
@@ -70,6 +73,20 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
+  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
+    if (!this.bibliography || !this.bibliography.sources) {
+      return [];
+    }
+
+    if (this.projectBibios().length > 0) {
+      return this.projectBibios();
+    }
+
+    const bibliographies = bibliographyFilesFromDocument(doc, ui);
+    return bibliographies || [];
+  }
+
+
   public items(): BibliographySource[] {
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
@@ -86,9 +103,40 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return this.bibliography?.project_biblios || [];
   }
 
+  public generateBibLaTeX(_ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
+    return Promise.resolve(toBibLaTeX(id, csl));
+  }
+
+  public warningMessage(): string | undefined {
+    return undefined;
+  }
+
+  public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+
+    const kPermissableFileExtensions = ['bib', 'yaml', 'yml', 'json'];
+    if (this.bibliography?.project_biblios
+      && this.bibliography.project_biblios.length > 0) {
+      return this.bibliography?.project_biblios.map(projectBiblio => {
+        return {
+          displayPath: projectBiblio,
+          fullPath: projectBiblio,
+          isProject: true,
+          writable: kPermissableFileExtensions.includes(getExtension(projectBiblio))
+        };
+      });
+    }
+    return bibliographyFilesFromDocument(doc, ui)?.map(path => {
+      return {
+        displayPath: path,
+        fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+        isProject: false,
+        writable: kPermissableFileExtensions.includes(getExtension(path))
+      };
+    }) || [];
+  }
 }
 
-export function bibliographyPaths(doc: ProsemirrorNode): string[] | undefined {
+function bibliographyFilesFromDocument(doc: ProsemirrorNode, ui: EditorUI): string[] | undefined {
   // Gather the files from the document
   return bibliographyFilesFromDoc(parseYamlNodes(doc));
 }

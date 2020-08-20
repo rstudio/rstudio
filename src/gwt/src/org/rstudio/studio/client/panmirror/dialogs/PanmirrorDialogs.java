@@ -84,6 +84,7 @@ public class PanmirrorDialogs {
               alertType = MessageDisplay.MSG_ERROR;
               break;
          }
+         
          PanmirrorDialogs.this.globalDisplay_.showMessage(alertType, title, message, new Operation() {
             @Override
             public void execute()
@@ -93,7 +94,56 @@ public class PanmirrorDialogs {
          });    
       });
    }
-
+   
+   
+   public Promise<Boolean> yesNoMessage(String message, String title, int type, String yesLabel, String noLabel) 
+   {
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         int alertType = MessageDisplay.MSG_INFO;
+         switch(type) {
+            case AlertType.Info:
+              alertType = MessageDisplay.MSG_INFO;
+              break;
+            case AlertType.Warning:
+              alertType = MessageDisplay.MSG_WARNING;
+              break;
+            case AlertType.Error:
+              alertType = MessageDisplay.MSG_ERROR;
+              break;
+         }
+         
+         PanmirrorDialogs.this.globalDisplay_.showYesNoMessage(alertType, 
+                                                               title, 
+                                                               message, 
+                                                               false, 
+                                                               new Operation() {
+                                                                  @Override
+                                                                  public void execute()
+                                                                  {
+                                                                     resolve.onInvoke(true);    
+                                                                  }        
+                                                               }, 
+                                                               new Operation() {
+                                                                  @Override
+                                                                  public void execute()
+                                                                  {
+                                                                     resolve.onInvoke(false);    
+                                                                  }
+                                                               },
+                                                               new Operation() {
+                                                                  @Override
+                                                                  public void execute()
+                                                                  {
+                                                                     resolve.onInvoke(false);    
+                                                                  }
+                                                               }, 
+                                                               yesLabel,
+                                                               noLabel,
+                                                               true
+         );    
+      });
+   }
+   
    public Promise<PanmirrorLinkEditResult> editLink(
       PanmirrorLinkProps link, PanmirrorLinkTargets targets, PanmirrorLinkCapabilities capabilities)
    {

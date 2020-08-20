@@ -379,14 +379,16 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
           trigger_external_build('IDE/macos-v1.4')
-          trigger_external_build('IDE/qa-opensource-automation')
         }
 
         else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
           trigger_external_build('IDE/macos-v1.3')
-          trigger_external_build('IDE/windows-v1.3')
         }
         parallel parallel_containers
+
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/qa-opensource-automation')
+        }
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants

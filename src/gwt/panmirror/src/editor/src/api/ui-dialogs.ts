@@ -23,6 +23,7 @@ import { kStyleAttrib, attrPartitionKeyvalue } from "./pandoc_attr";
 
 export interface EditorDialogs {
   alert: AlertFn;
+  yesNoMessage: YesNoMessageFn;
   editLink: LinkEditorFn;
   editImage: ImageEditorFn;
   editCodeBlock: CodeBlockEditorFn;
@@ -59,6 +60,8 @@ export const kAlertTypeWarning = 2;
 export const kAlertTypeError = 3;
 
 export type AlertFn = (message: string, title: string, type: number) => Promise<boolean>;
+
+export type YesNoMessageFn = (message: string, title: string, type: number, yesLabel: string, noLabel: string) => Promise<boolean>;
 
 export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 

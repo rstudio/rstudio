@@ -1,0 +1,42 @@
+
+
+.pm-cite-panel-container {
+  width: 100%;
+  height: 100%;
+  border: solid red 1px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pm-cite-panel-cite-selection {
+  width: 100%;
+  height: 100%;
+  border: solid red 1px;
+  display: flex;
+  flex-direction: row;
+  
+}
+
+.pm-cite-panel-cite-selection-sources {
+  width: 25%;
+  border: solid red 1px;
+}
+
+.pm-cite-panel-cite-selection-items {
+  width: 75%;
+  border: solid red 1px;
+}
+
+.pm-cite-panel-selected-cites {
+  height: 50px;
+  width: 100%;
+  border: solid red 1px;
+}
+
+.pm-cite-panel-buttons {
+  width: 100%;
+  border: solid red 1px;
+  display: flex;
+  justify-content: flex-end;
+}
+

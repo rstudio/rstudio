@@ -569,6 +569,11 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
+biblatex-csl-converter@^1.9.1:
+  version "1.9.1"
+  resolved "https://registry.yarnpkg.com/biblatex-csl-converter/-/biblatex-csl-converter-1.9.1.tgz#50aacfef172997f1c98d72837ffdd3b19c62f8c4"
+  integrity sha512-M7HkWas8NbiFoNdS/lZOfup5A83Scw4iWFoPn9r84zh9DzaG/gHU86qH1QHMgUc2dSaquuIBQZRHC9wCs7k92g==
+
 binary-extensions@^1.0.0:
   version "1.13.1"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.13.1.tgz#598afe54755b2868a5330d2aff9d4ebb53209b65"

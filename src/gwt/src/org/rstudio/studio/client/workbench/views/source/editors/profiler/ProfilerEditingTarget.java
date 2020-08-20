@@ -417,6 +417,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine,
+                                  boolean moveCursor,
                                   Command onNavigationCompleted)
    {
    }

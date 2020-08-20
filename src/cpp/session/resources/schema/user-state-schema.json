@@ -201,6 +201,12 @@
             "default": false,
             "description": "Whether or not the MinGW compiler with GCC 4.9 is used."
         },
+        "bibliography_default_type": {
+            "type": "string",
+            "enum": ["bib", "yaml", "json"],
+            "default": "bib",
+            "description": "The default type for new bibliographies."
+        },
         "zotero_api_key": {
             "type": "string",
             "default": "",

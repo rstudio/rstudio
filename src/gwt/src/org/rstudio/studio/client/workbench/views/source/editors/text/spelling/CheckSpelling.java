@@ -110,21 +110,21 @@ public class CheckSpelling
 
       view_.getSkipButton().addClickHandler((ClickEvent event) ->
       {
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
-         currentPos_ = spellingDoc_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
@@ -156,7 +156,7 @@ public class CheckSpelling
    private void doReplacement(String replacement)
    {
       spellingDoc_.replaceSelection(replacement);
-      currentPos_ = spellingDoc_.getSelectionEnd();
+      currentPos_ = spellingDoc_.getSelectionEnd() + 1;
    }
 
    private void findNextMisspelling()
@@ -170,14 +170,18 @@ public class CheckSpelling
 
          Iterable<SpellingDoc.WordRange> wordSource = spellingDoc_.getWords(
                currentPos_,
-               wrapped_ ? initialCursorPos_.getPosition() : null);
+               wrapped_ ? initialCursorPos_.getPosition() : -1);
 
          final ArrayList<String> words = new ArrayList<String>();
          final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<SpellingDoc.WordRange>();
 
+         SpellingDoc.WordRange lastWord = null;
          for (SpellingDoc.WordRange w : wordSource)
          {
-            
+            // update last (so that whenever the loop terminates we know the location
+            // of the last word that we iterated over)
+            lastWord = w;
+          
             if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
                continue;
 
@@ -191,6 +195,7 @@ public class CheckSpelling
 
          if (checkWords.size() > 0)
          {
+            final int endCheckedPos = lastWord.end;
             typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
                @Override
@@ -208,10 +213,16 @@ public class CheckSpelling
                      }
                   }
 
-                  SpellingDoc.WordRange lastCheckedWord = checkWords.get(checkWords.size() - 1);
-                  currentPos_ = lastCheckedWord.end;
-                  // Everything spelled correctly, continue
-                  Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  int initialCursorPos = initialCursorPos_.getPosition();
+                  if (wrapped_ && (endCheckedPos >= initialCursorPos))
+                  {
+                     onSpellingComplete();
+                  }
+                  else
+                  {
+                     currentPos_ = endCheckedPos + 1;
+                     Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  }
                }
             });
          }
@@ -220,12 +231,7 @@ public class CheckSpelling
             // No misspellings
             if (wrapped_)
             {
-               close();
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                     GlobalDisplay.MSG_INFO,
-                     "Check Spelling",
-                     "Spell check is complete.");
-               callback_.onSuccess(Void.create());
+               onSpellingComplete();
             }
             else
             {
@@ -244,6 +250,16 @@ public class CheckSpelling
                "An error has occurred:\n\n" + e.getMessage());
          callback_.onFailure(e);
       }
+   }
+   
+   private void onSpellingComplete()
+   {
+      close();
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+            GlobalDisplay.MSG_INFO,
+            "Check Spelling",
+            "Spell check is complete.");
+      callback_.onSuccess(Void.create());
    }
 
    private void close()

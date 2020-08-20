@@ -24,13 +24,25 @@ import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
-import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
+import { BibliographyDataProviderZotero, kZoteroItemProvider } from './bibliography-provider_zotero';
+import { toBibLaTeX } from './bibDB';
 
+export interface BibliographyFile {
+  displayPath: string;
+  fullPath: string;
+  isProject: boolean;
+  writable: boolean;
+}
 
 export interface BibliographyDataProvider {
+  name: string;
+
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  containers(doc: ProsemirrorNode, ui: EditorUI): string[];
   items(): BibliographySource[];
-  projectBibios(): string[];
+  bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
+  generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
+  warningMessage(): string | undefined;
 }
 
 export interface Bibliography {
@@ -53,6 +65,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'title', weight: .1 },
   { name: 'author.given', weight: .025 },
   { name: 'issued', weight: .025 },
+  { name: 'provider', weight: 0 }
 ];
 
 export class BibliographyManager {
@@ -60,7 +73,7 @@ export class BibliographyManager {
   private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySource[];
-  private projectBibs?: string[];
+  private writable?: boolean;
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
@@ -77,6 +90,9 @@ export class BibliographyManager {
     // Load each provider
     const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
 
+    // Note whether there is anything writable
+    this.writable = this.shouldAllowWrites(doc, ui);
+
     // Once loaded, see if any of the providers required an index update
     const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
 
@@ -85,10 +101,6 @@ export class BibliographyManager {
       // Get the entries
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySource[]).concat(...providersEntries);
-
-      // Get the project biblios
-      const providersProjectBibs = this.providers.map(provider => provider.projectBibios());
-      this.projectBibs = ([] as string[]).concat(...providersProjectBibs);
 
       this.updateIndex(this.sources);
     }
@@ -99,8 +111,10 @@ export class BibliographyManager {
   }
 
   public allSources(): BibliographySource[] {
-    if (this.sources) {
+    if (this.sources && this.isWritable()) {
       return this.sources;
+    } else {
+      return this.sources?.filter(source => source.provider === kLocalItemType) || [];
     }
     return [];
   }
@@ -109,11 +123,62 @@ export class BibliographyManager {
     return this.allSources().filter(source => source.provider === kLocalItemType);
   }
 
-  public projectBiblios(): string[] {
-    if (this.projectBibs) {
-      return this.projectBibs;
+  public isWritable(): boolean {
+    return this.writable || false;
+  }
+
+  private shouldAllowWrites(doc: ProsemirrorNode, ui: EditorUI): boolean {
+    const bibliographyFiles = this.bibliographyFiles(doc, ui);
+    if (bibliographyFiles.length === 0) {
+      // Since there are no bibliographies, we can permit writing a fresh one
+      return true;
     }
-    return [];
+    return bibliographyFiles.filter(bibFile => bibFile.writable).length > 0;
+  }
+
+  public writableBibliographyFiles(doc: ProsemirrorNode, ui: EditorUI) {
+    return this.bibliographyFiles(doc, ui).filter(bibFile => bibFile.writable);
+  }
+
+  private bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+    const writablePaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
+    return ([] as BibliographyFile[]).concat(...writablePaths);
+  }
+
+  public localProviders(): BibliographyDataProvider[] {
+    return this.providers;
+  }
+
+  // Allows providers to generate bibLaTeX, if needed. This is useful in contexts
+  // like Zotero where a user may be using the Better Bibtex plugin which can generate
+  // superior BibLaTeX using things like stable citekeys with custom rules, and more.
+  // 
+  // If the provider doesn't provide BibLaTeX, we can generate it ourselves
+  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
+    const dataProvider = this.providers.find(prov => prov.name === provider);
+    if (dataProvider) {
+      const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(ui, id, csl);
+      if (dataProviderBibLaTeX) {
+        return dataProviderBibLaTeX;
+      }
+    }
+    return Promise.resolve(toBibLaTeX(id, csl));
+  }
+
+  public warning(): string | undefined {
+    const warningProvider = this.providers.find(provider => provider.warningMessage());
+    if (warningProvider) {
+      return warningProvider.warningMessage();
+    }
+  }
+
+  public warningForProvider(provider?: string): string | undefined {
+    if (provider) {
+      const warningProvider = this.providers.find(prov => prov.name === provider);
+      if (warningProvider) {
+        return warningProvider.warningMessage();
+      }
+    }
   }
 
   public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {
@@ -129,10 +194,12 @@ export class BibliographyManager {
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
     // bibliography hasn't already been loaded.
+
     return this.localSources().find(source => source.id === id);
   }
 
   public searchAllSources(query: string, limit: number): BibliographySource[] {
+
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a source if the
@@ -146,10 +213,15 @@ export class BibliographyManager {
         limit,
         keys: kFields,
       };
+
       const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
+
       const items = results.map((result: { item: any }) => result.item);
 
-      return uniqby(items, (source: BibliographySource) => source.id);
+      // Filter out any non local items if this isn't a writable bibliography
+      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalItemType);
+
+      return uniqby(filteredItems, (source: BibliographySource) => source.id);
 
     } else {
       return [];

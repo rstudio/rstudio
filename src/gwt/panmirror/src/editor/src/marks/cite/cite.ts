@@ -25,7 +25,7 @@ import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mar
 import { MarkTransaction } from '../../api/transaction';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
-import { InsertCiteProps, kAlertTypeError } from '../../api/ui-dialogs';
+import { InsertCiteProps, kAlertTypeError, kAlertTypeWarning } from '../../api/ui-dialogs';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
 import { performCompletionReplacement } from '../../api/completion';
@@ -33,12 +33,13 @@ import { performCompletionReplacement } from '../../api/completion';
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { InsertCitationCommand } from './cite-commands';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
-import { bibliographyPaths, ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
-import { join } from 'path';
+import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
+import { InsertCitationCommand } from './cite-commands';
+import { toBibLaTeX } from '../../api/bibliography/bibDB';
+import { joinPaths, getExtension } from '../../api/path';
 
 const kCiteCitationsIndex = 0;
 
@@ -178,7 +179,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (_schema: Schema) => {
-      return [new InsertCitationCommand(ui)];
+      return [new InsertCitationCommand(ui, context.events)];
     },
 
     appendMarkTransaction: (schema: Schema) => {
@@ -233,7 +234,8 @@ const extension = (context: ExtensionContext): Extension | null => {
             }
           }),
         citeHighlightPlugin(schema),
-        citePopupPlugin(schema, ui, mgr, context.server.pandoc)];
+        citePopupPlugin(schema, ui, mgr, context.server.pandoc)
+      ];
     },
   };
 };
@@ -260,7 +262,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
 
-        if (!source) {
+        if (!source && bibManager.isWritable()) {
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
@@ -624,17 +626,16 @@ export async function insertCitation(
     // (even creating a bibliography if necessary)
 
     // Read bibliographies out of the document and pass those alone
-    const bibliographies = bibliographyPaths(view.state.doc);
     const existingIds = bibManager.localSources().map(source => source.id);
 
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibliographyFiles(bibManager.projectBiblios(), bibliographies),
+      bibliographyFiles: bibManager.writableBibliographyFiles(view.state.doc, ui).map(writableFile => writableFile.displayPath),
       provider,
       csl,
       citeUI: csl ? {
-        suggestedId: suggestCiteId(existingIds, csl),
+        suggestedId: csl.id || suggestCiteId(existingIds, csl),
         previewFields: formatForPreview(csl),
       } : undefined
     };
@@ -643,39 +644,61 @@ export async function insertCitation(
     if (result && result.id.length) {
 
       if (!result?.csl.title) {
-        await ui.dialogs.alert("This citation can't be added to the bibliography because it is missing required fields.", "Invalid Citation", kAlertTypeError);
+        await ui.dialogs.alert(ui.context.translateText("This citation can't be added to the bibliography because it is missing required fields."), ui.context.translateText("Invalid Citation"), kAlertTypeError);
       } else {
+
         // Figure out whether this is a project or document level bibliography
-        const project = bibManager.projectBiblios().length > 0;
-        const bibliographyFile = project
-          ? result.bibliographyFile
-          : join(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+        const writableBiblios = bibManager.writableBibliographyFiles(view.state.doc, ui);
+
+        const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
+        const project = thisWritableBiblio?.isProject || false;
+        const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
 
         // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
         const cslToWrite = sanitizeForCiteproc(result.csl);
 
         // Write entry to a bibliography file if it isn't already present
         await bibManager.load(ui, view.state.doc);
-        if (!bibManager.findIdInLocalBibliography(result.id)) {
-          await server.addToBibliography(bibliographyFile, project, result.id, JSON.stringify([cslToWrite]));
+
+        // See if there is a warning for the selected provider. If there is, we may need to surface
+        // that to the user. If there is no provider specified, no need to care about warnings.
+        const warning = bibManager.warningForProvider(provider);
+
+        // If there is a warning message and we're exporting to BibLaTeX, show the warning
+        // message to the user and confirm that they'd like to proceed. This would ideally
+        // know more about the warning type and not have this filter here (e.g. it would just
+        // always show the warning)
+        let proceedWithInsert = true;
+        if (warning && ui.prefs.zoteroUseBetterBibtex() && isBibLaTeX(result.bibliographyFile)) {
+          // Ask the user about the best course of action
+          proceedWithInsert = await ui.dialogs.yesNoMessage(warning, "Warning", kAlertTypeWarning, ui.context.translateText("Insert Citation Anyway"), ui.context.translateText("Cancel"));
         }
 
-        const tr = view.state.tr;
+        if (proceedWithInsert) {
+          if (!bibManager.findIdInLocalBibliography(result.id)) {
+            const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, result.id, result.csl, provider);
+            await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
+          }
 
-        // Update the bibliography on the page if need be
-        if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
+          const tr = view.state.tr;
 
-          // Write the cite id
-          const schema = view.state.schema;
-          const id = schema.text(result.id, [schema.marks.cite_id.create()]);
-          performCiteCompletionReplacement(tr, tr.mapping.map(pos), id);
+          // Update the bibliography on the page if need be
+          if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
 
-          view.dispatch(tr);
+            // Write the cite id
+            const schema = view.state.schema;
+            const id = schema.text(result.id, [schema.marks.cite_id.create()]);
+            performCiteCompletionReplacement(tr, tr.mapping.map(pos), id);
+            view.dispatch(tr);
+          }
         }
       }
     }
   }
-  view.focus();
+}
+
+function isBibLaTeX(bibFile: string): boolean {
+  return getExtension(bibFile) === 'bib';
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
@@ -687,18 +710,6 @@ export function performCiteCompletionReplacement(tr: Transaction, pos: number, r
   const range = getMarkRange(tr.selection.$head, tr.doc.type.schema.marks.cite);
   if (range) {
     encloseInCiteMark(tr, range.from, range.to);
-  }
-
-
-}
-
-function bibliographyFiles(projectBiblios: string[], docBiblios?: string[]): string[] {
-  if (projectBiblios.length > 0) {
-    return projectBiblios;
-  } else if (docBiblios) {
-    return docBiblios;
-  } else {
-    return [];
   }
 }
 

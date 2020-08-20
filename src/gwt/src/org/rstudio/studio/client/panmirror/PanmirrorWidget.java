@@ -419,6 +419,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getSpellingDoc();
    }
    
+   public void spellingInvalidateAllWords()
+   {
+      editor_.spellingInvalidateAllWords();
+   }
+   
+   public void spellingInvalidateWord(String word)
+   {
+      editor_.spellingInvalidateWord(word);
+   }
+   
    public void showOutline(boolean show, double width)
    {
       showOutline(show, width, false);

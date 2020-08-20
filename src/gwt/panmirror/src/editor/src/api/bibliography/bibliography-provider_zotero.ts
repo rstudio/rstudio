@@ -12,12 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { ZoteroCollection, ZoteroServer } from "../zotero";
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile } from "./bibliography";
+import { EditorUI } from '../ui';
+import { CSL } from '../csl';
+import { toBibLaTeX } from './bibDB';
 
 export const kZoteroItemProvider = 'Zotero';
 
@@ -25,24 +30,31 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   private collections: ZoteroCollection[] = [];
   private server: ZoteroServer;
+  private warning: string | undefined;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
   }
 
+  public name: string = "Zotero";
+
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
     let hasUpdates = false;
     if (zoteroEnabled(docPath, yamlBlocks)) {
-      const collectionNames = zoteroCollectionsForDoc(yamlBlocks);
 
       try {
 
         // Don't send the items back through to the server
-        const collectionSpecs = this.collections.map(collection => ({ name: collection.name, version: collection.version }));
+        const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
 
-        const useCache = true;
-        const result = await this.server.getCollections(docPath, collectionNames, collectionSpecs || [], useCache);
+        // If there is a warning, stop using the cache and force a fresh trip
+        // through the whole pipeline to be sure we're trying to clear that warning
+        const useCache = this.warning === undefined;
+
+        // TODO: remove collection names from server call
+        const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
+        this.warning = result.warning;
         if (result.status === "ok") {
 
           if (result.message) {
@@ -77,14 +89,32 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return hasUpdates;
   }
 
+  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
+    return this.collections.map(collection => collection.name);
+  }
+
   public items(): BibliographySource[] {
     const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
     const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
     return zoteroEntries;
   }
 
-  public projectBibios(): string[] {
+  public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     return [];
+  }
+
+  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
+    if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
+      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, kZoteroMyLibrary);
+      if (bibLaTeX) {
+        return Promise.resolve(bibLaTeX.message);
+      }
+    }
+    return Promise.resolve(toBibLaTeX(id, csl));
+  }
+
+  public warningMessage(): string | undefined {
+    return this.warning;
   }
 
   private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
@@ -92,13 +122,12 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     const items = collection.items?.map(item => {
       return {
         ...item,
-        id: suggestCiteId([], item),
+        id: item.id || suggestCiteId([], item),
         provider: kZoteroItemProvider,
       };
     });
     return items || [];
   }
-
 }
 
 
@@ -106,14 +135,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 // zotero: true | false                           Globally enables or disables the zotero integration
 //                                                If true, uses all collections. If false uses none.
 //
-// zotero: <collectionname> | [<collectionname>]  A single collection name or an array of collection
-//                                                names that will be used when searching for citation
-// 
-// Be default, zotero integration is disabled. Add this header to enable integration
+// By default, zotero integration is enabled. Add this header to disable integration
 //
 function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
+    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
   );
 
   if (zoteroYaml.length > 0) {
@@ -138,29 +164,3 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
   }
 }
 
-function zoteroCollectionsForDoc(parsedYamls: ParsedYaml[]): string[] | null {
-  const zoteroYaml = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.zotero,
-  );
-
-  // Look through any yaml nodes to see whether any contain bibliography information
-  if (zoteroYaml.length > 0) {
-    // Pandoc will use the last biblography node when generating a bibliography.
-    // So replicate this and use the last biblography node that we find
-    const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
-    const zoteroCollections = zoteroParsedYaml.yaml.zotero;
-
-    if (
-      Array.isArray(zoteroCollections) &&
-      zoteroCollections.every(collection => typeof collection === 'string')) {
-      return zoteroCollections;
-    } else if (typeof zoteroCollections === 'string') {
-      return [zoteroCollections];
-      // zotero: true means request all collections (signified by null)
-    } else if (typeof zoteroCollections === 'boolean' && zoteroCollections === true) {
-      return null;
-    }
-  }
-  return [];
-
-}

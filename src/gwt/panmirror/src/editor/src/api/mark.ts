@@ -40,7 +40,7 @@ export function markIsActive(context: EditorState | Transaction, type: MarkType)
   const { from, $from, to, empty } = context.selection;
 
   if (empty) {
-    return !!type.isInSet(context.storedMarks || $from.marks());
+    return type && !!type.isInSet(context.storedMarks || $from.marks());
   }
 
   return !!context.doc.rangeHasMark(from, to, type);

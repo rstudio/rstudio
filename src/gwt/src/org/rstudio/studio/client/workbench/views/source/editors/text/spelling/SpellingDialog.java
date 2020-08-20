@@ -44,7 +44,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
       btnAdd_ = new ThemedButton("Add");
       btnAdd_.setTitle("Add word to user dictionary");
-      btnSkip_ = new ThemedButton("Ignore");
+      btnSkip_ = new ThemedButton("Skip");
       btnIgnoreAll_ = new ThemedButton("Ignore All");
       btnChange_ = new ThemedButton("Change");
       btnChangeAll_ = new ThemedButton("Change All");

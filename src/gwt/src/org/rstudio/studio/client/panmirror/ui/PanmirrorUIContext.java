@@ -33,8 +33,8 @@ public class PanmirrorUIContext
    public Mapper mapResourceToURL;
    public WatchResource watchResource;
    public Mapper translateText;
+   public BooleanGetter isWindowsDesktop;
 
-   
    @JsFunction 
    public interface Getter
    {

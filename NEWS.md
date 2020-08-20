@@ -88,4 +88,5 @@
 * Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
 * Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
 * Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
+* Reduced difference in font size and spacing between Terminal and Console (#6382)
 

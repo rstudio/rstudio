@@ -28,10 +28,16 @@ export interface ZoteroResult {
 export interface ZoteroCollectionSpec {
   name: string;
   version: number;
+  key: string;
+  parentKey: string;
 }
 
 export interface ZoteroCollection extends ZoteroCollectionSpec {
-  items: CSL[];
+  items: ZoteroCSL[];
+}
+
+export interface ZoteroCSL extends CSL {
+  collectionKeys?: string[];
 }
 
 export const kZoteroMyLibrary = 1;
@@ -49,6 +55,9 @@ export interface ZoteroServer {
     cached: ZoteroCollectionSpec[],
     useCache: boolean
   ) => Promise<ZoteroResult>;
+
+  getCollectionSpecs: ()
+    => Promise<ZoteroResult>;
 
   // Return status: nohost w/ warning text if it fails to 
   // communciate w/ Better BibTeX. Otherwise returns 

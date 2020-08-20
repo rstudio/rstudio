@@ -21,7 +21,7 @@ import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, CompletionHeaderProps } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
@@ -34,8 +34,11 @@ import { FocusEvent } from '../../api/event-types';
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
 
+import './cite-completion.css';
+
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
+const kHeaderHeight = 20;
 
 export const kCiteCompletionWidth = 400;
 const kCiteCompletionItemPadding = 10;
@@ -76,8 +79,9 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
+        return insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
       }
+      return Promise.resolve();
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -89,6 +93,15 @@ export function citationCompletionHandler(
     },
 
     view: {
+      header: () => {
+        if (bibManager.warning()) {
+          return {
+            component: CompletionWarningHeaderView,
+            height: kHeaderHeight,
+            message: bibManager.warning()
+          };
+        }
+      },
       component: BibliographySourceView,
       key: entry => entry.source.id,
       width: kCiteCompletionWidth,
@@ -128,8 +141,8 @@ function filterCitations(
   // Now do the regular search
   const searchResults = search(token);
 
-  // If we hav an exact match, no need for completions
-  if (searchResults.length === 1 && searchResults[0].source.id === token) {
+  // If we have an exact match, no need for completions
+  if (searchResults.find(entry => entry.source.id === token)) {
     return [];
   } else {
     return searchResults || [];
@@ -150,6 +163,8 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           const managerEntries = () => {
             // Filter duplicate sources
             const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
+
+            const warning = manager.warning();
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
@@ -214,3 +229,15 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     />
   );
 };
+
+
+const CompletionWarningHeaderView: React.FC<CompletionHeaderProps> = props => {
+  return (
+    <div className={'pm-completion-cite-warning pm-pane-border-color'}>
+      {props.ui.context.translateText(props.message || 'An unexpected warning occurred.')}
+    </div>
+  );
+};
+
+
+

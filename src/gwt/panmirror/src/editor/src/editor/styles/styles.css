@@ -228,3 +228,17 @@ p.ProseMirror-selectednode {
   padding-right: 4px;
   font-size: 9pt;
 }
+
+.pm-spelling-error {
+  border-bottom: 1px dotted #e51400;
+}
+
+.pm-dark-mode .pm-spelling-error {
+  border-color: #f48771;
+}
+
+.pm-nbsp::before {
+  content: '·';
+  position: relative;
+  left: 2px;
+}

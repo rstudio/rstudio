@@ -73,6 +73,8 @@ public class PanmirrorEditor
    public native PanmirrorFindReplace getFindReplace();
    
    public native PanmirrorSpellingDoc getSpellingDoc();
+   public native void spellingInvalidateAllWords();
+   public native void spellingInvalidateWord(String word);
    
    public native PanmirrorEditingLocation getEditingLocation();
    

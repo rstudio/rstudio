@@ -19,6 +19,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.Iterator;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
@@ -30,17 +32,36 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+
+import com.google.inject.Inject;
 
 import elemental2.core.JsArray;
 
 
 public class VisualModeSpelling extends SpellingContext
 {
-   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
+   public interface Context
+   {
+      void invalidateAllWords();
+      void invalidateWord(String word);
+   }
+   
+   public VisualModeSpelling(DocUpdateSentinel docUpdateSentinel,
+                             DocDisplay docDisplay,
+                             Context context)
    {
      super(docUpdateSentinel);  
+     RStudioGinjector.INSTANCE.injectMembers(this);
      docDisplay_ = docDisplay;
+     context_ = context;
+   }
+   
+   @Inject
+   void initialize(EventBus eventBus)
+   {
+      eventBus_ = eventBus;
    }
     
    public void checkSpelling(PanmirrorSpellingDoc doc)   
@@ -48,7 +69,7 @@ public class VisualModeSpelling extends SpellingContext
       checkSpelling(new SpellingDoc() {
 
          @Override
-         public Iterable<WordRange> getWords(int start, Integer end)
+         public Iterable<WordRange> getWords(int start, int end)
          {
             return new Iterable<WordRange>() {
 
@@ -163,10 +184,45 @@ public class VisualModeSpelling extends SpellingContext
    
    public PanmirrorUISpelling uiSpelling()
    {
+      CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
+      
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
+      
+      uiSpelling.realtimeEnabled = () -> {
+         return typo().realtimeSpellcheckEnabled(); 
+      };
+      
+      uiSpelling.checkWord = (word) -> {
+         if (typo().shouldCheckWord(word))
+            return typo().checkSpelling(word);
+         else
+            return true;
+      };
+      
+      uiSpelling.suggestionList = (word) -> {
+        String[] suggestions = typo().suggestionList(word);
+        return new JsArray<String>(suggestions);
+      };
+      
+      uiSpelling.isWordIgnored = (word) -> {
+        return typo().isIgnoredWord(word); 
+      };
+      
+      uiSpelling.ignoreWord = (word) -> {
+         typo().addIgnoredWord(word);
+      };
+      
+      uiSpelling.unignoreWord = (word) -> {
+         typo().removeIgnoredWord(word);
+      };
+      
+      uiSpelling.addToDictionary = (word) -> {
+         typo().addToUserDictionary(word);
+      };
+      
       uiSpelling.breakWords = (String text) -> {
       
-         CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
+        
          JsArray<PanmirrorWordRange> words = new JsArray<PanmirrorWordRange>();
          
          int pos = 0;
@@ -207,6 +263,19 @@ public class VisualModeSpelling extends SpellingContext
          return words;
          
       };
+      
+      uiSpelling.classifyCharacter = (ch) -> {
+         switch(classifier.classify(ch)) {
+         case Word:
+            return 0;
+         case Boundary:
+            return 1;
+         case NonWord:
+         default:
+            return 2;
+         }
+      };
+      
       return uiSpelling;
    }
    
@@ -214,24 +283,21 @@ public class VisualModeSpelling extends SpellingContext
    @Override
    public void invalidateAllWords()
    {
-      
+      context_.invalidateAllWords();
    }
 
    @Override
-   public void invalidateMisspelledWords()
+   public void invalidateWord(String word, boolean userDictionary)
    {
+      context_.invalidateWord(word);
       
+      if (userDictionary)
+         eventBus_.fireEvent(new VisualModeSpellingAddToDictionaryEvent(word));
    }
-
-   @Override
-   public void invalidateWord(String word)
-   {
-      
-      
-   }
-
-
+   
    private final DocDisplay docDisplay_;
+   private final Context context_;
+   private EventBus eventBus_;
 }
 
 

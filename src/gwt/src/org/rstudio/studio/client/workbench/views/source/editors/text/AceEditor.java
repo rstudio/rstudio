@@ -1608,7 +1608,7 @@ public class AceEditor implements DocDisplay,
 
          
          @Override
-         public Iterable<WordRange> getWords(int start, Integer end)
+         public Iterable<WordRange> getWords(int start, int end)
          {
             return new Iterable<WordRange>() {
 
@@ -1620,7 +1620,7 @@ public class AceEditor implements DocDisplay,
                         fileType_.getSpellCheckTokenPredicate(),
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
-                        end != null ? positionFromIndex(end) : null).iterator();
+                        end != -1 ? positionFromIndex(end) : null).iterator();
                   
                   // shim it on to spelling doc iterator
                   return new Iterator<WordRange>() {
@@ -3065,18 +3065,19 @@ public class AceEditor implements DocDisplay,
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      navigateToPosition(position, recordCurrent, false);
+      navigateToPosition(position, recordCurrent, false, true);
    }
 
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
-                                  boolean highlightLine)
+                                  boolean highlightLine,
+                                  boolean restoreCursorPosition)
    {
       if (recordCurrent)
          recordCurrentNavigationPosition();
 
-      navigate(position, true, highlightLine);
+      navigate(position, true, highlightLine, restoreCursorPosition);
    }
 
    @Override
@@ -3178,12 +3179,13 @@ public class AceEditor implements DocDisplay,
 
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {
-      navigate(srcPosition, addToHistory, false);
+      navigate(srcPosition, addToHistory, false, false);
    }
 
    private void navigate(SourcePosition srcPosition,
                          boolean addToHistory,
-                         boolean highlightLine)
+                         boolean highlightLine,
+                         boolean restoreCursorPosition)
    {
       // get existing cursor position
       Position previousCursorPos = getCursorPosition();
@@ -3211,8 +3213,11 @@ public class AceEditor implements DocDisplay,
       else
          ensureCursorVisible();
 
-      // set focus
-      focus();
+      // restore original cursor position or set focus
+      if (restoreCursorPosition)
+         setCursorPosition(previousCursorPos);
+      else
+         focus();
 
       if (highlightLine)
          applyLineHighlight(position.getRow());
