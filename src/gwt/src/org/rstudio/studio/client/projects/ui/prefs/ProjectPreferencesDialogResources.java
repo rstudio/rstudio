@@ -61,6 +61,9 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
 
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
+   
+   @Source("iconRMarkdown_2x.png")
+   ImageResource iconRMarkdown2x();
 
    ProjectPreferencesDialogResources INSTANCE = GWT.create(ProjectPreferencesDialogResources.class);
 }

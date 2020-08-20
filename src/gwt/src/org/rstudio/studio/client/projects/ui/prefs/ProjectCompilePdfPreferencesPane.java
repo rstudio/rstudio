@@ -92,16 +92,6 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       return new RestartRequirement();
    }
 
-   private void addHeader(String caption)
-   {
-      PreferencesDialogBaseResources baseRes =
-                              PreferencesDialogBaseResources.INSTANCE;
-      Label pdfCompilationLabel = new Label(caption);
-      pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(pdfCompilationLabel);
-      add(pdfCompilationLabel);
-   }
-
    private class RootDocumentChooser extends TextBoxWithButton
    {
       public RootDocumentChooser()

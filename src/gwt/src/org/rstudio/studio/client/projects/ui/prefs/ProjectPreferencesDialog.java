@@ -40,11 +40,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 {
    public static final int GENERAL = 0;
    public static final int EDITING = 1;
-   public static final int SWEAVE = 2;
-   public static final int BUILD = 3;
-   public static final int VCS = 4;
-   public static final int RENV = 5;
-   public static final int SHARING = 6;
+   public static final int R_MARKDOWN = 2;
+   public static final int SWEAVE = 3;
+   public static final int BUILD = 4;
+   public static final int VCS = 5;
+   public static final int RENV = 6;
+   public static final int SHARING = 7;
 
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -53,6 +54,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    Provider<Session> session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
+                                   ProjectRMarkdownPreferencesPane rMarkdown,
                                    ProjectCompilePdfPreferencesPane compilePdf,
                                    ProjectSourceControlPreferencesPane source,
                                    ProjectBuildToolsPreferencesPane build,
@@ -65,7 +67,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             RES.styles().panelContainer(),
             RES.styles().panelContainerNoChooser(),
             false,
-            new ProjectPreferencesPane[] {general, editing, compilePdf, build,
+            new ProjectPreferencesPane[] {general, editing, rMarkdown, compilePdf, build,
                                           source, renv, sharing});
 
       pSession_ = session;
