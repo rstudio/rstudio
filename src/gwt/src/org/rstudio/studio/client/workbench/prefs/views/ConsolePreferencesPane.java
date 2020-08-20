@@ -111,10 +111,7 @@ public class ConsolePreferencesPane extends PreferencesPane
          if (prefs_.limitVisibleConsole().getValue() != initialLimitVisibleConsole_)
          {
             initialLimitVisibleConsole_ = prefs_.limitVisibleConsole().getValue();
-            if (Desktop.isDesktop())
-               restartRequirement.setDesktopRestartRequired(true);
-            else
-               restartRequirement.setUiReloadRequired(true);
+            restartRequirement.setRestartRequired();
          }
       }
       return restartRequirement;
