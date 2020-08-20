@@ -21,7 +21,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
 import { ZoteroCollectionSpec } from '../../api/zotero';
-import { BibliographyManager } from '../../api/bibliography/bibliography';
+import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPanel } from './insert_citation-panel';
 
@@ -39,9 +39,9 @@ interface InsertCitationDataProvider {
 export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode, bibliographyManager: BibliographyManager) {
 
   // The citations that the user would like to insert
-  let citations: string[] = [];
-  const onCitationChanged = (cites: string[]) => {
-    citations = cites;
+  let sources: BibliographySource[] = [];
+  const onSourceChanged = (srcs: BibliographySource[]) => {
+    sources = srcs;
   };
 
   // Render the element into the window
@@ -69,7 +69,7 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
           doc={doc}
           ui={ui}
           bibliographyManager={bibliographyManager}
-          onCitationChanged={onCitationChanged}
+          onSourceChanged={onSourceChanged}
           height={height}
           width={width} />
         , container);
@@ -80,15 +80,14 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
       // TODO: Focus the correct control (text filtering)?
     },
     () => {
-      if (citations.length === 0) {
+      if (sources.length === 0) {
         return "Please select a citation to insert.";
       }
       return null;
     });
 
-  if (performInsert && citations.length > 0) {
-    console.log(citations);
-    window.alert('Inserting ' + citations.length + ' citations');
+  if (performInsert && sources.length > 0) {
+    window.alert('Inserting ' + sources.length + ' citations');
   }
 }
 

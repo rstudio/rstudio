@@ -22,7 +22,7 @@ interface InsertCitationPanelProps extends WidgetProps {
   height: number;
   width: number;
   bibliographyManager: BibliographyManager;
-  onCitationChanged: (cites: string[]) => void;
+  onSourceChanged: (sources: BibliographySource[]) => void;
 }
 
 // Takes a flat data structure of containers and turns it into a hierarchical
@@ -66,10 +66,10 @@ export const kDOIType = 'DOI Search';
 
 export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
 
-  const [citeIds, setCiteIds] = React.useState<string[]>([]);
   const [treeSourceData, setTreeSourceData] = React.useState<SelectTreeNode[]>([]);
   const [selectedNode, setSelectedNode] = React.useState<SelectTreeNode>();
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
+  const [itemsToInsert, setItemsToInsert] = React.useState<BibliographySource[]>([]);
 
   const bibMgr = props.bibliographyManager;
   React.useEffect(() => {
@@ -130,20 +130,27 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     // load the right panel
   }, [selectedNode]);
 
+  // When items are added or removed from the list of items to insert, we should remove them 
+  // from the list of displayed item data
+  React.useEffect(() => {
+    setItemData(itemData.filter(data => !itemsToInsert.map(item => item.id).includes(data.id)));
+  }, [itemsToInsert]);
+
+
   const style: React.CSSProperties = {
     height: props.height + 'px',
     width: props.width + 'px',
     ...props.style,
   };
 
-
   const nodeSelected = (node: SelectTreeNode) => {
     setSelectedNode(node);
   };
 
   const citationAdded = (source: BibliographySource) => {
-    const cites = [source.id, ...citeIds];
-    setCiteIds(cites);
+    const sources = [source, ...itemsToInsert];
+    setItemsToInsert(sources);
+    props.onSourceChanged(sources);
   };
 
   return (
@@ -171,7 +178,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       </div>
       <div className='pm-cite-panel-selected-cites'>
         <TagInput
-          tags={citeIds} />
+          tags={itemsToInsert.map(item => item.id)} />
       </div>
     </div >
   );
@@ -188,7 +195,6 @@ export const CitationListItem = (props: ListChildComponentProps) => {
   const source = citationListData.data[props.index];
 
   const onClick = (event: React.MouseEvent) => {
-    console.log(citationListData);
     citationListData.addCitation(source);
   };
 
