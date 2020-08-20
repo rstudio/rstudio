@@ -33,11 +33,13 @@ public class VisualModeChunks implements ChunkDefinition.Provider
 {
    public VisualModeChunks(DocUpdateSentinel sentinel,
                            DocDisplay display,
-                           TextEditingTarget target)
+                           TextEditingTarget target, 
+                           VisualModeEditorSync sync)
    {
       target_ = target;
       sentinel_ = sentinel;
       parent_ = display;
+      sync_ = sync;
       chunks_ = new ArrayList<VisualModeChunk>();
    }
 
@@ -55,7 +57,8 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          
          VisualModeChunk chunk = new VisualModeChunk(
                index, getPos, sentinel_, parent_, 
-               target_.getNotebook(), target_.getRCompletionContext());
+               target_.getNotebook(), target_.getRCompletionContext(),
+               sync_, target_.getCodeExecutor());
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror
@@ -136,6 +139,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       return defs;
    }
 
+   private final VisualModeEditorSync sync_;
    private final List<VisualModeChunk> chunks_;
    private final DocUpdateSentinel sentinel_;
    private final DocDisplay parent_;

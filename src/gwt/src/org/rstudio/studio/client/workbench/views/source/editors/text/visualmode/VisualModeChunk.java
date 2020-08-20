@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -31,11 +32,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -50,9 +54,14 @@ public class VisualModeChunk
                           DocUpdateSentinel sentinel,
                           DocDisplay parent,
                           TextEditingTargetNotebook notebook, 
-                          CompletionContext rCompletionContext)
+                          CompletionContext rCompletionContext,
+                          VisualModeEditorSync sync,
+                          EditingTargetCodeExecution codeExecutor)
    {
       getPos_ = getPos;
+      sync_ = sync;
+      codeExecution_ = codeExecutor;
+      parent_ = parent;
 
       ChunkOutputUi output = null; 
       if (index >= 0)
@@ -76,16 +85,16 @@ public class VisualModeChunk
 
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)
-      final AceEditor editor = new AceEditor();
-      final AceEditorNative chunkEditor = editor.getWidget().getEditor();
+      editor_ = new AceEditor();
+      final AceEditorNative chunkEditor = editor_.getWidget().getEditor();
       chunk.editor = Js.uncheckedCast(chunkEditor);
 
       // Forward the R completion context from the parent editing session
-      editor.setRCompletionContext(rCompletionContext);
+      editor_.setRCompletionContext(rCompletionContext);
       
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
-      editor.setUseWrapMode(true);
+      editor_.setUseWrapMode(true);
 
       // Provide the editor's container element
       DivElement ele = Document.get().createDivElement();
@@ -105,23 +114,18 @@ public class VisualModeChunk
       // GWT land since the editor accepts GWT-flavored Filetype objects
       chunk.setMode = (String mode) ->
       {
-         setMode(editor, mode);
+         setMode(editor_, mode);
       };
       
       // Provide a callback to have the code at the cursor executed
-      final EditingTargetCodeExecution executor = new EditingTargetCodeExecution(
-            editor, sentinel.getId());
-      executor.setAppendLinesAtEnd(false);
       chunk.executeSelection = () ->
       {
-         if (parent.showChunkOutputInline() && scope_ != null)
+         // Ensure visual mode is sync'ed to the editor (we always execute code
+         // from the editor)
+         sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
          {
-            notebook.executeChunk(scope_);
-         }
-         else
-         {
-            executor.executeSelection(false);
-         }
+            executeSelection();
+         });
       };
       
       // Register pref handlers, so that the new editor instance responds to
@@ -130,7 +134,7 @@ public class VisualModeChunk
             releaseOnDismiss_, 
             RStudioGinjector.INSTANCE.getUserPrefs(), 
             null,  // Project context
-            editor, 
+            editor_, 
             new TextEditingTargetPrefsHelper.PrefsContext() 
             {
                 @Override
@@ -173,12 +177,12 @@ public class VisualModeChunk
       // Turn off line numbers as they're not helpful in chunks
       chunkEditor.getRenderer().setShowGutter(false);
       
-      editor_ = chunk;
+      chunk_ = chunk;
    }
    
    public PanmirrorUIChunkEditor getEditor()
    {
-      return editor_;
+      return chunk_;
    }
    
    /**
@@ -335,13 +339,69 @@ public class VisualModeChunk
       }
    }
    
+   private void executeSelection()
+   {
+      // Ensure we have a scope. This should always exist since we sync the
+      // scope outline prior to executing code.
+      if (scope_ == null)
+      {
+         Debug.logWarning("Cannot execute selection; no selection scope available");
+         return;
+      }
+      
+      // Extract the selection range from the native chunk editing widget
+      Range selectionRange = editor_.getSelectionRange();
+      
+      // Map the selection range inside the child editor into the parent editor
+      // by adjusting the row offset; for example, if this chunk is at row 12 in
+      // the parent document, then executing row 2 in the chunk means executing
+      // row 14 in the parent.
+      //
+      // Consider: Do we need to adjust the column, too? (For chunks indented in
+      // the parent document, such as inside a list)
+      int offset = scope_.getPreamble().getRow();
+      selectionRange.getStart().setRow(
+            selectionRange.getStart().getRow() + offset);
+      selectionRange.getEnd().setRow(
+            selectionRange.getEnd().getRow() + offset);
+      
+      Debug.logObject(selectionRange);
+
+      // Execute selection in the parent
+      parent_.setSelectionRange(selectionRange);
+      codeExecution_.executeSelection(false);
+      
+      // After the event loop, forward the parent selection back to the child if
+      // it's changed (this allows us to advance the cursor after running a line)
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         Range postExecution = parent_.getSelectionRange();
+         
+         // Ignore if range hasn't changed
+         if (postExecution.isEqualTo(selectionRange))
+            return;
+
+         // Reverse the offset adjustment and apply selection to the nested
+         // editor
+         postExecution.getStart().setRow(
+               postExecution.getStart().getRow() - offset);
+         postExecution.getEnd().setRow(
+               postExecution.getEnd().getRow() - offset);
+         editor_.setSelectionRange(postExecution);
+      });
+   }
+   
    private ChunkDefinition def_;
    private ChunkOutputWidget widget_;
    private Scope scope_;
    
    private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
-   private final PanmirrorUIChunkEditor editor_;
+   private final PanmirrorUIChunkEditor chunk_;
+   private final AceEditor editor_;
+   private final DocDisplay parent_;
    private final List<Command> destroyHandlers_;
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;
+   private final VisualModeEditorSync sync_;
+   private final EditingTargetCodeExecution codeExecution_;
 }

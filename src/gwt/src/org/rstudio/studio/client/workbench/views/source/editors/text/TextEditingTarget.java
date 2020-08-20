@@ -3067,7 +3067,7 @@ public class TextEditingTarget implements
       // if visual mode is active then we need to grab its edits before proceeding
       if (visualMode_.isActivated())
       {
-         visualMode_.syncToEditor(SyncType.SyncTypeIdle, onComplete);
+         visualMode_.syncToEditor(SyncType.SyncTypeNormal, onComplete);
       }
 
       // if visual mode is not active and we are doing canonical saves
@@ -7429,6 +7429,11 @@ public class TextEditingTarget implements
    public VisualMode getVisualMode()
    {
       return visualMode_;
+   }
+   
+   public EditingTargetCodeExecution getCodeExecutor()
+   {
+      return codeExecution_;
    }
 
    /**

@@ -114,7 +114,7 @@ public class VisualMode implements VisualModeEditorSync,
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -157,8 +157,8 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public enum SyncType
    {
-      // A synchronization performed on idle 
-      SyncTypeIdle,
+      // A normal synchronization (usually performed on idle)
+      SyncTypeNormal,
       
       // A synchronization performed prior to executing code
       SyncTypeExecution,
@@ -1061,7 +1061,7 @@ public class VisualMode implements VisualModeEditorSync,
                protected void execute()
                {
                   if (isDirty_ && !panmirror_.isInitialDoc())
-                     syncToEditor(SyncType.SyncTypeIdle);
+                     syncToEditor(SyncType.SyncTypeNormal);
                }
             };
             
