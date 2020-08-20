@@ -70,7 +70,7 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
   );
 };
 
-function containsChild(key: string, node: SelectTreeNode): boolean {
+export function containsChild(key: string, node: SelectTreeNode): boolean {
   if (node.key === key) {
     return true;
   }

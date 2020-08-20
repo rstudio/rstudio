@@ -20,20 +20,9 @@ import ReactDOM from 'react-dom';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
-import { ZoteroCollectionSpec } from '../../api/zotero';
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
 
-import { InsertCitationPanel } from './insert_citation-panel';
-
-
-interface CitationSourceProvider {
-  name: string;
-}
-
-interface InsertCitationDataProvider {
-  getProviders(): CitationSourceProvider[];
-  getCollections(): ZoteroCollectionSpec[];
-}
+import { InsertCitationPicker } from './insert_citation-picker';
 
 
 export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode, bibliographyManager: BibliographyManager) {
@@ -65,7 +54,7 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
       container.style.height = height + 'px';
       container.style.width = width + 'px';
       ReactDOM.render(
-        <InsertCitationPanel
+        <InsertCitationPicker
           doc={doc}
           ui={ui}
           bibliographyManager={bibliographyManager}
