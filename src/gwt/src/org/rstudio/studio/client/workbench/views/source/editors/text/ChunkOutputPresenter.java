@@ -50,7 +50,10 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
    // show that plots will be redrawn, or update a particular plot
    void setPlotPending(boolean pending, String pendingStyle);
    void updatePlot(String plotUrl, String pendingStyle);
-   
+
+   // Handles html that can be appended to end of the chunk.
+   void showCallbackHtml(String htmlOutput);
+
    // clear output or indicate that interactive output (or playback) is complete
    void clearOutput();
    void completeOutput();

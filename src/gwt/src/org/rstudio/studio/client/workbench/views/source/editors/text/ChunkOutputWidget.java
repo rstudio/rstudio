@@ -279,19 +279,10 @@ public class ChunkOutputWidget extends Composite
 
    public void renderHtml(String htmlOutput)
    {
-      initializeOutput(TYPE_HTML);
-
-      final RenderTimer widgetTimer = new RenderTimer();
-      presenter_.showHtmlOutput(htmlOutput,
-         null,
-         -1,
-         new Command() {
-            @Override
-            public void execute()
-            {
-               widgetTimer.cancel();
-            }
-         });
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final RenderTimer renderTimer = new RenderTimer();
+      presenter_.showCallbackHtml(htmlOutput);
    }
 
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,

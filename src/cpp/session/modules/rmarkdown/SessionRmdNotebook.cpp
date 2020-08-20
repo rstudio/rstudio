@@ -173,6 +173,7 @@ bool fixChunkFilename(int, const core::FilePath& path)
 
 void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
+                          const std::string& code,
                           const std::string& nbCtxId)
 {
    r::sexp::Protect rProtect;
@@ -181,18 +182,14 @@ void onChunkExecCompleted(const std::string& docId,
 
    r::exec::RFunction func(".rs.executeChunkCallback");
    func.addParam(chunkId);
+   func.addParam(code);
 
    core::Error error = func.call(&outputSEXP, &rProtect);
    if (error)
       LOG_ERROR(error);
-   else
-   {
+   else if (!r::sexp::isNull(outputSEXP))
       output = r::sexp::asString(outputSEXP);
-      if (!output.empty())
-      {
-      }
-   }
-   
+
    emitOutputFinished(docId, chunkId, output, ExecScopeChunk);
 }
 

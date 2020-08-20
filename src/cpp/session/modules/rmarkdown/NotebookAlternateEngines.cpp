@@ -46,8 +46,9 @@ class ChunkExecCompletedScope : boost::noncopyable
 {
 public:
    ChunkExecCompletedScope(const std::string& docId,
-                           const std::string& chunkId)
-      : docId_(docId), chunkId_(chunkId)
+                           const std::string& chunkId,
+                           const std::string& chunkCode)
+      : docId_(docId), chunkId_(chunkId), chunkCode_(chunkCode)
    {
    }
    
@@ -56,12 +57,14 @@ public:
       events().onChunkExecCompleted(
                docId_,
                chunkId_,
+               chunkCode_,
                notebookCtxId());
    }
    
 private:
    std::string docId_;
    std::string chunkId_;
+   std::string chunkCode_;
 };
 
 class ChunkExecDisconnectScope : boost::noncopyable
@@ -148,6 +151,7 @@ void reportChunkExecutionError(const std::string& docId,
 
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& chunkCode,
                              const std::string& nbCtxId,
                              const std::string& code,
                              const std::map<std::string, std::string>& options)
@@ -156,7 +160,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    Error error;
    
    // always ensure we emit a 'execution complete' event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, chunkCode);
    
    // prepare cache output file (use tempfile on failure)
    FilePath targetPath = module_context::tempFile("rcpp-cache-", "txt");
@@ -225,6 +229,7 @@ void reportStanExecutionError(const std::string& docId,
 
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& chunkCode,
                              const std::string& nbCtxId,
                              const std::string& code,
                              const std::map<std::string, std::string>& options)
@@ -233,7 +238,7 @@ Error executeStanEngineChunk(const std::string& docId,
    Error error;
    
    // ensure we always emit an execution complete event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, chunkCode);
    
    // prepare console output file -- use tempfile on failure
    FilePath targetPath = module_context::tempFile("stan-cache-", "txt");
@@ -378,6 +383,7 @@ Error executeStanEngineChunk(const std::string& docId,
 
 Error executeSqlEngineChunk(const std::string& docId,
                             const std::string& chunkId,
+                            const std::string& chunkCode,
                             const std::string& nbCtxId,
                             const std::string& code,
                             const json::Object& options)
@@ -385,7 +391,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    Error error;
    
    // ensure we always emit an execution complete event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, chunkCode);
 
    // prepare console output file -- use tempfile on failure
    FilePath consolePath = module_context::tempFile("data-console-", "txt");
@@ -471,6 +477,7 @@ Error executeSqlEngineChunk(const std::string& docId,
 
 Error runUserDefinedEngine(const std::string& docId,
                            const std::string& chunkId,
+                           const std::string& chunkCode,
                            const std::string& nbCtxId,
                            const std::string& engine,
                            const std::string& code,
@@ -482,7 +489,7 @@ Error runUserDefinedEngine(const std::string& docId,
    Error error;
    
    // always ensure we emit a 'execution complete' event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, chunkCode);
 
    // connect to capture html file output
    ChunkExecDisconnectScope chunkExecDisconnectScope(htmlCaptureContext);
@@ -771,11 +778,11 @@ Error executeAlternateEngineChunk(const std::string& docId,
    // handle some engines with their own custom routines
    Error error = Success();
    if (engine == "Rcpp")
-      error = executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeRcppEngineChunk(docId, chunkId, code, nbCtxId, code, options);
    else if (engine == "stan")
-      error = executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeStanEngineChunk(docId, chunkId, code, nbCtxId, code, options);
    else if (engine == "sql")
-      error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+      error = executeSqlEngineChunk(docId, chunkId, code, nbCtxId, code, jsonChunkOptions);
    else
    {
       // check to see if this is a known interpreter; if so, we'll
@@ -797,11 +804,11 @@ Error executeAlternateEngineChunk(const std::string& docId,
       {
          // connect to capture html file output
          ChunkExecContext htmlCaptureContext(
-            docId, chunkId, nbCtxId, execScope,
+            docId, chunkId, code, nbCtxId, execScope,
             workingDir, chunkOptions, pixelWidth, charWidth);
          htmlCaptureContext.connect();
 
-         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions,
+         runUserDefinedEngine(docId, chunkId, code, nbCtxId, engine, code, jsonChunkOptions,
             htmlCaptureContext);
       }
    }

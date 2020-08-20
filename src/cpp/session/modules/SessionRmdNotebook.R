@@ -1138,17 +1138,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalarListFromList(defaultOptions)
 })
 
-.rs.addFunction("executeChunkCallback", function(chunkName)
+.rs.addFunction("executeChunkCallback", function(chunkName, chunkCode)
 {
   if (exists(".rs.notebookChunkCallbacks"))
   {
-     browser()
      handles <- ls(.rs.notebookChunkCallbacks)
      for (handle in handles) {
         chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
-        if (grepl(chunkName, handle)) {
-           return(chunkCallback)
-        }
+        result <- chunkCallback(chunkName, chunkCode)[[1]][1]
+        return(result)
      }
   }
   NULL

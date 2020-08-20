@@ -410,8 +410,9 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
+            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
+               unit->docId(), unit->chunkId(), codeString, ctx, unit->execScope(),
                workingDir, options, docQueue->pixelWidth(), 
                docQueue->charWidth());
             execContext_->connect();
@@ -729,6 +730,10 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
 void onConsolePrompt(const std::string& prompt)
 {
+   // Ignore debug prompts
+   if (r::context::inBrowseContext())
+      return;
+
    if (s_queue)
    {
       s_queue->onConsolePrompt(prompt);

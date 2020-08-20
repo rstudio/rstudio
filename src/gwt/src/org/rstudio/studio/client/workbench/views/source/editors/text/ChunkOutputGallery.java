@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsArrayEx;
@@ -184,6 +185,12 @@ public class ChunkOutputGallery extends Composite
             plot.updateImageUrl(plotUrl, pendingStyle);
          }
       }
+   }
+
+   @Override
+   public void showCallbackHtml(String htmlOutput)
+   {
+      htmlCallback_.add(new HTML(htmlOutput));
    }
 
    @Override
@@ -433,4 +440,5 @@ public class ChunkOutputGallery extends Composite
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;
    @UiField HTMLPanel viewer_;
+   @UiField SimplePanel htmlCallback_;
 }
