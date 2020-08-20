@@ -12,25 +12,39 @@ import { SelectTreeNode } from "../select_tree";
 
 export const kAllLocalType = 'All Local Sources';
 
-
 export const CitationListPanel: React.FC<CitationPanelProps> = props => {
 
   const bibMgr = props.bibliographyManager;
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState<string>();
 
   React.useEffect(() => {
     async function loadData() {
       if (props.selectedNode) {
         const selectedNode = props.selectedNode;
+
+        // No search term, load all data from collection
         if (selectedNode.type === kAllLocalType) {
-          setItemData(bibMgr.allSources());
+          if (!searchTerm || searchTerm.length === 0) {
+            setItemData(bibMgr.allSources());
+          } else {
+            setItemData(bibMgr.searchAllSources(searchTerm, 1000));
+          }
         } else {
-          const provider = bibMgr.localProviders().find(prov => prov.name === selectedNode.type);
+          const provider = bibMgr.localProviders().find(prov => prov.key === selectedNode.type);
           if (provider) {
             if (selectedNode.key === provider.key) {
-              setItemData(provider.items());
+              if (!searchTerm || searchTerm.length === 0) {
+                setItemData(bibMgr.sourcesForProvider(provider.key));
+              } else {
+                setItemData(bibMgr.searchProvider(searchTerm, 1000, provider.key));
+              }
             } else {
-              setItemData(provider.itemsForCollection(selectedNode.key));
+              if (!searchTerm || searchTerm.length === 0) {
+                setItemData(bibMgr.sourcesForProviderCollection(provider.key, selectedNode.key));
+              } else {
+                setItemData(bibMgr.searchProviderCollection(searchTerm, 1000, provider.key, selectedNode.key));
+              }
             }
           }
         }
@@ -39,22 +53,28 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
     loadData();
 
     // load the right panel
-  }, [props.selectedNode]);
+  }, [props.selectedNode, searchTerm]);
 
   const filteredItemData = itemData.filter(data => !props.sourcesToAdd.map(source => source.id).includes(data.id));
 
-  return (
-    <FixedSizeList
-      height={500}
-      width='100%'
-      itemCount={filteredItemData.length}
-      itemSize={50}
-      itemData={{ data: filteredItemData, addSource: props.addSource }}
-    >
-      {CitationListItem}
-    </FixedSizeList>);
-};
+  const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e?.target.value);
+  };
 
+  return (
+    <div>
+      <input type="text" value={searchTerm} onChange={searchChanged} />
+      <FixedSizeList
+        height={500}
+        width='100%'
+        itemCount={filteredItemData.length}
+        itemSize={50}
+        itemData={{ data: filteredItemData, addSource: props.addSource }}
+      >
+        {CitationListItem}
+      </FixedSizeList>
+    </div>);
+};
 
 export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationPanel {
   const providers = bibliographyManager.localProviders();
@@ -62,8 +82,8 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
     const node: any = {};
     node.key = provider.key;
     node.name = provider.name;
-    node.type = provider.name;
-    node.children = toTree(provider.name, provider.containers(doc, ui));
+    node.type = provider.key;
+    node.children = toTree(provider.key, provider.containers(doc, ui));
     return node;
   });
 

@@ -99,6 +99,11 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     }
   }, [selectedNode]);
 
+  // Notify the handler whenever this list changes
+  React.useEffect(() => {
+    props.onSourceChanged(sourcesToAdd);
+  }, [sourcesToAdd]);
+
   // Style properties
   const style: React.CSSProperties = {
     height: props.height + 'px',
@@ -112,9 +117,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     selectedNode,
     sourcesToAdd,
     addSource: (source: BibliographySource) => {
-      const sources = [source, ...sourcesToAdd];
-      setSourcesToAdd(sources);
-      props.onSourceChanged(sources);
+      setSourcesToAdd([source, ...sourcesToAdd]);
     }
   };
   const panelToDisplay = selectedPanel ? React.createElement(selectedPanel.panel, citationProps) : undefined;

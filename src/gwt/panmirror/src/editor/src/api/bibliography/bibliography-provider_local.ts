@@ -25,12 +25,12 @@ import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
 
-export const kLocalItemType = 'Local';
 
 export interface BibliographyResult {
   etag: string;
   bibliography: Bibliography;
 }
+export const kLocalBiliographyProviderKey = "E06068FE-45DA-4D88-ABDA-0DF290624950";
 
 export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
@@ -43,7 +43,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.etag = '';
   }
   public name: string = "Local Bibliography";
-  public key: string = "E06068FE-45DA-4D88-ABDA-0DF290624950";
+  public key: string = kLocalBiliographyProviderKey;
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
@@ -97,7 +97,8 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return this.bibliography.sources.map(source => ({
       ...source,
       id: source.id!, // Local CSL always has an id
-      provider: kLocalItemType
+      providerKey: this.key,
+      collectionKeys: []
     }));
   }
 

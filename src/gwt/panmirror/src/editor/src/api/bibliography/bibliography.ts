@@ -23,8 +23,8 @@ import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
-import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
-import { BibliographyDataProviderZotero, kZoteroItemProvider } from './bibliography-provider_zotero';
+import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
+import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
 
 export interface BibliographyFile {
@@ -61,7 +61,8 @@ export interface Bibliography {
 // The individual bibliographic source
 export interface BibliographySource extends CSL {
   id: string;
-  provider: string;
+  providerKey: string;
+  collectionKeys: string[];
 }
 
 // The fields and weights that will indexed and searched
@@ -122,13 +123,21 @@ export class BibliographyManager {
     if (this.sources && this.isWritable()) {
       return this.sources;
     } else {
-      return this.sources?.filter(source => source.provider === kLocalItemType) || [];
+      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
     }
     return [];
   }
 
+  public sourcesForProvider(providerKey: string): BibliographySource[] {
+    return this.allSources().filter(item => item.providerKey === providerKey);
+  }
+
+  public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySource[] {
+    return this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey));
+  }
+
   public localSources(): BibliographySource[] {
-    return this.allSources().filter(source => source.provider === kLocalItemType);
+    return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
   }
 
   public isWritable(): boolean {
@@ -180,9 +189,9 @@ export class BibliographyManager {
     }
   }
 
-  public warningForProvider(provider?: string): string | undefined {
-    if (provider) {
-      const warningProvider = this.providers.find(prov => prov.name === provider);
+  public warningForProvider(providerKey?: string): string | undefined {
+    if (providerKey) {
+      const warningProvider = this.providers.find(prov => prov.key === providerKey);
       if (warningProvider) {
         return warningProvider.warningMessage();
       }
@@ -227,13 +236,23 @@ export class BibliographyManager {
       const items = results.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
-      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalItemType);
+      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
 
       return uniqby(filteredItems, (source: BibliographySource) => source.id);
 
     } else {
       return [];
     }
+  }
+
+  // Search only a specific provider
+  public searchProvider(query: string, limit: number, providerKey: string): BibliographySource[] {
+    return this.searchAllSources(query, limit).filter(item => item.providerKey === providerKey);
+  }
+
+  // Search a specific provider and collection
+  public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySource[] {
+    return this.searchProvider(query, limit, providerKey).filter(item => item.collectionKeys.includes(collectionKey));
   }
 
   private updateIndex(bibSources: BibliographySource[]) {

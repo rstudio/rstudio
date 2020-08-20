@@ -24,7 +24,7 @@ import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
 
-export const kZoteroItemProvider = 'Zotero';
+export const kZoteroProviderKey = '"2509FBBE-5BB0-44C4-B119-6083A81ED673"';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
@@ -38,7 +38,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public name: string = "Zotero";
-  public key: string = "2509FBBE-5BB0-44C4-B119-6083A81ED673";
+  public key: string = kZoteroProviderKey;
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -144,7 +144,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       return {
         ...item,
         id: item.id || suggestCiteId([], item),
-        provider: kZoteroItemProvider,
+        providerKey: this.key,
+        collectionKeys: item.collectionKeys || []
       };
     });
     return items || [];
