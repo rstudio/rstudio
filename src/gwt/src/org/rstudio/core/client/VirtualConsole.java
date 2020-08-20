@@ -236,7 +236,8 @@ public class VirtualConsole
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
-      } else
+      }
+      else
       {
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text);
