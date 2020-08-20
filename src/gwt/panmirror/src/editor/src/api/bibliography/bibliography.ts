@@ -215,6 +215,28 @@ export class BibliographyManager {
     return this.localSources().find(source => source.id === id);
   }
 
+  // A general purpose search interface for filtered searching
+  public search(query?: string, providerKey?: string, collectionKey?: string) {
+    const limit = 1000;
+    if (query) {
+      if (providerKey && collectionKey) {
+        return this.searchProviderCollection(query, limit, providerKey, collectionKey);
+      } else if (providerKey) {
+        return this.searchProvider(query, limit, providerKey);
+      } else {
+        return this.searchAllSources(query, limit);
+      }
+    } else {
+      if (providerKey && collectionKey) {
+        return this.sourcesForProviderCollection(providerKey, collectionKey);
+      } else if (providerKey) {
+        return this.sourcesForProvider(providerKey);
+      } else {
+        return this.allSources();
+      }
+    }
+  }
+
   public searchAllSources(query: string, limit: number): BibliographySource[] {
 
     // NOTE: This will only search sources that have already been loaded.

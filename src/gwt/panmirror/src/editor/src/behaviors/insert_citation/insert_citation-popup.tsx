@@ -30,7 +30,6 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
   // The citations that the user would like to insert
   let sources: BibliographySource[] = [];
   const onSourceChanged = (srcs: BibliographySource[]) => {
-    console.log(srcs);
     sources = srcs;
   };
 

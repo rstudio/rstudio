@@ -8,6 +8,8 @@ import { BibliographySource, BibliographyManager, BibliographyContainer } from "
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 import { EditorUI } from "../../../api/ui";
 import { SelectTreeNode } from "../select_tree";
+import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
+import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
 
 export const kAllLocalType = 'All Local Sources';
@@ -23,31 +25,16 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
       if (props.selectedNode) {
         const selectedNode = props.selectedNode;
 
-        // No search term, load all data from collection
-        if (selectedNode.type === kAllLocalType) {
-          if (!searchTerm || searchTerm.length === 0) {
-            setItemData(bibMgr.allSources());
-          } else {
-            setItemData(bibMgr.searchAllSources(searchTerm, 1000));
-          }
-        } else {
-          const provider = bibMgr.localProviders().find(prov => prov.key === selectedNode.type);
-          if (provider) {
-            if (selectedNode.key === provider.key) {
-              if (!searchTerm || searchTerm.length === 0) {
-                setItemData(bibMgr.sourcesForProvider(provider.key));
-              } else {
-                setItemData(bibMgr.searchProvider(searchTerm, 1000, provider.key));
-              }
-            } else {
-              if (!searchTerm || searchTerm.length === 0) {
-                setItemData(bibMgr.sourcesForProviderCollection(provider.key, selectedNode.key));
-              } else {
-                setItemData(bibMgr.searchProviderCollection(searchTerm, 1000, provider.key, selectedNode.key));
-              }
-            }
-          }
-        }
+        // The node could be the root node
+        const providerKey = selectedNode.type === kAllLocalType ? undefined : selectedNode.type;
+
+        // The node could be a provider or a collection
+        const collectionKey = (
+          selectedNode.type !== kAllLocalType &&
+          selectedNode.key !== kZoteroProviderKey &&
+          selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
+
+        setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
       }
     }
     loadData();
@@ -83,7 +70,8 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
     node.key = provider.key;
     node.name = provider.name;
     node.type = provider.key;
-    node.children = toTree(provider.key, provider.containers(doc, ui));
+    node.image = libraryImageForProvider(provider.key, ui);
+    node.children = toTree(provider.key, provider.containers(doc, ui), folderImageForProvider(provider.key, ui));
     return node;
   });
 
@@ -93,6 +81,7 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
     treeNode: {
       key: 'My Sources',
       name: 'My Sources',
+      image: ui.images.citations?.local_sources,
       type: kAllLocalType,
       children: localProviderNodes,
       expanded: true
@@ -119,19 +108,38 @@ const CitationListItem = (props: ListChildComponentProps) => {
   </div>);
 };
 
+function libraryImageForProvider(providerKey: string, ui: EditorUI) {
+  switch (providerKey) {
+    case kZoteroProviderKey:
+      return ui.images.citations?.zotero_library;
+    case kLocalBiliographyProviderKey:
+      return ui.images.citations?.bibligraphy;
+  }
+}
+
+function folderImageForProvider(providerKey: string, ui: EditorUI) {
+  switch (providerKey) {
+    case kZoteroProviderKey:
+      return ui.images.citations?.zotero_folder;
+    case kLocalBiliographyProviderKey:
+      return ui.images.citations?.bibligraphy_folder;
+  }
+}
+
 // Takes a flat data structure of containers and turns it into a hierarchical
 // tree structure for display as TreeNodes.
-function toTree(type: string, containers: BibliographyContainer[]): SelectTreeNode[] {
+function toTree(type: string, containers: BibliographyContainer[], folderImage?: string): SelectTreeNode[] {
 
   const treeMap: { [id: string]: SelectTreeNode } = {};
   const rootNodes: SelectTreeNode[] = [];
+
 
   containers.sort((a, b) => a.name.localeCompare(b.name)).forEach(container => {
 
     // First see if we have an existing node for this item
     // A node could already be there if we had to insert a 'placeholder' 
     // node to contain the node's children before we encountered the node.
-    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, children: [], type };
+    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, image: folderImage, children: [], type };
 
     // Always set its name to be sure we fill this in when we encounter it
     currentNode.name = container.name;
@@ -142,7 +150,7 @@ function toTree(type: string, containers: BibliographyContainer[]): SelectTreeNo
         // This is a placeholder node - we haven't yet encountered this child's parent
         // so we insert this to hold the child. Once we encounter the true parent node, 
         // we will fix up the values in this placeholder node.
-        parentNode = { key: container.parentKey, name: '', children: [], type };
+        parentNode = { key: container.parentKey, name: '', image: folderImage, children: [], type };
         treeMap[container.parentKey] = parentNode;
       }
       parentNode.children?.push(currentNode);

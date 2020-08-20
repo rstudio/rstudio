@@ -14,7 +14,7 @@ import { EditorUI } from "../../api/ui";
 
 import { TagInput } from "./tag_input";
 import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
-import { doiPanel } from "./panels/insert_citation-panel-DOI";
+import { doiPanel } from "./panels/insert_citation-panel-doi";
 
 import './insert_citation-picker.css';
 
@@ -70,7 +70,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       // Load the panels
       const allPanels = [
         bibliographyPanel(props.doc, props.ui, props.bibliographyManager),
-        doiPanel()
+        doiPanel(props.ui)
       ];
       setPanels(allPanels);
 
@@ -134,18 +134,18 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     <div className='pm-cite-panel-container' style={style}>
 
       <div className='pm-cite-panel-cite-selection'>
-        <div className='pm-cite-panel-cite-selection-sources'>
+        <div className='pm-cite-panel-cite-selection-sources pm-block-border-color pm-background-color'>
           <SelectTree
             nodes={treeSourceData}
             selectedNode={selectedNode}
             nodeSelected={nodeSelected} />
         </div>
 
-        <div className='pm-cite-panel-cite-selection-items'>
+        <div className='pm-cite-panel-cite-selection-items pm-block-border-color pm-background-color'>
           {panelToDisplay}
         </div>
       </div>
-      <div className='pm-cite-panel-selected-cites'>
+      <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
         <TagInput
           tags={sourcesToAdd.map(source => source.id)}
           deleteTag={deleteSource} />

@@ -24,7 +24,7 @@ import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
 
-export const kZoteroProviderKey = '"2509FBBE-5BB0-44C4-B119-6083A81ED673"';
+export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 

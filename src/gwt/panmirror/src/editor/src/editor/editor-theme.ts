@@ -192,10 +192,12 @@ export function applyTheme(theme: EditorTheme) {
       border: 1px solid transparent !important;
     }
     .pm-selected-select-tree-item {
-      background-color: ${theme.findTextBorderColor} !important;
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
     }
     .pm-dark-mode .pm-selected-select-tree-item {
-      background-color: ${theme.findTextBorderColor} !important;
+      background-color: ${theme.selectionColor} !important;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
