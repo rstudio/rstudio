@@ -98,9 +98,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(
             "Learn more about markdown writer options",
-            "https://rstudio.github.io/visual-markdown-editing/#/markdown?id=writer-options",
-            false, // no version info
-            false  // not an rstudio link
+            "visual_markdown_editing-writer-options",
+            false // no version info
       );
       add(markdownPerFileOptions);
    }
