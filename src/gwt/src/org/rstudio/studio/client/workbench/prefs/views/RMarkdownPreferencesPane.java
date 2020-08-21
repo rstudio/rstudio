@@ -291,9 +291,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(
-            "Setting markdown options on a per-file basis",
-            "visual_markdown_editing-file-options",
-            false // no version info
+         "Learn more about markdown writer options",
+         "https://rstudio.github.io/visual-markdown-editing/#/markdown?id=writer-options",
+         false, // no version info
+         false  // not an rstudio link
       );
       nudgeRight(markdownPerFileOptions);
       spaced(markdownPerFileOptions);
