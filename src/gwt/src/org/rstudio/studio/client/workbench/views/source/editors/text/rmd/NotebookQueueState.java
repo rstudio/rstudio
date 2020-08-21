@@ -394,7 +394,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    {
       for (Integer line: lines)
       {
-         docDisplay_.setChunkLineExecState(line + offset, line + offset, state);
+         notebook_.setChunkLineExecState(line + offset, line + offset, state);
       }
    }
    

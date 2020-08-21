@@ -82,6 +82,7 @@ public class VisualModeChunk
       
       releaseOnDismiss_ = new ArrayList<HandlerRegistration>();
       destroyHandlers_ = new ArrayList<Command>();
+      rowState_ = new ArrayList<VisualModeChunkRowState>();
 
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)
@@ -97,8 +98,8 @@ public class VisualModeChunk
       editor_.setUseWrapMode(true);
 
       // Provide the editor's container element
-      DivElement ele = Document.get().createDivElement();
-      ele.appendChild(chunkEditor.getContainer());
+      host_ = Document.get().createDivElement();
+      host_.appendChild(chunkEditor.getContainer());
       
       outputHost_ = Document.get().createDivElement();
       if (output != null && widget_ == null)
@@ -106,9 +107,9 @@ public class VisualModeChunk
          widget_ = output.getOutputWidget();
          setOutputWidget(output.getOutputWidget());
       }
-      ele.appendChild(outputHost_);
+      host_.appendChild(outputHost_);
 
-      chunk.element = ele;
+      chunk.element = host_;
       
       // Provide a callback to set the file's mode; this needs to happen in
       // GWT land since the editor accepts GWT-flavored Filetype objects
@@ -277,6 +278,19 @@ public class VisualModeChunk
       outputHost_.setInnerHTML("");
    }
    
+   /**
+    * Sets the execution state of a range of lines in the chunk.
+    * 
+    * @param start The first line of the range, counting from the first line in
+    *   the chunk
+    * @param end The last line of the range
+    * @param state the execution state to apply
+    */
+   public void setLineExecState(int start, int end, int state)
+   {
+      // TODO: map to row state 
+   }
+   
    private void setMode(AceEditor editor, String mode)
    {
       switch(mode)
@@ -365,8 +379,6 @@ public class VisualModeChunk
       selectionRange.getEnd().setRow(
             selectionRange.getEnd().getRow() + offset);
       
-      Debug.logObject(selectionRange);
-
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
       codeExecution_.executeSelection(false);
@@ -397,6 +409,7 @@ public class VisualModeChunk
    
    private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
+   private final DivElement host_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;
    private final DocDisplay parent_;
@@ -404,4 +417,5 @@ public class VisualModeChunk
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
+   private final List<VisualModeChunkRowState> rowState_;
 }

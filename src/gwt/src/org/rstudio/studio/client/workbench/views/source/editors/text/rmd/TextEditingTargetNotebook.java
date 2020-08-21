@@ -710,7 +710,7 @@ public class TextEditingTargetNotebook
             int offset = scope.getBodyStart().getRow();
             List<Integer> lines = unit.getExecutingLines();
             for (Integer line: lines)
-               docDisplay_.setChunkLineExecState(line + offset, line + offset, 
+               setChunkLineExecState(line + offset, line + offset, 
                      ChunkRowExecState.LINE_ERROR);
          }
 
@@ -1275,13 +1275,19 @@ public class TextEditingTargetNotebook
       Scope chunk = getChunkScope(chunkId);
       if (chunk != null)
       {
-         docDisplay_.setChunkLineExecState(
+         setChunkLineExecState(
                chunk.getBodyStart().getRow(), 
                chunk.getEnd().getRow(), 
                ChunkRowExecState.LINE_RESTING);
 
          setChunkState(chunk, ChunkContextToolbar.STATE_RESTING);
       }
+   }
+   
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      docDisplay_.setChunkLineExecState(start, end, state);
+      editingTarget_.getVisualMode().setChunkLineExecState(start, end, state);
    }
    
    public void setChunkState(Scope chunk, int state)
@@ -1331,7 +1337,7 @@ public class TextEditingTargetNotebook
           scope.getEnd() == null)
          return;
 
-      docDisplay_.setChunkLineExecState(
+      setChunkLineExecState(
             scope.getBodyStart().getRow(), 
             scope.getEnd().getRow(), 
             ChunkRowExecState.LINE_NONE);

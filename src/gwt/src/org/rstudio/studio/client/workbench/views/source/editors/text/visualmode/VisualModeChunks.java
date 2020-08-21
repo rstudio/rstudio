@@ -138,6 +138,35 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       }
       return defs;
    }
+   
+   /**
+    * Sets the executions state of a range of lines in the visual editor.
+    * 
+    * @param start The first line
+    * @param end The last line
+    * @param state The execution state
+    */
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      for (VisualModeChunk chunk: chunks_)
+      {
+         Scope scope = chunk.getScope();
+         if (scope == null)
+         {
+            // Expected if the position of this chunk in the code editor isn't
+            // known
+            continue;
+         }
+         
+         if (start >= scope.getPreamble().getRow() &&
+             end <= scope.getEnd().getRow())
+         {
+            int offset = scope.getPreamble().getRow();
+            chunk.setLineExecState(start - offset, end - offset, state);
+            break;
+         }
+      }
+   }
 
    private final VisualModeEditorSync sync_;
    private final List<VisualModeChunk> chunks_;
