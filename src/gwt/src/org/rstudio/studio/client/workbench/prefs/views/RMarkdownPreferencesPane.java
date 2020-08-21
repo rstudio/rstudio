@@ -329,7 +329,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(zoteroDataDir_);
       
       zoteroUseBetterBibtex_ = checkboxPref(
-         "Use Better BibTeX for citation keys and BibLaTeX export",
+         "Use Better BibTeX for citation keys and BibTeX export",
          prefs_.zoteroUseBetterBibtex(),
          false);
       lessSpaced(zoteroUseBetterBibtex_);
