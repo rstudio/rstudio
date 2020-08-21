@@ -1,0 +1,11 @@
+
+
+.pm-tag-input-container {
+  display: flexbox;
+}
+
+.pm-tag-input-text {
+  display: inline-block;
+  padding: 4px;
+  margin: 4px;
+}

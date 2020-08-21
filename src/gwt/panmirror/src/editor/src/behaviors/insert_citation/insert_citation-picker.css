@@ -34,5 +34,6 @@
   margin-top: 10px;
   border: solid 1px;
   border-radius: 3px;  
+  overflow-y: auto;
 }
 

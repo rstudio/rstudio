@@ -126,8 +126,9 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     setSelectedNode(node);
   };
 
-  const deleteSource = (id: string) => {
-    setSourcesToAdd(sourcesToAdd.filter(source => source.id !== id));
+  const deleteSource = (displayText: string) => {
+    const filteredSources = sourcesToAdd.filter(source => forDisplay(source.id) !== displayText);
+    setSourcesToAdd(filteredSources);
   };
 
   return (
@@ -147,11 +148,15 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       </div>
       <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
         <TagInput
-          tags={sourcesToAdd.map(source => source.id)}
+          tags={sourcesToAdd.map(source => forDisplay(source.id))}
           deleteTag={deleteSource} />
       </div>
     </div >
   );
 };
 
+
+function forDisplay(source: string) {
+  return `@${source}`;
+}
 
