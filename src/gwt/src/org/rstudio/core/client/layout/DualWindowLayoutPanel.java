@@ -513,6 +513,12 @@ public class DualWindowLayoutPanel extends SimplePanel
    public void replaceWindows(LogicalWindow windowA,
                               LogicalWindow windowB)
    {
+      // If there is nothing to replace, we don't want to reset the state and potentially open
+      // something the user had minimized.
+      if (windowA == windowA_ &&
+          windowB == windowB_)
+         return;
+
       unhookEvents();
       windowA_ = windowA;
       windowB_ = windowB;

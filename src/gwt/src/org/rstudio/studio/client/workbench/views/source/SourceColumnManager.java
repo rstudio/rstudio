@@ -702,7 +702,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public EditingTarget addTab(SourceDocument doc, boolean atEnd,
                                int mode, SourceColumn column)
    {
-      if (column == null)
+      if (column == null || getByName(column.getName()) == null)
          column = getActive();
       return column.addTab(doc, atEnd, mode);
    }
@@ -1506,6 +1506,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             ArrayList<EditingTarget> editors = column.getEditors();
             for (EditingTarget target : editors)
             {
+               if (!target.dirtyState().getValue())
+               {
+                  column.closeTab(target.asWidget(), false);
+                  continue;
+               }
                server_.getSourceDocument(target.getId(),
                   new ServerRequestCallback<SourceDocument>()
                   {
@@ -1905,9 +1910,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
-   public void beforeShow()
+   public void beforeShow(boolean excludeMain)
    {
-      columnList_.forEach((column) -> column.onBeforeShow());
+      for (SourceColumn column : columnList_)
+      {
+         if (!excludeMain ||
+             !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            column.onBeforeShow();
+      }
    }
 
    public void beforeShow(String name)
