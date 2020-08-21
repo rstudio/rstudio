@@ -32,7 +32,6 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane

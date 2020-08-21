@@ -893,11 +893,11 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract markdown references
-   it = dcfFields.find("MarkdownRefernces");
+   it = dcfFields.find("MarkdownReferences");
    if (it != dcfFields.end())
    {
       if (!interpretMarkdownReferencesValue(it->second, &(pConfig->markdownReferences)))
-         return requiredFieldError("MarkdownRefernces", pUserErrMsg);
+         return requiredFieldError("MarkdownReferences", pUserErrMsg);
    }
    else
    {

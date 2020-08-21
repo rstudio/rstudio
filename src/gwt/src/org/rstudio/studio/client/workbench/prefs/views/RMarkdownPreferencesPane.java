@@ -253,7 +253,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(visualModeWrap_);
       
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Wrap text at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          "Wrap at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
           prefs.visualMarkdownEditingWrapAtColumn()
       )));
       visualModeWrapColumn_.getElement().getStyle().setMarginBottom(8, Unit.PX);
@@ -275,7 +275,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
       };
-      visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
+      visualModeReferences_ = new SelectWidget("Write references at end of current: ", referencesValues, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
       spaced(visualModeReferences_);
