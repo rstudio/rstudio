@@ -43,6 +43,7 @@ export interface CitationPanel {
 // Panels get a variety of information as properties to permit them to search
 // citations and add them
 export interface CitationPanelProps extends WidgetProps {
+  ui: EditorUI;
   bibliographyManager: BibliographyManager;
   selectedNode?: SelectTreeNode;
   sourcesToAdd: BibliographySource[];
@@ -126,6 +127,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
 
   // Load the panel that is displayed for the selected node
   const citationProps: CitationPanelProps = {
+    ui: props.ui,
     bibliographyManager: props.bibliographyManager,
     selectedNode,
     sourcesToAdd,

@@ -19,13 +19,15 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 
+import { EditorUI } from "../../../api/ui";
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
-import { EditorUI } from "../../../api/ui";
 import { SelectTreeNode } from "../select_tree";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
+import { TextInput } from "../../../api/widgets/text";
 
+import './insert_citation-panel-bibliography.css';
 
 export const kAllLocalType = 'All Local Sources';
 
@@ -63,9 +65,20 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
     setSearchTerm(e?.target.value);
   };
 
+  // ref={textRef}
   return (
-    <div>
-      <input type="text" value={searchTerm} onChange={searchChanged} />
+    <div style={props.style} className='pm-insert-citation-panel'>
+      <div className='pm-insert-citation-panel-textbox-container'>
+        <TextInput
+          width='100%'
+          iconAdornment={props.ui.images.search}
+          tabIndex={0}
+          className='pm-insert-citation-panel-textbox pm-block-border-color'
+          placeholder={props.ui.context.translateText('Search for citation')}
+          onChange={searchChanged}
+        />
+
+      </div>
       <FixedSizeList
         height={500}
         width='100%'

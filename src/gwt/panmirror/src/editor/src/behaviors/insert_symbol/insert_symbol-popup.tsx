@@ -200,7 +200,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
       <div onKeyDown={handleKeyboardEvent}>
         <div className="pm-popup-insert-symbol-search-container" style={{ width: gridWidth }}>
           <TextInput
-            widthChars={20}
+            width={20 + 'ch'}
             iconAdornment={props.searchImage}
             tabIndex={0}
             className="pm-popup-insert-symbol-search-textbox"

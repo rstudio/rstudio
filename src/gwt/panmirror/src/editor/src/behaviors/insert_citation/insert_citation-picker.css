@@ -12,8 +12,7 @@
   height: 100%;
   display: flex;
   flex-direction: row;
-  
-}
+  }
 
 .pm-cite-panel-cite-selection-sources {
   width: 25%;
@@ -24,7 +23,7 @@
 
 .pm-cite-panel-cite-selection-items {
   width: 75%;
-  border: solid red 1px;
+  border: solid 1px;
   border-radius: 3px;  
 }
 

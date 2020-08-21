@@ -1,4 +1,5 @@
 .pm-textinput-container {
+  display: flexbox;
   position:relative;
   padding:0;
   margin:0;
@@ -6,7 +7,7 @@
 
 .pm-textinput-icon {
   position:absolute;
-  top:6px;
+  top:8px;
   left:4px;
   width:12px;
   height:12px;

@@ -20,7 +20,7 @@ import { WidgetProps } from './react';
 import './text.css';
 
 export interface TextInputProps extends WidgetProps {
-  widthChars: number;
+  width: string;
   tabIndex?: number;
   className?: string;
   placeholder?: string;
@@ -33,7 +33,7 @@ export interface TextInputProps extends WidgetProps {
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
   const style: React.CSSProperties = {
     ...props.style,
-    width: props.widthChars + 'ch',
+    width: props.width,
   };
 
   return (
