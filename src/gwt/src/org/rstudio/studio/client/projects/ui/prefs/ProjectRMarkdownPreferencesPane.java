@@ -88,6 +88,11 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
    {
       RProjectConfig config = options.getConfig();
 
+      config.setMarkdownWrap(RProjectConfig.MARKDOWN_WRAP_DEFAULT);
+      config.setMarkdownWrapAtColumn(72);
+      config.setMarkdownReferences(RProjectConfig.MARKDOWN_REFERENCES_DEFAULT);
+      
+      
       config.setMarkdownCanonical(canonical_.getSelectedIndex());
       
 

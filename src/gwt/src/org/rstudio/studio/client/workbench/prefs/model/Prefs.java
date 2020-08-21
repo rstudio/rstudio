@@ -178,9 +178,12 @@ public abstract class Prefs
       public void removeProjectValue(boolean fireEvents)
       {
          JsObject projValues = layers_.get(projectLayer()).getValues();
-         projValues.unset(name_);
-         if (fireEvents)
-            ValueChangeEvent.fire(this, getValue());
+         if (projValues.hasKey(name_))
+         {
+            projValues.unset(name_);
+            if (fireEvents)
+               ValueChangeEvent.fire(this, getValue());
+         }
       }
 
       protected abstract void doSetValue(JsObject root, String name, T value);
