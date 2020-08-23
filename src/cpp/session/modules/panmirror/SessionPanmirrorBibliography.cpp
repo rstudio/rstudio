@@ -432,7 +432,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // determine whether the file the bibliography is requested for is part of the current project
    bool isProjectFile = false;
-   if (!file.empty() && projects::projectContext().hasProject())
+   if (!file.empty() && module_context::isBookdownProject())
    {
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (filePath.isWithin(projects::projectContext().buildTargetPath()))
