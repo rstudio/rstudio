@@ -28,6 +28,8 @@ import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliogr
 import { TextInput } from "../../../api/widgets/text";
 
 import './insert_citation-panel-bibliography.css';
+import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
+import { TextButton, OutlineButton } from "../../../api/widgets/button";
 
 export const kAllLocalType = 'All Local Sources';
 
@@ -84,7 +86,7 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
         width='100%'
         itemCount={filteredItemData.length}
         itemSize={50}
-        itemData={{ data: filteredItemData, addSource: props.addSource }}
+        itemData={{ data: filteredItemData, addSource: props.addSource, ui: props.ui }}
       >
         {CitationListItem}
       </FixedSizeList>
@@ -120,20 +122,40 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
 interface CitationListData {
   data: BibliographySource[];
   addSource: (source: BibliographySource) => void;
+  ui: EditorUI;
 }
 
 const CitationListItem = (props: ListChildComponentProps) => {
 
   const citationListData: CitationListData = props.data;
   const source = citationListData.data[props.index];
+  const entry = entryForSource(source, props.data.ui);
 
-  const onClick = (event: React.MouseEvent) => {
+  const onClick = () => {
     citationListData.addSource(source);
   };
 
-  return (<div style={props.style} onClick={onClick}>
-    {source.title}
-  </div>);
+  return (
+    <div className={'pm-insert-citation-panel-item'} style={props.style}>
+      <div className={'pm-insert-citation-panel-item-type'}>
+        {entry.adornmentImage ? <img className={'pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color'} src={entry.adornmentImage} /> : undefined}
+        <img className={'pm-insert-citation-panel-item-icon pm-block-border-color'} src={entry.image} />
+      </div>
+      <div className={'pm-insert-citation-panel-item-summary'}>
+        <div className={'pm-insert-citation-panel-item-id'}>
+          <div className={'pm-insert-citation-panel-item-title pm-fixedwidth-font'}>{entry.authorsFormatter(source.author, 35)}</div>
+          <div className={'pm-insert-citation-panel-item-detail'}>{entry.issuedDateFormatter(source.issued)}</div>
+        </div>
+        <div className={'pm-insert-citation-panel-item-subtitle-text'}>{source.title}</div>
+      </div>
+      <div className='pm-insert-citation-panel-item-button'>
+        <OutlineButton
+          title="Add"
+          onClick={onClick}
+        />
+      </div>
+    </div>
+  );
 };
 
 function libraryImageForProvider(providerKey: string, ui: EditorUI) {
