@@ -797,6 +797,9 @@ public abstract class ModalDialogBase extends DialogBox
     */
    public void refreshFocusableElements()
    {
+      if (!DomUtils.isEffectivelyVisible(getElement()))
+         return;
+
       ArrayList<Element> focusable = getFocusableElements();
       if (focusable.size() == 0)
       {
