@@ -35,15 +35,20 @@ export interface XRef {
   file: string;
   type: string;
   id: string;
+  suffix: string;
   title?: string;
 }
 
-export function xrefKey(xref: XRef, headingType = false) {
+export function xrefKey(xref: XRef) {
+
   // headings don't include their type in the key
-  return !headingType && /^h\d$/.test(xref.type)
+  const key = /^h\d$/.test(xref.type)
     ? xref.id
     // no colon if there is no type
     : xref.type.length > 0 ? `${xref.type}:${xref.id}` : xref.id;
+
+  // return key with suffix
+  return key + xref.suffix;
 }
 
 export function xrefPosition(doc: ProsemirrorNode, xref: string): number {

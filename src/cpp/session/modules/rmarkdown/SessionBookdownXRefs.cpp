@@ -42,6 +42,7 @@ const char * const kRefs = "refs";
 const char * const kFile = "file";
 const char * const kType = "type";
 const char * const kId = "id";
+const char * const kSuffix = "suffix";
 const char * const kTitle = "title";
 
 bool isBookdownRmd(const FileInfo& fileInfo)
@@ -193,6 +194,7 @@ bool writeEntryId(const std::string& id, json::Object* pEntryJson)
    {
       pEntryJson->operator[](kType) = id.substr(0, colonPos);
       pEntryJson->operator[](kId) = id.substr(colonPos + 1);
+      pEntryJson->operator[](kSuffix) = "";
       return true;
    }
    else
@@ -304,8 +306,36 @@ std::vector<XRefIndexEntry> indexEntriesForFile(const XRefFileIndex& fileIndex, 
    return indexEntries;
 }
 
+std::map<std::string,int> readMultiKeys()
+{
+   std::map<std::string,int> multiKeys;
+   FilePath refKeys = projects::projectContext().buildTargetPath().completePath("_book/reference-keys.txt");
+   if (refKeys.exists())
+   {
+      // read the keys
+      std::vector<std::string> keys;
+      Error error = core::readStringVectorFromFile(refKeys, &keys);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return multiKeys;
+      }
 
-json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
+      // look for keys with a -N suffix
+      boost::regex multiRe("^(?:[a-z]+:)?(.*?)(?:-(\\d+))$");
+      for (auto key : keys)
+      {
+         boost::smatch match;
+         if (boost::regex_search(key, match, multiRe))
+            multiKeys[match[1]] = boost::lexical_cast<int>(match[2]);
+      }
+   }
+
+   return multiKeys;
+}
+
+
+json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries, bool isBookdownProject)
 {
    // split out text refs (as a map) and normal entries
    std::map<std::string,std::string> textRefs;
@@ -323,6 +353,11 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
          normalEntries.push_back(indexEntry);
       }
    }
+
+   // read in referece-keys.txt so we can detect entires w/ suffixes
+   std::map<std::string,int> multiKeys;
+   if (isBookdownProject)
+      multiKeys = readMultiKeys();
 
    // turn normal entries into xref json
    json::Array xrefsJson;
@@ -356,8 +391,27 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries)
          {
             validEntryId = writeEntryId(entry, &xrefJson);
          }
+
+         // add the entry (suffixed if necessary)
          if (validEntryId)
-            xrefsJson.push_back(xrefJson);
+         {
+            // if this key has a suffix then add multiple items w/ suffixes
+            std::string id = xrefJson["id"].getString();
+            std::map<std::string,int>::const_iterator it = multiKeys.find(id);
+            if (it != multiKeys.end() && it->second > 1)
+            {
+               for (int i=1; i<=it->second; i++)
+               {
+                  json::Object xrefJsonSuffixed = xrefJson;
+                  xrefJsonSuffixed[kSuffix] = "-" + boost::lexical_cast<std::string>(i);
+                  xrefsJson.push_back(xrefJsonSuffixed);
+               }
+            }
+            else
+            {
+               xrefsJson.push_back(xrefJson);
+            }
+         }
       }
    }
 
@@ -470,7 +524,7 @@ json::Object xrefIndexforProject(IndexEntryFilter filter)
    json::Object indexJson;
    indexJson[kBaseDir] = module_context::createAliasedPath(projects::projectContext().buildTargetPath());
    std::vector<XRefIndexEntry> entries = indexEntriesForProject(filter);
-   indexJson[kRefs] = indexEntriesToXRefs(entries);
+   indexJson[kRefs] = indexEntriesToXRefs(entries, true);
    return indexJson;
 }
 
@@ -509,7 +563,7 @@ json::Object xrefIndex(const std::string& file, IndexEntryFilter filter)
          {
             XRefFileIndex idx = indexForDoc(filePath.getFilename(), pDoc->contents());
             std::vector<XRefIndexEntry> entries = indexEntriesForFile(idx, filter);
-            indexJson["refs"] = indexEntriesToXRefs(entries);
+            indexJson["refs"] = indexEntriesToXRefs(entries, false);
          }
       }
       else
@@ -560,9 +614,40 @@ Error xrefForId(const json::JsonRpcRequest& request,
       {
          // headings also match on just the id part
          entryId = boost::regex_replace(entryId, boost::regex("^h\\d\\:"), "");
-         return id == entryId;
+         if (id == entryId)
+            return true;
+
+         // we can also match after trimming off any provided suffix
+         std::string trimmedId = boost::regex_replace(id, boost::regex("-\\d$"), "");
+         if (trimmedId == entryId)
+            return true;
       }
+
+      return false;
    });
+
+   // if there is more than one item returned it could have been a suffix match,
+   // in that case winnow it down to the passed id
+   json::Array refsJson = indexJson["refs"].getArray();
+   if (refsJson.getSize() > 1)
+   {
+      for (auto refJsonValue : refsJson)
+      {
+         json::Object refJson = refJsonValue.getObject();
+         boost::format fmt("%1%:%2%%3%");
+         std::string refId = boost::str(fmt %
+                                        refJson[kType].getString() %
+                                        refJson[kId].getString() %
+                                        refJson[kSuffix].getString());
+         if (refId == id)
+         {
+            json::Array suffixRefsJson;
+            suffixRefsJson.push_back(refJson);
+            indexJson["refs"] = suffixRefsJson;
+            break;
+         }
+      }
+   }
 
    // return it
    pResponse->setResult(indexJson);
