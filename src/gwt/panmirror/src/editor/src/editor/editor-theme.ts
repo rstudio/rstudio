@@ -255,6 +255,11 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.borderBackgroundColor};
       background-color: ${theme.backgroundColor};
     }
+    .pm-input-outline-button {
+      color: ${theme.textColor};
+      border-color: ${theme.textColor};
+      background-color: ${theme.backgroundColor};
+    }
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child span {
       color: ${theme.lightTextColor} !important;

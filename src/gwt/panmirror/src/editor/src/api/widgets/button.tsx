@@ -99,3 +99,31 @@ export const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>((
     </button>
   );
 });
+
+export interface OutlineButtonProps extends WidgetProps {
+  title: string;
+  onClick?: () => void;
+  tabIndex?: number;
+}
+
+export const OutlineButton = React.forwardRef<HTMLButtonElement, OutlineButtonProps>((props: TextButtonProps, ref) => {
+  const className = ['pm-outline-button', 'pm-input-button', 'pm-input-outline-button'].concat(props.classes || []).join(' ');
+  const onClick = (e: React.MouseEvent) => {
+    if (props.onClick) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={className}
+      style={props.style}
+      ref={ref}
+      tabIndex={props.tabIndex}
+    >
+      {props.title}
+    </button>
+  );
+});
