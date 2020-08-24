@@ -18,8 +18,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -41,7 +45,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    public PreferencesDialog(WorkbenchServerOperations server,
                             Session session,
                             PreferencesDialogResources res,
-                            Provider<GeneralPreferencesPane> pR,
+                            GeneralPreferencesPane general,
                             EditingPreferencesPane source,
                             ConsolePreferencesPane console,
                             RMarkdownPreferencesPane rmarkdown,
@@ -64,20 +68,22 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
             res.styles().panelContainer(),
             res.styles().panelContainerNoChooser(),
             true,
-            new PreferencesPane[] {pR.get(),
-                                   source,
-                                   console,
-                                   appearance,
-                                   paneLayout,
-                                   packages,
-                                   rmarkdown,
-                                   compilePdf,
-                                   spelling,
-                                   sourceControl,
-                                   publishing,
-                                   terminal,
-                                   accessibility,
-                                   python});
+            panes(
+                  general,
+                  source,
+                  console,
+                  appearance,
+                  paneLayout,
+                  packages,
+                  rmarkdown,
+                  compilePdf,
+                  spelling,
+                  sourceControl,
+                  publishing,
+                  terminal,
+                  accessibility,
+                  python));
+      
       session_ = session;
       server_ = server;
       state_ = userState;
@@ -155,6 +161,17 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    {
       GWT.<PreferencesDialogResources>create(PreferencesDialogResources.class).styles().ensureInjected();
    }
+   
+   @SafeVarargs
+   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(
+      PreferencesDialogPaneBase<UserPrefs>... paneList)
+   {
+      List<PreferencesDialogPaneBase<UserPrefs>> allPanes = new ArrayList<>();
+      for (PreferencesDialogPaneBase<UserPrefs> pane : paneList)
+         allPanes.add(pane);
+      return allPanes;
+   }
+   
 
    private final WorkbenchServerOperations server_;
    private final Session session_;

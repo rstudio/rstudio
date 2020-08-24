@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -40,10 +42,11 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                    String panelContainerStyle,
                                    String panelContainerStyleNoChooser,
                                    boolean showApplyButton,
-                                   PreferencesDialogPaneBase<T>[] panes)
+                                   List<PreferencesDialogPaneBase<T>> panes)
    {
       super(Roles.getDialogRole());
       setText(caption);
+      
       panes_ = panes;
       panelContainerStyle_ = panelContainerStyle;
       panelContainerStyleNoChooser_ = panelContainerStyleNoChooser;
@@ -102,12 +105,12 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             refreshFocusableElements();
 
          if (currentIndex_ != null)
-            setPaneVisibility(panes_[currentIndex_], false);
+            setPaneVisibility(panes_.get(currentIndex_), false);
 
          currentIndex_ = index;
 
          if (currentIndex_ != null)
-            setPaneVisibility(panes_[currentIndex_], true);
+            setPaneVisibility(panes_.get(currentIndex_), true);
       });
 
       sectionChooser_.select(0);
@@ -128,9 +131,9 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
    public void activatePane(Class<?> clazz)
    {
-      for (int i = 0; i < panes_.length; i++)
+      for (int i = 0; i < panes_.size(); i++)
       {
-         if (panes_[i].getClass() == clazz)
+         if (panes_.get(i).getClass() == clazz)
          {
             activatePane(i);
             break;
@@ -171,9 +174,9 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
    protected void hidePane(Class<?> clazz)
    {
-      for (int i = 0; i < panes_.length; i++)
+      for (int i = 0; i < panes_.size(); i++)
       {
-         if (panes_[i].getClass() == clazz)
+         if (panes_.get(i).getClass() == clazz)
          {
             hidePane(i);
             break;
@@ -290,7 +293,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    }
 
    private DockLayoutPanel panel_;
-   private PreferencesDialogPaneBase<T>[] panes_;
+   private List<PreferencesDialogPaneBase<T>> panes_;
    private FlowPanel container_;
    private Integer currentIndex_;
    private final ProgressIndicator progressIndicator_;
