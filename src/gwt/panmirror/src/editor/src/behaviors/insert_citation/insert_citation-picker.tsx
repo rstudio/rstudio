@@ -47,6 +47,7 @@ export interface CitationPanelProps extends WidgetProps {
   selectedNode?: SelectTreeNode;
   sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
+  removeSource: (source: BibliographySource) => void;
 }
 
 // The picker is a full featured UI for finding and selection citation data
@@ -132,6 +133,9 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     sourcesToAdd,
     addSource: (source: BibliographySource) => {
       setSourcesToAdd([source, ...sourcesToAdd]);
+    },
+    removeSource: (src: BibliographySource) => {
+      deleteSource(src.id);
     }
   };
   const panelToDisplay = selectedPanel ? React.createElement(selectedPanel.panel, citationProps) : undefined;
@@ -140,10 +144,15 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     setSelectedNode(node);
   };
 
-  const deleteSource = (displayText: string) => {
-    const filteredSources = sourcesToAdd.filter(source => forDisplay(source.id) !== displayText);
+  const deleteSource = (id: string) => {
+    const filteredSources = sourcesToAdd.filter(source => source.id !== id);
     setSourcesToAdd(filteredSources);
   };
+
+  const deleteTag = (tag: string) => {
+    const filteredSources = sourcesToAdd.filter(source => forDisplay(source.id) !== tag);
+    setSourcesToAdd(filteredSources);
+  }
 
   return (
     <div className='pm-cite-panel-container' style={style}>
@@ -163,12 +172,11 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
         <TagInput
           tags={sourcesToAdd.map(source => forDisplay(source.id))}
-          deleteTag={deleteSource} />
+          deleteTag={deleteTag} />
       </div>
     </div >
   );
 };
-
 
 function forDisplay(source: string) {
   return `@${source}`;

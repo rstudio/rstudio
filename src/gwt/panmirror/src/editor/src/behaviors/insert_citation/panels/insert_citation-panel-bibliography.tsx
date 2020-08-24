@@ -19,18 +19,19 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 
-import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
-import { EditorUI } from "../../../api/ui";
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
+import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
+import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { OutlineButton } from "../../../api/widgets/button";
+import { SelectTreeNode } from "../../../api/widgets/select_tree";
 
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
 import './insert_citation-panel-bibliography.css';
-import { SelectTreeNode } from "../../../api/widgets/select_tree";
+
 
 export const kAllLocalType = 'All Local Sources';
 
@@ -85,9 +86,9 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
       <FixedSizeList
         height={500}
         width='100%'
-        itemCount={filteredItemData.length}
+        itemCount={itemData.length}
         itemSize={64}
-        itemData={{ data: filteredItemData, addSource: props.addSource, ui: props.ui }}
+        itemData={{ data: itemData, sourcesToAdd: props.sourcesToAdd, addSource: props.addSource, removeSource: props.removeSource, ui: props.ui }}
       >
         {CitationListItem}
       </FixedSizeList>
@@ -122,7 +123,9 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
 
 interface CitationListData {
   data: BibliographySource[];
+  sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
+  removeSource: (source: BibliographySource) => void;
   ui: EditorUI;
 }
 
@@ -136,9 +139,14 @@ const CitationListItem = (props: ListChildComponentProps) => {
   const id = entry.source.id.length > maxIdLength ? `@${entry.source.id.substr(0, maxIdLength - 1)}…` : `@${entry.source.id}`;
   const authorWidth = Math.max(10, 50 - id.length);
 
+  const alreadyAdded = citationListData.sourcesToAdd.map(src => src.id).includes(source.id);
 
   const onClick = () => {
-    citationListData.addSource(source);
+    if (alreadyAdded) {
+      citationListData.removeSource(source);
+    } else {
+      citationListData.addSource(source);
+    }
   };
 
   return (
@@ -159,7 +167,8 @@ const CitationListItem = (props: ListChildComponentProps) => {
             </div>
             <div className='pm-insert-citation-panel-item-button'>
               <OutlineButton
-                title="Add"
+                style={{ width: '70px' }}
+                title={alreadyAdded ? 'Remove' : 'Add'}
                 onClick={onClick}
               />
             </div>
