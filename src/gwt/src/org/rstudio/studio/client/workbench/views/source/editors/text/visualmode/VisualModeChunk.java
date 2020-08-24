@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -26,6 +28,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -82,7 +85,7 @@ public class VisualModeChunk
       
       releaseOnDismiss_ = new ArrayList<HandlerRegistration>();
       destroyHandlers_ = new ArrayList<Command>();
-      rowState_ = new ArrayList<VisualModeChunkRowState>();
+      rowState_ = new HashMap<Integer,VisualModeChunkRowState>();
 
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)
@@ -100,7 +103,15 @@ public class VisualModeChunk
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
       host_.appendChild(chunkEditor.getContainer());
+
+      // Create an element to host all of the execution status widgets
+      // (VisualModeChunkRowState).
+      execHost_ = Document.get().createDivElement();
+      execHost_.getStyle().setProperty("position", "absolute");
+      execHost_.getStyle().setProperty("top", "3px");
+      host_.appendChild(execHost_);
       
+      // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
       if (output != null && widget_ == null)
       {
@@ -288,7 +299,34 @@ public class VisualModeChunk
     */
    public void setLineExecState(int start, int end, int state)
    {
-      // TODO: map to row state 
+      for (int i = start; i <= end; i++)
+      {
+         if (state == ChunkRowExecState.LINE_NONE)
+         {
+            // Removing state; clear the execution display
+            if (rowState_.containsKey(i))
+            {
+               rowState_.get(i).detach();
+               rowState_.remove(i);
+            }
+         }
+         else
+         {
+            if (rowState_.containsKey(i))
+            {
+               // Adding state to a widget we already track
+               rowState_.get(i).setState(state);
+            }
+            else
+            {
+               // Create a new state widget
+               VisualModeChunkRowState row = 
+                     new VisualModeChunkRowState(state, editor_, i);
+               execHost_.appendChild(row.getElement());
+               rowState_.put(i, row);
+            }
+         }
+      }
    }
    
    private void setMode(AceEditor editor, String mode)
@@ -410,6 +448,7 @@ public class VisualModeChunk
    private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
    private final DivElement host_;
+   private final DivElement execHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;
    private final DocDisplay parent_;
@@ -417,5 +456,5 @@ public class VisualModeChunk
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
-   private final List<VisualModeChunkRowState> rowState_;
+   private final Map<Integer,VisualModeChunkRowState> rowState_;
 }

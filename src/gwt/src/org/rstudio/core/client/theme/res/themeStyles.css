@@ -422,6 +422,14 @@ pre {
 
 .visual_chunk-queued-line,
 .visual_chunk-error-line,
+.visual_chunk-resting-line,
+.visual_chunk-executing-line {
+   width: 7px;
+   position: absolute;
+   display: block;
+   left: -12px;
+}
+
 .ace_chunk-queued-line:before,
 .ace_chunk-error-line:before {
    width: 7px;
