@@ -152,7 +152,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   const deleteTag = (tag: string) => {
     const filteredSources = sourcesToAdd.filter(source => forDisplay(source.id) !== tag);
     setSourcesToAdd(filteredSources);
-  }
+  };
 
   return (
     <div className='pm-cite-panel-container' style={style}>

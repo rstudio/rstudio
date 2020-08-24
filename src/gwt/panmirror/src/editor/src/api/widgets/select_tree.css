@@ -22,5 +22,6 @@
 .pm-select-tree-node-label-div {
   font-size: 1.1em;
   opacity: .8;
+  overflow: hidden;
 }
 
