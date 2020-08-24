@@ -31,13 +31,13 @@
   flex-shrink: 0;
 }
 
-.pm-insert-citation-right-container {
+.pm-insert-citation-panel-item-right-container {
   flex-grow: 1;
   flex-shrink: 1;
   min-width: 0;
 }
 
-.pm-insert-citation-panel-right-container-body {
+.pm-insert-citation-panel-item-right-container-body {
   display: flex;
   flex-grow: 1;
   flex-shrink: 0;
@@ -66,13 +66,10 @@
   padding-left: 10px;
 }
 
-
 .pm-insert-citation-panel-item-separator {
   border-bottom: solid 1px;
   height: 2px;
 }
-
-
 
 .pm-insert-citation-panel-item-icon {
   border: solid 1px;
@@ -102,13 +99,6 @@
   display: flex;
   justify-content: space-between;
   flex-direction: row;
-}
-
-.pm-completion-item-primary {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
 }
 
 .pm-insert-citation-panel-item-title {

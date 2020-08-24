@@ -19,17 +19,18 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 
+import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
 import { EditorUI } from "../../../api/ui";
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
-import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 import { SelectTreeNode } from "../select_tree";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { TextInput } from "../../../api/widgets/text";
+import { OutlineButton } from "../../../api/widgets/button";
+
+import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
 import './insert_citation-panel-bibliography.css';
-import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
-import { OutlineButton } from "../../../api/widgets/button";
 
 export const kAllLocalType = 'All Local Sources';
 
@@ -142,19 +143,19 @@ const CitationListItem = (props: ListChildComponentProps) => {
 
   return (
     <div>
-      <div className={'pm-insert-citation-panel-item'} style={props.style}>
-        <div className={'pm-insert-citation-panel-item-type'}>
-          {entry.adornmentImage ? <img className={'pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color'} src={entry.adornmentImage} /> : undefined}
-          <img className={'pm-insert-citation-panel-item-icon pm-block-border-color'} src={entry.image} />
+      <div className='pm-insert-citation-panel-item' style={props.style}>
+        <div className='pm-insert-citation-panel-item-type'>
+          {entry.adornmentImage ? <img className='pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
+          <img className='pm-insert-citation-panel-item-icon pm-block-border-color' src={entry.image} />
         </div>
-        <div className='pm-insert-citation-right-container'>
-          <div className='pm-insert-citation-panel-right-container-body'>
-            <div className={'pm-insert-citation-panel-item-summary'}>
-              <div className={'pm-insert-citation-panel-item-id'}>
-                <div className={'pm-insert-citation-panel-item-title pm-fixedwidth-font'}>{id}</div>
-                <div className={'pm-insert-citation-panel-item-detail'}>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+        <div className='pm-insert-citation-panel-item-right-container'>
+          <div className='pm-insert-citation-panel-item-right-container-body'>
+            <div className='pm-insert-citation-panel-item-summary'>
+              <div className='pm-insert-citation-panel-item-id'>
+                <div className='pm-insert-citation-panel-item-title pm-fixedwidth-font'>{id}</div>
+                <div className='pm-insert-citation-panel-item-detail'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
               </div>
-              <div className={'pm-insert-citation-panel-item-subtitle-text'}>{source.title}</div>
+              <div className='pm-insert-citation-panel-item-subtitle-text'>{source.title}</div>
             </div>
             <div className='pm-insert-citation-panel-item-button'>
               <OutlineButton
