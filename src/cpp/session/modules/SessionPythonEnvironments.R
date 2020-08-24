@@ -276,6 +276,6 @@
 
 .rs.registerPackageLoadHook("reticulate", function(...)
 {
-   python <- .rs.readUiPref("python_default_interpreter")
+   python <- .rs.readUiPref("python_path")
    .rs.reticulate.usePython(python)
 })

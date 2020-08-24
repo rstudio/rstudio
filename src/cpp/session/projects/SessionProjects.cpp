@@ -399,6 +399,9 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["markdown_wrap_at_column"] = config.markdownWrapAtColumn;
    configJson["markdown_references"] = config.markdownReferences;
    configJson["markdown_canonical"] = config.markdownCanonical;
+   configJson["python_type"] = config.pythonType;
+   configJson["python_version"] = config.pythonVersion;
+   configJson["python_path"] = config.pythonPath;
 
    return configJson;
 }

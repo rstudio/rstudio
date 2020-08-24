@@ -2956,14 +2956,38 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The path to the default Python interpreter
+    * The Python type.
     */
-   public PrefValue<String> pythonDefaultInterpreter()
+   public PrefValue<String> pythonType()
    {
       return string(
-         "python_default_interpreter",
-         "Default Python interpreter", 
-         "The path to the default Python interpreter", 
+         "python_type",
+         "Python Type", 
+         "The Python type.", 
+         "");
+   }
+
+   /**
+    * The Python version.
+    */
+   public PrefValue<String> pythonVersion()
+   {
+      return string(
+         "python_version",
+         "Python Version", 
+         "The Python version.", 
+         "");
+   }
+
+   /**
+    * The path to the default Python interpreter.
+    */
+   public PrefValue<String> pythonPath()
+   {
+      return string(
+         "python_path",
+         "Python Path", 
+         "The path to the default Python interpreter.", 
          "");
    }
 
@@ -3381,8 +3405,12 @@ public class UserPrefsAccessor extends Prefs
          graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
       if (source.hasKey("browser_fixed_width_fonts"))
          browserFixedWidthFonts().setValue(layer, source.getObject("browser_fixed_width_fonts"));
-      if (source.hasKey("python_default_interpreter"))
-         pythonDefaultInterpreter().setValue(layer, source.getString("python_default_interpreter"));
+      if (source.hasKey("python_type"))
+         pythonType().setValue(layer, source.getString("python_type"));
+      if (source.hasKey("python_version"))
+         pythonVersion().setValue(layer, source.getString("python_version"));
+      if (source.hasKey("python_path"))
+         pythonPath().setValue(layer, source.getString("python_path"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3593,7 +3621,9 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(graphicsBackend());
       prefs.add(graphicsAntialiasing());
       prefs.add(browserFixedWidthFonts());
-      prefs.add(pythonDefaultInterpreter());
+      prefs.add(pythonType());
+      prefs.add(pythonVersion());
+      prefs.add(pythonPath());
       return prefs;
    }
    
