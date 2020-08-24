@@ -25,23 +25,19 @@ interface TagInputProps extends WidgetProps {
   deleteTag: (tag: string) => void;
 }
 
-export const TagInput: React.FC<TagInputProps> = props => {
-
-
-  return (<div style={props.style} className="pm-tag-input-container">
+export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>((props, ref) => {
+  return (<div style={props.style} className='pm-tag-input-container' ref={ref}>
     {props.tags.map(tag => (<Tag key={tag} text={tag} deleteTag={props.deleteTag} />))
     }
   </div >);
-};
+});
 
 interface TagProps extends WidgetProps {
   text: string;
   deleteTag: (tag: string) => void;
 }
 
-
 const Tag: React.FC<TagProps> = props => {
-
   const onClick = (e: React.MouseEvent) => {
     props.deleteTag(props.text);
   };

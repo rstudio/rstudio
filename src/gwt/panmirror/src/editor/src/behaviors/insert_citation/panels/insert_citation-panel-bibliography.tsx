@@ -67,7 +67,16 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
     setSearchTerm(e?.target.value);
   };
 
-  // ref={textRef}
+  // Dynamically size the ListBox
+  const searchBoxRef = React.useRef<HTMLInputElement>(null);
+  const [listHeight, setListHeight] = React.useState<number>(props.height);
+  React.useEffect(() => {
+    const searchBoxHeight = searchBoxRef.current?.clientHeight;
+    if (searchBoxHeight) {
+      setListHeight(props.height - searchBoxHeight);
+    }
+  }, []);
+
   return (
     <div style={props.style} className='pm-insert-citation-panel'>
       <div className='pm-insert-citation-panel-textbox-container'>
@@ -78,11 +87,12 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
           className='pm-insert-citation-panel-textbox pm-block-border-color'
           placeholder={props.ui.context.translateText('Search for citation')}
           onChange={searchChanged}
+          ref={searchBoxRef}
         />
 
       </div>
       <FixedSizeList
-        height={500}
+        height={listHeight}
         width='100%'
         itemCount={itemData.length}
         itemSize={64}

@@ -14,7 +14,7 @@
  */
 
 
-import React from "react";
+import React, { ReactHTML } from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
@@ -44,6 +44,7 @@ export interface CitationPanel {
 export interface CitationPanelProps extends WidgetProps {
   ui: EditorUI;
   bibliographyManager: BibliographyManager;
+  height: number;
   selectedNode?: SelectTreeNode;
   sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
@@ -125,10 +126,26 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     ...props.style,
   };
 
+  // heights for other elements
+  const tagRef = React.useRef<HTMLDivElement>(null);
+  const [panelHeight, setPanelHeight] = React.useState<number>(props.height);
+  React.useEffect(() => {
+    const tagDiv = tagRef.current;
+    if (tagDiv) {
+      setPanelHeight(props.height - tagDiv.clientHeight);
+    }
+  }, []);
+
+  const tagStyle: React.CSSProperties = {
+    height: '60px'
+  };
+
+
   // Load the panel that is displayed for the selected node
   const citationProps: CitationPanelProps = {
     ui: props.ui,
     bibliographyManager: props.bibliographyManager,
+    height: panelHeight,
     selectedNode,
     sourcesToAdd,
     addSource: (source: BibliographySource) => {
@@ -172,7 +189,9 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
         <TagInput
           tags={sourcesToAdd.map(source => forDisplay(source.id))}
-          deleteTag={deleteTag} />
+          deleteTag={deleteTag}
+          style={tagStyle}
+          ref={tagRef} />
       </div>
     </div >
   );
