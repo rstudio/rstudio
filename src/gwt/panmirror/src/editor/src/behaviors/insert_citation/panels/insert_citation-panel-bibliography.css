@@ -19,7 +19,7 @@
 
 .pm-insert-citation-panel-item {
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
 .pm-insert-citation-panel-item-type {
@@ -31,18 +31,13 @@
   flex-shrink: 0;
 }
 
-.pm-insert-citation-panel-item-right-container {
-  flex-grow: 1;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-.pm-insert-citation-panel-item-right-container-body {
+.pm-insert-citation-panel-item-container {
   display: flex;
   flex-grow: 1;
   flex-shrink: 0;
   min-width: 0;
   align-items: center;
+  padding: 0px;
 }
 
 .pm-insert-citation-panel-item-summary {
@@ -52,9 +47,7 @@
   min-width: 0;
   flex-grow: 1;
 
-  padding-top: 6px;
   padding-right: 4px;
-  padding-bottom: 4px;
   padding-left: 0px;
   line-height: 20px;
   font-size: 14px;
@@ -69,8 +62,9 @@
 }
 
 .pm-insert-citation-panel-item-separator {
+  margin-left: 50px;
   border-bottom: solid 1px;
-  height: 2px;
+  height: 1px;
 }
 
 .pm-insert-citation-panel-item-icon {

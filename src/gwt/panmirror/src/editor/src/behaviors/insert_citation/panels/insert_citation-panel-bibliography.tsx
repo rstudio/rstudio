@@ -160,29 +160,27 @@ const CitationListItem = (props: ListChildComponentProps) => {
   return (
     <div>
       <div className='pm-insert-citation-panel-item' style={props.style}>
-        <div className='pm-insert-citation-panel-item-type'>
-          {entry.adornmentImage ? <img className='pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
-          <img className='pm-insert-citation-panel-item-icon pm-block-border-color' src={entry.image} />
-        </div>
-        <div className='pm-insert-citation-panel-item-right-container'>
-          <div className='pm-insert-citation-panel-item-right-container-body'>
-            <div className='pm-insert-citation-panel-item-summary'>
-              <div className='pm-insert-citation-panel-item-id'>
-                <div className='pm-insert-citation-panel-item-title pm-fixedwidth-font'>{id}</div>
-                <div className='pm-insert-citation-panel-item-detail'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
-              </div>
-              <div className='pm-insert-citation-panel-item-subtitle-text'>{source.title}</div>
-            </div>
-            <div className='pm-insert-citation-panel-item-button'>
-              <OutlineButton
-                style={{ width: '70px' }}
-                title={alreadyAdded ? 'Remove' : 'Add'}
-                onClick={onClick}
-              />
-            </div>
+        <div className='pm-insert-citation-panel-item-container'>
+          <div className='pm-insert-citation-panel-item-type'>
+            {entry.adornmentImage ? <img className='pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
+            <img className='pm-insert-citation-panel-item-icon pm-block-border-color' src={entry.image} />
           </div>
-          <div className='pm-insert-citation-panel-item-separator pm-block-border-color' />
+          <div className='pm-insert-citation-panel-item-summary'>
+            <div className='pm-insert-citation-panel-item-id'>
+              <div className='pm-insert-citation-panel-item-title pm-fixedwidth-font'>{id}</div>
+              <div className='pm-insert-citation-panel-item-detail'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+            </div>
+            <div className='pm-insert-citation-panel-item-subtitle-text'>{source.title}</div>
+          </div>
+          <div className='pm-insert-citation-panel-item-button'>
+            <OutlineButton
+              style={{ width: '70px' }}
+              title={alreadyAdded ? 'Remove' : 'Add'}
+              onClick={onClick}
+            />
+          </div>
         </div>
+        <div className='pm-insert-citation-panel-item-separator pm-block-border-color' />
       </div>
     </div>
   );
