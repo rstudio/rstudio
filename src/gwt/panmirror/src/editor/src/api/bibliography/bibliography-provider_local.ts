@@ -204,9 +204,9 @@ const kSpaceOrColonRegex = /[\s:]/;
 function bibliographyLine(bibliographyFile: string): string {
   const sketchyCharMatch = bibliographyFile.match(kSpaceOrColonRegex);
   if (sketchyCharMatch) {
-    return `bibliography: "${bibliographyFile}"\n`;
+    return `bibliography: "${bibliographyFile}"`;
   } else {
-    return `bibliography: ${bibliographyFile}\n`;
+    return `bibliography: ${bibliographyFile}`;
   }
 }
 
@@ -248,13 +248,13 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
 function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
   // Add this to the first node
   const yamlCode = parsedYaml.yamlCode;
-  const yamlWithBib = `---${yamlCode}${bibliographyLine(bibliographyFile)}---`;
+  const yamlWithBib = `---\n${yamlCode}\n${bibliographyLine(bibliographyFile)}\n---`;
   const yamlText = schema.text(yamlWithBib);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
 
 function createBiblographyYamlNode(schema: Schema, bibliographyFile: string) {
-  const yamlText = schema.text(`---${bibliographyLine(bibliographyFile)}---`);
+  const yamlText = schema.text(`---\n${bibliographyLine(bibliographyFile)}\n---`);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
 
