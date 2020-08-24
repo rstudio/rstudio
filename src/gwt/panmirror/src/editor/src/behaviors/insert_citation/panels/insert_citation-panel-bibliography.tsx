@@ -22,7 +22,6 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
 import { EditorUI } from "../../../api/ui";
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
-import { SelectTreeNode } from "../select_tree";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { TextInput } from "../../../api/widgets/text";
@@ -31,6 +30,7 @@ import { OutlineButton } from "../../../api/widgets/button";
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
 import './insert_citation-panel-bibliography.css';
+import { SelectTreeNode } from "../../../api/widgets/select_tree";
 
 export const kAllLocalType = 'All Local Sources';
 

@@ -20,12 +20,11 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { WidgetProps } from "../../api/widgets/react";
 
-import { SelectTree, SelectTreeNode, containsChild } from "./select_tree";
 import { BibliographyManager, BibliographySource } from "../../api/bibliography/bibliography";
 import { EditorUI } from "../../api/ui";
+import { SelectTreeNode, containsChild, SelectTree } from "../../api/widgets/select_tree";
+import { TagInput } from "../../api/widgets/tag_input";
 
-
-import { TagInput } from "./tag_input";
 import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
 import { doiPanel } from "./panels/insert_citation-panel-doi";
 
