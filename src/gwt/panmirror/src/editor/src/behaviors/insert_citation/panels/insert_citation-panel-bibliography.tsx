@@ -22,16 +22,15 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
-import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
-import { OutlineButton } from "../../../api/widgets/button";
 import { SelectTreeNode } from "../../../api/widgets/select_tree";
 
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
 import './insert_citation-panel-bibliography.css';
 import debounce from "lodash.debounce";
+import { CitationListItem } from "./insert_citation-panel-list-item";
 
 
 export const kAllLocalType = 'All Local Sources';
@@ -139,62 +138,6 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
     </div>);
 };
 
-interface CitationListData {
-  data: BibliographySource[];
-  sourcesToAdd: BibliographySource[];
-  addSource: (source: BibliographySource) => void;
-  removeSource: (source: BibliographySource) => void;
-  ui: EditorUI;
-}
-
-const CitationListItem = (props: ListChildComponentProps) => {
-
-  const citationListData: CitationListData = props.data;
-  const source = citationListData.data[props.index];
-  const entry = entryForSource(source, props.data.ui);
-
-  const maxIdLength = 30;
-  const id = entry.source.id.length > maxIdLength ? `@${entry.source.id.substr(0, maxIdLength - 1)}…` : `@${entry.source.id}`;
-  const authorWidth = Math.max(10, 50 - id.length);
-
-  const alreadyAdded = citationListData.sourcesToAdd.map(src => src.id).includes(source.id);
-
-  const onClick = () => {
-    if (alreadyAdded) {
-      citationListData.removeSource(source);
-    } else {
-      citationListData.addSource(source);
-    }
-  };
-
-  return (
-    <div>
-      <div className='pm-insert-citation-panel-item' style={props.style}>
-        <div className='pm-insert-citation-panel-item-container'>
-          <div className='pm-insert-citation-panel-item-type'>
-            {entry.adornmentImage ? <img className='pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
-            <img className='pm-insert-citation-panel-item-icon pm-block-border-color' src={entry.image} />
-          </div>
-          <div className='pm-insert-citation-panel-item-summary'>
-            <div className='pm-insert-citation-panel-item-id'>
-              <div className='pm-insert-citation-panel-item-title pm-fixedwidth-font'>{id}</div>
-              <div className='pm-insert-citation-panel-item-detail'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
-            </div>
-            <div className='pm-insert-citation-panel-item-subtitle-text'>{source.title}</div>
-          </div>
-          <div className='pm-insert-citation-panel-item-button'>
-            <OutlineButton
-              style={{ width: '70px' }}
-              title={alreadyAdded ? 'Remove' : 'Add'}
-              onClick={onClick}
-            />
-          </div>
-        </div>
-        <div className='pm-insert-citation-panel-item-separator pm-block-border-color' />
-      </div>
-    </div>
-  );
-};
 
 function libraryImageForProvider(providerKey: string, ui: EditorUI) {
   switch (providerKey) {

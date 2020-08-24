@@ -14,7 +14,7 @@
  */
 
 
-import React, { ReactHTML } from "react";
+import React from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
@@ -29,6 +29,7 @@ import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
 import { doiPanel } from "./panels/insert_citation-panel-doi";
 
 import './insert_citation-picker.css';
+import { EditorServer } from "../../api/server";
 
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
@@ -44,6 +45,7 @@ export interface CitationPanel {
 export interface CitationPanelProps extends WidgetProps {
   ui: EditorUI;
   bibliographyManager: BibliographyManager;
+  server: EditorServer;
   height: number;
   selectedNode?: SelectTreeNode;
   sourcesToAdd: BibliographySource[];
@@ -51,7 +53,7 @@ export interface CitationPanelProps extends WidgetProps {
   removeSource: (source: BibliographySource) => void;
 }
 
-// The picker is a full featured UI for finding and selection citation data
+// The picker is a full featured UI for finding and selecting citation data
 // to be added to a document.
 interface InsertCitationPickerProps extends WidgetProps {
   ui: EditorUI;
@@ -59,6 +61,7 @@ interface InsertCitationPickerProps extends WidgetProps {
   height: number;
   width: number;
   bibliographyManager: BibliographyManager;
+  server: EditorServer;
   onSourceChanged: (sources: BibliographySource[]) => void;
 }
 
@@ -138,6 +141,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   const citationProps: CitationPanelProps = {
     ui: props.ui,
     bibliographyManager: props.bibliographyManager,
+    server: props.server,
     height: panelHeight,
     selectedNode,
     sourcesToAdd,

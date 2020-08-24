@@ -179,7 +179,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (_schema: Schema) => {
-      return [new InsertCitationCommand(ui, context.events, mgr)];
+      return [new InsertCitationCommand(ui, context.events, mgr, context.server)];
     },
 
     appendMarkTransaction: (schema: Schema) => {

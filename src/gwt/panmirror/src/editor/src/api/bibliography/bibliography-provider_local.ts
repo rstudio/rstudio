@@ -42,7 +42,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.server = server;
     this.etag = '';
   }
-  public name: string = "Local Bibliography";
+  public name: string = "Bibliography";
   public key: string = kLocalBiliographyProviderKey;
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {

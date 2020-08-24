@@ -23,9 +23,15 @@ import { EditorUI } from '../../api/ui';
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPicker } from './insert_citation-picker';
+import { EditorServer } from '../../api/server';
 
 
-export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode, bibliographyManager: BibliographyManager) {
+export async function showInsertCitationPopup(
+  ui: EditorUI,
+  doc: ProsemirrorNode,
+  bibliographyManager: BibliographyManager,
+  server: EditorServer,
+) {
 
   // The citations that the user would like to insert
   let sources: BibliographySource[] = [];
@@ -59,6 +65,7 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
           doc={doc}
           ui={ui}
           bibliographyManager={bibliographyManager}
+          server={server}
           onSourceChanged={onSourceChanged}
           height={height}
           width={width} />

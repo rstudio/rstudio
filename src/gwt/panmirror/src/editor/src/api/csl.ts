@@ -15,9 +15,6 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
-import { BibDB, EntryObject, BibFieldTypes, TextNodeObject, NameDictObject, NodeArray, RangeArray } from 'biblatex-csl-converter';
-import { convertArrayOfRowsToTableNode } from 'prosemirror-utils';
-
 
 export interface CSL {
 

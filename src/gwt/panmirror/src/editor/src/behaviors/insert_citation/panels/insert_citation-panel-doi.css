@@ -1,0 +1,17 @@
+
+
+.pm-insert-doi-panel{
+  width: 100%;
+}
+
+.pm-insert-doi-panel-textbox-container {
+  width: 100%;
+}
+
+.pm-insert-doi-panel-textbox{
+  width: 100%;
+  border: solid 1px;
+  margin-right: 10px;
+  box-sizing:border-box;
+  height: 28px !important;
+}
