@@ -51,7 +51,7 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
                               TextFileType fileType,
                               int navMethod)
    {
-      this(file, position, fileType, false, NavigationMethods.DEFAULT);
+      this(file, position, fileType, true, NavigationMethods.DEFAULT);
    }
 
    public OpenSourceFileEvent(FileSystemItem file,
