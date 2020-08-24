@@ -192,10 +192,6 @@ export class AceNodeView implements NodeView {
       this.dom.classList.add('pm-ace-first-line-meta');
     }
 
-    // add a chunk execution button if execution is supported
-    this.runChunkToolbar = this.initRunChunkToolbar(ui);
-    this.dom.append(this.runChunkToolbar);
-
     // update mode
     this.updateMode();
 
@@ -729,36 +725,6 @@ export class AceNodeView implements NodeView {
     // set focus
     this.view.focus();
     this.escaping = false;
-  }
-
-  private initRunChunkToolbar(ui: EditorUI) {
-    const toolbar = window.document.createElement('div');
-    toolbar.classList.add('pm-ace-toolbar');
-    if (this.options.executeRmdChunkFn) {
-      // run previous chunks button
-      const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
-      const runPreviousChunksButton = createImageButton(
-        ui.images.runprevchunks!,
-        ['pm-run-previous-chunks-button'],
-        `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
-      );
-      runPreviousChunksButton.tabIndex = -1;
-      runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
-      toolbar.append(runPreviousChunksButton);
-
-      // run chunk button
-      const runChunkShortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
-      const runChunkButton = createImageButton(
-        ui.images.runchunk!,
-        ['pm-run-chunk-button'],
-        `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
-      );
-      runChunkButton.tabIndex = -1;
-      runChunkButton.onclick = this.executeChunk.bind(this);
-      toolbar.append(runChunkButton);
-    }
-
-    return toolbar;
   }
 
   private executeChunk() {
