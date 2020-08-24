@@ -29,7 +29,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    public PythonPreferencesPane(PythonDialogResources res,
                                 PythonServerOperations server)
    {
-      super(res, server);
+      super("(No interpreter selected)");
    }
 
    @Override
@@ -70,7 +70,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
             interpreter_ != null &&
             interpreter_.isValid() &&
             !StringUtil.isNullOrEmpty(newValue) &&
-            !StringUtil.equals(newValue, PYTHON_PLACEHOLDER_TEXT);
+            !StringUtil.equals(newValue, placeholderText_);
       
       if (isSet && !StringUtil.equals(oldValue, newValue))
       {

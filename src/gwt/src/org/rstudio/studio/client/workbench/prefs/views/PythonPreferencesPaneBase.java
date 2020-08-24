@@ -18,12 +18,15 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterListEntryUi;
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterSelectionDialog;
 
@@ -41,12 +44,11 @@ import com.google.inject.Inject;
 
 public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPaneBase<T>
 {
-   @Inject
-   public PythonPreferencesPaneBase(PythonDialogResources res,
-                                    PythonServerOperations server)
+   public PythonPreferencesPaneBase(String placeholderText)
    {
-      res_ = res;
-      server_ = server;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      placeholderText_ = placeholderText;
       
       add(headerLabel("Python"));
       
@@ -58,7 +60,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
-            PYTHON_PLACEHOLDER_TEXT,
+            placeholderText_,
             "Select...",
             null,
             ElementIds.TextBoxButtonId.PYTHON_PATH,
@@ -118,12 +120,22 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       }, BlurEvent.getType());
       
       tbPythonInterpreter_.setWidth("420px");
-      tbPythonInterpreter_.setText(PYTHON_PLACEHOLDER_TEXT);
+      tbPythonInterpreter_.setText(placeholderText_);
       tbPythonInterpreter_.setReadOnly(false);
       add(lessSpaced(tbPythonInterpreter_));
       
       add(spaced(container_));
       
+   }
+   
+   @Inject
+   private void initialize(PythonDialogResources res,
+                           PythonServerOperations server,
+                           UserPrefs prefs)
+   {
+      res_ = res;
+      server_ = server;
+      prefs_ = prefs;
    }
    
    protected void clearDescription()
@@ -135,7 +147,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       String path = tbPythonInterpreter_.getText();
       if (StringUtil.isNullOrEmpty(path) ||
-          StringUtil.equals(path, PYTHON_PLACEHOLDER_TEXT))
+          StringUtil.equals(path, placeholderText_))
       {
          clearDescription();
          return;
@@ -215,7 +227,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       String requestedPath = tbPythonInterpreter_.getText();
       boolean isSet =
             !StringUtil.isNullOrEmpty(requestedPath) &&
-            !StringUtil.equals(requestedPath, PYTHON_PLACEHOLDER_TEXT);
+            !StringUtil.equals(requestedPath, placeholderText_);
       
       if (!isSet)
       {
@@ -241,6 +253,72 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       return "Python";
    }
+   
+   protected void initialize(boolean useProjectPrefs)
+   {
+      String pythonPath = useProjectPrefs
+            ? prefs_.pythonPath().getValue()
+            : prefs_.pythonPath().getGlobalValue();
+      
+      if (!StringUtil.isNullOrEmpty(pythonPath))
+      {
+         tbPythonInterpreter_.setText(pythonPath);
+         updateDescription();
+      }
+      
+      server_.pythonActiveInterpreter(new ServerRequestCallback<PythonInterpreter>()
+      {
+         @Override
+         public void onResponseReceived(PythonInterpreter response)
+         {
+            checkForMismatch(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+   
+   public RestartRequirement onApply(boolean useProjectPrefs)
+   {
+      RestartRequirement requirement = new RestartRequirement();
+      
+      String oldValue = useProjectPrefs
+            ? prefs_.pythonPath().getValue()
+            : prefs_.pythonPath().getGlobalValue();
+            
+      String newValue = tbPythonInterpreter_.getText();
+      
+      boolean isSet =
+            interpreter_ != null &&
+            interpreter_.isValid() &&
+            !StringUtil.isNullOrEmpty(newValue) &&
+            !StringUtil.equals(newValue, placeholderText_);
+      
+      if (isSet && !StringUtil.equals(oldValue, newValue))
+      {
+         if (useProjectPrefs)
+         {
+            prefs_.pythonType().setProjectValue(interpreter_.getType());
+            prefs_.pythonVersion().setProjectValue(interpreter_.getVersion());
+            prefs_.pythonPath().setProjectValue(interpreter_.getPath());
+         }
+         else
+         {
+            prefs_.pythonType().setGlobalValue(interpreter_.getType());
+            prefs_.pythonVersion().setGlobalValue(interpreter_.getVersion());
+            prefs_.pythonPath().setGlobalValue(interpreter_.getPath());
+            
+         }
+         requirement.setSessionRestartRequired(true);
+      }
+      
+      return requirement;
+   }
+   
 
    public interface Styles extends CssResource
    {
@@ -254,16 +332,19 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       Styles styles();
    }
 
+   protected final String placeholderText_;
+   
    protected final InfoBar mismatchWarningBar_;
-   protected final PythonDialogResources res_;
-   protected final PythonServerOperations server_;
    protected final TextBoxWithButton tbPythonInterpreter_;
    protected final SimplePanel container_ = new SimplePanel();
    
    protected PythonInterpreter interpreter_;
-   
-   protected static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreter selected)";
 
+   protected PythonDialogResources res_;
+   protected PythonServerOperations server_;
+   protected UserPrefs prefs_;
+   
+   
    protected static Resources RES = GWT.create(Resources.class);
    static
    {
