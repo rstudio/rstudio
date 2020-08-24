@@ -1652,6 +1652,10 @@ void fillFromBookdownRefs(const std::string& term,
       // user-provided search term
       if (!string_utils::isSubsequence(displayText, term, true))
          continue;
+
+      // add the suffix (if any)
+      if (bookdownRef.getObject().hasMember("suffix"))
+         displayText += bookdownRef.getObject()["suffix"].getString();
       
       // bundle xref into source item
       json::Object meta;

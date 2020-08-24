@@ -28,7 +28,7 @@ import { EditorEvents } from "../../api/events";
 import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord, charAt } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, findBeginWord, findEndWord, charAt } from "./spelling";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 const kInvalidateSpellingWordTransaction = 'invalidateSpellingWord';
@@ -302,7 +302,6 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
 
         // create menu w/ suggestions
         const menuItems: EditorMenuItem[] = suggestions.slice(0, kMaxSuggetions).map(suggestion => {
-          suggestion = editorWord(suggestion);
           return {
             text: suggestion,
             exec: () => {

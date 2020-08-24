@@ -52,6 +52,18 @@ const char * const kBuildTypeMakefile = "Makefile";
 const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
 
+const char * const kMarkdownWrapUseDefault = "Default";
+const char * const kMarkdownWrapNone = "None";
+const char * const kMarkdownWrapColumn = "Column";
+const char * const kMarkdownWrapSentence = "Sentence";
+
+const int kMarkdownWrapAtColumnDefault = 72;
+
+const char * const kMarkdownReferencesUseDefault = "Default";
+const char * const kMarkdownReferencesBlock = "Block";
+const char * const kMarkdownReferencesSection = "Section";
+const char * const kMarkdownReferencesDocument = "Document";
+
 namespace {
 
 const char * const kPackageInstallArgsDefault = "--no-multiarch "
@@ -184,6 +196,47 @@ bool interpretLineEndingsValue(std::string value, int* pValue)
    {
       return false;
    }
+}
+
+bool interpretMarkdownWrapValue(const std::string& value, std::string* pValue)
+{
+   if (value == "" || value == kMarkdownWrapUseDefault)
+   {
+      *pValue = kMarkdownWrapUseDefault;
+      return true;
+   }
+   else if (value == kMarkdownWrapNone ||
+            value == kMarkdownWrapColumn ||
+            value == kMarkdownWrapSentence)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool interpretMarkdownReferencesValue(const std::string& value, std::string *pValue)
+{
+   if (value == "" || value == kMarkdownReferencesUseDefault)
+   {
+      *pValue = kMarkdownReferencesUseDefault;
+      return true;
+   }
+   else if (value == kMarkdownReferencesBlock ||
+            value == kMarkdownReferencesSection ||
+            value == kMarkdownReferencesDocument)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+
 }
 
 
@@ -390,6 +443,9 @@ Error readProjectFile(const FilePath& projectFilePath,
                           &providedDefaults,
                           pUserErrMsg);
 }
+
+// TODO: add visual markdown options, e.g. see:
+// https://github.com/rstudio/rstudio/commit/35126fd3b7f1b2f78dcc8f9df6c77f1a1bd324dc#diff-87efb91b81672d3e9b3a9c9c6e46241c
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
@@ -811,7 +867,54 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->defaultTutorial = "";
    }
-   
+
+   // extract markdown wrap
+   it = dcfFields.find("MarkdownWrap");
+   if (it != dcfFields.end())
+   {
+      if (!interpretMarkdownWrapValue(it->second, &(pConfig->markdownWrap)))
+         return requiredFieldError("MarkdownWrap", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownWrap = defaultConfig.markdownWrap;
+   }
+
+   // extract markdown wrap at column
+   it = dcfFields.find("MarkdownWrapAtColumn");
+   if (it != dcfFields.end())
+   {
+      if (!interpretIntValue(it->second, &(pConfig->markdownWrapAtColumn)))
+         return requiredFieldError("MarkdownWrapAtColumn", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownWrapAtColumn = defaultConfig.markdownWrapAtColumn;
+   }
+
+   // extract markdown references
+   it = dcfFields.find("MarkdownReferences");
+   if (it != dcfFields.end())
+   {
+      if (!interpretMarkdownReferencesValue(it->second, &(pConfig->markdownReferences)))
+         return requiredFieldError("MarkdownReferences", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownReferences = defaultConfig.markdownReferences;
+   }
+
+   // extract markdown canonical
+   it = dcfFields.find("MarkdownCanonical");
+   if (it != dcfFields.end())
+   {
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->markdownCanonical)))
+         return requiredFieldError("MarkdownCanonical", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownCanonical = defaultConfig.markdownCanonical;
+   }
 
    return Success();
 }
@@ -1021,6 +1124,37 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format docsFmt("\nDefaultTutorial: %1%\n");
       contents.append(boost::str(docsFmt % config.defaultTutorial));
+   }
+
+   // if any markdown configs deviate from the default then create a markdown section
+   if (config.markdownWrap != kMarkdownWrapUseDefault ||
+       config.markdownReferences != kMarkdownReferencesUseDefault ||
+       config.markdownCanonical != DefaultValue)
+   {
+      contents.append("\n");
+
+      if (config.markdownWrap != kMarkdownWrapUseDefault)
+      {
+         boost::format fmt("MarkdownWrap: %1%\n");
+         contents.append(boost::str(fmt % config.markdownWrap));
+         if (config.markdownWrap == kMarkdownWrapColumn)
+         {
+            boost::format fmt("MarkdownWrapAtColumn: %1%\n");
+            contents.append(boost::str(fmt % config.markdownWrapAtColumn));
+         }
+      }
+
+      if (config.markdownReferences != kMarkdownReferencesUseDefault)
+      {
+         boost::format fmt("MarkdownReferences: %1%\n");
+         contents.append(boost::str(fmt % config.markdownReferences));
+      }
+
+      if (config.markdownCanonical != DefaultValue)
+      {
+         boost::format fmt("MarkdownCanonical: %1%\n");
+         contents.append(boost::str(fmt % yesNoAskValueToString(config.markdownCanonical)));
+      }
    }
    
 

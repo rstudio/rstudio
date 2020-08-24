@@ -3060,9 +3060,14 @@ public class TextEditingTarget implements
 
    private void applyVisualModeFixups(Command onComplete)
    {
-      // are we writing canonical?
+      // check canonical pref
+      boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+    
+      // check for a file based canonical setting
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
-      boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
+      String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
+      if (!yamlCanonical.isEmpty())
+         canonical = YamlTree.isTrue(yamlCanonical);
 
       // if visual mode is active then we need to grab its edits before proceeding
       if (visualMode_.isActivated())

@@ -89,7 +89,7 @@ public class VisualModeMarkdownWriter
       PanmirrorWriterReferencesOptions references = new PanmirrorWriterReferencesOptions();
       references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
       options.references = references;
-      
+            
       // layer in format config
       if (formatConfig.wrap != null)
       {

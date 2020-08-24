@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
 
 public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
@@ -112,10 +111,10 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       switch (quitChildProcessesOnExit)
       {
-      case YES_VALUE:
+      case YesNoAskDefault.YES_VALUE:
          quitChildProcessesChecked = true;
          break;
-      case NO_VALUE:
+      case YesNoAskDefault.NO_VALUE:
          quitChildProcessesChecked = false;
          break;
       }
@@ -141,43 +140,12 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       int quitChildProcessesOnExit = 0;
       if (quitChildProcessesChecked != sessionInfo_.quitChildProcessesOnExit())
       {
-         quitChildProcessesOnExit = (quitChildProcessesChecked ? YES_VALUE : NO_VALUE);
+         quitChildProcessesOnExit = (quitChildProcessesChecked ? YesNoAskDefault.YES_VALUE : YesNoAskDefault.NO_VALUE);
       }
 
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       return new RestartRequirement();
    }
-
-   private class YesNoAskDefault extends ListBox
-   {
-      public YesNoAskDefault(boolean includeAsk)
-      {
-         super();
-         setMultipleSelect(false);
-
-         String[] items = includeAsk ? new String[] {USE_DEFAULT, YES, NO, ASK}:
-                                       new String[] {USE_DEFAULT, YES, NO};
-
-         for (int i=0; i<items.length; i++)
-            addItem(items[i]);
-      }
-
-      @Override
-      public void setSelectedIndex(int value)
-      {
-         if (value < getItemCount())
-            super.setSelectedIndex(value);
-         else
-            super.setSelectedIndex(0);
-      }
-   }
-
-   private static final String USE_DEFAULT = "(Default)";
-   private static final String YES = "Yes";
-   private static final int YES_VALUE = 1;
-   private static final String NO = "No";
-   private static final int NO_VALUE = 2;
-   private static final String ASK ="Ask";
 
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;

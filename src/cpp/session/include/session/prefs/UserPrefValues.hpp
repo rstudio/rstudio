@@ -335,6 +335,7 @@ namespace prefs {
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
+#define kVisualMarkdownEditingCanonical "visual_markdown_editing_canonical"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
@@ -1516,6 +1517,12 @@ public:
     */
    std::string visualMarkdownEditingReferencesLocation();
    core::Error setVisualMarkdownEditingReferencesLocation(std::string val);
+
+   /**
+    * Whether to write canonical visual mode markdown when saving from source mode.
+    */
+   bool visualMarkdownEditingCanonical();
+   core::Error setVisualMarkdownEditingCanonical(bool val);
 
    /**
     * Maximum content width for visual editing mode, in pixels

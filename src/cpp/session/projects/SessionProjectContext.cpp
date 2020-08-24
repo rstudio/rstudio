@@ -708,6 +708,8 @@ void ProjectContext::updatePackageInfo()
 
 json::Object ProjectContext::uiPrefs() const
 {
+   using namespace r_util;
+
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
@@ -718,6 +720,19 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
    uiPrefs[kRootDocument] = config_.rootDocument;
    uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
+
+   // markdown prefs -- all have 'use default' option so write them conditionally
+   if (config_.markdownWrap != kMarkdownWrapUseDefault)
+   {
+      uiPrefs[kVisualMarkdownEditingWrap] = boost::algorithm::to_lower_copy(config_.markdownWrap);
+      if (config_.markdownWrap == kMarkdownWrapColumn)
+         uiPrefs[kVisualMarkdownEditingWrapAtColumn] = config_.markdownWrapAtColumn;
+   }
+   if (config_.markdownReferences != kMarkdownReferencesUseDefault)
+      uiPrefs[kVisualMarkdownEditingReferencesLocation] = boost::algorithm::to_lower_copy(config_.markdownReferences);
+   if (config_.markdownCanonical != DefaultValue)
+      uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
+
    return uiPrefs;
 }
 

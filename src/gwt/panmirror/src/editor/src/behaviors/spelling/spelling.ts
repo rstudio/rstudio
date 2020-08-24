@@ -166,8 +166,3 @@ export function excludedMarks(schema: Schema, marks: readonly PandocMark[]): Mar
 export function spellcheckerWord(word: string) {
   return word.replace(/’/g, '\'');
 }
-
-export function editorWord(word: string) {
-  return word.replace(/'/g, '’');
-}
-

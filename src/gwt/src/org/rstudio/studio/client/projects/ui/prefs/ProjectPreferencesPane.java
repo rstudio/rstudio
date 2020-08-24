@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 
@@ -39,6 +41,16 @@ public abstract class ProjectPreferencesPane
       globalDisplay_ = globalDisplay;
       session_ = session;
       eventBus_ = eventBus;
+   }
+   
+   protected void addHeader(String caption)
+   {
+      PreferencesDialogBaseResources baseRes =
+                              PreferencesDialogBaseResources.INSTANCE;
+      Label headerLabel = new Label(caption);
+      headerLabel.addStyleName(baseRes.styles().headerLabel());
+      nudgeRight(headerLabel);
+      add(headerLabel);
    }
 
    protected void promptToRestart()

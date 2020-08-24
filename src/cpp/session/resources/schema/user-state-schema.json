@@ -204,7 +204,7 @@
         "bibliography_default_type": {
             "type": "string",
             "enum": ["bib", "yaml", "json"],
-            "default": "bib",
+            "default": "yaml",
             "description": "The default type for new bibliographies."
         },
         "zotero_api_key": {

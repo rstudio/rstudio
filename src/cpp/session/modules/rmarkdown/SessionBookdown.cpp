@@ -109,11 +109,6 @@ namespace {
 
 } // anonymous namespace
 
-bool hasRenumberFootnotes()
-{
-   return module_context::isPackageVersionInstalled("bookdown", "0.19.3");
-}
-
 Error initialize()
 {
    ExecBlock initBlock ;

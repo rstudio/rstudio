@@ -30,8 +30,6 @@ namespace modules {
 namespace rmarkdown {
 namespace bookdown {
 
-bool hasRenumberFootnotes();
-
 core::Error initialize();
 
 } // namespace bookdown
