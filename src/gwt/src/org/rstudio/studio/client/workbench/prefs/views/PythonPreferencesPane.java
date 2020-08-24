@@ -62,7 +62,7 @@ public class PythonPreferencesPane extends PreferencesPane
             PYTHON_PLACEHOLDER_TEXT,
             "Select...",
             null,
-            ElementIds.TextBoxButtonId.PYTHON_DEFAULT_INTERPRETER,
+            ElementIds.TextBoxButtonId.PYTHON_PATH,
             true,
             new ClickHandler()
             {
@@ -174,6 +174,8 @@ public class PythonPreferencesPane extends PreferencesPane
       }
       else
       {
+         interpreter_ = info;
+         
          PythonInterpreterListEntryUi ui = new PythonInterpreterListEntryUi(info);
          ui.addStyleName(RES.styles().description());
          
@@ -244,9 +246,12 @@ public class PythonPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
-      String pythonPath = prefs.pythonDefaultInterpreter().getValue();
+      String pythonPath = prefs.pythonPath().getGlobalValue();
       if (!StringUtil.isNullOrEmpty(pythonPath))
+      {
          tbPythonInterpreter_.setText(pythonPath);
+         updateDescription();
+      }
       
       server_.pythonActiveInterpreter(new ServerRequestCallback<PythonInterpreter>()
       {
@@ -269,7 +274,7 @@ public class PythonPreferencesPane extends PreferencesPane
    {
       RestartRequirement requirement = super.onApply(prefs);
       
-      String oldValue = prefs.pythonDefaultInterpreter().getGlobalValue();
+      String oldValue = prefs.pythonPath().getGlobalValue();
       String newValue = tbPythonInterpreter_.getText();
       
       boolean isSet =
@@ -278,7 +283,7 @@ public class PythonPreferencesPane extends PreferencesPane
       
       if (isSet && !StringUtil.equals(oldValue, newValue))
       {
-         prefs.pythonDefaultInterpreter().setGlobalValue(newValue);
+         prefs.pythonPath().setGlobalValue(newValue);
          requirement.setSessionRestartRequired(true);
       }
       
@@ -304,6 +309,8 @@ public class PythonPreferencesPane extends PreferencesPane
    private final PythonServerOperations server_;
    private final TextBoxWithButton tbPythonInterpreter_;
    private final SimplePanel container_ = new SimplePanel();
+   
+   private PythonInterpreter interpreter_;
    
    private static final String PYTHON_PLACEHOLDER_TEXT = "(No interpreter selected)";
 
