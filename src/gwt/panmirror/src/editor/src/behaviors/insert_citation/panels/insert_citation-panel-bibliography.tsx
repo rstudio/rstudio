@@ -63,8 +63,6 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
     // load the right panel
   }, [props.selectedNode, searchTerm]);
 
-  const filteredItemData = itemData.filter(data => !props.sourcesToAdd.map(source => source.id).includes(data.id));
-
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e?.target.value);
   };

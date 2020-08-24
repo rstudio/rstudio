@@ -75,6 +75,13 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[] {
+    return [];
+
+    // TODO: If we can make the 'itemsForCollections' call work, we can begin emitting the various
+    // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
+    // in a single call, meaning that the items lose context of which bibliography file that they
+    // come from.
+    /*
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
     }
@@ -85,6 +92,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
     const bibliographies = bibliographyFilesFromDocument(doc, ui);
     return bibliographies ? bibliographies.map(biblio => ({ name: biblio, key: biblio })) : [];
+    */
   }
 
 
