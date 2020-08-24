@@ -278,12 +278,16 @@ public class PythonPreferencesPane extends PreferencesPane
       String newValue = tbPythonInterpreter_.getText();
       
       boolean isSet =
+            interpreter_ != null &&
+            interpreter_.isValid() &&
             !StringUtil.isNullOrEmpty(newValue) &&
             !StringUtil.equals(newValue, PYTHON_PLACEHOLDER_TEXT);
       
       if (isSet && !StringUtil.equals(oldValue, newValue))
       {
-         prefs.pythonPath().setGlobalValue(newValue);
+         prefs.pythonType().setGlobalValue(interpreter_.getType());
+         prefs.pythonVersion().setGlobalValue(interpreter_.getVersion());
+         prefs.pythonPath().setGlobalValue(interpreter_.getPath());
          requirement.setSessionRestartRequired(true);
       }
       
