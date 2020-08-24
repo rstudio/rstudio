@@ -17,12 +17,21 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+
 public class ChunkContextPanmirrorUi extends ChunkContextUi
 {
    public ChunkContextPanmirrorUi(TextEditingTarget target, 
                                   boolean dark, Scope chunk)
    {
       super(target, dark, chunk);
+
+      // Position toolbar at top right of chunk
+      Style style = toolbar_.getElement().getStyle();
+      style.setTop(20, Unit.PX);
+      style.setRight(0, Unit.PX);
+      style.setWidth(100, Unit.PX);
    }
 
    @Override

@@ -208,6 +208,11 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       chunk_ = scope;
    }
+   
+   public ChunkContextToolbar getToolbar()
+   {
+      return toolbar_;
+   }
 
    // Protected methods -------------------------------------------------------
 

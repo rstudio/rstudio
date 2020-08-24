@@ -124,8 +124,6 @@ export class AceNodeView implements NodeView {
   private readonly options: CodeViewOptions;
   private readonly events: EditorEvents;
 
-  private readonly runChunkToolbar: HTMLDivElement;
-
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
@@ -418,7 +416,6 @@ export class AceNodeView implements NodeView {
     // remove the preview and recreate chunk toolbar
     this.dom.innerHTML = "";
     this.dom.appendChild(this.chunk.element);
-    this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
     this.aceEditor.on("changeSelection", () => {
@@ -660,16 +657,6 @@ export class AceNodeView implements NodeView {
       }
       this.mode = lang;
     }
-
-    // if we have a language check whether execution should be enabled for this language
-    if (lang && this.canExecuteChunks()) {
-      const enabled = !!this.editorOptions.rmdChunkExecution!.find(rmdChunkLang => {
-        return lang.localeCompare(rmdChunkLang, undefined, { sensitivity: 'accent' }) === 0;
-      });
-      this.enableChunkExecution(enabled);
-    } else {
-      this.enableChunkExecution(false);
-    }
   }
 
   private backspaceMaybeDeleteNode() {
@@ -725,41 +712,6 @@ export class AceNodeView implements NodeView {
     // set focus
     this.view.focus();
     this.escaping = false;
-  }
-
-  private executeChunk() {
-    // ensure editor is rendered
-    if (!this.aceEditor) {
-      this.initEditor();
-    }
-    if (this.isChunkExecutionEnabled()) {
-      const chunk = rmdChunk(this.node.textContent);
-      if (chunk != null) {
-        this.options.executeRmdChunkFn!(chunk);
-      }
-    }
-  }
-
-  private executePreviousChunks() {
-    if (this.isChunkExecutionEnabled()) {
-      const prevChunks = previousExecutableRmdChunks(this.view.state, this.getPos());
-      const mergedChunk = mergeRmdChunks(prevChunks);
-      if (mergedChunk) {
-        this.options.executeRmdChunkFn!(mergedChunk);
-      }
-    }
-  }
-
-  private canExecuteChunks() {
-    return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
-  }
-
-  private enableChunkExecution(enable: boolean) {
-    this.runChunkToolbar.style.display = enable ? 'initial' : 'none';
-  }
-
-  private isChunkExecutionEnabled() {
-    return this.runChunkToolbar.style.display !== 'none';
   }
 
   private getContents(): string {

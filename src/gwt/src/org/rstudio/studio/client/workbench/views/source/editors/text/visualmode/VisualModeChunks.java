@@ -56,9 +56,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
          
          VisualModeChunk chunk = new VisualModeChunk(
-               index, getPos, sentinel_, parent_, 
-               target_.getNotebook(), target_.getRCompletionContext(),
-               sync_, target_.getCodeExecutor());
+               index, getPos, sentinel_, target_, sync_);
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror

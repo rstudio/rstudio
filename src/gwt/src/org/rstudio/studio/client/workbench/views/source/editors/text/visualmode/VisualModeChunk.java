@@ -32,10 +32,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExe
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
@@ -55,25 +57,23 @@ public class VisualModeChunk
    public VisualModeChunk(int index,
                           PanmirrorUIChunks.GetVisualPosition getPos,
                           DocUpdateSentinel sentinel,
-                          DocDisplay parent,
-                          TextEditingTargetNotebook notebook, 
-                          CompletionContext rCompletionContext,
-                          VisualModeEditorSync sync,
-                          EditingTargetCodeExecution codeExecutor)
+                          TextEditingTarget target,
+                          VisualModeEditorSync sync)
    {
       getPos_ = getPos;
       sync_ = sync;
-      codeExecution_ = codeExecutor;
-      parent_ = parent;
+      codeExecution_ = target.getCodeExecutor();
+      parent_ = target.getDocDisplay();
+      target_ = target;
 
       ChunkOutputUi output = null; 
       if (index >= 0)
       {
-         Position pos = parent.positionFromIndex(index);
-         scope_ = parent.getScopeAtPosition(pos);
+         Position pos = parent_.positionFromIndex(index);
+         scope_ = parent_.getScopeAtPosition(pos);
 
          // Migrate output UI from this scope
-         output = notebook.migrateOutput(scope_, this);
+         output = target.getNotebook().migrateOutput(scope_, this);
       }
       else
       {
@@ -94,7 +94,7 @@ public class VisualModeChunk
       chunk.editor = Js.uncheckedCast(chunkEditor);
 
       // Forward the R completion context from the parent editing session
-      editor_.setRCompletionContext(rCompletionContext);
+      editor_.setRCompletionContext(target_.getRCompletionContext());
       
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
@@ -119,6 +119,14 @@ public class VisualModeChunk
          setOutputWidget(output.getOutputWidget());
       }
       host_.appendChild(outputHost_);
+      
+      // Create the chunk toolbar
+      if (scope_ != null)
+      {
+         toolbar_ = new ChunkContextPanmirrorUi(target_, 
+               false, scope_);
+         host_.appendChild(toolbar_.getToolbar().getElement());
+      }
 
       chunk.element = host_;
       
@@ -230,7 +238,14 @@ public class VisualModeChunk
    public void setScope(Scope scope)
    {
       scope_ = scope;
+
+      // Update the toolbar's location
+      if (toolbar_ != null)
+      {
+         toolbar_.setScope(scope);
+      }
       
+      // Update the chunk definition location
       if (def_ != null)
       {
          def_.setRow(scope.getEnd().getRow());
@@ -444,7 +459,8 @@ public class VisualModeChunk
    private ChunkDefinition def_;
    private ChunkOutputWidget widget_;
    private Scope scope_;
-   
+   private ChunkContextPanmirrorUi toolbar_;
+
    private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
    private final DivElement host_;
@@ -457,4 +473,5 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
+   private final TextEditingTarget target_;
 }
