@@ -131,7 +131,14 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
           width='100%'
           itemCount={itemData.length}
           itemSize={64}
-          itemData={{ data: itemData, sourcesToAdd: props.sourcesToAdd, addSource: props.addSource, removeSource: props.removeSource, ui: props.ui }}
+          itemData={{
+            data: itemData,
+            sourcesToAdd: props.sourcesToAdd,
+            addSource: props.addSource,
+            removeSource: props.removeSource,
+            ui: props.ui,
+            separator: true
+          }}
         >
           {CitationListItem}
         </FixedSizeList>)}

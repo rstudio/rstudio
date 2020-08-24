@@ -14,14 +14,8 @@ interface CitationListData {
   addSource: (source: BibliographySource) => void;
   removeSource: (source: BibliographySource) => void;
   ui: EditorUI;
+  separator?: boolean;
 }
-
-//image
-//title
-//deail
-//adornmentImage?
-//TODO: Add table of preview fields below
-//TODO: Don't require bibliography source, use CSL?
 
 export const CitationListItem = (props: ListChildComponentProps) => {
 
@@ -66,7 +60,11 @@ export const CitationListItem = (props: ListChildComponentProps) => {
             />
           </div>
         </div>
-        <div className='pm-insert-citation-panel-item-separator pm-block-border-color' />
+        {
+          citationListData.separator ?
+            <div className='pm-insert-citation-panel-item-separator pm-block-border-color' /> :
+            undefined
+        }
       </div>
     </div>
   );

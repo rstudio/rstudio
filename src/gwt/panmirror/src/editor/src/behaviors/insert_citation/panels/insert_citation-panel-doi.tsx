@@ -25,6 +25,8 @@ import { TextInput } from "../../../api/widgets/text";
 import debounce from "lodash.debounce";
 import { CSL } from "../../../api/csl";
 import { formatForPreview, CiteField, suggestCiteId } from "../../../api/cite";
+import { CitationListItem } from "./insert_citation-panel-list-item";
+import { BibliographyManager, BibliographySource } from "../../../api/bibliography/bibliography";
 
 export function doiPanel(ui: EditorUI): CitationPanel {
   return {
@@ -44,30 +46,42 @@ export function doiPanel(ui: EditorUI): CitationPanel {
 export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
 
 
+  const defaultNoResultsMessage = 'Paste a DOI to load data from Crossref, DataCite, or mEDRA.';
+  const noMatchingResultsMessage = 'No item matching this identifier could be located.'
+
   const [csl, setCsl] = React.useState<CSL>();
+  const [noResultsText, setNoResultsText] = React.useState<string>(defaultNoResultsMessage);
+  const [searchText, setSearchText] = React.useState<string>('');
   const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
   React.useEffect(() => {
     if (csl) {
       const previewFields = formatForPreview(csl);
       setPreviewFields(previewFields);
-      console.log(previewFields);
     } else {
       setPreviewFields([]);
+      if (searchText.length > 0) {
+        setNoResultsText(noMatchingResultsMessage);
+      } else {
+        setNoResultsText(defaultNoResultsMessage);
+      }
     }
   }, [csl]);
 
+  React.useEffect(() => {
+    if (searchText) {
+      const debounced = debounce(async () => {
+        const result = await props.server.doi.fetchCSL(searchText, 350);
+        const csl = result.message;
+        setCsl(csl);
+      }, 50);
+      debounced();
+    } else {
+      setCsl(undefined);
+    }
+  }, [searchText])
+
   const doiChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.persist();
-    const debounced = debounce(async () => {
-      const search = e.target.value;
-      const result = await props.server.doi.fetchCSL(search, 350);
-      const csl = result.message;
-      if (csl && !csl.id) {
-        csl.id = suggestCiteId(props.bibliographyManager.allSources().map(source => source.id), csl);
-      }
-      setCsl(csl);
-    }, 50);
-    debounced();
+    setSearchText(e.target.value);
   };
 
   return (
@@ -82,13 +96,33 @@ export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
           onChange={doiChanged}
         />
       </div>
-      <div>
+      <div className='pm-insert-doi-panel-heading'>
+        {csl ?
+          <CitationListItem
+            index={0}
+            data={{
+              data: toBibliographyEntry(csl, props.bibliographyManager, props.ui),
+              sourcesToAdd: props.sourcesToAdd,
+              addSource: props.addSource,
+              removeSource: props.removeSource,
+              ui: props.ui
+            }}
+            style={{}}
+            isScrolling={false}
+          /> :
+          <div className='pm-insert-doi-panel-no-result'>
+            <div className='pm-insert-doi-panel-no-result-text'>
+              {props.ui.context.translateText(noResultsText)}
+            </div>
+          </div>}
+      </div>
+      <div className='pm-insert-doi-panel-fields'>
         <table>
           <tbody>
             {previewFields.map(previewField =>
               (<tr key={previewField.name}>
-                <td>{previewField.name}</td>
-                <td>{previewField.value}</td>
+                <td className='pm-insert-doi-panel-fields-name'>{previewField.name}</td>
+                <td className='pm-insert-doi-panel-fields-value'>{previewField.value}</td>
               </tr>)
             )}
           </tbody>
@@ -98,3 +132,18 @@ export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
   );
 };
 export const kDOIType = 'DOI Search';
+
+
+function toBibliographyEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): BibliographySource[] {
+  if (csl) {
+    return [
+      {
+        ...csl,
+        id: csl.id || suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl),
+        providerKey: 'doi',
+        collectionKeys: [],
+      }
+    ];
+  }
+  return [];
+}

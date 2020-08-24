@@ -1,6 +1,6 @@
 
 
-.pm-insert-doi-panel{
+.pm-insert-doi-panel {
   width: 100%;
 }
 
@@ -8,10 +8,36 @@
   width: 100%;
 }
 
-.pm-insert-doi-panel-textbox{
+.pm-insert-doi-panel-textbox {
   width: 100%;
   border: solid 1px;
   margin-right: 10px;
   box-sizing:border-box;
   height: 28px !important;
+}
+
+.pm-insert-doi-panel-heading {
+  padding-top: 10px;
+}
+
+.pm-insert-doi-panel-fields {
+  padding-top: 8px;
+  padding-left: 50px;
+  opacity: 0.8;
+}
+
+.pm-insert-doi-panel-fields-name {
+  padding-right: 10px;
+}
+
+.pm-insert-doi-panel-no-result {
+  width: 100%;
+}
+
+.pm-insert-doi-panel-no-result-text {
+  text-align: center;
+  font-size: 10pt;
+  font-style: italic;
+  opacity: 0.8;
+  padding-top: 20px;
 }
