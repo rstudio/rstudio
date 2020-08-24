@@ -40,14 +40,15 @@ export async function showInsertCitationPopup(ui: EditorUI, doc: ProsemirrorNode
     (containerWidth: number, containerHeight: number, confirm: VoidFunction, cancel: VoidFunction) => {
 
       const kMaxHeight = 600;
+      const kMaxWidth = 900;
       const kMaxHeightProportion = .9;
-      const kWidthProportion = 1.33;
+      const kdialogPaddingIncludingButtons = 70;
 
       const windowHeight = containerHeight;
       const windowWidth = containerWidth;
 
-      const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion);
-      const width = Math.min(kWidthProportion * height, windowWidth * .9);
+      const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion - kdialogPaddingIncludingButtons);
+      const width = Math.min(kMaxWidth, windowWidth * .9);
 
       const container = window.document.createElement('div');
 

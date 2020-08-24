@@ -58,6 +58,8 @@
   padding-left: 0px;
   line-height: 20px;
   font-size: 14px;
+
+  overflow: hidden;
 }
 
 .pm-insert-citation-panel-item-button {
@@ -99,6 +101,7 @@
   display: flex;
   justify-content: space-between;
   flex-direction: row;
+  white-space: nowrap;
 }
 
 .pm-insert-citation-panel-item-title {

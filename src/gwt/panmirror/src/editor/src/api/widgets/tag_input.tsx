@@ -27,8 +27,7 @@ interface TagInputProps extends WidgetProps {
 
 export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>((props, ref) => {
   return (<div style={props.style} className='pm-tag-input-container' ref={ref}>
-    {props.tags.map(tag => (<Tag key={tag} text={tag} deleteTag={props.deleteTag} />))
-    }
+    {props.tags.map(tag => (<Tag key={tag} text={tag} deleteTag={props.deleteTag} />))}
   </div >);
 });
 

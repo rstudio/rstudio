@@ -126,19 +126,12 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     ...props.style,
   };
 
-  // heights for other elements
-  const tagRef = React.useRef<HTMLDivElement>(null);
-  const [panelHeight, setPanelHeight] = React.useState<number>(props.height);
-  React.useEffect(() => {
-    const tagDiv = tagRef.current;
-    if (tagDiv) {
-      setPanelHeight(props.height - tagDiv.clientHeight);
-    }
-  }, []);
-
+  // Size the tag element and main panel
+  const tagHeight = 60;
   const tagStyle: React.CSSProperties = {
-    height: '60px'
+    height: `${tagHeight}px`
   };
+  const panelHeight = props.height - tagHeight;
 
 
   // Load the panel that is displayed for the selected node
@@ -190,8 +183,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
         <TagInput
           tags={sourcesToAdd.map(source => forDisplay(source.id))}
           deleteTag={deleteTag}
-          style={tagStyle}
-          ref={tagRef} />
+          style={tagStyle} />
       </div>
     </div >
   );
