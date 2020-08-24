@@ -19,10 +19,7 @@ import React from "react";
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 import { EditorUI } from "../../../api/ui";
 
-export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
-  return (<div>DOI TOWN!</div>);
-};
-export const kDOIType = 'DOI Search';
+import './insert_citation-panel-doi.css';
 
 export function doiPanel(ui: EditorUI): CitationPanel {
   return {
@@ -38,3 +35,8 @@ export function doiPanel(ui: EditorUI): CitationPanel {
     }
   };
 }
+
+export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
+  return (<div>DOI TOWN!</div>);
+};
+export const kDOIType = 'DOI Search';

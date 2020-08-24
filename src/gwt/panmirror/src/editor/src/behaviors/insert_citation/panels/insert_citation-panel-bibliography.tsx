@@ -31,9 +31,36 @@ import { SelectTreeNode } from "../../../api/widgets/select_tree";
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
 import './insert_citation-panel-bibliography.css';
+import debounce from "lodash.debounce";
 
 
 export const kAllLocalType = 'All Local Sources';
+
+export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationPanel {
+  const providers = bibliographyManager.localProviders();
+  const localProviderNodes = providers.map(provider => {
+    const node: any = {};
+    node.key = provider.key;
+    node.name = provider.name;
+    node.type = provider.key;
+    node.image = libraryImageForProvider(provider.key, ui);
+    node.children = toTree(provider.key, provider.containers(doc, ui), folderImageForProvider(provider.key, ui));
+    return node;
+  });
+
+  return {
+    key: '17373086-77FE-410F-A319-33E314482125',
+    panel: CitationListPanel,
+    treeNode: {
+      key: 'My Sources',
+      name: 'My Sources',
+      image: ui.images.citations?.local_sources,
+      type: kAllLocalType,
+      children: localProviderNodes,
+      expanded: true
+    }
+  };
+}
 
 export const CitationListPanel: React.FC<CitationPanelProps> = props => {
 
@@ -64,7 +91,12 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
   }, [props.selectedNode, searchTerm]);
 
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e?.target.value);
+    e.persist();
+    const debounced = debounce(() => {
+      const search = e.target.value;
+      setSearchTerm(search);
+    }, 50);
+    debounced();
   };
 
   // Dynamically size the ListBox
@@ -91,43 +123,21 @@ export const CitationListPanel: React.FC<CitationPanelProps> = props => {
         />
 
       </div>
-      <FixedSizeList
-        height={listHeight}
-        width='100%'
-        itemCount={itemData.length}
-        itemSize={64}
-        itemData={{ data: itemData, sourcesToAdd: props.sourcesToAdd, addSource: props.addSource, removeSource: props.removeSource, ui: props.ui }}
-      >
-        {CitationListItem}
-      </FixedSizeList>
+      {itemData.length === 0 ?
+        (<div className='pm-insert-citation-panel-noresults' style={{ height: listHeight + 'px' }}>
+          <div className='pm-insert-citation-panel-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
+        </div>) :
+        (<FixedSizeList
+          height={listHeight}
+          width='100%'
+          itemCount={itemData.length}
+          itemSize={64}
+          itemData={{ data: itemData, sourcesToAdd: props.sourcesToAdd, addSource: props.addSource, removeSource: props.removeSource, ui: props.ui }}
+        >
+          {CitationListItem}
+        </FixedSizeList>)}
     </div>);
 };
-
-export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationPanel {
-  const providers = bibliographyManager.localProviders();
-  const localProviderNodes = providers.map(provider => {
-    const node: any = {};
-    node.key = provider.key;
-    node.name = provider.name;
-    node.type = provider.key;
-    node.image = libraryImageForProvider(provider.key, ui);
-    node.children = toTree(provider.key, provider.containers(doc, ui), folderImageForProvider(provider.key, ui));
-    return node;
-  });
-
-  return {
-    key: '17373086-77FE-410F-A319-33E314482125',
-    panel: CitationListPanel,
-    treeNode: {
-      key: 'My Sources',
-      name: 'My Sources',
-      image: ui.images.citations?.local_sources,
-      type: kAllLocalType,
-      children: localProviderNodes,
-      expanded: true
-    }
-  };
-}
 
 interface CitationListData {
   data: BibliographySource[];

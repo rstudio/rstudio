@@ -122,3 +122,15 @@
   font-size: 10pt;
   opacity: 0.6;
 }
+
+.pm-insert-citation-panel-noresults {
+  width: 100%;
+}
+
+.pm-insert-citation-panel-noresults-text {
+  text-align: center;
+  font-size: 10pt;
+  font-style: italic;
+  opacity: 0.8;
+  padding-top: 20px;
+}

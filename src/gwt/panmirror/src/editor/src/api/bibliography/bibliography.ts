@@ -68,9 +68,9 @@ export interface BibliographySource extends CSL {
 // The fields and weights that will indexed and searched
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: .35 },
-  { name: 'author.family', weight: .25 },
-  { name: 'author.literal', weight: .25 },
+  { name: 'id', weight: .30 },
+  { name: 'author.family', weight: .275 },
+  { name: 'author.literal', weight: .275 },
   { name: 'title', weight: .1 },
   { name: 'author.given', weight: .025 },
   { name: 'issued', weight: .025 },
@@ -253,7 +253,12 @@ export class BibliographyManager {
         keys: kFields,
       };
 
+      // TODO: Search performance can really drop off for long strings
+      // Test cases start at 20ms to search for a single character
+      // grow to 270ms to search for 20 character string
+      // grow to 1060ms to search for 40 character string 
       const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
+
 
       const items = results.map((result: { item: any }) => result.item);
 
