@@ -38,7 +38,7 @@
    .rs.python.findPythonInterpreters()
 })
 
-.rs.addJsonRpcHandler("python_describe_interpreter", function(pythonPath)
+.rs.addJsonRpcHandler("python_interpreter_info", function(pythonPath)
 {
    .rs.python.describeInterpreter(pythonPath)
 })

@@ -142,7 +142,7 @@ public class PythonPreferencesPane extends PreferencesPane
          return;
       }
       
-      server_.pythonDescribeInterpreter(
+      server_.pythonInterpreterInfo(
             tbPythonInterpreter_.getText(),
             new ServerRequestCallback<PythonInterpreter>()
             {
