@@ -147,18 +147,23 @@ const CitationListItem = (props: ListChildComponentProps) => {
           {entry.adornmentImage ? <img className={'pm-insert-citation-panel-item-adorn pm-block-border-color pm-background-color'} src={entry.adornmentImage} /> : undefined}
           <img className={'pm-insert-citation-panel-item-icon pm-block-border-color'} src={entry.image} />
         </div>
-        <div className={'pm-insert-citation-panel-item-summary'}>
-          <div className={'pm-insert-citation-panel-item-id'}>
-            <div className={'pm-insert-citation-panel-item-title pm-fixedwidth-font'}>{id}</div>
-            <div className={'pm-insert-citation-panel-item-detail'}>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+        <div className='pm-insert-citation-right-container'>
+          <div className='pm-insert-citation-panel-right-container-body'>
+            <div className={'pm-insert-citation-panel-item-summary'}>
+              <div className={'pm-insert-citation-panel-item-id'}>
+                <div className={'pm-insert-citation-panel-item-title pm-fixedwidth-font'}>{id}</div>
+                <div className={'pm-insert-citation-panel-item-detail'}>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+              </div>
+              <div className={'pm-insert-citation-panel-item-subtitle-text'}>{source.title}</div>
+            </div>
+            <div className='pm-insert-citation-panel-item-button'>
+              <OutlineButton
+                title="Add"
+                onClick={onClick}
+              />
+            </div>
           </div>
-          <div className={'pm-insert-citation-panel-item-subtitle-text'}>{source.title}</div>
-        </div>
-        <div className='pm-insert-citation-panel-item-button'>
-          <OutlineButton
-            title="Add"
-            onClick={onClick}
-          />
+          <div className='pm-insert-citation-panel-item-separator pm-block-border-color' />
         </div>
       </div>
     </div>

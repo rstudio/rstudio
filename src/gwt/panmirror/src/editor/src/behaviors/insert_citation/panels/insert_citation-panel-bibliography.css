@@ -31,13 +31,26 @@
   flex-shrink: 0;
 }
 
+.pm-insert-citation-right-container {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.pm-insert-citation-panel-right-container-body {
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 0;
+  min-width: 0;
+  align-items: center;
+}
+
 .pm-insert-citation-panel-item-summary {
   
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
-  flex-shrink: 1;
   min-width: 0;
+  flex-grow: 1;
 
   padding-top: 6px;
   padding-right: 4px;
@@ -52,6 +65,14 @@
   padding-right: 20px;
   padding-left: 10px;
 }
+
+
+.pm-insert-citation-panel-item-separator {
+  border-bottom: solid 1px;
+  height: 2px;
+}
+
+
 
 .pm-insert-citation-panel-item-icon {
   border: solid 1px;
