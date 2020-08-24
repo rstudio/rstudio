@@ -77,7 +77,7 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
     paddingLeft: indentLevel * kIndent + 'px'
   };
 
-  const selectedClassName = `${selected ? 'pm-selected-select-tree-item' : ''} pm-select-tree-node`;
+  const selectedClassName = `${selected ? 'pm-selected-select-tree-item' : 'pm-select-tree-item'} pm-select-tree-node`;
   return (
     <div key={props.node.key} onClick={onClick} style={style}>
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>

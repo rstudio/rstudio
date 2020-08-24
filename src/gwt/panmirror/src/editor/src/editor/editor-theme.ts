@@ -191,6 +191,10 @@ export function applyTheme(theme: EditorTheme) {
       background-color: ${theme.chunkBackgroundColor} !important;
       border: 1px solid transparent !important;
     }
+    .pm-select-tree-item {
+      border: 1px solid ${theme.backgroundColor} !important;
+      border-radius: 3px;
+    }
     .pm-selected-select-tree-item {
       background-color: ${theme.findTextBackgroundColor} !important;
       border: 1px solid ${theme.findTextBorderColor} !important;
