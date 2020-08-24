@@ -33,9 +33,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop,
                                           int additionalSources) /*-{
-      return { 
-         quadrants: panes, 
-         tabSet1: tabSet1, 
+      return {
+         quadrants: panes,
+         tabSet1: tabSet1,
          tabSet2: tabSet2,
          hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
@@ -128,7 +128,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       int idx;
       for (idx = 0; idx < replacedTabs.length; idx++)
       {
-         if (tab == replacedTabs[idx])
+         if (StringUtil.equals(tab, replacedTabs[idx]))
          {
             return idx;
          }
@@ -157,23 +157,24 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       JsArrayString panes = getQuadrants();
       for (int i = 0; i<panes.length(); i++)
-         if (panes.get(i) == "Console")
+         if (StringUtil.equals(panes.get(i), "Console"))
             return i;
-      
+
       throw new IllegalStateException();
    }
-   
+
    public final boolean getConsoleLeft()
    {
       JsArrayString panes = getQuadrants();
-      return panes.get(0) == "Console" || panes.get(1) == "Console";
+      return StringUtil.equals(panes.get(0), "Console") ||
+         StringUtil.equals(panes.get(1), "Console");
    }
-   
+
    public final boolean getConsoleRight()
    {
       return !getConsoleLeft();
    }
-   
+
    public final boolean validateAndAutoCorrect()
    {
       JsArrayString panes = getQuadrants();
@@ -187,12 +188,12 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
 
-      // Presentation tab must always be at the end of the ts1 tabset (this 
+      // Presentation tab must always be at the end of the ts1 tabset (this
       // is so that activating it works even in the presence of optionally
-      // visible tabs). This is normally an invariant but for a time during 
-      // the v0.99-1000 preview we allowed the Connections tab to be the 
+      // visible tabs). This is normally an invariant but for a time during
+      // the v0.99-1000 preview we allowed the Connections tab to be the
       // last one in the tabset.
-      if (ts1.get(ts1.length() - 1) != "Presentation")
+      if (!StringUtil.equals(ts1.get(ts1.length() - 1), "Presentation"))
       {
          // 1.3 released with a bug where Tutorial would be added at the end; autocorrect
          // https://github.com/rstudio/rstudio/issues/7246
@@ -208,7 +209,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             return false;
          }
       }
-      
+
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
       if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
@@ -228,7 +229,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
    private static Set<String> makeSet(String... values)
    {
-      TreeSet<String> set = new TreeSet<String>();
+      TreeSet<String> set = new TreeSet<>();
       for (String val : values)
          set.add(val);
       return set;
@@ -244,7 +245,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     getConsoleRightOnTop(),
                     getAdditionalSourceColumns());
    }
-   
+
    public final native boolean isEqualTo(PaneConfig other)  /*-{
       return other != null &&
              this.panes.toString() == other.panes.toString() &&
@@ -252,13 +253,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
              this.tabSet2.toString() == other.tabSet2.toString() &&
              this.hiddenTabSet.toString() == other.hiddenTabSet.toString();
    }-*/;
-  
+
    private boolean sameElements(JsArrayString a, String[] b)
    {
       if (a.length() != b.length)
          return false;
 
-      ArrayList<String> a1 = new ArrayList<String>();
+      ArrayList<String> a1 = new ArrayList<>();
       for (int i = 0; i < a.length(); i++)
          a1.add(a.get(i));
       Collections.sort(a1);
@@ -266,7 +267,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       Arrays.sort(b);
 
       for (int i = 0; i < b.length; i++)
-         if (a1.get(i) != b[i])
+         if (!StringUtil.equals(a1.get(i), b[i]))
             return false;
 
       return true;
