@@ -23,6 +23,36 @@
       return(.rs.markdown.getCompletionsHref(data))
 })
 
+.rs.addFunction("markdown.resolveCompletionRoot", function(path)
+{
+   # figure out working directory
+   props <- .rs.getSourceDocumentProperties(path)
+   workingDirProp <- props$properties$working_dir
+   
+   useProject <-
+      identical(workingDirProp, "project") &&
+      is.character(props$path) &&
+      is.character(props$project_path)
+   
+   if (useProject)
+   {
+      # path refers to the full path; project_path refers
+      # to the project-relative path. use that to infer
+      # the path to the project hosting the document
+      # (just in case the user is editing a document that
+      # belongs to an alternate project)
+      substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+   }
+   else if (identical(workingDirProp, "current"))
+   {
+      getwd()
+   }
+   else
+   {
+      dirname(path)
+   }
+})
+
 .rs.addFunction("markdown.getCompletionsHref", function(data)
 {
    # extract parameters
@@ -34,18 +64,7 @@
       return(.rs.emptyCompletions())
    
    # figure out working directory
-   props <- .rs.getSourceDocumentProperties(path)
-   workingDirProp <- props$properties$working_dir
-   workingDir <- if (identical(workingDirProp, "project"))
-      props$project_path
-   else if (identical(workingDirProp, "current"))
-      getwd()
-   
-   # check for NULL working dir (don't include as part of if-else check above
-   # since some documents may not have an associated project and yet could
-   # be configured to use a project directory)
-   if (is.null(workingDir))
-      workingDir <- dirname(path)
+   workingDir <- .rs.markdown.resolveCompletionRoot(path)
    
    # determine dirname, basename (need to handle trailing slashes properly
    # so can't just use dirname / basename)
