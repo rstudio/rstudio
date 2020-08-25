@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.views.PythonDialogResources;
 import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneBase;
@@ -28,21 +30,41 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
    public ProjectPythonPreferencesPane(PythonDialogResources res,
                                        PythonServerOperations server)
    {
-      super("(Use default)");
+      super("380px", "(Use default)");
    }
 
    @Override
-   protected void initialize(RProjectOptions prefs)
+   protected void initialize(RProjectOptions options)
    {
-      // TODO Auto-generated method stub
+      RProjectConfig config = options.getConfig();
+      String pythonPath = config.getPythonPath();
+      initialize(pythonPath);
+   }
+
+   @Override
+   public RestartRequirement onApply(RProjectOptions options)
+   {
+      RestartRequirement requirement = new RestartRequirement();
+      RProjectConfig config = options.getConfig();
       
-   }
-
-   @Override
-   public RestartRequirement onApply(RProjectOptions prefs)
-   {
-      // TODO Auto-generated method stub
-      return null;
+      String oldValue = config.getPythonPath();
+      String newValue = tbPythonInterpreter_.getText();
+      
+      boolean isSet =
+            interpreter_ != null &&
+            interpreter_.isValid() &&
+            !StringUtil.isNullOrEmpty(newValue) &&
+            !StringUtil.equals(newValue, placeholderText_);
+      
+      if (isSet && !StringUtil.equals(oldValue, newValue))
+      {
+         config.setPythonType(interpreter_.getType());
+         config.setPythonVersion(interpreter_.getVersion());
+         config.setPythonPath(interpreter_.getPath());
+         requirement.setSessionRestartRequired(true);
+      }
+      
+      return requirement;
    }
 
 }

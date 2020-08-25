@@ -252,8 +252,15 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             "Restart Required",
             "You need to restart RStudio in order for these changes to take effect. " +
                   "Do you want to do this now?",
-            () -> forceClosed(() -> quit.doRestart(session)),
+            () -> onRestart(quit, session),
             true);
+   }
+   
+   private void onRestart(ApplicationQuit quit,
+                          Session session)
+   {
+      closeDialog();
+      quit.doRestart(session);
    }
    
    protected void restartSession(GlobalDisplay display)
@@ -269,10 +276,8 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    
    private void onRestartSession()
    {
-      forceClosed(() ->
-      {
-         RStudioGinjector.INSTANCE.getCommands().restartR().execute();
-      });
+      closeDialog();
+      RStudioGinjector.INSTANCE.getCommands().restartR().execute();
    }
 
    void forceClosed(final Command onClosed)

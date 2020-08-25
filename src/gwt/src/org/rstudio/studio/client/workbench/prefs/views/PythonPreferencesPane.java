@@ -14,11 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.inject.Inject;
@@ -29,33 +26,14 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    public PythonPreferencesPane(PythonDialogResources res,
                                 PythonServerOperations server)
    {
-      super("(No interpreter selected)");
+      super("420px", "(No interpreter selected)");
    }
 
    @Override
    protected void initialize(UserPrefs prefs)
    {
       String pythonPath = prefs.pythonPath().getGlobalValue();
-      if (!StringUtil.isNullOrEmpty(pythonPath))
-      {
-         tbPythonInterpreter_.setText(pythonPath);
-         updateDescription();
-      }
-      
-      server_.pythonActiveInterpreter(new ServerRequestCallback<PythonInterpreter>()
-      {
-         @Override
-         public void onResponseReceived(PythonInterpreter response)
-         {
-            checkForMismatch(response);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-      });
+      initialize(pythonPath);
    }
    
    @Override

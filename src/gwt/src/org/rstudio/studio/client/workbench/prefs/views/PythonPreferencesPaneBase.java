@@ -44,7 +44,8 @@ import com.google.inject.Inject;
 
 public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPaneBase<T>
 {
-   public PythonPreferencesPaneBase(String placeholderText)
+   public PythonPreferencesPaneBase(String width,
+                                    String placeholderText)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -119,7 +120,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          updateDescription();
       }, BlurEvent.getType());
       
-      tbPythonInterpreter_.setWidth("420px");
+      tbPythonInterpreter_.setWidth(width);
       tbPythonInterpreter_.setText(placeholderText_);
       tbPythonInterpreter_.setReadOnly(false);
       add(lessSpaced(tbPythonInterpreter_));
@@ -254,12 +255,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       return "Python";
    }
    
-   protected void initialize(boolean useProjectPrefs)
+   protected void initialize(String pythonPath)
    {
-      String pythonPath = useProjectPrefs
-            ? prefs_.pythonPath().getValue()
-            : prefs_.pythonPath().getGlobalValue();
-      
       if (!StringUtil.isNullOrEmpty(pythonPath))
       {
          tbPythonInterpreter_.setText(pythonPath);
@@ -282,44 +279,6 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       });
    }
    
-   public RestartRequirement onApply(boolean useProjectPrefs)
-   {
-      RestartRequirement requirement = new RestartRequirement();
-      
-      String oldValue = useProjectPrefs
-            ? prefs_.pythonPath().getValue()
-            : prefs_.pythonPath().getGlobalValue();
-            
-      String newValue = tbPythonInterpreter_.getText();
-      
-      boolean isSet =
-            interpreter_ != null &&
-            interpreter_.isValid() &&
-            !StringUtil.isNullOrEmpty(newValue) &&
-            !StringUtil.equals(newValue, placeholderText_);
-      
-      if (isSet && !StringUtil.equals(oldValue, newValue))
-      {
-         if (useProjectPrefs)
-         {
-            prefs_.pythonType().setProjectValue(interpreter_.getType());
-            prefs_.pythonVersion().setProjectValue(interpreter_.getVersion());
-            prefs_.pythonPath().setProjectValue(interpreter_.getPath());
-         }
-         else
-         {
-            prefs_.pythonType().setGlobalValue(interpreter_.getType());
-            prefs_.pythonVersion().setGlobalValue(interpreter_.getVersion());
-            prefs_.pythonPath().setGlobalValue(interpreter_.getPath());
-            
-         }
-         requirement.setSessionRestartRequired(true);
-      }
-      
-      return requirement;
-   }
-   
-
    public interface Styles extends CssResource
    {
       String description();
