@@ -41,9 +41,6 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile);
 
 SessionLaunchProfile sessionLaunchProfileFromJson(const json::Object& jsonProfile);
 
-Error encryptProfilePassword(SessionLaunchProfile& profile, std::string* encryptedPassword);
-Error decryptProfilePassword(SessionLaunchProfile& profile, const std::string& encryptedPassword);
-
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
