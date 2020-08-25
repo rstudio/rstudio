@@ -47,6 +47,7 @@ struct PostgresqlConnectionOptions
    std::string password;
    std::string connectionUri;
    int connectionTimeoutSeconds;
+   std::string secureKey;
 };
 
 enum class Driver

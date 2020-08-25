@@ -24,6 +24,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/Crypto.hpp>
 
 #include <soci/row-exchange.h>
 #include <soci/postgresql/soci-postgresql.h>
@@ -355,8 +356,12 @@ public:
       return Success();
    }
 
-   Error addPassword(const PostgresqlConnectionOptions& options,
-                     std::string* pConnectionStr) const
+   Error decryptPassword(const std::string& secureKey, std::string& password) const
+   {
+      return Success();
+   }
+
+   Error addPassword(const PostgresqlConnectionOptions& options, std::string* pConnectionStr) const
    {
       // if not using password authentication (or perhaps it is hardcoded into the connection uri), bail
       if (options.password.empty())
@@ -364,7 +369,17 @@ public:
 
       std::string password = options.password;
 
-      // TO-DO: decrypt the password - warn if the password is unencrypted
+      Error error = decryptPassword(options.secureKey, password);
+      if (error)
+      {
+         static bool warnOnce = false;
+         if (!warnOnce)
+         {
+            warnOnce = true;
+            LOG_DEBUG_MESSAGE(error.asString());
+            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
+         }
+      }
 
       password = pgEncode(password, false);
 
