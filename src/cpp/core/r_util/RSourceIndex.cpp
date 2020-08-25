@@ -251,7 +251,8 @@ public:
       case RToken::RBRACKET:
       case RToken::RDBRACKET:
       {
-         stack_.pop_back();
+         if (!stack_.empty())
+            stack_.pop_back();
          break;
       }
          
