@@ -14,6 +14,8 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/ServerDatabaseKeyObfuscation.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
@@ -117,6 +119,9 @@ Error readOptions(const std::string& databaseConfigFile,
       options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
                                                          kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
       options.connectionUri = settings.get(kPostgresqlDatabaseConnectionUri, std::string());
+      std::string secureKey = core::http::secure_cookie::getKey();
+      OBFUSCATE_KEY(secureKey);
+      options.secureKey = secureKey;
       *pOptions = options;
 
       if (!options.connectionUri.empty() &&
@@ -134,7 +139,7 @@ Error readOptions(const std::string& databaseConfigFile,
       }
 
       if (options.connectionUri.empty())
-         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host);
+         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host + ":" + options.port + "/" + options.database);
       else
          LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
 
