@@ -37,7 +37,7 @@ import {
   decodeBlockCapsuleText,
 } from '../api/pandoc_capsule';
 
-import { PandocToProsemirrorResult, PandocDetectedLineWrapping } from './pandoc_converter';
+import { PandocToProsemirrorResult, PandocLineWrapping } from './pandoc_converter';
 import { kLinkTarget, kLinkTargetUrl, kLinkChildren, kLinkAttr, kLinkTargetTitle } from '../api/link';
 import { kHeadingAttr, kHeadingLevel, kHeadingChildren } from '../api/heading';
 import { pandocAutoIdentifier, gfmAutoIdentifier } from '../api/pandoc_id';
@@ -419,7 +419,7 @@ class ParserState {
 }
 
 // determine what sort of line wrapping is used within the file
-function detectLineWrapping(ast: PandocAst) {
+function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
 
   // look for soft breaks and classify them as column or sentence breaks
   let columnBreaks = 0;
@@ -443,12 +443,12 @@ function detectLineWrapping(ast: PandocAst) {
   const lineBreaks = columnBreaks + sentenceBreaks;
   if (lineBreaks >= ast.blocks.length) {
     if (sentenceBreaks > columnBreaks) {
-      return PandocDetectedLineWrapping.Sentence;
+      return "sentence";
     } else {
-      return PandocDetectedLineWrapping.Column;
+      return "column";
     }
   } else {
-    return PandocDetectedLineWrapping.None;
+    return "none";
   }
 }
 

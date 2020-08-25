@@ -501,6 +501,9 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
                         }
+                        
+                        // offer to set line wrapping under certain conditions
+                        maybeOfferLineWrappingConfig(result.line_wrapping);
                      });          
                   }
                });
@@ -511,7 +514,7 @@ public class VisualMode implements VisualModeEditorSync,
          
       });
    }
-
+ 
    public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   
       withPanmirror(() -> {
@@ -1236,6 +1239,14 @@ public class VisualMode implements VisualModeEditorSync,
       docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
       view_.showWarningBar(message);
    }
+   
+   private void maybeOfferLineWrappingConfig(String lineWrapping)
+   {
+      
+      
+      
+   }
+   
    
    private Commands commands_;
    private UserPrefs prefs_;
