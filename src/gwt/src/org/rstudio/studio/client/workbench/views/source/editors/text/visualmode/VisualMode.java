@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
@@ -1354,13 +1355,11 @@ public class VisualMode implements VisualModeEditorSync,
    {
       // Get all of the chunks from the document (code view)
       ArrayList<Scope> chunkScopes = new ArrayList<Scope>();
-      JsArray<Scope> scopes = docDisplay_.getScopeTree();
-      for (int i = 0; i < scopes.length(); i++)
+      ScopeList chunks = new ScopeList(docDisplay_);
+      chunks.selectAll(ScopeList.CHUNK);
+      for (Scope chunk : chunks)
       {
-         if (scopes.get(i).isChunk())
-         {
-            chunkScopes.add(scopes.get(i));
-         }
+         chunkScopes.add(chunk);
       }
       
       // Get all of the chunks from the outline emitted by visual mode
@@ -1397,9 +1396,18 @@ public class VisualMode implements VisualModeEditorSync,
             // editor at this position yet.
             continue;
          }
-         Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
-               " moved from" + chunk.getScope().getBodyStart().getRow() + " to " +
-               chunkScopes.get(k).getBodyStart().getRow());
+         if (chunk.getScope() == null)
+         {
+            Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
+                  " found in ace at " + 
+                  chunkScopes.get(k).getBodyStart().getRow());
+         }
+         else
+         {
+            Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
+                  " moved from " + chunk.getScope().getBodyStart().getRow() + " to " +
+                  chunkScopes.get(k).getBodyStart().getRow());
+         }
          chunk.setScope(chunkScopes.get(k));
       }
    }

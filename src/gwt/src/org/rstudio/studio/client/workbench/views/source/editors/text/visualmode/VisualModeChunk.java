@@ -66,17 +66,22 @@ public class VisualModeChunk
       active_ = false;
 
       ChunkOutputUi output = null; 
-      if (index >= 0)
+      if (index > 0)
       {
          Position pos = parent_.positionFromIndex(index);
          scope_ = parent_.getScopeAtPosition(pos);
+         if (scope_ != null)
+         {
+            output = target.getNotebook().migrateOutput(scope_, this);
+         }
 
          // Migrate output UI from this scope
-         output = target.getNotebook().migrateOutput(scope_, this);
+         Debug.devlog("create visual mode chunk at index " + index);
       }
       else
       {
          // No position supplied; no scope is available
+         Debug.devlog("create visual mode chunk with no scope");
          scope_ = null;
       }
 
@@ -126,9 +131,7 @@ public class VisualModeChunk
       // Create the chunk toolbar
       if (scope_ != null)
       {
-         toolbar_ = new ChunkContextPanmirrorUi(target_, 
-               false, scope_, sync);
-         host_.appendChild(toolbar_.getToolbar().getElement());
+         createToolbar();
       }
 
       chunk.element = host_;
@@ -242,8 +245,12 @@ public class VisualModeChunk
    {
       scope_ = scope;
 
-      // Update the toolbar's location
-      if (toolbar_ != null)
+      // Update the toolbar's location, or create one if we don't have one yet
+      if (toolbar_ == null)
+      {
+         createToolbar();
+      }
+      else
       {
          toolbar_.setScope(scope);
       }
@@ -487,6 +494,13 @@ public class VisualModeChunk
                postExecution.getEnd().getRow() - offset);
          editor_.setSelectionRange(postExecution);
       });
+   }
+   
+   private void createToolbar()
+   {
+      toolbar_ = new ChunkContextPanmirrorUi(target_, 
+            false, scope_, sync_);
+      host_.appendChild(toolbar_.getToolbar().getElement());
    }
    
    private ChunkDefinition def_;
