@@ -21,8 +21,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 
-import com.google.gwt.dom.client.Style.Unit;
-
 /**
  * A host for notebook chunk output for visual editing mode; it wraps a
  * ChunkOutputWidget. It is complemented by ChunkOutputCodeUi, which wraps chunk
@@ -50,6 +48,9 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       ChunkOutputWidget outputWidget = getOutputWidget();
       setupOutputWidget();
       outputWidget_.getElement().getStyle().clearHeight();
+      
+      // Ensure we adopt the background color from Prosemirror
+      outputWidget_.getElement().addClassName("pm-background-color");
 
       // If we found one, hook it up to the output widget
       if (chunk_ != null)

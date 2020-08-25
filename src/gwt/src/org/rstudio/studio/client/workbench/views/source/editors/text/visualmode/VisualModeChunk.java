@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
-import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -40,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -289,6 +287,11 @@ public class VisualModeChunk
       def_ = def;
    }
    
+   /**
+    * Gets the visual position of the chunk (from Prosemirror)
+    * 
+    * @return The chunk's visual position
+    */
    public int getVisualPosition()
    {
       return getPos_.getVisualPosition();
@@ -327,17 +330,18 @@ public class VisualModeChunk
          }
          else
          {
-            if (rowState_.containsKey(i))
+            if (rowState_.containsKey(i) && rowState_.get(i).attached())
             {
                // Adding state to a widget we already track
                rowState_.get(i).setState(state);
             }
-            else
+            else if (state != ChunkRowExecState.LINE_RESTING)
             {
-               // Create a new state widget
+               // Create a new state widget if we have a non-resting state to
+               // draw
                VisualModeChunkRowState row = 
                      new VisualModeChunkRowState(state, editor_, i);
-               execHost_.appendChild(row.getElement());
+               row.attach(execHost_);
                rowState_.put(i, row);
             }
          }

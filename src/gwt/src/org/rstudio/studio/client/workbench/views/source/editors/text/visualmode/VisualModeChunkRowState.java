@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.Timer;
 
 /**
  * Represents the execution state for a row of a chunk in visual mode.
@@ -32,6 +33,8 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    public VisualModeChunkRowState(int state, AceEditor editor, int row)
    {
       super(state);
+      
+      attached_ = false;
       
       // Convert to zero-based row
       row = row - 1;
@@ -68,6 +71,19 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    protected void addClazz(int state)
    {
       ele_.addClassName(getClazz(state));
+      
+      // When moving elements to a resting state, clean them up entirely shortly
+      // thereafter (this gives the fadeout animation time to run)
+      if (state == LINE_RESTING && !restingTimer_.isRunning())
+      {
+         restingTimer_.schedule(500);
+      }
+      else if (restingTimer_.isRunning())
+      {
+         // If running the resting timer, cancel it since we are moving out of
+         // the resting state
+         restingTimer_.cancel();
+      }
    }
 
    @Override
@@ -79,13 +95,27 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    @Override
    public void detach()
    {
-      super.detach();
-      ele_.removeFromParent();
+      if (attached_)
+      {
+         super.detach();
+         ele_.removeFromParent();
+         attached_ = false;
+         if (restingTimer_.isRunning())
+         {
+            restingTimer_.cancel();
+         }
+      }
    }
    
-   public Element getElement()
+   public void attach(Element parent)
    {
-      return ele_;
+      parent.appendChild(ele_);
+      attached_ = true;
+   }
+   
+   public boolean attached()
+   {
+      return attached_;
    }
 
    private String getClazz(int state)
@@ -108,6 +138,16 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    public final static String LINE_EXECUTED_CLASS = "visual_chunk-executed-line";
    public final static String LINE_RESTING_CLASS  = "visual_chunk-resting-line";
    public final static String LINE_ERROR_CLASS    = "visual_chunk-error-line";
+
+   private Timer restingTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         detach();
+      }
+   };
    
+   private boolean attached_;
    private DivElement ele_;
 }
