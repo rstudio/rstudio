@@ -305,7 +305,7 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
          collections.key as collectionKey,
          collections.collectionName as collectionName,
          parentCollections.key as parentCollectionKey,
-         MAX(items.version) AS version
+         IFNULL(MAX(items.version), 0) AS version
       FROM
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
@@ -355,7 +355,7 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    std::string sql = R"(
      SELECT
-        MAX(items.version) AS version
+        IFNULL(MAX(items.version), 0) AS version
       FROM
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
@@ -368,8 +368,12 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 
    int version = 0;
    Error error = execQuery(pConnection, sql, [&version](const database::Row& row) {
-      std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
-      version = safe_convert::stringTo<int>(versionStr, 0);
+       const soci::indicator indicator = row.get_indicator("version");
+       if (indicator == soci::i_ok)
+       {
+           std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
+           version = safe_convert::stringTo<int>(versionStr, 0);
+       }
    });
    if (error)
       LOG_ERROR(error);
