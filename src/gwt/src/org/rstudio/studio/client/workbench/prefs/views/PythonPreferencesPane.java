@@ -30,8 +30,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       super("420px", "(No interpreter selected)");
       
       overrideLabel_ = new Label();
-      overrideLabel_.addStyleName(RES.styles().override());
-      add(spaced(overrideLabel_));
+      add(overrideLabel_);
    }
 
    @Override
@@ -52,10 +51,12 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
          
          overrideLabel_.setText(text);
          overrideLabel_.setVisible(true);
+         overrideLabel_.addStyleName(RES.styles().overrideLabel());
       }
       else
       {
          overrideLabel_.setVisible(false);
+         overrideLabel_.removeStyleName(RES.styles().overrideLabel());
       }
    }
    

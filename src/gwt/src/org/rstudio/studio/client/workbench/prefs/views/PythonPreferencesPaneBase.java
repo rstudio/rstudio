@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -59,7 +60,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       mismatchWarningBar_.setText(
             "The active Python interpreter has been changed by an R startup script.");
       mismatchWarningBar_.setVisible(false);
-      add(spaced(mismatchWarningBar_));
+      add(mismatchWarningBar_);
       
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
@@ -135,9 +136,9 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       tbPythonInterpreter_.setWidth(width);
       tbPythonInterpreter_.setText(placeholderText_);
       tbPythonInterpreter_.setReadOnly(false);
-      add(lessSpaced(tbPythonInterpreter_));
+      add(spaced(tbPythonInterpreter_));
       
-      add(spaced(container_));
+      add(container_);
       
    }
    
@@ -227,7 +228,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       else
       {
          PythonInterpreterListEntryUi ui = new PythonInterpreterListEntryUi(info);
-         ui.addStyleName(RES.styles().description());
+         ui.addStyleName(RES.styles().interpreterDescription());
          
          String type = info.getType();
          
@@ -258,7 +259,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       // nothing to do if there isn't an active interpreter
       if (StringUtil.isNullOrEmpty(activeInterpreter.getPath()))
       {
-         mismatchWarningBar_.setVisible(false);
+         setMismatchBarVisible(false);
          return;
       }
       
@@ -270,7 +271,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       if (!isSet)
       {
-         mismatchWarningBar_.setVisible(false);
+         setMismatchBarVisible(false);
          return;
       }
       
@@ -278,7 +279,21 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       boolean mismatch =
             !StringUtil.equals(requestedPath, activeInterpreter.getPath());
       
-      mismatchWarningBar_.setVisible(mismatch);
+      setMismatchBarVisible(mismatch);
+   }
+   
+   private void setMismatchBarVisible(boolean visible)
+   {
+      mismatchWarningBar_.setVisible(visible);
+      
+      if (visible)
+      {
+         mismatchWarningBar_.addStyleName(RES.styles().mismatchBar());
+      }
+      else
+      {
+         mismatchWarningBar_.addStyleName(RES.styles().mismatchBar());
+      }
    }
 
    @Override
@@ -319,9 +334,9 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    public interface Styles extends CssResource
    {
-      String override();
-      String description();
-      String invalid();
+      String overrideLabel();
+      String interpreterDescription();
+      String mismatchBar();
    }
 
    public interface Resources extends ClientBundle
