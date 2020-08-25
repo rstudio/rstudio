@@ -53,6 +53,7 @@ public:
    FileEventContext()
       : recursive(false),
         hDirectory(nullptr),
+        completionsPending(false),
         hRestartTimer(nullptr),
         restartCount(0)
    {
@@ -69,6 +70,10 @@ public:
    FilePath rootPath;
    bool recursive;
    HANDLE hDirectory;
+
+   // flag set to indicate if ReadDirectoryChangesW() has been called,
+   // but the completion handler has not yet been invoked in response
+   bool completionsPending;
 
    // structures/buffers used to reach changes (and flag used to
    // determine whether the system may write into these buffers)
@@ -131,8 +136,11 @@ void cleanupContext(FileEventContext* pContext)
    // let the client know we are unregistered
    pContext->callbacks.onUnregistered(pContext->handle);
 
-   // delete context
-   delete pContext;
+   // delete the context only if there isn't a pending
+   // request for completions -- if there is a pending request,
+   // the completion handler will handle cleanup of the context
+   if (!pContext->completionsPending)
+      delete pContext;
 }
 
 void removeTrailingSlash(std::wstring* pPath)
@@ -402,12 +410,18 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,
                                           DWORD dwNumberOfBytesTransfered,
                                           LPOVERLAPPED lpOverlapped)
 {
-   // check for abort (needs to be done first as context may have been deleted)
-   if (dwErrorCode == ERROR_OPERATION_ABORTED)
-      return;
-
    // get the context
    FileEventContext* pContext = (FileEventContext*)(lpOverlapped->hEvent);
+
+   // the completion handler is now running, so unset pending flag
+   pContext->completionsPending = false;
+
+   // check for abort or other indication that the context was cleaned up
+   if (dwErrorCode == ERROR_OPERATION_ABORTED || pContext->hDirectory == nullptr)
+   {
+      delete pContext;
+      return;
+   }
 
    // bail if we don't have callbacks installed yet (could have occurred
    // if we encountered an error during file scanning which caused us to
@@ -472,6 +486,9 @@ Error readDirectoryChanges(FileEventContext* pContext)
 
    if (!ok)
       return LAST_SYSTEM_ERROR();
+
+   // set flag indicating that completion handler is ready to run
+   pContext->completionsPending = true;
 
    return Success();
 }
