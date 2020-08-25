@@ -2962,7 +2962,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_type",
-         "Python Type", 
+         "", 
          "The Python type.", 
          "");
    }
@@ -2974,7 +2974,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_version",
-         "Python Version", 
+         "", 
          "The Python version.", 
          "");
    }
@@ -2986,7 +2986,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_path",
-         "Python Path", 
+         "", 
          "The path to the default Python interpreter.", 
          "");
    }
