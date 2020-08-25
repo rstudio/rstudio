@@ -43,6 +43,7 @@ public abstract class Prefs
       T getGlobalValue();
       void setGlobalValue(T value);
       void setGlobalValue(T value, boolean fireEvents);
+      void removeGlobalValue(boolean fireEvents);
       
       // explicit set for project values -- these are here so that the project
       // options dialog can notify other modules that preferences have changed
@@ -163,6 +164,24 @@ public abstract class Prefs
       public void setGlobalValue(T value, boolean fireEvents)
       {
          setValue(layers_.get(userLayer()).getValues(), value, fireEvents);
+      }
+      
+      public void removeGlobalValue(boolean fireEvents)
+      {
+         boolean wasUnset = false;
+         
+         for (int i = userLayer(); i >= 0; i--)
+         {
+            JsObject layer = layers_.get(i).getValues();
+            if (layer.hasKey(name_))
+            {
+               layer.unset(name_);
+               wasUnset = true;
+            }
+         }
+         
+         if (fireEvents && wasUnset)
+            ValueChangeEvent.fire(this, getValue());
       }
       
       public void setProjectValue(T value)

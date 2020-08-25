@@ -57,6 +57,12 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
          prefs.pythonPath().setGlobalValue(interpreter_.getPath());
          requirement.setSessionRestartRequired(true);
       }
+      else
+      {
+         prefs.pythonType().removeGlobalValue(true);
+         prefs.pythonVersion().removeGlobalValue(true);
+         prefs.pythonPath().removeGlobalValue(true);
+      }
       
       return requirement;
    }

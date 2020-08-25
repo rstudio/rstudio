@@ -63,6 +63,12 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
          config.setPythonPath(interpreter_.getPath());
          requirement.setSessionRestartRequired(true);
       }
+      else
+      {
+         config.setPythonType("");
+         config.setPythonVersion("");
+         config.setPythonPath("");
+      }
       
       return requirement;
    }
