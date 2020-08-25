@@ -1335,6 +1335,8 @@ public class PaneManager
 
    private Widget createSourceColumnWindow(String name)
    {
+      if (panesByName_.get(name) != null)
+         return panesByName_.get(name).getNormal();
       panesByName_.put(name, createSource(name, sourceColumnManager_.getWidget(name)));
 
       PaneConfig paneConfig = getCurrentConfig();
