@@ -17,7 +17,7 @@ import React from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { FixedSizeList } from "react-window";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 
 import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";

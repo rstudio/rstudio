@@ -121,7 +121,7 @@ export const CitationDOIPanel: React.FC<CitationPanelProps> = props => {
           <tbody>
             {previewFields.map(previewField =>
               (<tr key={previewField.name}>
-                <td className='pm-insert-doi-panel-fields-name'>{previewField.name}</td>
+                <td className='pm-insert-doi-panel-fields-name'>{previewField.name}:</td>
                 <td className='pm-insert-doi-panel-fields-value'>{previewField.value}</td>
               </tr>)
             )}

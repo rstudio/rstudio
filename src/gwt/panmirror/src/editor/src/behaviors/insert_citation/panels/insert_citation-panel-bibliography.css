@@ -58,7 +58,7 @@
 .pm-insert-citation-panel-item-button {
   flex-shrink: 0;
   padding-right: 20px;
-  padding-left: 10px;
+  padding-left: 20px;
 }
 
 .pm-insert-citation-panel-item-separator {
@@ -99,6 +99,7 @@
 }
 
 .pm-insert-citation-panel-item-title {
+  padding-left: 1px;
   margin-right: 8px;
   font-weight: 500;
   font-size: 11pt;

@@ -23,11 +23,15 @@
 .pm-insert-doi-panel-fields {
   padding-top: 8px;
   padding-left: 50px;
-  opacity: 0.8;
 }
 
 .pm-insert-doi-panel-fields-name {
-  padding-right: 10px;
+  padding-right: 20px;
+  opacity: 0.6;
+}
+
+.pm-insert-doi-panel-fields-value {
+  opacity: 0.8;
 }
 
 .pm-insert-doi-panel-no-result {
