@@ -146,9 +146,35 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    protected void updateDescription()
    {
+      // avoid recursive calls
+      if (updatingDescription_)
+         return;
+      
+      try
+      {
+         updatingDescription_ = true;
+         updateDescriptionImpl();
+      }
+      finally
+      {
+         updatingDescription_ = false;
+      }
+   }
+   
+   private void updateDescriptionImpl()
+   {
       String path = tbPythonInterpreter_.getText();
-      if (StringUtil.isNullOrEmpty(path) ||
-          StringUtil.equals(path, placeholderText_))
+      
+      // reset to default when empty
+      if (StringUtil.isNullOrEmpty(path))
+      {
+         tbPythonInterpreter_.setText(placeholderText_);
+         clearDescription();
+         return;
+      }
+      
+      // clear description when using default
+      if (StringUtil.equals(path, placeholderText_))
       {
          clearDescription();
          return;
@@ -161,7 +187,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                @Override
                public void onResponseReceived(PythonInterpreter info)
                {
-                  updateDescription(info);
+                  updateDescriptionImpl(info);
                }
 
                @Override
@@ -172,7 +198,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
             });
    }
    
-   protected void updateDescription(PythonInterpreter info)
+   private void updateDescriptionImpl(PythonInterpreter info)
    {
       interpreter_ = info;
          
@@ -298,6 +324,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    protected final SimplePanel container_ = new SimplePanel();
    
    protected PythonInterpreter interpreter_;
+   
+   protected boolean updatingDescription_;
 
    protected PythonDialogResources res_;
    protected PythonServerOperations server_;
