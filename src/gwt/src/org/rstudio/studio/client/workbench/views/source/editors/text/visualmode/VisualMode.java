@@ -28,6 +28,7 @@ import org.rstudio.core.client.Rendezvous;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
@@ -78,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -586,9 +588,32 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+   /**
+    * Returns the width of the entire visual editor
+    * 
+    * @return The visual editor's width.
+    */
    public int getPixelWidth()
    {
       return panmirror_.getOffsetWidth();
+   }
+   
+   /**
+    * Returns the width of the content inside the visual editor
+    * 
+    * @return Width of content.
+    */
+   public int getContentWidth()
+   {
+      Element[] elements = DomUtils.getElementsByClassName(panmirror_.getElement(), 
+            "pm-content");
+      if (elements.length < 1)
+      {
+         // if no root node, use the entire surface
+         return getPixelWidth();
+      }
+
+      return elements[0].getOffsetWidth();
    }
    
    public void manageCommands()

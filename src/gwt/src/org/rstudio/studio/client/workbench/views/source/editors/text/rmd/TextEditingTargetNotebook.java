@@ -1319,13 +1319,24 @@ public class TextEditingTargetNotebook
    
    public int getPlotWidth()
    {
-      // subtract some space to account for padding; ensure the plot doesn't
-      // grow arbitrarily large. note that this value must total the amount of
-      // space outside the element (here, 2 * (10px margin + 1px border)); since
-      // we stretch the plot to fit the space it will scale in unpredictable
-      // ways if it doesn't fit exactly
-      return Math.min(Math.max(editingTarget_.getPixelWidth() - 22, 
-                               ChunkOutputUi.MIN_PLOT_WIDTH),
+      int pixelWidth = 0;
+
+      // Start with the width of the surface, then subtract some space to
+      // account for padding; ensure the plot doesn't grow arbitrarily large.
+      // note that this value must total the amount of space outside the element
+      // since we stretch the plot to fit the space it will scale in
+      // unpredictable ways if it doesn't fit exactly
+      if (editingTarget_.isVisualEditorActive())
+      {
+         pixelWidth = editingTarget_.getVisualMode().getContentWidth() - 22;
+      }
+      else
+      {
+         pixelWidth = editingTarget_.getPixelWidth() - 22;
+      }
+      
+      // clamp to max/min for notebook chunks
+      return Math.min(Math.max(pixelWidth, ChunkOutputUi.MIN_PLOT_WIDTH),
                       ChunkOutputUi.MAX_PLOT_WIDTH);
    }
    
