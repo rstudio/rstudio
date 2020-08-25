@@ -13,34 +13,61 @@
  *
  */
 
-import React from "react";
+import React, { CSSProperties } from "react";
 
 import { WidgetProps } from "../../api/widgets/react";
 
-
 import './select_tree.css';
 
+// Individual nodes and children of the Select Tree
 export interface SelectTreeNode {
   key: string;
   name: string;
-  type: string;
   image?: string;
-  children: SelectTreeNode[];
+  type: string;
   expanded?: boolean;
+  children: SelectTreeNode[];
 }
 
 interface SelectTreeProps extends WidgetProps {
+  height: number;
   nodes: SelectTreeNode[];
   selectedNode?: SelectTreeNode;
   nodeSelected: (node: SelectTreeNode) => void;
 }
 
+
 export const SelectTree: React.FC<SelectTreeProps> = props => {
+
+  const style: CSSProperties = {
+    overflowY: 'scroll',
+    height: props.height + 'px',
+    ...props.style
+  };
+
+  const processKey = (e: React.KeyboardEvent) => {
+    const selectedNode = props.selectedNode;
+    switch (e.key) {
+      case 'ArrowDown':
+        if (selectedNode) {
+          const next = nextNode(selectedNode, props.nodes);
+          props.nodeSelected(next);
+        }
+        break;
+
+      case 'ArrowUp':
+        if (selectedNode) {
+          const previous = previousNode(selectedNode, props.nodes);
+          props.nodeSelected(previous);
+        }
+        break;
+    }
+  };
 
 
   return (
-    <div style={props.style}>
-      {props.nodes.map(treeNode => <SelectTreeItem key={treeNode.key} node={treeNode} alwaysOpen={true} onSelected={props.nodeSelected} selectedNode={props.selectedNode} />)}
+    <div style={style} tabIndex={0} onKeyDown={processKey} >
+      {props.nodes.map(treeNode => <SelectTreeItem key={treeNode.key} node={treeNode} onSelected={props.nodeSelected} selectedNode={props.selectedNode} />)}
     </div>
   );
 };
@@ -51,8 +78,6 @@ interface SelectTreeItemProps extends WidgetProps {
   onSelected: (node: SelectTreeNode) => void;
   indentLevel?: number;
   selectedNode?: SelectTreeNode;
-  alwaysOpen?: boolean;
-
 }
 
 export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
@@ -69,8 +94,16 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
     props.onSelected(props.node);
   };
 
-  const expanded = props.selectedNode && containsChild(props.selectedNode.key, props.node);
-  const selected = props.selectedNode && props.selectedNode.key === props.node.key;
+  React.useEffect(() => {
+    if (props.node === props.selectedNode) {
+      props.node.expanded = true;
+      setExpanded(props.node.expanded);
+    }
+  }, [props.selectedNode]);
+
+  const [expanded, setExpanded] = React.useState<boolean>(props.node.expanded || false);
+
+  const selected = props.selectedNode && props.selectedNode === props.node;
   const indentLevel = props.indentLevel || 0;
 
   const indentStyle = {
@@ -84,7 +117,7 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
         {props.node.image ? <div className='pm-select-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-select-tree-node-image' /></div> : null}
         <div className='pm-select-tree-node-label-div'>{props.node.name}</div>
       </div>
-      {props.alwaysOpen || expanded ? props.node.children?.map(childNode => <SelectTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : ''}
+      {expanded ? props.node.children?.map(childNode => <SelectTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : undefined}
     </div >
   );
 };
@@ -102,6 +135,48 @@ export function containsChild(key: string, node: SelectTreeNode): boolean {
   }
   return false;
 }
+
+// Creates an ordered flattened list of visible nodes in the
+// tree. Useful for incrementing through visible nodes :)
+function visibleNodes(nodes: SelectTreeNode[]) {
+
+  const nodeList: SelectTreeNode[][] = nodes.map(node => {
+    if (node.expanded) {
+      return [node].concat(visibleNodes(node.children));
+    } else {
+      return [node];
+    }
+  });
+  return ([] as SelectTreeNode[]).concat(...nodeList);
+
+}
+
+// Get the next node for the current node
+function nextNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectTreeNode {
+  const nodes = visibleNodes(allNodes);
+  const currentIndex = nodes.indexOf(node);
+  if (currentIndex < nodes.length - 1) {
+    return nodes[currentIndex + 1];
+  } else {
+    return nodes[0];
+  }
+}
+
+// Get the previous node for the current node
+function previousNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectTreeNode {
+  const nodes = visibleNodes(allNodes);
+  const currentIndex = nodes.indexOf(node);
+  if (currentIndex > 0) {
+    return nodes[currentIndex - 1];
+  } else {
+    return nodes[nodes.length - 1];
+  }
+
+}
+
+
+
+
 
 
 
