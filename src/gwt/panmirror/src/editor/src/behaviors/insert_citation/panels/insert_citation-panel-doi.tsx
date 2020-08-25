@@ -34,7 +34,7 @@ export function doiPanel(ui: EditorUI): CitationPanel {
     panel: CitationDOIPanel,
     treeNode: {
       key: 'DOI',
-      name: "Find DOI",
+      name: ui.context.translateText('Lookup DOI'),
       image: ui.images.citations?.doi,
       type: kDOIType,
       children: [],
