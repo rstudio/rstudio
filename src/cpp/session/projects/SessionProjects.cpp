@@ -665,6 +665,15 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                             "markdown_canonical", config.markdownCanonical);
    if (error)
       return error;
+   
+   // read python options
+   error = json::readObject(configJson,
+                            "python_type", config.pythonType,
+                            "python_version", config.pythonVersion,
+                            "python_path", config.pythonPath);
+   
+   if (error)
+      return error;
 
    // read the vcs options
    RProjectVcsOptions vcsOptions;

@@ -1181,23 +1181,18 @@ Error writeProjectFile(const FilePath& projectFilePath,
        !config.pythonVersion.empty() ||
        !config.pythonPath.empty())
    {
-      if (!config.pythonType.empty())
-      {
-         boost::format fmt("PythonType: %1%\n");
-         contents.append(boost::str(fmt % config.pythonType));
-      }
+      boost::format fmt(
+               "\n"
+               "PythonType: %1%\n"
+               "PythonVersion: %2%\n"
+               "PythonPath: %3%\n");
       
-      if (!config.pythonVersion.empty())
-      {
-         boost::format fmt("PythonVersion: %1%\n");
-         contents.append(boost::str(fmt % config.pythonVersion));
-      }
+      auto pythonConfig = fmt
+            % config.pythonType
+            % config.pythonVersion
+            % config.pythonPath;
       
-      if (!config.pythonPath.empty())
-      {
-         boost::format fmt("PythonPath: %1%\n");
-         contents.append(boost::str(fmt % config.pythonPath));
-      }
+      contents.append(boost::str(pythonConfig));
    }
    
 
