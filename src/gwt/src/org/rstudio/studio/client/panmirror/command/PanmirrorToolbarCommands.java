@@ -80,8 +80,6 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp Code Chunk");
       add(PanmirrorCommands.SQLCodeChunk, "SQL Code Chunk");
       add(PanmirrorCommands.StanCodeChunk, "Stan Code Chunk");
-      add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
-      add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);

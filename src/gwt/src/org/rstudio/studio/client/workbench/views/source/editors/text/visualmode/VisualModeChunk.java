@@ -63,6 +63,7 @@ public class VisualModeChunk
       codeExecution_ = target.getCodeExecutor();
       parent_ = target.getDocDisplay();
       target_ = target;
+      active_ = false;
 
       ChunkOutputUi output = null; 
       if (index >= 0)
@@ -97,6 +98,10 @@ public class VisualModeChunk
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
       editor_.setUseWrapMode(true);
+      
+      // Track activation state
+      editor_.addFocusHandler((evt) -> { active_ = true; });
+      editor_.addBlurHandler((evt) -> { active_ = false; });
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
@@ -348,6 +353,16 @@ public class VisualModeChunk
       }
    }
    
+   /**
+    * Is the editor currently active?
+    * 
+    * @return Whether the editor has focus.
+    */
+   public boolean isActive()
+   {
+      return active_;
+   }
+   
    private void setMode(AceEditor editor, String mode)
    {
       switch(mode)
@@ -410,6 +425,20 @@ public class VisualModeChunk
       }
    }
    
+   /**
+    * Executes the chunk via the parent editor
+    */
+   public void execute()
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         target_.executeChunk(Position.create(scope_.getBodyStart().getRow(), 0));
+      });
+   }
+   
+   /**
+    * Executes the current selection inside the chunk
+    */
    private void executeSelection()
    {
       // Ensure we have a scope. This should always exist since we sync the
@@ -464,6 +493,7 @@ public class VisualModeChunk
    private ChunkOutputWidget widget_;
    private Scope scope_;
    private ChunkContextPanmirrorUi toolbar_;
+   private boolean active_;
 
    private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;

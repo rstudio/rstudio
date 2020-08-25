@@ -23,6 +23,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -114,6 +116,38 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
       }
       return null;
+   }
+   
+   /**
+    * Executes the currently active chunk
+    */
+   public void executeCurrentChunk()
+   {
+      for (VisualModeChunk chunk: chunks_)
+      {
+         if (chunk.isActive())
+         {
+            chunk.execute();
+            break;
+         }
+      }
+   }
+   
+   /**
+    * Executes all previous chunks
+    */
+   public void executePreviousChunks()
+   {
+      for (VisualModeChunk chunk: chunks_)
+      {
+         if (chunk.isActive())
+         {
+            target_.executeChunks(
+                  Position.create(chunk.getScope().getBodyStart().getRow(), 0),
+                  TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+            break;
+         }
+      }
    }
    
    /**
