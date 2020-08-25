@@ -241,6 +241,7 @@ public:
       case RToken::LBRACKET:
       case RToken::LDBRACKET:
       {
+         // push offset of bracket position
          stack_.push_back(cursor.offset());
          break;
       }
@@ -251,8 +252,21 @@ public:
       case RToken::RBRACKET:
       case RToken::RDBRACKET:
       {
-         if (!stack_.empty())
-            stack_.pop_back();
+         // only pop if this is a matching bracket
+         std::size_t n = stack_.size();
+         if (n > 0)
+         {
+            // get the token at the recorded offset
+            auto offset = stack_[n - 1];
+            const RToken& token = tokens_.atUnsafe(offset);
+            
+            // check for matching types
+            auto lhsType = token.type();
+            auto rhsType = cursor.type();
+            if (token_utils::typeComplement(lhsType) == rhsType)
+               stack_.pop_back();
+         }
+         
          break;
       }
          
