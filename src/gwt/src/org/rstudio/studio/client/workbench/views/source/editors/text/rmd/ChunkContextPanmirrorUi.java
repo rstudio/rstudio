@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeEditorSync;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,9 +25,13 @@ import com.google.gwt.dom.client.Style.Unit;
 public class ChunkContextPanmirrorUi extends ChunkContextUi
 {
    public ChunkContextPanmirrorUi(TextEditingTarget target, 
-                                  boolean dark, Scope chunk)
+                                  boolean dark, 
+                                  Scope chunk,
+                                  VisualModeEditorSync sync)
    {
       super(target, dark, chunk);
+
+      sync_ = sync;
 
       // Position toolbar at top right of chunk
       Style style = toolbar_.getElement().getStyle();
@@ -35,8 +41,28 @@ public class ChunkContextPanmirrorUi extends ChunkContextUi
    }
 
    @Override
+   public void runChunk()
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         super.runChunk();
+      });
+   }
+
+   @Override
+   public void runPreviousChunks()
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         super.runPreviousChunks();
+      });
+   }
+
+   @Override
    protected int getRow()
    {
       return chunk_.getPreamble().getRow();
    }
+   
+   private final VisualModeEditorSync sync_;
 }

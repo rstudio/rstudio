@@ -127,7 +127,7 @@ public class VisualModeChunk
       if (scope_ != null)
       {
          toolbar_ = new ChunkContextPanmirrorUi(target_, 
-               false, scope_);
+               false, scope_, sync);
          host_.appendChild(toolbar_.getToolbar().getElement());
       }
 

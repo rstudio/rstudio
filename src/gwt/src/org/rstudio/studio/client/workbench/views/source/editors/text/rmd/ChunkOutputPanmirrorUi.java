@@ -127,7 +127,10 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       if (!attached_)
          return;
 
-      chunk_.removeWidget();
+      if (chunk_ != null)
+      {
+         chunk_.removeWidget();
+      }
 
       attached_ = false;
    }

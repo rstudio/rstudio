@@ -44,6 +44,20 @@ public class ChunkContextCodeUi extends ChunkContextUi
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
             toolbar_, row, null, host_);
    }
+   
+   @Override
+   public void runChunk()
+   {
+      super.runChunk();
+      target_.focus();
+   }
+
+   @Override
+   public void runPreviousChunks()
+   {
+      super.runPreviousChunks();
+      target_.focus();
+   }
 
    public LineWidget getLineWidget()
    {

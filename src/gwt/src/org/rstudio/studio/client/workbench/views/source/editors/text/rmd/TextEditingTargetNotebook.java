@@ -1137,6 +1137,7 @@ public class TextEditingTargetNotebook
       for (ChunkOutputUi output: outputs().values())
       {
          Scope scope = output.getScope();
+
          // if the scope associated with this output no longer looks like a 
          // valid chunk scope, or is considerably out of sync with the widget,
          // remove the widget
@@ -1148,8 +1149,13 @@ public class TextEditingTargetNotebook
                   docUpdateSentinel_.getId(), output.getChunkId(), "", 0, 
                   ChunkChangeEvent.CHANGE_REMOVE));
          }
-         if (!StringUtil.equals(scope.getChunkLabel(), output.getChunkLabel()))
+         
+         // sync label if it has changed
+         if (scope != null &&
+             !StringUtil.equals(scope.getChunkLabel(), output.getChunkLabel()))
+         {
             output.setChunkLabel(scope.getChunkLabel());
+         }
       }
    }
 

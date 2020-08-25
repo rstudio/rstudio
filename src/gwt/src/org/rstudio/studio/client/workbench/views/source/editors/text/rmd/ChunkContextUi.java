@@ -127,14 +127,12 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       target_.executeChunks(chunkPosition(), 
             TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-      target_.focus();
    }
 
    @Override
    public void runChunk()
    {
       target_.executeChunk(chunkPosition());
-      target_.focus();
    }
 
    @Override
