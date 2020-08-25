@@ -31,7 +31,6 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       
       overrideLabel_ = new Label();
       overrideLabel_.addStyleName(RES.styles().override());
-      overrideLabel_.setVisible(false);
       add(spaced(overrideLabel_));
    }
 
@@ -54,6 +53,10 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
          overrideLabel_.setText(text);
          overrideLabel_.setVisible(true);
       }
+      else
+      {
+         overrideLabel_.setVisible(false);
+      }
    }
    
    @Override
@@ -64,18 +67,19 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       String oldValue = prefs.pythonPath().getGlobalValue();
       String newValue = tbPythonInterpreter_.getText();
       
+      if (StringUtil.equals(newValue, placeholderText_))
+         newValue = "";
+      
       boolean isSet =
             interpreter_ != null &&
             interpreter_.isValid() &&
-            !StringUtil.isNullOrEmpty(newValue) &&
-            !StringUtil.equals(newValue, placeholderText_);
+            !StringUtil.isNullOrEmpty(newValue);
       
       if (isSet && !StringUtil.equals(oldValue, newValue))
       {
          prefs.pythonType().setGlobalValue(interpreter_.getType());
          prefs.pythonVersion().setGlobalValue(interpreter_.getVersion());
          prefs.pythonPath().setGlobalValue(interpreter_.getPath());
-         requirement.setSessionRestartRequired(true);
       }
       else
       {
@@ -83,6 +87,9 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
          prefs.pythonVersion().removeGlobalValue(true);
          prefs.pythonPath().removeGlobalValue(true);
       }
+      
+      if (!StringUtil.equals(oldValue, newValue))
+         requirement.setRestartRequired();
       
       return requirement;
    }

@@ -50,18 +50,19 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
       String oldValue = config.getPythonPath();
       String newValue = tbPythonInterpreter_.getText();
       
+      if (StringUtil.equals(newValue, placeholderText_))
+         newValue = "";
+      
       boolean isSet =
             interpreter_ != null &&
             interpreter_.isValid() &&
-            !StringUtil.isNullOrEmpty(newValue) &&
-            !StringUtil.equals(newValue, placeholderText_);
+            !StringUtil.isNullOrEmpty(newValue);
       
       if (isSet && !StringUtil.equals(oldValue, newValue))
       {
          config.setPythonType(interpreter_.getType());
          config.setPythonVersion(interpreter_.getVersion());
          config.setPythonPath(interpreter_.getPath());
-         requirement.setSessionRestartRequired(true);
       }
       else
       {
@@ -69,6 +70,9 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
          config.setPythonVersion("");
          config.setPythonPath("");
       }
+      
+      if (!StringUtil.equals(oldValue, newValue))
+         requirement.setRestartRequired();
       
       return requirement;
    }
