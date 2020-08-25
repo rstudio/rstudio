@@ -338,9 +338,9 @@ public class PaneManager
                StringUtil.equals(column.getName(), SourceColumnManager.MAIN_SOURCE_NAME)) ?
                true : false;
 
-               LogicalWindow columnWindow = mainSourceWindow ?
-                                            sourceLogicalWindows_.get(0) :
-                                            getParentLogicalWindow(column.asWidget().getElement());
+            LogicalWindow columnWindow = mainSourceWindow ?
+                                         sourceLogicalWindows_.get(0) :
+                                         getParentLogicalWindow(column.asWidget().getElement());
 
             if (StringUtil.equals(docWindowId, windowId) &&
                 (columnWindow == null && mainSourceWindow ||
