@@ -436,12 +436,18 @@ bool isVariableIndexable(const RTokenCursor& cursor,
       return true;
    
    // allow indexing within an R6Class definition
-   auto&& tokens = status.tokens();
-   
    for (auto&& index : stack)
    {
-      auto&& token = tokens.at(index - 1);
-      if (token.contentEquals(L"R6Class"))
+      // create token cursor and move to idnex
+      RTokenCursor clone = cursor.clone();
+      clone.setOffset(index);
+      
+      // try moving to previous token
+      if (!clone.moveToPreviousSignificantToken())
+         continue;
+      
+      // check that it's an R6Class
+      if (clone.contentEquals(L"R6Class"))
          return true;
    }
    
