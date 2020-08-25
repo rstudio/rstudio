@@ -88,10 +88,6 @@ export interface EditorMenuItem {
   };
 }
 
-export interface EditorUIExecute {
-  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
-}
-
 export interface EditorUIMath {
   typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
 }

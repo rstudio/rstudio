@@ -113,7 +113,6 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
       visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
@@ -122,7 +121,6 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
          target_, 
-         visualModeExec_, 
          visualModeChunks_, 
          visualModeFormat_,
          visualModeSpelling_
@@ -1284,9 +1282,6 @@ public class VisualMode implements VisualModeEditorSync,
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       
-      // enable chunk execution for R and Python
-      options.rmdChunkExecution = VisualModeChunkExec.kRmdChunkExecutionLangs;
-      
       // add focus-visible class to prevent interaction with focus-visible.js
       // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
       // is contentEditable, and that triggers a dom mutation event for ProseMirror,
@@ -1395,7 +1390,6 @@ public class VisualMode implements VisualModeEditorSync,
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private final VisualModePanmirrorFormat visualModeFormat_;
-   private final VisualModeChunkExec visualModeExec_;
    private final VisualModeChunks visualModeChunks_;
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;

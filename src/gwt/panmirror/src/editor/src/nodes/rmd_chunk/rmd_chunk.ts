@@ -80,10 +80,6 @@ const extension = (context: ExtensionContext): Extension | null => {
               return null;
             }
           },
-          executeRmdChunkFn: ui.execute.executeRmdChunk
-            ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
-            : undefined,
-
           createFromPastePattern: /^\{([a-zA-Z0-9_]+).*}.*?\n/m
         },
 
@@ -113,9 +109,6 @@ const extension = (context: ExtensionContext): Extension | null => {
         new D3ChunkCommand(ui),
         new StanChunkCommand(ui),
       ];
-      if (ui.execute.executeRmdChunk) {
-        commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
-      }
       return commands;
     },
 
