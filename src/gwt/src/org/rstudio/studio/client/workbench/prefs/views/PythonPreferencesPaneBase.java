@@ -34,6 +34,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -114,6 +116,16 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          updateDescription();
       });
+      
+      tbPythonInterpreter_.addDomHandler((KeyDownEvent event) ->
+      {
+         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            tbPythonInterpreter_.blur();
+         }
+      }, KeyDownEvent.getType());
       
       tbPythonInterpreter_.addDomHandler((BlurEvent event) ->
       {
