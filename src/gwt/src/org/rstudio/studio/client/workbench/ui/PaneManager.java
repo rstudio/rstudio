@@ -334,11 +334,17 @@ public class PaneManager
             // its column, default to the main source window.
             SourceColumn column =
                sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
-            LogicalWindow columnWindow = column == null ? sourceLogicalWindows_.get(0) :
-               getParentLogicalWindow(column.asWidget().getElement());
+            boolean mainSourceWindow = (column == null ||
+               StringUtil.equals(column.getName(), SourceColumnManager.MAIN_SOURCE_NAME)) ?
+               true : false;
+
+               LogicalWindow columnWindow = mainSourceWindow ?
+                                            sourceLogicalWindows_.get(0) :
+                                            getParentLogicalWindow(column.asWidget().getElement());
 
             if (StringUtil.equals(docWindowId, windowId) &&
-                window == columnWindow)
+                (columnWindow == null && mainSourceWindow ||
+                 window == columnWindow))
             {
                numDocs++;
             }
