@@ -319,6 +319,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    public interface Styles extends CssResource
    {
+      String override();
       String description();
       String invalid();
    }

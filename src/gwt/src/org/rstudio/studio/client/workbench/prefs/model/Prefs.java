@@ -50,6 +50,7 @@ public abstract class Prefs
       // these values are not persisted by this module (rather, the project 
       // options dialog has its own codepath to read and write them along with
       // the other non-uipref project options)
+      T getProjectValue();
       void setProjectValue(T value);
       void setProjectValue(T value, boolean fireEvents);
       void removeProjectValue(boolean fireEvents);
@@ -182,6 +183,12 @@ public abstract class Prefs
          
          if (fireEvents && wasUnset)
             ValueChangeEvent.fire(this, getValue());
+      }
+      
+      public T getProjectValue()
+      {
+         JsObject projValues = layers_.get(projectLayer()).getValues();
+         return doGetValue(projValues);
       }
       
       public void setProjectValue(T value)

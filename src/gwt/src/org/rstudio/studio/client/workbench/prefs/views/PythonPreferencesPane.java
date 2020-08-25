@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
@@ -27,6 +28,11 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
                                 PythonServerOperations server)
    {
       super("420px", "(No interpreter selected)");
+      
+      overrideLabel_ = new Label();
+      overrideLabel_.addStyleName(RES.styles().override());
+      overrideLabel_.setVisible(false);
+      add(spaced(overrideLabel_));
    }
 
    @Override
@@ -34,6 +40,20 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    {
       String pythonPath = prefs.pythonPath().getGlobalValue();
       initialize(pythonPath);
+      
+      // notify user if project pref is overriding global pref
+      String projectPythonPath = prefs.pythonPath().getProjectValue();
+      boolean hasProjectOverride = !StringUtil.isNullOrEmpty(projectPythonPath);
+      if (hasProjectOverride)
+      {
+         String text =
+               "(NOTE: This project has already been configured with " +
+               "its own Python interpreter. Use the Project Options " +
+               "dialog to change the version of Python used in this project.)";
+         
+         overrideLabel_.setText(text);
+         overrideLabel_.setVisible(true);
+      }
    }
    
    @Override
@@ -66,5 +86,6 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       
       return requirement;
    }
-
+   
+   private final Label overrideLabel_;
 }

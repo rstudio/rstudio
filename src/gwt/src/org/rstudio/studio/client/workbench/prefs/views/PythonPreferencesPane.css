@@ -1,5 +1,9 @@
 @charset "UTF-8";
 
+.override {
+	font-style: oblique;
+}
+
 .description {
 }
 
