@@ -883,6 +883,11 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeChunks_.setChunkLineExecState(start, end, state);
    }
    
+   public void setChunkState(Scope chunk, int state)
+   {
+      visualModeChunks_.setChunkState(chunk, state);
+   }
+   
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});

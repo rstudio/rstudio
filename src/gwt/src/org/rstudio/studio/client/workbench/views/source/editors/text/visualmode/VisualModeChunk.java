@@ -361,6 +361,19 @@ public class VisualModeChunk
    }
    
    /**
+    * Sets the execution state of this chunk.
+    * 
+    * @param state The new execution state.
+    */
+   public void setState(int state)
+   {
+      if (toolbar_ != null)
+      {
+         toolbar_.setState(state);
+      }
+   }
+   
+   /**
     * Is the editor currently active?
     * 
     * @return Whether the editor has focus.

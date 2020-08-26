@@ -1299,6 +1299,7 @@ public class TextEditingTargetNotebook
    public void setChunkState(Scope chunk, int state)
    {
       chunks_.setChunkState(chunk.getPreamble().getRow(), state);
+      editingTarget_.getVisualMode().setChunkState(chunk, state);
    }
    
    public static boolean isSetupChunkScope(Scope scope)
