@@ -15,6 +15,9 @@
 
 package org.rstudio.studio.client.panmirror.outline;
 
+import jsinterop.annotations.JsType;
+
+@JsType
 public class PanmirrorOutlineItem
 {
    public String navigation_id;

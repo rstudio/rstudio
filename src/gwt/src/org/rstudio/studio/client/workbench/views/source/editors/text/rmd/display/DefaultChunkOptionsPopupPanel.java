@@ -118,7 +118,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return new Pair<String, String>("<!--", "");
       else if (modeId == "mode/c_cpp")
          return new Pair<String, String>("/***", "");
-      else if (modeId == "mode/r")
+      else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
          return new Pair<String, String>("{", "}");
       
       return null;

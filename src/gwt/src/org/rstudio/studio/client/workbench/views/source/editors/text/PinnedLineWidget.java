@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -22,8 +21,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;

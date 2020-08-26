@@ -50,6 +50,10 @@ import com.google.gwt.user.client.Command;
 
 import jsinterop.base.Js;
 
+/**
+ * Represents an R Markdown chunk in the visual editor, including its embedded
+ * text editor, output, and execution tools. 
+ */
 public class VisualModeChunk
 {
    public VisualModeChunk(int index,
@@ -72,16 +76,13 @@ public class VisualModeChunk
          scope_ = parent_.getScopeAtPosition(pos);
          if (scope_ != null)
          {
+            // Move any pre-existing output from code view into visual mode
             output = target.getNotebook().migrateOutput(scope_, this);
          }
-
-         // Migrate output UI from this scope
-         Debug.devlog("create visual mode chunk at index " + index);
       }
       else
       {
          // No position supplied; no scope is available
-         Debug.devlog("create visual mode chunk with no scope");
          scope_ = null;
       }
 

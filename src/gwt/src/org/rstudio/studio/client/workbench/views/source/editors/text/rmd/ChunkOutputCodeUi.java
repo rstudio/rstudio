@@ -49,6 +49,7 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       ChunkOutputWidget outputWidget = getOutputWidget();
       outputWidget.setEmbeddedStyle(false);
       wrapper_.add(outputWidget);
+      wrapped_ = true;
 
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
             display_, wrapper_, def.getRow(), def, lineWidgetHost);
@@ -182,15 +183,20 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
    @Override
    public void reattach()
    {
+      if (wrapped_)
+         return;
+      
       outputWidget_.setEmbeddedStyle(false);
       applyHeight(height_);
       wrapper_.add(outputWidget_);
+      wrapped_ = true;
    }
 
    @Override
    public void detach()
    {
       wrapper_.clear();
+      wrapped_ = false;
    }
 
    @Override
@@ -206,6 +212,7 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
    }
 
    private HandlerRegistration renderHandlerReg_ = null;
+   private boolean wrapped_;
 
    private final PinnedLineWidget lineWidget_;
    private final DocDisplay display_;

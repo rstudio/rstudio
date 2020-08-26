@@ -23,6 +23,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
+/**
+ * Implementation of a R Markdown chunk context toolbar host for visual mode
+ * (inside Panmirror)
+ */
 public class ChunkContextPanmirrorUi extends ChunkContextUi
 {
    public ChunkContextPanmirrorUi(TextEditingTarget outerEditor, Scope outerChunk,

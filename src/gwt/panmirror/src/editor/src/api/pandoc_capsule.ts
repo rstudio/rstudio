@@ -18,7 +18,6 @@ import { Schema } from 'prosemirror-model';
 import { base64Encode, base64Decode } from './base64';
 
 import { PandocToken, ProsemirrorWriter, mapTokens, PandocTokenType } from './pandoc';
-import { assert } from 'console';
 
 // constants used for creating/consuming capsules
 const kFieldDelimiter = '\n';

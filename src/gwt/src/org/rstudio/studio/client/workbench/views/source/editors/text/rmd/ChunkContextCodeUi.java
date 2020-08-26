@@ -19,6 +19,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 
+/**
+ * Implementation of a R Markdown chunk context toolbar host for code view
+ * (inside the text editor)
+ */
 public class ChunkContextCodeUi extends ChunkContextUi
 {
    public ChunkContextCodeUi(TextEditingTarget target, boolean dark, Scope chunk,

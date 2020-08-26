@@ -1636,7 +1636,6 @@ public class TextEditingTargetNotebook
             {
                visualOutputs_.get(chunkId).remove();
                visualOutputs_.remove(chunkId);
-               Debug.devlog("remove visual output for chunk " + chunkId);
             }
             if (codeOutputs_.containsKey(chunkId))
             {
@@ -1722,7 +1721,6 @@ public class TextEditingTargetNotebook
          output = new ChunkOutputPanmirrorUi(docUpdateSentinel_.getId(), 
                editingTarget_.getVisualMode(), def, null, null);
          visualOutputs_.put(def.getChunkId(), output);
-         Debug.devlog("create visual mode chunk output for chunk " + def.getChunkId());
       }
       else
       {

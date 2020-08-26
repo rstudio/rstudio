@@ -1375,7 +1375,6 @@ public class VisualMode implements VisualModeEditorSync,
          if (location.items[j].type == PanmirrorOutlineItemType.RmdChunk)
          {
             chunkItems.add(location.items[j]);
-            Debug.logObject(location.items[j]);
          }
       }
       
@@ -1400,18 +1399,6 @@ public class VisualMode implements VisualModeEditorSync,
             // This is normal; it is possible that we haven't created a chunk
             // editor at this position yet.
             continue;
-         }
-         if (chunk.getScope() == null)
-         {
-            Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
-                  " found in ace at " + 
-                  chunkScopes.get(k).getBodyStart().getRow());
-         }
-         else
-         {
-            Debug.devlog("chunk at pos " + chunk.getVisualPosition() + 
-                  " moved from " + chunk.getScope().getBodyStart().getRow() + " to " +
-                  chunkScopes.get(k).getBodyStart().getRow());
          }
          chunk.setScope(chunkScopes.get(k));
       }
