@@ -54,6 +54,10 @@ export interface PandocBlockCapsuleFilter {
   // space for indented block or incidental whitespace after block delimiter)
   match: RegExp;
 
+  // optional seconary filter expression (applied to a successful match to ensure 
+  // that matching wasn't overly greedy)
+  discard?: RegExp;
+
   // custom function for pulling out the 3 parts from a match (defaults to p1,p2,p3)
   extract?: (
     match: string,
@@ -118,6 +122,13 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
     const p3 = match[3];
     const p4 = match[4];
 
+    // if the capsuleFilter has a discard expression then check it; if
+    // discarded then move on to the next match
+    if (capsuleFilter.discard && !!_match.match(capsuleFilter.discard)) {
+      match = capsuleFilter.match.exec(markdown);
+      continue;
+    }
+
     // extract matches
     const extract = capsuleFilter.extract || defaultExtractor;
     const { prefix, source, suffix } = extract(_match, p1, p2, p3, p4);
@@ -138,7 +149,7 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
       [kSuffixField]: suffix,
     };
 
-    // constuct a field
+    // construct a field
     const field = (name: string, value: string) => `${name}${kValueDelimiter}${base64Encode(value)}`;
 
     // construct a record

@@ -14,6 +14,8 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/ServerDatabaseKeyObfuscation.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
@@ -50,6 +52,7 @@ constexpr const char* kDefaultPostgresqlDatabaseUser = "postgres";
 constexpr const char* kDatabasePassword = "password";
 constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
+constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
 
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
@@ -115,8 +118,30 @@ Error readOptions(const std::string& databaseConfigFile,
       options.port = settings.get(kDatabasePort, kDefaultPostgresqlDatabasePort);
       options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
                                                          kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
+      options.connectionUri = settings.get(kPostgresqlDatabaseConnectionUri, std::string());
+      std::string secureKey = core::http::secure_cookie::getKey();
+      OBFUSCATE_KEY(secureKey);
+      options.secureKey = secureKey;
       *pOptions = options;
-      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host);
+
+      if (!options.connectionUri.empty() &&
+          (options.database != kDefaultDatabaseName ||
+           options.host != kDefaultDatabaseHost ||
+           options.user != kDefaultPostgresqlDatabaseUser ||
+           options.port != kDefaultPostgresqlDatabasePort ||
+           options.connectionTimeoutSeconds != kDefaultPostgresqlDatabaseConnectionTimeoutSeconds))
+      {
+         LOG_WARNING_MESSAGE("A " + std::string(kPostgresqlDatabaseConnectionUri) +
+                                " was specified for Postgres database connection"
+                                " in addition to other connection parameters. Only the " +
+                                std::string(kPostgresqlDatabaseConnectionUri) +
+                                " and password settings will be used.");
+      }
+
+      if (options.connectionUri.empty())
+         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host + ":" + options.port + "/" + options.database);
+      else
+         LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
 
       checkConfFilePermissions = true;
    }
