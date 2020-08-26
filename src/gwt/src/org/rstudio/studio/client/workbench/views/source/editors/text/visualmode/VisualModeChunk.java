@@ -499,7 +499,7 @@ public class VisualModeChunk
    private void createToolbar()
    {
       toolbar_ = new ChunkContextPanmirrorUi(target_, 
-            false, scope_, sync_);
+            scope_, editor_, false, sync_);
       host_.appendChild(toolbar_.getToolbar().getElement());
    }
    

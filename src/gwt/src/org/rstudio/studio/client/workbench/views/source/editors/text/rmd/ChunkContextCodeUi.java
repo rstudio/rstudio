@@ -24,7 +24,7 @@ public class ChunkContextCodeUi extends ChunkContextUi
    public ChunkContextCodeUi(TextEditingTarget target, boolean dark, Scope chunk,
                              PinnedLineWidget.Host host, int renderPass)
    {
-      super(target, dark, chunk);
+      super(target, chunk, target.getDocDisplay(), dark);
       
       host_ = host;
       renderPass_ = renderPass;
@@ -37,11 +37,17 @@ public class ChunkContextCodeUi extends ChunkContextUi
    }
 
    @Override
+   protected int getInnerRow()
+   {
+      return getRow();
+   }
+
+   @Override
    protected void createToolbar(int row)
    {
       super.createToolbar(row);
       lineWidget_ = new PinnedLineWidget(
-            ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
+            ChunkContextToolbar.LINE_WIDGET_TYPE, outerEditor_.getDocDisplay(), 
             toolbar_, row, null, host_);
    }
    
@@ -49,14 +55,14 @@ public class ChunkContextCodeUi extends ChunkContextUi
    public void runChunk()
    {
       super.runChunk();
-      target_.focus();
+      outerEditor_.focus();
    }
 
    @Override
    public void runPreviousChunks()
    {
       super.runPreviousChunks();
-      target_.focus();
+      outerEditor_.focus();
    }
 
    public LineWidget getLineWidget()

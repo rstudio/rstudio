@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
@@ -24,12 +25,10 @@ import com.google.gwt.dom.client.Style.Unit;
 
 public class ChunkContextPanmirrorUi extends ChunkContextUi
 {
-   public ChunkContextPanmirrorUi(TextEditingTarget target, 
-                                  boolean dark, 
-                                  Scope chunk,
-                                  VisualModeEditorSync sync)
+   public ChunkContextPanmirrorUi(TextEditingTarget outerEditor, Scope outerChunk,
+         DocDisplay innerEditor, boolean dark, VisualModeEditorSync sync)
    {
-      super(target, dark, chunk);
+      super(outerEditor, outerChunk, innerEditor, dark);
 
       sync_ = sync;
 
@@ -61,8 +60,15 @@ public class ChunkContextPanmirrorUi extends ChunkContextUi
    @Override
    protected int getRow()
    {
-      return chunk_.getPreamble().getRow();
+      return outerChunk_.getPreamble().getRow();
    }
-   
+
+   @Override
+   protected int getInnerRow()
+   {
+      // The inner (embedded) editor always has the chunk on the first row
+      return 0;
+   }
+
    private final VisualModeEditorSync sync_;
 }
