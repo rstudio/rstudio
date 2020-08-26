@@ -130,7 +130,7 @@ public class VisualModeEditingLocation
       buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
       
       // if the lengths differ then bail
-      if (outlineItems.size() != outlineItems.size())
+      if (outlineItems.size() != location.items.length)
          return;
       
       // iterate over the items until we find the active one (bail if our own

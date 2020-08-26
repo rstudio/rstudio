@@ -45,7 +45,9 @@ struct PostgresqlConnectionOptions
    std::string port;
    std::string user;
    std::string password;
+   std::string connectionUri;
    int connectionTimeoutSeconds;
+   std::string secureKey;
 };
 
 enum class Driver
@@ -290,6 +292,10 @@ private:
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
 };
+
+// validates connection options - used for test purposes only
+Error validateOptions(const ConnectionOptions& options,
+                      std::string* pConnectionStr);
 
 // connect to the database with the specified connection options
 Error connect(const ConnectionOptions& options,
