@@ -1398,7 +1398,8 @@ public class TextEditingTargetNotebook
    }
    
    /**
-    * Given a scope, migrate any notebook output associated with the scope.
+    * Given a scope, migrate any notebook output associated with the scope into
+    * visual mode.
     * 
     * @param scope The scope containing a code chunk
     * @param chunk The chunk in which to migrate the output
@@ -1634,6 +1635,7 @@ public class TextEditingTargetNotebook
             {
                visualOutputs_.get(chunkId).remove();
                visualOutputs_.remove(chunkId);
+               Debug.devlog("remove visual output for chunk " + chunkId);
             }
             if (codeOutputs_.containsKey(chunkId))
             {
@@ -1719,13 +1721,12 @@ public class TextEditingTargetNotebook
          output = new ChunkOutputPanmirrorUi(docUpdateSentinel_.getId(), 
                editingTarget_.getVisualMode(), def, null, null);
          visualOutputs_.put(def.getChunkId(), output);
-         Debug.devlog("create visual mode chunk output at row " + def.getRow());
+         Debug.devlog("create visual mode chunk output for chunk " + def.getChunkId());
       }
       else
       {
          output = new ChunkOutputCodeUi(docUpdateSentinel_.getId(), docDisplay_,
                                   def, this, null);
-         Debug.devlog("create code mode chunk output at row " + def.getRow());
          codeOutputs_.put(def.getChunkId(), output);
       }
    }

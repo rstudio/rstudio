@@ -138,6 +138,11 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    @Override
    public void remove()
    {
+      if (chunk_ != null)
+      {
+         chunk_.setDefinition(null);
+      }
+
       detach();
    }
 

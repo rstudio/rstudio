@@ -464,8 +464,6 @@ public class DocUpdateSentinel
       String oldFoldSpec = sourceDoc_.getFoldSpec();
 
       final JsArray<ChunkDefinition> newChunkDefs = chunkDefProvider_.getChunkDefs();
-      Debug.devlog("write chunk defs");
-      Debug.logObject(newChunkDefs);
       JsArray<ChunkDefinition> oldChunkDefs =
             sourceDoc_.getNotebookDoc().getChunkDefs();
 

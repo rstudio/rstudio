@@ -133,6 +133,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    public void runChunk()
    {
       target_.executeChunk(chunkPosition());
+      target_.focus();
    }
 
    @Override
@@ -235,7 +236,6 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       String line = target_.getDocDisplay().getLine(row);
       return line.contains("r setup");
    }
-   
 
    private String getEngine(int row)
    {
