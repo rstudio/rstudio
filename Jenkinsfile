@@ -29,7 +29,7 @@ def compile_package(os, type, flavor, variant) {
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
-  env = "${env} MAKEFLAGS=-j3"
+  env = "${env} MAKEFLAGS=-j2"
 
   // perform the compilation
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."

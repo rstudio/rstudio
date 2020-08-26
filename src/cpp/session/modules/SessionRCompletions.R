@@ -2203,9 +2203,9 @@ assign(x = ".rs.acCompletionTypes",
 
       if (is.null(path) && isRmd)
       {
-         # for R Markdown documents without an explicit working dir, use the
-         # base directory of the file
-         path <- suppressWarnings(.rs.normalizePath(dirname(filePath)))
+         # for R Markdown documents without an explicit working dir,
+         # use preferences instead
+         path <- .rs.markdown.resolveCompletionRoot(filePath)
       }
 
       if (is.null(path))
