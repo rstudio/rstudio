@@ -77,6 +77,7 @@ namespace prefs {
 #define kErrorHandlerTypeNotebook "notebook"
 #define kErrorHandlerTypeCustom "custom"
 #define kUsingMingwGcc49 "using_mingw_gcc49"
+#define kVisualModeConfirmed "visual_mode_confirmed"
 #define kBibliographyDefaultType "bibliography_default_type"
 #define kBibliographyDefaultTypeBib "bib"
 #define kBibliographyDefaultTypeYaml "yaml"
@@ -189,6 +190,12 @@ public:
     */
    bool usingMingwGcc49();
    core::Error setUsingMingwGcc49(bool val);
+
+   /**
+    * Whether or not the use of Visual Mode has been confirmed.
+    */
+   bool visualModeConfirmed();
+   core::Error setVisualModeConfirmed(bool val);
 
    /**
     * The default type for new bibliographies.
