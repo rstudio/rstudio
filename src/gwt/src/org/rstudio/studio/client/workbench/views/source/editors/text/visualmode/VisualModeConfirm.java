@@ -33,9 +33,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-
-// TOOD: test the various state permutations
-
 public class VisualModeConfirm
 {
    public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
