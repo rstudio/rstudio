@@ -23,13 +23,14 @@ import { WidgetProps } from "../../api/widgets/react";
 import { BibliographyManager, BibliographySource } from "../../api/bibliography/bibliography";
 import { EditorUI } from "../../api/ui";
 import { SelectTreeNode, containsChild, SelectTree } from "../../api/widgets/select_tree";
-import { TagInput } from "../../api/widgets/tag_input";
+import { TagInput, TagItem } from "../../api/widgets/tag_input";
 
 import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
 import { doiPanel } from "./panels/insert_citation-panel-doi";
 
 import './insert_citation-picker.css';
 import { EditorServer } from "../../api/server";
+import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
@@ -163,9 +164,16 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     setSourcesToAdd(filteredSources);
   };
 
-  const deleteTag = (tag: string) => {
-    const filteredSources = sourcesToAdd.filter(source => forDisplay(source.id) !== tag);
+  const deleteTag = (tag: TagItem) => {
+    const filteredSources = sourcesToAdd.filter(source => source.id !== tag.key);
     setSourcesToAdd(filteredSources);
+  };
+
+  const tagEdited = (key: string, text: string) => {
+    const targetSource = sourcesToAdd.find(source => source.id === key);
+    if (targetSource) {
+      targetSource.id = text;
+    }
   };
 
   return (
@@ -174,9 +182,11 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       <div className='pm-cite-panel-cite-selection'>
         <div className='pm-cite-panel-cite-selection-sources pm-block-border-color pm-background-color'>
           <SelectTree
+            height={panelHeight}
             nodes={treeSourceData}
             selectedNode={selectedNode}
-            nodeSelected={nodeSelected} />
+            nodeSelected={nodeSelected}
+          />
         </div>
 
         <div className='pm-cite-panel-cite-selection-items pm-block-border-color pm-background-color'>
@@ -185,15 +195,18 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       </div>
       <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
         <TagInput
-          tags={sourcesToAdd.map(source => forDisplay(source.id))}
+          tags={sourcesToAdd.map(source => ({
+            key: source.id,
+            displayText: source.id,
+            displayPrefix: '@',
+            isEditable: source.providerKey !== kLocalBiliographyProviderKey,
+          }))}
           deleteTag={deleteTag}
+          tagEdited={tagEdited}
+          ui={props.ui}
           style={tagStyle} />
       </div>
     </div >
   );
 };
-
-function forDisplay(source: string) {
-  return `@${source}`;
-}
 

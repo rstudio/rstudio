@@ -84,7 +84,7 @@ export async function showInsertCitationPopup(
     });
 
   if (performInsert && sources.length > 0) {
-    window.alert('Inserting ' + sources.length + ' citations');
+    window.alert('Inserting ' + sources.length + ' citations: ' + sources.map(source => source.id).join(','));
   }
 }
 

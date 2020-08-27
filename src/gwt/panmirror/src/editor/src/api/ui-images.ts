@@ -126,4 +126,8 @@ export interface EditorUIImages {
     doi?: string;
     crossref?: string;
   };
+  widgets?: {
+    tag_delete?: string;
+    tag_edit?: string;
+  };
 }

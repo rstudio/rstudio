@@ -126,6 +126,9 @@ import zoteroFolderImage from './images/citations/insert/zotero-folder.png';
 import doiImage from './images/citations/insert/doi.png';
 import crossRefImage from './images/citations/insert/crossref.png';
 
+import tagDelete from './images/widgets/tag-delete.png';
+import tagEdit from './images/widgets/tag-edit.png';
+
 export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
@@ -240,5 +243,9 @@ export function defaultEditorUIImages(): EditorUIImages {
       doi: doiImage,
       crossref: crossRefImage
     },
+    widgets: {
+      tag_delete: tagDelete,
+      tag_edit: tagEdit
+    }
   };
 }
