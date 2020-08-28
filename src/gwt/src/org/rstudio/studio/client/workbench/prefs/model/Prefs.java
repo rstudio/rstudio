@@ -35,6 +35,7 @@ public abstract class Prefs
       // get accessor for prefs -- this automatically checks the project
       // prefs, then the global prefs, then returns the default. this should
       // be called by user code that wants to depend on prefs
+      boolean hasValue();
       T getValue();
       
       // explicit get and set of global pref values -- these should be used by
@@ -124,6 +125,18 @@ public abstract class Prefs
                break;
             }
          }
+      }
+      
+      public boolean hasValue()
+      {
+         for (PrefLayer layer: JsUtil.asReverseIterable(layers_))
+         {
+            if (layer.getValues().hasKey(name_))
+            {
+               return true;
+            }
+         }
+         return false;
       }
       
       public T getValue()

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.user.client.Command;
@@ -61,8 +62,7 @@ public class VisualModeConfirm
    {
       
       // confirmation also updates state
-      Operation doConfirm = () -> {
-         userState_.visualModeConfirmed().setGlobalValue(true);
+      Operation doConfirm = () -> {    
          docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED, true);
          onConfirmed.execute();
       };
@@ -79,7 +79,9 @@ public class VisualModeConfirm
                "Line Wrapping", 
                "Whoa their pardner, fixup that line wrapping?", 
                false, 
-               doConfirm, 
+               () -> { 
+                  doConfirm.execute(); 
+               }, 
                () -> { 
                   onCancelled.execute(); 
                }, 
@@ -87,19 +89,23 @@ public class VisualModeConfirm
                "Fix", "Don't Fix", true
                );
          }
-         else if (!userState_.visualModeConfirmed().getValue() &&
-                  !hasBeenEditedInVisualMode())
+         else if (!userPrefs_.visualMarkdownEditingIsDefault().getValue() &&
+                  !userState_.visualModeConfirmed().getValue())
          {
-            globalDisplay_.showYesNoMessage(
-               MessageDisplay.MSG_QUESTION,
-               "Visual Mode", 
-               "Are you sure you want to switch to Visual Mode?", 
-               false, 
-               doConfirm, 
-               () -> { onCancelled.execute(); }, 
-               null,
-               "Switch", "Don't Switch", true
+            boolean dontShowAgain = !userState_.visualModeConfirmed().hasValue();
+            VisualModeConfirmDialog dialog = new VisualModeConfirmDialog(
+               dontShowAgain,
+               (value) -> {
+                  if (value)
+                  {
+                    userState_.visualModeConfirmed().setGlobalValue(true);
+                    userState_.writeState();
+                  }
+                  doConfirm.execute();
+               }, 
+               () -> { onCancelled.execute(); }
             );
+            dialog.showModal();
          }
          else
          {
@@ -134,11 +140,6 @@ public class VisualModeConfirm
       {
          return false;
       }
-   }
-   
-   private boolean hasBeenEditedInVisualMode()
-   {
-      return docUpdateSentinel_.hasProperty(TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED);
    }
    
    private final DocUpdateSentinel docUpdateSentinel_;
