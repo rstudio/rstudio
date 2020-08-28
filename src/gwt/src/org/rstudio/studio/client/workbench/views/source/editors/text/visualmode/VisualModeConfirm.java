@@ -92,14 +92,12 @@ public class VisualModeConfirm
          else if (!userPrefs_.visualMarkdownEditingIsDefault().getValue() &&
                   !userState_.visualModeConfirmed().getValue())
          {
-            boolean dontShowAgain = !userState_.visualModeConfirmed().hasValue();
             VisualModeConfirmDialog dialog = new VisualModeConfirmDialog(
-               dontShowAgain,
                (value) -> {
                   if (value)
                   {
-                    userState_.visualModeConfirmed().setGlobalValue(true);
-                    userState_.writeState();
+                     userState_.visualModeConfirmed().setGlobalValue(true);
+                     userState_.writeState(); 
                   }
                   doConfirm.execute();
                }, 

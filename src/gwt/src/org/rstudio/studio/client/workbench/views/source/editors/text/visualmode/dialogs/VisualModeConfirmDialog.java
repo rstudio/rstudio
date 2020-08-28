@@ -34,8 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class VisualModeConfirmDialog extends ModalDialog<Boolean>
 {
-   public VisualModeConfirmDialog(boolean initialValue,
-                                  OperationWithInput<Boolean> onConfirm,
+   public VisualModeConfirmDialog(OperationWithInput<Boolean> onConfirm,
                                   Operation onCancel)
    {
       super("Switch to Visual Mode", 
@@ -48,7 +47,7 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
       setOkButtonCaption("Use Visual Mode");
       
       chkDontShowAgain_ = new CheckBox("Don't show this message again");
-      chkDontShowAgain_.setValue(initialValue);
+      chkDontShowAgain_.setValue(true);
       addLeftWidget(chkDontShowAgain_);
    }
    
