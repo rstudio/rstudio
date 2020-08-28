@@ -16,9 +16,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs;
 
-// TODO: rstudio link for Markdown Output
-// TODO: check box needs to start out checked
-// TODO: centering of dialog
 
 import com.google.gwt.aria.client.Roles;
 
@@ -71,6 +68,19 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
    protected boolean validate(Boolean result)
    {
       return true;  
+   }
+   
+   public static void ensureStylesInjected()
+   {
+      try
+      {
+         VisualModeConfirmDialog dlg = new VisualModeConfirmDialog((value) -> {}, () -> {});
+         dlg.removeFromParent();
+      }
+      catch(Exception e)
+      {
+      }
+      
    }
    
    interface Binder extends UiBinder<Widget, VisualModeConfirmDialog> {}
