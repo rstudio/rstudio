@@ -33,11 +33,14 @@
    </p>
    
    <p>
-     <rc:HelpLink caption="Learn more about R Markdown visual editing mode" link="visual_markdown_editing"></rc:HelpLink> 
+     <rc:HelpLink caption="Learn more about R Markdown visual editing mode" 
+                  link="visual_markdown_editing"
+                  withVersionInfo="false">
+     </rc:HelpLink> 
    </p>  
      
    <p styleName="{style.lastParagraph}">Visual mode will re-write your markdown source code using Pandoc's default markdown writer.
-   Click here to learn more about <a href="https://rstudio.github.io/visual-markdown-editing/#/markdown?id=markdown-output">
+   Click here to learn more about <a href="https://rstudio.github.io/visual-markdown-editing/#/markdown?id=markdown-output" target="_blank">
    markdown output</a> from visual mode. 
    </p>
    
