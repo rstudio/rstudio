@@ -139,7 +139,7 @@ function toBibliographyEntry(csl: CSL | undefined, bibliographyManager: Bibliogr
     return [
       {
         ...csl,
-        id: csl.id || suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl),
+        id: suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl),
         providerKey: 'doi',
         collectionKeys: [],
       }
