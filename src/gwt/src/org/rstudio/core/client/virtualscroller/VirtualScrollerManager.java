@@ -49,8 +49,16 @@ public class VirtualScrollerManager
 
    public static void append(Element parent, Element content)
    {
-      if (!initialized_ || parent == null)
+      // wholly degenerate case
+      if (parent == null) {
          return;
+      }
+
+      // ensure that the element is added to be turned into a bucket later
+      if (!initialized_) {
+         parent.appendChild(content);
+         return;
+      }
 
       parent = getVirtualScrollerAncestor(parent);
 
@@ -81,6 +89,13 @@ public class VirtualScrollerManager
       scrollers_.get(parent.getAttribute(scrollerAttribute_)).clear();
    }
 
+   public static Element getCurBucket(Element parent)
+   {
+      if (scrollerForElement(parent) == null) return null;
+
+      return scrollerForElement(parent).getCurBucket();
+   }
+
    public static VirtualScrollerNative scrollerForElement(Element parent)
    {
       if (!initialized_ || parent == null) return null;
@@ -93,7 +108,7 @@ public class VirtualScrollerManager
       // Unfortunately we can't trust the calling code to always pass us the top level container
       // element. There are cases where the VirtualConsole will initialize itself multiple times
       // and pass in elements that are not direct descendants of the container.
-      Element ancestor = parent.getParentElement();
+      Element ancestor = parent;
       while (ancestor != null)
       {
          if (ancestor.getAttribute(scrollerAttribute_).length() > 0)

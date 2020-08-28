@@ -27,6 +27,8 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
+import static elemental2.dom.DomGlobal.document;
+
 /**
  * Displays R Console output to user, with special behaviors for regular output
  * vs. error output.
@@ -109,17 +111,33 @@ public class ConsoleOutputWriter
          virtualConsole_ = vcFactory_.create(trailing);
       }
 
-      int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
+      // set the appendTarget to the VirtualConsole bucket if possible
+      Element appendTarget = virtualConsole_.getParent();
+
+      // we never want to count lines based on the trailing element so grab its parent, if possible
+      // otherwise just grab the outElement
+      if (appendTarget.getAttribute("tabindex").equals("-1") && appendTarget.getTagName().toLowerCase().equals("span"))
+      {
+         if (appendTarget.getParentElement() != null)
+            appendTarget = appendTarget.getParentElement();
+         else {
+            appendTarget = outEl;
+         }
+      }
+
+      int oldLineCount = DomUtils.countLines(appendTarget, true);
       virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
-      int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      lines_ += newLineCount - oldLineCount;
+      int newLineCount = DomUtils.countLines(appendTarget, true);
+
+      if (!virtualConsole_.isLimitConsoleVisible())
+         lines_ += newLineCount - oldLineCount;
 
       return ignoreLineCount || !trimExcess();
    }
 
    public boolean trimExcess()
    {
-      if (maxLines_ <= 0)
+      if (maxLines_ <= 0 || virtualConsole_ != null && virtualConsole_.isLimitConsoleVisible())
          return false;  // No limit in effect
 
       int linesToTrim = lines_ - maxLines_;
@@ -173,11 +191,17 @@ public class ConsoleOutputWriter
 
    public void focusEnd()
    {
-      Node lastChild = output_.getElement().getLastChild();
-      if (lastChild == null)
-         return;
-      Element last = lastChild.cast();
-      last.focus();
+      elemental2.dom.Element ele = document.querySelector("#rstudio_console_input > textarea");
+      if (ele != null)
+         ele.focus();
+      else
+      {
+         Node lastChild = output_.getElement().getLastChild();
+         if (lastChild == null)
+            return;
+         Element last = lastChild.cast();
+         last.focus();
+      }
    }
 
    private int maxLines_ = -1;

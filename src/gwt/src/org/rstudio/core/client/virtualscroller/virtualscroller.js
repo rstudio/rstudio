@@ -47,7 +47,6 @@ var VirtualScroller;
 
       self._createAndAddNewBucket = self._createAndAddNewBucket.bind(self);
       self._debug = self._debug.bind(self);
-      self._getCurBucket = self._getCurBucket.bind(self);
       self._hideBucket = self._hideBucket.bind(self);
       self._isAtBottomBucket = self._isAtBottomBucket.bind(self);
       self._isAtTopBucket = self._isAtTopBucket.bind(self);
@@ -58,6 +57,7 @@ var VirtualScroller;
       self._showBucket = self._showBucket.bind(self);
       self.append = self.append.bind(self);
       self.clear = self.clear.bind(self);
+      self.getCurBucket = self.getCurBucket.bind(self);
       self.setScrollParent = self.setScrollParent.bind(self);
 
       // set up the initial bucket
@@ -251,10 +251,10 @@ var VirtualScroller;
     },
 
     append: function (element) {
-      if (this._getCurBucket().childElementCount >= this._BUCKET_MAX_SIZE) {
+      if (this.getCurBucket().childElementCount >= this._BUCKET_MAX_SIZE) {
         this._createAndAddNewBucket();
       }
-      this._getCurBucket().appendChild(element);
+      this.getCurBucket().appendChild(element);
       this._jumpToBottom();
     },
 
@@ -286,7 +286,7 @@ var VirtualScroller;
       return newBucket;
     },
 
-    _getCurBucket: function() {
+    getCurBucket: function() {
       // there should always be a bucket
       if (this.buckets.length < 1)
         return this._createAndAddNewBucket();
