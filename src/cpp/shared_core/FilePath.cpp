@@ -106,6 +106,7 @@ MimeType s_mimeTypes[] =
       { "sql",          "text/x-sql" },
       { "stan",         "text/x-stan" },
       { "clj",          "text/x-clojure" },
+      { "ts",           "text/x-typescript"},
 
       // other types we are likely to serve
       { "xml",          "text/xml" },
