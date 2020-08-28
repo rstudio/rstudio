@@ -67,30 +67,34 @@ public class VisualModeConfirm
          onConfirmed.execute();
       };
       
-   
       if (userSwitchToVisualModePending_)
       {
          userSwitchToVisualModePending_ = false;
                   
-         if (requiresLineWrappingPrompt(result.line_wrapping))
-         {
-            globalDisplay_.showYesNoMessage(
-               MessageDisplay.MSG_QUESTION,
-               "Line Wrapping", 
-               "Whoa their pardner, fixup that line wrapping?", 
-               false, 
-               () -> { 
-                  doConfirm.execute(); 
-               }, 
-               () -> { 
-                  onCancelled.execute(); 
-               }, 
-               null,
-               "Fix", "Don't Fix", true
+         // check if we require a line wrapping prompt and if setup an operation to do so
+         Operation lineWrapCheck = requiresLineWrappingPrompt(result.line_wrapping) 
+            ? ()-> {
+               globalDisplay_.showYesNoMessage(
+                  MessageDisplay.MSG_QUESTION,
+                  "Line Wrapping", 
+                  "Whoa their pardner, fixup that line wrapping?", 
+                  false, 
+                  () -> { 
+                     doConfirm.execute(); 
+                  }, 
+                  () -> { 
+                     onCancelled.execute(); 
+                  }, 
+                  null,
+                  "Fix", "Don't Fix", true
                );
-         }
-         else if (!userPrefs_.visualMarkdownEditingIsDefault().getValue() &&
-                  !userState_.visualModeConfirmed().getValue())
+            }
+            : doConfirm
+         ;
+         
+         // confirm visual mode
+         if (!userPrefs_.visualMarkdownEditingIsDefault().getValue() &&
+             !userState_.visualModeConfirmed().getValue())
          {
             VisualModeConfirmDialog dialog = new VisualModeConfirmDialog(
                (value) -> {
@@ -99,7 +103,7 @@ public class VisualModeConfirm
                      userState_.visualModeConfirmed().setGlobalValue(true);
                      userState_.writeState(); 
                   }
-                  doConfirm.execute();
+                  lineWrapCheck.execute();
                }, 
                () -> { onCancelled.execute(); }
             );
@@ -107,7 +111,7 @@ public class VisualModeConfirm
          }
          else
          {
-            doConfirm.execute();
+            lineWrapCheck.execute();
          }
       }
       else
