@@ -20,7 +20,7 @@ import ReactDOM from 'react-dom';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
-import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
+import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPicker } from './insert_citation-picker';
 import { EditorServer } from '../../api/server';
@@ -37,6 +37,12 @@ export async function showInsertCitationPopup(
   let sources: BibliographySource[] = [];
   const onSourceChanged = (srcs: BibliographySource[]) => {
     sources = srcs;
+  };
+
+  // The bibliography into which entries should be written
+  let bibliography: BibliographyFile | undefined;
+  const onBibliographyChanged = (bibliographyFile: BibliographyFile) => {
+    bibliography = bibliographyFile;
   };
 
   // Render the element into the window
@@ -67,6 +73,7 @@ export async function showInsertCitationPopup(
           bibliographyManager={bibliographyManager}
           server={server}
           onSourceChanged={onSourceChanged}
+          onBibliographyChanged={onBibliographyChanged}
           height={height}
           width={width} />
         , container);
@@ -84,7 +91,7 @@ export async function showInsertCitationPopup(
     });
 
   if (performInsert && sources.length > 0) {
-    window.alert('Inserting ' + sources.length + ' citations: ' + sources.map(source => source.id).join(','));
+    window.alert('Inserting ' + sources.length + ' citations: ' + sources.map(source => source.id).join(',') + " into " + bibliography?.fullPath);
   }
 }
 

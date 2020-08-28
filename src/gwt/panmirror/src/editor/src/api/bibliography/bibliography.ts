@@ -153,7 +153,7 @@ export class BibliographyManager {
     return bibliographyFiles.filter(bibFile => bibFile.writable).length > 0;
   }
 
-  public writableBibliographyFiles(doc: ProsemirrorNode, ui: EditorUI) {
+  public writableBibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     return this.bibliographyFiles(doc, ui).filter(bibFile => bibFile.writable);
   }
 

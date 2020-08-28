@@ -20,7 +20,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { WidgetProps } from "../../api/widgets/react";
 
-import { BibliographyManager, BibliographySource } from "../../api/bibliography/bibliography";
+import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
 import { EditorUI } from "../../api/ui";
 import { SelectTreeNode, containsChild, SelectTree } from "../../api/widgets/select_tree";
 import { TagInput, TagItem } from "../../api/widgets/tag_input";
@@ -31,6 +31,7 @@ import { doiPanel } from "./panels/insert_citation-panel-doi";
 import './insert_citation-picker.css';
 import { EditorServer } from "../../api/server";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
+import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
@@ -64,6 +65,7 @@ interface InsertCitationPickerProps extends WidgetProps {
   bibliographyManager: BibliographyManager;
   server: EditorServer;
   onSourceChanged: (sources: BibliographySource[]) => void;
+  onBibliographyChanged: (bibliographyFile: BibliographyFile) => void;
 }
 
 export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props => {
@@ -130,12 +132,19 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     ...props.style,
   };
 
-  // Size the tag element and main panel
-  const tagHeight = 60;
+  // Size the tag element, bibliography picker, and main panel
+  const tagHeight = 50;
   const tagStyle: React.CSSProperties = {
-    height: `${tagHeight}px`
+    minHeight: `${tagHeight}px`
   };
-  const panelHeight = props.height - tagHeight;
+  const bibliographyHeight = 40;
+  const biblioStyle: React.CSSProperties = {
+    minHeight: `${bibliographyHeight}px`,
+  };
+
+  const buttonHeight = 30;
+
+  const panelHeight = props.height - tagHeight - bibliographyHeight - buttonHeight;
 
 
   // Load the panel that is displayed for the selected node
@@ -176,6 +185,10 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     }
   };
 
+  const bibliographyFileChanged = (biblographyFile: BibliographyFile) => {
+    props.onBibliographyChanged(biblographyFile);
+  };
+
   return (
     <div className='pm-cite-panel-container' style={style}>
 
@@ -193,7 +206,10 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
           {panelToDisplay}
         </div>
       </div>
-      <div className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'>
+      <div
+        className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'
+        style={tagStyle}
+      >
         <TagInput
           tags={sourcesToAdd.map(source => ({
             key: source.id,
@@ -206,7 +222,14 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
           ui={props.ui}
           style={tagStyle} />
       </div>
-    </div >
+      <div className='pm-cite-panel-select-bibliography'>
+        <CitationBibliographyPicker
+          bibliographyFiles={props.bibliographyManager.writableBibliographyFiles(props.doc, props.ui)}
+          biblographyFileChanged={bibliographyFileChanged}
+          style={biblioStyle}
+          ui={props.ui} />
+      </div>
+    </div>
   );
 };
 
