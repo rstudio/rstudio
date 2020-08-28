@@ -67,23 +67,33 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                 server.pandoc,
               );
 
-              // Insert the cite mark and text
-              const citeMark = schema.marks.cite.create();
-              const cite = schema.text(`[]`, [citeMark]);
-              tr.replaceSelectionWith(cite, false);
+              // The starting location of this transaction
+              const start = tr.selection.from;
 
-              // move the selection into the cite mark
+              // Insert the cite mark and text
+              const wrapperText = schema.text(`[]`, []);
+              tr.insert(tr.selection.from, wrapperText);
+
+              // move the selection into the wrapper
               setTextSelection(tr.selection.from - 1)(tr);
 
               // insert the CiteId marks and text
               sources.forEach((source, i) => {
-                const citeIdMark = schema.marks.cite_id.create(citeMark);
+                const citeIdMark = schema.marks.cite_id.create();
                 const citeIdText = schema.text(`@${source.id}`, [citeIdMark]);
                 tr.insert(tr.selection.from, citeIdText);
                 if (sources.length > 1) {
                   tr.insert(tr.selection.from, schema.text(i !== sources.length - 1 ? '; ' : ';', []));
                 }
               });
+
+              // Enclose wrapper in the cite mark
+              const endOfWrapper = tr.selection.from + 1;
+              const citeMark = schema.marks.cite.create();
+              tr.addMark(start, endOfWrapper, citeMark);
+
+              // Move selection to the end of the inserted content
+              setTextSelection(endOfWrapper)(tr);
 
               // commit the transaction
               dispatch(tr);
