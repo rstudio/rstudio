@@ -37,7 +37,7 @@
    </p>  
      
    <p styleName="{style.lastParagraph}">Visual mode will re-write your markdown source code using Pandoc's default markdown writer.
-   Click here to learn more about <a href="https://rstudio.github.io/visual-markdown-editing/#/markdown?id=markdown-output">
+   Click here to learn more about <a href="https://www.rstudio.org/links/visual_markdown_editing-markdown-output">
    markdown output</a> from visual mode. 
    </p>
    
