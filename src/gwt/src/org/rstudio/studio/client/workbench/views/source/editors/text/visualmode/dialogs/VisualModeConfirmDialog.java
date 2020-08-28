@@ -1,5 +1,5 @@
 /*
- * PanimrrorEditRawDialog.java
+ * VisualModeConfirmDialog.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -40,6 +40,7 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
             onCancel);
       
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      mainWidget_.addStyleName(VisualModeDialogsResources.INSTANCE.styles().confirmDialog());
       
       setOkButtonCaption("Use Visual Mode");
       

@@ -6,10 +6,6 @@
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
           
-      .confirmDialog {
-         width: 450px;
-      }
-      
       .confirmDialog a:visited {
 	      color: #00a;
 	   }
@@ -17,11 +13,10 @@
       .lastParagraph {
 	      margin-bottom: 12px;
 	   }
-       
      
    </ui:style>
    
-   <g:HTMLPanel styleName="{style.confirmDialog}">
+   <g:HTMLPanel>
    
    <g:Label>You are activating R Markdown visual editing mode. 
    This mode enables you to compose markdown using a familiar word processor
