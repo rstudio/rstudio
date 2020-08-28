@@ -35,22 +35,30 @@ interface BibliographyType {
   displayName: string;
 }
 
+function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
+  return {
+    displayPath: path,
+    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+    isProject: false,
+    writable: true
+  };
+}
+
 export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps> = props => {
 
-
-  const [createBibText, setCreateBibText] = React.useState<string>('references.yaml');
+  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile('references.yaml', props.ui));
+  const [createFileText, setCreateFileText] = React.useState<string>('references.bib');
 
   React.useEffect(() => {
-    props.biblographyFileChanged({
-      displayPath: createBibText,
-      fullPath: joinPaths(props.ui.context.getDefaultResourceDir(), createBibText),
-      isProject: false,
-      writable: true
-    });
-  }, [createBibText]);
+    props.biblographyFileChanged(bibliographyFile);
+  }, [bibliographyFile]);
 
 
   const bibliographyTypes: BibliographyType[] = [
+    {
+      displayName: props.ui.context.translateText('BibLaTeX'),
+      extension: 'bib',
+    },
     {
       displayName: props.ui.context.translateText('CSL-YAML'),
       extension: 'yaml',
@@ -59,10 +67,6 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
       displayName: props.ui.context.translateText('CSL-JSON'),
       extension: 'json',
     },
-    {
-      displayName: props.ui.context.translateText('BibLaTeX'),
-      extension: 'bib',
-    }
   ];
 
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -72,13 +76,16 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
 
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
-    setCreateBibText(text);
+    setCreateFileText(text);
+    setBibliographyFile(newBibliographyFile(text, props.ui));
   };
 
   const onTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
     const type = bibliographyTypes[index];
-    setCreateBibText(changeExtension(createBibText, type.extension));
+    const newPath = changeExtension(createFileText, type.extension);
+    setCreateFileText(newPath);
+    setBibliographyFile(newBibliographyFile(newPath, props.ui));
   };
 
   return (
@@ -97,9 +104,9 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
               <TextInput
                 width='100'
                 tabIndex={0}
-                value={createBibText}
                 className='pm-citation-bibliography-picker-textbox pm-block-border-color'
                 placeholder={props.ui.context.translateText('Bibligraphy File Name')}
+                value={createFileText}
                 onChange={onTextChange}
               />
 

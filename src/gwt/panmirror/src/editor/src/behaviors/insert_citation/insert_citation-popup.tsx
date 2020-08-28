@@ -26,12 +26,17 @@ import { InsertCitationPicker } from './insert_citation-picker';
 import { EditorServer } from '../../api/server';
 
 
+export interface InsertCitationResult {
+  sources: BibliographySource[];
+  bibliography: BibliographyFile;
+}
+
 export async function showInsertCitationPopup(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
-) {
+): Promise<InsertCitationResult | undefined> {
 
   // The citations that the user would like to insert
   let sources: BibliographySource[] = [];
@@ -90,8 +95,13 @@ export async function showInsertCitationPopup(
       return null;
     });
 
-  if (performInsert && sources.length > 0) {
-    window.alert('Inserting ' + sources.length + ' citations: ' + sources.map(source => source.id).join(',') + " into " + bibliography?.fullPath);
+  if (performInsert && sources.length > 0 && bibliography) {
+    return {
+      sources,
+      bibliography
+    };
+  } else {
+    return undefined;
   }
 }
 

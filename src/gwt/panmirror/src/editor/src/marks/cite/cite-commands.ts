@@ -27,6 +27,7 @@ import { showInsertCitationPopup } from '../../behaviors/insert_citation/insert_
 import { EditorEvents } from '../../api/events';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
+import { ensureSourcesInBibliography } from './cite';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, events: EditorEvents, bibliographyManager: BibliographyManager, server: EditorServer) {
@@ -34,25 +35,60 @@ export class InsertCitationCommand extends ProsemirrorCommand {
       EditorCommandId.Citation,
       ['Shift-Mod-F8'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
         // enable/disable command
         const schema = state.schema;
         if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.cite)(state)) {
           return false;
         }
 
-        const useNewInsert = true;
+        if (dispatch && view) {
+          showInsertCitationPopup(ui, state.doc, bibliographyManager, server).then(async result => {
+            if (result) {
 
-        if (useNewInsert && dispatch && view) {
-          showInsertCitationPopup(ui, state.doc, bibliographyManager, server);
-        } else if (dispatch) {
-          const tr = state.tr;
-          const citeMark = schema.marks.cite.create();
-          const cite = schema.text(`[@]`, [citeMark]);
-          tr.replaceSelectionWith(cite, false);
-          const citeIdMark = schema.marks.cite_id.create();
-          tr.addMark(state.selection.from + 1, state.selection.from + 2, citeIdMark);
-          setTextSelection(state.selection.from + 2)(tr);
-          dispatch(tr);
+              // The sources that we should insert
+              const sources = result.sources;
+
+              // The bibliography that we should insert sources into (if needed)
+              const bibliography = result.bibliography;
+
+              // The transaction that will hold all the changes we'll make
+              const tr = state.tr;
+
+              // First, be sure that we add any sources to the bibliography
+              // and that the bibliography is properly configured
+              await ensureSourcesInBibliography(
+                tr,
+                sources,
+                bibliography,
+                bibliographyManager,
+                view,
+                ui,
+                server.pandoc,
+              );
+
+              // Insert the cite mark and text
+              const citeMark = schema.marks.cite.create();
+              const cite = schema.text(`[]`, [citeMark]);
+              tr.replaceSelectionWith(cite, false);
+
+              // move the selection into the cite mark
+              setTextSelection(tr.selection.from - 1)(tr);
+
+              // insert the CiteId marks and text
+              sources.forEach((source, i) => {
+                const citeIdMark = schema.marks.cite_id.create(citeMark);
+                const citeIdText = schema.text(`@${source.id}`, [citeIdMark]);
+                tr.insert(tr.selection.from, citeIdText);
+                if (sources.length > 1) {
+                  tr.insert(tr.selection.from, schema.text(i !== sources.length - 1 ? '; ' : ';', []));
+                }
+              });
+
+              // commit the transaction
+              dispatch(tr);
+            }
+          });
         }
         return true;
       },

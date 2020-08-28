@@ -291,5 +291,63 @@ export class BibliographyManager {
     this.fuse = new Fuse(bibSources, options, index);
   }
 
+  // Ensures that the sources are in the specified bibliography file
+// and ensures that the bibliography file is properly referenced (either) 
+// as a project bibliography or inline in the document YAML
+export async function ensureSourcesInBibliography(
+    tr: Transaction,
+    sources: BibliographySource[],
+    bibliographyFile: BibliographyFile,
+    bibManager: BibliographyManager,
+    view: EditorView,
+    ui: EditorUI,
+    server: PandocServer,
+) {
+  // Write entry to a bibliography file if it isn't already present
+  await bibManager.load(ui, view.state.doc);
+
+  // See if there is a warning for the selected provider. If there is, we may need to surface
+  // that to the user. If there is no provider specified, no need to care about warnings.
+  const providers = uniqBy(sources, (source: BibliographySource) => source.providerKey).map(source => source.providerKey);
+
+  // Find any providers that have warnings
+  const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));
+
+  // If there is a warning message and we're exporting to BibLaTeX, show the warning
+  // message to the user and confirm that they'd like to proceed. This would ideally
+  // know more about the warning type and not have this filter here (e.g. it would just
+  // always show the warning)
+  let proceedWithInsert = true;
+  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && isBibLaTeX(bibliographyFile.fullPath)) {
+    const results = await Promise.all<boolean>(providersWithWarnings.map(async withWarning => {
+      const warning = bibManager.warningForProvider(withWarning);
+      if (warning) {
+        return await ui.dialogs.yesNoMessage(warning, "Warning", kAlertTypeWarning, ui.context.translateText("Insert Citation Anyway"), ui.context.translateText("Cancel"));
+      } else {
+        return true;
+      }
+    }));
+    proceedWithInsert = results.every(result => result);
+  }
+
+  if (proceedWithInsert) {
+    await Promise.all(
+      sources.map(async (source, i) => {
+        if (source.id) {
+          // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
+          const cslToWrite = sanitizeForCiteproc(source);
+
+          if (!bibManager.findIdInLocalBibliography(source.id)) {
+            const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, source.id, source, source.providerKey);
+            await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
+          }
+
+          if (!bibliographyFile.isProject) {
+            ensureBibliographyFileForDoc(tr, bibliographyFile.displayPath, ui);
+          }
+        }
+      }));
+  }
+}
 }
 
