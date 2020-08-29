@@ -44,15 +44,10 @@ function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
   };
 }
 
+
+
+
 export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps> = props => {
-
-  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile('references.yaml', props.ui));
-  const [createFileText, setCreateFileText] = React.useState<string>('references.bib');
-
-  React.useEffect(() => {
-    props.biblographyFileChanged(bibliographyFile);
-  }, [bibliographyFile]);
-
 
   const bibliographyTypes: BibliographyType[] = [
     {
@@ -68,6 +63,15 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
       extension: 'json',
     },
   ];
+  const kDefaultBibFile = changeExtension('references.bib', bibliographyTypes[0].extension);
+  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile(kDefaultBibFile, props.ui));
+  const [createFileText, setCreateFileText] = React.useState<string>(kDefaultBibFile);
+
+  React.useEffect(() => {
+    props.biblographyFileChanged(bibliographyFile);
+  }, [bibliographyFile]);
+
+
 
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
