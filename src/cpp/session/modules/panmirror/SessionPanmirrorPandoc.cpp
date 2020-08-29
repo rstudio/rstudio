@@ -367,6 +367,11 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
       response.setResult(extensions);
       cont(Success(), &response);
    }
+   else
+   {
+       // Pandoc failed for some reason
+       cont(Error(), &response);
+   }
 
 }
 
