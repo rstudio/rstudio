@@ -23,6 +23,7 @@ public class StatusBarPopupMenu extends ScrollableToolbarPopupMenu
    public StatusBarPopupMenu()
    {
       super();
+      setReceivesFocus(ReceivesFocus.NO);
       addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
    }
 

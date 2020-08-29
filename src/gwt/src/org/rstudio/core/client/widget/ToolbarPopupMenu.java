@@ -18,7 +18,9 @@ import java.util.List;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -53,6 +55,15 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       void onPopupMenu(ToolbarPopupMenu menu);
    }
 
+   /**
+    * Does the control receive keyboard focus?
+    */
+   public enum ReceivesFocus
+   {
+      NO,
+      YES
+   }
+
    public ToolbarPopupMenu()
    {
       super(true);
@@ -63,7 +74,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       commandHandler_ = new HandlerRegistrations();
       getElement().getStyle().setZIndex(1000);
    }
-   
+
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
    {
       this();
@@ -79,7 +90,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       return menuBar_;
    }
-   
+
    @Override
    protected void onLoad()
    {
@@ -94,22 +105,22 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.selectItem(null);
       commandHandler_.removeHandler();
    }
-   
+
    public void selectFirst()
    {
       menuBar_.selectFirst();
    }
-   
+
    public void selectLast()
    {
       menuBar_.selectLast();
    }
-   
+
    public void moveSelectionFwd(int numElements)
    {
       menuBar_.moveSelectionFwd(numElements);
    }
-   
+
    public void moveSelectionBwd(int numElements)
    {
       menuBar_.moveSelectionBwd(numElements);
@@ -128,34 +139,34 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          AppMenuItem appMenuItem = (AppMenuItem) menuItem;
          command = appMenuItem.getScheduledCommand(true);
       }
-      
+
       if (command != null)
          menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
-      
+
       menuBar_.addItem(menuItem);
    }
-   
+
    public void addItem(SafeHtml html, MenuBar popup)
    {
       menuBar_.addItem(html, popup);
    }
-   
+
    public void addItem(MenuItem menuItem, final ToolbarPopupMenu popup)
    {
       menuBar_.addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup.menuBar_);
    }
-   
+
    public void addItem(AppCommand command, ToolbarPopupMenu popup)
    {
       if (command.isEnabled())
          addItem(command.createMenuItem(false), popup);
    }
-   
+
    public void setAutoOpen(boolean autoOpen)
    {
       menuBar_.setAutoOpen(autoOpen);
    }
-   
+
    public void insertItem(MenuItem menuItem, int beforeIndex)
    {
      ScheduledCommand command = menuItem.getScheduledCommand();
@@ -163,42 +174,42 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
       menuBar_.insertItem(menuItem, beforeIndex);
    }
-   
+
    public void removeItem(MenuItem menuItem)
    {
       menuBar_.removeItem(menuItem);
    }
-   
+
    public boolean containsItem(MenuItem menuItem)
    {
       return menuBar_.getItemIndex(menuItem) >= 0;
    }
-   
+
    public void clearItems()
    {
       menuBar_.clearItems();
    }
-   
+
    public void addSeparator()
    {
       menuBar_.addSeparator();
    }
-   
+
    public void addSeparator(MenuItemSeparator separator)
    {
       menuBar_.addSeparator(separator);
    }
-   
+
    public void addSeparator(String label)
    {
       menuBar_.addSeparator(new LabelledMenuSeparator(label));
    }
-   
+
    public void addSeparator(int minPx)
    {
       menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
    }
-   
+
    public int getItemCount()
    {
       return menuBar_.getItemCount();
@@ -210,7 +221,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       menuBar_.focus();
    }
-   
+
    public void setAutoHideRedundantSeparators(boolean value)
    {
       menuBar_.setAutoHideRedundantSeparators(value);
@@ -220,7 +231,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       callback.onPopupMenu(this);
    }
-   
+
    public void addMenuBarStyle(String style)
    {
       menuBar_.addStyleName(style);
@@ -238,17 +249,17 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          hide();
          if (parent_ != null) parent_.hide();
       }
-   
+
       private ScheduledCommand coreCommand_;
    }
-   
+
    protected class ToolbarMenuBar extends BaseMenuBar
    {
       public ToolbarMenuBar(boolean vertical)
       {
          super(vertical);
       }
-      
+
       @Override
       protected void onUnload()
       {
@@ -260,7 +271,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       protected void onLoad()
       {
          super.onLoad();
-         
+
          nativePreviewReg_ = Event.addNativePreviewHandler(nativePreviewEvent ->
          {
             if (nativePreviewEvent.getTypeInt() == Event.ONKEYDOWN)
@@ -280,6 +291,50 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                      moveSelectionBwd(5);
                      break;
                }
+
+               /* if we don't have focus, handle keyboard here because our host will not */
+               if (getReceivesFocus() == ReceivesFocus.NO)
+               {
+                  switch (nativePreviewEvent.getNativeEvent().getKeyCode())
+                  {
+                     case KeyCodes.KEY_UP:
+                        nativePreviewEvent.cancel();
+                        moveSelectionUp();
+                        break;
+                     case KeyCodes.KEY_DOWN:
+                        nativePreviewEvent.cancel();
+                        moveSelectionDown();
+                        break;
+                     case KeyCodes.KEY_HOME:
+                        nativePreviewEvent.cancel();
+                        selectFirst();
+                        break;
+                     case KeyCodes.KEY_END:
+                        nativePreviewEvent.cancel();
+                        selectLast();
+                        break;
+                     case KeyCodes.KEY_ENTER:
+                     case KeyCodes.KEY_SPACE:
+                        nativePreviewEvent.cancel();
+                        final MenuItem menuItem = getSelectedItem();
+                        if (menuItem != null)
+                        {
+                           nativePreviewEvent.cancel();
+                           NativeEvent evt = Document.get().createClickEvent(
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              false,
+                              false,
+                              false,
+                              false);
+                           menuItem.getElement().dispatchEvent(evt);
+                        }
+                        break;
+                  }
+               }
             }
          });
       }
@@ -290,7 +345,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
 
       public List<MenuItem> getMenuItems() { return getItems(); }
-      
+
       public int getSelectedIndex()
       {
          MenuItem selectedMenuItem = getSelectedItem();
@@ -317,7 +372,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          selectItem(0);
       }
-      
+
       private void selectLast()
       {
          selectItem(getItemCount() - 1);
@@ -325,7 +380,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
 
       private HandlerRegistration nativePreviewReg_;
    }
-   
+
    public Element getMenuTableElement()
    {
       Element menuEl = getWidget().getElement();
@@ -337,12 +392,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          Element el = (Element) node;
          return el.hasTagName("table");
       });
-      
+
       if (tableNode == null)
          return null;
-      
+
       return tableNode.cast();
-      
+
    }
 
    @Override
@@ -351,9 +406,20 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       if (command.getExecutedFromShortcut())
          hide();
    }
-   
+
+   public void setReceivesFocus(ReceivesFocus receivesFocus)
+   {
+      receivesFocus_ = receivesFocus;
+   }
+
+   public ReceivesFocus getReceivesFocus()
+   {
+      return receivesFocus_;
+   }
+
    protected final ToolbarMenuBar menuBar_;
    private ToolbarPopupMenu parent_;
    private final EventBus events_;
    private final HandlerRegistrations commandHandler_;
+   private ReceivesFocus receivesFocus_ = ReceivesFocus.YES;
 }

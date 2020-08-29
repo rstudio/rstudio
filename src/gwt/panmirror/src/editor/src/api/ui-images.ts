@@ -17,6 +17,7 @@ export interface EditorUIImages {
   copy?: string;
   properties?: string;
   properties_deco?: string;
+  properties_deco_dark?: string;
   removelink?: string;
   runchunk?: string;
   runprevchunks?: string;

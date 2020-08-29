@@ -24,7 +24,7 @@ import { Extension, ExtensionContext } from '../api/extension';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 import { pandocAttrFrom } from '../api/pandoc_attr';
 import { BaseKey } from '../api/basekeys';
-import { fancyQuotesToSimple } from '../api/quote';
+
 import { markIsActive } from '../api/mark';
 
 const extension = (context: ExtensionContext): Extension => {
@@ -103,7 +103,7 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
 
       // determine type and attrs
       const type = rawBlock ? schema.nodes.raw_block : rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block;
-      const content = rmdChunk ? schema.text(`{${fancyQuotesToSimple(match[2])}}\n`) : Fragment.empty;
+      const content = rmdChunk ? schema.text(`{${match[2]}}\n`) : Fragment.empty;
       const attrs = rawBlock ? { format: lang } : !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
 
       // see if this should go into a preceding list item

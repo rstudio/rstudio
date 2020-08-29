@@ -1,5 +1,5 @@
 /*
- * quote.ts
+ * smallcaps-styles.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,10 +13,7 @@
  *
  */
 
-export const kQuoteType = 0;
-export const kQuoteChildren = 1;
-
-export enum QuoteType {
-  SingleQuote = 'SingleQuote',
-  DoubleQuote = 'DoubleQuote',
+.ProseMirror .underline {
+  text-decoration: underline;
 }
+

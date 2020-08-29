@@ -86,12 +86,12 @@ public class SpellingPreferencesPane extends PreferencesPane
       add(headerLabel("Checking"));
       
       boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
-      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking(), false);
+      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spell-checking", prefs.realTimeSpellchecking(), false);
       realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
       spaced(realtimeSpellcheckingCheckbox_);
       add(realtimeSpellcheckingCheckbox_);
 
-      blacklistWarning_ = new Label("Real time spellchecking currently unavailable for this dictionary");
+      blacklistWarning_ = new Label("Real time spell-checking currently unavailable for this dictionary");
       blacklistWarning_.getElement().getStyle().setColor("red");
       blacklistWarning_.setVisible(!canRealtime);
 

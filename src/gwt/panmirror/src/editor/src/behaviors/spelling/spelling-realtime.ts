@@ -31,6 +31,7 @@ import { EditorUI, EditorMenuItem } from "../../api/ui";
 import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord, charAt } from "./spelling";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
+const kInvalidateSpellingWordTransaction = 'invalidateSpellingWord';
 const kSpellingErrorClass = 'pm-spelling-error';
 
 const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
@@ -44,8 +45,15 @@ export function realtimeSpellingPlugin(
   return new RealtimeSpellingPlugin(excludedMarks(schema, marks), ui, events);
 }
 
-export function updateRealtimeSpelling(view: EditorView) {
+export function invalidateAllWords(view: EditorView) {
   updateSpelling(view);
+}
+
+export function invalidateWord(view: EditorView, word: string) {
+  const tr = view.state.tr;
+  tr.setMeta(kInvalidateSpellingWordTransaction, word);
+  tr.setMeta(kAddToHistoryTransaction, false);
+  view.dispatch(tr);
 }
 
 class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
@@ -76,17 +84,27 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             this.hasBeenFocused = true;
           }
 
-          // check for disabled state
-          if (this.disabled()) {
+          // don't continue if either realtime spelling is disabled or we have never been focused
+          if (!this.ui.spelling.realtimeEnabled() || !this.hasBeenFocused) {
             return DecorationSet.empty;
           }
 
           if (tr.getMeta(kUpdateSpellingTransaction)) {
 
             // explicit update request invalidates any existing decorations (this can happen when
-            // dictionaries change or when focus is restored after 'missing' a bunch of other
-            // invalidations due to not beign the active tab)
+            // we get focus for the very firs time or when the main or secondary dictionaries change)
             return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
+
+          } else if (tr.getMeta(kInvalidateSpellingWordTransaction)) {
+
+            // for word invalidations we search through the decorations and remove words that match
+            const word = tr.getMeta(kInvalidateSpellingWordTransaction) as string;
+
+            // find decorations that have this word and remove them
+            const wordDecos = old.find(undefined, undefined, spec => spec.word === word);
+
+            // return decorators w/ those words removed
+            return old.remove(wordDecos);
 
           } else if (tr.docChanged) {
 
@@ -183,21 +201,15 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
     // save reference to ui
     this.ui = ui;
 
-    // trigger update whenever we get the focus (updates are suspended while we aren't the active tab)
-    events.subscribe(FocusEvent, () => {
+    // trigger update on first focus
+    const focusUnsubscribe = events.subscribe(FocusEvent, () => {
       if (this.view) {
+        focusUnsubscribe();
         this.hasBeenFocused = true;
         updateSpelling(this.view);
       }
     });
   }
-
-  private disabled() {
-    return !this.hasBeenFocused ||
-      !this.ui.context.isActiveTab() ||
-      !this.ui.spelling.realtimeEnabled();
-  }
-
 }
 
 function spellingDecorations(
@@ -217,10 +229,13 @@ function spellingDecorations(
   while (words.hasNext()) {
     const word = words.next()!;
     const wordText = state.doc.textBetween(word.start, word.end);
-    if (!spelling.checkWord(spellcheckerWord(wordText))) {
+    const wordCheck = spellcheckerWord(wordText);
+    if (!spelling.checkWord(wordCheck)) {
       const attrs: DecorationAttrs = {};
-      const spec: { [key: string]: any } = {};
-      if (excludeCursor && (state.selection.head === word.end)) {
+      const spec: { [key: string]: any } = {
+        word: wordCheck
+      };
+      if (excludeCursor && state.selection.head > word.start && state.selection.head <= word.end) {
         spec.cursor = true;
       } else {
         attrs.class = kSpellingErrorClass;

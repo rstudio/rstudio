@@ -15,9 +15,23 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../api/pandoc';
+import { ExtensionContext } from '../api/extension';
+import { kQuoteType, QuoteType, kQuoteChildren } from '../api/quote';
 
-const extension = () => {
+const extension = (context: ExtensionContext) => {
+
+  const readText = (text: string) => {
+    if (context.pandocExtensions.smart) {
+      return text
+        .replace(/---/g, '—')
+        .replace(/--/g, '–')
+        .replace(/\.\.\./g, '…');
+    } else {
+      return text;
+    }
+  };
+
   return {
     nodes: [
       {
@@ -30,9 +44,21 @@ const extension = () => {
         },
         pandoc: {
           readers: [
-            { token: PandocTokenType.Str, text: true, getText: (t: PandocToken) => t.c },
+            { token: PandocTokenType.Str, text: true, getText: (t: PandocToken) => readText(t.c) },
             { token: PandocTokenType.Space, text: true, getText: () => ' ' },
             { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
+            {
+              token: PandocTokenType.Quoted,
+              handler: () => (writer: ProsemirrorWriter, tok: PandocToken) => {
+                const type = tok.c[kQuoteType].t;
+                const quote = type === QuoteType.SingleQuote ? '\'' : '"';
+                writer.writeTokens([
+                  { t: 'Str', c: quote },
+                  ...tok.c[kQuoteChildren],
+                  { t: 'Str', c: quote },
+                ]);
+              }
+            },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             const text = node.textContent;

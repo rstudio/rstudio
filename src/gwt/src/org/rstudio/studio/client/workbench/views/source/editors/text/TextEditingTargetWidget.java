@@ -314,7 +314,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
+      Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_, target_.getId());
 
       // Buttons are unique to a source column so require SourceAppCommands
       SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();

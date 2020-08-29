@@ -35,12 +35,12 @@ function wrapSentencesTransform(tr: Transform) {
   paragraphs.reverse().forEach(paragraph => {
     const parts = split(paragraph.node.textContent);
     parts.reverse().filter(part => part.type === "Sentence").forEach(sentence => {
-      const hardBreak = schema.text("\n");
-      const hardBreakPos = paragraph.pos + sentence.range[1] + 2;
-      tr.insert(hardBreakPos, hardBreak);
+      // don't break sentence if at least one mark is active
+      if (tr.doc.resolve(paragraph.pos + sentence.range[1] + 1).marks().length === 0) {
+        const hardBreak = schema.text("\n");
+        const hardBreakPos = paragraph.pos + sentence.range[1] + 2;
+        tr.insert(hardBreakPos, hardBreak);
+      }
     });
   });
-
-
-
 }
