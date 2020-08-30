@@ -52,7 +52,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
-        const useCache = this.warning === undefined;
+        const useCache = this.warning === undefined || this.warning.length === 0;
 
         // Read collection specs. TODO: Consider making this an asynch call elsewhere
         const allCollectionSpecsResult = await this.server.getCollectionSpecs();

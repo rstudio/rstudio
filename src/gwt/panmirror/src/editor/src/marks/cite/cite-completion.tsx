@@ -164,8 +164,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
             // Filter duplicate sources
             const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
 
-            const warning = manager.warning();
-
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
             return sortedSources.map(source => entryForSource(source, ui));
