@@ -18,7 +18,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -184,12 +184,25 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       CheckBox visualMarkdownIsDefault = checkboxPref(
             "Use visual editor by default for new documents",
             prefs_.visualMarkdownEditingIsDefault());
-      HorizontalPanel visualEditingPanel = checkBoxWithHelp(visualMarkdownIsDefault,
-            "visual_markdown_editing",
-            "Learn more about visual markdown editing");
-      visualMode.add(visualEditingPanel);
+      visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(10, Unit.PX);
+      visualMode.add(visualMarkdownIsDefault);
+      
+      HelpLink visualModeHelpLink = new HelpLink(
+         "Learn more about visual editing mode",
+         "visual_markdown_editing",
+         false // no version info
+      );
+      nudgeRight(visualModeHelpLink);
+      spaced(visualModeHelpLink);
+      visualMode.add(visualModeHelpLink);
+      
 
+      visualMode.add(headerLabel("Display"));
+      
+      
       VerticalPanel visualModeOptions = new VerticalPanel();
+      
+      
       
       // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
@@ -198,6 +211,15 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
+      
+      // show margin
+      CheckBox visualEditorShowMargin = checkboxPref(
+            "Show margin column indicator in code blocks",
+            prefs_.visualMarkdownEditingShowMargin(),
+            false);
+      lessSpaced(visualEditorShowMargin);
+      visualModeOptions.add(visualEditorShowMargin);
+      
 
       // content width
       visualModeContentWidth_ = numericPref(
@@ -226,17 +248,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
-      visualModeFontSize_.getElement().getStyle().setMarginBottom(8, Unit.PX);
+      visualModeFontSize_.getElement().getStyle().setMarginTop(3, Unit.PX);
+      visualModeFontSize_.getElement().getStyle().setMarginBottom(15, Unit.PX);
       visualModeOptions.add(visualModeFontSize_);
 
-      // show margin
-      CheckBox visualEditorShowMargin = checkboxPref(
-            "Show margin column indicator in code blocks",
-            prefs_.visualMarkdownEditingShowMargin(),
-            false);
-      spaced(visualEditorShowMargin);
-      visualModeOptions.add(visualEditorShowMargin);
-      
+     
       visualModeOptions.add(headerLabel("Markdown"));
 
       // auto wrap
@@ -267,7 +283,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeWrap_.addChangeHandler((arg) -> {
          manageWrapColumn.execute();
       });
-      spaced(visualModeWrapColumn_);
+      lessSpaced(visualModeWrapColumn_);
 
       // references
       String[] referencesValues = {
@@ -299,16 +315,34 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(markdownPerFileOptions);
       visualModeOptions.add(markdownPerFileOptions);
       
-      visualModeOptions.add(headerLabel("Citations"));
+      visualMode.add(visualModeOptions);
       
-      zoteroConnection_ = new ZoteroConnectionWidget(res);
+      VerticalTabPanel citations = new VerticalTabPanel(ElementIds.RMARKDOWN_CITATIONS_PREFS);
+ 
+      Label citationsLabel = new Label("Citation features are available within R Markdown visual mode.");
+      spaced(citationsLabel);
+      citations.add(citationsLabel);
+      
+      // help on per-file markdown options
+      HelpLink citationsHelpLink = new HelpLink(
+         "Learn more about using citations with visual editing mode",
+         "https://rstudio.github.io/visual-markdown-editing/#/citations",
+         false, // no version info
+         false // not rstudio link
+      );
+      spaced(citationsHelpLink);
+      citations.add(citationsHelpLink);
+      
+      citations.add(headerLabel("Zotero"));
+      
+      zoteroConnection_ = new ZoteroConnectionWidget(res, false);
       spaced(zoteroConnection_);
-      visualModeOptions.add(zoteroConnection_);
+      citations.add(zoteroConnection_);
      
       zoteroApiKey_ = new ZoteroApiKeyWidget(zoteroServer, "240px");
       zoteroApiKey_.getElement().getStyle().setMarginLeft(4, Unit.PX);
       zoteroApiKey_.setKey(state_.zoteroApiKey().getValue());
-      visualModeOptions.add(zoteroApiKey_);
+      citations.add(zoteroApiKey_);
       
       zoteroDataDir_ = new DirectoryChooserTextBox(
          "Zotero Data Directory:",
@@ -325,17 +359,15 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       String dataDir = state_.zoteroDataDir().getValue();
       if (!dataDir.isEmpty())
          zoteroDataDir_.setText(dataDir);
-      visualModeOptions.add(zoteroDataDir_);
+      citations.add(zoteroDataDir_);
       
       zoteroUseBetterBibtex_ = checkboxPref(
          "Use Better BibTeX for citation keys and BibTeX export",
          prefs_.zoteroUseBetterBibtex(),
          false);
       lessSpaced(zoteroUseBetterBibtex_);
-      visualModeOptions.add(zoteroUseBetterBibtex_);
+      citations.add(zoteroUseBetterBibtex_);
        
-      visualMode.add(visualModeOptions);
-      
       // kickoff query for detected zotero data directory
       zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {
 
@@ -363,6 +395,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
       tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());
+      tabPanel.add(citations, "Citations", citations.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
