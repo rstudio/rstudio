@@ -107,28 +107,7 @@ namespace {
 bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
                           boost::shared_ptr<ActiveSession> b)
 {
-   if (a->executing() == b->executing())
-   {
-      if (a->running() == b->running())
-      {
-         if (a->lastUsed() == b->lastUsed())
-         {
-            return a->id() > b->id();
-         }
-         else
-         {
-            return a->lastUsed() > b->lastUsed();
-         }
-      }
-      else
-      {
-         return a->running();
-      }
-   }
-   else
-   {
-      return a->executing();
-   }
+   return *a > *b;
 }
 
 } // anonymous namespace
@@ -159,6 +138,10 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
          {
             if (pSession->validate(userHomePath, projectSharingEnabled))
             {
+               // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
+               // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
+               // causing an occasional segfault.
+               pSession->cacheSortConditions();
                sessions.push_back(pSession);
             }
             else
