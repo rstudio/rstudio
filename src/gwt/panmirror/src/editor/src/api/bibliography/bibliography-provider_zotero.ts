@@ -19,7 +19,7 @@ import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLib
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyContainer } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
@@ -28,7 +28,7 @@ export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
-  private collections: ZoteroCollection[] = [];
+  private allCollections: ZoteroCollection[] = [];
   private allCollectionSpecs: ZoteroCollectionSpec[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
@@ -48,13 +48,13 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       try {
 
         // Don't send the items back through to the server
-        const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
+        const collectionSpecs = this.allCollections.map(({ items, ...rest }) => rest);
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
         const useCache = this.warning === undefined || this.warning.length === 0;
 
-        // Read collection specs. TODO: Consider making this an asynch call elsewhere
+        // Read collection specs.
         const allCollectionSpecsResult = await this.server.getCollectionSpecs();
         if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
           this.allCollectionSpecs = allCollectionSpecsResult.message;
@@ -68,7 +68,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
           if (result.message) {
 
             const newCollections = (result.message as ZoteroCollection[]).map(collection => {
-              const existingCollection = this.collections.find(col => col.name === collection.name);
+              const existingCollection = this.allCollections.find(col => col.name === collection.name);
               if (useCache && existingCollection && existingCollection.version === collection.version) {
                 collection.items = existingCollection.items;
               } else {
@@ -78,7 +78,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
             });
             hasUpdates = hasUpdates || newCollections.length !== this.collections.length;
-            this.collections = newCollections;
+            this.allCollections = newCollections;
           }
         } else {
           // console.log(result.status);
@@ -92,17 +92,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       if (this.collections.length > 0) {
         hasUpdates = true;
       }
-      this.collections = [];
+      this.allCollections = [];
     }
     return hasUpdates;
   }
 
-  public containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[] {
+  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
     return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
   }
 
   public items(): BibliographySource[] {
-    const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
+    const entryArrays = this.allCollections?.map(collection => this.bibliographySources(collection)) || [];
     const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
     return zoteroEntries;
   }

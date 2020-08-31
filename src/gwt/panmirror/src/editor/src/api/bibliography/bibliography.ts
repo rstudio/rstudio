@@ -39,7 +39,7 @@ export interface BibliographyDataProvider {
   name: string;
 
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[];
+  collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
   items(): BibliographySource[];
   itemsForCollection(collectionKey: string): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
@@ -47,7 +47,7 @@ export interface BibliographyDataProvider {
   warningMessage(): string | undefined;
 }
 
-export interface BibliographyContainer {
+export interface BibliographyCollection {
   name: string;
   key: string;
   parentKey?: string;
@@ -253,7 +253,7 @@ export class BibliographyManager {
         keys: kFields,
       };
 
-      // TODO: Search performance can really drop off for long strings
+      // NOTE: Search performance can really drop off for long strings
       // Test cases start at 20ms to search for a single character
       // grow to 270ms to search for 20 character string
       // grow to 1060ms to search for 40 character string 

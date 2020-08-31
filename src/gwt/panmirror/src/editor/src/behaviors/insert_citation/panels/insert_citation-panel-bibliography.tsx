@@ -19,7 +19,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { FixedSizeList } from "react-window";
 
-import { BibliographySource, BibliographyManager, BibliographyContainer } from "../../../api/bibliography/bibliography";
+import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { EditorUI } from "../../../api/ui";
@@ -40,10 +40,10 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
   const localProviderNodes = providers.map(provider => {
     const node: any = {};
     node.key = provider.key;
-    node.name = provider.name;
+    node.name = ui.context.translateText(provider.name);
     node.type = provider.key;
     node.image = libraryImageForProvider(provider.key, ui);
-    node.children = toTree(provider.key, provider.containers(doc, ui), folderImageForProvider(provider.key, ui));
+    node.children = toTree(provider.key, provider.collections(doc, ui), folderImageForProvider(provider.key, ui));
     return node;
   });
 
@@ -166,7 +166,7 @@ function folderImageForProvider(providerKey: string, ui: EditorUI) {
 
 // Takes a flat data structure of containers and turns it into a hierarchical
 // tree structure for display as TreeNodes.
-function toTree(type: string, containers: BibliographyContainer[], folderImage?: string): SelectTreeNode[] {
+function toTree(type: string, containers: BibliographyCollection[], folderImage?: string): SelectTreeNode[] {
 
   const treeMap: { [id: string]: SelectTreeNode } = {};
   const rootNodes: SelectTreeNode[] = [];

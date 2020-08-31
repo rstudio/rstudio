@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyContainer } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -74,10 +74,10 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public containers(doc: ProsemirrorNode, ui: EditorUI): BibliographyContainer[] {
+  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
     return [];
 
-    // TODO: If we can make the 'itemsForCollections' call work, we can begin emitting the various
+    // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
     // in a single call, meaning that the items lose context of which bibliography file that they
     // come from.
@@ -111,7 +111,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public itemsForCollection(collectionKey: string): BibliographySource[] {
-    // TODO: Need to filter by biblio file
+    // NOTE: IF we add support, need to filter by biblio file
     return [];
   }
 
