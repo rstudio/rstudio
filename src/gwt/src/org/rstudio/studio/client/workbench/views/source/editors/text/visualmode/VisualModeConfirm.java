@@ -16,26 +16,29 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
-import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmLineWrappingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+// TODO: provide way to set the column
+
 public class VisualModeConfirm
-{
+{ 
    public enum LineWrappingAction
    {
       SetFileLineWrapping,
@@ -52,9 +55,9 @@ public class VisualModeConfirm
    }
    
    @Inject
-   void initialize(GlobalDisplay globalDisplay, UserPrefs prefs, UserState state)
+   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs, UserState state)
    {
-      globalDisplay_ = globalDisplay;
+      workbenchContext_ = workbenchContext;
       userPrefs_ = prefs;
       userState_ = state;
    }
@@ -82,20 +85,21 @@ public class VisualModeConfirm
          // check if we require a line wrapping prompt and if setup an operation to do so
          Operation lineWrapCheck = requiresLineWrappingPrompt(result.line_wrapping) 
             ? ()-> {
-               globalDisplay_.showYesNoMessage(
-                  MessageDisplay.MSG_QUESTION,
-                  "Line Wrapping", 
-                  "Whoa their pardner, fixup that line wrapping?", 
-                  false, 
-                  () -> { 
+               
+               VisualModeConfirmLineWrappingDialog dialog = new VisualModeConfirmLineWrappingDialog(
+                  result.line_wrapping,
+                  userPrefs_.visualMarkdownEditingWrap().getValue(),
+                  userPrefs_.visualMarkdownEditingWrap().hasProjectValue(),
+                  VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_),
+                  (action) -> { 
                      doConfirm.execute(); 
+                     performLineWrappingAction(action); 
                   }, 
                   () -> { 
                      onCancelled.execute(); 
-                  }, 
-                  null,
-                  "Fix", "Don't Fix", true
+                  }   
                );
+               dialog.showModal();
             }
             : doConfirm
          ;
@@ -142,9 +146,15 @@ public class VisualModeConfirm
          if (!yamlWrap.isEmpty())
             return false;
          
+         
+         // determine applicable preference (project if this file is in a project)
+         String pref = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_)
+             ? userPrefs_.visualMarkdownEditingWrap().getValue()
+             : userPrefs_.visualMarkdownEditingWrap().getGlobalValue();
+               
          // if this file has soft breaks and they differ from the current configured preference
          return !lineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE) &&
-                !lineWrapping.equals(userPrefs_.visualMarkdownEditingWrap().getValue());
+                !lineWrapping.equals(pref);
       }
       else
       {
@@ -152,10 +162,15 @@ public class VisualModeConfirm
       }
    }
    
+   private void performLineWrappingAction(LineWrappingAction action)
+   {
+      Debug.logToRConsole(action.toString());
+   }
+   
    private final DocUpdateSentinel docUpdateSentinel_;
    private final DocDisplay docDisplay_;
    
-   private GlobalDisplay globalDisplay_;
+   private WorkbenchContext workbenchContext_;
    private UserPrefs userPrefs_;
    private UserState userState_;
    

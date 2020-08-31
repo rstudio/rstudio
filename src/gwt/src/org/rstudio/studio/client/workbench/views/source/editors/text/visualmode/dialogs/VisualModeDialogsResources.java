@@ -29,6 +29,9 @@ public interface VisualModeDialogsResources extends ClientBundle
    interface Styles extends CssResource
    {
       String confirmDialog();
+      String confirmLineWrappingDialog();
+      String lineWrappingRadio();
+      String lineWrappingHelp();
    }
 
    @Source("VisualModeDialogs.css")

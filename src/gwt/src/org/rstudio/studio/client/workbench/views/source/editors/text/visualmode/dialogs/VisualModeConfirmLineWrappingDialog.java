@@ -16,45 +16,116 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs;
 
-
-// explain the deal for this particular context
-
-// offer for this file
-
-// offer for this project (if approprate)
-
-// offer to do nothing
-
-// learn more
-
 import com.google.gwt.aria.client.Roles;
-
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeConfirm.LineWrappingAction>
 {   
-   public VisualModeConfirmLineWrappingDialog(OperationWithInput<VisualModeConfirm.LineWrappingAction> onConfirm,
-                                  Operation onCancel)
+   public VisualModeConfirmLineWrappingDialog(
+      String detectedLineWrapping,
+      String configuredLineWrapping,
+      boolean isProjectConfig,
+      boolean haveProject,
+      OperationWithInput<VisualModeConfirm.LineWrappingAction> onConfirm,
+      Operation onCancel)
    {
-      super("Line Wrapping", 
+      super("Line Wrapping Mismatch", 
             Roles.getDialogRole(), 
             onConfirm, 
             onCancel);
+   
       
+      
+      mainWidget_ = new VerticalPanel();
+      mainWidget_.setSpacing(10);
+      mainWidget_.addStyleName(RES.styles().confirmLineWrappingDialog());
+      
+      Label mismatch = new Label("Line wrapping mismatch detected:");
+      mainWidget_.add(mismatch);
+      
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendHtmlConstant("<ul>");
+      builder.appendHtmlConstant("<li style=\"margin-bottom: 10px;\">");
+      builder.appendEscaped("This document appears to use ");
+      builder.appendEscaped(detectedLineWrapping);
+      builder.appendEscaped("-based line wrapping"); 
+      builder.appendHtmlConstant("</li>");
+      builder.appendHtmlConstant("<li style=\"margin-bottom: 3px;\">");
+      if (isProjectConfig)
+         builder.appendEscaped("The current project is configured with ");
+      else
+         builder.appendEscaped("The current global option is set to ");
+      if (configuredLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE))
+         builder.appendEscaped("no ");
+      else 
+         builder.appendEscaped(configuredLineWrapping + "-based");
+      builder.appendEscaped("line wrapping");
+      builder.appendHtmlConstant("</li>");
+      builder.appendHtmlConstant("</ul>");
+      
+      
+      mainWidget_.add(new HTML(builder.toSafeHtml()));
+      
+      StringBuilder msg = new StringBuilder();
+      msg.append("You can either continue using ");
+      msg.append(detectedLineWrapping + "-based line wrapping, ");
+      msg.append("or alternatively adopt the ");
+      msg.append(isProjectConfig ? "project" : "global");
+      msg.append(" default.");
+      
+      Label choiceLabel = new Label("Select your preference for line wrapping below:");
+      mainWidget_.add(choiceLabel);
+            
     
+      chkConfigureFile_ = lineWrappingRadio( 
+         "Use " + detectedLineWrapping + "-based line wrapping for this document"
+      );
+      chkConfigureFile_.setValue(true);
+      mainWidget_.add(chkConfigureFile_);
+      chkConfigureProject_= lineWrappingRadio(
+         "Use " + detectedLineWrapping + "-based line wrapping for this project"
+      );      
+      if (haveProject)
+         mainWidget_.add(chkConfigureProject_);
+      
+      chkConfigureNone_ = lineWrappingRadio(
+         "Use the " + (isProjectConfig ? "project" : "global") + " default (" + 
+         (configuredLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE) 
+           ? "no"
+           : configuredLineWrapping + "-based") +
+         " line wrapping) for this document"
+      );
+      mainWidget_.add(chkConfigureNone_);
+      
+      
+      HelpLink lineWrappingHelp = new HelpLink(
+         "Learn more about visual mode line wrapping options",
+         "visual_markdown_editing-line-wrapping",
+         false
+      );
+      lineWrappingHelp.addStyleName(RES.styles().lineWrappingHelp());
+      mainWidget_.add(lineWrappingHelp);
+      
    }
    
   
    @Override
    protected Widget createMainWidget()
    {
-      return null;
+      return mainWidget_;
    }
    
   
@@ -62,7 +133,12 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
    @Override
    protected VisualModeConfirm.LineWrappingAction collectInput()
    {
-      return VisualModeConfirm.LineWrappingAction.SetFileLineWrapping;
+      if (chkConfigureFile_.getValue())
+         return VisualModeConfirm.LineWrappingAction.SetFileLineWrapping;
+      else if (chkConfigureProject_.getValue())
+         return VisualModeConfirm.LineWrappingAction.SetProjectLineWrapping;
+      else
+         return VisualModeConfirm.LineWrappingAction.SetNothing;
    }
 
 
@@ -73,9 +149,20 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
    }
    
   
+   private RadioButton lineWrappingRadio(String caption)
+   {
+      final String kRadioGroup = "DDFEDF81-87F7-45E8-B5FC-E021FC41FC69";
+      RadioButton radio = new RadioButton(kRadioGroup, caption);
+      radio.addStyleName(RES.styles().lineWrappingRadio());
+      return radio;
+   }
    
-   private Widget mainWidget_; 
+   private VerticalPanel mainWidget_; 
+   private RadioButton chkConfigureFile_;
+   private RadioButton chkConfigureProject_;
+   private RadioButton chkConfigureNone_;
    
-
+   
+   private static VisualModeDialogsResources RES = VisualModeDialogsResources.INSTANCE;
    
 }

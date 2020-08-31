@@ -2,3 +2,21 @@
 .confirmDialog {
    width: 450px;
 }
+
+.confirmLineWrappingDialog {
+   width: 450px;
+}
+
+.confirmLineWrappingDialog ul {
+	margin-block-start: 0;
+	margin-block-end: 0;
+	padding-inline-start: 25px;
+}
+
+.lineWrappingRadio {
+	
+}
+
+.lineWrappingHelp {
+   margin-top: 8px;
+}
