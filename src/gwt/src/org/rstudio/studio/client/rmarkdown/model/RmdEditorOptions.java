@@ -48,6 +48,26 @@ public class RmdEditorOptions
                       .trim().toLowerCase();
    }
    
+   public static String setMarkdownOption(String yaml, String option, String value)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      
+      // add editor option key if not yet present
+      if (!yamlTree.containsKey(EDITOR_OPTION_KEY))
+         yamlTree.addYamlValue(null, EDITOR_OPTION_KEY, "");
+      
+      // add markdown option key if not yet present
+      if (!yamlTree.getChildKeys(EDITOR_OPTION_KEY).contains(MARKDOWN_OPTION_KEY))
+         yamlTree.addYamlValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, "");
+        
+         
+      // set value
+      yamlTree.setGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, MARKDOWN_WRAP_OPTION, value);
+      
+      // return tree
+      return yamlTree.toString();
+   }
+   
    public static String set(String yaml, String option, String value)
    {
       YamlTree yamlTree = new YamlTree(yaml);
@@ -64,6 +84,8 @@ public class RmdEditorOptions
    
    private static String EDITOR_OPTION_KEY = "editor_options";
    private static String MARKDOWN_OPTION_KEY = "markdown";
+   
+   public static String MARKDOWN_WRAP_OPTION = "wrap";
    
    public static String PREVIEW_IN        = "preview";
    public static String PREVIEW_IN_WINDOW = "window";

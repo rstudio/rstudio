@@ -83,6 +83,7 @@ public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource,
                                    SourceDocAddedEvent.Handler,
                                    VisualModeSpelling.Context,
+                                   VisualModeConfirm.Context,
                                    VisualModeSpellingAddToDictionaryEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
@@ -110,7 +111,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay);
+      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, this);
       visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
@@ -736,11 +737,13 @@ public class VisualMode implements VisualModeEditorSync,
             
    }
    
+   @Override
    public String getYamlFrontMatter()
    {
       return panmirror_.getYamlFrontMatter();
    }
    
+   @Override
    public boolean applyYamlFrontMatter(String yaml)
    {
       panmirror_.applyYamlFrontMatter(yaml);

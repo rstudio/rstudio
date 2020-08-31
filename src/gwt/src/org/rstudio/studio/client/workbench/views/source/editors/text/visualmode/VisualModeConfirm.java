@@ -16,12 +16,16 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -32,24 +36,33 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeLineWrappingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class VisualModeConfirm
 { 
-   public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
+   public interface Context
+   {
+      String getYamlFrontMatter();
+      boolean applyYamlFrontMatter(String yaml);
+   }
+   
+   public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay, Context context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
       docDisplay_ = docDisplay; 
+      context_ = context;
    }
    
    @Inject
-   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs, UserState state)
+   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs, UserState state, ProjectsServerOperations server)
    {
       workbenchContext_ = workbenchContext;
       userPrefs_ = prefs;
       userState_ = state;
+      server_= server;
    }
    
    public void onUserSwitchToVisualModePending()
@@ -85,8 +98,14 @@ public class VisualModeConfirm
                   isProjectDoc,
                   userPrefs_.visualMarkdownEditingWrapAtColumn().getGlobalValue(),
                   (lineWrappingResult) -> { 
+                     
                      doConfirm.execute(); 
-                     performLineWrapping(lineWrappingResult); 
+                     
+                     // do this deferred so that the editor is fully hooked up 
+                     Scheduler.get().scheduleDeferred(() -> {
+                        configureLineWrapping(lineWrappingResult, result.line_wrapping); 
+                     });
+                 
                   }, 
                   () -> { 
                      onCancelled.execute(); 
@@ -155,17 +174,52 @@ public class VisualModeConfirm
       }
    }
    
-   private void performLineWrapping(VisualModeLineWrappingDialog.Result result)
+   private void configureLineWrapping(VisualModeLineWrappingDialog.Result result, String lineWrapping)
    {
-      Debug.logToRConsole(result.action.toString());
+      if (result.action == VisualModeLineWrappingDialog.Action.SetFileLineWrapping)
+      {
+         String value = lineWrapping == UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN 
+           ? result.column.toString()
+           : UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE;
+           
+         String yaml = context_.getYamlFrontMatter();
+         yaml = RmdEditorOptions.setMarkdownOption(yaml, RmdEditorOptions.MARKDOWN_WRAP_OPTION, value);
+         context_.applyYamlFrontMatter(yaml);
+      }
+      else if (result.action == VisualModeLineWrappingDialog.Action.SetProjectLineWrapping)
+      {
+         server_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+            @Override
+            public void onResponseReceived(RProjectOptions options)
+            {
+               RProjectConfig config = options.getConfig();
+            
+               if (lineWrapping == UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN)
+               {
+                  config.setMarkdownWrap(RProjectConfig.MARKDOWN_WRAP_COLUMN);
+                  config.setMarkdownWrapAtColumn(result.column);
+                  userPrefs_.visualMarkdownEditingWrap().setProjectValue(lineWrapping);
+                  userPrefs_.visualMarkdownEditingWrapAtColumn().setProjectValue(result.column);
+               }
+               else if (lineWrapping == UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE)
+               {
+                  config.setMarkdownWrap(RProjectConfig.MARKDOWN_WRAP_SENTENCE);
+                  userPrefs_.visualMarkdownEditingWrap().setProjectValue(lineWrapping);
+               }
+               server_.writeProjectConfig(config, new VoidServerRequestCallback());
+            }
+         });
+      }
    }
    
+   private final VisualModeConfirm.Context context_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final DocDisplay docDisplay_;
    
    private WorkbenchContext workbenchContext_;
    private UserPrefs userPrefs_;
    private UserState userState_;
+   private ProjectsServerOperations server_;
    
    private boolean userSwitchToVisualModePending_ = false;
   
