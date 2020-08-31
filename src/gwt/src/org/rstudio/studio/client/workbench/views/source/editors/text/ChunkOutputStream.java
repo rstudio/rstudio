@@ -433,7 +433,7 @@ public class ChunkOutputStream extends FlowPanel
 
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Callback");
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
       add(frame);
 
       Element body = frame.getDocument().getBody();
@@ -452,6 +452,7 @@ public class ChunkOutputStream extends FlowPanel
 
             frame.getElement().getStyle().setOverflow(Overflow.VISIBLE);
             frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.VISIBLE);
+            onHeightChanged();
          }
       });
    }

@@ -16,9 +16,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
@@ -29,6 +31,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -73,6 +76,7 @@ public class ChunkOutputGallery extends Composite
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
+      callback_ = new ArrayList<>();
       viewer_.add(content_);
 
       if (chunkOutputSize_ == ChunkOutputSize.Full)
@@ -190,13 +194,41 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showCallbackHtml(String htmlOutput)
    {
-      htmlCallback_.add(new HTML(htmlOutput));
+      VerticalPanel callbackContent = new VerticalPanel();
+      callback_.add(callbackContent);
+
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      callbackContent.add(frame);
+      viewer_.add(callbackContent);
+
+      frame.getDocument().getBody().getStyle().setPadding(0, Unit.PX);
+      frame.getDocument().getBody().getStyle().setMargin(0, Unit.PX);
+
+      frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            callbackContent.setHeight(contentHeight + "px");
+            frame.setHeight(contentHeight + "px");
+            frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            frame.getElement().getStyle().setOverflow(Style.Overflow.SCROLL);
+            frame.getWindow().getDocument().getBody().getStyle().setOverflow(Style.Overflow.SCROLL);
+
+            host_.notifyHeightChanged();
+         }
+      });
    }
 
    @Override
    public void clearOutput()
    {
       content_.clear();
+      callback_.clear();
       pages_.clear();
       filmstrip_.clear();
    }
@@ -435,6 +467,7 @@ public class ChunkOutputGallery extends Composite
 
    private ChunkConsolePage console_;
    private SimplePanel content_;
+   private ArrayList<VerticalPanel> callback_;
    private int activePage_ = -1;
    
    @UiField GalleryStyle style;

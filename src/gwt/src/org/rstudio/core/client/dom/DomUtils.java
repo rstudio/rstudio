@@ -895,7 +895,7 @@ public class DomUtils
       element.style[name] = value;
    }-*/;
 
-   public static final native void fillIFrame(IFrameElement iframe, String contents) /*-{
+   public static final native void fillIFrame(IFrameElement iframe, String content) /*-{
       var doc = iframe.contentWindow.document;
 
       // Put the content in the iframe
