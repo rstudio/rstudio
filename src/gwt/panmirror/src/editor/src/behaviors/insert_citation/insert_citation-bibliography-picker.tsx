@@ -15,14 +15,14 @@
 
 import React from "react";
 
-import { WidgetProps } from "../../api/widgets/react";
 import { EditorUI } from "../../api/ui";
-import { BibliographyFile } from "../../api/bibliography/bibliography";
 import { joinPaths, changeExtension } from "../../api/path";
-
-import './insert_citation-bibliography-picker.css';
+import { WidgetProps } from "../../api/widgets/react";
 import { TextInput } from "../../api/widgets/text";
 import { SelectInput } from "../../api/widgets/select";
+import { BibliographyFile } from "../../api/bibliography/bibliography";
+
+import './insert_citation-bibliography-picker.css';
 
 export interface CitationBiblographyPickerProps extends WidgetProps {
   bibliographyFiles: BibliographyFile[];
@@ -44,11 +44,9 @@ function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
   };
 }
 
-
-
-
 export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps> = props => {
 
+  // The types of bibliography files and the default value
   const bibliographyTypes: BibliographyType[] = [
     {
       displayName: props.ui.context.translateText('BibLaTeX'),
@@ -63,33 +61,40 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
       extension: 'json',
     },
   ];
-  const kDefaultBibFile = changeExtension('references.bib', bibliographyTypes[0].extension);
-  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile(kDefaultBibFile, props.ui));
-  const [createFileText, setCreateFileText] = React.useState<string>(kDefaultBibFile);
+  const suggestedBibliographyFileName = changeExtension('references.bib', bibliographyTypes[0].extension);
 
-  React.useEffect(() => {
-    props.biblographyFileChanged(bibliographyFile);
-  }, [bibliographyFile]);
+  // The file that the user selected (either for creation or selected from list)
+  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile(suggestedBibliographyFileName, props.ui));
 
+  // The name of the file that the user would like to create
+  const [createFileName, setCreateFileName] = React.useState<string>(suggestedBibliographyFileName);
 
-
+  // Selection of file from list
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
     props.biblographyFileChanged(props.bibliographyFiles[index]);
   };
 
-  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const text = e.target.value;
-    setCreateFileText(text);
-    setBibliographyFile(newBibliographyFile(text, props.ui));
+  // Whenever the create file changes, store the value and notify listeners
+  const createFileChanged = (text: string) => {
+    const newFile = newBibliographyFile(text, props.ui);
+    setCreateFileName(text);
+    setBibliographyFile(newFile);
+    props.biblographyFileChanged(newFile);
   };
 
+  // Change to the file we should create
+  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    createFileChanged(text);
+  };
+
+  // File type change
   const onTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
     const type = bibliographyTypes[index];
-    const newPath = changeExtension(createFileText, type.extension);
-    setCreateFileText(newPath);
-    setBibliographyFile(newBibliographyFile(newPath, props.ui));
+    const newPath = changeExtension(createFileName, type.extension);
+    createFileChanged(newPath);
   };
 
   return (
@@ -110,7 +115,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
                 tabIndex={0}
                 className='pm-citation-bibliography-picker-textbox pm-block-border-color'
                 placeholder={props.ui.context.translateText('Bibligraphy File Name')}
-                value={createFileText}
+                value={createFileName}
                 onChange={onTextChange}
               />
 
