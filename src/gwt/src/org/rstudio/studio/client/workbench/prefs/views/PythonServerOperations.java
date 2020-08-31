@@ -22,6 +22,6 @@ public interface PythonServerOperations
    
    void pythonFindInterpreters(ServerRequestCallback<PythonInterpreters> requestCallback);
    
-   void pythonDescribeInterpreter(String interpreterPath,
-                                  ServerRequestCallback<PythonInterpreter> requestCallback);
+   void pythonInterpreterInfo(String interpreterPath,
+                              ServerRequestCallback<PythonInterpreter> requestCallback);
 }

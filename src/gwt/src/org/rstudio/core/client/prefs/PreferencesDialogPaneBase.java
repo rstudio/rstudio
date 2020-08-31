@@ -18,9 +18,11 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -29,6 +31,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -143,6 +146,27 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    {
       widget.addStyleName(res_.styles().textBoxWithChooser());
       return widget;
+   }
+   
+   protected Label headerLabel(String caption)
+   {
+      Label headerLabel = new Label(caption);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
+   }
+
+   protected FormLabel headerLabel(String caption, Widget labeledWidget)
+   {
+      return headerLabel(caption, labeledWidget.getElement());
+   }
+
+   protected FormLabel headerLabel(String caption, Element labeledElement)
+   {
+      FormLabel headerLabel = new FormLabel(caption, labeledElement);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
    }
 
    protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)

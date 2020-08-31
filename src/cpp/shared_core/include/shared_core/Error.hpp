@@ -494,6 +494,8 @@ public:
 
    /**
     * @brief Sets the property that indicates that this error was expected.
+    *        Errors are unexpected by default; only unexpected errors will be logged.
+    *        Expected errors can be marked as such to suppress logging of those errors.
     */
    void setExpected();
 

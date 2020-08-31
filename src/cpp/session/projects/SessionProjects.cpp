@@ -399,6 +399,9 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["markdown_wrap_at_column"] = config.markdownWrapAtColumn;
    configJson["markdown_references"] = config.markdownReferences;
    configJson["markdown_canonical"] = config.markdownCanonical;
+   configJson["python_type"] = config.pythonType;
+   configJson["python_version"] = config.pythonVersion;
+   configJson["python_path"] = config.pythonPath;
 
    return configJson;
 }
@@ -650,6 +653,15 @@ Error writeProjectConfig(const json::Object& configJson)
                             "markdown_wrap_at_column", config.markdownWrapAtColumn,
                             "markdown_references", config.markdownReferences,
                             "markdown_canonical", config.markdownCanonical);
+   if (error)
+      return error;
+   
+   // read python options
+   error = json::readObject(configJson,
+                            "python_type", config.pythonType,
+                            "python_version", config.pythonVersion,
+                            "python_path", config.pythonPath);
+   
    if (error)
       return error;
 

@@ -106,7 +106,10 @@ struct RProjectConfig
         markdownWrap(kMarkdownWrapUseDefault),
         markdownWrapAtColumn(kMarkdownWrapAtColumnDefault),
         markdownReferences(kMarkdownReferencesUseDefault),
-        markdownCanonical(DefaultValue)
+        markdownCanonical(DefaultValue),
+        pythonType(),
+        pythonVersion(),
+        pythonPath()
    {
    }
 
@@ -145,6 +148,9 @@ struct RProjectConfig
    int markdownWrapAtColumn;
    std::string markdownReferences;
    int markdownCanonical;
+   std::string pythonType;
+   std::string pythonVersion;
+   std::string pythonPath;
 };
 
 Error findProjectFile(FilePath filePath,
