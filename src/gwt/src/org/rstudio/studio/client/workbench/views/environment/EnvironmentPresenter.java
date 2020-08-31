@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -176,13 +177,7 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void run()
          {
-            server_.requeryContext(new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-               }
-            });
+            server_.requeryContext(new QuietServerRequestCallback<Void>());
          }
       };
 

@@ -40,6 +40,11 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
       caption_ = caption;
       useClientInfoMsg_ = useClientInfoMsg;
    }
+   
+   @Override
+   public void onResponseReceived(T response)
+   {
+   }
 
    @Override
    public void onError(ServerError error)

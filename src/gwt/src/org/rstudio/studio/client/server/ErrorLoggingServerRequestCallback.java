@@ -1,5 +1,5 @@
 /*
- * ServerRequestCallback.java
+ * ErrorLoggingServerRequestCallback.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -15,31 +15,19 @@
 
 package org.rstudio.studio.client.server;
 
-import org.rstudio.core.client.jsonrpc.RpcRequest;
+import org.rstudio.core.client.Debug;
 
-public abstract class ServerRequestCallback<T>
+public class ErrorLoggingServerRequestCallback<T> extends ServerRequestCallback<T>
 { 
-   public abstract void onResponseReceived(T response);
-   public abstract void onError(ServerError error);
-   
-   public void onRequestInitiated(RpcRequest request)
+   @Override
+   public void onResponseReceived(T response)
    {
-      request_ = request;
-   }
-
-   public void cancel()
-   {
-      if (request_ != null)
-         request_.cancel();
-      cancelled_ = true;
-   }
-
-   public boolean cancelled() 
-   {
-      return cancelled_;
    }
    
-   private boolean cancelled_ = false;
-   private RpcRequest request_;
+   @Override
+   public void onError(ServerError error)
+   {
+      Debug.logError(error);
+   }
 }
 

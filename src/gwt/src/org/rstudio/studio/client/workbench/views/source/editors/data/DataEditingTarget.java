@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -227,14 +228,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
                {
                   server_.removeCachedData(
                         oldCacheKey,
-                        new ServerRequestCallback<Void>() {
-
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                           }
-                        });
+                        new ErrorLoggingServerRequestCallback<Void>());
 
                   data.fillProperties(doc_.getProperties());
                   reloadDisplay();
