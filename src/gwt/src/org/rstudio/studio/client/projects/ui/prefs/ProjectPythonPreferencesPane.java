@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -52,6 +53,10 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
       
       if (StringUtil.equals(newValue, placeholderText_))
          newValue = "";
+      
+      FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
+      if (projDir.exists() && newValue.startsWith(projDir.getPath()))
+         newValue = newValue.substring(projDir.getLength() + 1);
       
       boolean isSet =
             interpreter_ != null &&

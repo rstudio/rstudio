@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterListEntryUi;
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterSelectionDialog;
@@ -145,10 +146,12 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    @Inject
    private void initialize(PythonDialogResources res,
                            PythonServerOperations server,
+                           Session session,
                            UserPrefs prefs)
    {
       res_ = res;
       server_ = server;
+      session_ = session;
       prefs_ = prefs;
    }
    
@@ -357,6 +360,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
 
    protected PythonDialogResources res_;
    protected PythonServerOperations server_;
+   protected Session session_;
    protected UserPrefs prefs_;
    
    
