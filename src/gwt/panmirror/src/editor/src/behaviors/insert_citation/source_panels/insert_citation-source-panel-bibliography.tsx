@@ -18,24 +18,24 @@ import React from "react";
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { FixedSizeList } from "react-window";
+import debounce from "lodash.debounce";
 
-import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
-import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
-import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { NavigationTreeNode } from "../../../api/widgets/navigation_tree";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
+import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
+import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
-import './insert_citation-panel-bibliography.css';
-import debounce from "lodash.debounce";
+import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
 import { CitationListItem } from "./insert_citation-panel-list-item";
 
+import './insert_citation-source-panel-bibliography.css';
 
-export const kAllLocalType = 'All Local Sources';
+const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
+export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
   const localProviderNodes = providers.map(provider => {
     const node: any = {};
@@ -49,19 +49,19 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
 
   return {
     key: '17373086-77FE-410F-A319-33E314482125',
-    panel: CitationListPanel,
+    panel: BibligraphySourcePanel,
     treeNode: {
       key: 'My Sources',
       name: ui.context.translateText('My Sources'),
       image: ui.images.citations?.local_sources,
-      type: kAllLocalType,
+      type: kAllLocalSourcesRootNodeType,
       children: localProviderNodes,
       expanded: true
     }
   };
 }
 
-export const CitationListPanel: React.FC<CitationSourcePanelProps> = props => {
+export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props => {
 
   const bibMgr = props.bibliographyManager;
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
@@ -72,12 +72,12 @@ export const CitationListPanel: React.FC<CitationSourcePanelProps> = props => {
       if (props.selectedNode) {
         const selectedNode = props.selectedNode;
 
-        // The node could be the root node
-        const providerKey = selectedNode.type === kAllLocalType ? undefined : selectedNode.type;
+        // The node could be the root node, no provider
+        const providerKey = selectedNode.type === kAllLocalSourcesRootNodeType ? undefined : selectedNode.type;
 
-        // The node could be a provider or a collection
+        // The node could be a provider root or a collection
         const collectionKey = (
-          selectedNode.type !== kAllLocalType &&
+          selectedNode.type !== kAllLocalSourcesRootNodeType &&
           selectedNode.key !== kZoteroProviderKey &&
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
@@ -171,7 +171,7 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   const treeMap: { [id: string]: NavigationTreeNode } = {};
   const rootNodes: NavigationTreeNode[] = [];
 
-
+  // Sort the folder in alphabetical order at each level of the tree
   containers.sort((a, b) => a.name.localeCompare(b.name)).forEach(container => {
 
     // First see if we have an existing node for this item
