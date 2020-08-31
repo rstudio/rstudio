@@ -532,7 +532,7 @@ void parseLintOptionGlobals(const std::string& text, FileLocalLintOptions* pOpti
    std::string::const_iterator end = text.end();
    
    ParsedCSVLine parsed = parseCsvLine(begin + 1, end, true);
-   for (const std::string element : parsed.first)
+   for (const std::string& element : parsed.first)
    {
       pOptions->globals.insert(string_utils::trimWhitespace(element));
    }
@@ -564,7 +564,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
 FileLocalLintOptions parseLintOptions(const std::vector<std::string>& lintText)
 {
    FileLocalLintOptions options;
-   for (const std::string text : lintText)
+   for (const std::string& text : lintText)
    {
       parseLintOption(text, &options);
    }

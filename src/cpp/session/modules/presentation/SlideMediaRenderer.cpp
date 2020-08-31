@@ -106,7 +106,7 @@ std::vector<MediaSource> discoverMediaSources(
 std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
 {
    json::Array cmdsArray;
-   for (const AtCommand atCmd : atCommands)
+   for (const AtCommand& atCmd : atCommands)
    {
       cmdsArray.push_back(atCmd.asJson());
    }

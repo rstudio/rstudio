@@ -93,7 +93,7 @@ json::Object NotebookDocQueue::toJson() const
 {
    // serialize all the queue units 
    json::Array units;
-   for (const boost::shared_ptr<NotebookQueueUnit> unit : queue_)
+   for (const boost::shared_ptr<NotebookQueueUnit>& unit : queue_)
    {
       units.push_back(unit->toJson());
    }
