@@ -26,8 +26,8 @@ import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/wid
 
 import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
 
-import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
-import { doiPanel } from "./panels/insert_citation-panel-doi";
+import { bibliographyPanel } from "./provider_panels/insert_citation-panel-bibliography";
+import { doiPanel } from "./provider_panels/insert_citation-panel-doi";
 
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
