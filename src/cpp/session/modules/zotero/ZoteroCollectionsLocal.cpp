@@ -213,9 +213,24 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
    Error error = execQuery(pConnection, creatorsSQL(tableName), [&creators](const database::Row& row) {
      std::string key = row.get<std::string>("key");
      ZoteroCreator creator;
-     creator.firstName = row.get<std::string>("firstName");
-     creator.lastName = row.get<std::string>("lastName");
-     creator.creatorType = row.get<std::string>("creatorType");
+
+     soci::indicator firstIndicator = row.get_indicator("firstName");
+     if (firstIndicator == soci::i_ok)
+     {
+        creator.firstName = row.get<std::string>("firstName");
+     }
+
+     soci::indicator lastIndicator = row.get_indicator("lastName");
+     if (lastIndicator == soci::i_ok)
+     {
+        creator.lastName = row.get<std::string>("lastName");
+     }
+
+     soci::indicator typeIndicator = row.get_indicator("creatorType");
+     if (typeIndicator == soci::i_ok)
+     {
+        creator.creatorType = row.get<std::string>("creatorType");
+     }
      creators[key].push_back(creator);
    });
    if (error)
@@ -253,17 +268,16 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
       if (rowVersion > version)
          version = rowVersion;
 
-      // read the csl
-      std::string name = row.get<std::string>("name");
-
-      // If the value is NULL, we should just omit it
-      // null values are meaningless
-      soci::indicator indicator = row.get_indicator("value");
-      if (indicator == soci::i_ok)
+      // read the csl name value pairs
+      soci::indicator nameIndicator = row.get_indicator("name");
+      soci::indicator valueIndicator = row.get_indicator("value");
+      if (nameIndicator == soci::i_ok && valueIndicator == soci::i_ok)
       {
-         std::string value = readString(row, "value");
-         // the data was returned without problems
-         currentItem[name] = value;
+        std::string name = row.get<std::string>("name");
+        std::string value = readString(row, "value");
+
+        // the data was returned without problems
+        currentItem[name] = value;
       }
    });
 
@@ -289,9 +303,9 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
    std::string sql = R"(
       SELECT
          collections.key as collectionKey,
-	 collections.collectionName as collectionName,
-	 parentCollections.key as parentCollectionKey,
-         MAX(items.version) AS version
+         collections.collectionName as collectionName,
+         parentCollections.key as parentCollectionKey,
+         IFNULL(MAX(items.version), 0) AS version
       FROM
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
@@ -341,7 +355,7 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 {
    std::string sql = R"(
      SELECT
-        MAX(items.version) AS version
+        IFNULL(MAX(items.version), 0) AS version
       FROM
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
@@ -354,8 +368,12 @@ int getLibraryVersion(boost::shared_ptr<database::IConnection> pConnection)
 
    int version = 0;
    Error error = execQuery(pConnection, sql, [&version](const database::Row& row) {
-      std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
-      version = safe_convert::stringTo<int>(versionStr, 0);
+       const soci::indicator indicator = row.get_indicator("version");
+       if (indicator == soci::i_ok)
+       {
+           std::string versionStr = readString(row, static_cast<std::size_t>(0), "0");
+           version = safe_convert::stringTo<int>(versionStr, 0);
+       }
    });
    if (error)
       LOG_ERROR(error);

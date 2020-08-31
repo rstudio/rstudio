@@ -209,6 +209,7 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
 
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+   public static final String RMD_VISUAL_MODE_WRAP_CONFIGURED = "rmdVisualWrapConfigured";
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
@@ -7733,6 +7734,12 @@ public class TextEditingTarget implements
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
 
+   // user is switching to visual mode
+   void onUserSwitchingToVisualMode()
+   {
+      visualMode_.onUserSwitchingToVisualMode();
+   }
+   
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

@@ -98,7 +98,7 @@ import { completionExtension } from '../behaviors/completion/completion';
 import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
 import { realtimeSpellingPlugin, invalidateAllWords, invalidateWord } from '../behaviors/spelling/spelling-realtime';
 
-import { PandocConverter } from '../pandoc/pandoc_converter';
+import { PandocConverter, PandocLineWrapping } from '../pandoc/pandoc_converter';
 
 import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
@@ -118,6 +118,9 @@ export interface EditorCode {
 export interface EditorSetMarkdownResult {
   // editor view of markdown (as it will be persisted)
   canonical: string;
+
+  // line wrapping
+  line_wrapping: PandocLineWrapping;
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
@@ -471,7 +474,7 @@ export class Editor {
   ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
-    const { doc, unrecognized, unparsed_meta } = result;
+    const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
@@ -518,6 +521,7 @@ export class Editor {
     // return
     return {
       canonical,
+      line_wrapping,
       unrecognized,
       unparsed_meta
     };

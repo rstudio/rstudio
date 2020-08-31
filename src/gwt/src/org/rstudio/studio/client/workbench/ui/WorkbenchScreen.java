@@ -409,7 +409,7 @@ public class WorkbenchScreen extends Composite
       return this;
    }
 
-   private TimeBufferedCommand paneSizesChangedCommand_;
+   private final TimeBufferedCommand paneSizesChangedCommand_;
 
    private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,0,1.0);
 
@@ -420,5 +420,5 @@ public class WorkbenchScreen extends Composite
    private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
    private final MainSplitPanel tabsPanel_;
-   private PaneManager paneManager_;
+   private final PaneManager paneManager_;
 }

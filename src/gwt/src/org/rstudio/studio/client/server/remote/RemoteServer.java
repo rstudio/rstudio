@@ -93,6 +93,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.ProjectUserRole;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -2057,6 +2058,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
+   
+   public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
+   }
+
 
    public void writeProjectVcsOptions(RProjectVcsOptions options,
                                       ServerRequestCallback<Void> callback)
@@ -6457,6 +6464,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
+   private static final String WRITE_PROJECT_CONFIG = "write_project_config";
    private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
 
    private static final String NEW_DOCUMENT = "new_document";
@@ -6803,6 +6811,6 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-
+  
 
 }

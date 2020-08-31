@@ -83,7 +83,6 @@ import markStrikeout from '../marks/strikeout';
 import markSuperscript from '../marks/superscript';
 import markSubscript from '../marks/subscript';
 import markSmallcaps from '../marks/smallcaps';
-import markUnderline from '../marks/underline';
 import markRawInline from '../marks/raw_inline/raw_inline';
 import markRawTex from '../marks/raw_inline/raw_tex';
 import markRawHTML from '../marks/raw_inline/raw_html';
@@ -171,7 +170,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     nodeShortcodeBlock,
 
     // marks
-    markUnderline,
     markStrikeout,
     markSuperscript,
     markSubscript,

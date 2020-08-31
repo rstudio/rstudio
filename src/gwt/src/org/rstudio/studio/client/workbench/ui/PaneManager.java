@@ -167,8 +167,8 @@ public class PaneManager
          boolean newHasKey = newValue.hasKey(MAXIMIZED_TAB_KEY);
 
          if (oldHasKey && newHasKey)
-            return oldValue.getString(MAXIMIZED_TAB_KEY) !=
-                   newValue.getString(MAXIMIZED_TAB_KEY);
+            return !StringUtil.equals(oldValue.getString(MAXIMIZED_TAB_KEY),
+                   newValue.getString(MAXIMIZED_TAB_KEY));
 
          return oldHasKey != newHasKey;
       }
@@ -334,11 +334,17 @@ public class PaneManager
             // its column, default to the main source window.
             SourceColumn column =
                sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
-            LogicalWindow columnWindow = column == null ? sourceLogicalWindows_.get(0) :
-               getParentLogicalWindow(column.asWidget().getElement());
+            boolean mainSourceWindow = (column == null ||
+               StringUtil.equals(column.getName(), SourceColumnManager.MAIN_SOURCE_NAME)) ?
+               true : false;
 
-            if (docWindowId == windowId &&
-                window == columnWindow)
+            LogicalWindow columnWindow = mainSourceWindow ?
+                                         sourceLogicalWindows_.get(0) :
+                                         getParentLogicalWindow(column.asWidget().getElement());
+
+            if (StringUtil.equals(docWindowId, windowId) &&
+                (columnWindow == null && mainSourceWindow ||
+                 window == columnWindow))
             {
                numDocs++;
             }
@@ -667,7 +673,7 @@ public class PaneManager
          else
          {
             String nextName = sourceColumnManager_.getNextColumnName();
-            if (nextName != SourceColumnManager.MAIN_SOURCE_NAME)
+            if (!StringUtil.equals(nextName, SourceColumnManager.MAIN_SOURCE_NAME))
                return nextName;
             return panes_.get(0).getNormal().getName();
          }
@@ -1155,7 +1161,7 @@ public class PaneManager
       hiddenTabs_.remove(tab);
 
       // Add tab to the back of the new set
-      if (tabs.get(tabs.size() - 1).name() == "Presentation")
+      if (StringUtil.equals(tabs.get(tabs.size() - 1).name(), "Presentation"))
          tabs.add(tabs.size() - 1, tab);
       else
          tabs.add(tab);
@@ -1329,6 +1335,8 @@ public class PaneManager
 
    private Widget createSourceColumnWindow(String name)
    {
+      if (panesByName_.get(name) != null)
+         return panesByName_.get(name).getNormal();
       panesByName_.put(name, createSource(name, sourceColumnManager_.getWidget(name)));
 
       PaneConfig paneConfig = getCurrentConfig();
@@ -1465,11 +1473,11 @@ public class PaneManager
 
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
 
-      if (persisterName == "TabSet1")
+      if (StringUtil.equals(persisterName, "TabSet1"))
          tabs1_ = tabs;
-      else if (persisterName == "TabSet2")
+      else if (StringUtil.equals(persisterName, "TabSet2"))
          tabs2_ = tabs;
-      else if (persisterName == "HiddenTabSet")
+      else if (StringUtil.equals(persisterName, "HiddenTabSet"))
          hiddenTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
@@ -1490,7 +1498,7 @@ public class PaneManager
          session_.persistClientState();
       });
 
-      if (persisterName != "HiddenTabSet")
+      if (!StringUtil.equals(persisterName, "HiddenTabSet"))
          new SelectedTabStateValue(persisterName, tabPanel);
 
       return new Triad<>(
@@ -1715,7 +1723,7 @@ public class PaneManager
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
-   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<LogicalWindow>();
+   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();

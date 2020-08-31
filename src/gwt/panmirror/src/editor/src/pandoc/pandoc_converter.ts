@@ -26,7 +26,6 @@ import {
   PandocInlineHTMLReaderFn,
   PandocWriterOptions,
   PandocTokensFilterFn,
-  PandocExtensions,
 } from '../api/pandoc';
 
 import { haveTableCellsWithInlineRcode } from '../api/rmd';
@@ -40,8 +39,11 @@ import { ExtensionManager } from '../editor/editor-extensions';
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 
+export type PandocLineWrapping = "none" | "column" | "sentence";
+
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
+  line_wrapping: PandocLineWrapping;
   unrecognized: string[];
   unparsed_meta: { [key: string]: any };
 }
