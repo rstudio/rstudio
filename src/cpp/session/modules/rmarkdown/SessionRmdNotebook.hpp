@@ -76,9 +76,9 @@ std::string notebookCtxId();
 
 struct Events : boost::noncopyable
 {
-   // Document {0}, chunk {1} from context id, {2} from code, {3} execution completed
+   // Document {0}, chunk {1} from context id, {2} from code, {3} label, {4} execution completed
    RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&,
-                             const std::string&, const std::string&)>
+                             const std::string&, const std::string&, const std::string&)>
                 onChunkExecCompleted;
 
    // Document {0}, chunk {1} had console output of type {2} and text {3}

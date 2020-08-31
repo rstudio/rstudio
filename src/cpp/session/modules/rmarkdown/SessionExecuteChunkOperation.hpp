@@ -128,6 +128,7 @@ public:
    static boost::shared_ptr<ExecuteChunkOperation> create(const std::string& docId,
                                                           const std::string& chunkId,
                                                           const std::string& chunkCode,
+                                                          const std::string& chunkLabel,
                                                           const std::string& nbCtxId,
                                                           const ShellCommand& command,
                                                           const core::FilePath& scriptPath)
@@ -137,6 +138,7 @@ public:
                                                         docId,
                                                         chunkId,
                                                         chunkCode,
+                                                        chunkLabel,
                                                         nbCtxId,
                                                         command,
                                                         scriptPath));
@@ -149,6 +151,7 @@ private:
    ExecuteChunkOperation(const std::string& docId,
                          const std::string& chunkId,
                          const std::string& chunkCode,
+                         const std::string& chunkLabel,
                          const std::string& nbCtxId,
                          const ShellCommand& command,
                          const core::FilePath& scriptPath)
@@ -156,6 +159,7 @@ private:
         docId_(docId),
         chunkId_(chunkId),
         chunkCode_(chunkCode),
+        chunkLabel_(chunkLabel),
         nbCtxId_(nbCtxId),
         command_(command),
         scriptPath_(scriptPath)
@@ -230,7 +234,7 @@ private:
    
    void onExit(int exitStatus)
    {
-      events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, notebookCtxId());
+      events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, notebookCtxId());
       deregisterProcess();
       scriptPath_.removeIfExists();
    }
@@ -288,6 +292,7 @@ private:
    std::string docId_;
    std::string chunkId_;
    std::string chunkCode_;
+   std::string chunkLabel_;
    std::string nbCtxId_;
    ShellCommand command_;
    core::FilePath scriptPath_;
@@ -326,6 +331,7 @@ public:
 
 core::Error runChunk(const std::string& docId,
                      const std::string& chunkId,
+                     const std::string& chunkLabel,
                      const std::string& nbCtxId,
                      const std::string& engine,
                      const std::string& code,
@@ -356,7 +362,7 @@ core::Error runChunk(const std::string& docId,
 
    // create process
    boost::shared_ptr<ExecuteChunkOperation> operation =
-         ExecuteChunkOperation::create(docId, chunkId, code, nbCtxId, command,
+         ExecuteChunkOperation::create(docId, chunkId, code, chunkLabel, nbCtxId, command,
                scriptPath);
 
    // write input code to cache

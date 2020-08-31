@@ -85,12 +85,13 @@ core::Error copyLibDirForOutput(const core::FilePath& file,
 }
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, const std::string& chunkCode, const std::string& nbCtxId,
-      ExecScope execScope, const core::FilePath& workingDir, 
+      const std::string& chunkId, const std::string& chunkCode, const std::string& chunkLabel,
+      const std::string& nbCtxId, ExecScope execScope, const core::FilePath& workingDir,
       const ChunkOptions& options, int pixelWidth, int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
    chunkCode_(chunkCode),
+   chunkLabel_(chunkLabel),
    nbCtxId_(nbCtxId),
    workingDir_(workingDir),
    options_(options),
@@ -469,7 +470,7 @@ void ChunkExecContext::disconnect()
 
    NotebookCapture::disconnect();
 
-   events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, nbCtxId_);
+   events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 
