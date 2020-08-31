@@ -18,7 +18,7 @@ import React from "react";
 
 import { EditorUI } from "../../../api/ui";
 
-import { CitationProviderPanelProps, CitationProviderPanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
 
 import './insert_citation-panel-doi.css';
 import { TextInput } from "../../../api/widgets/text";
@@ -28,7 +28,7 @@ import { formatForPreview, CiteField, suggestCiteId } from "../../../api/cite";
 import { CitationListItem } from "./insert_citation-panel-list-item";
 import { BibliographyManager, BibliographySource } from "../../../api/bibliography/bibliography";
 
-export function doiPanel(ui: EditorUI): CitationProviderPanel {
+export function doiPanel(ui: EditorUI): CitationSourcePanel {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
     panel: CitationDOIPanel,
@@ -43,7 +43,7 @@ export function doiPanel(ui: EditorUI): CitationProviderPanel {
   };
 }
 
-export const CitationDOIPanel: React.FC<CitationProviderPanelProps> = props => {
+export const CitationDOIPanel: React.FC<CitationSourcePanelProps> = props => {
 
 
   const defaultNoResultsMessage = 'Paste a DOI to load data from Crossref, DataCite, or mEDRA.';

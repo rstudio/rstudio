@@ -26,7 +26,7 @@ import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { NavigationTreeNode } from "../../../api/widgets/navigation_tree";
 
-import { CitationProviderPanelProps, CitationProviderPanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
 
 import './insert_citation-panel-bibliography.css';
 import debounce from "lodash.debounce";
@@ -35,7 +35,7 @@ import { CitationListItem } from "./insert_citation-panel-list-item";
 
 export const kAllLocalType = 'All Local Sources';
 
-export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationProviderPanel {
+export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
   const localProviderNodes = providers.map(provider => {
     const node: any = {};
@@ -61,7 +61,7 @@ export function bibliographyPanel(doc: ProsemirrorNode, ui: EditorUI, bibliograp
   };
 }
 
-export const CitationListPanel: React.FC<CitationProviderPanelProps> = props => {
+export const CitationListPanel: React.FC<CitationSourcePanelProps> = props => {
 
   const bibMgr = props.bibliographyManager;
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
