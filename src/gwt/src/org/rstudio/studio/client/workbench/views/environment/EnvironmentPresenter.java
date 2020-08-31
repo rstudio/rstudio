@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -438,10 +439,24 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.bringToFront();
 
-      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
-                                                      ".RData",
-                                                      true,
-                                                      "save.image");
+      server_.isFunctionMasked(
+            "save.image",
+            "base",
+            new ErrorLoggingServerRequestCallback<Boolean>()
+            {
+               public void onResponseReceived(Boolean isMasked)
+               {
+                  String code = isMasked
+                        ? "base::save.image"
+                        : "save.image";
+                  
+                  consoleDispatcher_.saveFileAsThenExecuteCommand(
+                        "Save Workspace As",
+                        ".RData",
+                        true,
+                        code);
+               };
+            });
    }
 
    void onLoadWorkspace()

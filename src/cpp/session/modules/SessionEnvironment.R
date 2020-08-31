@@ -39,7 +39,7 @@
       mode = "function"
    )
    
-   identical(globalValue, packageValue)
+   !identical(globalValue, packageValue)
 })
 
 .rs.addFunction("valueFromStr", function(val)
