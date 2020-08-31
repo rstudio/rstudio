@@ -245,6 +245,19 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
 }
 
 /**
+ * Whether or not the use of Visual Mode has been confirmed.
+ */
+bool UserStateValues::visualModeConfirmed()
+{
+   return readPref<bool>("visual_mode_confirmed");
+}
+
+core::Error UserStateValues::setVisualModeConfirmed(bool val)
+{
+   return writePref("visual_mode_confirmed", val);
+}
+
+/**
  * The default type for new bibliographies.
  */
 std::string UserStateValues::bibliographyDefaultType()
@@ -303,6 +316,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kConnectVia,
       kErrorHandlerType,
       kUsingMingwGcc49,
+      kVisualModeConfirmed,
       kBibliographyDefaultType,
       kZoteroApiKey,
       kZoteroDataDir,

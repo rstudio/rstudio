@@ -114,6 +114,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             String currentFileName = createBibliographyFileName_.getValue();
             createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension)); 
             userState_.bibliographyDefaultType().setGlobalValue(extension);
+            userState_.writeState();
          }});
 
       setBibliographies(citeProps.bibliographyFiles);

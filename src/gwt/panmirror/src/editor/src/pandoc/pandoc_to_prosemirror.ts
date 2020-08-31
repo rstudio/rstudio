@@ -27,6 +27,7 @@ import {
   mapTokens,
   stringifyTokens,
   PandocExtensions,
+  forEachToken,
 } from '../api/pandoc';
 import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText, kPandocAttrClasses, kPandocAttrKeyvalue } from '../api/pandoc_attr';
 import {
@@ -36,7 +37,7 @@ import {
   decodeBlockCapsuleText,
 } from '../api/pandoc_capsule';
 
-import { PandocToProsemirrorResult } from './pandoc_converter';
+import { PandocToProsemirrorResult, PandocLineWrapping } from './pandoc_converter';
 import { kLinkTarget, kLinkTargetUrl, kLinkChildren, kLinkAttr, kLinkTargetTitle } from '../api/link';
 import { kHeadingAttr, kHeadingLevel, kHeadingChildren } from '../api/heading';
 import { pandocAutoIdentifier, gfmAutoIdentifier } from '../api/pandoc_id';
@@ -115,6 +116,9 @@ class Parser {
       blocks: resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters)
     };
 
+    // detect line wrapping 
+    const lineWrapping = detectLineWrapping(targetAst);
+
     // resolve heading ids
     targetAst = resolveHeadingIds(targetAst, this.extensions);
 
@@ -124,6 +128,7 @@ class Parser {
     // return
     return {
       doc: state.doc(),
+      line_wrapping: lineWrapping,
       unrecognized: state.unrecognized(),
       unparsed_meta: ast.meta
     };
@@ -410,6 +415,40 @@ class ParserState {
     } else {
       return undefined;
     }
+  }
+}
+
+// determine what sort of line wrapping is used within the file
+function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
+
+  // look for soft breaks and classify them as column or sentence breaks
+  let columnBreaks = 0;
+  let sentenceBreaks = 0;
+  let prevTok: PandocToken = { t: PandocTokenType.Null };
+  forEachToken(ast.blocks, tok => {
+    if (tok.t === PandocTokenType.SoftBreak) {
+      if (prevTok.t === PandocTokenType.Str &&
+        typeof (prevTok.c) === "string" &&
+        [".", "?", "!"].includes(prevTok.c.charAt(prevTok.c.length - 1))) {
+        sentenceBreaks++;
+      } else {
+        columnBreaks++;
+      }
+    }
+    prevTok = tok;
+  });
+
+  // need to have at least as many line breaks as blocks to trigger detection
+  // (prevents 'over-detection' if there are stray few soft breaks)
+  const lineBreaks = columnBreaks + sentenceBreaks;
+  if (lineBreaks > ast.blocks.length) {
+    if (sentenceBreaks > columnBreaks) {
+      return "sentence";
+    } else {
+      return "column";
+    }
+  } else {
+    return "none";
   }
 }
 

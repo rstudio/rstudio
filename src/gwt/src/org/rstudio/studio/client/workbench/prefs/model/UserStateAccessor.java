@@ -410,6 +410,18 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
+    * Whether or not the use of Visual Mode has been confirmed.
+    */
+   public PrefValue<Boolean> visualModeConfirmed()
+   {
+      return bool(
+         "visual_mode_confirmed",
+         "", 
+         "Whether or not the use of Visual Mode has been confirmed.", 
+         false);
+   }
+
+   /**
     * The default type for new bibliographies.
     */
    public PrefValue<String> bibliographyDefaultType()
@@ -490,6 +502,8 @@ public class UserStateAccessor extends Prefs
          errorHandlerType().setValue(layer, source.getString("error_handler_type"));
       if (source.hasKey("using_mingw_gcc49"))
          usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
+      if (source.hasKey("visual_mode_confirmed"))
+         visualModeConfirmed().setValue(layer, source.getBool("visual_mode_confirmed"));
       if (source.hasKey("bibliography_default_type"))
          bibliographyDefaultType().setValue(layer, source.getString("bibliography_default_type"));
       if (source.hasKey("zotero_api_key"))
@@ -517,6 +531,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(connectVia());
       prefs.add(errorHandlerType());
       prefs.add(usingMingwGcc49());
+      prefs.add(visualModeConfirmed());
       prefs.add(bibliographyDefaultType());
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
