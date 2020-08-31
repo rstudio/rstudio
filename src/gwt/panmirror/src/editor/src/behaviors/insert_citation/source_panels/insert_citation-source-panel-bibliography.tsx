@@ -29,7 +29,7 @@ import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provi
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
 import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-import { CitationListItem } from "./insert_citation-panel-list-item";
+import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 import './insert_citation-source-panel-bibliography.css';
 
@@ -140,7 +140,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
             separator: true
           }}
         >
-          {CitationListItem}
+          {CitationSourcePanelListItem}
         </FixedSizeList>)}
     </div>);
 };
