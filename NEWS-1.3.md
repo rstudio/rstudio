@@ -8,3 +8,4 @@
 - Fix an issue where a delay in the creation of the Slurm job output file could result in a hanging "Determining session network" page when opening a session (Pro #1792)
 - Fix an issue where `auth-none` would not load sessions (#7575)
 - Fix session crashing on Windows desktop (#7637, #7652, #7665)
+- Fix an issue where launching many sessions simultaneously could cause a segfault (#7670)
