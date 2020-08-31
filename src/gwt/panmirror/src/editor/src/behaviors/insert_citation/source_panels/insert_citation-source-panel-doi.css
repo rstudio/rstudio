@@ -11,7 +11,6 @@
 .pm-insert-doi-source-panel-textbox {
   width: 100%;
   border: solid 1px;
-  margin-right: 10px;
   box-sizing:border-box;
   height: 28px !important;
 }
@@ -23,6 +22,7 @@
 .pm-insert-doi-source-panel-fields {
   padding-top: 8px;
   padding-left: 50px;
+  padding-right: 10px;
 }
 
 .pm-insert-doi-source-panel-fields-name {
