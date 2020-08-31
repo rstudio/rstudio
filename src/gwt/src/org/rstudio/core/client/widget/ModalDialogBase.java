@@ -615,8 +615,10 @@ public abstract class ModalDialogBase extends DialogBox
 
             // allow Enter on textareas, buttons, or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA") || e.hasTagName("A") ||
+            if (e.hasTagName("TEXTAREA") ||
+                  e.hasTagName("A") ||
                   e.hasTagName("BUTTON") ||
+                  e.hasTagName("INPUT") ||
                   e.hasClassName(allowEnterKeyClass) ||
                   (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
                return;

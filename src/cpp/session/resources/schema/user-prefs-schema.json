@@ -1395,11 +1395,20 @@
                 "Ubuntu Mono"
             ]
         },
-        "python_default_interpreter": {
+        "python_type": {
+            "description": "The Python type.",
             "type": "string",
-            "title": "Default Python interpreter",
-            "default": "",
-            "description": "The path to the default Python interpreter"
+            "default": ""
+        },
+        "python_version": {
+            "description": "The Python version.",
+            "type": "string",
+            "default": ""
+        },
+        "python_path": {
+            "description": "The path to the default Python interpreter.",
+            "type": "string",
+            "default": ""
         }
     }
 }

@@ -260,7 +260,7 @@ public class ElementIds
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
       CHOOSE_IMAGE("choose_image"),
-      PYTHON_DEFAULT_INTERPRETER("python_default_interpreter");
+      PYTHON_PATH("python_path");
 
       TextBoxButtonId(String value)
       {

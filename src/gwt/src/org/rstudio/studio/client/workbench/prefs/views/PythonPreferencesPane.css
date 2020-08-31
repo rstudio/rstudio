@@ -1,8 +1,13 @@
 @charset "UTF-8";
 
-.description {
+.overrideLabel {
+	font-style: oblique;
+	font-size: 11px;
 }
 
-.invalid {
-	color: red;
+.interpreterDescription {
+	margin-bottom: 12px;
+}
+
+.mismatchBar {
 }

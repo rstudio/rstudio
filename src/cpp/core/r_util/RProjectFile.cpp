@@ -915,6 +915,25 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->markdownCanonical = defaultConfig.markdownCanonical;
    }
+   
+   // extract python fields
+   it = dcfFields.find("PythonType");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonType = it->second;
+   }
+   
+   it = dcfFields.find("PythonVersion");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonVersion = it->second;
+   }
+   
+   it = dcfFields.find("PythonPath");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonPath = it->second;
+   }
 
    return Success();
 }
@@ -1155,6 +1174,25 @@ Error writeProjectFile(const FilePath& projectFilePath,
          boost::format fmt("MarkdownCanonical: %1%\n");
          contents.append(boost::str(fmt % yesNoAskValueToString(config.markdownCanonical)));
       }
+   }
+   
+   // if any Python configs deviate from default, then create Python section
+   if (!config.pythonType.empty() ||
+       !config.pythonVersion.empty() ||
+       !config.pythonPath.empty())
+   {
+      boost::format fmt(
+               "\n"
+               "PythonType: %1%\n"
+               "PythonVersion: %2%\n"
+               "PythonPath: %3%\n");
+      
+      auto pythonConfig = fmt
+            % config.pythonType
+            % config.pythonVersion
+            % config.pythonPath;
+      
+      contents.append(boost::str(pythonConfig));
    }
    
 

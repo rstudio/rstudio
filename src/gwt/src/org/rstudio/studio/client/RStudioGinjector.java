@@ -108,6 +108,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneBase;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
@@ -332,6 +333,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(OpenProjectDialog dialog);
    void injectMembers(SourceColumn column);
    void injectMembers(SourceColumnManager columnManager);
+   void injectMembers(PythonPreferencesPaneBase<?> pane);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
