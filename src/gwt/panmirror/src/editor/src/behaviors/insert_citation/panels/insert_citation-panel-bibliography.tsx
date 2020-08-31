@@ -24,7 +24,7 @@ import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provi
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
-import { SelectTreeNode } from "../../../api/widgets/select_tree";
+import { NavigationTreeNode } from "../../../api/widgets/navigation_tree";
 
 import { CitationPanelProps, CitationPanel } from "../insert_citation-picker";
 
@@ -166,10 +166,10 @@ function folderImageForProvider(providerKey: string, ui: EditorUI) {
 
 // Takes a flat data structure of containers and turns it into a hierarchical
 // tree structure for display as TreeNodes.
-function toTree(type: string, containers: BibliographyCollection[], folderImage?: string): SelectTreeNode[] {
+function toTree(type: string, containers: BibliographyCollection[], folderImage?: string): NavigationTreeNode[] {
 
-  const treeMap: { [id: string]: SelectTreeNode } = {};
-  const rootNodes: SelectTreeNode[] = [];
+  const treeMap: { [id: string]: NavigationTreeNode } = {};
+  const rootNodes: NavigationTreeNode[] = [];
 
 
   containers.sort((a, b) => a.name.localeCompare(b.name)).forEach(container => {

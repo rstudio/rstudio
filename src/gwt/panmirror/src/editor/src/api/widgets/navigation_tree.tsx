@@ -15,29 +15,35 @@
 
 import React, { CSSProperties } from "react";
 
-import { WidgetProps } from "../../api/widgets/react";
+import { WidgetProps } from "./react";
 
-import './select_tree.css';
+import './navigation_tree.css';
 
 // Individual nodes and children of the Select Tree
-export interface SelectTreeNode {
+export interface NavigationTreeNode {
   key: string;
   name: string;
   image?: string;
   type: string;
   expanded?: boolean;
-  children: SelectTreeNode[];
+  children: NavigationTreeNode[];
 }
 
-interface SelectTreeProps extends WidgetProps {
+interface NavigationTreeProps extends WidgetProps {
   height: number;
-  nodes: SelectTreeNode[];
-  selectedNode?: SelectTreeNode;
-  nodeSelected: (node: SelectTreeNode) => void;
+  nodes: NavigationTreeNode[];
+  selectedNode?: NavigationTreeNode;
+  nodeSelected: (node: NavigationTreeNode) => void;
 }
 
+// Indent level for each level
+const kNavigationTreeIndent = 16;
 
-export const SelectTree: React.FC<SelectTreeProps> = props => {
+// Select Tree is a single selection tree that is useful in 
+// hierarchical navigation type contexts. It does not support
+// multiple selection and is generally not a well behaved tree
+// like you would use to navigate a hierarchical file system.
+export const NavigationTree: React.FC<NavigationTreeProps> = props => {
 
   const style: CSSProperties = {
     overflowY: 'scroll',
@@ -45,6 +51,7 @@ export const SelectTree: React.FC<SelectTreeProps> = props => {
     ...props.style
   };
 
+  // Process keys to enable keyboard based navigation
   const processKey = (e: React.KeyboardEvent) => {
     const selectedNode = props.selectedNode;
     switch (e.key) {
@@ -64,36 +71,32 @@ export const SelectTree: React.FC<SelectTreeProps> = props => {
     }
   };
 
-
   return (
     <div style={style} tabIndex={0} onKeyDown={processKey} >
-      {props.nodes.map(treeNode => <SelectTreeItem key={treeNode.key} node={treeNode} onSelected={props.nodeSelected} selectedNode={props.selectedNode} />)}
+      {props.nodes.map(treeNode => <NavigationTreeItem key={treeNode.key} node={treeNode} onSelected={props.nodeSelected} selectedNode={props.selectedNode} />)}
     </div>
   );
 };
 
 
-interface SelectTreeItemProps extends WidgetProps {
-  node: SelectTreeNode;
-  onSelected: (node: SelectTreeNode) => void;
+interface NavigationTreeItemProps extends WidgetProps {
+  node: NavigationTreeNode;
+  onSelected: (node: NavigationTreeNode) => void;
   indentLevel?: number;
-  selectedNode?: SelectTreeNode;
+  selectedNode?: NavigationTreeNode;
 }
 
-export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
+// Renders each item
+const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
 
-  const kIndent = 16;
-
-  const style = {
-    ...props.style
-  };
-
+  // Select the tree node
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     props.onSelected(props.node);
   };
 
+  // Anytime the selected node changes, expand the selected node
   React.useEffect(() => {
     if (props.node === props.selectedNode) {
       props.node.expanded = true;
@@ -101,28 +104,33 @@ export const SelectTreeItem: React.FC<SelectTreeItemProps> = props => {
     }
   }, [props.selectedNode]);
 
+  // Whether this node is expanded
   const [expanded, setExpanded] = React.useState<boolean>(props.node.expanded || false);
 
+  // Whether this node is elected
   const selected = props.selectedNode && props.selectedNode === props.node;
-  const indentLevel = props.indentLevel || 0;
 
+  // Indent this node the proper amount
+  const indentLevel = props.indentLevel || 0;
   const indentStyle = {
-    paddingLeft: indentLevel * kIndent + 'px'
+    paddingLeft: indentLevel * kNavigationTreeIndent + 'px'
   };
 
-  const selectedClassName = `${selected ? 'pm-selected-select-tree-item' : 'pm-select-tree-item'} pm-select-tree-node`;
+  const selectedClassName = `${selected ? 'pm-selected-navigation-tree-item' : 'pm-navigation-tree-item'} pm-navigation-tree-node`;
   return (
-    <div key={props.node.key} onClick={onClick} style={style}>
+    <div key={props.node.key} onClick={onClick} style={props.style}>
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>
-        {props.node.image ? <div className='pm-select-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-select-tree-node-image' /></div> : null}
-        <div className='pm-select-tree-node-label-div'>{props.node.name}</div>
+        {props.node.image ? <div className='pm-navigation-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-navigation-tree-node-image' /></div> : null}
+        <div className='pm-navigation-tree-node-label-div'>{props.node.name}</div>
       </div>
-      {expanded ? props.node.children?.map(childNode => <SelectTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : undefined}
+      {expanded ? props.node.children?.map(childNode => <NavigationTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : undefined}
     </div >
   );
 };
 
-export function containsChild(key: string, node: SelectTreeNode): boolean {
+// Indicates whether a given key is the identified node or one of its
+// children
+export function containsChild(key: string, node: NavigationTreeNode): boolean {
   if (node.key === key) {
     return true;
   }
@@ -138,21 +146,21 @@ export function containsChild(key: string, node: SelectTreeNode): boolean {
 
 // Creates an ordered flattened list of visible nodes in the
 // tree. Useful for incrementing through visible nodes :)
-function visibleNodes(nodes: SelectTreeNode[]) {
+function visibleNodes(nodes: NavigationTreeNode[]) {
 
-  const nodeList: SelectTreeNode[][] = nodes.map(node => {
+  const nodeList: NavigationTreeNode[][] = nodes.map(node => {
     if (node.expanded) {
       return [node].concat(visibleNodes(node.children));
     } else {
       return [node];
     }
   });
-  return ([] as SelectTreeNode[]).concat(...nodeList);
+  return ([] as NavigationTreeNode[]).concat(...nodeList);
 
 }
 
 // Get the next node for the current node
-function nextNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectTreeNode {
+function nextNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
   const nodes = visibleNodes(allNodes);
   const currentIndex = nodes.indexOf(node);
   if (currentIndex < nodes.length - 1) {
@@ -163,7 +171,7 @@ function nextNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectTreeN
 }
 
 // Get the previous node for the current node
-function previousNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectTreeNode {
+function previousNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
   const nodes = visibleNodes(allNodes);
   const currentIndex = nodes.indexOf(node);
   if (currentIndex > 0) {
@@ -173,10 +181,3 @@ function previousNode(node: SelectTreeNode, allNodes: SelectTreeNode[]): SelectT
   }
 
 }
-
-
-
-
-
-
-

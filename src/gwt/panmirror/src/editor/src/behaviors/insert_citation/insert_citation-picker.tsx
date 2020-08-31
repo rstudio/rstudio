@@ -22,7 +22,7 @@ import { WidgetProps } from "../../api/widgets/react";
 
 import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
 import { EditorUI } from "../../api/ui";
-import { SelectTreeNode, containsChild, SelectTree } from "../../api/widgets/select_tree";
+import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation_tree";
 import { TagInput, TagItem } from "../../api/widgets/tag_input";
 
 import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
@@ -39,7 +39,7 @@ import { CitationBibliographyPicker } from "./insert_citation-bibliography-picke
 export interface CitationPanel {
   key: string;
   panel: React.FC<CitationPanelProps>;
-  treeNode: SelectTreeNode;
+  treeNode: NavigationTreeNode;
 }
 
 // Panels get a variety of information as properties to permit them to search
@@ -49,7 +49,7 @@ export interface CitationPanelProps extends WidgetProps {
   bibliographyManager: BibliographyManager;
   server: EditorServer;
   height: number;
-  selectedNode?: SelectTreeNode;
+  selectedNode?: NavigationTreeNode;
   sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
   removeSource: (source: BibliographySource) => void;
@@ -75,10 +75,10 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   const [selectedPanel, setSelectedPanel] = React.useState<CitationPanel>();
 
   // The node of the SelectTree that is selected
-  const [selectedNode, setSelectedNode] = React.useState<SelectTreeNode>();
+  const [selectedNode, setSelectedNode] = React.useState<NavigationTreeNode>();
 
   // Data for the SelectTree
-  const [treeSourceData, setTreeSourceData] = React.useState<SelectTreeNode[]>([]);
+  const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>([]);
 
   // The accumulated bibliography sources to be inserted
   const [sourcesToAdd, setSourcesToAdd] = React.useState<BibliographySource[]>([]);
@@ -106,7 +106,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   // Whenever the user selects a new node, lookup the correct panel for that node and 
   // select that panel.
   React.useEffect(() => {
-    const panelForNode = (treeNode: SelectTreeNode, panelItems: CitationPanel[]) => {
+    const panelForNode = (treeNode: NavigationTreeNode, panelItems: CitationPanel[]) => {
       const panelItem = panelItems.find(panel => {
         return containsChild(treeNode.key, panel.treeNode);
       });
@@ -164,7 +164,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   };
   const panelToDisplay = selectedPanel ? React.createElement(selectedPanel.panel, citationProps) : undefined;
 
-  const nodeSelected = (node: SelectTreeNode) => {
+  const nodeSelected = (node: NavigationTreeNode) => {
     setSelectedNode(node);
   };
 
@@ -194,7 +194,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
 
       <div className='pm-cite-panel-cite-selection'>
         <div className='pm-cite-panel-cite-selection-sources pm-block-border-color pm-background-color'>
-          <SelectTree
+          <NavigationTree
             height={panelHeight}
             nodes={treeSourceData}
             selectedNode={selectedNode}

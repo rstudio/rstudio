@@ -1,17 +1,17 @@
 
 
-.pm-select-tree-node-indent {
+.pm-navigation-tree-node-indent {
   margin-left: 10px;
 }
 
-.pm-select-tree-node {
+.pm-navigation-tree-node {
   padding-top: 4px;
   padding-bottom: 4px;
   display: flex;
   align-items: center;
 }
 
-.pm-select-tree-node-image {
+.pm-navigation-tree-node-image {
   width:20px;
   height:20px;
   padding-right: 3px;
@@ -19,7 +19,7 @@
   vertical-align: middle;
 }
 
-.pm-select-tree-node-label-div {
+.pm-navigation-tree-node-label-div {
   font-size: 1.1em;
   opacity: .8;
   overflow: hidden;
