@@ -208,9 +208,6 @@ export function applyTheme(theme: EditorTheme) {
       border: 1px solid ${theme.findTextBorderColor} !important;
       border-radius: 3px;
     }
-    .pm-dark-mode .pm-selected-navigation-tree-item {
-      background-color: ${theme.selectionColor} !important;
-    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }

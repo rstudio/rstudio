@@ -115,7 +115,7 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
             isScrolling={false}
           /> :
           <div className='pm-insert-doi-source-panel-no-result'>
-            <div className='pm-insert-doi-source-panel-no-result-text'>
+            <div className='pm-insert-doi-source-panel-no-result-text pm-text-color'>
               {props.ui.context.translateText(noResultsText)}
             </div>
           </div>}
@@ -125,8 +125,8 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
           <tbody>
             {previewFields.map(previewField =>
               (<tr key={previewField.name}>
-                <td className='pm-insert-doi-source-panel-fields-name'>{previewField.name}:</td>
-                <td className='pm-insert-doi-source-panel-fields-value'>{previewField.value}</td>
+                <td className='pm-insert-doi-source-panel-fields-name pm-text-color'>{previewField.name}:</td>
+                <td className='pm-insert-doi-source-panel-fields-value pm-text-color'>{previewField.value}</td>
               </tr>)
             )}
           </tbody>

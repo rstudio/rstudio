@@ -191,7 +191,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   return (
-    <div className='pm-cite-panel-container' style={style}>
+    <div className='pm-cite-panel-container  pm-background-color' style={style}>
 
       <div className='pm-cite-panel-cite-selection'>
         <div className='pm-cite-panel-cite-selection-sources pm-block-border-color pm-background-color'>

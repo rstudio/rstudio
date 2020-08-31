@@ -121,7 +121,7 @@ const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
     <div key={props.node.key} onClick={onClick} style={props.style}>
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>
         {props.node.image ? <div className='pm-navigation-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-navigation-tree-node-image' /></div> : null}
-        <div className='pm-navigation-tree-node-label-div'>{props.node.name}</div>
+        <div className='pm-navigation-tree-node-label-div pm-text-color'>{props.node.name}</div>
       </div>
       {expanded ? props.node.children?.map(childNode => <NavigationTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : undefined}
     </div >

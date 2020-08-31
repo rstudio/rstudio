@@ -20,6 +20,7 @@ import { WidgetProps } from "../../api/widgets/react";
 import { EditorUI } from "../ui";
 
 import './tag_input.css';
+import { TextInput } from "./text";
 
 // Item representing a tag entry
 // The key remains stable even if the tag is edited
@@ -134,9 +135,9 @@ const Tag: React.FC<TagProps> = props => {
     <img src={props.ui.images.widgets?.tag_delete} onClick={onDeleteClick} onKeyPress={onDeleteKeyPress} className='pm-tag-input-delete-image' tabIndex={0} />
     <div className={`pm-tag-input-text ${props.tag.isEditable ? 'pm-tag-input-text-edittable' : undefined}`}>
       {!editing ?
-        <div onClick={onEditClick} className='pm-tag-input-text-raw'>{props.tag.displayPrefix}{displayText}</div> :
-        <input type='text'
-          size={editingText.length}
+        <div onClick={onEditClick} className='pm-tag-input-text-raw pm-text-color'>{props.tag.displayPrefix}{displayText}</div> :
+        <TextInput
+          width={`${editingText.length} ch`}
           ref={editTextInput}
           className='pm-tag-input-text-edit'
           value={editingText}

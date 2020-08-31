@@ -13,7 +13,7 @@
  *
  */
 
-import React, { ChangeEventHandler, KeyboardEventHandler } from 'react';
+import React, { ChangeEventHandler, KeyboardEventHandler, FocusEventHandler } from 'react';
 
 import { WidgetProps } from './react';
 
@@ -29,6 +29,8 @@ export interface TextInputProps extends WidgetProps {
   onChange?: ChangeEventHandler;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
+  onKeyPress?: KeyboardEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
@@ -58,6 +60,8 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}
         onKeyUp={props.onKeyUp}
+        onKeyPress={props.onKeyPress}
+        onBlur={props.onBlur}
         tabIndex={props.tabIndex}
         ref={ref}
       />

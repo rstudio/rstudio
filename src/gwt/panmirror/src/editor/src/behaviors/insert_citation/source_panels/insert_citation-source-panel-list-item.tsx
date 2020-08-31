@@ -67,10 +67,10 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           </div>
           <div className='pm-insert-citation-source-panel-item-summary'>
             <div className='pm-insert-citation-source-panel-item-id'>
-              <div className='pm-insert-citation-source-panel-item-title pm-fixedwidth-font'>{id}</div>
-              <div className='pm-insert-citation-source-panel-item-detail'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+              <div className='pm-insert-citation-source-panel-item-title pm-fixedwidth-font pm-text-color'>{id}</div>
+              <div className='pm-insert-citation-source-panel-item-detail pm-text-color'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
             </div>
-            <div className='pm-insert-citation-source-panel-item-subtitle-text'>{source.title}</div>
+            <div className='pm-insert-citation-source-panel-item-subtitle-text pm-text-color'>{source.title}</div>
           </div>
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton

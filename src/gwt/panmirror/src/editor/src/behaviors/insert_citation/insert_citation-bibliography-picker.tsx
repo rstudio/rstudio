@@ -106,7 +106,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
 
   return (
     <div className='pm-citation-bibliography-picker-container' style={props.style}>
-      <div className='pm-citation-bibliography-picker-label'>{props.bibliographyFiles.length > 0 ?
+      <div className='pm-citation-bibliography-picker-label pm-text-color'>{props.bibliographyFiles.length > 0 ?
         props.ui.context.translateText('Add to bibliography:') :
         props.ui.context.translateText('Create bibliography file:')
       }</div>
