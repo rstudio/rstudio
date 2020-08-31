@@ -63,8 +63,15 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   ];
   const suggestedBibliographyFileName = changeExtension('references.bib', bibliographyTypes[0].extension);
 
+  // On first load, initialize the default bibliography file
+  React.useEffect(() => {
+    const initialBibFile = (props.bibliographyFiles.length > 0) ? props.bibliographyFiles[0] : newBibliographyFile(suggestedBibliographyFileName, props.ui);
+    setBibliographyFile(initialBibFile);
+    props.biblographyFileChanged(initialBibFile);
+  }, []);
+
   // The file that the user selected (either for creation or selected from list)
-  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>(props.bibliographyFiles.length > 0 ? props.bibliographyFiles[0] : newBibliographyFile(suggestedBibliographyFileName, props.ui));
+  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>();
 
   // The name of the file that the user would like to create
   const [createFileName, setCreateFileName] = React.useState<string>(suggestedBibliographyFileName);
