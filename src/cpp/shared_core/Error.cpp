@@ -37,9 +37,6 @@ namespace core {
 
 namespace {
 
-constexpr const char* s_errorExpected = "expected";
-constexpr const char* s_errorExpectedValue = "yes";
-
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
 
@@ -182,6 +179,7 @@ struct Error::Impl
    ErrorProperties Properties;
    Error Cause;
    ErrorLocation Location;
+   bool Expected = false;
 };
 
 // This is a shallow copy because deep copy will only be performed on a write.
@@ -423,12 +421,12 @@ std::string Error::getSummary() const
 
 bool Error::isExpected() const
 {
-   return getProperty(s_errorExpected) == s_errorExpectedValue;
+   return m_impl->Expected;
 }
 
 void Error::setExpected()
 {
-   addProperty(s_errorExpected, s_errorExpectedValue);
+   m_impl->Expected = true;
 }
 
 void Error::copyOnWrite()

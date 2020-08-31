@@ -1594,9 +1594,8 @@ namespace {
 int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
-   if (!error.isExpected())
+   if (error)
       core::log::logError(error, location);
-
    return EXIT_FAILURE;
 }
 

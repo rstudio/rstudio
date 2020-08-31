@@ -80,7 +80,7 @@ void addToSystemPath(const FilePath& path, bool prepend)
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
-   if (!error.isExpected())
+   if (error)
       core::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }

@@ -291,8 +291,7 @@ int RReadConsole (const char *pmt,
                error = initError;
 
             // log the error if it was unexpected
-            if (!error.isExpected())
-               LOG_ERROR(error);
+            LOG_ERROR(error);
             
             // terminate the session (use suicide so that no special
             // termination code runs -- i.e. call to setAbnormalEnd(false)

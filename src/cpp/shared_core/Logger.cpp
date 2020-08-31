@@ -287,27 +287,32 @@ std::string cleanDelimiters(const std::string& in_str)
 
 void logError(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
 }
 
 void logError(const Error& in_error, const ErrorLocation& in_location)
 {
-   logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
 }
 
 void logErrorAsWarning(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::WARN, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::WARN, in_error.asString());
 }
 
 void logErrorAsInfo(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::INFO, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::INFO, in_error.asString());
 }
 
 void logErrorAsDebug(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::DEBUG, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::DEBUG, in_error.asString());
 }
 
 void logErrorMessage(const std::string& in_message, const std::string& in_section)
