@@ -54,19 +54,12 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
   const [searchText, setSearchText] = React.useState<string>('');
   const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
 
-  React.useEffect(() => {
-    if (csl) {
-      const preview = formatForPreview(csl);
-      setPreviewFields(preview);
-    } else {
-      setPreviewFields([]);
-      if (searchText.length > 0) {
-        setNoResultsText(noMatchingResultsMessage);
-      } else {
-        setNoResultsText(defaultMessage);
-      }
-    }
-  }, [csl]);
+  const clearResults = (message: string) => {
+    setCsl(undefined);
+    setPreviewFields([]);
+    setNoResultsText(message);
+
+  };
 
   React.useEffect(() => {
     if (searchText) {
@@ -74,13 +67,15 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
         const result = await props.server.doi.fetchCSL(searchText, 350);
         if (result.status === 'ok') {
           setCsl(result.message);
+          const preview = formatForPreview(result.message);
+          setPreviewFields(preview);
         } else {
-          setCsl(undefined);
+          clearResults(noMatchingResultsMessage);
         }
       }, 50);
       debounced();
     } else {
-      setCsl(undefined);
+      clearResults(defaultMessage);
     }
   }, [searchText]);
 
