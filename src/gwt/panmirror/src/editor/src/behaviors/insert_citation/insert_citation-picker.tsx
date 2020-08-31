@@ -217,8 +217,8 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
             displayPrefix: '@',
             isEditable: source.providerKey !== kLocalBiliographyProviderKey,
           }))}
-          deleteTag={deleteTag}
-          tagEdited={tagEdited}
+          tagDeleted={deleteTag}
+          tagChanged={tagEdited}
           ui={props.ui}
           style={tagStyle} />
       </div>
