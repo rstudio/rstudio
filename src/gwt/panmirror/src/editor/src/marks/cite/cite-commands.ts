@@ -82,8 +82,8 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                 const citeIdMark = schema.marks.cite_id.create();
                 const citeIdText = schema.text(`@${source.id}`, [citeIdMark]);
                 tr.insert(tr.selection.from, citeIdText);
-                if (sources.length > 1) {
-                  tr.insert(tr.selection.from, schema.text(i !== sources.length - 1 ? '; ' : ';', []));
+                if (sources.length > 1 && i !== sources.length - 1) {
+                  tr.insert(tr.selection.from, schema.text('; ', []));
                 }
               });
 

@@ -156,7 +156,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     selectedNode,
     sourcesToAdd,
     addSource: (source: BibliographySource) => {
-      setSourcesToAdd([source, ...sourcesToAdd]);
+      setSourcesToAdd([...sourcesToAdd, source]);
     },
     removeSource: (src: BibliographySource) => {
       deleteSource(src.id);
