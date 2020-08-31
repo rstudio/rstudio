@@ -19,28 +19,29 @@ import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemir
 import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
+import uniqBy from 'lodash.uniqby';
+
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { BibliographyManager, BibliographyFile, BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
+import { joinPaths, getExtension } from '../../api/path';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { InsertCiteProps, kAlertTypeError, kAlertTypeWarning } from '../../api/ui-dialogs';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
 import { performCompletionReplacement } from '../../api/completion';
+import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
-import { Extension, ExtensionContext } from '../../api/extension';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
-import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
-import { toBibLaTeX } from '../../api/bibliography/bibDB';
-import { joinPaths, getExtension } from '../../api/path';
-import uniqBy from 'lodash.uniqby';
+
 
 const kCiteCitationsIndex = 0;
 
@@ -650,6 +651,7 @@ export async function insertCitation(
         // Figure out whether this is a project or document level bibliography
         const writableBiblios = bibManager.writableBibliographyFiles(view.state.doc, ui);
 
+        // Sort out the bibliography file into which we should write the entry
         const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
         const project = thisWritableBiblio?.isProject || false;
         const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
@@ -723,7 +725,7 @@ export async function ensureSourcesInBibliography(
   // know more about the warning type and not have this filter here (e.g. it would just
   // always show the warning)
   let proceedWithInsert = true;
-  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && isBibLaTeX(bibliographyFile.fullPath)) {
+  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && getExtension(bibliographyFile.fullPath) === 'bib') {
     const results = await Promise.all<boolean>(providersWithWarnings.map(async withWarning => {
       const warning = bibManager.warningForProvider(withWarning);
       if (warning) {
@@ -753,10 +755,6 @@ export async function ensureSourcesInBibliography(
         }
       }));
   }
-}
-
-function isBibLaTeX(bibFile: string): boolean {
-  return getExtension(bibFile) === 'bib';
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
