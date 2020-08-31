@@ -469,7 +469,6 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetDialog.ensureStylesInjected();
       PanmirrorResources.INSTANCE.styles().ensureInjected();
       PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
-      VisualModeConfirmDialog.ensureStylesInjected();
       ZoteroApiKeyWidget.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();

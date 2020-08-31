@@ -71,18 +71,6 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
       return true;  
    }
    
-   public static void ensureStylesInjected()
-   {
-      try
-      {
-         VisualModeConfirmDialog dlg = new VisualModeConfirmDialog((value) -> {}, () -> {});
-         dlg.removeFromParent();
-      }
-      catch(Exception e)
-      {
-      }
-      
-   }
    
    interface Binder extends UiBinder<Widget, VisualModeConfirmDialog> {}
    
