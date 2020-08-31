@@ -23,7 +23,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
-import { showInsertCitationPopup } from '../../behaviors/insert_citation/insert_citation-popup';
+import { showInsertCitationDialog } from '../../behaviors/insert_citation/insert_citation-dialog';
 import { EditorEvents } from '../../api/events';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
@@ -43,7 +43,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          showInsertCitationPopup(ui, state.doc, bibliographyManager, server).then(async result => {
+          showInsertCitationDialog(ui, state.doc, bibliographyManager, server).then(async result => {
             if (result) {
 
               // The sources that we should insert

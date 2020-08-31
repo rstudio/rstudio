@@ -28,17 +28,17 @@ import { InsertCitationPanel } from './insert_citation-panel';
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
-export interface InsertCitationResult {
+export interface InsertCitationDialogResult {
   sources: BibliographySource[];
   bibliography: BibliographyFile;
 }
 
-export async function showInsertCitationPopup(
+export async function showInsertCitationDialog(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
-): Promise<InsertCitationResult | undefined> {
+): Promise<InsertCitationDialogResult | undefined> {
 
   // The citations that the user would like to insert
   let sources: BibliographySource[] = [];
