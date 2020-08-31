@@ -208,15 +208,9 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       
       // persist metadata
-      if (ordinal >= 0)
-         metadata_.put(ordinal, metadata);
+      metadata_.put(ordinal, metadata);
       
-      final boolean knitrFigure = ordinal < 0 ? false :
-                                                metadata.getSizingPolicyKnitrFigure();
-      // The ordinal is -1 then we have already processed the chunk output and are adding an HTML
-      // rendering from an API callback.
-      if (ordinal < 0)
-         ordinal = maxOrdinal_ + 1;
+      final boolean knitrFigure = metadata.getSizingPolicyKnitrFigure();
       
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy
@@ -294,10 +288,10 @@ public class ChunkOutputStream extends FlowPanel
       Event.sinkEvents(frame.getElement(), Event.ONLOAD);
       Event.setEventListener(frame.getElement(), e ->
       {
-            if (Event.ONLOAD == e.getTypeInt())
-            {
-               afterRender_.execute();
-            }
+         if (Event.ONLOAD == e.getTypeInt())
+         {
+            afterRender_.execute();
+         }
       });
    }
 
@@ -305,8 +299,8 @@ public class ChunkOutputStream extends FlowPanel
    public void showErrorOutput(UnhandledError err)
    {
       hasErrors_ = true;
-
-      // if there's only one error frame, it's not worth showing dedicated
+      
+      // if there's only one error frame, it's not worth showing dedicated 
       // error UX
       if (err.getErrorFrames() != null &&
           err.getErrorFrames().length() < 2)
@@ -321,7 +315,7 @@ public class ChunkOutputStream extends FlowPanel
          // emit any messages queued prior to the error
          if (idx > 0)
          {
-            renderConsoleOutput(queuedError_.substring(0, idx),
+            renderConsoleOutput(queuedError_.substring(0, idx), 
                   classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
@@ -334,9 +328,9 @@ public class ChunkOutputStream extends FlowPanel
          // flush any irrelevant messages from the stream
          flushQueuedErrors();
       }
-
+      
       UserState state =  RStudioGinjector.INSTANCE.getUserState();
-      ConsoleError error = new ConsoleError(err,
+      ConsoleError error = new ConsoleError(err, 
             AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
             this, null);
 
@@ -355,9 +349,9 @@ public class ChunkOutputStream extends FlowPanel
       // later
       addWithOrdinal(new ChunkOrdinalWidget(), ordinal);
    }
-
+   
    @Override
-   public void showDataOutput(JavaScriptObject data,
+   public void showDataOutput(JavaScriptObject data, 
          NotebookFrameMetadata metadata, int ordinal)
    {
       metadata_.put(ordinal, metadata);
@@ -392,13 +386,13 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
-
+   
    @Override
    public void setPlotPending(boolean pending, String pendingStyle)
    {
       for (Widget w: this)
       {
-         if (w instanceof FixedRatioWidget &&
+         if (w instanceof FixedRatioWidget && 
              ((FixedRatioWidget)w).getWidget() instanceof Image)
          {
             if (pending)
@@ -416,7 +410,7 @@ public class ChunkOutputStream extends FlowPanel
       {
          if (w instanceof ChunkPlotWidget)
          {
-            // ask the plot to sync this URL (it contains the logic for
+            // ask the plot to sync this URL (it contains the logic for 
             // determining whether it matches the URL)
             ChunkPlotWidget plot = (ChunkPlotWidget)w;
             plot.updateImageUrl(plotUrl, pendingStyle);

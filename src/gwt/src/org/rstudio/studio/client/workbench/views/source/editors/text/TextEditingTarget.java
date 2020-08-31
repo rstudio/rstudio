@@ -2288,7 +2288,7 @@ public class TextEditingTarget implements
 
    private void updateCurrentScope()
    {
-      if (fileType_ == null || !fileType_.canShowScopeTree() || statusBar_ == null)
+      if (fileType_ == null || !fileType_.canShowScopeTree())
          return;
 
       // special handing for presentations since we extract

@@ -794,7 +794,6 @@ public class TextEditingTargetNotebook
          }
       }
 
-      // !!! rethink where this belongs
       if (outputs_.containsKey(data.getChunkId()) &&
           !StringUtil.isNullOrEmpty(data.getHtmlOutput()))
       {

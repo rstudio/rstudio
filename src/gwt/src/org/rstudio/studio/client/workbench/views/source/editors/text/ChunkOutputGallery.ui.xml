@@ -93,7 +93,5 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
     </g:FlowPanel>
     <g:HTMLPanel styleName="{style.viewer}" ui:field="viewer_">
     </g:HTMLPanel>
-   <g:SimplePanel styleName="{style.viewer}" ui:field="htmlCallback_">
-   </g:SimplePanel>
 </g:HTMLPanel>
 </ui:UiBinder> 

@@ -473,5 +473,4 @@ public class ChunkOutputGallery extends Composite
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;
    @UiField HTMLPanel viewer_;
-   @UiField SimplePanel htmlCallback_;
 }

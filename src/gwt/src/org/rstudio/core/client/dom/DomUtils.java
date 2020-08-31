@@ -897,8 +897,6 @@ public class DomUtils
 
    public static final native void fillIFrame(IFrameElement iframe, String content) /*-{
       var doc = iframe.contentWindow.document;
-
-      // Put the content in the iframe
       doc.open();
       doc.writeln(content);
       doc.close();
