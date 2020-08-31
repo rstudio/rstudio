@@ -133,6 +133,37 @@ export function applyTheme(theme: EditorTheme) {
 
   // generate theme css
   const themeCss = `
+    .pm-default-theme .pm-background-color {
+      background-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-text-color {
+      color: ${defaults.textColor} !important;
+    }
+    .pm-default-theme .pm-border-background-color {
+      background-color: ${defaults.borderBackgroundColor} !important;
+    }
+    .pm-default-theme .pm-input-text {
+      border-color: ${defaults.paneBorderColor} !important
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-input-outline-button {
+      color: ${defaults.textColor};
+      border-color: ${defaults.textColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-selected-navigation-tree-item {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      border-color: ${defaults.findTextBorderColor} !important;
+    }
+    .pm-default-theme .pm-navigation-tree-item {
+      border-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }

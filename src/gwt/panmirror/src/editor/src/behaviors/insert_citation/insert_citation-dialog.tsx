@@ -70,6 +70,7 @@ export async function showInsertCitationDialog(
       const width = Math.min(kMaxWidth, windowWidth * .9);
 
       const container = window.document.createElement('div');
+      container.className = 'pm-default-theme';
 
       container.style.height = height + 'px';
       container.style.width = width + 'px';

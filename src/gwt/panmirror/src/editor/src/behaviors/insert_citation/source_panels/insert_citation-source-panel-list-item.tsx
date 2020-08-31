@@ -39,7 +39,9 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   const source = citationListData.allSources[props.index];
 
   // An entry contains formatted values for display
-  const entry = entryForSource(source, props.data.ui);
+  // NOTE: Dark mode is disabled right here since this is currently hosted in a 
+  // dialog. It would be nice to use a style or something to signal this
+  const entry = entryForSource(source, props.data.ui, false);
 
   // NOTE: Could consider making this length dynamic to account for item width
   const maxIdLength = 30;

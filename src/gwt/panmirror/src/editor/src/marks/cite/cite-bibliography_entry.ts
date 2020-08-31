@@ -29,7 +29,7 @@ export interface BibliographyEntry {
   adornmentImage?: string;
 }
 
-export function entryForSource(source: BibliographySource, ui: EditorUI): BibliographyEntry {
+export function entryForSource(source: BibliographySource, ui: EditorUI, permitDarkMode?: boolean): BibliographyEntry {
   const authorsFormatter = (authors?: CSLName[], maxLength?: number): string => {
     return formatAuthors(authors, maxLength);
   };
@@ -48,7 +48,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
     source,
     authorsFormatter,
     issuedDateFormatter,
-    image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
+    image: imageForType(ui, source.type)[permitDarkMode && ui.prefs.darkMode() ? 1 : 0],
     adornmentImage: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
   };
 }
