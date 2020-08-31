@@ -36,6 +36,14 @@ import com.google.inject.Inject;
 
 public class VisualModeConfirm
 {
+   public enum LineWrappingAction
+   {
+      SetFileLineWrapping,
+      SetProjectLineWrapping,
+      SetNothing
+   }
+   
+   
    public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -122,7 +130,7 @@ public class VisualModeConfirm
    }
    
    private boolean requiresLineWrappingPrompt(String lineWrapping)
-   {
+   { 
       boolean wrapConfigured = docUpdateSentinel_.getBoolProperty(
          TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED, false
       );
