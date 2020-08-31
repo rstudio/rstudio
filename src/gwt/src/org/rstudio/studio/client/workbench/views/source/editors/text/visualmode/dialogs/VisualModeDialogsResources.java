@@ -32,6 +32,7 @@ public interface VisualModeDialogsResources extends ClientBundle
       String confirmLineWrappingDialog();
       String lineWrappingRadio();
       String lineWrappingHelp();
+      String wrapAtColumn();
    }
 
    @Source("VisualModeDialogs.css")

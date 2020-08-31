@@ -17,14 +17,16 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -32,17 +34,42 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeConfirm.LineWrappingAction>
+public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrappingDialog.Result>
 {   
-   public VisualModeConfirmLineWrappingDialog(
+   public class Result
+   {
+      public Result(Action action)
+      {
+         this(action, null);
+      }
+      
+      public Result(Action action, Integer column)
+      {
+         this.action = action;
+         this.column = column;
+      }
+      public final Action action;
+      public final Integer column;
+   }
+   
+   public enum Action
+   {
+      SetFileLineWrapping,
+      SetProjectLineWrapping,
+      SetNothing
+   }
+   
+   
+   public VisualModeLineWrappingDialog(
       String detectedLineWrapping,
       String configuredLineWrapping,
       boolean isProjectConfig,
       boolean haveProject,
-      OperationWithInput<VisualModeConfirm.LineWrappingAction> onConfirm,
+      int defaultColumnBreak,
+      OperationWithInput<Result> onConfirm,
       Operation onCancel)
    {
-      super("Line Wrapping Mismatch", 
+      super("Line Wrapping", 
             Roles.getDialogRole(), 
             onConfirm, 
             onCancel);
@@ -50,7 +77,7 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
       
       
       mainWidget_ = new VerticalPanel();
-      mainWidget_.setSpacing(10);
+     
       mainWidget_.addStyleName(RES.styles().confirmLineWrappingDialog());
       
       Label mismatch = new Label("Line wrapping mismatch detected:");
@@ -67,46 +94,45 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
       if (isProjectConfig)
          builder.appendEscaped("The current project is configured with ");
       else
-         builder.appendEscaped("The current global option is set to ");
+         builder.appendEscaped("The current global default is set to ");
       if (configuredLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE))
-         builder.appendEscaped("no ");
+         builder.appendEscaped("no");
       else 
          builder.appendEscaped(configuredLineWrapping + "-based");
-      builder.appendEscaped("line wrapping");
+      builder.appendEscaped(" line wrapping");
       builder.appendHtmlConstant("</li>");
       builder.appendHtmlConstant("</ul>");
       
       
       mainWidget_.add(new HTML(builder.toSafeHtml()));
       
-      StringBuilder msg = new StringBuilder();
-      msg.append("You can either continue using ");
-      msg.append(detectedLineWrapping + "-based line wrapping, ");
-      msg.append("or alternatively adopt the ");
-      msg.append(isProjectConfig ? "project" : "global");
-      msg.append(" default.");
-      
+     
       Label choiceLabel = new Label("Select your preference for line wrapping below:");
       mainWidget_.add(choiceLabel);
-            
-    
+         
+      
       chkConfigureFile_ = lineWrappingRadio( 
          "Use " + detectedLineWrapping + "-based line wrapping for this document"
       );
       chkConfigureFile_.setValue(true);
       mainWidget_.add(chkConfigureFile_);
+      
+      numFileColumn_ = createColumnInput(defaultColumnBreak);
+      mainWidget_.add(numFileColumn_);
+      
       chkConfigureProject_= lineWrappingRadio(
          "Use " + detectedLineWrapping + "-based line wrapping for this project"
-      );      
+      );
+      numProjectColumn_ = createColumnInput(defaultColumnBreak);
+
       if (haveProject)
+      {
          mainWidget_.add(chkConfigureProject_);
+         mainWidget_.add(numProjectColumn_);
+      }
       
       chkConfigureNone_ = lineWrappingRadio(
-         "Use the " + (isProjectConfig ? "project" : "global") + " default (" + 
-         (configuredLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE) 
-           ? "no"
-           : configuredLineWrapping + "-based") +
-         " line wrapping) for this document"
+         "Use the " + (isProjectConfig ? "project" : "global") + " default line wrapping for this document"
       );
       mainWidget_.add(chkConfigureNone_);
       
@@ -118,6 +144,18 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
       );
       lineWrappingHelp.addStyleName(RES.styles().lineWrappingHelp());
       mainWidget_.add(lineWrappingHelp);
+      
+      boolean wrapColumn = detectedLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN);
+      ValueChangeHandler<Boolean> manageColumnInputs = (ignored) -> {
+         numFileColumn_.setVisible(wrapColumn && chkConfigureFile_.getValue());
+         numProjectColumn_.setVisible(wrapColumn && chkConfigureProject_.getValue());
+      };
+      manageColumnInputs.onValueChange(null);
+      chkConfigureFile_.addValueChangeHandler(manageColumnInputs);
+      chkConfigureProject_.addValueChangeHandler(manageColumnInputs);
+      chkConfigureNone_.addValueChangeHandler(manageColumnInputs);
+      
+      
       
    }
    
@@ -131,21 +169,26 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
   
    
    @Override
-   protected VisualModeConfirm.LineWrappingAction collectInput()
+   protected Result collectInput()
    {
       if (chkConfigureFile_.getValue())
-         return VisualModeConfirm.LineWrappingAction.SetFileLineWrapping;
+         return new Result(Action.SetFileLineWrapping, Integer.parseInt(numFileColumn_.getValue()));
       else if (chkConfigureProject_.getValue())
-         return VisualModeConfirm.LineWrappingAction.SetProjectLineWrapping;
+         return new Result(Action.SetProjectLineWrapping, Integer.parseInt(numProjectColumn_.getValue()));
       else
-         return VisualModeConfirm.LineWrappingAction.SetNothing;
+         return new Result(Action.SetNothing);
    }
 
 
    @Override
-   protected boolean validate(VisualModeConfirm.LineWrappingAction result)
+   protected boolean validate(Result result)
    {
-      return true;  
+      if (numFileColumn_.isVisible())
+         return numFileColumn_.validate();
+      else if (numProjectColumn_.isVisible())
+         return numProjectColumn_.validate();
+      else
+         return true;
    }
    
   
@@ -157,9 +200,20 @@ public class VisualModeConfirmLineWrappingDialog extends ModalDialog<VisualModeC
       return radio;
    }
    
+   private NumericValueWidget createColumnInput(int defaultValue)
+   {
+      NumericValueWidget num = new NumericValueWidget("Wrap at column:", 1, UserPrefs.MAX_WRAP_COLUMN);
+      num.addStyleName(RES.styles().wrapAtColumn());
+      num.setValue(Integer.toString(defaultValue));
+      return num;
+   }
+   
+   
    private VerticalPanel mainWidget_; 
    private RadioButton chkConfigureFile_;
+   private NumericValueWidget numFileColumn_;
    private RadioButton chkConfigureProject_;
+   private NumericValueWidget numProjectColumn_;
    private RadioButton chkConfigureNone_;
    
    

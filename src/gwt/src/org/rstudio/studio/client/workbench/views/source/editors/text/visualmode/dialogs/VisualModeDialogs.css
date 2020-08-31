@@ -4,19 +4,26 @@
 }
 
 .confirmLineWrappingDialog {
-   width: 450px;
+   width: 435px;
 }
 
 .confirmLineWrappingDialog ul {
-	margin-block-start: 0;
-	margin-block-end: 0;
+	margin-block-start: 10px;
+	margin-block-end: 15px;
 	padding-inline-start: 25px;
 }
 
 .lineWrappingRadio {
-	
+	display: inline-block;
+	margin-top: 10px;
 }
 
 .lineWrappingHelp {
-   margin-top: 8px;
+   margin-top: 20px;
+   margin-bottom: 12px;
+}
+
+.wrapAtColumn {
+   margin-top: 10px;
+   margin-left: 24px;
 }

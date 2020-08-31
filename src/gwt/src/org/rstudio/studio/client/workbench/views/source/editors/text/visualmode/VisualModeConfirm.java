@@ -29,24 +29,14 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmLineWrappingDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeLineWrappingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-// TODO: provide way to set the column
-
 public class VisualModeConfirm
 { 
-   public enum LineWrappingAction
-   {
-      SetFileLineWrapping,
-      SetProjectLineWrapping,
-      SetNothing
-   }
-   
-   
    public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -86,14 +76,17 @@ public class VisualModeConfirm
          Operation lineWrapCheck = requiresLineWrappingPrompt(result.line_wrapping) 
             ? ()-> {
                
-               VisualModeConfirmLineWrappingDialog dialog = new VisualModeConfirmLineWrappingDialog(
+               boolean isProjectDoc = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+               
+               VisualModeLineWrappingDialog dialog = new VisualModeLineWrappingDialog(
                   result.line_wrapping,
                   userPrefs_.visualMarkdownEditingWrap().getValue(),
-                  userPrefs_.visualMarkdownEditingWrap().hasProjectValue(),
-                  VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_),
-                  (action) -> { 
+                  isProjectDoc && userPrefs_.visualMarkdownEditingWrap().hasProjectValue(),
+                  isProjectDoc,
+                  userPrefs_.visualMarkdownEditingWrapAtColumn().getGlobalValue(),
+                  (lineWrappingResult) -> { 
                      doConfirm.execute(); 
-                     performLineWrappingAction(action); 
+                     performLineWrapping(lineWrappingResult); 
                   }, 
                   () -> { 
                      onCancelled.execute(); 
@@ -162,9 +155,9 @@ public class VisualModeConfirm
       }
    }
    
-   private void performLineWrappingAction(LineWrappingAction action)
+   private void performLineWrapping(VisualModeLineWrappingDialog.Result result)
    {
-      Debug.logToRConsole(action.toString());
+      Debug.logToRConsole(result.action.toString());
    }
    
    private final DocUpdateSentinel docUpdateSentinel_;
