@@ -314,7 +314,7 @@ public class VirtualConsole
                      haveInsertedRange = false;
                   }
 
-                  moves.put(l, start);
+                  moves.put(l, overlap.start);
                }
             }
             else
