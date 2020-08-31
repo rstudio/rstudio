@@ -19,9 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.dom.client.IFrameElement;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -298,178 +298,162 @@ public class ChunkOutputStream extends FlowPanel
             {
                afterRender_.execute();
             }
-         });
-      }
-
-      @Override
-      public void showErrorOutput(UnhandledError err)
-      {
-         hasErrors_ = true;
-
-         // if there's only one error frame, it's not worth showing dedicated
-         // error UX
-         if (err.getErrorFrames() != null &&
-             err.getErrorFrames().length() < 2)
-         {
-            flushQueuedErrors();
-            return;
-         }
-
-         int idx = queuedError_.indexOf(err.getErrorMessage());
-         if (idx >= 0)
-         {
-            // emit any messages queued prior to the error
-            if (idx > 0)
-            {
-               renderConsoleOutput(queuedError_.substring(0, idx),
-                     classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
-               initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
-            }
-            // leave messages following the error in the queue
-            queuedError_ = queuedError_.substring(
-                  idx + err.getErrorMessage().length());
-         }
-         else
-         {
-            // flush any irrelevant messages from the stream
-            flushQueuedErrors();
-         }
-
-         UserState state =  RStudioGinjector.INSTANCE.getUserState();
-         ConsoleError error = new ConsoleError(err,
-               AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
-               this, null);
-
-         UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
-         error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
-
-         add(error);
-         flushQueuedErrors();
-         onHeightChanged();
-      }
-
-      @Override
-      public void showOrdinalOutput(int ordinal)
-      {
-         // ordinals are placeholder elements which can be replaced with content
-         // later
-         addWithOrdinal(new ChunkOrdinalWidget(), ordinal);
-      }
-
-      @Override
-      public void showDataOutput(JavaScriptObject data,
-            NotebookFrameMetadata metadata, int ordinal)
-      {
-         metadata_.put(ordinal, metadata);
-         addWithOrdinal(new ChunkDataWidget(data, metadata, chunkOutputSize_), ordinal);
-      }
-
-      @Override
-      public void onErrorBoxResize()
-      {
-         onHeightChanged();
-      }
-
-      @Override
-      public void runCommandWithDebug(String command)
-      {
-         // not implemented (this is is only useful in the console)
-      }
-
-      @Override
-      public void clearOutput()
-      {
-         clear();
-         if (vconsole_ != null)
-            vconsole_.clear();
-         lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-      }
-
-      @Override
-      public void completeOutput()
-      {
-         // flush any remaining queued errors
-         flushQueuedErrors();
-         lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-      }
-
-      @Override
-      public void setPlotPending(boolean pending, String pendingStyle)
-      {
-         for (Widget w: this)
-         {
-            if (w instanceof FixedRatioWidget &&
-                ((FixedRatioWidget)w).getWidget() instanceof Image)
-            {
-               if (pending)
-                  w.addStyleName(pendingStyle);
-               else
-                  w.removeStyleName(pendingStyle);
-            }
-         }
-      }
-
-      @Override
-      public void updatePlot(String plotUrl, String pendingStyle)
-      {
-         for (Widget w: this)
-         {
-            if (w instanceof ChunkPlotWidget)
-            {
-               // ask the plot to sync this URL (it contains the logic for
-               // determining whether it matches the URL)
-               ChunkPlotWidget plot = (ChunkPlotWidget)w;
-               plot.updateImageUrl(plotUrl, pendingStyle);
-            }
-         }
-      }
-
-   private final native void fillIframe(IFrameElement iframe, String content) /*-{
-       var doc = iframe.document;
-
-       if(iframe.contentDocument)
-           doc = iframe.contentDocument; // For NS6
-       else if(iframe.contentWindow)
-           doc = iframe.contentWindow.document; // For IE5.5 and IE6
-
-       // Put the content in the iframe
-       doc.open();
-       doc.writeln(content);
-       doc.close();
-   }-*/;
+      });
+   }
 
    @Override
-      public void showCallbackHtml(String htmlOutput)
+   public void showErrorOutput(UnhandledError err)
+   {
+      hasErrors_ = true;
+
+      // if there's only one error frame, it's not worth showing dedicated
+      // error UX
+      if (err.getErrorFrames() != null &&
+          err.getErrorFrames().length() < 2)
       {
-         // flush any queued errors
-         initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
          flushQueuedErrors();
+         return;
+      }
 
-         if (StringUtil.isNullOrEmpty(htmlOutput))
-            return;
-         final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Callback");
-         //frame.getElement().getStyle().setHeight(25, Unit.PX);
-         //frame.getElement().getStyle().setWidth(100, Unit.PCT);
-         add(frame);
-
-         Element body = frame.getDocument().getBody();
-         Style bodyStyle = body.getStyle();
-         bodyStyle.setPadding(0, Unit.PX);
-         bodyStyle.setMargin(0, Unit.PX);
-
-         frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      int idx = queuedError_.indexOf(err.getErrorMessage());
+      if (idx >= 0)
+      {
+         // emit any messages queued prior to the error
+         if (idx > 0)
          {
-            @Override
-            public void execute()
-            {
-               fillIframe(frame.getIFrame(), htmlOutput);
-               //int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
-               //frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            renderConsoleOutput(queuedError_.substring(0, idx),
+                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
+         }
+         // leave messages following the error in the queue
+         queuedError_ = queuedError_.substring(
+               idx + err.getErrorMessage().length());
+      }
+      else
+      {
+         // flush any irrelevant messages from the stream
+         flushQueuedErrors();
+      }
 
-               frame.getElement().getStyle().setOverflow(Overflow.VISIBLE);
-               frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.VISIBLE);
-            }
-         });
+      UserState state =  RStudioGinjector.INSTANCE.getUserState();
+      ConsoleError error = new ConsoleError(err,
+            AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
+            this, null);
+
+      UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
+      error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
+
+      add(error);
+      flushQueuedErrors();
+      onHeightChanged();
+   }
+
+   @Override
+   public void showOrdinalOutput(int ordinal)
+   {
+      // ordinals are placeholder elements which can be replaced with content
+      // later
+      addWithOrdinal(new ChunkOrdinalWidget(), ordinal);
+   }
+
+   @Override
+   public void showDataOutput(JavaScriptObject data,
+         NotebookFrameMetadata metadata, int ordinal)
+   {
+      metadata_.put(ordinal, metadata);
+      addWithOrdinal(new ChunkDataWidget(data, metadata, chunkOutputSize_), ordinal);
+   }
+
+   @Override
+   public void onErrorBoxResize()
+   {
+      onHeightChanged();
+   }
+
+   @Override
+   public void runCommandWithDebug(String command)
+   {
+      // not implemented (this is is only useful in the console)
+   }
+
+   @Override
+   public void clearOutput()
+   {
+      clear();
+      if (vconsole_ != null)
+         vconsole_.clear();
+      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+   }
+
+   @Override
+   public void completeOutput()
+   {
+      // flush any remaining queued errors
+      flushQueuedErrors();
+      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+   }
+
+   @Override
+   public void setPlotPending(boolean pending, String pendingStyle)
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof FixedRatioWidget &&
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         {
+            if (pending)
+               w.addStyleName(pendingStyle);
+            else
+               w.removeStyleName(pendingStyle);
+         }
+      }
+   }
+
+   @Override
+   public void updatePlot(String plotUrl, String pendingStyle)
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof ChunkPlotWidget)
+         {
+            // ask the plot to sync this URL (it contains the logic for
+            // determining whether it matches the URL)
+            ChunkPlotWidget plot = (ChunkPlotWidget)w;
+            plot.updateImageUrl(plotUrl, pendingStyle);
+         }
+      }
+   }
+
+   @Override
+   public void showCallbackHtml(String htmlOutput)
+   {
+      // flush any queued errors
+      initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
+      flushQueuedErrors();
+
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Callback");
+      add(frame);
+
+      Element body = frame.getDocument().getBody();
+      Style bodyStyle = body.getStyle();
+      bodyStyle.setPadding(0, Unit.PX);
+      bodyStyle.setMargin(0, Unit.PX);
+
+      frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+
+            frame.getElement().getStyle().setOverflow(Overflow.VISIBLE);
+            frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.VISIBLE);
+         }
+      });
    }
 
    @Override
