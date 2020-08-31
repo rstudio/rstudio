@@ -132,7 +132,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           itemCount={itemData.length}
           itemSize={64}
           itemData={{
-            data: itemData,
+            allSources: itemData,
             sourcesToAdd: props.sourcesToAdd,
             addSource: props.addSource,
             removeSource: props.removeSource,

@@ -12,26 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-
 import React from "react";
+import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-
-import './insert_citation-panel-doi.css';
-import { TextInput } from "../../../api/widgets/text";
-import debounce from "lodash.debounce";
 import { CSL } from "../../../api/csl";
+import { TextInput } from "../../../api/widgets/text";
 import { formatForPreview, CiteField, suggestCiteId } from "../../../api/cite";
-import { CitationListItem } from "./insert_citation-panel-list-item";
 import { BibliographyManager, BibliographySource } from "../../../api/bibliography/bibliography";
 
-export function doiPanel(ui: EditorUI): CitationSourcePanel {
+import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
+
+import './insert_citation-source-panel-doi.css';
+
+const kDOIType = 'DOI Search';
+
+export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
-    panel: CitationDOIPanel,
+    panel: DOISourcePanel,
     treeNode: {
       key: 'DOI',
       name: ui.context.translateText('Lookup DOI'),
@@ -43,26 +44,26 @@ export function doiPanel(ui: EditorUI): CitationSourcePanel {
   };
 }
 
-export const CitationDOIPanel: React.FC<CitationSourcePanelProps> = props => {
+export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
 
-
-  const defaultNoResultsMessage = 'Paste a DOI to load data from Crossref, DataCite, or mEDRA.';
-  const noMatchingResultsMessage = 'No item matching this identifier could be located.'
+  const defaultMessage = props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.');
+  const noMatchingResultsMessage = props.ui.context.translateText('No item matching this identifier could be located.');
 
   const [csl, setCsl] = React.useState<CSL>();
-  const [noResultsText, setNoResultsText] = React.useState<string>(defaultNoResultsMessage);
+  const [noResultsText, setNoResultsText] = React.useState<string>(defaultMessage);
   const [searchText, setSearchText] = React.useState<string>('');
   const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
+
   React.useEffect(() => {
     if (csl) {
-      const previewFields = formatForPreview(csl);
-      setPreviewFields(previewFields);
+      const preview = formatForPreview(csl);
+      setPreviewFields(preview);
     } else {
       setPreviewFields([]);
       if (searchText.length > 0) {
         setNoResultsText(noMatchingResultsMessage);
       } else {
-        setNoResultsText(defaultNoResultsMessage);
+        setNoResultsText(defaultMessage);
       }
     }
   }, [csl]);
@@ -71,37 +72,40 @@ export const CitationDOIPanel: React.FC<CitationSourcePanelProps> = props => {
     if (searchText) {
       const debounced = debounce(async () => {
         const result = await props.server.doi.fetchCSL(searchText, 350);
-        const csl = result.message;
-        setCsl(csl);
+        if (result.status === 'ok') {
+          setCsl(result.message);
+        } else {
+          setCsl(undefined);
+        }
       }, 50);
       debounced();
     } else {
       setCsl(undefined);
     }
-  }, [searchText])
+  }, [searchText]);
 
   const doiChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
   };
 
   return (
-    <div style={props.style} className='pm-insert-doi-panel'>
-      <div className='pm-insert-doi-panel-textbox-container'>
+    <div style={props.style} className='pm-insert-doi-source-panel'>
+      <div className='pm-insert-doi-source-panel-textbox-container'>
         <TextInput
           width='100%'
           iconAdornment={props.ui.images.search}
           tabIndex={0}
-          className='pm-insert-doi-panel-textbox pm-block-border-color'
+          className='pm-insert-doi-source-panel-textbox pm-block-border-color'
           placeholder={props.ui.context.translateText('Search for a DOI')}
           onChange={doiChanged}
         />
       </div>
-      <div className='pm-insert-doi-panel-heading'>
+      <div className='pm-insert-doi-source-panel-heading'>
         {csl ?
-          <CitationListItem
+          <CitationSourcePanelListItem
             index={0}
             data={{
-              data: toBibliographyEntry(csl, props.bibliographyManager, props.ui),
+              allSources: toBibliographyEntry(csl, props.bibliographyManager, props.ui),
               sourcesToAdd: props.sourcesToAdd,
               addSource: props.addSource,
               removeSource: props.removeSource,
@@ -110,19 +114,19 @@ export const CitationDOIPanel: React.FC<CitationSourcePanelProps> = props => {
             style={{}}
             isScrolling={false}
           /> :
-          <div className='pm-insert-doi-panel-no-result'>
-            <div className='pm-insert-doi-panel-no-result-text'>
+          <div className='pm-insert-doi-source-panel-no-result'>
+            <div className='pm-insert-doi-source-panel-no-result-text'>
               {props.ui.context.translateText(noResultsText)}
             </div>
           </div>}
       </div>
-      <div className='pm-insert-doi-panel-fields'>
+      <div className='pm-insert-doi-source-panel-fields'>
         <table>
           <tbody>
             {previewFields.map(previewField =>
               (<tr key={previewField.name}>
-                <td className='pm-insert-doi-panel-fields-name'>{previewField.name}:</td>
-                <td className='pm-insert-doi-panel-fields-value'>{previewField.value}</td>
+                <td className='pm-insert-doi-source-panel-fields-name'>{previewField.name}:</td>
+                <td className='pm-insert-doi-source-panel-fields-value'>{previewField.value}</td>
               </tr>)
             )}
           </tbody>
@@ -131,8 +135,6 @@ export const CitationDOIPanel: React.FC<CitationSourcePanelProps> = props => {
     </div>
   );
 };
-export const kDOIType = 'DOI Search';
-
 
 function toBibliographyEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): BibliographySource[] {
   if (csl) {

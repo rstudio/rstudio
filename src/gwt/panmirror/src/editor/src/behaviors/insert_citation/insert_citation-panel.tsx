@@ -27,7 +27,7 @@ import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/wid
 import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
 
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
-import { doiPanel } from "./source_panels/insert_citation-panel-doi";
+import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
@@ -91,7 +91,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       // Load the panels
       const allPanels = [
         bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager),
-        doiPanel(props.ui)
+        doiSourcePanel(props.ui)
       ];
       setProviderPanels(allPanels);
 
