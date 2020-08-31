@@ -795,9 +795,11 @@ public class TextEditingTargetNotebook
       }
 
       if (outputs_.containsKey(data.getChunkId()) &&
-          !StringUtil.isNullOrEmpty(data.getHtmlOutput()))
+          !data.getHtmlCallback().isEmpty())
       {
-         outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlOutput());
+         ArrayList<String> callbacks = data.getHtmlCallback();
+         for (String callback : callbacks)
+            outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(callback);
          setDirtyState();
       }
    }

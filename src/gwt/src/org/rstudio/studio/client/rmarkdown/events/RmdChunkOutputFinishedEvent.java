@@ -18,6 +18,10 @@ package org.rstudio.studio.client.rmarkdown.events;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONString;
+
+import java.util.ArrayList;
 
 public class RmdChunkOutputFinishedEvent
              extends GwtEvent<RmdChunkOutputFinishedEvent.Handler>
@@ -41,10 +45,6 @@ public class RmdChunkOutputFinishedEvent
          return this.chunk_id;
       }-*/;
 
-      public final native String getHtmlOutput() /*-{
-         return this.html_output;
-      }-*/;
-
       public final native String getRequestId() /*-{
          return this.request_id;
       }-*/;
@@ -56,6 +56,27 @@ public class RmdChunkOutputFinishedEvent
       public final native int getScope() /*-{
          return this.scope;
       }-*/;
+      
+      public final ArrayList<String> getHtmlCallback() {
+         JSONArray nativeArray = new JSONArray(getNativeCallbacks());
+         ArrayList<String> result = new ArrayList<>();
+         for (int i = 0; i < nativeArray.size(); i++)
+         {
+            JSONArray callbacks = nativeArray.get(i).isArray();
+            if (callbacks == null || callbacks.size() == 0)
+               break;
+
+            JSONString string = callbacks.get(0).isString();
+            if (string != null)
+               result.add(string.stringValue());
+         }
+         return result;
+      }
+
+      private native final JavaScriptObject getNativeCallbacks() /*-{
+          return this["html_callback"] || [];
+      }-*/;
+
    }
 
    public RmdChunkOutputFinishedEvent(Data data)
