@@ -13,6 +13,35 @@
 #
 #
 
+.rs.addJsonRpcHandler("is_function_masked", function(functionName,
+                                                     packageName)
+{
+   result <- tryCatch(
+      .rs.isFunctionMasked(functionName, packageName),
+      error = function(e) FALSE
+   )
+   
+   .rs.scalar(result)
+})
+
+.rs.addFunction("isFunctionMasked", function(functionName,
+                                             packageName)
+{
+   globalValue  <- get(
+      x = functionName,
+      envir = globalenv(),
+      mode = "function"
+   )
+   
+   packageValue <- get(
+      x = functionName,
+      envir = asNamespace(packageName),
+      mode = "function"
+   )
+   
+   identical(globalValue, packageValue)
+})
+
 .rs.addFunction("valueFromStr", function(val)
 {
    .rs.withTimeLimit(1, fail = "<truncated>", {
