@@ -13,19 +13,21 @@
  *
  */
 
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
-import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
-
-import { InsertCitationPicker } from './insert_citation-picker';
 import { EditorServer } from '../../api/server';
 
+import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
 
+import { InsertCitationPanel } from './insert_citation-panel';
+
+
+// When the dialog has completed, it will return this result
+// If the dialog is canceled no result will be returned
 export interface InsertCitationResult {
   sources: BibliographySource[];
   bibliography: BibliographyFile;
@@ -72,7 +74,7 @@ export async function showInsertCitationPopup(
       container.style.height = height + 'px';
       container.style.width = width + 'px';
       ReactDOM.render(
-        <InsertCitationPicker
+        <InsertCitationPanel
           doc={doc}
           ui={ui}
           bibliographyManager={bibliographyManager}
@@ -104,5 +106,3 @@ export async function showInsertCitationPopup(
     return undefined;
   }
 }
-
-

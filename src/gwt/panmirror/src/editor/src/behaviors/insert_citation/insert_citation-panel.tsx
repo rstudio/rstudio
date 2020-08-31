@@ -18,33 +18,33 @@ import React from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
+import { EditorUI } from "../../api/ui";
+import { EditorServer } from "../../api/server";
 import { WidgetProps } from "../../api/widgets/react";
+import { TagInput, TagItem } from "../../api/widgets/tag_input";
+import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation_tree";
 
 import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
-import { EditorUI } from "../../api/ui";
-import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation_tree";
-import { TagInput, TagItem } from "../../api/widgets/tag_input";
 
 import { bibliographyPanel } from "./panels/insert_citation-panel-bibliography";
 import { doiPanel } from "./panels/insert_citation-panel-doi";
 
-import './insert_citation-picker.css';
-import { EditorServer } from "../../api/server";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
+import './insert_citation-panel.css';
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
-export interface CitationPanel {
+export interface CitationProviderPanel {
   key: string;
-  panel: React.FC<CitationPanelProps>;
+  panel: React.FC<CitationProviderPanelProps>;
   treeNode: NavigationTreeNode;
 }
 
 // Panels get a variety of information as properties to permit them to search
 // citations and add them
-export interface CitationPanelProps extends WidgetProps {
+export interface CitationProviderPanelProps extends WidgetProps {
   ui: EditorUI;
   bibliographyManager: BibliographyManager;
   server: EditorServer;
@@ -57,7 +57,7 @@ export interface CitationPanelProps extends WidgetProps {
 
 // The picker is a full featured UI for finding and selecting citation data
 // to be added to a document.
-interface InsertCitationPickerProps extends WidgetProps {
+interface InsertCitationPanelProps extends WidgetProps {
   ui: EditorUI;
   doc: ProsemirrorNode;
   height: number;
@@ -68,16 +68,16 @@ interface InsertCitationPickerProps extends WidgetProps {
   onBibliographyChanged: (bibliographyFile: BibliographyFile) => void;
 }
 
-export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props => {
+export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
 
   // The panels that are being displayed and which one is selected
-  const [panels, setPanels] = React.useState<CitationPanel[]>([]);
-  const [selectedPanel, setSelectedPanel] = React.useState<CitationPanel>();
+  const [providerPanels, setProviderPanels] = React.useState<CitationProviderPanel[]>([]);
+  const [selectedProviderPanel, setSelectedProviderPanel] = React.useState<CitationProviderPanel>();
 
   // The node of the SelectTree that is selected
   const [selectedNode, setSelectedNode] = React.useState<NavigationTreeNode>();
 
-  // Data for the SelectTree
+  // Data for the Navigation Tree
   const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>([]);
 
   // The accumulated bibliography sources to be inserted
@@ -93,7 +93,7 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
         bibliographyPanel(props.doc, props.ui, props.bibliographyManager),
         doiPanel(props.ui)
       ];
-      setPanels(allPanels);
+      setProviderPanels(allPanels);
 
       // Load the tree and select the root node
       const treeNodes = allPanels.map(panel => panel.treeNode);
@@ -106,16 +106,16 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
   // Whenever the user selects a new node, lookup the correct panel for that node and 
   // select that panel.
   React.useEffect(() => {
-    const panelForNode = (treeNode: NavigationTreeNode, panelItems: CitationPanel[]) => {
+    const panelForNode = (treeNode: NavigationTreeNode, panelItems: CitationProviderPanel[]) => {
       const panelItem = panelItems.find(panel => {
         return containsChild(treeNode.key, panel.treeNode);
       });
       return panelItem;
     };
     if (selectedNode) {
-      const rootPanel = panelForNode(selectedNode, panels);
-      if (rootPanel?.key !== selectedPanel?.key) {
-        setSelectedPanel(rootPanel);
+      const rootPanel = panelForNode(selectedNode, providerPanels);
+      if (rootPanel?.key !== selectedProviderPanel?.key) {
+        setSelectedProviderPanel(rootPanel);
       }
     }
   }, [selectedNode]);
@@ -142,13 +142,12 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
     minHeight: `${bibliographyHeight}px`,
   };
 
-  const buttonHeight = 30;
-
-  const panelHeight = props.height - tagHeight - bibliographyHeight - buttonHeight;
-
+  // Figure out the panel height (the height of the main panel less padding and other elements)
+  const padding = 30;
+  const panelHeight = props.height - tagHeight - bibliographyHeight - padding;
 
   // Load the panel that is displayed for the selected node
-  const citationProps: CitationPanelProps = {
+  const citationProps: CitationProviderPanelProps = {
     ui: props.ui,
     bibliographyManager: props.bibliographyManager,
     server: props.server,
@@ -162,7 +161,9 @@ export const InsertCitationPicker: React.FC<InsertCitationPickerProps> = props =
       deleteSource(src.id);
     }
   };
-  const panelToDisplay = selectedPanel ? React.createElement(selectedPanel.panel, citationProps) : undefined;
+
+  // Create the panel that should be displayed for the selected node of the tree
+  const panelToDisplay = selectedProviderPanel ? React.createElement(selectedProviderPanel.panel, citationProps) : undefined;
 
   const nodeSelected = (node: NavigationTreeNode) => {
     setSelectedNode(node);
