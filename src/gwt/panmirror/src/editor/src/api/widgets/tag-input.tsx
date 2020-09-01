@@ -60,6 +60,8 @@ const Tag: React.FC<TagProps> = props => {
   const [editingText, setEditingText] = React.useState<string>(props.tag.displayText);
   const [displayText, setDisplayText] = React.useState<string>(props.tag.displayText);
 
+  const editImage = React.useRef<HTMLImageElement>(null);
+
   // Anytime we begin editing, focus the text input
   const editTextInput = React.useRef<HTMLInputElement>(null);
   React.useLayoutEffect(() => {
@@ -77,7 +79,9 @@ const Tag: React.FC<TagProps> = props => {
   const onDeleteKeyPress = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'Enter':
-      case 'Space':
+      case ' ':
+        e.preventDefault();
+        e.stopPropagation();
         props.tagDeleted(props.tag);
         break;
     }
@@ -94,7 +98,9 @@ const Tag: React.FC<TagProps> = props => {
   const onEditKeyPress = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'Enter':
-      case 'Space':
+      case ' ':
+        e.preventDefault();
+        e.stopPropagation();
         setEditing(true);
         break;
     }
@@ -110,15 +116,34 @@ const Tag: React.FC<TagProps> = props => {
 
     // Notify of change
     props.tagChanged(props.tag.key, editingText);
+
+    // Focus the edit image
+    editImage.current?.focus();
+  };
+
+  const cancelTagEdit = () => {
+    // Halt editing
+    setEditing(false);
+
+    // Revert editing text
+    setEditingText(displayText);
+
+    // Focus the edit image
+    editImage.current?.focus();
   };
 
   // When editing the tag, allow enter to accept the changes
-  const handleEditKeyPress = (e: React.KeyboardEvent) => {
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'Enter':
         e.preventDefault();
         e.stopPropagation();
         commitTagEdit();
+        break;
+      case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
+        cancelTagEdit();
         break;
     }
   };
@@ -144,10 +169,10 @@ const Tag: React.FC<TagProps> = props => {
           className='pm-tag-input-text-edit'
           value={editingText}
           onChange={handleEditChange}
-          onKeyPress={handleEditKeyPress}
+          onKeyDown={handleEditKeyDown}
           onBlur={handleEditBlur} />
       }
     </div>
-    {props.tag.isEditable ? <img src={props.ui.images.widgets?.tag_edit} className='pm-tag-input-edit-image' onClick={onEditClick} onKeyPress={onEditKeyPress} tabIndex={0} /> : undefined}
+    {props.tag.isEditable ? <img src={props.ui.images.widgets?.tag_edit} className='pm-tag-input-edit-image' onClick={onEditClick} onKeyPress={onEditKeyPress} tabIndex={0} ref={editImage} /> : undefined}
   </div>;
 };
