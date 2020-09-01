@@ -22,6 +22,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.InfoBar;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -133,6 +134,9 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          updateDescription();
       }, BlurEvent.getType());
+      
+      tbPythonInterpreter_.getTextBox().getElement().addClassName(
+            ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
       
       tbPythonInterpreter_.setWidth(width);
       tbPythonInterpreter_.setText(placeholderText_);
