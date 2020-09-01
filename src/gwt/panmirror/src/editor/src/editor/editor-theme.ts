@@ -173,6 +173,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-default-theme .pm-placeholder-text-color {
       color: ${defaults.placeholderTextColor} !important;
     }
+    .pm-default-theme .pm-background-color *::selection {
+      background-color: ${defaults.selectionColor} !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }

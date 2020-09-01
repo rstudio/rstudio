@@ -23,7 +23,6 @@ import { SelectInput } from "../../api/widgets/select";
 import { BibliographyFile } from "../../api/bibliography/bibliography";
 
 import './insert_citation-bibliography-picker.css';
-import { BibTypes } from "biblatex-csl-converter";
 
 export interface CitationBiblographyPickerProps extends WidgetProps {
   bibliographyFiles: BibliographyFile[];
