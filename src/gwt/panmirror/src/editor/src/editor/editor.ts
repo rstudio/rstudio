@@ -112,7 +112,8 @@ import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  location?: EditingOutlineLocation;
+  selection_only: boolean;
+  location: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
@@ -259,6 +260,9 @@ export class Editor {
   // content width constraints (if unset uses default editor CSS)
   private maxContentWidth = 0;
   private minContentPadding = 0;
+
+  // keep track of whether the last transaction was selection-only
+  private lastTrSelectionOnly = false;
 
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
@@ -473,7 +477,7 @@ export class Editor {
     const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
-    // (resets the undo stack so that the intial setting of the document can't be undone)
+    // (resets the undo stack so that the initial setting of the document can't be undone)
     if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
@@ -539,6 +543,7 @@ export class Editor {
     // return code + perhaps outline location
     return {
       code,
+      selection_only: this.lastTrSelectionOnly,
       location: getEditingOutlineLocation(this.state)
     };
   }

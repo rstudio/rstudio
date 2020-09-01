@@ -318,7 +318,8 @@ public class VisualMode implements VisualModeEditorSync,
                public void execute(JsObject obj)
                {
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
-                  rv.arrive(() -> {
+                  rv.arrive(() ->
+                  {
                      if (markdown == null)
                      {
                         // note that ready.execute() is never called in the error case
@@ -1073,7 +1074,7 @@ public class VisualMode implements VisualModeEditorSync,
       // return changes w/ cursor
       return new TextEditorContainer.Changes(
          changes, 
-         panmirrorCode.location != null 
+         panmirrorCode.selection_only 
             ? new TextEditorContainer.Navigator()
             {
                @Override
