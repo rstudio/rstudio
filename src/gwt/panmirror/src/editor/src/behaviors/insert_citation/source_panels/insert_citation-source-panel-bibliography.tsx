@@ -71,7 +71,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   const fixedList = React.useRef<FixedSizeList>(null);
   const listContainer = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  React.useEffect(debounce(() => {
     async function loadData() {
       if (props.selectedNode) {
         const selectedNode = props.selectedNode;
@@ -92,7 +92,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     loadData();
 
     // load the right panel
-  }, [props.selectedNode, searchTerm]);
+  }, 50), [props.selectedNode, searchTerm]);
 
   // If the nodes change, clear the search box value
   React.useLayoutEffect(() => {
