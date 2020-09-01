@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -40,6 +41,9 @@ public class VisualModeChunkRowState extends ChunkRowExecState
       row = row - 1;
       
       ele_ = Document.get().createDivElement();
+      
+      // This element is decorative from the perspective of a screen reader
+      A11y.setARIAHidden(ele_);
 
       // Get all the line groups in the editor; note that this only works if the
       // word wrapping is turned on (otherwise Ace doesn't create ace_line_group
