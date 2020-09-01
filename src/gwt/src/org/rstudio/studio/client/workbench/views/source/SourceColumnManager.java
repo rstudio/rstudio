@@ -778,6 +778,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
       return true;
    }
+   
+   public void getDocumentChunkContext(Command onCompleted)
+   {
+      onCompleted.execute();
+   }
 
    public void activateCodeBrowser(
       final String codeBrowserPath,

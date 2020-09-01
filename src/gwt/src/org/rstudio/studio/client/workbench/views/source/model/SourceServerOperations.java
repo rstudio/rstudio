@@ -25,6 +25,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.server.Null;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -266,4 +267,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                                     String path,
                                     String code,
                                     ServerRequestCallback<String> requestCallback);
+   
+   public void getDocumentChunkContextCompleted(ServerRequestCallback<Null> requestCallback);
 }

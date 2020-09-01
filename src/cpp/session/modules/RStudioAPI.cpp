@@ -36,8 +36,10 @@ namespace modules {
 namespace rstudioapi {
 
 namespace {
+
 module_context::WaitForMethodFunction s_waitForShowDialog;
 module_context::WaitForMethodFunction s_waitForOpenFileDialog;
+module_context::WaitForMethodFunction s_waitForDocumentChunkContext;
 
 SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
 {
@@ -48,9 +50,6 @@ SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
    module_context::enqueClientEvent(event);
    return R_NilValue;
 }
-
-} // end anonymous namespace
-
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
@@ -234,21 +233,42 @@ SEXP rs_systemUsername()
    return r::sexp::create(core::system::username(), &protect);
 }
 
+SEXP rs_documentChunkContext(SEXP docIdSEXP)
+{
+   using namespace module_context;
+   
+   std::string docId = r::sexp::safeAsString(docIdSEXP);
+   
+   json::Object eventData;
+   eventData["type"] = "chunk_context";
+   eventData["data"] = json::Object();
+   
+   json::JsonRpcRequest request;
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   if (!s_waitForDocumentChunkContext(&request, event))
+      return R_NilValue;
+}
+
+} // end anonymous namespace
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
    // register waitForMethod handler
-   s_waitForShowDialog     = registerWaitForMethod("rstudioapi_show_dialog_completed");
-   s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
+   s_waitForShowDialog           = registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForOpenFileDialog       = registerWaitForMethod("open_file_dialog_completed");
+   s_waitForDocumentChunkContext = registerWaitForMethod("document_chunk_context_completed");
 
+   // register R call methods
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
    RS_REGISTER_CALL_METHOD(rs_userIdentity);
    RS_REGISTER_CALL_METHOD(rs_systemUsername);
+   RS_REGISTER_CALL_METHOD(rs_documentChunkContext);
    
    using boost::bind;
    ExecBlock initBlock;

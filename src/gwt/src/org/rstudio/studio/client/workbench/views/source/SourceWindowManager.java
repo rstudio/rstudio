@@ -632,10 +632,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       EditorCommandEvent event = dispatchEvent.getEvent();
       
       String type = event.getType();
+      
       if (type == EditorCommandEvent.TYPE_EDITOR_CONTEXT)
       {
          GetEditorContextEvent.Data data = event.getData();
          fireEventToLastFocusedWindow(new GetEditorContextEvent(data));
+      }
+      else if (type == EditorCommandEvent.TYPE_CHUNK_CONTEXT)
+      {
+         GetDocumentChunkContextEvent.Data data = event.getData();
+         fireEventToLastFocusedWindow(new GetDocumentChunkContextEvent(data));
       }
       else if (type == EditorCommandEvent.TYPE_REPLACE_RANGES)
       {
@@ -648,7 +654,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          fireEventForDocument(data.getId(), new SetSelectionRangesEvent(data));
       }
       else
+      {
          assert false: "Unrecognized editor event type '" + type + "'";
+      }
    }
    
    @Override
@@ -1442,4 +1450,5 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private boolean mainWindowFocused_ = true;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
+
 }

@@ -101,6 +101,7 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
+import org.rstudio.studio.client.server.Null;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -153,6 +154,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStarted
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.GetDocumentChunkContextEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
@@ -211,6 +213,7 @@ public class Source implements InsertSourceHandler,
                                ReplaceRangesEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
+                               GetDocumentChunkContextEvent.Handler,
                                RequestDocumentSaveEvent.Handler,
                                RequestDocumentCloseEvent.Handler,
                                ScrollToPositionEvent.Handler,
@@ -2801,6 +2804,16 @@ public class Source implements InsertSourceHandler,
       server_.getEditorContextCompleted(
             GetEditorContextEvent.SelectionData.create(),
             new VoidServerRequestCallback());
+   }
+   
+   @Override
+   public void onGetDocumentChunkContext(GetDocumentChunkContextEvent event)
+   {
+      // TODO: Handle user-specified editor ID.
+      columnManager_.getDocumentChunkContext(() ->
+      {
+         server_.getDocumentChunkContextCompleted(new SimpleRequestCallback<Null>());
+      });
    }
 
    @Override

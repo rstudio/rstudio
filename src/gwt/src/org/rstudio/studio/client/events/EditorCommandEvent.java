@@ -50,16 +50,17 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    @SuppressWarnings("unchecked")
    public final <T extends JavaScriptObject> T getData()
    {
-      T casted = (T) data_;
+      T casted = (T) data_.cast();
       return casted;
    }
 
    private final String type_;
    private final JavaScriptObject data_;
 
-   public static final String TYPE_REPLACE_RANGES = "replace_ranges";
+   public static final String TYPE_REPLACE_RANGES       = "replace_ranges";
    public static final String TYPE_SET_SELECTION_RANGES = "set_selection_ranges";
-   public static final String TYPE_EDITOR_CONTEXT = "editor_context";
+   public static final String TYPE_EDITOR_CONTEXT       = "editor_context";
+   public static final String TYPE_CHUNK_CONTEXT        = "chunk_context";
 
    // Boilerplate ----
 

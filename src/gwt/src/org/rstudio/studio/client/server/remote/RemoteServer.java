@@ -127,6 +127,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
+import org.rstudio.studio.client.server.Null;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1891,6 +1892,14 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_EDITOR_CONTEXT_COMPLETED, data, requestCallback);
    }
+   
+   @Override
+   public void getDocumentChunkContextCompleted(ServerRequestCallback<Null> requestCallback)
+   {
+      // TODO: return data
+      sendRequest(RPC_SCOPE, GET_DOCUMENT_CHUNK_CONTEXT_COMPLETED, requestCallback);
+   }
+   
 
    public void setSourceDocumentDirty(String docId,
          boolean dirty,
@@ -6500,6 +6509,7 @@ public class RemoteServer implements Server
    private static final String EXPLORER_END_INSPECT = "explorer_end_inspect";
 
    private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
+   private static final String GET_DOCUMENT_CHUNK_CONTEXT_COMPLETED = "get_document_chunk_context_completed";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
