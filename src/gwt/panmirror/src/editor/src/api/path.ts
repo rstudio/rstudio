@@ -39,3 +39,9 @@ export function getExtension(path: string) {
   return "";
 }
 
+export function changeExtension(path: string, extension: string) {
+  const lastDot = path.lastIndexOf(".");
+  const pathNoExtension = path.substr(0, lastDot + 1);
+  return pathNoExtension + extension;
+}
+

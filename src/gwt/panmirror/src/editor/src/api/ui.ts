@@ -105,5 +105,7 @@ export interface EditorUIPrefs {
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;
   zoteroUseBetterBibtex: () => boolean;
+  setBibliographyDefaultType: (type: string) => void;
+  bibliographyDefaultType: () => string;
 }
 

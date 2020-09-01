@@ -133,8 +133,19 @@ public abstract class ModalDialogBase extends DialogBox
       {
          // Is this too aggressive? Alternatively we could only filter out
          // keycodes that are known to be problematic (pgup/pgdown)
-         event.stopPropagation();
+         if (handleKeyDownEvent(event)) {
+            event.stopPropagation();
+         }
       }, KeyDownEvent.getType());
+   }
+   
+   protected void hideButtons()
+   {
+     buttonPanel_.setVisible(false);
+   }
+   
+   protected boolean handleKeyDownEvent(KeyDownEvent event) {
+      return true;
    }
 
    @Override

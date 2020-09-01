@@ -33,7 +33,7 @@
             "type": "string"
           },
           "parentCollection": {
-            "type": "string"
+            "type": ["string", "boolean"]
           },
           "version": {
             "type": "number"

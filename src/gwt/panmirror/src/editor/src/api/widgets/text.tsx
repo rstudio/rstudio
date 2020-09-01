@@ -13,40 +13,55 @@
  *
  */
 
-import React, { ChangeEventHandler, KeyboardEventHandler } from 'react';
+import React, { ChangeEventHandler, KeyboardEventHandler, FocusEventHandler } from 'react';
 
 import { WidgetProps } from './react';
 
 import './text.css';
 
 export interface TextInputProps extends WidgetProps {
-  widthChars: number;
+  width: string;
   tabIndex?: number;
   className?: string;
   placeholder?: string;
   iconAdornment?: string;
+  value?: string;
   onChange?: ChangeEventHandler;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
+  onKeyPress?: KeyboardEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
   const style: React.CSSProperties = {
     ...props.style,
-    width: props.widthChars + 'ch',
+    width: props.width,
   };
 
   return (
-    <div className="pm-textinput-container">
-      <img src={props.iconAdornment} className="pm-textinput-icon" alt="" />
+    <div className="pm-textinput-container" style={style}>
+      {
+        props.iconAdornment ?
+          <img src={props.iconAdornment} className="pm-textinput-icon" alt="" /> :
+          undefined
+      }
       <input
         type="text"
         placeholder={props.placeholder}
-        className={`pm-input-text pm-textinput-input pm-text-color pm-background-color ${props.className}`}
-        style={style}
+        className={`
+          pm-input-text 
+          pm-textinput-input 
+          pm-text-color 
+          pm-background-color 
+          ${props.className}
+          ${props.iconAdornment ? 'pm-textinput-input-with-icon' : ''}`}
+        value={props.value || undefined}
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}
         onKeyUp={props.onKeyUp}
+        onKeyPress={props.onKeyPress}
+        onBlur={props.onBlur}
         tabIndex={props.tabIndex}
         ref={ref}
       />

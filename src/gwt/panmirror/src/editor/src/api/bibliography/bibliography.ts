@@ -23,8 +23,8 @@ import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
-import { BibliographyDataProviderLocal, kLocalItemType } from './bibliography-provider_local';
-import { BibliographyDataProviderZotero, kZoteroItemProvider } from './bibliography-provider_zotero';
+import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
+import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
 
 export interface BibliographyFile {
@@ -35,14 +35,22 @@ export interface BibliographyFile {
 }
 
 export interface BibliographyDataProvider {
+  key: string;
   name: string;
 
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  containers(doc: ProsemirrorNode, ui: EditorUI): string[];
+  collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
   items(): BibliographySource[];
+  itemsForCollection(collectionKey: string): BibliographySource[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
   generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
   warningMessage(): string | undefined;
+}
+
+export interface BibliographyCollection {
+  name: string;
+  key: string;
+  parentKey?: string;
 }
 
 export interface Bibliography {
@@ -53,15 +61,16 @@ export interface Bibliography {
 // The individual bibliographic source
 export interface BibliographySource extends CSL {
   id: string;
-  provider: string;
+  providerKey: string;
+  collectionKeys: string[];
 }
 
 // The fields and weights that will indexed and searched
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: .35 },
-  { name: 'author.family', weight: .25 },
-  { name: 'author.literal', weight: .25 },
+  { name: 'id', weight: .30 },
+  { name: 'author.family', weight: .275 },
+  { name: 'author.literal', weight: .275 },
   { name: 'title', weight: .1 },
   { name: 'author.given', weight: .025 },
   { name: 'issued', weight: .025 },
@@ -112,15 +121,23 @@ export class BibliographyManager {
 
   public allSources(): BibliographySource[] {
     if (this.sources && this.isWritable()) {
-      return this.sources;
+      return uniqby(this.sources, source => source.id);
     } else {
-      return this.sources?.filter(source => source.provider === kLocalItemType) || [];
+      return uniqby(this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [], source => source.id);
     }
     return [];
   }
 
+  public sourcesForProvider(providerKey: string): BibliographySource[] {
+    return uniqby(this.allSources().filter(item => item.providerKey === providerKey), source => source.id);
+  }
+
+  public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySource[] {
+    return uniqby(this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey)), source => source.id);
+  }
+
   public localSources(): BibliographySource[] {
-    return this.allSources().filter(source => source.provider === kLocalItemType);
+    return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
   }
 
   public isWritable(): boolean {
@@ -149,13 +166,18 @@ export class BibliographyManager {
     return this.providers;
   }
 
+  public providerName(providerKey: string): string | undefined {
+    const dataProvider = this.providers.find(prov => prov.key === providerKey);
+    return dataProvider?.name;
+  }
+
   // Allows providers to generate bibLaTeX, if needed. This is useful in contexts
   // like Zotero where a user may be using the Better Bibtex plugin which can generate
   // superior BibLaTeX using things like stable citekeys with custom rules, and more.
   // 
   // If the provider doesn't provide BibLaTeX, we can generate it ourselves
   public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
-    const dataProvider = this.providers.find(prov => prov.name === provider);
+    const dataProvider = this.providers.find(prov => prov.key === provider);
     if (dataProvider) {
       const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(ui, id, csl);
       if (dataProviderBibLaTeX) {
@@ -172,9 +194,9 @@ export class BibliographyManager {
     }
   }
 
-  public warningForProvider(provider?: string): string | undefined {
-    if (provider) {
-      const warningProvider = this.providers.find(prov => prov.name === provider);
+  public warningForProvider(providerKey?: string): string | undefined {
+    if (providerKey) {
+      const warningProvider = this.providers.find(prov => prov.key === providerKey);
       if (warningProvider) {
         return warningProvider.warningMessage();
       }
@@ -198,6 +220,28 @@ export class BibliographyManager {
     return this.localSources().find(source => source.id === id);
   }
 
+  // A general purpose search interface for filtered searching
+  public search(query?: string, providerKey?: string, collectionKey?: string) {
+    const limit = 1000;
+    if (query) {
+      if (providerKey && collectionKey) {
+        return this.searchProviderCollection(query, limit, providerKey, collectionKey);
+      } else if (providerKey) {
+        return this.searchProvider(query, limit, providerKey);
+      } else {
+        return this.searchAllSources(query, limit);
+      }
+    } else {
+      if (providerKey && collectionKey) {
+        return this.sourcesForProviderCollection(providerKey, collectionKey);
+      } else if (providerKey) {
+        return this.sourcesForProvider(providerKey);
+      } else {
+        return this.allSources();
+      }
+    }
+  }
+
   public searchAllSources(query: string, limit: number): BibliographySource[] {
 
     // NOTE: This will only search sources that have already been loaded.
@@ -214,18 +258,33 @@ export class BibliographyManager {
         keys: kFields,
       };
 
+      // NOTE: Search performance can really drop off for long strings
+      // Test cases start at 20ms to search for a single character
+      // grow to 270ms to search for 20 character string
+      // grow to 1060ms to search for 40 character string 
       const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
+
 
       const items = results.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
-      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalItemType);
+      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
 
       return uniqby(filteredItems, (source: BibliographySource) => source.id);
 
     } else {
       return [];
     }
+  }
+
+  // Search only a specific provider
+  public searchProvider(query: string, limit: number, providerKey: string): BibliographySource[] {
+    return this.searchAllSources(query, limit).filter(item => item.providerKey === providerKey);
+  }
+
+  // Search a specific provider and collection
+  public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySource[] {
+    return this.searchProvider(query, limit, providerKey).filter(item => item.collectionKeys.includes(collectionKey));
   }
 
   private updateIndex(bibSources: BibliographySource[]) {

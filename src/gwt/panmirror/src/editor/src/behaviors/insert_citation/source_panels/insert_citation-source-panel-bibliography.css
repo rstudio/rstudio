@@ -1,0 +1,29 @@
+
+
+.pm-insert-citation-panel {
+  width: 100%;
+}
+
+.pm-insert-citation-panel-textbox-container
+{
+  width: 100%;
+}
+
+.pm-insert-citation-panel-textbox {
+  width: 100%;
+  border: solid 1px;
+  box-sizing:border-box;
+  height: 28px !important;
+}
+
+.pm-insert-citation-panel-noresults {
+  width: 100%;
+}
+
+.pm-insert-citation-panel-noresults-text {
+  text-align: center;
+  font-size: 10pt;
+  font-style: italic;
+  opacity: 0.8;
+  padding-top: 20px;
+}

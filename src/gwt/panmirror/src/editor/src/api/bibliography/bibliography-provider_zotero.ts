@@ -14,21 +14,22 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
 
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
 
-export const kZoteroItemProvider = 'Zotero';
+export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
-  private collections: ZoteroCollection[] = [];
+  private allCollections: ZoteroCollection[] = [];
+  private allCollectionSpecs: ZoteroCollectionSpec[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
 
@@ -37,6 +38,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public name: string = "Zotero";
+  public key: string = kZoteroProviderKey;
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -46,21 +48,27 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       try {
 
         // Don't send the items back through to the server
-        const collectionSpecs = this.collections.map(({ items, ...rest }) => rest);
+        const collectionSpecs = this.allCollections.map(({ items, ...rest }) => rest);
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
-        const useCache = this.warning === undefined;
+        const useCache = this.warning === undefined || this.warning.length === 0;
+
+        // Read collection specs.
+        const allCollectionSpecsResult = await this.server.getCollectionSpecs();
+        if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
+          this.allCollectionSpecs = allCollectionSpecsResult.message;
+        }
 
         // TODO: remove collection names from server call
         const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
         this.warning = result.warning;
-        if (result.status === "ok") {
+        if (result.status === 'ok') {
 
           if (result.message) {
 
             const newCollections = (result.message as ZoteroCollection[]).map(collection => {
-              const existingCollection = this.collections.find(col => col.name === collection.name);
+              const existingCollection = this.allCollections.find(col => col.name === collection.name);
               if (useCache && existingCollection && existingCollection.version === collection.version) {
                 collection.items = existingCollection.items;
               } else {
@@ -70,7 +78,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
             });
             hasUpdates = hasUpdates || newCollections.length !== this.collections.length;
-            this.collections = newCollections;
+            this.allCollections = newCollections;
           }
         } else {
           // console.log(result.status);
@@ -84,19 +92,32 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       if (this.collections.length > 0) {
         hasUpdates = true;
       }
-      this.collections = [];
+      this.allCollections = [];
     }
     return hasUpdates;
   }
 
-  public containers(doc: ProsemirrorNode, ui: EditorUI): string[] {
-    return this.collections.map(collection => collection.name);
+  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
+    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
   }
 
   public items(): BibliographySource[] {
-    const entryArrays = this.collections?.map(collection => this.bibliographySources(collection)) || [];
+    const entryArrays = this.allCollections?.map(collection => this.bibliographySources(collection)) || [];
     const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
     return zoteroEntries;
+  }
+
+  public itemsForCollection(collectionKey?: string): BibliographySource[] {
+    if (!collectionKey) {
+      return this.items();
+    }
+
+    return this.items().filter((item: any) => {
+      if (item.collectionKeys) {
+        return item.collectionKeys.includes(collectionKey);
+      }
+      return false;
+    });
   }
 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
@@ -123,7 +144,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       return {
         ...item,
         id: item.id || suggestCiteId([], item),
-        provider: kZoteroItemProvider,
+        providerKey: this.key,
+        collectionKeys: item.collectionKeys || []
       };
     });
     return items || [];

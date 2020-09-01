@@ -1,0 +1,20 @@
+
+
+
+.pm-citation-bibliography-picker-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.pm-citation-bibliography-picker-select-file {
+  width: 100%;
+}
+
+.pm-citation-bibliography-picker-label {
+  margin-right: 8px;
+}
+
+.pm-citation-bibliography-picker-textbox {
+  margin-right: 8px;
+}

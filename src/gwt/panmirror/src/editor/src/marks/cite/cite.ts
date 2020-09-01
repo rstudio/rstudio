@@ -19,27 +19,29 @@ import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemir
 import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
+import uniqBy from 'lodash.uniqby';
+
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
-import { BibliographyManager } from '../../api/bibliography/bibliography';
+import { BibliographyManager, BibliographyFile, BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
+import { joinPaths, getExtension } from '../../api/path';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { InsertCiteProps, kAlertTypeError, kAlertTypeWarning } from '../../api/ui-dialogs';
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
 import { performCompletionReplacement } from '../../api/completion';
+import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 
 import { citationCompletionHandler } from './cite-completion';
 import { citeHighlightPlugin } from './cite-highlight';
-import { Extension, ExtensionContext } from '../../api/extension';
 import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
-import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 import { InsertCitationCommand } from './cite-commands';
-import { toBibLaTeX } from '../../api/bibliography/bibDB';
-import { joinPaths, getExtension } from '../../api/path';
+
 
 const kCiteCitationsIndex = 0;
 
@@ -179,7 +181,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (_schema: Schema) => {
-      return [new InsertCitationCommand(ui, context.events)];
+      return [new InsertCitationCommand(ui, context.events, mgr, context.server)];
     },
 
     appendMarkTransaction: (schema: Schema) => {
@@ -613,7 +615,6 @@ export async function insertCitation(
     // Now that we have loaded the bibliography, there is an entry
     // Just write it. Not an ideal experience, but something that
     // should happen only in unusual experiences
-
     const tr = view.state.tr;
 
     // This could be called by paste handler, so stop completions
@@ -650,55 +651,110 @@ export async function insertCitation(
         // Figure out whether this is a project or document level bibliography
         const writableBiblios = bibManager.writableBibliographyFiles(view.state.doc, ui);
 
+        // Sort out the bibliography file into which we should write the entry
         const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
         const project = thisWritableBiblio?.isProject || false;
         const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+        const bibliographyFile: BibliographyFile = {
+          displayPath: result.bibliographyFile,
+          fullPath: writableBiblioPath,
+          isProject: project,
+          writable: true
+        };
 
-        // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
-        const cslToWrite = sanitizeForCiteproc(result.csl);
+        // Create the source that holds the id, provider, etc...
+        const source: BibliographySource = {
+          ...result.csl,
+          id: result.id,
+          providerKey: provider || '',
+          collectionKeys: [],
+        };
 
-        // Write entry to a bibliography file if it isn't already present
-        await bibManager.load(ui, view.state.doc);
 
-        // See if there is a warning for the selected provider. If there is, we may need to surface
-        // that to the user. If there is no provider specified, no need to care about warnings.
-        const warning = bibManager.warningForProvider(provider);
+        // Start the transaction
+        const tr = view.state.tr;
 
-        // If there is a warning message and we're exporting to BibLaTeX, show the warning
-        // message to the user and confirm that they'd like to proceed. This would ideally
-        // know more about the warning type and not have this filter here (e.g. it would just
-        // always show the warning)
-        let proceedWithInsert = true;
-        if (warning && ui.prefs.zoteroUseBetterBibtex() && isBibLaTeX(result.bibliographyFile)) {
-          // Ask the user about the best course of action
-          proceedWithInsert = await ui.dialogs.yesNoMessage(warning, "Warning", kAlertTypeWarning, ui.context.translateText("Insert Citation Anyway"), ui.context.translateText("Cancel"));
-        }
+        // Write the source to the bibliography if needed
+        await ensureSourcesInBibliography(
+          tr,
+          [source],
+          bibliographyFile,
+          bibManager,
+          view,
+          ui,
+          server,
+        );
 
-        if (proceedWithInsert) {
-          if (!bibManager.findIdInLocalBibliography(result.id)) {
-            const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, result.id, result.csl, provider);
-            await server.addToBibliography(writableBiblioPath, project, result.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
-          }
+        // Write the citeId
+        const schema = view.state.schema;
+        const idText = schema.text(source.id, [schema.marks.cite_id.create()]);
+        performCiteCompletionReplacement(tr, tr.mapping.map(pos), idText);
 
-          const tr = view.state.tr;
-
-          // Update the bibliography on the page if need be
-          if (project || ensureBibliographyFileForDoc(tr, result.bibliographyFile, ui)) {
-
-            // Write the cite id
-            const schema = view.state.schema;
-            const id = schema.text(result.id, [schema.marks.cite_id.create()]);
-            performCiteCompletionReplacement(tr, tr.mapping.map(pos), id);
-            view.dispatch(tr);
-          }
-        }
+        // Dispath the transaction
+        view.dispatch(tr);
       }
     }
   }
 }
 
-function isBibLaTeX(bibFile: string): boolean {
-  return getExtension(bibFile) === 'bib';
+
+// Ensures that the sources are in the specified bibliography file
+// and ensures that the bibliography file is properly referenced (either) 
+// as a project bibliography or inline in the document YAML
+export async function ensureSourcesInBibliography(
+  tr: Transaction,
+  sources: BibliographySource[],
+  bibliographyFile: BibliographyFile,
+  bibManager: BibliographyManager,
+  view: EditorView,
+  ui: EditorUI,
+  server: PandocServer,
+) {
+  // Write entry to a bibliography file if it isn't already present
+  await bibManager.load(ui, view.state.doc);
+
+  // See if there is a warning for the selected provider. If there is, we may need to surface
+  // that to the user. If there is no provider specified, no need to care about warnings.
+  const providers = uniqBy(sources, (source: BibliographySource) => source.providerKey).map(source => source.providerKey);
+
+  // Find any providers that have warnings
+  const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));
+
+  // If there is a warning message and we're exporting to BibLaTeX, show the warning
+  // message to the user and confirm that they'd like to proceed. This would ideally
+  // know more about the warning type and not have this filter here (e.g. it would just
+  // always show the warning)
+  let proceedWithInsert = true;
+  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && getExtension(bibliographyFile.fullPath) === 'bib') {
+    const results = await Promise.all<boolean>(providersWithWarnings.map(async withWarning => {
+      const warning = bibManager.warningForProvider(withWarning);
+      if (warning) {
+        return await ui.dialogs.yesNoMessage(warning, "Warning", kAlertTypeWarning, ui.context.translateText("Insert Citation Anyway"), ui.context.translateText("Cancel"));
+      } else {
+        return true;
+      }
+    }));
+    proceedWithInsert = results.every(result => result);
+  }
+
+  if (proceedWithInsert) {
+    await Promise.all(
+      sources.map(async (source, i) => {
+        if (source.id) {
+          // Crossref sometimes provides invalid json for some entries. Sanitize it for citeproc
+          const cslToWrite = sanitizeForCiteproc(source);
+
+          if (!bibManager.findIdInLocalBibliography(source.id)) {
+            const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, source.id, source, source.providerKey);
+            await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
+          }
+
+          if (!bibliographyFile.isProject) {
+            ensureBibliographyFileForDoc(tr, bibliographyFile.displayPath, ui);
+          }
+        }
+      }));
+  }
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {

@@ -365,9 +365,9 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
    if (pandocCaptureOutput(arg, &extensions, &response))
    {
       response.setResult(extensions);
-      cont(Success(), &response);
-   }
 
+   }
+   cont(Success(), &response);
 }
 
 } // end anonymous namespace

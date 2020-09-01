@@ -1,0 +1,11 @@
+.pm-dialog-buttons-panel {
+  display: flex;
+}
+
+.pm-dialog-buttons-button {
+  height: 28px;
+  width: 80px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica', 'sans-serif', 'serif'
+}
