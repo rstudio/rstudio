@@ -375,5 +375,31 @@ public class RProjectConfig extends JavaScriptObject
       this.markdown_canonical = canonical;
    }-*/;
    
+   public native final String getPythonType() /*-{
+      return this.python_type;
+   }-*/;
+   
+   public native final void setPythonType(String type) /*-{
+      this.python_type = type;
+   }-*/;
+   
+   public native final String getPythonVersion() /*-{
+      return this.python_version;
+   }-*/;
+   
+   public native final void setPythonVersion(String version) /*-{
+      this.python_version = version;
+   }-*/;
+   
+   public native final String getPythonPath() /*-{
+      return this.python_path;
+   }-*/;
+   
+   public native final void setPythonPath(String path) /*-{
+      this.python_path = path;
+   }-*/;
+   
+   
+   
    
 }

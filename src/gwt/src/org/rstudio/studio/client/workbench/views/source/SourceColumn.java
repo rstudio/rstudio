@@ -1176,6 +1176,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   TextEditingTarget.RMD_VISUAL_MODE,
                   DocUpdateSentinel.PROPERTY_TRUE
                );
+            // don't ever prompt for line wrapping config b/c this 
+            // document started out in visual mode
+            document.getProperties().setString(
+                  TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
+                  DocUpdateSentinel.PROPERTY_TRUE
+               );
+            
          }
       }
    }

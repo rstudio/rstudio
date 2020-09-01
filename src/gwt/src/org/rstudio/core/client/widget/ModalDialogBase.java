@@ -61,7 +61,6 @@ import java.util.List;
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
 {
-   protected static final String allowEnterKeyClass = "__rstudio_modal_allow_enter_key";
 
    public interface ReturnFocusHandler
    {
@@ -615,9 +614,10 @@ public abstract class ModalDialogBase extends DialogBox
 
             // allow Enter on textareas, buttons, or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA") || e.hasTagName("A") ||
+            if (e.hasTagName("TEXTAREA") ||
+                  e.hasTagName("A") ||
                   e.hasTagName("BUTTON") ||
-                  e.hasClassName(allowEnterKeyClass) ||
+                  e.hasClassName(ALLOW_ENTER_KEY_CLASS) ||
                   (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
                return;
 
@@ -866,4 +866,6 @@ public abstract class ModalDialogBase extends DialogBox
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private final FocusHelper focus_;
    private static final List<ReturnFocusHandler> FOCUS_HANDLERS = new ArrayList<>();
+   
+   public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
 }

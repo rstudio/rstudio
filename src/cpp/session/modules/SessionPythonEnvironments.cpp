@@ -36,15 +36,14 @@ namespace {
 void onPrefsChanged(const std::string& /* layerName */,
                     const std::string& prefName)
 {
-   if (prefName == kPythonDefaultInterpreter)
+   if (prefName == kPythonPath)
    {
-      std::string interpreterPath =
-            prefs::userPrefs().pythonDefaultInterpreter();
+      std::string pythonPath = prefs::userPrefs().pythonPath();
       
-      if (!interpreterPath.empty())
+      if (!pythonPath.empty())
       {
          Error error = r::exec::RFunction(".rs.reticulate.usePython")
-               .addParam(interpreterPath)
+               .addParam(pythonPath)
                .call();
 
          if (error)

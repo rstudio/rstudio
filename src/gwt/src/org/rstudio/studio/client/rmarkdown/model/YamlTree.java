@@ -232,6 +232,7 @@ public class YamlTree
       parent.addChild(child);
    }
    
+   
    public String getKeyValue(String key)
    {
       if (keyMap_.containsKey(key))
@@ -279,6 +280,35 @@ public class YamlTree
          }
       }
       return "";
+   }
+   
+   public void setGrandchildValue(String grandparentKey, String parentKey, String childKey, String value)
+   {
+      for (YamlTreeNode grandparent: root_.children)
+      {
+         if (grandparent.key == grandparentKey)
+         {
+            for (YamlTreeNode parent: grandparent.children)
+            {
+               if (parent.key == parentKey)
+               {
+                  for (YamlTreeNode child: parent.children)
+                  {
+                     if (child.key == childKey)
+                     {
+                        child.setValue(value);
+                        return;
+                     }
+                  }
+                  // if we didn't find an existing value then add a new one
+                  YamlTreeNode newChild = new YamlTreeNode(parent.getIndent() + "  " + childKey + ": " + value);
+                  keyMap_.put(childKey, newChild);
+                  parent.addChild(newChild);
+                  return;
+               }
+            }
+         }
+      }
    }
    
    public boolean containsKey(String key)
