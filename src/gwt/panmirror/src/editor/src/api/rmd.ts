@@ -49,7 +49,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       return false;
     }
 
-    // must either be at the body top level, within a list item, or within a
+    // must either be at the body top level, within a list item, within a div, or within a
     // blockquote (and never within a table)
     const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
     if (within(schema.nodes.table)) {
@@ -58,7 +58,9 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     if (
       !selectionIsBodyTopLevel(state.selection) &&
       !within(schema.nodes.list_item) &&
-      !within(schema.nodes.blockquote)
+      !within(schema.nodes.blockquote) &&
+      (schema.nodes.div && !within(schema.nodes.div))
+
     ) {
       return false;
     }
@@ -78,7 +80,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
         tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars;
+        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
         setTextSelection(selPos)(tr);
       }
 
