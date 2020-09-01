@@ -443,6 +443,7 @@ public class ChunkOutputStream extends FlowPanel
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
             int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
 
             frame.getElement().getStyle().setOverflow(Overflow.VISIBLE);
             frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.VISIBLE);

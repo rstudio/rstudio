@@ -214,7 +214,7 @@ public class ChunkOutputGallery extends Composite
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
             int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
             callbackContent.setHeight(contentHeight + "px");
-            frame.setHeight(contentHeight + "px");
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
             frame.getElement().getStyle().setOverflow(Style.Overflow.SCROLL);
             frame.getWindow().getDocument().getBody().getStyle().setOverflow(Style.Overflow.SCROLL);
