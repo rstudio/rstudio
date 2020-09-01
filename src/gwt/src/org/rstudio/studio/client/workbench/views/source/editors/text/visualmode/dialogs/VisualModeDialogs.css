@@ -1,10 +1,12 @@
 
 .confirmDialog {
    width: 450px;
+   padding: 7px;
 }
 
 .confirmLineWrappingDialog {
    width: 435px;
+   padding: 7px;
 }
 
 .confirmLineWrappingDialog ul {
