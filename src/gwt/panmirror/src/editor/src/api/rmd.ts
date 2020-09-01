@@ -38,6 +38,28 @@ export interface EditorRmdChunk {
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
 
+export function canInsertRmdChunk(state: EditorState) {
+
+  // must either be at the body top level, within a list item, within a div, or within a
+  // blockquote (and never within a table)
+  const schema = state.schema;
+  const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
+  if (within(schema.nodes.table)) {
+    return false;
+  }
+  if (
+    !selectionIsBodyTopLevel(state.selection) &&
+    !within(schema.nodes.list_item) &&
+    !within(schema.nodes.blockquote) &&
+    (schema.nodes.div && !within(schema.nodes.div))
+
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
@@ -49,17 +71,9 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       return false;
     }
 
-    // must either be at the body top level, within a list item, or within a
+    // must either be at the body top level, within a list item, within a div, or within a
     // blockquote (and never within a table)
-    const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
-    if (within(schema.nodes.table)) {
-      return false;
-    }
-    if (
-      !selectionIsBodyTopLevel(state.selection) &&
-      !within(schema.nodes.list_item) &&
-      !within(schema.nodes.blockquote)
-    ) {
+    if (!canInsertRmdChunk(state)) {
       return false;
     }
 
@@ -78,7 +92,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
         tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars;
+        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
         setTextSelection(selPos)(tr);
       }
 

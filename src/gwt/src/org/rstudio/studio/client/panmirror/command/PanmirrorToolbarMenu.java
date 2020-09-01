@@ -80,7 +80,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    public PanmirrorToolbarMenu addSubmenu(String text)
    { 
       PanmirrorToolbarMenu submenu = new PanmirrorToolbarMenu(this, commands_);
-      submenu.addMenuBarStyle(RES.styles().toolbarPopupMenu());
+      submenu.addMenuBarStyle(RES.styles().toolbarPopupSubmenu());
       addItem(new MenuItem(menuText(text)), submenu);
       uiObjects_.add(submenu);
       return submenu;

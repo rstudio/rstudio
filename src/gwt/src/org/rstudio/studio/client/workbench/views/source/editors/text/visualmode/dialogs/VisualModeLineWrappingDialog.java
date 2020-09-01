@@ -80,21 +80,26 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
      
       mainWidget_.addStyleName(RES.styles().confirmLineWrappingDialog());
       
-      Label mismatch = new Label("Line wrapping mismatch detected:");
+      String current = isProjectConfig ? "project default" : "global default";
+      
+      Label mismatch = new Label(
+         "Line wrapping in this document differs from the " + 
+         current + ":"
+      );
       mainWidget_.add(mismatch);
       
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendHtmlConstant("<ul>");
       builder.appendHtmlConstant("<li style=\"margin-bottom: 10px;\">");
-      builder.appendEscaped("This document appears to use ");
+      builder.appendEscaped("The document uses ");
       builder.appendEscaped(detectedLineWrapping);
       builder.appendEscaped("-based line wrapping"); 
       builder.appendHtmlConstant("</li>");
       builder.appendHtmlConstant("<li style=\"margin-bottom: 3px;\">");
       if (isProjectConfig)
-         builder.appendEscaped("The current project is configured with ");
+         builder.appendEscaped("The " + current + " is ");
       else
-         builder.appendEscaped("The current global default is set to ");
+         builder.appendEscaped("The " + current + " is ");
       if (configuredLineWrapping.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE))
          builder.appendEscaped("no");
       else 
@@ -107,7 +112,7 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
       mainWidget_.add(new HTML(builder.toSafeHtml()));
       
      
-      Label choiceLabel = new Label("Select your preference for line wrapping below:");
+      Label choiceLabel = new Label("Select how you'd like to handle line wrapping below:");
       mainWidget_.add(choiceLabel);
          
       
@@ -132,7 +137,7 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
       }
       
       chkConfigureNone_ = lineWrappingRadio(
-         "Use the " + (isProjectConfig ? "project" : "global") + " default line wrapping for this document"
+         "Use the current " + (isProjectConfig ? "project" : "global") + " default line wrapping for this document"
       );
       mainWidget_.add(chkConfigureNone_);
       

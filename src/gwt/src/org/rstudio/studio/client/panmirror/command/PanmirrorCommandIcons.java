@@ -30,6 +30,7 @@ public class PanmirrorCommandIcons
    public final String BLOCKQUOTE = "blockquote";
    public final String BOLD = "bold";
    public final String BULLET_LIST = "bullet_list";
+   public final String CITATION = "citation";
    public final String CODE = "code";
    public final String IMAGE = "image";
    public final String ITALIC = "italic";
@@ -48,6 +49,8 @@ public class PanmirrorCommandIcons
       icons_.put(dm(BOLD), res.bold_dm());
       icons_.put(BULLET_LIST, res.bullet_list());
       icons_.put(dm(BULLET_LIST), res.bullet_list_dm());
+      icons_.put(CITATION, res.citation());
+      icons_.put(dm(CITATION), res.citation_dm());
       icons_.put(CODE, res.code());
       icons_.put(dm(CODE), res.code_dm());
       icons_.put(IMAGE, res.image());

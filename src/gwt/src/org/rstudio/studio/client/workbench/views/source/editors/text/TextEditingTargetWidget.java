@@ -419,7 +419,7 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());
 
       insertChunkMenu_ = new ToolbarMenuButton(
-                       "Insert",
+                       "",
                        commands_.insertChunk().getTooltip(),
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
