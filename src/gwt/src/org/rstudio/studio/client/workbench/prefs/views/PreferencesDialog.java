@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +40,11 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
+   /**
+    * Implementation note, when adding a new PreferencesPane, also add a
+    * command for directly showing that pane from the Command Palette. See
+    * WorkbenchScreen.onShowCodeOptions() for an example.
+    */
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,
                             Session session,

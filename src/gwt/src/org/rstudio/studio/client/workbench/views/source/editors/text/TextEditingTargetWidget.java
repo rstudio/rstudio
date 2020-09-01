@@ -281,11 +281,15 @@ public class TextEditingTargetWidget
 
    private void createTestToolbarButtons(Toolbar toolbar)
    {
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
       compareTestButton_ = new ToolbarButton(
             "Compare Results",
             ToolbarButton.NoTitle,
             commands_.shinyCompareTest().getImageResource(),
-            event -> commands_.shinyCompareTest().execute());
+            event -> {
+               mgr.setActive(column_);
+               commands_.shinyCompareTest().execute();
+            });
       compareTestButton_.setTitle(commands_.shinyCompareTest().getDesc());
 
       toolbar.addRightWidget(compareTestButton_);
@@ -295,7 +299,10 @@ public class TextEditingTargetWidget
             "Run Tests",
             ToolbarButton.NoTitle,
             commands_.testTestthatFile().getImageResource(),
-            event -> commands_.testTestthatFile().execute());
+            event -> {
+               mgr.setActive(column_);
+               commands_.testTestthatFile().execute();
+            });
       testThatButton_.setTitle(commands_.testTestthatFile().getDesc());
 
       toolbar.addRightWidget(testThatButton_);
@@ -305,7 +312,10 @@ public class TextEditingTargetWidget
             "Run Tests",
             ToolbarButton.NoTitle,
             commands_.testShinytestFile().getImageResource(),
-            event -> commands_.testShinytestFile().execute());
+            event -> {
+               mgr.setActive(column_);
+               commands_.testShinytestFile().execute();  
+            });
       testShinyButton_.setTitle(commands_.testShinytestFile().getDesc());
 
       toolbar.addRightWidget(testShinyButton_);
@@ -443,12 +453,12 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.goToNextSection(), column_).createUnsyncedToolbarButton());
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document";
-
       sourceButton_ = new ToolbarButton(
             "Source",
             SOURCE_BUTTON_TITLE,
             commands_.sourceActiveDocument().getImageResource(),
             event -> {
+               mgr.setActive(column_);
                if (userPrefs_.sourceWithEcho().getValue())
                   commands_.sourceActiveDocumentWithEcho().execute();
                else
@@ -622,6 +632,7 @@ public class TextEditingTargetWidget
          @Override
          public void run()
          {
+            mgr.setActive(column_);
             String title = commands_.toggleDocumentOutline().getTooltip();
             title = editorPanel_.getWidgetSize(docOutlineWidget_) > 0
                   ? title.replace("Show ", "Hide ")

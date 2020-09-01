@@ -1536,10 +1536,6 @@ well as menu structures (for main menu and popup menus).
         label="Zoom Right Column"
         menuLabel="Zoo_m Right Column"/>
 
-   <cmd id="paneLayout"
-        menuLabel="Pane Layo_ut..."
-        windowMode="main"/>
-
    <cmd id="jumpTo"
         label="Jump To..."
         menuLabel="_Jump To..."
@@ -2921,10 +2917,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Send to _Terminal"
         desc="Send the current line or selection to terminal"/>
 
-   <cmd id="showTerminalOptions"
-        menuLabel="_Terminal Options..."
-        windowMode="main"/>
-
    <cmd id="sendFilenameToTerminal"
         menuLabel="Send _Filename to Terminal"
         windowMode="main"/>
@@ -2952,6 +2944,59 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showOptions"
         menuLabel="_Global Options..."
+        windowMode="main"/>
+
+   <cmd id="showCodeOptions"
+        label="Code Options..."
+        windowMode="main"/>
+
+   <cmd id="showConsoleOptions"
+        label="Console Options..."
+        windowMode="main"/>
+
+   <cmd id="showAppearanceOptions"
+        label="Appearance Options..."
+        windowMode="main"/>
+
+   <cmd id="paneLayout"
+        menuLabel="Pane Layo_ut..."
+        label="Pane Layout Options..."
+        windowMode="main"/>
+
+   <cmd id="showPackagesOptions"
+        label="Packages Options..."
+        windowMode="main"/>
+
+   <cmd id="showRMarkdownOptions"
+        label="R Markdown Options..."
+        windowMode="main"/>
+
+   <cmd id="showSweaveOptions"
+        label="Sweave Options..."
+        windowMode="main"/>
+
+   <cmd id="showSpellingOptions"
+        label="Spelling Options..."
+        windowMode="main"/>
+
+   <cmd id="showVcsOptions"
+        label="Git/SVN Version Control Options..."
+        windowMode="main"/>
+
+   <cmd id="showPublishingOptions"
+        label="Publishing Options..."
+        windowMode="main"/>
+
+   <cmd id="showTerminalOptions"
+        menuLabel="_Terminal Options..."
+        windowMode="main"/>
+
+   <cmd id="showAccessibilityOptions"
+        menuLabel="Accessibility _Options..."
+        windowMode="main"/>
+
+   <cmd id="showPythonOptions"
+        label="Python Options..."
         windowMode="main"/>
 
    <cmd id="modifyKeyboardShortcuts"
@@ -3790,10 +3835,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleScreenReaderSupport"
         menuLabel="_Screen Reader Support"
         checkable="true"
-        windowMode="main"/>
-
-   <cmd id="showAccessibilityOptions"
-        menuLabel="Accessibility _Options..."
         windowMode="main"/>
 
    <cmd id="showAccessibilityHelp"

@@ -419,6 +419,16 @@ public abstract class
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
+   public abstract AppCommand showCodeOptions();
+   public abstract AppCommand showConsoleOptions();
+   public abstract AppCommand showAppearanceOptions();
+   public abstract AppCommand showPackagesOptions();
+   public abstract AppCommand showRMarkdownOptions();
+   public abstract AppCommand showSweaveOptions();
+   public abstract AppCommand showSpellingOptions();
+   public abstract AppCommand showVcsOptions();
+   public abstract AppCommand showPublishingOptions();
+   public abstract AppCommand showPythonOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
    public abstract AppCommand showCommandPalette();
 
