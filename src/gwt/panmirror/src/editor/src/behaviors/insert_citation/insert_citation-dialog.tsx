@@ -71,7 +71,6 @@ export async function showInsertCitationDialog(
       const container = window.document.createElement('div');
       container.className = 'pm-default-theme';
 
-      //container.style.height = height + 'px';
       container.style.width = width + 'px';
       ReactDOM.render(
         <InsertCitationPanel

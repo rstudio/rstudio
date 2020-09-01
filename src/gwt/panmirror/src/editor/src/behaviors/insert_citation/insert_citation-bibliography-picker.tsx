@@ -46,6 +46,8 @@ function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
 
 export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps> = props => {
 
+  const defaultBiblioType = props.ui.prefs.bibliographyDefaultType();
+
   // The types of bibliography files and the default value
   const bibliographyTypes: BibliographyType[] = [
     {
@@ -61,7 +63,9 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
       extension: 'json',
     },
   ];
-  const suggestedBibliographyFileName = changeExtension('references.bib', bibliographyTypes[0].extension);
+
+  // Switch to the default file type
+  const suggestedBibliographyFileName = changeExtension('references.bib', defaultBiblioType || bibliographyTypes[0].extension);
 
   // On first load, initialize the default bibliography file
   React.useEffect(() => {
@@ -97,12 +101,12 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   };
 
   // File type change
-  // JJA: Does this (eventually) update the sticky user state on preferred bibliography type?
   const onTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
     const type = bibliographyTypes[index];
     const newPath = changeExtension(createFileName, type.extension);
     createFileChanged(newPath);
+    props.ui.prefs.setBibliographyDefaultType(type.extension);
   };
 
   return (
@@ -129,7 +133,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
 
               <SelectInput
                 onChange={onTypeChange}>
-                {bibliographyTypes.map(bibType => (<option key={bibType.extension} value={bibType.extension}>{bibType.displayName}</option>))}
+                {bibliographyTypes.map(bibType => (<option key={bibType.extension} value={bibType.extension} selected={bibType.extension === defaultBiblioType}>{bibType.displayName}</option>))}
               </SelectInput>
             </div>
           )
