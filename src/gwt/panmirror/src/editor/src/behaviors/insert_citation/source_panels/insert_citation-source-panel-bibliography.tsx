@@ -69,6 +69,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   const [searchTerm, setSearchTerm] = React.useState<string>();
   const [focused, setFocused] = React.useState<boolean>(false);
   const fixedList = React.useRef<FixedSizeList>(null);
+  const listContainer = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     async function loadData() {
@@ -93,17 +94,23 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     // load the right panel
   }, [props.selectedNode, searchTerm]);
 
+  // If the nodes change, clear the search box value
+  React.useLayoutEffect(() => {
+    if (searchBoxRef.current) {
+      searchBoxRef.current.value = '';
+      setSearchTerm('');
+    }
+  }, [props.selectedNode]);
+
+  // Whenever selection changed, ensure that we are scrolled to that item
   React.useLayoutEffect(() => {
     fixedList.current?.scrollToItem(selectedIndex);
   }, [selectedIndex]);
 
+  // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.persist();
-    const debounced = debounce(() => {
-      const search = e.target.value;
-      setSearchTerm(search);
-    }, 50);
-    debounced();
+    const search = e.target.value;
+    setSearchTerm(search);
   };
 
   // Dynamically size the ListBox
@@ -144,8 +151,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-
+  const handleListKeyDown = (event: React.KeyboardEvent) => {
     switch (event.key) {
       case 'ArrowUp':
         incrementIndex(event, selectedIndex - 1);
@@ -171,9 +177,18 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
         toggleSelectedSource(event);
         break;
     }
-
   };
 
+  // If the user arrows down in the search text box, advance to the list of items
+  const handleTextKeyDown = (event: React.KeyboardEvent) => {
+    switch (event.key) {
+      case 'ArrowDown':
+        listContainer.current?.focus();
+        break;
+    }
+  };
+
+  // Focus / Blur are used to track whether to show selection highlighting
   const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(true);
   };
@@ -191,6 +206,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           tabIndex={0}
           className='pm-insert-citation-panel-textbox pm-block-border-color'
           placeholder={props.ui.context.translateText('Search for citation')}
+          onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
           ref={searchBoxRef}
         />
@@ -201,7 +217,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           <div className='pm-insert-citation-panel-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
         </div>) :
         (
-          <div tabIndex={0} onKeyDown={handleKeyDown} onFocus={onFocus} onBlur={onBlur}>
+          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={listContainer}>
             <FixedSizeList
               height={listHeight}
               width='100%'

@@ -58,7 +58,7 @@ export async function showInsertCitationDialog(
     "Insert",
     (containerWidth: number, containerHeight: number, confirm: VoidFunction, cancel: VoidFunction) => {
 
-      const kMaxHeight = 600;
+      const kMaxHeight = 650;
       const kMaxWidth = 900;
       const kMaxHeightProportion = .9;
       const kdialogPaddingIncludingButtons = 70;
@@ -72,7 +72,7 @@ export async function showInsertCitationDialog(
       const container = window.document.createElement('div');
       container.className = 'pm-default-theme';
 
-      container.style.height = height + 'px';
+      //container.style.height = height + 'px';
       container.style.width = width + 'px';
       ReactDOM.render(
         <InsertCitationPanel

@@ -170,6 +170,9 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${defaults.borderBackgroundColor};
       background-color: ${defaults.backgroundColor};
     }
+    .pm-default-theme .pm-placeholder-text-color {
+      color: ${defaults.placeholderTextColor} !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }

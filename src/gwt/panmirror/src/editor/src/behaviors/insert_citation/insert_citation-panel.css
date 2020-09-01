@@ -26,11 +26,9 @@
 }
 
 .pm-cite-panel-selected-cites {
-  height: 50px;
   margin-top: 10px;
   border: solid 1px;
   border-radius: 3px;  
-  overflow-y: auto;
 }
 
 .pm-cite-panel-select-bibliography {

@@ -126,25 +126,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // Style properties
   const style: React.CSSProperties = {
-    height: props.height + 'px',
     width: props.width + 'px',
     ...props.style,
   };
 
-  // Size the tag element, bibliography picker, and main panel
-  const tagHeight = 50;
-  const tagStyle: React.CSSProperties = {
-    minHeight: `${tagHeight}px`
-  };
-  const bibliographyHeight = 28;
-  const biblioStyle: React.CSSProperties = {
-    minHeight: `${bibliographyHeight}px`,
-    paddingLeft: '2px'
-  };
-
   // Figure out the panel height (the height of the main panel less padding and other elements)
-  const padding = 30;
-  const panelHeight = props.height - tagHeight - bibliographyHeight - padding;
+  const panelHeight = props.height * .75;
 
   // Load the panel that is displayed for the selected node
   const citationProps: CitationSourcePanelProps = {
@@ -196,6 +183,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // Support keyboard shortcuts for dismissing dialog
   const onKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
+      event.preventDefault();
       event.stopPropagation();
       props.onOk();
     }
@@ -228,7 +216,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       </div>
       <div
         className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'
-        style={tagStyle}
       >
         <TagInput
           tags={sourcesToAdd.map(source => ({
@@ -240,13 +227,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           tagDeleted={deleteTag}
           tagChanged={tagEdited}
           ui={props.ui}
-          style={tagStyle} />
+          placeholder={props.ui.context.translateText('Selected Cite Keys')} />
       </div>
       <div className='pm-cite-panel-select-bibliography'>
         <CitationBibliographyPicker
           bibliographyFiles={props.bibliographyManager.writableBibliographyFiles(props.doc, props.ui)}
           biblographyFileChanged={bibliographyFileChanged}
-          style={biblioStyle}
           ui={props.ui} />
 
         <DialogButtons

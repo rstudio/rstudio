@@ -6,6 +6,13 @@
   align-items: flex-start;
 }
 
+.pm-tag-input-placeholder {
+  height: 27px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
 .pm-tag-input-tag {
   display: flex;
   align-items: center;
@@ -34,7 +41,6 @@
   font-size: 10pt;
   opacity: 0.8;
   padding: 0px;
-  
 }
 
 .pm-tag-input-text-edittable {
