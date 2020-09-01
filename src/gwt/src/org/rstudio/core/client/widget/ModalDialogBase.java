@@ -140,6 +140,11 @@ public abstract class ModalDialogBase extends DialogBox
       }, KeyDownEvent.getType());
    }
    
+   protected void hideButtons()
+   {
+     buttonPanel_.setVisible(false);
+   }
+   
    protected boolean handleKeyDownEvent(KeyDownEvent event) {
       return true;
    }

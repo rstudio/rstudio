@@ -69,6 +69,11 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
                closeDialog();
             });
       mainWidget_ = new DialogWidget(mainWidgetEl);
+      
+      // prevent default action handling
+      hideButtons();
+      setEnterDisabled(true);
+      setEscapeDisabled(true);
    }
 
    @Override
