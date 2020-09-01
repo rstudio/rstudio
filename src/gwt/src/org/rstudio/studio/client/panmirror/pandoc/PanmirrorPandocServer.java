@@ -100,7 +100,7 @@ public class PanmirrorPandocServer {
            id,
            sourceAsJson,
            sourceAsBibLaTeX,
-           new PromiseServerRequestCallback<Boolean>(resolve, reject)
+           new PromiseServerRequestCallback<Boolean>(resolve, reject, "Saving biliography...", 1500)
         );
      }); 
    }

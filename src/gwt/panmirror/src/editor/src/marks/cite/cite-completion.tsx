@@ -32,7 +32,7 @@ import { EditorEvents } from '../../api/events';
 import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
+import { parseCitation, insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
 
 import './cite-completion.css';
 
@@ -79,7 +79,7 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        return insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
+        return insertSingleCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, bibManager.providerName(entry.source.providerKey));
       }
       return Promise.resolve();
     },
@@ -163,8 +163,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           const managerEntries = () => {
             // Filter duplicate sources
             const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
-
-            const warning = manager.warning();
 
             // Sort by id by default
             const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));

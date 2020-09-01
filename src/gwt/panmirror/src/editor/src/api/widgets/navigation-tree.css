@@ -1,0 +1,27 @@
+
+
+.pm-navigation-tree-node-indent {
+  margin-left: 10px;
+}
+
+.pm-navigation-tree-node {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.pm-navigation-tree-node-image {
+  width:20px;
+  height:20px;
+  padding-right: 3px;
+  padding-left: 4px;
+  vertical-align: middle;
+}
+
+.pm-navigation-tree-node-label-div {
+  font-size: 1.1em;
+  opacity: .8;
+  overflow: hidden;
+}
+

@@ -22,6 +22,7 @@ export interface SelectInputProps extends WidgetProps {
   className?: string;
   onChange?: ChangeEventHandler;
   children: ReactNode;
+  defaultValue?: string;
 }
 
 export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>((props, ref) => {
@@ -31,11 +32,12 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
 
   return (
     <select
-      className={`pm-input-select pm-background-color pm-pane-border-color pm-text-color pm-background-color ${props.className}`}
+      className={`pm-input-select pm-background-color pm-pane-border-color pm-text-color ${props.className}`}
       style={style}
       tabIndex={props.tabIndex}
       ref={ref}
       onChange={props.onChange}
+      defaultValue={props.defaultValue}
     >
       {props.children}
     </select>

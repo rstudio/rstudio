@@ -329,7 +329,11 @@ export function formatIssuedDate(date: CSLDate | undefined): string {
         return `${dateParts[0][0]}-${dateParts[1][0]}`;
       // Only a single date
       case 1:
-        return `${dateParts[0][0]}`;
+        // Note that it is possible to receive an entry with a single null entry
+        // For examples:
+        // 10.1163/1874-6772_seg_a44_588
+        const singleDatePart = dateParts[0][0];
+        return `${singleDatePart ? singleDatePart : ''}`;
 
       // Seems like a malformed date :(
       case 0:

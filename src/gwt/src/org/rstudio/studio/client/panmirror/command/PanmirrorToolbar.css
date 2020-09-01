@@ -42,3 +42,7 @@
 .toolbarPopupMenu .gwt-MenuItem {
    min-width: 190px;
 }
+
+.toolbarPopupSubmenu .gwt-MenuItem {
+   min-width: 120px;
+}

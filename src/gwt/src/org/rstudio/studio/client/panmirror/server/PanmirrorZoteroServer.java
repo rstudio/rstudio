@@ -57,7 +57,7 @@ public class PanmirrorZoteroServer
       return new Promise<JavaScriptObject>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetCollections(file, collections, cached, useCache,
-                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
+                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Loading Collections...", 2000));
             });
    }
 

@@ -119,5 +119,16 @@ export interface EditorUIImages {
     web?: string;
     web_dark?: string;
     zoteroOverlay?: string;
+    local_sources?: string;
+    bibligraphy?: string;
+    bibligraphy_folder?: string;
+    zotero_library?: string;
+    zotero_folder?: string;
+    doi?: string;
+    crossref?: string;
+  };
+  widgets?: {
+    tag_delete?: string;
+    tag_edit?: string;
   };
 }

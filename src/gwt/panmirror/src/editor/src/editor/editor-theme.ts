@@ -92,7 +92,7 @@ export function defaultTheme(): EditorTheme {
     findTextBorderColor: 'rgb(200, 200, 250)',
     borderBackgroundColor: '#ddd',
     blockBorderColor: '#ddd',
-    focusOutlineColor: '#ddd',
+    focusOutlineColor: '#5d84cd',
     paneBorderColor: 'silver',
     fixedWidthFont: 'monospace, monospace',
     fixedWidthFontSizePt: 9,
@@ -133,6 +133,49 @@ export function applyTheme(theme: EditorTheme) {
 
   // generate theme css
   const themeCss = `
+    .pm-default-theme .pm-background-color {
+      background-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-text-color {
+      color: ${defaults.textColor} !important;
+    }
+    .pm-default-theme .pm-border-background-color {
+      background-color: ${defaults.borderBackgroundColor} !important;
+    }
+    .pm-default-theme .pm-input-text {
+      border-color: ${defaults.paneBorderColor} !important
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-input-outline-button {
+      color: ${defaults.textColor};
+      border-color: ${defaults.textColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-selected-navigation-tree-item {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      border-color: ${defaults.findTextBorderColor} !important;
+    }
+    .pm-default-theme .pm-navigation-tree-item {
+      border-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-focus-outline-color {
+      border-color: ${defaults.focusOutlineColor} !important;
+    }
+    .pm-default-theme .pm-input-button {
+      border-color: ${defaults.borderBackgroundColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-placeholder-text-color {
+      color: ${defaults.placeholderTextColor} !important;
+    }
+    .pm-default-theme .pm-background-color *::selection {
+      background-color: ${defaults.selectionColor} !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }
@@ -199,6 +242,15 @@ export function applyTheme(theme: EditorTheme) {
       background-color: ${theme.chunkBackgroundColor} !important;
       border: 1px solid transparent !important;
     }
+    .pm-navigation-tree-item {
+      border: 1px solid ${theme.backgroundColor} !important;
+      border-radius: 3px;
+    }
+    .pm-selected-navigation-tree-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }
@@ -206,7 +258,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.blockBorderColor} !important;
     }
     .pm-focus-outline-color {
-      outline-color: ${theme.focusOutlineColor} !important;
+      border-color: ${theme.focusOutlineColor} !important;
     }
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
@@ -253,6 +305,11 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-input-button {
       border-color: ${theme.borderBackgroundColor};
+      background-color: ${theme.backgroundColor};
+    }
+    .pm-input-outline-button {
+      color: ${theme.textColor};
+      border-color: ${theme.textColor};
       background-color: ${theme.backgroundColor};
     }
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,
