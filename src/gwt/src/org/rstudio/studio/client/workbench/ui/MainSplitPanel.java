@@ -272,6 +272,18 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
+   public void showLeftWidgets()
+   {
+      for (Widget w : leftList_)
+         w.setVisible(true);
+   }
+
+   public void hideLeftWidgets()
+   {
+      for (Widget w : leftList_)
+         w.setVisible(false);
+   }
+   
    public void onSplitterResized(SplitterResizedEvent event)
    {
       enforceBoundaries();

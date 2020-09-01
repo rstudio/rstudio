@@ -823,6 +823,7 @@ public class PaneManager
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
+      panel_.hideLeftWidgets();
 
       final double initialSize = panel_.getWidgetSize(right_);
 
@@ -917,6 +918,7 @@ public class PaneManager
       // widgets to size themselves vertically.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      panel_.showLeftWidgets();
 
       restoreTwoColumnLayout();
 
@@ -944,6 +946,7 @@ public class PaneManager
       // hidden windows to display themselves, and so on.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      panel_.showLeftWidgets();
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
