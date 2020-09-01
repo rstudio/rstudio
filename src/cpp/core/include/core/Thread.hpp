@@ -341,7 +341,6 @@ public:
 
    void remove(const T& value)
    {
-      std::set<std::string> test;
       LOCK_MUTEX(mutex_)
       {
          auto itr = set_.find(value);
