@@ -823,7 +823,7 @@ public class PaneManager
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
-      panel_.hideLeftWidgets();
+      panel_.setLeftWidgetsVisible(false);
 
       final double initialSize = panel_.getWidgetSize(right_);
 
@@ -899,7 +899,7 @@ public class PaneManager
       if (maximizedWindow_ != null)
          restoreSavedLayout();
       else
-         restoreFourPaneLayout();
+         restorePaneLayout();
    }
 
    private void invalidateSavedLayoutState(boolean enableSplitter)
@@ -911,20 +911,18 @@ public class PaneManager
       manageLayoutCommands();
    }
 
-   private void restoreFourPaneLayout()
+   private void restorePaneLayout()
    {
       // Ensure that all windows are in the 'normal' state. This allows
       // hidden windows to display themselves, and so on. This also forces
       // widgets to size themselves vertically.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      panel_.showLeftWidgets();
 
-      restoreTwoColumnLayout();
-
+      restoreColumnLayout();
    }
 
-   private void restoreTwoColumnLayout()
+   private void restoreColumnLayout()
    {
       double rightWidth = panel_.getWidgetSize(right_);
       double panelWidth = panel_.getOffsetWidth();
@@ -936,6 +934,9 @@ public class PaneManager
          resizeHorizontally(rightWidth, minThreshold);
       else if (rightWidth >= maxThreshold)
          resizeHorizontally(rightWidth, maxThreshold);
+      
+      // show any additional source columns
+      panel_.setLeftWidgetsVisible(true);
 
       invalidateSavedLayoutState(true);
    }
@@ -946,7 +947,7 @@ public class PaneManager
       // hidden windows to display themselves, and so on.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      panel_.showLeftWidgets();
+      panel_.setLeftWidgetsVisible(true);
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
@@ -1239,7 +1240,7 @@ public class PaneManager
          if (widgetSizePriorToZoom_ < 0)
          {
             // no prior position to restore to, just show defaults
-            restoreTwoColumnLayout();
+            restoreColumnLayout();
             return;
          }
          targetSize = widgetSizePriorToZoom_;
@@ -1263,9 +1264,16 @@ public class PaneManager
          targetSize = 0;
 
       if (unZooming)
+      {
+         panel_.setLeftWidgetsVisible(true);
          widgetSizePriorToZoom_ = -1;
-      else if (widgetSizePriorToZoom_ < 0)
-         widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      }
+      else
+      {
+         panel_.setLeftWidgetsVisible(false);
+         if (widgetSizePriorToZoom_ < 0)
+            widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      }
 
       resizeHorizontally(initialSize, targetSize, () -> manageLayoutCommands());
    }
