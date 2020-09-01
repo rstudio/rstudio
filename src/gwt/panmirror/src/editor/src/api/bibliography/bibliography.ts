@@ -166,13 +166,18 @@ export class BibliographyManager {
     return this.providers;
   }
 
+  public providerName(providerKey: string): string | undefined {
+    const dataProvider = this.providers.find(prov => prov.key === providerKey);
+    return dataProvider?.name;
+  }
+
   // Allows providers to generate bibLaTeX, if needed. This is useful in contexts
   // like Zotero where a user may be using the Better Bibtex plugin which can generate
   // superior BibLaTeX using things like stable citekeys with custom rules, and more.
   // 
   // If the provider doesn't provide BibLaTeX, we can generate it ourselves
   public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
-    const dataProvider = this.providers.find(prov => prov.name === provider);
+    const dataProvider = this.providers.find(prov => prov.key === provider);
     if (dataProvider) {
       const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(ui, id, csl);
       if (dataProviderBibLaTeX) {

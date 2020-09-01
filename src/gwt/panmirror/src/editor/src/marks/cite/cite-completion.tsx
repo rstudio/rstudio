@@ -79,7 +79,7 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        return insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.providerKey);
+        return insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, bibManager.providerName(entry.source.providerKey));
       }
       return Promise.resolve();
     },
