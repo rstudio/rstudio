@@ -386,7 +386,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.setActiveEditor(target);
    }
 
-   private void setActive(SourceColumn column)
+   public void setActive(SourceColumn column)
    {
       SourceColumn prevColumn = activeColumn_;
       activeColumn_ = column;
