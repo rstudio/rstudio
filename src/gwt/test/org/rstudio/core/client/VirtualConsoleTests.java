@@ -1169,4 +1169,23 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("Inverted with red background yellow foreground Inverted with default colors", vc.toString());
    }
+
+   public void testCarriageReturnPartialEndOverwrite()
+   {
+      // Case where a span is partially overwritten after a carriage-return
+      // and thus must be moved to a new position; it was being moved to an incorrect location
+      // causing output to be lost.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput = "⠹ [ \033[32mPASS\033[39m x632 \033[31mFAIL\033[39m x16 \033[35mWARN\033[39m x4" +
+         "\r" +
+         "\033[32m✓\033[39m |   4       | reporter-zzz\033[36m [\033[0m";
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermColor2\">✓</span><span> |   4       | reporter-zzz</span>" +
+         "<span></span><span class=\"xtermColor6\"> [</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("✓ |   4       | reporter-zzz [", vc.toString());
+   }
 }
