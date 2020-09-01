@@ -72,6 +72,7 @@ public class PanmirrorUIPrefs {
    public void setBibliographyDefaultType(String value)
    {
       pUserState_.get().bibliographyDefaultType().setGlobalValue(value);
+      pUserState_.get().writeState();
    }
    
    public double emojiSkinTone() 
