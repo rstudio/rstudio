@@ -77,6 +77,8 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
     return [];
 
+    // JJA: assuming this method being commented out is intentional?
+
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
     // in a single call, meaning that the items lose context of which bibliography file that they

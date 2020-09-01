@@ -97,6 +97,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   };
 
   // File type change
+  // JJA: Does this (eventually) update the sticky user state on preferred bibliography type?
   const onTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
     const type = bibliographyTypes[index];
