@@ -166,6 +166,10 @@ export function applyTheme(theme: EditorTheme) {
     .pm-default-theme .pm-focus-outline-color {
       border-color: ${defaults.focusOutlineColor} !important;
     }
+    .pm-default-theme .pm-input-button {
+      border-color: ${defaults.borderBackgroundColor};
+      background-color: ${defaults.backgroundColor};
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }

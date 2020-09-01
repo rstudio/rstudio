@@ -33,6 +33,7 @@ import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliograph
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation-panel.css';
+import { DialogButtons } from "../../api/widgets/dialog-buttons";
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
@@ -53,6 +54,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
   sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
   removeSource: (source: BibliographySource) => void;
+  confirm: VoidFunction;
 }
 
 // The picker is a full featured UI for finding and selecting citation data
@@ -66,6 +68,8 @@ interface InsertCitationPanelProps extends WidgetProps {
   server: EditorServer;
   onSourceChanged: (sources: BibliographySource[]) => void;
   onBibliographyChanged: (bibliographyFile: BibliographyFile) => void;
+  onOk: () => void;
+  onCancel: () => void;
 }
 
 export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
@@ -120,11 +124,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   }, [selectedNode]);
 
-  // Notify the handler whenever this list changes
-  React.useEffect(() => {
-    props.onSourceChanged(sourcesToAdd);
-  }, [sourcesToAdd]);
-
   // Style properties
   const style: React.CSSProperties = {
     height: props.height + 'px',
@@ -137,9 +136,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const tagStyle: React.CSSProperties = {
     minHeight: `${tagHeight}px`
   };
-  const bibliographyHeight = 40;
+  const bibliographyHeight = 28;
   const biblioStyle: React.CSSProperties = {
     minHeight: `${bibliographyHeight}px`,
+    paddingLeft: '2px'
   };
 
   // Figure out the panel height (the height of the main panel less padding and other elements)
@@ -155,11 +155,14 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     selectedNode,
     sourcesToAdd,
     addSource: (source: BibliographySource) => {
-      setSourcesToAdd([...sourcesToAdd, source]);
+      const newSources = [...sourcesToAdd, source];
+      setSourcesToAdd(newSources);
+      props.onSourceChanged(newSources);
     },
     removeSource: (src: BibliographySource) => {
       deleteSource(src.id);
-    }
+    },
+    confirm: props.onOk
   };
 
   // Create the panel that should be displayed for the selected node of the tree
@@ -172,11 +175,11 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const deleteSource = (id: string) => {
     const filteredSources = sourcesToAdd.filter(source => source.id !== id);
     setSourcesToAdd(filteredSources);
+    props.onSourceChanged(sourcesToAdd);
   };
 
   const deleteTag = (tag: TagItem) => {
-    const filteredSources = sourcesToAdd.filter(source => source.id !== tag.key);
-    setSourcesToAdd(filteredSources);
+    deleteSource(tag.key);
   };
 
   const tagEdited = (key: string, text: string) => {
@@ -190,8 +193,24 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     props.onBibliographyChanged(biblographyFile);
   };
 
+  // Support keyboard shortcuts for dismissing dialog
+  const onKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.stopPropagation();
+      props.onOk();
+    }
+  };
+
+  // Esc can cause loss of focus so catch it early
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      props.onCancel();
+    }
+  };
+
   return (
-    <div className='pm-cite-panel-container' style={style}>
+    <div className='pm-cite-panel-container' style={style} onKeyPress={onKeyPress} onKeyDown={onKeyDown}>
 
       <div className='pm-cite-panel-cite-selection'>
         <div className='pm-cite-panel-cite-selection-sources pm-block-border-color pm-background-color'>
@@ -228,6 +247,11 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           bibliographyFiles={props.bibliographyManager.writableBibliographyFiles(props.doc, props.ui)}
           biblographyFileChanged={bibliographyFileChanged}
           style={biblioStyle}
+          ui={props.ui} />
+
+        <DialogButtons
+          onOk={props.onOk}
+          onCancel={props.onCancel}
           ui={props.ui} />
       </div>
     </div>

@@ -121,35 +121,54 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   const itemHeight = 64;
   const itemsPerPage = Math.floor(props.height / itemHeight);
 
+  // Upddate selected item index (this will manage bounds)
+  const incrementIndex = (event: React.KeyboardEvent, index: number) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const maxIndex = itemData.length - 1;
+    setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
+  };
+
+  // Toggle the currently selected item as added or removed
+  const toggleSelectedSource = (event: React.KeyboardEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const source = itemData[selectedIndex];
+    if (source) {
+      if (props.sourcesToAdd.includes(source)) {
+        props.removeSource(source);
+      } else {
+        props.addSource(source);
+      }
+    }
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
 
     switch (event.key) {
       case 'ArrowUp':
-        setSelectedIndex(Math.max(0, selectedIndex - 1));
+        incrementIndex(event, selectedIndex - 1);
         break;
 
       case 'ArrowDown':
-        setSelectedIndex(Math.min(itemData.length - 1, selectedIndex + 1));
+        incrementIndex(event, selectedIndex + 1);
         break;
 
       case 'PageDown':
-        setSelectedIndex(Math.min(itemData.length - 1, selectedIndex + itemsPerPage));
+        incrementIndex(event, selectedIndex + itemsPerPage);
         break;
 
       case 'PageUp':
-        setSelectedIndex(Math.max(0, selectedIndex - itemsPerPage));
+        incrementIndex(event, selectedIndex - itemsPerPage);
         break;
 
       case 'Enter':
+        toggleSelectedSource(event);
+        props.confirm();
+        break;
       case ' ':
-        const source = itemData[selectedIndex];
-        if (source) {
-          if (props.sourcesToAdd.includes(source)) {
-            props.removeSource(source);
-          } else {
-            props.addSource(source);
-          }
-        }
+        toggleSelectedSource(event);
         break;
     }
 

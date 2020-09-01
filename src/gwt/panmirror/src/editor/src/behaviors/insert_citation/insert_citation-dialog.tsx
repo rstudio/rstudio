@@ -82,6 +82,8 @@ export async function showInsertCitationDialog(
           server={server}
           onSourceChanged={onSourceChanged}
           onBibliographyChanged={onBibliographyChanged}
+          onOk={confirm}
+          onCancel={cancel}
           height={height}
           width={width} />
         , container);

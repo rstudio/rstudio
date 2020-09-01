@@ -36,6 +36,11 @@
 .pm-cite-panel-select-bibliography {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: 10px;
+  align-items: flex-end;
+}
+
+.pm-cite-panel-button-panel {
+  display: flex;
 }
