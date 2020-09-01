@@ -823,8 +823,9 @@ public class PaneManager
             DomUtils.contains(left_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
-      panel_.setLeftWidgetsVisible(false);
 
+      leftWidgetSizePriorToZoom_ = panel_.getLeftWidgetSize();
+      panel_.resizeLeftWidgets(0.0);
       final double initialSize = panel_.getWidgetSize(right_);
 
       double targetSize = isLeftWidget ? 0 : panel_.getOffsetWidth();
@@ -854,23 +855,36 @@ public class PaneManager
                                    final Command afterComplete)
    {
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      horizontalResizeAnimation(start, end, afterComplete).run(duration);
+      ArrayList<Double> startList = new ArrayList<>();
+      startList.add(start);
+      ArrayList<Double> endList = new ArrayList<>();
+      endList.add(end);
+      horizontalResizeAnimation(startList, endList, afterComplete).run(duration);
    }
 
-   private Animation horizontalResizeAnimation(final double start,
-                                               final double end,
+   private Animation horizontalResizeAnimation(final ArrayList<Double> start,
+                                               final ArrayList<Double> end,
                                                final Command afterComplete)
    {
+      if (start.isEmpty() ||
+          start.size() != end.size())
+         return null;
       return new Animation()
       {
          @Override
          protected void onUpdate(double progress)
          {
-            double size =
-                  (1 - progress) * start +
-                  progress * end;
+            for (int i = 0; i < start.size(); i ++)
+            {
+               double size =
+                  (1 - progress) * start.get(i) +
+                     progress * end.get(i);
+               if (i == 0)
+                  panel_.setWidgetSize(right_, size);
+               else
+                  panel_.resizeLeftWidgets(size);
+            }
 
-            panel_.setWidgetSize(right_, size);
          }
 
          @Override
@@ -935,9 +949,8 @@ public class PaneManager
       else if (rightWidth >= maxThreshold)
          resizeHorizontally(rightWidth, maxThreshold);
       
-      // show any additional source columns
-      panel_.setLeftWidgetsVisible(true);
-
+      if (leftWidgetSizePriorToZoom_ > 0)
+         panel_.resizeLeftWidgets(leftWidgetSizePriorToZoom_);
       invalidateSavedLayoutState(true);
    }
 
@@ -947,7 +960,6 @@ public class PaneManager
       // hidden windows to display themselves, and so on.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      panel_.setLeftWidgetsVisible(true);
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_);
@@ -1229,30 +1241,36 @@ public class PaneManager
     */
    public void zoomColumn(String columnId)
    {
-      final double initialSize = panel_.getWidgetSize(right_);
-
+      final ArrayList<Double> initialSize = new ArrayList<>();
+      initialSize.add(panel_.getWidgetSize(right_));
+      initialSize.add(panel_.getLeftWidgetSize());
+      
       String currentZoomedColumn = getZoomedColumn();
-      double targetSize;
+      ArrayList<Double> targetSize = new ArrayList<>();
       boolean unZooming = false;
 
       if (StringUtil.equals(currentZoomedColumn, columnId))
       {
-         if (widgetSizePriorToZoom_ < 0)
+         if (widgetSizePriorToZoom_ < 0 ||
+            (leftWidgetSizePriorToZoom_ < 0 && additionalSourceCount_ > 0))
          {
             // no prior position to restore to, just show defaults
             restoreColumnLayout();
             return;
          }
-         targetSize = widgetSizePriorToZoom_;
+         targetSize.add(widgetSizePriorToZoom_);
+         targetSize.add(leftWidgetSizePriorToZoom_);
          unZooming = true;
       }
       else if (StringUtil.equals(columnId, LEFT_COLUMN))
       {
-         targetSize = 0;
+         targetSize.add(0.0);
+         targetSize.add(0.0);
       }
       else if (StringUtil.equals(columnId, RIGHT_COLUMN))
       {
-         targetSize = panel_.getOffsetWidth();
+         targetSize.add((double) panel_.getOffsetWidth());
+         targetSize.add(0.0);
       }
       else
       {
@@ -1260,22 +1278,27 @@ public class PaneManager
          return;
       }
 
-      if (targetSize < 0)
-         targetSize = 0;
+      for (Double size : targetSize)
+      {
+         if (size < 0)
+            size = 0.0;
+      }
 
       if (unZooming)
       {
-         panel_.setLeftWidgetsVisible(true);
          widgetSizePriorToZoom_ = -1;
+         leftWidgetSizePriorToZoom_ = -1;
       }
       else
       {
-         panel_.setLeftWidgetsVisible(false);
          if (widgetSizePriorToZoom_ < 0)
             widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+         if (leftWidgetSizePriorToZoom_ < 0)
+            leftWidgetSizePriorToZoom_ = panel_.getLeftWidgetSize();
       }
 
-      resizeHorizontally(initialSize, targetSize, () -> manageLayoutCommands());
+      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
+      horizontalResizeAnimation(initialSize, targetSize, () -> manageLayoutCommands()).run(duration);
    }
 
    public LogicalWindow getZoomedWindow()
@@ -1756,6 +1779,7 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
+   private double leftWidgetSizePriorToZoom_ = -1;
 
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;

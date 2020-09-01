@@ -272,18 +272,51 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
-   public void setLeftWidgetsVisible(boolean visible)
+   public double getLeftWidgetSize()
    {
+      double size = 0.0;
       for (Widget w : leftList_)
-         w.setVisible(visible);
+      {
+         size += getWidgetSize(w);
+      }
+      return size;
    }
-
-   @Override
-   public void setWidgetSize(Widget widget, double size)
+   
+   public void resizeLeftWidgets(double size)
    {
-      if (leftList_.isEmpty())
-         super.setWidgetSize(widget, size);
-
+      double difference = size - getLeftWidgetSize();
+      if (leftList_.isEmpty() || difference == 0.0)
+         return;
+      
+      // if we are increasing the size, spread it evenly acorss the columns
+      if (difference > 0)
+      {
+         double perColumn = difference / leftList_.size();
+         for (int i = 0; i < leftList_.size(); i++)
+            setWidgetSize(leftList_.get(i), perColumn);
+      }
+      else
+      {
+         for (int i =0;
+              i < leftList_.size() && difference < 0.0;
+              i++)
+         {
+            double currentSize = getWidgetSize(leftList_.get(i));
+            if (currentSize > 0)
+            {
+               if (currentSize >= -difference)
+               {
+                  setWidgetSize(leftList_.get(i), currentSize + difference);
+                  difference = 0.0;
+               }
+               else
+               {
+                  difference += currentSize;
+                  setWidgetSize(leftList_.get(i), 0.0);
+               }
+            }
+         }
+      }
    }
    
    public void onSplitterResized(SplitterResizedEvent event)
