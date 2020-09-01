@@ -113,13 +113,20 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     setSearchTerm(search);
   };
 
-  // Dynamically size the ListBox
+  // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
   const [listHeight, setListHeight] = React.useState<number>(props.height);
   React.useEffect(() => {
+
+    // Size the list Box
     const searchBoxHeight = searchBoxRef.current?.clientHeight;
     if (searchBoxHeight) {
       setListHeight(props.height - searchBoxHeight);
+    }
+
+    // Focus the search box
+    if (searchBoxRef.current) {
+      searchBoxRef.current.focus();
     }
   }, []);
 
