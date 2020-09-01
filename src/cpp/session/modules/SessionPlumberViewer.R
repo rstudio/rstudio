@@ -26,18 +26,25 @@
 }, attrs = list(plumberViewerType = "browser"), envir = baseenv())
 
 .rs.addFunction("setPlumberViewerType", function(type) {
-   if (identical(type, "none"))
-      options(plumber.swagger.url = NULL)
-   else if (identical(type, "pane"))
-      options(plumber.swagger.url = .rs.invokePlumberPaneViewer)
-   else if (identical(type, "window"))
-      options(plumber.swagger.url = .rs.invokePlumberWindowViewer)
-   else if (identical(type, "browser"))
-      options(plumber.swagger.url = .rs.invokePlumberWindowExternal)
+   viewer <-
+      if (identical(type, "none"))
+          NULL
+      else if (identical(type, "pane"))
+          .rs.invokePlumberPaneViewer
+      else if (identical(type, "window"))
+          .rs.invokePlumberWindowViewer
+      else if (identical(type, "browser"))
+          .rs.invokePlumberWindowExternal
+  options(
+    # plumber >= v1.0.0
+    plumber.docs.callback = viewer,
+    # plumber < v1.0.0
+    plumber.swagger.url = viewer
+  )
 })
 
 .rs.addFunction("getPlumberViewerType", function() {
-   viewer <- getOption("plumber.swagger.url")
+   viewer <- getOption("plumber.docs.callback", getOption("plumber.swagger.url"))
    if (identical(viewer, FALSE))
       return("none")
    else if (identical(viewer, TRUE))

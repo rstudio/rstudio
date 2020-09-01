@@ -58,7 +58,7 @@ public class ZoteroConnectionWidget extends Composite
       
       if (includeHelp)
       {
-         HelpLink zoteroHelp = new HelpLink("Using Zotero", "https://rstudio.github.io/visual-markdown-editing/#/citations?id=citations-from-zotero", false, false);
+         HelpLink zoteroHelp = new HelpLink("Using Zotero", "visual_markdown_editing-zotero", false);
          zoteroHelp.addStyleName(res.styles().selectWidgetHelp());
          panel.add(zoteroHelp);
       }

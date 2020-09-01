@@ -188,7 +188,7 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
 
 Error initPlumberViewerPref(boost::shared_ptr<std::string> pPlumberViewerType)
 {
-   SEXP plumberBrowser = r::options::getOption("plumber.swagger.url");
+   SEXP plumberBrowser = r::options::getOption("plumber.docs.callback");
    *pPlumberViewerType = prefs::userPrefs().plumberViewerType();
    if (plumberBrowser == R_NilValue)
    {
