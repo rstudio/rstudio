@@ -209,6 +209,7 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
 
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+   public static final String RMD_VISUAL_MODE_WRAP_CONFIGURED = "rmdVisualWrapConfigured";
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
@@ -1194,7 +1195,7 @@ public class TextEditingTarget implements
                                   boolean highlightLine)
    {
       ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, false);
       });
    }
    
@@ -1202,17 +1203,16 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine,
+                                  boolean moveCursor,
                                   Command onNavigationCompleted)
    {
       ensureTextEditorActive(() -> {
-         
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, !moveCursor);
          if (onNavigationCompleted != null)
             onNavigationCompleted.execute();
-         
       });
    }
-   
+
    // These methods are called by SourceNavigationHistory and source pane management
    // features (e.g. external source window and source columns) so need to check for
    // and dispatch to visual mode
@@ -3027,9 +3027,15 @@ public class TextEditingTarget implements
 
    private void applyVisualModeFixups(Command onComplete)
    {
-      // are we writing cannonical?
+      
+      // check canonical pref
+      boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+    
+      // check for a file based canonical setting
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
-      boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
+      String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
+      if (!yamlCanonical.isEmpty())
+         canonical = YamlTree.isTrue(yamlCanonical);
 
       // if visual mode is active then we need to grab it's edits before proceeding
       if (visualMode_.isActivated())
@@ -7728,6 +7734,12 @@ public class TextEditingTarget implements
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
 
+   // user is switching to visual mode
+   void onUserSwitchingToVisualMode()
+   {
+      visualMode_.onUserSwitchingToVisualMode();
+   }
+   
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

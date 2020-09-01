@@ -234,6 +234,11 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setFocus(true);
    }
+   
+   public void blur()
+   {
+      textBox_.setFocus(false);
+   }
 
    @Override
    protected void onAttach()

@@ -358,28 +358,7 @@ public class VisualModePanmirrorFormat
 
    private boolean isDocInProject()
    {  
-      // if we are in a project
-      if (workbenchContext_.isProjectActive())
-      {
-         // if the doc path is  null let's assume it's going to be saved
-         // within the current project
-         String docPath = docUpdateSentinel_.getPath();
-         if (docPath != null)
-         {
-            // if the doc is in the project directory
-            FileSystemItem docFile = FileSystemItem.createFile(docPath);
-            FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
-            return docFile.getPathRelativeTo(projectDir) != null;
-         }
-         else
-         {
-            return true;
-         }
-      }
-      else
-      {
-         return false;
-      }
+      return VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
    }
    
    

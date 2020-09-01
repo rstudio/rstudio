@@ -668,6 +668,8 @@ public class TextEditingTargetWidget
             target_.recordCurrentNavigationPosition();
             docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, visible);
             toggleRmdVisualModeButton_.setLatched(visible);
+            if (visible)
+               onUserSwitchingToVisualMode();
          });
       docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          toggleRmdVisualModeButton_.setLatched(isVisualMode());
@@ -1651,6 +1653,13 @@ public class TextEditingTargetWidget
       )
       {
          @Override
+         public void onUpdateComplete()
+         {
+            if (docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false))
+               onUserSwitchingToVisualMode();
+         }
+        
+         @Override
          public String getShortcut()
          {
             return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
@@ -1837,6 +1846,11 @@ public class TextEditingTargetWidget
       }
       editor_.setRainbowParentheses(rainbowMode);
       commands_.toggleRainbowParens().setChecked(rainbowMode);
+   }
+   
+   private void onUserSwitchingToVisualMode()
+   {
+      target_.onUserSwitchingToVisualMode();
    }
 
    private final TextEditingTarget target_;

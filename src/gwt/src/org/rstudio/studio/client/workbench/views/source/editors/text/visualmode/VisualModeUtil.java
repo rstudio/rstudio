@@ -16,8 +16,11 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 // shared static utility functions for visual mode
 
@@ -29,4 +32,32 @@ public class VisualModeUtil
       TextEditorContainer.Editor editor = editorContainer.getEditor();
       return editor.getCode();
    }
+   
+   public static boolean isDocInProject(WorkbenchContext workbenchContext, 
+                                        DocUpdateSentinel docUpdateSentinel)
+   {  
+      // if we are in a project
+      if (workbenchContext.isProjectActive())
+      {
+         // if the doc path is  null let's assume it's going to be saved
+         // within the current project
+         String docPath = docUpdateSentinel.getPath();
+         if (docPath != null)
+         {
+            // if the doc is in the project directory
+            FileSystemItem docFile = FileSystemItem.createFile(docPath);
+            FileSystemItem projectDir = workbenchContext.getActiveProjectDir();
+            return docFile.getPathRelativeTo(projectDir) != null;
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else
+      {
+         return false;
+      }
+   }
+   
 }

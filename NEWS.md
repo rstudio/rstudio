@@ -7,6 +7,8 @@
 * Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
+* The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
+* Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
 
 ### Plots
 
@@ -41,6 +43,7 @@
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 * Add support for navigating source history with mouse forward/back buttons (#7272)
 * Improved error logging of mistyped usernames when using PAM authentication (#7501)
+* R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 
 ### RStudio Server Pro
 
@@ -89,4 +92,6 @@
 * Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
 * Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
 * Reduced difference in font size and spacing between Terminal and Console (#6382)
+* Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
+* Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
 

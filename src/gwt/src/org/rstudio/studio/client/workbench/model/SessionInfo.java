@@ -331,10 +331,6 @@ public class SessionInfo extends JavaScriptObject
       return this.blogdown_config;
    }-*/;
    
-   public final native boolean getBookdownHasRenumberFootnotes() /*-{
-      return this.bookdown_has_renumber_footnotes;
-   }-*/;
-   
    public final native boolean getIsBookdownProject() /*-{
       return this.is_bookdown_project;
    }-*/;

@@ -38,7 +38,7 @@
    .rs.python.findPythonInterpreters()
 })
 
-.rs.addJsonRpcHandler("python_describe_interpreter", function(pythonPath)
+.rs.addJsonRpcHandler("python_interpreter_info", function(pythonPath)
 {
    .rs.python.describeInterpreter(pythonPath)
 })
@@ -276,6 +276,6 @@
 
 .rs.registerPackageLoadHook("reticulate", function(...)
 {
-   python <- .rs.readUiPref("python_default_interpreter")
+   python <- .rs.readUiPref("python_path")
    .rs.reticulate.usePython(python)
 })

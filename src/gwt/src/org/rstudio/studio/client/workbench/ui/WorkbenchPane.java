@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -70,8 +71,7 @@ public abstract class WorkbenchPane extends ToolbarPane
       {
          Element el = focusableElements.get(0);
          el.focus();
-         el.addClassName("focus-visible");
-         addRemoveFocusVisibleHandler(el);
+         A11y.showFocusOutline(el);
       }
       else
          Debug.logWarning("Could not set focus, no focusable element on " + title_ + " pane");
@@ -88,7 +88,7 @@ public abstract class WorkbenchPane extends ToolbarPane
    {
       return false;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
@@ -103,13 +103,6 @@ public abstract class WorkbenchPane extends ToolbarPane
       super.bringToFront();
    }
 
-   private native void addRemoveFocusVisibleHandler(Element el) /*-{
-      el.addEventListener('blur', function(e) {
-         el.classList.remove('focus-visible');
-      });
-
-   }-*/;
-
-   private String title_;
+   private final String title_;
    protected final EventBus events_;
 }

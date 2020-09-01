@@ -106,6 +106,13 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
 
+          // ensure that usethis badges comment ends up in it's own block
+          preprocessor: (markdown: string) => {
+            return markdown.replace(/([^\n])(\n^<!-- badges: end -->$)/gm, (_match, p1, p2) => {
+              return p1 + "\n" + p2;
+            });
+          },
+
           // we define a custom blockReader here so that we can convert html and tex blocks with
           // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {

@@ -28,7 +28,7 @@ import { EditorEvents } from "../../api/events";
 import { kAddToHistoryTransaction } from "../../api/transaction";
 import { EditorUI, EditorMenuItem } from "../../api/ui";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord, findBeginWord, findEndWord, charAt } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, findBeginWord, findEndWord, charAt } from "./spelling";
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 const kInvalidateSpellingWordTransaction = 'invalidateSpellingWord';
@@ -169,11 +169,17 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             if (cursorDecos.length) {
 
               // there will only be one cursor, capture it's position then remove it
+              const word = cursorDecos[0].spec.word as string;
               const { from, to } = cursorDecos[0];
               decos = decos.remove(cursorDecos);
 
               // add it back in as a real spelling error
-              decos = decos.add(tr.doc, [Decoration.inline(from, to, { class: kSpellingErrorClass })]);
+              decos = decos.add(tr.doc, [Decoration.inline(
+                from,
+                to,
+                { class: kSpellingErrorClass },
+                { word })
+              ]);
             }
 
             // return decorators
@@ -296,7 +302,6 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
 
         // create menu w/ suggestions
         const menuItems: EditorMenuItem[] = suggestions.slice(0, kMaxSuggetions).map(suggestion => {
-          suggestion = editorWord(suggestion);
           return {
             text: suggestion,
             exec: () => {

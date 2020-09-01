@@ -98,6 +98,8 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       mainWidget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       citeProps_ = citeProps;
       
+      citationId_.getElement().setAttribute("spellcheck", "false");
+      
       // Bibliography Types (for when user is creating a new bibliography)
       for (BibliographyType bibType : BibliographyType.values()) {
          createBibliographyTypes_.addItem(bibType.displayName(), bibType.fileExtension());   
@@ -112,6 +114,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
             String currentFileName = createBibliographyFileName_.getValue();
             createBibliographyFileName_.setValue(ensureExtension(currentFileName, extension)); 
             userState_.bibliographyDefaultType().setGlobalValue(extension);
+            userState_.writeState();
          }});
 
       setBibliographies(citeProps.bibliographyFiles);

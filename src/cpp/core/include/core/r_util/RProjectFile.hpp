@@ -45,6 +45,19 @@ extern const char * const kBuildTypeMakefile;
 extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
 
+extern const char * const kMarkdownWrapUseDefault;
+extern const char * const kMarkdownWrapNone;
+extern const char * const kMarkdownWrapColumn;
+extern const char * const kMarkdownWrapSentence;
+
+extern const int kMarkdownWrapAtColumnDefault;
+
+extern const char * const kMarkdownReferencesUseDefault;
+extern const char * const kMarkdownReferencesBlock;
+extern const char * const kMarkdownReferencesSection;
+extern const char * const kMarkdownReferencesDocument;
+
+
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
 struct RProjectBuildDefaults
@@ -89,7 +102,14 @@ struct RProjectConfig
         quitChildProcessesOnExit(DefaultValue),
         disableExecuteRprofile(false),
         defaultOpenDocs(),
-        defaultTutorial()
+        defaultTutorial(),
+        markdownWrap(kMarkdownWrapUseDefault),
+        markdownWrapAtColumn(kMarkdownWrapAtColumnDefault),
+        markdownReferences(kMarkdownReferencesUseDefault),
+        markdownCanonical(DefaultValue),
+        pythonType(),
+        pythonVersion(),
+        pythonPath()
    {
    }
 
@@ -124,6 +144,13 @@ struct RProjectConfig
    bool disableExecuteRprofile;
    std::string defaultOpenDocs;
    std::string defaultTutorial;
+   std::string markdownWrap;
+   int markdownWrapAtColumn;
+   std::string markdownReferences;
+   int markdownCanonical;
+   std::string pythonType;
+   std::string pythonVersion;
+   std::string pythonPath;
 };
 
 Error findProjectFile(FilePath filePath,

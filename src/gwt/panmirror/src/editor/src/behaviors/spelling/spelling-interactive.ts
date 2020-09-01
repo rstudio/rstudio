@@ -22,7 +22,7 @@ import { PandocMark } from "../../api/mark";
 import { EditorWordRange, EditorSpellingDoc, EditorWordSource, EditorAnchor, EditorRect, EditorUISpelling } from "../../api/spelling";
 import { scrollIntoView } from "../../api/scroll";
 
-import { excludedMarks, getWords, spellcheckerWord, editorWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord } from "./spelling";
 
 // get the document interface required by interactive spellchecking
 
@@ -74,7 +74,6 @@ export function getSpellingDoc(
 
     replaceSelection: (text: string) => {
       const tr = view.state.tr;
-      text = editorWord(text);
       tr.replaceSelectionWith(view.state.schema.text(text), true);
       view.dispatch(tr);
     },

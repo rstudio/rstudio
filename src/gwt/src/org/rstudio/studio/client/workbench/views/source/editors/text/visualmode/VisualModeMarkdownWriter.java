@@ -26,6 +26,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -57,8 +58,9 @@ public class VisualModeMarkdownWriter
    }
    
    @Inject
-   void initialize(UserPrefs prefs)
+   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs)
    {
+      workbenchContext_ = workbenchContext;
       prefs_ = prefs;
    }
 
@@ -78,18 +80,33 @@ public class VisualModeMarkdownWriter
       // always write atx headers (e.g. ##)
       options.atxHeaders = true;
       
-      // use user pref for wrap 
-      String wrapPref = prefs_.visualMarkdownEditingWrap().getValue();
+      // determine prefs based on whether this file is a project file
+      String wrapPref;
+      Integer wrapAtColumnPref;
+      String referencesLocationPref;
+      if (VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_))
+      {
+         wrapPref = prefs_.visualMarkdownEditingWrap().getValue();
+         wrapAtColumnPref = prefs_.visualMarkdownEditingWrapAtColumn().getValue();
+         referencesLocationPref = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      }
+      else
+      {
+         wrapPref = prefs_.visualMarkdownEditingWrap().getGlobalValue();
+         wrapAtColumnPref = prefs_.visualMarkdownEditingWrapAtColumn().getGlobalValue();
+         referencesLocationPref = prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue();
+      }     
+          
       if (wrapPref.equals(UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN))
-         options.wrap = prefs_.visualMarkdownEditingWrapAtColumn().getValue().toString();
+         options.wrap = wrapAtColumnPref.toString();
       else
          options.wrap = wrapPref;
          
       // use user pref for references location
       PanmirrorWriterReferencesOptions references = new PanmirrorWriterReferencesOptions();
-      references.location = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+      references.location = referencesLocationPref;
       options.references = references;
-      
+            
       // layer in format config
       if (formatConfig.wrap != null)
       {
@@ -143,6 +160,7 @@ public class VisualModeMarkdownWriter
 
    
    private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
+   private WorkbenchContext workbenchContext_;
    private UserPrefs prefs_;
    private final VisualModePanmirrorFormat format_;
    private final DocUpdateSentinel docUpdateSentinel_;

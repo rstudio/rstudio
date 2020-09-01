@@ -1,5 +1,5 @@
 /*
- * smallcaps-styles.css
+ * ServerDatabaseKeyObfuscation.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,7 +13,4 @@
  *
  */
 
-.ProseMirror .underline {
-  text-decoration: underline;
-}
-
+#define OBFUSCATE_KEY(key) (key)

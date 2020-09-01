@@ -17,11 +17,15 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../api/pandoc';
 import { ExtensionContext } from '../api/extension';
-import { kQuoteType, QuoteType, kQuoteChildren } from '../api/quote';
+import { kQuoteType, QuoteType, kQuoteChildren, fancyQuotesToSimple } from '../api/quote';
 
 const extension = (context: ExtensionContext) => {
 
   const readText = (text: string) => {
+
+    // we explicitly don't want fancy quotes in the editor
+    text = fancyQuotesToSimple(text);
+
     if (context.pandocExtensions.smart) {
       return text
         .replace(/---/g, '—')

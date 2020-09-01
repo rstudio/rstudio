@@ -93,6 +93,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.ProjectUserRole;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -1055,14 +1056,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PYTHON_FIND_INTERPRETERS, requestCallback);
    }
 
-   public void pythonDescribeInterpreter(String interpreterPath,
-                                         ServerRequestCallback<PythonInterpreter> requestCallback)
+   public void pythonInterpreterInfo(String interpreterPath,
+                                     ServerRequestCallback<PythonInterpreter> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(interpreterPath)
             .get();
 
-      sendRequest(RPC_SCOPE, PYTHON_DESCRIBE_INTERPRETER, params, requestCallback);
+      sendRequest(RPC_SCOPE, PYTHON_INTERPRETER_INFO, params, requestCallback);
    }
 
    public void pythonGetCompletions(String line,
@@ -2057,6 +2058,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
+   
+   public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
+   }
+
 
    public void writeProjectVcsOptions(RProjectVcsOptions options,
                                       ServerRequestCallback<Void> callback)
@@ -6457,6 +6464,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
+   private static final String WRITE_PROJECT_CONFIG = "write_project_config";
    private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
 
    private static final String NEW_DOCUMENT = "new_document";
@@ -6621,7 +6629,7 @@ public class RemoteServer implements Server
 
    private static final String PYTHON_ACTIVE_INTERPRETER = "python_active_interpreter";
    private static final String PYTHON_FIND_INTERPRETERS = "python_find_interpreters";
-   private static final String PYTHON_DESCRIBE_INTERPRETER = "python_describe_interpreter";
+   private static final String PYTHON_INTERPRETER_INFO = "python_interpreter_info";
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    private static final String PYTHON_GO_TO_HELP = "python_go_to_help";
@@ -6803,6 +6811,6 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-
+  
 
 }

@@ -406,6 +406,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return editors_.size() > 0;
    }
 
+   public boolean hasDirtyDoc()
+   {
+      for (EditingTarget editor : editors_)
+      {
+         if (editor.dirtyState().getValue())
+            return true;
+      }
+      return false;
+   }
+
    public boolean isSaveCommandActive()
    {
       for (EditingTarget target : editors_)
@@ -1003,6 +1013,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onBeforeShow()
    {
+      // All columns aside from the main column should open with a document
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          // Avoid scenarios where the Source tab comes up but no tabs are
@@ -1165,6 +1176,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   TextEditingTarget.RMD_VISUAL_MODE,
                   DocUpdateSentinel.PROPERTY_TRUE
                );
+            // don't ever prompt for line wrapping config b/c this 
+            // document started out in visual mode
+            document.getProperties().setString(
+                  TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
+                  DocUpdateSentinel.PROPERTY_TRUE
+               );
+            
          }
       }
    }

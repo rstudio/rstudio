@@ -27,9 +27,9 @@
 namespace rstudio {
 namespace server_core {
 
-std::string transformPort(const std::string& token, int port);
+std::string transformPort(const std::string& token, int port, bool server = false);
 
-int detransformPort(const std::string& token, const std::string& port);
+int detransformPort(const std::string& token, const std::string& port, bool& server);
 
 bool portmapPathForLocalhostUrl(const std::string& url, const std::string& token, 
       std::string* pPath);

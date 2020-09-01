@@ -335,6 +335,7 @@ namespace prefs {
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
+#define kVisualMarkdownEditingCanonical "visual_markdown_editing_canonical"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
@@ -371,7 +372,9 @@ namespace prefs {
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
 #define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
-#define kPythonDefaultInterpreter "python_default_interpreter"
+#define kPythonType "python_type"
+#define kPythonVersion "python_version"
+#define kPythonPath "python_path"
 
 class UserPrefValues: public Preferences
 {
@@ -1518,6 +1521,12 @@ public:
    core::Error setVisualMarkdownEditingReferencesLocation(std::string val);
 
    /**
+    * Whether to write canonical visual mode markdown when saving from source mode.
+    */
+   bool visualMarkdownEditingCanonical();
+   core::Error setVisualMarkdownEditingCanonical(bool val);
+
+   /**
     * Maximum content width for visual editing mode, in pixels
     */
    int visualMarkdownEditingMaxContentWidth();
@@ -1608,10 +1617,22 @@ public:
    core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
    /**
-    * The path to the default Python interpreter
+    * The Python type.
     */
-   std::string pythonDefaultInterpreter();
-   core::Error setPythonDefaultInterpreter(std::string val);
+   std::string pythonType();
+   core::Error setPythonType(std::string val);
+
+   /**
+    * The Python version.
+    */
+   std::string pythonVersion();
+   core::Error setPythonVersion(std::string val);
+
+   /**
+    * The path to the default Python interpreter.
+    */
+   std::string pythonPath();
+   core::Error setPythonPath(std::string val);
 
 };
 

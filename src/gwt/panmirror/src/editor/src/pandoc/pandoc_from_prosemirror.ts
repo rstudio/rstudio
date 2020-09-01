@@ -32,6 +32,7 @@ import {
 import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
 import { PandocAttr } from '../api/pandoc_attr';
 import { fragmentText } from '../api/fragment';
+import { fancyQuotesToSimple } from '../api/quote';
 
 export function pandocFromProsemirror(
   doc: ProsemirrorNode,
@@ -116,7 +117,7 @@ class PandocWriter implements PandocOutput {
     const token: PandocToken = {
       t: type,
     };
-    if (content !== undefined) {
+    if (content) {
       if (typeof content === 'function') {
         token.c = [];
         this.fill(token.c, content);
@@ -232,6 +233,9 @@ class PandocWriter implements PandocOutput {
               .replace(/–/g, '--')
               .replace(/…/g, '...');
           }
+
+          // we explicitly don't want fancy quotes in the editor
+          textRun = fancyQuotesToSimple(textRun);
 
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';

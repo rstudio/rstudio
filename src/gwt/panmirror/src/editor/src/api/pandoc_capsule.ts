@@ -52,6 +52,10 @@ export interface PandocBlockCapsuleFilter {
   // space for indented block or incidental whitespace after block delimiter)
   match: RegExp;
 
+  // optional seconary filter expression (applied to a successful match to ensure 
+  // that matching wasn't overly greedy)
+  discard?: RegExp;
+
   // custom function for pulling out the 3 parts from a match (defaults to p1,p2,p3)
   extract?: (
     match: string,
@@ -99,10 +103,16 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
   };
 
   // replace all w/ source preservation capsules
-  return markdown.replace(capsuleFilter.match, (_match: string, p1: string, p2: string, p3: string, p4: string) => {
+  return markdown.replace(capsuleFilter.match, (match: string, p1: string, p2: string, p3: string, p4: string) => {
+
+    // if the capsuleFilter has a discard expression then check it it
+    if (capsuleFilter.discard && !!match.match(capsuleFilter.discard)) {
+      return match;
+    }
+
     // extract matches
     const extract = capsuleFilter.extract || defaultExtractor;
-    const { prefix, source, suffix } = extract(_match, p1, p2, p3, p4);
+    const { prefix, source, suffix } = extract(match, p1, p2, p3, p4);
 
     // make the capsule
     const capsule: PandocBlockCapsule = {
@@ -227,12 +237,12 @@ export function blockCapsuleParagraphTokenHandler(type: string) {
 export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags?: string) {
   return new RegExp(
     (prefix || '') +
-      kBlockCapsuleSentinel +
-      kValueDelimiter +
-      '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' +
-      kValueDelimiter +
-      kBlockCapsuleSentinel +
-      (suffix || ''),
+    kBlockCapsuleSentinel +
+    kValueDelimiter +
+    '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' +
+    kValueDelimiter +
+    kBlockCapsuleSentinel +
+    (suffix || ''),
     flags,
   );
 }

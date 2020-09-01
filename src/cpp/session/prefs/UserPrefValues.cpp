@@ -2494,6 +2494,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingReferencesLocation(std::stri
 }
 
 /**
+ * Whether to write canonical visual mode markdown when saving from source mode.
+ */
+bool UserPrefValues::visualMarkdownEditingCanonical()
+{
+   return readPref<bool>("visual_markdown_editing_canonical");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingCanonical(bool val)
+{
+   return writePref("visual_markdown_editing_canonical", val);
+}
+
+/**
  * Maximum content width for visual editing mode, in pixels
  */
 int UserPrefValues::visualMarkdownEditingMaxContentWidth()
@@ -2689,16 +2702,42 @@ core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
 }
 
 /**
- * The path to the default Python interpreter
+ * The Python type.
  */
-std::string UserPrefValues::pythonDefaultInterpreter()
+std::string UserPrefValues::pythonType()
 {
-   return readPref<std::string>("python_default_interpreter");
+   return readPref<std::string>("python_type");
 }
 
-core::Error UserPrefValues::setPythonDefaultInterpreter(std::string val)
+core::Error UserPrefValues::setPythonType(std::string val)
 {
-   return writePref("python_default_interpreter", val);
+   return writePref("python_type", val);
+}
+
+/**
+ * The Python version.
+ */
+std::string UserPrefValues::pythonVersion()
+{
+   return readPref<std::string>("python_version");
+}
+
+core::Error UserPrefValues::setPythonVersion(std::string val)
+{
+   return writePref("python_version", val);
+}
+
+/**
+ * The path to the default Python interpreter.
+ */
+std::string UserPrefValues::pythonPath()
+{
+   return readPref<std::string>("python_path");
+}
+
+core::Error UserPrefValues::setPythonPath(std::string val)
+{
+   return writePref("python_path", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -2894,6 +2933,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingWrap,
       kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
+      kVisualMarkdownEditingCanonical,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
@@ -2909,7 +2949,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGraphicsBackend,
       kGraphicsAntialiasing,
       kBrowserFixedWidthFonts,
-      kPythonDefaultInterpreter,
+      kPythonType,
+      kPythonVersion,
+      kPythonPath,
    });
 }
    
