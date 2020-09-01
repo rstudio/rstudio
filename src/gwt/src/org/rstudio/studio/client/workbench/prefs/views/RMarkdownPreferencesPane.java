@@ -326,9 +326,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       // help on per-file markdown options
       HelpLink citationsHelpLink = new HelpLink(
          "Learn more about using citations with visual editing mode",
-         "https://rstudio.github.io/visual-markdown-editing/#/citations",
-         false, // no version info
-         false // not rstudio link
+         "visual_markdown_editing-citations",
+         false // no version info
       );
       spaced(citationsHelpLink);
       citations.add(citationsHelpLink);
