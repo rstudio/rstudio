@@ -128,7 +128,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");   
+      add(PanmirrorCommands.Citation, "Citation...", icons.CITATION);   
       add(PanmirrorCommands.CrossReference, "Cross Reference");
       add(PanmirrorCommands.InsertEmoji, "Insert Emoji...");
       add(PanmirrorCommands.InsertSymbol, "Insert Unicode...");

@@ -48,6 +48,12 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("blockquote_2x.png")
    ImageResource blockquote();
    
+   @Source("citation_2x.png")
+   ImageResource citation();
+   
+   @Source("citation_dm_2x.png")
+   ImageResource citation_dm();
+   
    @Source("code_2x.png")
    ImageResource code();
 
