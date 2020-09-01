@@ -1,5 +1,5 @@
 /*
- * select_tree.tsx
+ * navigation-tree.tsx
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -17,7 +17,7 @@ import React, { CSSProperties } from "react";
 
 import { WidgetProps } from "./react";
 
-import './navigation_tree.css';
+import './navigation-tree.css';
 
 // Individual nodes and children of the Select Tree
 export interface NavigationTreeNode {

@@ -1,5 +1,5 @@
 /*
- * tag_input.tsx
+ * tag-input.tsx
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -15,11 +15,11 @@
 
 import React from "react";
 
-import { WidgetProps } from "../../api/widgets/react";
+import { WidgetProps } from "./react";
 
 import { EditorUI } from "../ui";
 
-import './tag_input.css';
+import './tag-input.css';
 import { TextInput } from "./text";
 
 // Item representing a tag entry

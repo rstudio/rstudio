@@ -21,8 +21,8 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorUI } from "../../api/ui";
 import { EditorServer } from "../../api/server";
 import { WidgetProps } from "../../api/widgets/react";
-import { TagInput, TagItem } from "../../api/widgets/tag_input";
-import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation_tree";
+import { TagInput, TagItem } from "../../api/widgets/tag-input";
+import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 
 import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
 

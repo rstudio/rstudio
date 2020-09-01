@@ -22,7 +22,7 @@ import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
-import { NavigationTreeNode } from "../../../api/widgets/navigation_tree";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
