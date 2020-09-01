@@ -25,7 +25,7 @@ import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { EditorEvents } from '../../api/events';
 import { EditorServer } from '../../api/server';
-import { showInsertCitationDialog } from '../../behaviors/insert_citation/insert_citation-dialog';
+import { showInsertCitationDialog as selectCitations } from '../../behaviors/insert_citation/insert_citation-dialog';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
@@ -44,7 +44,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          showInsertCitationDialog(ui, state.doc, bibliographyManager, server).then(async result => {
+          selectCitations(ui, state.doc, bibliographyManager, server).then(async result => {
             if (result) {
 
               // The sources that we should insert
