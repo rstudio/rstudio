@@ -23,6 +23,7 @@ import { SelectInput } from "../../api/widgets/select";
 import { BibliographyFile } from "../../api/bibliography/bibliography";
 
 import './insert_citation-bibliography-picker.css';
+import { BibTypes } from "biblatex-csl-converter";
 
 export interface CitationBiblographyPickerProps extends WidgetProps {
   bibliographyFiles: BibliographyFile[];
@@ -132,8 +133,9 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
               />
 
               <SelectInput
-                onChange={onTypeChange}>
-                {bibliographyTypes.map(bibType => (<option key={bibType.extension} value={bibType.extension} selected={bibType.extension === defaultBiblioType}>{bibType.displayName}</option>))}
+                onChange={onTypeChange}
+                defaultValue={defaultBiblioType}>
+                {bibliographyTypes.map(bibType => (<option key={bibType.extension} value={bibType.extension}>{bibType.displayName}</option>))}
               </SelectInput>
             </div>
           )

@@ -22,6 +22,7 @@ export interface SelectInputProps extends WidgetProps {
   className?: string;
   onChange?: ChangeEventHandler;
   children: ReactNode;
+  defaultValue?: string;
 }
 
 export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>((props, ref) => {
@@ -36,6 +37,7 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
       tabIndex={props.tabIndex}
       ref={ref}
       onChange={props.onChange}
+      defaultValue={props.defaultValue}
     >
       {props.children}
     </select>
