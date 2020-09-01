@@ -65,7 +65,10 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   const bibMgr = props.bibliographyManager;
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
+  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
   const [searchTerm, setSearchTerm] = React.useState<string>();
+  const [focused, setFocused] = React.useState<boolean>(false);
+  const fixedList = React.useRef<FixedSizeList>(null);
 
   React.useEffect(() => {
     async function loadData() {
@@ -82,12 +85,17 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
         setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
+        setSelectedIndex(0);
       }
     }
     loadData();
 
     // load the right panel
   }, [props.selectedNode, searchTerm]);
+
+  React.useLayoutEffect(() => {
+    fixedList.current?.scrollToItem(selectedIndex);
+  }, [selectedIndex]);
 
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
@@ -108,6 +116,53 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     }
   }, []);
 
+
+  // Item height and consequently page height
+  const itemHeight = 64;
+  const itemsPerPage = Math.floor(props.height / itemHeight);
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+
+    switch (event.key) {
+      case 'ArrowUp':
+        setSelectedIndex(Math.max(0, selectedIndex - 1));
+        break;
+
+      case 'ArrowDown':
+        setSelectedIndex(Math.min(itemData.length - 1, selectedIndex + 1));
+        break;
+
+      case 'PageDown':
+        setSelectedIndex(Math.min(itemData.length - 1, selectedIndex + itemsPerPage));
+        break;
+
+      case 'PageUp':
+        setSelectedIndex(Math.max(0, selectedIndex - itemsPerPage));
+        break;
+
+      case 'Enter':
+      case ' ':
+        const source = itemData[selectedIndex];
+        if (source) {
+          if (props.sourcesToAdd.includes(source)) {
+            props.removeSource(source);
+          } else {
+            props.addSource(source);
+          }
+        }
+        break;
+    }
+
+  };
+
+  const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    setFocused(true);
+  };
+
+  const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    setFocused(false);
+  };
+
   return (
     <div style={props.style} className='pm-insert-citation-panel'>
       <div className='pm-insert-citation-panel-textbox-container'>
@@ -126,22 +181,29 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
         (<div className='pm-insert-citation-panel-noresults' style={{ height: listHeight + 'px' }}>
           <div className='pm-insert-citation-panel-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
         </div>) :
-        (<FixedSizeList
-          height={listHeight}
-          width='100%'
-          itemCount={itemData.length}
-          itemSize={64}
-          itemData={{
-            allSources: itemData,
-            sourcesToAdd: props.sourcesToAdd,
-            addSource: props.addSource,
-            removeSource: props.removeSource,
-            ui: props.ui,
-            separator: true
-          }}
-        >
-          {CitationSourcePanelListItem}
-        </FixedSizeList>)}
+        (
+          <div tabIndex={0} onKeyDown={handleKeyDown} onFocus={onFocus} onBlur={onBlur}>
+            <FixedSizeList
+              height={listHeight}
+              width='100%'
+              itemCount={itemData.length}
+              itemSize={itemHeight}
+              itemData={{
+                selectedIndex,
+                allSources: itemData,
+                sourcesToAdd: props.sourcesToAdd,
+                addSource: props.addSource,
+                removeSource: props.removeSource,
+                ui: props.ui,
+                showSeparator: true,
+                showSelection: focused
+              }}
+              ref={fixedList}
+            >
+              {CitationSourcePanelListItem}
+            </FixedSizeList>
+          </div>
+        )}
     </div>);
 };
 

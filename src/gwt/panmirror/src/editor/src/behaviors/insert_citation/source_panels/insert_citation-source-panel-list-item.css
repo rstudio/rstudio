@@ -42,6 +42,10 @@
   padding-left: 20px;
 }
 
+.pm-insert-citation-source-panel-item-button-selected {
+  border-width: 2px;
+}
+
 .pm-insert-citation-source-panel-item-separator {
   margin-left: 50px;
   border-bottom: solid 1px;

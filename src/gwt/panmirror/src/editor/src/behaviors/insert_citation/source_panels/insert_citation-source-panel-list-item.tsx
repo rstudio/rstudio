@@ -25,12 +25,14 @@ import { BibliographySource } from "../../../api/bibliography/bibliography";
 import './insert_citation-source-panel-list-item.css';
 
 interface CitationSourcePanelListData {
+  selectedIndex: number;
   allSources: BibliographySource[];
   sourcesToAdd: BibliographySource[];
   addSource: (source: BibliographySource) => void;
   removeSource: (source: BibliographySource) => void;
   ui: EditorUI;
   showSeparator?: boolean;
+  showSelection?: boolean;
 }
 
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
@@ -76,6 +78,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           </div>
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton
+              classes={citationListData.showSelection && props.index === citationListData.selectedIndex ? ['pm-focus-outline-color', 'pm-insert-citation-source-panel-item-button-selected'] : []}
+              tabIndex={citationListData.showSelection ? -1 : 0}
               style={{ width: '70px' }}
               title={alreadyAdded ? 'Remove' : 'Add'}
               onClick={onClick}

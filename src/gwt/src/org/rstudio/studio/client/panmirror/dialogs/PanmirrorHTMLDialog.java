@@ -124,6 +124,7 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
       switch (event.getNativeKeyCode()) {
       case KeyCodes.KEY_PAGEDOWN:   
       case KeyCodes.KEY_PAGEUP:
+      case KeyCodes.KEY_SPACE:
             return false;
       }
       return true;

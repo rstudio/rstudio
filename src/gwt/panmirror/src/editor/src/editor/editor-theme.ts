@@ -92,7 +92,7 @@ export function defaultTheme(): EditorTheme {
     findTextBorderColor: 'rgb(200, 200, 250)',
     borderBackgroundColor: '#ddd',
     blockBorderColor: '#ddd',
-    focusOutlineColor: '#ddd',
+    focusOutlineColor: '#5d84cd',
     paneBorderColor: 'silver',
     fixedWidthFont: 'monospace, monospace',
     fixedWidthFontSizePt: 9,
@@ -163,7 +163,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-default-theme .pm-block-border-color {
       border-color: ${defaults.blockBorderColor} !important;
     }
-
+    .pm-default-theme .pm-focus-outline-color {
+      border-color: ${defaults.focusOutlineColor} !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }
@@ -246,7 +248,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.blockBorderColor} !important;
     }
     .pm-focus-outline-color {
-      outline-color: ${theme.focusOutlineColor} !important;
+      border-color: ${theme.focusOutlineColor} !important;
     }
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
