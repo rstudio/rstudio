@@ -33,6 +33,7 @@ interface CitationSourcePanelListData {
   ui: EditorUI;
   showSeparator?: boolean;
   showSelection?: boolean;
+  preventFocus?: boolean;
 }
 
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
@@ -79,7 +80,7 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton
               classes={citationListData.showSelection && props.index === citationListData.selectedIndex ? ['pm-focus-outline-color', 'pm-insert-citation-source-panel-item-button-selected'] : []}
-              tabIndex={citationListData.showSelection ? -1 : 0}
+              tabIndex={citationListData.preventFocus ? -1 : 0}
               style={{ width: '70px' }}
               title={alreadyAdded ? 'Remove' : 'Add'}
               onClick={onClick}

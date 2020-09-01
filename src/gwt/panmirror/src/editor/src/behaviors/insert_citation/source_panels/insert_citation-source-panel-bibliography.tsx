@@ -238,7 +238,8 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
                 removeSource: props.removeSource,
                 ui: props.ui,
                 showSeparator: true,
-                showSelection: focused
+                showSelection: focused,
+                preventFocus: true
               }}
               ref={fixedList}
             >
