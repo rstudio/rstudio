@@ -94,6 +94,7 @@ public class VisualMode implements VisualModeEditorSync,
                                    CommandPaletteEntrySource,
                                    SourceDocAddedEvent.Handler,
                                    VisualModeSpelling.Context,
+                                   VisualModeConfirm.Context,
                                    VisualModeSpellingAddToDictionaryEvent.Handler
 {
    public VisualMode(TextEditingTarget target,
@@ -120,6 +121,7 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
+      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, this);
       visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
@@ -477,6 +479,10 @@ public class VisualMode implements VisualModeEditorSync,
                      // get result
                      PanmirrorSetMarkdownResult result = Js.uncheckedCast(obj);
 
+                     // update flags
+                     isDirty_ = false;
+                     loadingFromSource_ = false;
+                     
                      // bail on error
                      if (result == null)
                      {
@@ -508,50 +514,64 @@ public class VisualMode implements VisualModeEditorSync,
                         return;
                      }
 
-                     // update flags
-                     isDirty_ = false;
-                     loadingFromSource_ = false;
-
-                     // if pandoc's view of the document doesn't match the editor's we 
-                     // need to reset the editor's code (for both dirty state and 
-                     // so that diffs are efficient)
-                     if (result.canonical != editorCode)
-                     {
-                        getSourceEditor().setCode(result.canonical);
-                        markDirty();
-                     }
-
-                     // completed
-                     allDone.execute(true);
-
-                     Scheduler.get().scheduleDeferred(() -> {
-
-                        // if we are being focused it means we are switching from source mode, in that
-                        // case sync our editing location to what it is in source 
-                        if (focus)
-                        { 
-                           panmirror_.focus();
-                           panmirror_.setEditingLocation(
-                                 visualModeLocation_.getSourceOutlineLocation(), 
-                                 visualModeLocation_.savedEditingLocation()
-                                 ); 
+                     // clear progress (for possible dialog overlays created by confirmation)
+                     progress_.endProgressOperation();
+                     
+                     // confirm if necessary
+                     visualModeConfirm_.withSwitchConfirmation(
+                           
+                        // allow inspection of result
+                        result, 
+                        
+                        // onConfirmed
+                        () -> {
+                           // if pandoc's view of the document doesn't match the editor's we 
+                           // need to reset the editor's code (for both dirty state and 
+                           // so that diffs are efficient)
+                           if (result.canonical != editorCode)
+                           {
+                              getSourceEditor().setCode(result.canonical);
+                              markDirty();
+                           }
+                           
+                           // completed
+                           allDone.execute(true);
+                           
+                           // deferred actions
+                           Scheduler.get().scheduleDeferred(() -> {
+                              // if we are being focused it means we are switching from source mode, in that
+                              // case sync our editing location to what it is in source 
+                              if (focus)
+                              { 
+                                 panmirror_.focus();
+                                 panmirror_.setEditingLocation(
+                                       visualModeLocation_.getSourceOutlineLocation(), 
+                                       visualModeLocation_.savedEditingLocation()
+                                       ); 
+                              }
+                              
+                              // show any warnings
+                              PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+                              if (result.unrecognized.length > 0) 
+                              {
+                                 view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                              } 
+                              else if (format.warnings.invalidFormat.length() > 0)
+                              {
+                                 view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                              }
+                              else if (format.warnings.invalidOptions.length > 0)
+                              {
+                                 view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                              }
+                           });         
+                        }, 
+                        
+                        // onCancelled
+                        () -> {
+                           allDone.execute(false);
                         }
-
-                        // show any warnings
-                        PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-                        if (result.unrecognized.length > 0) 
-                        {
-                           view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
-                        } 
-                        else if (format.warnings.invalidFormat.length() > 0)
-                        {
-                           view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-                        }
-                        else if (format.warnings.invalidOptions.length > 0)
-                        {
-                           view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
-                        }
-                     });          
+                     ); 
                   }
                });
                
@@ -561,7 +581,7 @@ public class VisualMode implements VisualModeEditorSync,
          
       });
    }
-
+ 
    public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   
       withPanmirror(() -> {
@@ -794,11 +814,13 @@ public class VisualMode implements VisualModeEditorSync,
             
    }
    
+   @Override
    public String getYamlFrontMatter()
    {
       return panmirror_.getYamlFrontMatter();
    }
    
+   @Override
    public boolean applyYamlFrontMatter(String yaml)
    {
       panmirror_.applyYamlFrontMatter(yaml);
@@ -886,6 +908,11 @@ public class VisualMode implements VisualModeEditorSync,
    public void setChunkState(Scope chunk, int state)
    {
       visualModeChunks_.setChunkState(chunk, state);
+   }
+   
+   public void onUserSwitchingToVisualMode()
+   {
+      visualModeConfirm_.onUserSwitchToVisualModePending();
    }
    
    private void manageUI(boolean activate, boolean focus)
@@ -1420,6 +1447,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final VisualModeEditingLocation visualModeLocation_;
    private final VisualModeMarkdownWriter visualModeWriterOptions_;
    private final VisualModeNavigation visualModeNavigation_;
+   private final VisualModeConfirm visualModeConfirm_;
    private final VisualModeSpelling visualModeSpelling_;
    
    private VisualModeReloadChecker panmirrorFormatConfig_;

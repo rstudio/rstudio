@@ -73,13 +73,13 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RCodeChunk, "R Code Chunk");
-      add(PanmirrorCommands.BashCodeChunk, "Bash Code Chunk");
-      add(PanmirrorCommands.D3CodeChunk, "D3 Code Chunk");
-      add(PanmirrorCommands.PythonCodeChunk, "Python Code Chunk");
-      add(PanmirrorCommands.RcppCodeChunk, "Rcpp Code Chunk");
-      add(PanmirrorCommands.SQLCodeChunk, "SQL Code Chunk");
-      add(PanmirrorCommands.StanCodeChunk, "Stan Code Chunk");
+      add(PanmirrorCommands.RCodeChunk, "R");
+      add(PanmirrorCommands.BashCodeChunk, "Bash");
+      add(PanmirrorCommands.D3CodeChunk, "D3");
+      add(PanmirrorCommands.PythonCodeChunk, "Python");
+      add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
+      add(PanmirrorCommands.SQLCodeChunk, "SQL");
+      add(PanmirrorCommands.StanCodeChunk, "Stan");
 
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
@@ -126,7 +126,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");   
+      add(PanmirrorCommands.Citation, "Citation...", icons.CITATION);   
       add(PanmirrorCommands.CrossReference, "Cross Reference");
       add(PanmirrorCommands.InsertEmoji, "Insert Emoji...");
       add(PanmirrorCommands.InsertSymbol, "Insert Unicode...");

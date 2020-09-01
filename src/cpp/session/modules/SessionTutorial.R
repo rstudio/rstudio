@@ -254,6 +254,9 @@
    # who need to update packages
    reYamlSeparator <- "^\\s*(?:---|[.][.][.])\\s*$"
    yamlSeparators <- grep(reYamlSeparator, contents)
+   if (length(yamlSeparators) == 0)
+      return(NULL)
+
    yamlRange <- seq.int(
       from       = yamlSeparators[[1]] + 1,
       length.out = yamlSeparators[[2]] - yamlSeparators[[1]] - 1

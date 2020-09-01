@@ -108,6 +108,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneBase;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
@@ -181,6 +182,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
@@ -325,9 +327,11 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(VisualModePanmirrorFormat visualModePanmirrorFormat);
    void injectMembers(VisualModeMarkdownWriter visualModeMarkdownWriter);
    void injectMembers(VisualModeSpelling visualModeSpelling);
+   void injectMembers(VisualModeConfirm visualModeConfirm);
    void injectMembers(OpenProjectDialog dialog);
    void injectMembers(SourceColumn column);
    void injectMembers(SourceColumnManager columnManager);
+   void injectMembers(PythonPreferencesPaneBase<?> pane);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

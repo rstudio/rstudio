@@ -399,6 +399,9 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["markdown_wrap_at_column"] = config.markdownWrapAtColumn;
    configJson["markdown_references"] = config.markdownReferences;
    configJson["markdown_canonical"] = config.markdownCanonical;
+   configJson["python_type"] = config.pythonType;
+   configJson["python_version"] = config.pythonVersion;
+   configJson["python_path"] = config.pythonPath;
 
    return configJson;
 }
@@ -554,21 +557,11 @@ Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
          "active_vcs_override", pOptions->vcsOverride);
 }
 
-Error writeProjectOptions(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* /*pResponse*/)
+Error writeProjectConfig(const json::Object& configJson)
 {
-   // get the project config, vcs options, and build options
-   json::Object configJson, vcsOptionsJson, buildOptionsJson;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "config", &configJson,
-                                       "vcs_options", &vcsOptionsJson,
-                                       "build_options", &buildOptionsJson);
-   if (error)
-      return error;
-
    // read the config
    r_util::RProjectConfig config;
-   error = json::readObject(
+   Error error = json::readObject(
                     configJson,
                     "version", config.version,
                     "restore_workspace", config.restoreWorkspace,
@@ -607,7 +600,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       {
          config.defaultOpenDocs = existingConfig.defaultOpenDocs;
       }
-      
+
       if (!existingConfig.defaultTutorial.empty())
       {
          config.defaultTutorial = existingConfig.defaultTutorial;
@@ -662,16 +655,13 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                             "markdown_canonical", config.markdownCanonical);
    if (error)
       return error;
-
-   // read the vcs options
-   RProjectVcsOptions vcsOptions;
-   error = rProjectVcsOptionsFromJson(vcsOptionsJson, &vcsOptions);
-   if (error)
-      return error;
-
-   // read the build options
-   RProjectBuildOptions buildOptions;
-   error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
+   
+   // read python options
+   error = json::readObject(configJson,
+                            "python_type", config.pythonType,
+                            "python_version", config.pythonVersion,
+                            "python_path", config.pythonPath);
+   
    if (error)
       return error;
 
@@ -684,6 +674,51 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    // set the config
    setProjectConfig(config);
+
+   return Success();
+
+
+}
+
+Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   json::Object configJson;
+   Error error = json::readParam(request.params, 0, &configJson);
+   if (error)
+      return error;
+
+   return writeProjectConfig(configJson);
+}
+
+Error writeProjectOptions(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // get the project config, vcs options and build options
+   json::Object configJson, vcsOptionsJson, buildOptionsJson;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "config", &configJson,
+                                       "vcs_options", &vcsOptionsJson,
+                                       "build_options", &buildOptionsJson);
+   if (error)
+      return error;
+
+   // write project config
+   error = writeProjectConfig(configJson);
+   if (error)
+      return error;
+
+   // read the vcs options
+   RProjectVcsOptions vcsOptions;
+   error = rProjectVcsOptionsFromJson(vcsOptionsJson, &vcsOptions);
+   if (error)
+      return error;
+
+   // read the build options
+   RProjectBuildOptions buildOptions;
+   error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
+   if (error)
+      return error;
 
    // write the vcs options
    error = s_projectContext.writeVcsOptions(vcsOptions);
@@ -1011,6 +1046,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_project_file", createProjectFile))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))
+      (bind(registerRpcMethod, "write_project_config", writeProjectConfigRpc))
       (bind(registerRpcMethod, "write_project_vcs_options", writeProjectVcsOptions))
       (bind(registerRpcMethod, "find_project_in_folder", findProjectInFolder))
    ;

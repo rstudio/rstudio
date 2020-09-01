@@ -43,6 +43,8 @@
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 * Add support for navigating source history with mouse forward/back buttons (#7272)
 * Improved error logging of mistyped usernames when using PAM authentication (#7501)
+* Add ability to go directly to various Global Option panes via Command Palette (#7678)
+* R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 
 ### RStudio Server Pro
 
@@ -92,4 +94,5 @@
 * Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
 * Reduced difference in font size and spacing between Terminal and Console (#6382)
 * Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
+* Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
 

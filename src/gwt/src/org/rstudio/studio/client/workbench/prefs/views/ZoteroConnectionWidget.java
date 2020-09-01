@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 
 public class ZoteroConnectionWidget extends Composite
 {
-   public ZoteroConnectionWidget(PreferencesDialogResources res)
+   public ZoteroConnectionWidget(PreferencesDialogResources res, boolean includeHelp)
    {
    
       HorizontalPanel panel = new HorizontalPanel();
@@ -55,11 +55,14 @@ public class ZoteroConnectionWidget extends Composite
          );
       zoteroConnection_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       panel.add(zoteroConnection_);
-      HelpLink zoteroHelp = new HelpLink("Using Zotero", "visual_markdown_editing-zotero", false);
-      zoteroHelp.addStyleName(res.styles().selectWidgetHelp());
       
-      panel.add(zoteroHelp);
-
+      if (includeHelp)
+      {
+         HelpLink zoteroHelp = new HelpLink("Using Zotero", "visual_markdown_editing-zotero", false);
+         zoteroHelp.addStyleName(res.styles().selectWidgetHelp());
+         panel.add(zoteroHelp);
+      }
+      
       initWidget(panel);
    
    }

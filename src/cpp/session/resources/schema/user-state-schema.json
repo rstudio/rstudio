@@ -201,6 +201,11 @@
             "default": false,
             "description": "Whether or not the MinGW compiler with GCC 4.9 is used."
         },
+        "visual_mode_confirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether or not the use of Visual Mode has been confirmed."
+        },
         "bibliography_default_type": {
             "type": "string",
             "enum": ["bib", "yaml", "json"],

@@ -26,6 +26,7 @@ import { pandocAttrFrom } from '../api/pandoc_attr';
 import { BaseKey } from '../api/basekeys';
 
 import { markIsActive } from '../api/mark';
+import { canInsertRmdChunk } from '../api/rmd';
 
 const extension = (context: ExtensionContext): Extension => {
   const { pandocExtensions, format } = context;
@@ -85,13 +86,20 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
       return false;
     }
 
+    // determine nature of insert
+    const fenced = fencedAttributes && !!match[2];
+    const langAttrib = fenced ? match[2] : match[1] || '';
+    const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
+    const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
+
+    // if it's an rmd chunk then apply further validation
+    if (rmdChunk && !canInsertRmdChunk(state)) {
+      return false;
+    }
+
     // execute
     if (dispatch) {
-      // determine nature of insert
-      const fenced = fencedAttributes && !!match[2];
-      const langAttrib = fenced ? match[2] : match[1] || '';
-      const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
-      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
+
       // eslint-disable-next-line no-useless-escape
       const lang = langAttrib.replace(/^[\.=]/, '');
 

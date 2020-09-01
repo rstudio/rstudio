@@ -372,7 +372,9 @@ namespace prefs {
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
 #define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
-#define kPythonDefaultInterpreter "python_default_interpreter"
+#define kPythonType "python_type"
+#define kPythonVersion "python_version"
+#define kPythonPath "python_path"
 
 class UserPrefValues: public Preferences
 {
@@ -1615,10 +1617,22 @@ public:
    core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
    /**
-    * The path to the default Python interpreter
+    * The Python type.
     */
-   std::string pythonDefaultInterpreter();
-   core::Error setPythonDefaultInterpreter(std::string val);
+   std::string pythonType();
+   core::Error setPythonType(std::string val);
+
+   /**
+    * The Python version.
+    */
+   std::string pythonVersion();
+   core::Error setPythonVersion(std::string val);
+
+   /**
+    * The path to the default Python interpreter.
+    */
+   std::string pythonPath();
+   core::Error setPythonPath(std::string val);
 
 };
 

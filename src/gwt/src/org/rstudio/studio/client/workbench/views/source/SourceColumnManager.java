@@ -386,7 +386,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.setActiveEditor(target);
    }
 
-   private void setActive(SourceColumn column)
+   public void setActive(SourceColumn column)
    {
       SourceColumn prevColumn = activeColumn_;
       activeColumn_ = column;
@@ -1566,7 +1566,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       if (column == activeColumn_)
-         setActive("");
+         setActive(MAIN_SOURCE_NAME);
       columnList_.remove(column);
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
                                        getActive().getName());
