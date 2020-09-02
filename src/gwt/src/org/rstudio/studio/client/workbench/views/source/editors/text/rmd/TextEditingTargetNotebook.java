@@ -1293,13 +1293,19 @@ public class TextEditingTargetNotebook
    public void setChunkLineExecState(int start, int end, int state)
    {
       docDisplay_.setChunkLineExecState(start, end, state);
-      editingTarget_.getVisualMode().setChunkLineExecState(start, end, state);
+      if (editingTarget_.isVisualEditorActive())
+      {
+         editingTarget_.getVisualMode().setChunkLineExecState(start, end, state);
+      }
    }
    
    public void setChunkState(Scope chunk, int state)
    {
       chunks_.setChunkState(chunk.getPreamble().getRow(), state);
-      editingTarget_.getVisualMode().setChunkState(chunk, state);
+      if (editingTarget_.isVisualEditorActive())
+      {
+         editingTarget_.getVisualMode().setChunkState(chunk, state);
+      }
    }
    
    public static boolean isSetupChunkScope(Scope scope)
@@ -1416,6 +1422,12 @@ public class TextEditingTargetNotebook
          if (output.getScope().getPreamble().getRow() == 
              scope.getPreamble().getRow())
          {
+            // If there's also a code output, detach it
+            if (codeOutputs_.containsKey(output.getChunkId()))
+            {
+               codeOutputs_.get(output.getChunkId()).detach();
+            }
+
             // Found an existing visual output; reattach it
             ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
             visualOutput.reattach();
@@ -1492,24 +1504,18 @@ public class TextEditingTargetNotebook
       // Iterate over all known code chunk outputs
       for (ChunkOutputUi output: codeOutputs_.values())
       {
-         // Detach code output
-         output.detach();
-
          // If this chunk output is in code mode, create a version for visual mode
-         ChunkOutputCodeUi codeOutput = (ChunkOutputCodeUi)output;
-         
          if (visualOutputs_.containsKey(output.getChunkId()))
          {
+            // Detach code output
+            output.detach();
+
             // Already a output for code view, reattach
             visualOutputs_.get(output.getChunkId()).reattach();
          }
-         else
-         {
-            // No output yet, create one
-            ChunkOutputPanmirrorUi visualOutput = new ChunkOutputPanmirrorUi(codeOutput, 
-                  editingTarget_.getVisualMode(), null);
-            visualOutputs_.put(output.getChunkId(), visualOutput);
-         }
+         
+         // If there's no visual output yet, we will create one later in
+         // migrateOutput (when the NodeView hosting the chunk is created)
       }
    }
    

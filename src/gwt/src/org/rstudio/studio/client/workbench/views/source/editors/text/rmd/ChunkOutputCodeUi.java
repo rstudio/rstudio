@@ -195,6 +195,9 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
    @Override
    public void detach()
    {
+      if (!wrapped_)
+         return;
+
       wrapper_.clear();
       wrapped_ = false;
    }

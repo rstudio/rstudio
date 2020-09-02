@@ -154,7 +154,10 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       
       setupOutputWidget();
       
-      chunk_.reloadWidget();
+      if (chunk_ != null)
+      {
+         chunk_.reloadWidget();
+      }
 
       attached_ = true;
    }
