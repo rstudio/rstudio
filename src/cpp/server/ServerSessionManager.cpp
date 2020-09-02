@@ -372,7 +372,7 @@ r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionCon
    profile.config = sessionProcessConfig(context, extraArgs);
 
    // pass the profile to any filters we have
-   for (const SessionManager::SessionLaunchProfileFilter f : sessionManager().getSessionLaunchProfileFilters())
+   for (const SessionManager::SessionLaunchProfileFilter& f : sessionManager().getSessionLaunchProfileFilters())
    {
       f(&profile);
    }
