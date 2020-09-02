@@ -14,12 +14,11 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.views.PythonDialogResources;
+import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneBase;
 import org.rstudio.studio.client.workbench.prefs.views.PythonServerOperations;
 
@@ -45,41 +44,13 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
-      RestartRequirement requirement = new RestartRequirement();
-      RProjectConfig config = options.getConfig();
-      
-      String oldValue = config.getPythonPath();
-      String newValue = tbPythonInterpreter_.getText();
-      
-      if (StringUtil.equals(newValue, placeholderText_))
-         newValue = "";
-      
-      FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
-      if (projDir.exists() && newValue.startsWith(projDir.getPath()))
-         newValue = newValue.substring(projDir.getLength() + 1);
-      
-      boolean isSet =
-            interpreter_ != null &&
-            interpreter_.isValid() &&
-            !StringUtil.isNullOrEmpty(newValue);
-      
-      if (isSet && !StringUtil.equals(oldValue, newValue))
+      return onApply(true, (PythonInterpreter interpreter) ->
       {
-         config.setPythonType(interpreter_.getType());
-         config.setPythonVersion(interpreter_.getVersion());
-         config.setPythonPath(interpreter_.getPath());
-      }
-      else
-      {
-         config.setPythonType("");
-         config.setPythonVersion("");
-         config.setPythonPath("");
-      }
-      
-      if (!StringUtil.equals(oldValue, newValue))
-         requirement.setRestartRequired();
-      
-      return requirement;
+         RProjectConfig config = options.getConfig();
+         config.setPythonType(interpreter.getType());
+         config.setPythonVersion(interpreter.getVersion());
+         config.setPythonPath(interpreter.getPath());
+      });
    }
 
 }
