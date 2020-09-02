@@ -13,6 +13,8 @@
  *
  */
 
+import { EditorUI } from "./ui";
+
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
   works: (query: string) => Promise<CrossrefMessage<CrossrefWork>>;
@@ -82,5 +84,45 @@ Note that the field contains a nested array, e.g. [ [ 2006, 5, 19 ] ] to conform
 to citeproc JSON dates */
 export interface CrossrefDate {
   'date-parts': Array<[number, number?, number?]>;
+}
+
+export function imageForCrossrefType(ui: EditorUI, type: string): [string?, string?] {
+  switch (type) {
+    case 'monograph':
+    case 'report':
+    case 'journal-article':
+    case 'journal-volume':
+    case 'journal':
+    case 'journal-issue':
+    case 'proceedings-article':
+    case 'dissertation':
+    case 'report-series':
+      return [ui.images.citations?.article, ui.images.citations?.article_dark];
+    case 'book-section':
+    case 'book-part':
+    case 'book-series':
+    case 'edited-book':
+    case 'book-chapter':
+    case 'book':
+    case 'book-set':
+    case 'book-track':
+    case 'reference-book':
+      return [ui.images.citations?.book, ui.images.citations?.book_dark];
+    case 'dataset':
+      return [ui.images.citations?.data, ui.images.citations?.data_dark];
+    case 'reference-entry':
+      return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
+    case 'posted-content':
+      return [ui.images.citations?.web, ui.images.citations?.web_dark];
+    case 'other':
+    case 'standard':
+    case 'standard-series':
+    case 'peer-review':
+    case 'component':
+    case 'proceedings-series':
+    case 'proceedings':
+    default:
+      return [ui.images.citations?.other, ui.images.citations?.other_dark];
+  }
 }
 
