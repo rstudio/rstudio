@@ -411,7 +411,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # succeed for files already open in the IDE, but since this operation
    # is normally called when attempting to preview / create a notebook on
    # save we generally expect the document to be available)
-   properties <- .rs.getSourceDocumentProperties(inputFile, FALSE)
+   properties <- .rs.getSourceDocumentProperties(inputFile, includeContents = FALSE)
    if (!is.null(properties$encoding))
       encoding <- properties$encoding
    

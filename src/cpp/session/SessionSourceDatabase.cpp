@@ -987,19 +987,38 @@ void onRemoveAll()
    s_idToPath.clear();
 }
 
-SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
+SEXP rs_getSourceDocumentId(SEXP pathSEXP)
+{
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+   
+   std::string id;
+   Error error = source_database::getId(path, &id);
+   if (error)
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(id, &protect);
+}
+
+SEXP rs_getSourceDocumentPath(SEXP idSEXP)
+{
+   std::string id = r::sexp::safeAsString(idSEXP);
+   
+   std::string path;
+   Error error = source_database::getPath(id, &path);
+   if (error)
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(path, &protect);
+}
+
+SEXP rs_getSourceDocumentProperties(SEXP idSEXP, SEXP includeContentsSEXP)
 {
    Error error;
-   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+   
+   std::string id = r::sexp::safeAsString(idSEXP);
    bool includeContents = r::sexp::asLogical(includeContentsSEXP);
-
-   std::string id;
-   error = source_database::getId(path, &id);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return R_NilValue;
-   }
 
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
    error = source_database::get(id, pDoc);
@@ -1029,7 +1048,9 @@ Error initialize()
    if (error)
       return error;
 
-   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
+   RS_REGISTER_CALL_METHOD(rs_getSourceDocumentPath);
+   RS_REGISTER_CALL_METHOD(rs_getSourceDocumentId);
+   RS_REGISTER_CALL_METHOD(rs_getSourceDocumentProperties);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);

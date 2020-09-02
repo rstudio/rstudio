@@ -187,6 +187,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.source.DocumentChunkContext;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
@@ -1894,10 +1895,21 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getDocumentChunkContextCompleted(ServerRequestCallback<Null> requestCallback)
+   public void getDocumentChunkContext(String docId,
+                                       ServerRequestCallback<DocumentChunkContext> requestCallback)
    {
-      // TODO: return data
-      sendRequest(RPC_SCOPE, GET_DOCUMENT_CHUNK_CONTEXT_COMPLETED, requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(docId)
+            .get();
+      
+      sendRequest(RPC_SCOPE, GET_DOCUMENT_CHUNK_CONTEXT, params, requestCallback);
+   }
+   
+   @Override
+   public void getDocumentChunkContextCompleted(DocumentChunkContext context,
+                                                ServerRequestCallback<Null> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_DOCUMENT_CHUNK_CONTEXT_COMPLETED, context, requestCallback);
    }
    
 
@@ -6509,6 +6521,7 @@ public class RemoteServer implements Server
    private static final String EXPLORER_END_INSPECT = "explorer_end_inspect";
 
    private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
+   private static final String GET_DOCUMENT_CHUNK_CONTEXT = "get_document_chunk_context";
    private static final String GET_DOCUMENT_CHUNK_CONTEXT_COMPLETED = "get_document_chunk_context_completed";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";

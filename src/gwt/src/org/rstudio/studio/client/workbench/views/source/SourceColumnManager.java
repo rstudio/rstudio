@@ -779,9 +779,35 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return true;
    }
    
-   public void getDocumentChunkContext(Command onCompleted)
+   public void getDocumentChunkContext(CommandWithArg<DocumentChunkContext> callback)
    {
-      onCompleted.execute();
+      // TODO: handle user-supplied document ID
+      // TODO: allow use of console? or no?
+      boolean hasActiveEditor =
+            hasActiveEditor() &&
+            activeColumn_.getActiveEditor() instanceof TextEditingTarget;
+      
+      if (!hasActiveEditor)
+      {
+         callback.execute(DocumentChunkContext.create());
+         return;
+      }
+      
+      TextEditingTarget target = (TextEditingTarget) activeColumn_.getActiveEditor();
+      if (target.isVisualModeActivated())
+      {
+         target.ensureVisualModeActive(() ->
+         {
+            target.getDocumentChunkContextVisualMode(callback);
+         });
+      }
+      else
+      {
+         target.ensureTextEditorActive(() ->
+         {
+            target.getDocumentChunkContextSourceMode(callback);
+         });
+      }
    }
 
    public void activateCodeBrowser(

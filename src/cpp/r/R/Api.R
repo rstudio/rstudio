@@ -894,5 +894,5 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # Document Chunks ----
 
 .rs.addApiFunction("documentChunkContext", function(docId = NULL) {
-   .Call("rs_documentChunkContext", docId, PACKAGE = "(embedding)")
+   .Call("rs_requestDocumentChunkContext", docId, PACKAGE = "(embedding)")
 })

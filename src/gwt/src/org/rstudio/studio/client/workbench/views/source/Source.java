@@ -458,6 +458,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
+      events_.addHandler(GetDocumentChunkContextEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
@@ -2810,9 +2811,11 @@ public class Source implements InsertSourceHandler,
    public void onGetDocumentChunkContext(GetDocumentChunkContextEvent event)
    {
       // TODO: Handle user-specified editor ID.
-      columnManager_.getDocumentChunkContext(() ->
+      columnManager_.getDocumentChunkContext((DocumentChunkContext context) ->
       {
-         server_.getDocumentChunkContextCompleted(new SimpleRequestCallback<Null>());
+         server_.getDocumentChunkContextCompleted(
+               context,
+               new SimpleRequestCallback<Null>());
       });
    }
 

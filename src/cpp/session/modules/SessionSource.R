@@ -308,12 +308,21 @@
    })
 })
 
-.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
+.rs.addFunction("getSourceDocumentPath", function(id)
 {
-   if (is.null(path) || !file.exists(path))
-      return(NULL)
-   
-   path <- normalizePath(path, winslash = "/", mustWork = TRUE)
-   .Call("rs_getDocumentProperties", path, includeContents)
+   .Call("rs_getSourceDocumentPath", id, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("getSourceDocumentId", function(path)
+{
+   .Call("rs_getSourceDocumentId", path, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("getSourceDocumentProperties", function(path = NULL,
+                                                        id = NULL,
+                                                        includeContents = FALSE)
+{
+   id <- .rs.nullCoalesce(id, .rs.getSourceDocumentId(path))
+   .Call("rs_getSourceDocumentProperties", id, includeContents, PACKAGE = "(embedding)")
 })
 

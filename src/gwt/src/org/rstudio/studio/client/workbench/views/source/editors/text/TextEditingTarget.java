@@ -142,6 +142,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.source.DocumentChunkContext;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -7738,6 +7739,35 @@ public class TextEditingTarget implements
    void onUserSwitchingToVisualMode()
    {
       visualMode_.onUserSwitchingToVisualMode();
+   }
+   
+   public void getDocumentChunkContextVisualMode(CommandWithArg<DocumentChunkContext> callback)
+   {
+      // TODO
+   }
+   
+   public void getDocumentChunkContextSourceMode(CommandWithArg<DocumentChunkContext> callback)
+   {
+      docUpdateSentinel_.withSavedDoc(() ->
+      {
+         server_.getDocumentChunkContext(
+               docUpdateSentinel_.getId(),
+               new ServerRequestCallback<DocumentChunkContext>()
+               {
+                  @Override
+                  public void onResponseReceived(DocumentChunkContext context)
+                  {
+                     callback.execute(context);
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     callback.execute(DocumentChunkContext.create());
+                  }
+               });
+      });
    }
    
 

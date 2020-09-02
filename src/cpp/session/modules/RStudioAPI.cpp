@@ -233,22 +233,57 @@ SEXP rs_systemUsername()
    return r::sexp::create(core::system::username(), &protect);
 }
 
-SEXP rs_documentChunkContext(SEXP docIdSEXP)
+// This is all a bit complicated, so I'm writing down what happens
+// when the user requests a document's chunk context...
+//
+// 1. We enque an EditorCommand client event, asking the client
+//    to figure out the document contents for the requested
+//    document ID. (Or, if no ID is provided, the active document.)
+//
+// 2. The client figures out the correct document ID, then makes sure
+//    the document is up-to-date in our source database.
+//
+// 3. The client then calls back to the session, asking it to produce
+//    the document's chunk context given the current state of the document.
+//
+// 4. Finally, the client sends an RPC back that we're listening for
+//    via a WaitFor method, which we can then supply back as the return value.
+//
+// Note that we use the 'EditorCommand' client event, since that acts
+// as a thin scaffolding for editor events and avoids the need to define
+// and handle the dispatch for a brand new client event.
+SEXP rs_requestDocumentChunkContext(SEXP docIdSEXP)
 {
-   using namespace module_context;
-   
    std::string docId = r::sexp::safeAsString(docIdSEXP);
    
+   json::Object eventPayload;
+   eventPayload["id"] = docId;
+ 
    json::Object eventData;
    eventData["type"] = "chunk_context";
-   eventData["data"] = json::Object();
+   eventData["data"] = eventPayload;
    
    json::JsonRpcRequest request;
    ClientEvent event(client_events::kEditorCommand, eventData);
    if (!s_waitForDocumentChunkContext(&request, event))
       return R_NilValue;
+   
+   json::Object contextJson;
+   Error error = json::readParam(request.params, 0, &contextJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   // otherwise, we can call an existing method to retrieve
+   // context for this document
+   r::sexp::Protect protect;
+   return r::sexp::create(contextJson, &protect);
+   return R_NilValue;
 }
-
+   
+   
 } // end anonymous namespace
 
 Error initialize()
@@ -256,10 +291,10 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // register waitForMethod handler
+   // register waitForMethod handlers
    s_waitForShowDialog           = registerWaitForMethod("rstudioapi_show_dialog_completed");
    s_waitForOpenFileDialog       = registerWaitForMethod("open_file_dialog_completed");
-   s_waitForDocumentChunkContext = registerWaitForMethod("document_chunk_context_completed");
+   s_waitForDocumentChunkContext = registerWaitForMethod("get_document_chunk_context_completed");
 
    // register R call methods
    RS_REGISTER_CALL_METHOD(rs_showDialog);
@@ -268,7 +303,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
    RS_REGISTER_CALL_METHOD(rs_userIdentity);
    RS_REGISTER_CALL_METHOD(rs_systemUsername);
-   RS_REGISTER_CALL_METHOD(rs_documentChunkContext);
+   RS_REGISTER_CALL_METHOD(rs_requestDocumentChunkContext);
    
    using boost::bind;
    ExecBlock initBlock;
