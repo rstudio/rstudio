@@ -17,21 +17,16 @@ import React from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { FixedSizeList } from "react-window";
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
-import { TextInput } from "../../../api/widgets/text";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-
 import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
 import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
-
-import './insert_citation-source-panel-bibliography.css';
+import { CitationSourceSearchPanel } from "./insert_citation-source-panel-search";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -65,11 +60,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   const bibMgr = props.bibliographyManager;
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
   const [searchTerm, setSearchTerm] = React.useState<string>();
-  const [focused, setFocused] = React.useState<boolean>(false);
-  const fixedList = React.useRef<FixedSizeList>(null);
-  const listContainer = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(debounce(() => {
     async function loadData() {
@@ -94,7 +85,6 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
         setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
-        setSelectedIndex(0);
       }
     }
     loadData();
@@ -103,158 +93,27 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   // If the nodes change, clear the search box value
   React.useLayoutEffect(() => {
-    if (searchBoxRef.current) {
-      searchBoxRef.current.value = '';
-      setSearchTerm('');
-    }
+    // TODO: Clear search term when node changes
   }, [props.selectedNode]);
 
-  // Whenever selection changed, ensure that we are scrolled to that item
-  React.useLayoutEffect(() => {
-    fixedList.current?.scrollToItem(selectedIndex);
-  }, [selectedIndex]);
-
   // Search the user search terms
-  const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-  };
-
-  // Perform first load tasks
-  const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    if (searchBoxHeight) {
-      setListHeight(props.height - searchBoxHeight);
-    }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
-    }
-  }, []);
-
-
-  // Item height and consequently page height
-  const itemHeight = 64;
-  const itemsPerPage = Math.floor(props.height / itemHeight);
-
-  // Upddate selected item index (this will manage bounds)
-  const incrementIndex = (event: React.KeyboardEvent, index: number) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const maxIndex = itemData.length - 1;
-    setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
-  };
-
-  // Toggle the currently selected item as added or removed
-  const toggleSelectedSource = (event: React.KeyboardEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-
-    const source = itemData[selectedIndex];
-    if (source) {
-      if (props.sourcesToAdd.includes(source)) {
-        props.removeSource(source);
-      } else {
-        props.addSource(source);
-      }
-    }
-  };
-
-  const handleListKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowUp':
-        incrementIndex(event, selectedIndex - 1);
-        break;
-
-      case 'ArrowDown':
-        incrementIndex(event, selectedIndex + 1);
-        break;
-
-      case 'PageDown':
-        incrementIndex(event, selectedIndex + itemsPerPage);
-        break;
-
-      case 'PageUp':
-        incrementIndex(event, selectedIndex - itemsPerPage);
-        break;
-
-      case 'Enter':
-        toggleSelectedSource(event);
-        props.confirm();
-        break;
-      case ' ':
-        toggleSelectedSource(event);
-        break;
-    }
-  };
-
-  // If the user arrows down in the search text box, advance to the list of items
-  const handleTextKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        listContainer.current?.focus();
-        break;
-    }
-  };
-
-  // Focus / Blur are used to track whether to show selection highlighting
-  const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(true);
-  };
-
-  const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(false);
+  const searchChanged = (term: string) => {
+    setSearchTerm(term);
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel'>
-      <div className='pm-insert-citation-panel-textbox-container'>
-        <TextInput
-          width='100%'
-          iconAdornment={props.ui.images.search}
-          tabIndex={0}
-          className='pm-insert-citation-panel-textbox pm-block-border-color'
-          placeholder={props.ui.context.translateText('Search for citation')}
-          onKeyDown={handleTextKeyDown}
-          onChange={searchChanged}
-          ref={searchBoxRef}
-        />
-
-      </div>
-      {itemData.length === 0 ?
-        (<div className='pm-insert-citation-panel-noresults' style={{ height: listHeight + 'px' }}>
-          <div className='pm-insert-citation-panel-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
-        </div>) :
-        (
-          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={listContainer}>
-            <FixedSizeList
-              height={listHeight}
-              width='100%'
-              itemCount={itemData.length}
-              itemSize={itemHeight}
-              itemData={{
-                selectedIndex,
-                allSources: itemData,
-                sourcesToAdd: props.sourcesToAdd,
-                addSource: props.addSource,
-                removeSource: props.removeSource,
-                ui: props.ui,
-                showSeparator: true,
-                showSelection: focused,
-                preventFocus: true
-              }}
-              ref={fixedList}
-            >
-              {CitationSourcePanelListItem}
-            </FixedSizeList>
-          </div>
-        )}
-    </div>);
+    <CitationSourceSearchPanel
+      height={props.height}
+      itemData={itemData}
+      selectedNode={props.selectedNode}
+      sourcesToAdd={props.sourcesToAdd}
+      searchTermChanged={searchChanged}
+      addSource={props.addSource}
+      removeSource={props.removeSource}
+      confirm={props.confirm}
+      ui={props.ui}
+    />
+  );
 };
 
 

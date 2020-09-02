@@ -1,26 +1,26 @@
 
 
-.pm-insert-citation-panel {
+.pm-insert-citation-panel-search {
   width: 100%;
 }
 
-.pm-insert-citation-panel-textbox-container
+.pm-insert-citation-panel-search-textbox-container
 {
   width: 100%;
 }
 
-.pm-insert-citation-panel-textbox {
+.pm-insert-citation-panel-search-textbox {
   width: 100%;
   border: solid 1px;
   box-sizing:border-box;
   height: 28px !important;
 }
 
-.pm-insert-citation-panel-noresults {
+.pm-insert-citation-panel-search-noresults {
   width: 100%;
 }
 
-.pm-insert-citation-panel-noresults-text {
+.pm-insert-citation-panel-search-noresults-text {
   text-align: center;
   font-size: 10pt;
   font-style: italic;
