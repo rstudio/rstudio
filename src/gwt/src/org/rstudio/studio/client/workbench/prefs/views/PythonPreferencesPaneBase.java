@@ -21,7 +21,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
-import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.ModalDialogBase;

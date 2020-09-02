@@ -399,6 +399,14 @@ public class RProjectConfig extends JavaScriptObject
       this.python_path = path;
    }-*/;
    
+   public native final String getSpellingDictionary() /*-{
+      return this.spelling_dictionary;
+   }-*/;
+   
+   public native final void setSpellingDictionary(String dictionary) /*-{
+      this.spelling_dictionary = dictionary;
+   }-*/;
+   
    
    
    

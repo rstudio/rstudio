@@ -745,6 +745,10 @@ json::Object ProjectContext::uiPrefs() const
    if (config_.markdownCanonical != DefaultValue)
       uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
 
+   // spelling prefs (only activate when non-empty)
+   if (!config_.spellingDictionary.empty())
+      uiPrefs[kSpellingDictionaryLanguage] = config_.spellingDictionary;
+
    return uiPrefs;
 }
 

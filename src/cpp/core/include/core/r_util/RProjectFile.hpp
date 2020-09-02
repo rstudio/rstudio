@@ -109,7 +109,8 @@ struct RProjectConfig
         markdownCanonical(DefaultValue),
         pythonType(),
         pythonVersion(),
-        pythonPath()
+        pythonPath(),
+        spellingDictionary()
    {
    }
 
@@ -151,6 +152,7 @@ struct RProjectConfig
    std::string pythonType;
    std::string pythonVersion;
    std::string pythonPath;
+   std::string spellingDictionary;
 };
 
 Error findProjectFile(FilePath filePath,

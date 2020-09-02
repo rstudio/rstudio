@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
-import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;

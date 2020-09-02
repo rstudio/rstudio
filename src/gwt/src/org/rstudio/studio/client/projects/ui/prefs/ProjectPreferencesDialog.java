@@ -46,11 +46,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    public static final int EDITING    = 1;
    public static final int R_MARKDOWN = 2;
    public static final int SWEAVE     = 3;
-   public static final int BUILD      = 4;
-   public static final int VCS        = 5;
-   public static final int RENV       = 6;
-   public static final int PYTHON     = 7;
-   public static final int SHARING    = 8;
+   public static final int SPELLING   = 4;
+   public static final int BUILD      = 5;
+   public static final int VCS        = 6;
+   public static final int RENV       = 7;
+   public static final int PYTHON     = 8;
+   public static final int SHARING    = 9;
 
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -61,6 +62,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectEditingPreferencesPane editing,
                                    ProjectRMarkdownPreferencesPane rMarkdown,
                                    ProjectCompilePdfPreferencesPane compilePdf,
+                                   ProjectSpellingPreferencesPane spelling,
                                    ProjectSourceControlPreferencesPane source,
                                    ProjectBuildToolsPreferencesPane build,
                                    ProjectRenvPreferencesPane renv,
@@ -78,6 +80,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                   editing,
                   rMarkdown, 
                   compilePdf,
+                  spelling,
                   build,
                   source,
                   renv,
@@ -169,6 +172,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.visualMarkdownEditingCanonical().setProjectValue(config.getMarkdownCanonical() == RProjectConfig.YES_VALUE);
                 else
                    uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
+                
+                // propagate spelling prefs
+                if (!config.getSpellingDictionary().isEmpty())
+                   uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());
+                else
+                   uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
 
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
