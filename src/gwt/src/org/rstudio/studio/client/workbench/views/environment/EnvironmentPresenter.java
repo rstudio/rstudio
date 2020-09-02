@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.RegexUtil;
@@ -442,7 +443,7 @@ public class EnvironmentPresenter extends BasePresenter
       server_.isFunctionMasked(
             "save.image",
             "base",
-            new ErrorLoggingServerRequestCallback<Boolean>()
+            new ServerRequestCallback<Boolean>()
             {
                public void onResponseReceived(Boolean isMasked)
                {
@@ -455,6 +456,19 @@ public class EnvironmentPresenter extends BasePresenter
                         ".RData",
                         true,
                         code);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  
+                  consoleDispatcher_.saveFileAsThenExecuteCommand(
+                        "Save Workspace As",
+                        ".RData",
+                        true,
+                        "save.image");
+                  
                };
             });
    }
