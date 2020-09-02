@@ -783,6 +783,13 @@ int main(int argc, char* argv[])
          scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
+      else if (installPath.completePath("conf/rdesktop-dev.conf").exists())
+      {
+         confPath = installPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = installPath.completePath("session/rsession");
+         scriptsPath = installPath.completePath("desktop");
+         devMode = true;
+      }
 
       // if there is no conf path then release mode
       if (confPath.isEmpty())
