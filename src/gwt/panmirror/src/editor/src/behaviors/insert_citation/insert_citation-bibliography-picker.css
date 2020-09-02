@@ -12,9 +12,21 @@
 }
 
 .pm-citation-bibliography-picker-label {
-  margin-right: 8px;
+  margin-right: 6px;
+}
+
+.pm-citation-bibliography-format-label {
+  padding-left: 4px;
+  margin-right: 6px;
 }
 
 .pm-citation-bibliography-picker-textbox {
   margin-right: 8px;
+}
+
+.pm-citation-bibliography-picker-create-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
 }
