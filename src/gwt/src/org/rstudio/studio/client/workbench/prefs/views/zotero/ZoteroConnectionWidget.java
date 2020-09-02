@@ -54,6 +54,7 @@ public class ZoteroConnectionWidget extends Composite
             true,
             false
          );
+      zoteroConnection_.addStyleName(ZoteroResources.INSTANCE.styles().connection());
       zoteroConnection_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       panel.add(zoteroConnection_);
       

@@ -2,9 +2,13 @@
 
 @external gwt-Label;
 
+.connection gwt-Label {
+   margin-left: 0 !important;
+}
+
 .apiKey {
-  font-family: monospace !important;
-  margin-right: 6px;
+   font-family: monospace !important;
+   margin-right: 6px;
 }
 
 .apiKeyPanel {
@@ -12,20 +16,23 @@
 }
 
 .librariesWidget {
+	margin-top: 4px;
    margin-left: 4px;
 }
 
 .librariesLabel {
-   margin-top: 8px;
+ 
 }
 
 .librariesList {
-   width: 270px;
-   height: 150px;
+   width: 255px;
+   height: 140px;
 }
 
-.librariesList .gwt-Label {
-	margin-left: 0 !important;
+
+.librariesSelect .gwt-Label {
+	margin-left: 0;
+	margin-bottom: 0;
 }
 
 

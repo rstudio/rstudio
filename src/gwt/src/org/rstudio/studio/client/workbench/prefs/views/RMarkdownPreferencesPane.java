@@ -364,16 +364,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          zoteroDataDir_.setText(dataDir);
       citations.add(zoteroDataDir_);
       
+      
+      ZoteroLibrariesWidget zoteroLibs = new ZoteroLibrariesWidget();
+      lessSpaced(zoteroLibs);
+      citations.add(zoteroLibs);
+      
       zoteroUseBetterBibtex_ = checkboxPref(
          "Use Better BibTeX for citation keys and BibTeX export",
          prefs_.zoteroUseBetterBibtex(),
          false);
       spaced(zoteroUseBetterBibtex_);
       citations.add(zoteroUseBetterBibtex_);
-      
-      
-      ZoteroLibrariesWidget zoteroLibs = new ZoteroLibrariesWidget();
-      citations.add(zoteroLibs);
        
       // kickoff query for detected zotero data directory
       zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {
@@ -396,7 +397,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          }
          
       });
-
+      
+   
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "533px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());

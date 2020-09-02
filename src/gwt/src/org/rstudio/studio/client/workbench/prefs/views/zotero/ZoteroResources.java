@@ -25,11 +25,13 @@ public interface ZoteroResources extends ClientBundle
 
    interface Styles extends CssResource
    {
+      String connection();
       String apiKey();
       String apiKeyPanel();
       String librariesWidget();
       String librariesLabel();
       String librariesList();
+      String librariesSelect();
    }
    
    @Source("ZoteroResources.css")

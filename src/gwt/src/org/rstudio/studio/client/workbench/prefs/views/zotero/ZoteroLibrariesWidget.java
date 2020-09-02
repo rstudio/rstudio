@@ -42,6 +42,7 @@ public class ZoteroLibrariesWidget extends Composite
          true,
          false
       );
+      selectedLibs_.addStyleName(RES.styles().librariesSelect());
       
       panel.add(selectedLibs_);
       
