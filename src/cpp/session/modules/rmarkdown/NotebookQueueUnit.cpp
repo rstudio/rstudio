@@ -69,7 +69,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 
 void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
-   for (const ExecRange range : in)
+   for (const ExecRange& range : in)
    {
       pOut->push_back(range.toJson());
    }

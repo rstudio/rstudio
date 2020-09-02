@@ -650,7 +650,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error;
-   for (const json::JsonRpcMethod& method : rMethods)
+   
+   for (json::JsonRpcMethod method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
    }

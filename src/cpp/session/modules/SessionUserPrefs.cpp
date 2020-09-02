@@ -262,7 +262,7 @@ SEXP rs_allPrefs()
    // Sort preference keys alphabetically for convenience
    std::sort(keys.begin(), keys.end());
 
-   for (const auto key: keys) 
+   for (const auto& key : keys) 
    {
       std::string layer;
       auto val = userPrefs().readValue(key, &layer);
