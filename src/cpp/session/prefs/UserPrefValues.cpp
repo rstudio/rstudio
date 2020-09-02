@@ -1012,6 +1012,19 @@ core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
 }
 
 /**
+ * Whether to only show a limited window of the total console output
+ */
+bool UserPrefValues::limitVisibleConsole()
+{
+   return readPref<bool>("limit_visible_console");
+}
+
+core::Error UserPrefValues::setLimitVisibleConsole(bool val)
+{
+   return writePref("limit_visible_console", val);
+}
+
+/**
  * Whether to show a toolbar on code chunks in R Markdown documents.
  */
 bool UserPrefValues::showInlineToolbarForRCodeChunks()
@@ -2819,6 +2832,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
+      kLimitVisibleConsole,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
