@@ -293,7 +293,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       {
          double perColumn = difference / leftList_.size();
          for (int i = 0; i < leftList_.size(); i++)
-            setWidgetSize(leftList_.get(i), perColumn);
+         {
+            double newSize = perColumn + getWidgetSize(leftList_.get(i));
+            setWidgetSize(leftList_.get(i), newSize);
+         }
       }
       else
       {
