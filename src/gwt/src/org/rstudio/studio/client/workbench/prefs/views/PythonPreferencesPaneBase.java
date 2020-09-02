@@ -353,7 +353,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       if (StringUtil.equals(newValue, placeholderText_))
          newValue = "";
       
-      // for project preferences, use relate project path for interpreter
+      // for project preferences, use project-relative path to interpreter
       if (isProjectPrefs)
       {
          FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
