@@ -760,6 +760,10 @@ public class BreakpointManager
       // set previously
       for (FileFunction function: functions)
       {
+         // There's a possibility here that the breakpoints were  
+         // not successfully cleared, so we may be in a temporarily  
+         // confusing state, but no error message will be less 
+         // confusing. 
          server_.setFunctionBreakpoints(
                function.functionName,
                function.fileName,
