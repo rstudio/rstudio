@@ -185,7 +185,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    private void updateDescriptionImpl()
    {
-      String path = tbPythonInterpreter_.getText();
+      String path = tbPythonInterpreter_.getText().trim();
       
       // reset to default when empty
       if (StringUtil.isNullOrEmpty(path))
@@ -203,7 +203,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       }
       
       server_.pythonInterpreterInfo(
-            tbPythonInterpreter_.getText(),
+            path,
             new ServerRequestCallback<PythonInterpreter>()
             {
                @Override
@@ -362,14 +362,13 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       }
       
       // check if the interpreter appears to have been set by the user
-      boolean isSet =
+      boolean isValidInterpreterSet =
             interpreter_ != null &&
             interpreter_.isValid() &&
             !StringUtil.isNullOrEmpty(newValue);
       
-      // if the interpreter was set and changed from the prior value,
-      // update the requisite preferences
-      if (isSet && !StringUtil.equals(initialPythonPath_, newValue))
+      // if an interpreter was set, update to the new value
+      if (isValidInterpreterSet)
       {
          update.execute(interpreter_);
       }
