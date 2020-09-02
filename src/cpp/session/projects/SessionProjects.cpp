@@ -402,6 +402,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["python_type"] = config.pythonType;
    configJson["python_version"] = config.pythonVersion;
    configJson["python_path"] = config.pythonPath;
+   configJson["spelling_dictionary"] = config.spellingDictionary;
 
    return configJson;
 }
@@ -662,6 +663,12 @@ Error writeProjectConfig(const json::Object& configJson)
                             "python_version", config.pythonVersion,
                             "python_path", config.pythonPath);
    
+   if (error)
+      return error;
+
+   // read spelling options
+   error = json::readObject(configJson,
+                            "spelling_dictionary", config.spellingDictionary);
    if (error)
       return error;
 

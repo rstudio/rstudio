@@ -935,6 +935,13 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->pythonPath = it->second;
    }
 
+   // extract spelling fields
+   it = dcfFields.find("SpellingDictionary");
+   if (it != dcfFields.end())
+   {
+      pConfig->spellingDictionary = it->second;
+   }
+
    return Success();
 }
 
@@ -1193,6 +1200,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
             % config.pythonPath;
       
       contents.append(boost::str(pythonConfig));
+   }
+
+   // add spelling dictioanry if present
+   if (!config.spellingDictionary.empty())
+   {
+      boost::format fmt("\nSpellingDictionary: %1%\n");
+      contents.append(boost::str(fmt % config.spellingDictionary));
    }
    
 
