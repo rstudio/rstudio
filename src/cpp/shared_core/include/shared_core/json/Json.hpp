@@ -1790,7 +1790,7 @@ template <typename T>
 inline Value toJsonValue(const std::vector<T>& in_vector)
 {
    Array results;
-   for (const T& val : in_vector)
+   for (auto&& val : in_vector)
    {
       results.push_back(val);
    }

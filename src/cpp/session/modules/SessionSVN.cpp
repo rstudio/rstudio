@@ -419,7 +419,7 @@ Error parseXml(const std::string strData,
       pDoc->parse<0>(&((*pDataBuffer)[0]));
       return Success();
    }
-   catch (rapidxml::parse_error)
+   catch (rapidxml::parse_error&)
    {
       return systemError(boost::system::errc::protocol_error,
                          "Could not parse XML",
