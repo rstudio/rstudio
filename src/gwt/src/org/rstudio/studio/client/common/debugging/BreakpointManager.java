@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.debugging.model.BreakpointState;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -759,22 +760,16 @@ public class BreakpointManager
       // set previously
       for (FileFunction function: functions)
       {
+         // There's a possibility here that the breakpoints were  
+         // not successfully cleared, so we may be in a temporarily  
+         // confusing state, but no error message will be less 
+         // confusing. 
          server_.setFunctionBreakpoints(
                function.functionName,
                function.fileName,
                function.packageName,
                new ArrayList<String>(),
-               new ServerRequestCallback<Void>()
-               {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // There's a possibility here that the breakpoints were
-                     // not successfully cleared, so we may be in a temporarily
-                     // confusing state, but no error message will be less
-                     // confusing.
-                  }
-               });
+               new QuietServerRequestCallback<Void>());
       }
 
       server_.removeAllBreakpoints(new VoidServerRequestCallback());

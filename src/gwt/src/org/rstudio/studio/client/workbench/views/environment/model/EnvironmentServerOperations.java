@@ -77,4 +77,8 @@ public interface EnvironmentServerOperations
    
    void environmentSetLanguage(String language,
                                ServerRequestCallback<Void> requestCallback);
+   
+   void isFunctionMasked(String functionName,
+                         String packageName,
+                         ServerRequestCallback<Boolean> requestCallback);
 }

@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -170,16 +171,7 @@ public class ErrorManager
 
    private void setErrorManagementType(String type)
    {
-      setErrorManagementType(type,
-            new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-            // No action necessary--the server emits an event when the handler
-            // type changes
-         }
-      });
+      setErrorManagementType(type, new QuietServerRequestCallback<Void>());
    }
 
    private void syncHandlerCommandsCheckedState()
