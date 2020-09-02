@@ -112,26 +112,11 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
     match = capsuleFilter.match.exec(original);
   }
 
-  // make a second pass, replacing each match with its encoded body
+  // reset capsule filter match index
   capsuleFilter.match.lastIndex = 0;
-  match = capsuleFilter.match.exec(markdown);
-  while (match != null) {
-    const _match = match[0];
-    const p1 = match[1];
-    const p2 = match[2];
-    const p3 = match[3];
-    const p4 = match[4];
 
-    // if the capsuleFilter has a discard expression then check it; if
-    // discarded then move on to the next match
-    if (capsuleFilter.discard && !!_match.match(capsuleFilter.discard)) {
-      match = capsuleFilter.match.exec(markdown);
-      continue;
-    }
-
-    // extract matches
-    const extract = capsuleFilter.extract || defaultExtractor;
-    const { prefix, source, suffix } = extract(_match, p1, p2, p3, p4);
+  // replace all w/ source preservation capsules
+  return markdown.replace(capsuleFilter.match, (match: string, p1: string, p2: string, p3: string, p4: string) => {
 
     // read the original position of the match
     let position = 0;
@@ -139,6 +124,15 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
     if (originalPos) {
       position = originalPos;
     }
+
+    // if the capsuleFilter has a discard expression then check it
+    if (capsuleFilter.discard && !!match.match(capsuleFilter.discard)) {
+      return match;
+    }
+
+    // extract matches
+    const extract = capsuleFilter.extract || defaultExtractor;
+    const { prefix, source, suffix } = extract(match, p1, p2, p3, p4);
 
     // make the capsule
     const capsule: PandocBlockCapsule = {
@@ -167,29 +161,19 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
     // now base64 encode the entire record (so it can masquerade as a paragraph)
     const encodedRecord = base64Encode(record);
 
-    // create a capsule, which is:
+    // return capsule, which is:
     //   - a base64 encoded record surrounded with a sentinel value
     //   - enclosed in a filter specific envelope (used to influence pandoc parsing),
     //   - surrounded by the original prefix and suffix
-    const replacement =
+    return (
       prefix +
       capsuleFilter.enclose(
         `${kBlockCapsuleSentinel}${kValueDelimiter}${encodedRecord}${kValueDelimiter}${kBlockCapsuleSentinel}`,
         capsule,
       ) +
-      suffix;
-
-    // replace the whole match with the replacement text
-    markdown = markdown.substring(0, match.index) +
-      replacement +
-      markdown.substring(match.index + _match.length);
-
-    // move on to next match
-    match = capsuleFilter.match.exec(markdown);
-  }
-
-  // return markdown with capsules replaced
-  return markdown;
+      suffix
+    );
+  });
 }
 
 // block capsules can also end up not as block tokens, but rather as text within another
