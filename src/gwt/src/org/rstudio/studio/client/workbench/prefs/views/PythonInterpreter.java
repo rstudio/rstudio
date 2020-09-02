@@ -22,10 +22,15 @@ public class PythonInterpreter extends JavaScriptObject
    {
    }
    
-   public final native String getPath()          /*-{ return this["path"];        }-*/;
-   public final native String getType()          /*-{ return this["type"];        }-*/;
-   public final native String getVersion()       /*-{ return this["version"];     }-*/;
-   public final native String getDescription()   /*-{ return this["description"]; }-*/;
-   public final native boolean isValid()         /*-{ return this["valid"];       }-*/;
-   public final native String getInvalidReason() /*-{ return this["reason"];      }-*/;
+   public static final native PythonInterpreter create()
+   /*-{
+      return {};
+   }-*/;
+   
+   public final native String getPath()          /*-{ return this["path"]        || "";    }-*/;
+   public final native String getType()          /*-{ return this["type"]        || "";    }-*/;
+   public final native String getVersion()       /*-{ return this["version"]     || "";    }-*/;
+   public final native String getDescription()   /*-{ return this["description"] || "";    }-*/;
+   public final native boolean isValid()         /*-{ return this["valid"]       || false; }-*/;
+   public final native String getInvalidReason() /*-{ return this["reason"]      || "";    }-*/;
 }

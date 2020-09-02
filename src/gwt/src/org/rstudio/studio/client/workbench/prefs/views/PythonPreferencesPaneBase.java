@@ -14,9 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.InfoBar;
@@ -181,7 +184,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    private void updateDescriptionImpl()
    {
-      String path = tbPythonInterpreter_.getText();
+      String path = tbPythonInterpreter_.getText().trim();
       
       // reset to default when empty
       if (StringUtil.isNullOrEmpty(path))
@@ -199,7 +202,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       }
       
       server_.pythonInterpreterInfo(
-            tbPythonInterpreter_.getText(),
+            path,
             new ServerRequestCallback<PythonInterpreter>()
             {
                @Override
@@ -315,6 +318,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    protected void initialize(String pythonPath)
    {
+      initialPythonPath_ = pythonPath;
+      
       if (!StringUtil.isNullOrEmpty(pythonPath))
       {
          tbPythonInterpreter_.setText(pythonPath);
@@ -337,6 +342,59 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       });
    }
    
+   protected RestartRequirement onApply(boolean isProjectPrefs,
+                                        CommandWithArg<PythonInterpreter> update)
+   {
+      RestartRequirement requirement = new RestartRequirement();
+      
+      // read current Python path (normalize placeholder text if set)
+      String newValue = tbPythonInterpreter_.getText().trim();
+      if (StringUtil.equals(newValue, placeholderText_))
+         newValue = "";
+      
+      // for project preferences, use project-relative path to interpreter
+      if (isProjectPrefs)
+      {
+         FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
+         if (projDir.exists() && newValue.startsWith(projDir.getPath()))
+            newValue = newValue.substring(projDir.getLength() + 1);
+      }
+      
+      // check if the interpreter appears to have been set by the user
+      boolean isValidInterpreterSet =
+            interpreter_ != null &&
+            interpreter_.isValid() &&
+            !StringUtil.isNullOrEmpty(newValue);
+      
+      // if an interpreter was set, update to the new value
+      if (isValidInterpreterSet)
+      {
+         update.execute(interpreter_);
+      }
+      else
+      {
+         update.execute(PythonInterpreter.create());
+      }
+      
+      // restart the IDE if the python path has been changed
+      // (we'd prefer to just restart the session but that's not enough
+      // to refresh requisite project preferences, or so it seems)
+      if (!StringUtil.equals(initialPythonPath_, newValue))
+      {
+         if (isProjectPrefs)
+         {
+            requirement.setRestartRequired();
+         }
+         else
+         {
+            requirement.setSessionRestartRequired(true);
+         }
+      }
+      
+      return requirement;
+   }
+   
+   
    public interface Styles extends CssResource
    {
       String overrideLabel();
@@ -356,6 +414,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    protected final TextBoxWithButton tbPythonInterpreter_;
    protected final SimplePanel container_ = new SimplePanel();
    
+   protected String initialPythonPath_;
    protected PythonInterpreter interpreter_;
    
    protected boolean updatingDescription_;
