@@ -176,6 +176,16 @@ export function applyTheme(theme: EditorTheme) {
     .pm-default-theme .pm-background-color *::selection {
       background-color: ${defaults.selectionColor} !important;
     }
+    .pm-default-theme .pm-find-text,
+    .pm-default-theme .pm-list-item-selected,
+    .pm-default-theme .pm-grid-item-selected {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      box-shadow: 0 0 0 1px ${defaults.findTextBorderColor}; 
+      border-radius: 3px;
+    }
+    .pm-default-theme .pm-rstudio-button {
+      border-color: DarkGray !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }
@@ -225,6 +235,7 @@ export function applyTheme(theme: EditorTheme) {
       color: ${theme.markupTextColor} !important;
     }
     .pm-find-text,
+    .pm-list-item-selected,
     .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
       box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 

@@ -113,7 +113,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
     <div className='pm-citation-bibliography-picker-container' style={props.style}>
       <div className='pm-citation-bibliography-picker-label pm-text-color'>{props.bibliographyFiles.length > 0 ?
         props.ui.context.translateText('Add to bibliography:') :
-        props.ui.context.translateText('Create bibliography file:')
+        props.ui.context.translateText('Create bibliography:')
       }</div>
       {
         props.bibliographyFiles.length > 0 ?
@@ -121,16 +121,16 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
             {props.bibliographyFiles.map(file => (<option key={file.fullPath} value={file.fullPath}>{file.displayPath}</option>))}
           </SelectInput>) :
           (
-            <div>
+            <div className='pm-citation-bibliography-picker-create-controls'>
               <TextInput
                 width='100'
                 tabIndex={0}
                 className='pm-citation-bibliography-picker-textbox pm-block-border-color'
-                placeholder={props.ui.context.translateText('Bibligraphy File Name')}
+                placeholder={props.ui.context.translateText('Bibligraphy file name')}
                 value={createFileName}
                 onChange={onTextChange}
               />
-
+              <div className='pm-citation-bibliography-format-label pm-text-color'>{props.ui.context.translateText('Format:')}</div>
               <SelectInput
                 onChange={onTypeChange}
                 defaultValue={defaultBiblioType}>

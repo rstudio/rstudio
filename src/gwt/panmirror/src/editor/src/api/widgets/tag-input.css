@@ -8,6 +8,7 @@
 
 .pm-tag-input-placeholder {
   height: 27px;
+  margin-left: 2px;
   padding: 4px;
   display: flex;
   align-items: center;

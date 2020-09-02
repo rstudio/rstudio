@@ -227,7 +227,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           tagDeleted={deleteTag}
           tagChanged={tagEdited}
           ui={props.ui}
-          placeholder={props.ui.context.translateText('Selected Cite Keys')} />
+          placeholder={props.ui.context.translateText('Selected Citation Keys')} />
       </div>
       <div className='pm-cite-panel-select-bibliography'>
         <CitationBibliographyPicker
@@ -236,9 +236,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           ui={props.ui} />
 
         <DialogButtons
+          okLabel={props.ui.context.translateText('Insert')}
+          cancelLabel={props.ui.context.translateText('Cancel')}
           onOk={props.onOk}
-          onCancel={props.onCancel}
-          ui={props.ui} />
+          onCancel={props.onCancel} />
       </div>
     </div>
   );
