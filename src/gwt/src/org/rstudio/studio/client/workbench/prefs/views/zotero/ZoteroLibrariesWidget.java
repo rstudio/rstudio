@@ -43,16 +43,14 @@ public class ZoteroLibrariesWidget extends Composite
          false
       );
       selectedLibs_.addStyleName(RES.styles().librariesSelect());
+      panel.add(selectedLibs_);   
       
-      panel.add(selectedLibs_);
+      librariesLabel_ = new Label("Select libraries:");
+      DomUtils.ensureHasId(librariesLabel_.getElement());
+      librariesLabel_.addStyleName(RES.styles().librariesLabel());
+      panel.add(librariesLabel_);
       
-      
-      Label librariesLabel = new Label("Select libraries:");
-      DomUtils.ensureHasId(librariesLabel.getElement());
-      librariesLabel.addStyleName(RES.styles().librariesLabel());
-      panel.add(librariesLabel);
-      
-      libraries_ = new CheckBoxList(librariesLabel);
+      libraries_ = new CheckBoxList(librariesLabel_);
       libraries_.addStyleName(RES.styles().librariesList());
       libraries_.addItem(new CheckBox("My Library"));
       libraries_.addItem(new CheckBox("Group Library"));
@@ -60,9 +58,20 @@ public class ZoteroLibrariesWidget extends Composite
       panel.add(libraries_);
    
       Roles.getListboxRole().setAriaLabelledbyProperty(libraries_.getElement(),
-            Id.of(librariesLabel.getElement()));
+            Id.of(librariesLabel_.getElement()));
+      
+      manageUI();
+      selectedLibs_.addChangeHandler((value) -> {
+         manageUI();
+      });
         
       initWidget(panel);
+   }
+   
+   private void manageUI()
+   {
+      librariesLabel_.setVisible(selectedLibs_.getValue().equals(SELECTED_LIBRARIES));
+      libraries_.setVisible(librariesLabel_.isVisible());
    }
    
    private static ZoteroResources RES = ZoteroResources.INSTANCE;
@@ -71,6 +80,7 @@ public class ZoteroLibrariesWidget extends Composite
    private final static String ALL_LIBRARIES = "all";
    private final static String SELECTED_LIBRARIES = "selected";
    
+   private final Label librariesLabel_;
    private final SelectWidget selectedLibs_;
    private final CheckBoxList libraries_;
 }

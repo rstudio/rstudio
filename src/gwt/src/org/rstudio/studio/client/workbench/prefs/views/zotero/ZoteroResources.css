@@ -2,8 +2,8 @@
 
 @external gwt-Label;
 
-.connection gwt-Label {
-   margin-left: 0 !important;
+.connection .gwt-Label {
+   margin-left: 2px !important;
 }
 
 .apiKey {
