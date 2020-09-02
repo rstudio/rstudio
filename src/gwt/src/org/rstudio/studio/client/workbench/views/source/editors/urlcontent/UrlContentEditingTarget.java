@@ -41,8 +41,6 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;

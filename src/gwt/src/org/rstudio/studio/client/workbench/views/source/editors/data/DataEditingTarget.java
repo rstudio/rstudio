@@ -18,7 +18,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -27,7 +26,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;

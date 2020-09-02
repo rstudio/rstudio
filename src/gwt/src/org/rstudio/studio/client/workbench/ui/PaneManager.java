@@ -693,6 +693,7 @@ public class PaneManager
       return "";
    }
 
+   @SuppressWarnings("rawtypes")
    private void focusWindow(String name)
    {
       if (StringUtil.isNullOrEmpty(name))

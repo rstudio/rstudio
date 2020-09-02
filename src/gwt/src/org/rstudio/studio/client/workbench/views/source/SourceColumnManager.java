@@ -1488,7 +1488,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      ArrayList<SourceDocument> moveEditors = new ArrayList<>();
       SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
       if (num < columnList_.size())
       {
