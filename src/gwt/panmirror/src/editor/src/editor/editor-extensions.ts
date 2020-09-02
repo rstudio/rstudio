@@ -105,6 +105,7 @@ import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
 import nodeShortcodeBlock from '../nodes/shortcode_block';
+import nodeHtmlPreserve from '../nodes/html_preserve';
 
 // extension/plugin factories
 import { acePlugins } from '../optional/ace/ace';
@@ -168,6 +169,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     nodeLineBlock,
     nodeRawBlock,
     nodeShortcodeBlock,
+    nodeHtmlPreserve,
 
     // marks
     markStrikeout,

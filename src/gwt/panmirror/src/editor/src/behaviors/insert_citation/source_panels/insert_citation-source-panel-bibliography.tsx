@@ -74,6 +74,14 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   React.useEffect(debounce(() => {
     async function loadData() {
       if (props.selectedNode) {
+
+        // Ignore other nodes
+        if (props.selectedNode.type !== kLocalBiliographyProviderKey &&
+          props.selectedNode.type !== kZoteroProviderKey &&
+          props.selectedNode.type !== kAllLocalSourcesRootNodeType) {
+          return;
+        }
+
         const selectedNode = props.selectedNode;
 
         // The node could be the root node, no provider
@@ -90,7 +98,6 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
       }
     }
     loadData();
-
     // load the right panel
   }, 50), [props.selectedNode, searchTerm]);
 

@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -29,21 +28,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
@@ -53,20 +47,17 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 public class SpellingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public SpellingPreferencesPane(GlobalDisplay globalDisplay,
-                                  PreferencesDialogResources res,
+   public SpellingPreferencesPane(PreferencesDialogResources res,
                                   SpellingService spellingService,
                                   WorkbenchListManager workbenchListManager,
                                   UserPrefs prefs)
    {
-      globalDisplay_ = globalDisplay;
       res_ = res;
-      spellingService_ = spellingService;
       uiPrefs_ = prefs;
       
       add(headerLabel("Dictionaries"));
 
-      languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
+      languageWidget_ = new SpellingLanguageSelectWidget(spellingService);
       spaced(languageWidget_);
       add(languageWidget_);
 
@@ -104,56 +95,7 @@ public class SpellingPreferencesPane extends PreferencesPane
          realtimeSpellcheckingCheckbox_.setEnabled(canRealtimeCheck);
          realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtimeCheck ? 1.0 : 0.6);
       });
-   }
-
-
-   private CommandWithArg<String> onInstallLanguages_ = new CommandWithArg<String>()
-   {
-      @Override
-      public void execute(String progress)
-      {
-         // show progress
-         final ProgressIndicator indicator = getProgressIndicator();
-         indicator.onProgress(progress);
-
-         // save current selection for restoring
-         final String currentLang = languageWidget_.getSelectedLanguage();
-
-         spellingService_.installAllDictionaries(
-            new ServerRequestCallback<SpellingPrefsContext> () {
-
-               @Override
-               public void onResponseReceived(SpellingPrefsContext context)
-               {
-                  indicator.onCompleted();
-                  languageWidget_.setLanguages(
-                                       context.getAllLanguagesInstalled(),
-                                       context.getAvailableLanguages());
-                  languageWidget_.setSelectedLanguage(currentLang);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  JSONString userMessage = error.getClientInfo().isString();
-                  if (userMessage != null)
-                  {
-                     indicator.onCompleted();
-                     globalDisplay_.showErrorMessage(
-                                             "Error Downloading Dictionaries",
-                                              userMessage.stringValue());
-                  }
-                  else
-                  {
-                     indicator.onError(error.getUserMessage());
-                  }
-               }
-
-         });
-      }
-
-   };
-   
+   }   
    
    private void addUserDictionariesEditor(WorkbenchListManager workbenchListManager)
    {
@@ -216,6 +158,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs rPrefs)
    {
       SpellingPrefsContext context = uiPrefs_.spellingPrefsContext().getValue();
+      languageWidget_.setProgressIndicator(getProgressIndicator());
       languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
                                    context.getAvailableLanguages());
 
@@ -258,9 +201,7 @@ public class SpellingPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
 
-   private final GlobalDisplay globalDisplay_;
    private final UserPrefs uiPrefs_;
-   private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
    private final SpellingCustomDictionariesWidget customDictsWidget_;
    private final Label blacklistWarning_;

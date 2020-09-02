@@ -37,6 +37,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -383,14 +384,9 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void changeContextDepth(int newDepth)
    {
-      server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error opening call frame", error.getUserMessage());
-         }
-      });
+      server_.setContextDepth(
+            newDepth,
+            new SimpleRequestCallback<Void>("Error opening call frame"));
    }
 
    public boolean clientStateDirty()

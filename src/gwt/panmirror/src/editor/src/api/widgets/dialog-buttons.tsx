@@ -23,38 +23,26 @@ import './dialog-buttons.css';
 
 
 export interface DialogButtonsProps extends WidgetProps {
+  okLabel: string;
+  cancelLabel: string;
   onOk: () => void;
   onCancel: () => void;
-  ui: EditorUI;
 }
 
 export const DialogButtons: React.FC<DialogButtonsProps> = props => {
-  const className = ['pm-link', 'pm-link-text-color'].concat(props.classes || []).join(' ');
-
-  const style: React.CSSProperties = {
-    ...props.style,
-    height: '28px',
-    width: '80px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontFamily: 'Lucida Sans, DejaVu Sans, Lucida Grande, Segoe UI, Verdana, Helvetica, sans-serif, serif',
-  };
-
   return (
     <div className='pm-dialog-buttons-panel' style={props.style}>
       <TextButton
-        title={props.ui.context.translateText('OK')}
-        classes={['pm-default-theme', 'pm-dialog-buttons-button']}
+        title={props.okLabel}
+        classes={['pm-default-theme', 'pm-dialog-buttons-button', 'pm-rstudio-button']}
         onClick={props.onOk}
         style={{
-          fontWeight: 600,
-          opacity: 0.8,
-          marginRight: '6px',
+          fontWeight: 600
         }} />
 
       <TextButton
-        title={props.ui.context.translateText('Cancel')}
-        classes={['pm-default-theme', 'pm-dialog-buttons-button']}
+        title={props.cancelLabel}
+        classes={['pm-default-theme', 'pm-dialog-buttons-button', 'pm-rstudio-button']}
         onClick={props.onCancel}
       />
     </div>

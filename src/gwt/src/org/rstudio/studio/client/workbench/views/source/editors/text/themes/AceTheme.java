@@ -57,6 +57,10 @@ public class AceTheme extends UserStateAccessor.Theme
       return this.isDark;
    }-*/;
    
+   public native final Boolean isSolarizedLight() /*-{
+      return this.url.indexOf('solarized_light.rstheme') !== -1;
+   }-*/;
+   
    public final Boolean isDefaultTheme()
    {
       return Pattern.create("^theme/default/.+?\\.rstheme$").test(getUrl());

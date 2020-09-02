@@ -62,9 +62,12 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
+  // Wheher this item is selected
+  const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
+
   return (
     <div>
-      <div className='pm-insert-citation-source-panel-item' style={props.style}>
+      <div className={`pm-insert-citation-source-panel-item ${selected ? 'pm-list-item-selected' : ''}`} style={props.style}>
         <div className='pm-insert-citation-source-panel-item-container'>
           <div className='pm-insert-citation-source-panel-item-type'>
             {entry.adornmentImage ? <img className='pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
@@ -79,7 +82,6 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           </div>
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton
-              classes={citationListData.showSelection && props.index === citationListData.selectedIndex ? ['pm-focus-outline-color', 'pm-insert-citation-source-panel-item-button-selected'] : []}
               tabIndex={citationListData.preventFocus ? -1 : 0}
               style={{ width: '70px' }}
               title={alreadyAdded ? 'Remove' : 'Add'}
@@ -88,9 +90,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           </div>
         </div>
         {
-          citationListData.showSeparator ?
-            <div className='pm-insert-citation-source-panel-item-separator pm-block-border-color' /> :
-            undefined
+
+          <div className={`pm-block-border-color  ${citationListData.showSeparator && !selected ? 'pm-insert-citation-source-panel-item-separator' : 'pm-insert-citation-source-panel-item-noseparator'}`} />
         }
       </div>
     </div>
