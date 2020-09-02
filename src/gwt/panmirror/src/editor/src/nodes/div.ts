@@ -18,6 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
 import { wrapIn, lift } from 'prosemirror-commands';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 import { ExtensionContext } from '../api/extension';
 import {
@@ -113,7 +114,12 @@ const extension = (context: ExtensionContext) => {
     ],
 
     baseKeys: () => {
-      return [{ key: BaseKey.Enter, command: divInputRuleEnter() }];
+      return [
+        { key: BaseKey.Enter, command: divInputRuleEnter() },
+        { key: BaseKey.ArrowLeft, command: arrowHandler('left') },
+        { key: BaseKey.ArrowUp, command: arrowHandler('up') },
+      ];
+
     },
 
     commands: () => {
@@ -133,6 +139,31 @@ const extension = (context: ExtensionContext) => {
     },
   };
 };
+
+function arrowHandler(_dir: 'up' | 'left') {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+    // only applies within divs
+    const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
+    if (!div) {
+      return false;
+    }
+
+    // if we are at the top of the document then create a gap cursor
+    const $pos = state.doc.resolve(div.pos);
+    if (!$pos.nodeBefore && $pos.depth === 1) {
+      if (dispatch) {
+        const gapCursor = new GapCursor($pos, $pos);
+        const tr = state.tr;
+        tr.setSelection(gapCursor);
+        dispatch(tr);
+      }
+      return true;
+    }
+
+    return false;
+  };
+}
 
 function divCommand(ui: EditorUI, allowEdit: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
