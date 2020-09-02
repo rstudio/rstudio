@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import java.util.ArrayList;
 
@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogResources;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;

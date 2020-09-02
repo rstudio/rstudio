@@ -46,6 +46,9 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroApiKeyWidget;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroConnectionWidget;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroLibrariesWidget;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
@@ -340,6 +343,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
      
       zoteroApiKey_ = new ZoteroApiKeyWidget(zoteroServer, "240px");
       zoteroApiKey_.getElement().getStyle().setMarginLeft(4, Unit.PX);
+      spaced(zoteroApiKey_);
       zoteroApiKey_.setKey(state_.zoteroApiKey().getValue());
       citations.add(zoteroApiKey_);
       
@@ -364,8 +368,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          "Use Better BibTeX for citation keys and BibTeX export",
          prefs_.zoteroUseBetterBibtex(),
          false);
-      lessSpaced(zoteroUseBetterBibtex_);
+      spaced(zoteroUseBetterBibtex_);
       citations.add(zoteroUseBetterBibtex_);
+      
+      
+      ZoteroLibrariesWidget zoteroLibs = new ZoteroLibrariesWidget();
+      citations.add(zoteroLibs);
        
       // kickoff query for detected zotero data directory
       zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {

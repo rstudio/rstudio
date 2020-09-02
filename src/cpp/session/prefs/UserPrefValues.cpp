@@ -2585,6 +2585,19 @@ core::Error UserPrefValues::setZoteroConnectionType(std::string val)
 }
 
 /**
+ * Zotero libraries to insert citations from.
+ */
+core::json::Array UserPrefValues::zoteroLibraries()
+{
+   return readPref<core::json::Array>("zotero_libraries");
+}
+
+core::Error UserPrefValues::setZoteroLibraries(core::json::Array val)
+{
+   return writePref("zotero_libraries", val);
+}
+
+/**
  * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
  */
 bool UserPrefValues::zoteroUseBetterBibtex()
@@ -2940,6 +2953,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroConnectionType,
+      kZoteroLibraries,
       kZoteroUseBetterBibtex,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,

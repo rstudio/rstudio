@@ -346,6 +346,7 @@ namespace prefs {
 #define kZoteroConnectionType "zotero_connection_type"
 #define kZoteroConnectionTypeLocal "local"
 #define kZoteroConnectionTypeWeb "web"
+#define kZoteroLibraries "zotero_libraries"
 #define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
@@ -1561,6 +1562,12 @@ public:
     */
    std::string zoteroConnectionType();
    core::Error setZoteroConnectionType(std::string val);
+
+   /**
+    * Zotero libraries to insert citations from.
+    */
+   core::json::Array zoteroLibraries();
+   core::Error setZoteroLibraries(core::json::Array val);
 
    /**
     * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
