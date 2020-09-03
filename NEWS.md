@@ -61,6 +61,7 @@
 * Project Sharing now works on Launcher sessions.
 * Remote session connections over HTTPS can now load certificates from the Apple Keychain. (Pro #1828)
 * Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
+* Update embedded nginx to v1.19.2 (Pro #1719)
 
 ### Bugfixes
 
