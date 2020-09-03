@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.spelling;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -36,10 +37,12 @@ import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
@@ -416,8 +419,27 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      final String language = userPrefs_.spellingDictionaryLanguage().getValue();
+      String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
+      // validate that the language is available
+      SpellingPrefsContext context = userPrefs_.spellingPrefsContext().getValue();
+      JsArray<SpellingLanguage> availableLanguages = context.getAvailableLanguages();
+      boolean isValid = false;
+      for (int i=0; i<availableLanguages.length(); i++)
+      {
+         if (language.equals(availableLanguages.get(i).getId()))
+         {
+            isValid = true;
+            break;
+         }
+      }
+      
+      // if the language isn't available then fall back to en_US
+      if (!isValid)
+      {
+         language = "en_US";
+      }
+      
       if (!userPrefs_.realTimeSpellchecking().getValue() ||
            typoLoaded_ && loadedDict_.equals(language))
          return;
