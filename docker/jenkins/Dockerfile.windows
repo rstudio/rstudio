@@ -27,9 +27,9 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
 # install NSIS - we do not do this via Chocolatey because the hosting URL of the NSIS
 # executable has gone defunct
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
-  Invoke-WebRequest $('https://rstudio-buildtools.s3.amazonaws.com/nsis-3.05-setup.exe') -OutFile 'C:\nsis-3.05-setup.exe' -UseBasicParsing ;`
-  Start-Process c:\nsis-3.05-setup.exe -Wait -ArgumentList '/S' ;`
-  Remove-Item c:\nsis-3.05-setup.exe -Force
+  Invoke-WebRequest $('https://rstudio-buildtools.s3.amazonaws.com/nsis-3.06.1-setup.exe') -OutFile 'C:\nsis-3.06.1-setup.exe' -UseBasicParsing ;`
+  Start-Process c:\nsis-3.06.1-setup.exe -Wait -ArgumentList '/S' ;`
+  Remove-Item c:\nsis-3.06.1-setup.exe -Force
   
 RUN choco install -y visualstudio2017buildtools --version 15.8.2.0; `
   choco install -y visualstudio2017-workload-vctools --version 1.3.0
