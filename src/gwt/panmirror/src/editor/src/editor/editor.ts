@@ -704,8 +704,9 @@ export class Editor {
   }
 
   public applyTheme(theme: EditorTheme) {
-    // set global dark mode class
+    // set global mode classes
     this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
+    this.parent.classList.toggle('pm-solarized-mode', !!theme.solarizedMode);
     // apply the rest of the theme
     applyTheme(theme);
   }

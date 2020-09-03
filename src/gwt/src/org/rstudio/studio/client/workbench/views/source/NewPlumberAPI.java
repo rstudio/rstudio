@@ -55,7 +55,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    // extends JavaScriptObject for easy serialization (as client state)
    public static class Result extends JavaScriptObject
    {
-      @SuppressWarnings("unused")
       protected Result() {}
 
       public static Result create()

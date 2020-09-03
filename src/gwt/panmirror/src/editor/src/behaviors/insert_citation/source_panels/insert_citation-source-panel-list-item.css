@@ -1,6 +1,9 @@
 .pm-insert-citation-source-panel-item {
   display: flex;
   flex-direction: column;
+  width: calc(100% - 2px) !important;
+  margin-left: 1px;
+  margin-right: 1px;
 }
 
 .pm-insert-citation-source-panel-item-type {
@@ -51,6 +54,12 @@
   border-bottom: solid 1px;
   height: 1px;
 }
+
+.pm-insert-citation-source-panel-item-noseparator {
+  margin-left: 50px;
+  height: 2px;
+}
+
 
 .pm-insert-citation-source-panel-item-icon {
   border: solid 1px;

@@ -305,6 +305,58 @@ private:
    std::queue<T> queue_;
 };
 
+template <typename T>
+class ThreadsafeSet
+{
+public:
+   bool contains(const T& value) const
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         return set_.find(value) != set_.end();
+      }
+      END_LOCK_MUTEX
+
+      // This will only be hit if we had a problem acquiring the lock, which likely means we have bigger problems.
+      return false;
+   }
+
+   void insert(const T& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         set_.insert(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void insert(T&& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         set_.insert(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void remove(const T& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto itr = set_.find(value);
+         if (itr != set_.end())
+            set_.erase(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+private:
+   // We need to supply the default std::set template argument values because there's a compiler bug pre MSVC 2019 16.6:
+   // https://developercommunity.visualstudio.com/content/problem/910615/c2976-during-function-template-argument-deduction.html
+   std::set<T, std::less<T>, std::allocator<T> > set_;
+   mutable boost::mutex mutex_;
+};
+
 void safeLaunchThread(boost::function<void()> threadMain,
                       boost::thread* pThread = nullptr);
       

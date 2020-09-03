@@ -264,7 +264,7 @@ void Request::addCookie(const std::string& name, const std::string& value)
 {
    cookies_.push_back(std::make_pair(name, value));
    std::vector<std::string> cookies;
-   for (const auto cookie: cookies_)
+   for (const auto& cookie : cookies_)
    {
       cookies.push_back(cookie.first + "=" + cookie.second);
    }

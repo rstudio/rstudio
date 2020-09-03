@@ -414,7 +414,7 @@ std::vector<Error> validate(const ProjectTemplateDescription& description,
    if (description.title.empty())
       result.push_back(errors::missingField("Title", resourcePath, location));
    
-   for (const ProjectTemplateWidgetDescription widget : description.widgets)
+   for (const ProjectTemplateWidgetDescription& widget : description.widgets)
    {
       std::vector<Error> widgetErrors =
             validateWidget(widget, resourcePath, location);

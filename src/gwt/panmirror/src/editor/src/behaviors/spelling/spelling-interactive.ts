@@ -74,7 +74,8 @@ export function getSpellingDoc(
 
     replaceSelection: (text: string) => {
       const tr = view.state.tr;
-      tr.replaceSelectionWith(view.state.schema.text(text), true);
+      const selectionMarks = tr.selection.$from.marks();
+      tr.replaceSelectionWith(view.state.schema.text(text, selectionMarks), false);
       view.dispatch(tr);
     },
 

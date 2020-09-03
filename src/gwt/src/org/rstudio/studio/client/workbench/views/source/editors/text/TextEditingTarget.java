@@ -3079,7 +3079,7 @@ public class TextEditingTarget implements
       // if visual mode is not active and we are doing canonical saves
       // then we need to apply any changes implied by canonical transformation
       // of our source
-      else if (canonical)
+      else if (canonical && visualMode_.canWriteCanonical())
       {
          String code = docDisplay_.getCode();
          visualMode_.getCanonicalChanges(code, (changes) -> {

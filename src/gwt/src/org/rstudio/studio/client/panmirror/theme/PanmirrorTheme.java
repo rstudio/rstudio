@@ -21,6 +21,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorTheme
 {
    public boolean darkMode;
+   public boolean solarizedMode;
    public String cursorColor;
    public String selectionColor;
    public String nodeSelectionColor;

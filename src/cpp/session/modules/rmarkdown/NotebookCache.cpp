@@ -73,7 +73,7 @@ void cleanUnusedCaches()
    }
 
    std::string nbCtxId = notebookCtxId();
-   for (const FilePath cache : caches)
+   for (const FilePath& cache : caches)
    {
       // make sure this looks like a notebook cache
       if (!cache.isDirectory())
@@ -121,7 +121,7 @@ void cleanUnusedCaches()
          continue;
       }
 
-      for (const FilePath context : contexts)
+      for (const FilePath& context : contexts)
       {
          // skip if not our context or the saved context
          if (context.getFilename() != kSavedCtx &&
@@ -431,7 +431,7 @@ void onDocSaved(FilePath path)
       LOG_ERROR(error);
       return;
    }
-   for (const FilePath source : children)
+   for (const FilePath& source : children)
    {
       // compute the target path 
       FilePath target = saved.completePath(source.getFilename());

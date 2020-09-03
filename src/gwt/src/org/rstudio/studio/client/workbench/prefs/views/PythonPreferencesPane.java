@@ -63,36 +63,21 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
-      RestartRequirement requirement = new RestartRequirement();
-      
-      String oldValue = prefs.pythonPath().getGlobalValue();
-      String newValue = tbPythonInterpreter_.getText();
-      
-      if (StringUtil.equals(newValue, placeholderText_))
-         newValue = "";
-      
-      boolean isSet =
-            interpreter_ != null &&
-            interpreter_.isValid() &&
-            !StringUtil.isNullOrEmpty(newValue);
-      
-      if (isSet && !StringUtil.equals(oldValue, newValue))
+      return onApply(false, (PythonInterpreter interpreter) ->
       {
-         prefs.pythonType().setGlobalValue(interpreter_.getType());
-         prefs.pythonVersion().setGlobalValue(interpreter_.getVersion());
-         prefs.pythonPath().setGlobalValue(interpreter_.getPath());
-      }
-      else
-      {
-         prefs.pythonType().removeGlobalValue(true);
-         prefs.pythonVersion().removeGlobalValue(true);
-         prefs.pythonPath().removeGlobalValue(true);
-      }
-      
-      if (!StringUtil.equals(oldValue, newValue))
-         requirement.setRestartRequired();
-      
-      return requirement;
+         if (interpreter.isValid())
+         {
+            prefs.pythonType().setGlobalValue(interpreter.getType());
+            prefs.pythonVersion().setGlobalValue(interpreter.getVersion());
+            prefs.pythonPath().setGlobalValue(interpreter.getPath());
+         }
+         else
+         {
+            prefs.pythonType().removeGlobalValue(true);
+            prefs.pythonVersion().removeGlobalValue(true);
+            prefs.pythonPath().removeGlobalValue(true);
+         }
+      });
    }
    
    private final Label overrideLabel_;

@@ -181,7 +181,7 @@ public:
       const std::string& before)
    {
       // find the document queue corresponding to this unit
-      for (const boost::shared_ptr<NotebookDocQueue> queue : queue_)
+      for (const boost::shared_ptr<NotebookDocQueue>& queue : queue_)
       {
          if (queue->docId() == pUnit->docId())
          {
