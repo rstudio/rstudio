@@ -50,13 +50,13 @@ public class PanmirrorZoteroServer
       });
    }
 
-   public Promise<JavaScriptObject> getCollections(String file, 
+   public Promise<JavaScriptObject> getCollections(String file, JsArrayString collections,
                                                    JsArray<PanmirrorZoteroCollectionSpec> cached,
                                                    boolean useCache)
    {
       return new Promise<JavaScriptObject>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-               server_.zoteroGetCollections(file, cached, useCache,
+               server_.zoteroGetCollections(file, collections, cached, useCache,
                      new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Loading Collections...", 2000));
             });
    }
