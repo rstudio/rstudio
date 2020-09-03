@@ -47,7 +47,6 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       
       ChunkOutputWidget outputWidget = getOutputWidget();
       setupOutputWidget();
-      outputWidget_.getElement().getStyle().clearHeight();
       
       // Ensure we adopt the background color from Prosemirror
       outputWidget_.getElement().addClassName("pm-background-color");
@@ -171,9 +170,16 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       return chunk_.getScope();
    }
    
+   /**
+    * Prepare output widget for hosting in visual mode
+    */
    private void setupOutputWidget()
    {
+      // Apply the CSS class styling the output widget for the embedded editor
       outputWidget_.setEmbeddedStyle(true);
+
+      // Clear any applied height (chunk height is natural in visual mode)
+      outputWidget_.getElement().getStyle().clearHeight();
    }
    
    private final VisualModeChunk chunk_;

@@ -69,6 +69,9 @@ public class VisualModeChunk
       target_ = target;
       active_ = false;
 
+      // Create an element to host all of the chunk output.
+      outputHost_ = Document.get().createDivElement();
+
       ChunkOutputUi output = null; 
       if (index > 0)
       {
@@ -120,11 +123,8 @@ public class VisualModeChunk
       execHost_.getStyle().setProperty("top", "3px");
       host_.appendChild(execHost_);
       
-      // Create an element to host all of the chunk output.
-      outputHost_ = Document.get().createDivElement();
       if (output != null && widget_ == null)
       {
-         widget_ = output.getOutputWidget();
          setOutputWidget(output.getOutputWidget());
       }
       host_.appendChild(outputHost_);

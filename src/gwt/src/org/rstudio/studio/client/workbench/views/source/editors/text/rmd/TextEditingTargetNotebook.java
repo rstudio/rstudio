@@ -1134,27 +1134,31 @@ public class TextEditingTargetNotebook
          lastEnd_ = null;
       }
       
-      for (ChunkOutputUi output: outputs().values())
+      // In code view, sync notebook output widgets to editor state
+      if (!editingTarget_.isVisualEditorActive())
       {
-         Scope scope = output.getScope();
+         for (ChunkOutputUi output: codeOutputs_.values())
+         {
+            Scope scope = output.getScope();
 
-         // if the scope associated with this output no longer looks like a 
-         // valid chunk scope, or is considerably out of sync with the widget,
-         // remove the widget
-         if (scope == null || !scope.isChunk() ||
-             scope.getBodyStart() == null || scope.getEnd() == null ||
-             scope.getEnd().getRow() - output.getCurrentRow() > 1)
-         {
-            events_.fireEvent(new ChunkChangeEvent(
-                  docUpdateSentinel_.getId(), output.getChunkId(), "", 0, 
-                  ChunkChangeEvent.CHANGE_REMOVE));
-         }
-         
-         // sync label if it has changed
-         if (scope != null &&
-             !StringUtil.equals(scope.getChunkLabel(), output.getChunkLabel()))
-         {
-            output.setChunkLabel(scope.getChunkLabel());
+            // if the scope associated with this output no longer looks like a 
+            // valid chunk scope, or is considerably out of sync with the widget,
+            // remove the widget
+            if (scope == null || !scope.isChunk() ||
+                scope.getBodyStart() == null || scope.getEnd() == null ||
+                scope.getEnd().getRow() - output.getCurrentRow() > 1)
+            {
+               events_.fireEvent(new ChunkChangeEvent(
+                     docUpdateSentinel_.getId(), output.getChunkId(), "", 0, 
+                     ChunkChangeEvent.CHANGE_REMOVE));
+            }
+            
+            // sync label if it has changed
+            if (scope != null &&
+                !StringUtil.equals(scope.getChunkLabel(), output.getChunkLabel()))
+            {
+               output.setChunkLabel(scope.getChunkLabel());
+            }
          }
       }
    }
@@ -1510,12 +1514,23 @@ public class TextEditingTargetNotebook
             // Detach code output
             output.detach();
 
-            // Already a output for code view, reattach
+            // Already a output for visual mode, reattach
             visualOutputs_.get(output.getChunkId()).reattach();
+            continue;
          }
          
-         // If there's no visual output yet, we will create one later in
-         // migrateOutput (when the NodeView hosting the chunk is created)
+         // No visual output yet; find a chunk to attach an output to
+         VisualModeChunk chunk = editingTarget_.getVisualMode().getChunkAtRow(
+               output.getCurrentRow());
+         if (chunk != null)
+         {
+            output.detach();
+            visualOutputs_.put(output.getChunkId(), 
+                  new ChunkOutputPanmirrorUi((ChunkOutputCodeUi)output, editingTarget_.getVisualMode(), 
+                        chunk));
+         }
+         // If there's no visual output or chunk yet, we will create one later
+         // in migrateOutput (when the NodeView hosting the chunk is created)
       }
    }
    
