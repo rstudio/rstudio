@@ -6245,16 +6245,14 @@ public class RemoteServer implements Server
 
    @Override
    public void zoteroGetCollections(String file,
-                                    JsArrayString collections,
                                     JsArray<PanmirrorZoteroCollectionSpec> cached,
                                     boolean useCache,
                                     ServerRequestCallback<JavaScriptObject> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(file)));
-      params.set(1, new JSONArray(collections));
-      params.set(2, new JSONArray(cached));
-      params.set(3,  JSONBoolean.getInstance(useCache));
+      params.set(1, new JSONArray(cached));
+      params.set(2,  JSONBoolean.getInstance(useCache));
       sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
    }
 

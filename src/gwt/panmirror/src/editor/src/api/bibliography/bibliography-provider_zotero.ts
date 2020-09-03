@@ -43,7 +43,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
     let hasUpdates = false;
-    if (zoteroEnabled(docPath, yamlBlocks)) {
+    if (zoteroEnabled(yamlBlocks)) {
 
       try {
 
@@ -52,7 +52,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
-        const useCache = this.warning === undefined || this.warning.length === 0;
+        // const useCache = this.warning === undefined || this.warning.length === 0;
+        const useCache = false;
 
         // Read collection specs.
         const allCollectionSpecsResult = await this.server.getCollectionSpecs();
@@ -60,8 +61,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
           this.allCollectionSpecs = allCollectionSpecsResult.message;
         }
 
-        // TODO: remove collection names from server call
-        const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
+        const result = await this.server.getCollections(docPath, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {
 
@@ -154,12 +154,12 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
 
 // The Zotero header allows the following:
-// zotero: true | false                           Globally enables or disables the zotero integration
-//                                                If true, uses all collections. If false uses none.
+
+// zotero: true | false                         
 //
 // By default, zotero integration is enabled. Add this header to disable integration
 //
-function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
+function zoteroEnabled(parsedYamls: ParsedYaml[]): boolean | undefined {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
   );
@@ -169,20 +169,14 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
     // So replicate this and use the last biblography node that we find
     const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
     const zoteroConfig = zoteroParsedYaml.yaml.zotero;
-
-    if (typeof zoteroConfig === 'boolean') {
-      return zoteroConfig;
+    if (zoteroConfig !== undefined) {
+      return !!zoteroConfig;
+    } else {
+      return true;
     }
 
-    // There is a zotero header that isn't boolean, 
-    // It is enabled
-    return true;
-
-    // any doc with a path could have project level zotero
-  } else if (docPath !== null) {
-    return true;
   } else {
-    return false;
+    return true;
   }
 }
 

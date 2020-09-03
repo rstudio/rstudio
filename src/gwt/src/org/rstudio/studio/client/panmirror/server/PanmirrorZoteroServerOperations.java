@@ -33,7 +33,6 @@ public interface PanmirrorZoteroServerOperations
    void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback);
    
    void zoteroGetCollections(String file,
-                             JsArrayString collections,
                              JsArray<PanmirrorZoteroCollectionSpec> cached, 
                              boolean useCache,
                              ServerRequestCallback<JavaScriptObject> callback);

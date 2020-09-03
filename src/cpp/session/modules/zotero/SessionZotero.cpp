@@ -22,6 +22,8 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/Preferences.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "ZoteroCollections.hpp"
@@ -197,23 +199,15 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
 
    // extract params
    std::string file;
-   json::Value collectionsJsonValue;
-   json::Array collectionsJson, cachedJson;
+   json::Array cachedJson;
    bool useCache;
-   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson, &useCache);
+   Error error = json::readParams(request.params, &file, &cachedJson, &useCache);
    if (error)
    {
       json::setErrorResponse(error, &response);
       cont(Success(), &response);
       return;
    }
-
-   // determine whether this is a request for all collections.
-   bool allCollections = collectionsJsonValue.isNull();
-
-   // if it isn't then cast to collectionsJson
-   if (!allCollections)
-      collectionsJson = collectionsJsonValue.getArray();
 
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
@@ -226,38 +220,38 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
-    // determine collections to request
+   // if it's a project, check for global bookdown disable of zotero
    std::vector<std::string> collections;
-
-   // explicit request
-   if (collectionsJson.getSize() > 0)
+   if (isProjectFile)
    {
-      collectionsJson.toVectorString(collections);
-   }
-   // based on project
-   else if (!allCollections && isProjectFile)
-   {
-      // look for special logical values
+      // check for global disable of zotero for bookdown
       const std::string kLogicalPrefix = "LOGICAL:";
       std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+
+      // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
       if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
       {
          std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
-         allCollections = value == "TRUE";
+         if (value != "TRUE")
+         {
+            ZoteroCollections noCollections;
+            handleGetCollections(Success(), noCollections, "", cont);
+            return;
+         }
       }
-      else
-      {
-         collections = bookdownCollections;
-      }
+
+      // read project/global pref
+      session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
    }
 
-   // return empty array if no collections were requested and we aren't getting allCollections
-   if (collections.size() == 0 && !allCollections)
+   // read global pref (ignore project b/c this file isn't in the project)
+   else
    {
-      ZoteroCollections noCollections;
-      handleGetCollections(Success(), noCollections, "", cont);
-      return;
+      auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
+      if (libsPref.has_value() && libsPref.get().isArray())
+         libsPref->getArray().toVectorString(collections);
    }
+
 
    // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;
@@ -274,8 +268,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // create handler for request
    auto handler =  boost::bind(handleGetCollections, _1, _2, _3, cont);
 
-   // allCollections is a request for the library
-   if (allCollections)
+   // if there are no explicit collections defined then this is a request for all
+   if (collections.size() == 0)
    {
       // we just need the kMyLibrary cache spec
       ZoteroCollectionSpec librarySpec(kMyLibrary);
