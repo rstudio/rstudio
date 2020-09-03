@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.SelectWidget;
 
@@ -22,7 +21,6 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ZoteroLibrariesWidget extends Composite
@@ -32,11 +30,9 @@ public class ZoteroLibrariesWidget extends Composite
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().librariesWidget());
       
-      
-      
       selectedLibs_ = new SelectWidget(
          "Use libraries:", 
-         new String[] { "(All Libraries)", "Selected Libraries" },
+         new String[] { "All Libraries", "Selected Libraries" },
          new String[] { ALL_LIBRARIES, SELECTED_LIBRARIES },
          false,
          true,
@@ -44,13 +40,8 @@ public class ZoteroLibrariesWidget extends Composite
       );
       selectedLibs_.addStyleName(RES.styles().librariesSelect());
       panel.add(selectedLibs_);   
-      
-      librariesLabel_ = new Label("Select libraries:");
-      DomUtils.ensureHasId(librariesLabel_.getElement());
-      librariesLabel_.addStyleName(RES.styles().librariesLabel());
-      panel.add(librariesLabel_);
-      
-      libraries_ = new CheckBoxList(librariesLabel_);
+        
+      libraries_ = new CheckBoxList(selectedLibs_.getLabel());
       libraries_.addStyleName(RES.styles().librariesList());
       libraries_.addItem(new CheckBox("My Library"));
       libraries_.addItem(new CheckBox("Group Library"));
@@ -58,7 +49,7 @@ public class ZoteroLibrariesWidget extends Composite
       panel.add(libraries_);
    
       Roles.getListboxRole().setAriaLabelledbyProperty(libraries_.getElement(),
-            Id.of(librariesLabel_.getElement()));
+            Id.of(selectedLibs_.getLabel().getElement()));
       
       manageUI();
       selectedLibs_.addChangeHandler((value) -> {
@@ -70,8 +61,7 @@ public class ZoteroLibrariesWidget extends Composite
    
    private void manageUI()
    {
-      librariesLabel_.setVisible(selectedLibs_.getValue().equals(SELECTED_LIBRARIES));
-      libraries_.setVisible(librariesLabel_.isVisible());
+      libraries_.setVisible(selectedLibs_.getValue().equals(SELECTED_LIBRARIES));
    }
    
    private static ZoteroResources RES = ZoteroResources.INSTANCE;
@@ -80,7 +70,6 @@ public class ZoteroLibrariesWidget extends Composite
    private final static String ALL_LIBRARIES = "all";
    private final static String SELECTED_LIBRARIES = "selected";
    
-   private final Label librariesLabel_;
    private final SelectWidget selectedLibs_;
    private final CheckBoxList libraries_;
 }

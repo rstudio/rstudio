@@ -29,6 +29,9 @@
    height: 140px;
 }
 
+.librariesSelect {
+	margin-bottom: 8px;
+}
 
 .librariesSelect .gwt-Label {
 	margin-left: 0;

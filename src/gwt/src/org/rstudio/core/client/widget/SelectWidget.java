@@ -164,6 +164,11 @@ public class SelectWidget extends Composite
    {
       return listBox_.addChangeHandler(handler);
    }
+   
+   public FormLabel getLabel()
+   {
+      return label_;
+   }
 
    public ListBox getListBox()
    {
