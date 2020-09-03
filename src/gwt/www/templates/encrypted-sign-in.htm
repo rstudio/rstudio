@@ -22,8 +22,14 @@
 <link rel="shortcut icon" href="images/favicon.ico" />
 
 <script>
+var activeSignIn = false;
 function verifyMe()
 {
+   activeSignIn = true;
+   if (document.getElementById('signinbutton').disabled)
+   {
+      return false;
+   }
    if(document.getElementById('username').value=='')
    {
       document.getElementById('username').focus();
@@ -265,9 +271,13 @@ if (displayProp !== "none")
 // skipping the need of a sign in attempt in all other tabs.
 var responseURL = '';
 setInterval(function() {
+  if (activeSignIn)
+    return;
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "./", true);
   xhr.onreadystatechange = function() {
+    if (activeSignIn)
+      return;
     try {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
