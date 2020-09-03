@@ -10,4 +10,5 @@
 - Fix an issue where `auth-none` would not load sessions (#7575)
 - Fix session crashing on Windows desktop (#7637, #7652, #7665)
 - Fix an issue where launching many sessions simultaneously could cause a segfault (#7670)
-- Fix an issue where invalid logging statements were not properly skipped in the Admin log page, causing a crash of the rserver-admin process (#1766)
+- Fix an issue where invalid logging statements were not properly skipped in the Admin log page, causing a crash of the rserver-admin process (Pro #1766)
+- Fix an issue where sessions running on Slurm compute nodes with names longer than 20 characters could not be entered (Pro #1906)
