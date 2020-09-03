@@ -36,8 +36,10 @@ namespace modules {
 namespace rstudioapi {
 
 namespace {
+
 module_context::WaitForMethodFunction s_waitForShowDialog;
 module_context::WaitForMethodFunction s_waitForOpenFileDialog;
+module_context::WaitForMethodFunction s_waitForRStudioApiResponse;
 
 SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
 {
@@ -48,9 +50,6 @@ SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
    module_context::enqueClientEvent(event);
    return R_NilValue;
 }
-
-} // end anonymous namespace
-
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
@@ -234,21 +233,70 @@ SEXP rs_systemUsername()
    return r::sexp::create(core::system::username(), &protect);
 }
 
+SEXP rs_sendApiRequest(SEXP requestSEXP)
+{
+   bool sync = false;
+   Error error = r::sexp::getNamedListElement(requestSEXP, "sync", &sync);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   // build client event
+   ClientEvent event(client_events::kRStudioApiRequest, requestSEXP);
+      
+   // the async version is simple -- just fire the event
+   if (sync)
+   {
+      // send request
+      json::JsonRpcRequest request;
+      if (!s_waitForRStudioApiResponse(&request, event))
+      {
+         r::exec::warning("Failed to execute API request");
+         return R_NilValue;
+      }
+      
+      // read response
+      json::Object responseJson;
+      Error error = json::readParam(request.params, 0, &responseJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      
+      r::sexp::Protect protect;
+      return r::sexp::create(responseJson, &protect);
+   }
+   else
+   {
+      module_context::enqueClientEvent(event);
+      r::sexp::Protect protect;
+      return r::sexp::create(true, &protect);
+   }
+}
+
+} // end anonymous namespace
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
-   // register waitForMethod handler
-   s_waitForShowDialog     = registerWaitForMethod("rstudioapi_show_dialog_completed");
-   s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
+   // register waitForMethod handlers
+   s_waitForShowDialog         = registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForOpenFileDialog     = registerWaitForMethod("open_file_dialog_completed");
+   s_waitForRStudioApiResponse = registerWaitForMethod("rstudioapi_response");
 
+   // register R callables
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
    RS_REGISTER_CALL_METHOD(rs_userIdentity);
    RS_REGISTER_CALL_METHOD(rs_systemUsername);
+   RS_REGISTER_CALL_METHOD(rs_sendApiRequest);
    
    using boost::bind;
    ExecBlock initBlock;

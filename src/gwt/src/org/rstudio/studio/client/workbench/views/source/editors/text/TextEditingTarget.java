@@ -7740,6 +7740,24 @@ public class TextEditingTarget implements
       visualMode_.onUserSwitchingToVisualMode();
    }
    
+   public void withEditorSelection(CommandWithArg<String> callback)
+   {
+      // TODO
+      if (visualMode_.isActivated())
+      {
+         ensureVisualModeActive(() ->
+         {
+            callback.execute(visualMode_.getSelectionValue());
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() ->
+         {
+            callback.execute(docDisplay_.getSelectionValue());
+         });
+      }
+   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

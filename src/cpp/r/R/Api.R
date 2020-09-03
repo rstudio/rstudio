@@ -1,3 +1,18 @@
+#
+# API.R
+#
+# Copyright (C) 2020 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
 .rs.addApiFunction("restartSession", function(command = NULL) {
    command <- as.character(command)
    invisible(.rs.restartR(command))
@@ -868,4 +883,50 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # stop a running tutorial
 .rs.addApiFunction("tutorialStop", function(name, package) {
    .rs.tutorial.stopTutorial(name, package)
+})
+
+# API for sending + receiving arbitrary requests from rstudioapi
+# added in RStudio v1.4; not used univerally by older APIs but useful
+# as a framework for any new functions that might be added
+
+# list of API events (keep in sync with RStudioApiRequestEvent.java)
+.rs.setVar("api.events", list(
+   TYPE_UNKNOWN              = 0L,
+   TYPE_GET_EDITOR_SELECTION = 1L,
+   TYPE_SET_EDITOR_SELECTION = 2L
+))
+
+.rs.addApiFunction("createRequest", function(type, data, sync)
+{
+   list(type = type, data = data, sync = sync)
+})
+
+.rs.addApiFunction("sendRequest", function(request)
+{
+   .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("selectionGet", function()
+{
+   
+   request <- .rs.api.createRequest(
+      type = .rs.api.events$TYPE_GET_EDITOR_SELECTION,
+      data = NULL,
+      sync = TRUE
+   )
+   
+   .rs.api.sendRequest(request)
+   
+})
+
+.rs.addApiFunction("selectionSet", function(text = NULL) {
+   
+   request <- .rs.apiRequest(
+      type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
+      data = list(text = paste(text, collapse = "\n")),
+      sync = TRUE
+   )
+   
+   .rs.api.sendRequest(request)
+   
 })

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -101,6 +102,7 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -140,6 +142,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
@@ -217,7 +220,8 @@ public class Source implements InsertSourceHandler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateSourceHistoryEvent.Handler
+                               MouseNavigateSourceHistoryEvent.Handler,
+                               GetEditorSelectionEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -2834,6 +2838,22 @@ public class Source implements InsertSourceHandler,
          docDisplay.replaceRange(range, text);
       }
       docDisplay.focus();
+   }
+   
+   @Override
+   public void onGetEditorSelection(GetEditorSelectionEvent event)
+   {
+      // get active editor (if any)
+      EditingTarget target = columnManager_.getActiveEditor();
+      if (target == null || !(target instanceof TextEditingTarget))
+      {
+         server_.rstudioApiResponse(
+               JavaScriptObject.createObject(),
+               new VoidServerRequestCallback());
+         return;
+      }
+      
+      TextEditingTarget editor = (TextEditingTarget) target;
    }
 
    private class StatFileEntry

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -51,6 +52,7 @@ import org.rstudio.studio.client.common.rstudioapi.AskSecretManager;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
@@ -77,7 +79,9 @@ import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
@@ -100,7 +104,8 @@ public class Workbench implements BusyEvent.Handler,
                                   ShowPageViewerEvent.Handler,
                                   TutorialLaunchEvent.Handler,
                                   DeferredInitCompletedEvent.Handler,
-                                  ReportShortcutBindingEvent.Handler
+                                  ReportShortcutBindingEvent.Handler,
+                                  RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
 
@@ -120,6 +125,7 @@ public class Workbench implements BusyEvent.Handler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
+                    SourceWindowManager sourceWindowManager,
                     UserInterfaceHighlighter highlighter,       // force gin to create
                     ChooseFile chooseFile,                      // force gin to create
                     AskPassManager askPass,                     // force gin to create
@@ -151,6 +157,7 @@ public class Workbench implements BusyEvent.Handler,
       pGitState_ = pGitState;
       newSession_ = newSession;
       serverOperations_ = serverOperations;
+      sourceWindowManager_ = sourceWindowManager;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
 
@@ -172,6 +179,7 @@ public class Workbench implements BusyEvent.Handler,
       eventBus.addHandler(TutorialLaunchEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
       eventBus.addHandler(ReportShortcutBindingEvent.TYPE, this);
+      eventBus.addHandler(RStudioApiRequestEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(500)
@@ -776,6 +784,33 @@ public class Workbench implements BusyEvent.Handler,
       else
          globalDisplay_.showWarningBar(false, event.getCommand() + " : " + command.summarize());
    }
+   
+   @Override
+   public void onRStudioApiRequest(RStudioApiRequestEvent event)
+   {
+      RStudioApiRequestEvent.Data eventData = event.getData();
+      
+      int type = eventData.getType();
+      JavaScriptObject data = eventData.getData();
+      
+      if (type == RStudioApiRequestEvent.TYPE_UNKNOWN)
+      {
+         assert false : "Unknown request";
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
+      {
+         sourceWindowManager_.fireEventToLastFocusedWindow(
+               new GetEditorSelectionEvent(data.cast()));
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
+      {
+         
+      }
+      else
+      {
+         assert false : "Unknown request of type '" + type + "'";
+      }
+   }
 
    private final Server server_;
    private final WorkbenchServerOperations serverOperations_;
@@ -793,6 +828,7 @@ public class Workbench implements BusyEvent.Handler,
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
+   private final SourceWindowManager sourceWindowManager_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private final WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
