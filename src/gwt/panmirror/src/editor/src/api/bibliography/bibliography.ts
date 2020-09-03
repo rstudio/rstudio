@@ -121,15 +121,15 @@ export class BibliographyManager {
 
   public allSources(): BibliographySource[] {
     if (this.sources && this.isWritable()) {
-      return uniqby(this.sources, source => source.id);
+      return this.sources;
     } else {
-      return uniqby(this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [], source => source.id);
+      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
     }
     return [];
   }
 
   public sourcesForProvider(providerKey: string): BibliographySource[] {
-    return uniqby(this.allSources().filter(item => item.providerKey === providerKey), source => source.id);
+    return this.allSources().filter(item => item.providerKey === providerKey);
   }
 
   public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySource[] {
@@ -269,8 +269,7 @@ export class BibliographyManager {
 
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
-
-      return uniqby(filteredItems, (source: BibliographySource) => source.id);
+      return filteredItems;
 
     } else {
       return [];

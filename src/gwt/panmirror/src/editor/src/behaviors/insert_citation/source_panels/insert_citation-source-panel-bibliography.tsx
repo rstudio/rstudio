@@ -32,6 +32,7 @@ import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citatio
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 import './insert_citation-source-panel-bibliography.css';
+import uniqBy from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -93,7 +94,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kZoteroProviderKey &&
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
-        setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
+        setItemData(uniqBy(bibMgr.search(searchTerm, providerKey, collectionKey), source => source.id));
         setSelectedIndex(0);
       }
     }
@@ -290,6 +291,8 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
     // A node could already be there if we had to insert a 'placeholder' 
     // node to contain the node's children before we encountered the node.
     const currentNode = treeMap[container.key] || { key: container.key, name: container.name, image: folderImage, children: [], type };
+
+    // TODO: Need to sort 'My Library' to the top of the Zotero node
 
     // Always set its name to be sure we fill this in when we encounter it
     currentNode.name = container.name;
