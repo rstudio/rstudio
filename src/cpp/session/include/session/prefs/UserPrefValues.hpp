@@ -344,6 +344,8 @@ namespace prefs {
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
 #define kZoteroConnectionType "zotero_connection_type"
+#define kZoteroConnectionTypeAuto "auto"
+#define kZoteroConnectionTypeNone "none"
 #define kZoteroConnectionTypeLocal "local"
 #define kZoteroConnectionTypeWeb "web"
 #define kZoteroLibraries "zotero_libraries"

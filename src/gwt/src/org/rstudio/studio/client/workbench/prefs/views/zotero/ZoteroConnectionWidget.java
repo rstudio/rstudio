@@ -37,11 +37,13 @@ public class ZoteroConnectionWidget extends Composite
       HorizontalPanel panel = new HorizontalPanel();
       
       ArrayList<String> options = new ArrayList<String>();
+      options.add("(None)");
       if (!webOnly())
          options.add("Local");
       options.add("Web");
       
       ArrayList<String> values = new ArrayList<String>();
+      values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE);
       if (!webOnly())
          values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL);
       values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB);

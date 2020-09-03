@@ -651,7 +651,11 @@ DetectedLocalZoteroConfig detectLocalZoteroConfig()
       }
    }
 
-   // return the data dir
+   // no data directory if it doesn't exist
+   if (!config.dataDirectory.exists())
+      config.dataDirectory = FilePath();
+
+   // return the config
    return config;
 }
 

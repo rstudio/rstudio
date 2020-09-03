@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -377,8 +378,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       citations.add(zoteroUseBetterBibtex_);
        
       // kickoff query for detected zotero data directory
-      zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {
-
+      zoteroServer.zoteroDetectLocalConfig(new ServerRequestCallback<JsObject>() {    
+         
          @Override
          public void onResponseReceived(JsObject response)
          {
@@ -387,7 +388,27 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             if (zoteroDataDir_.getText().isEmpty())
                zoteroDataDir_.setText(zoteroLocalConfig_.dataDirectory);
             
-            manageZoteroUI();
+            // resolve 'auto'
+            String connectionType = prefs.zoteroConnectionType().getValue();
+            zoteroIsAuto_ = connectionType.equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
+            if (zoteroIsAuto_)
+            {
+               if (!zoteroDataDir_.getText().isEmpty())
+                  connectionType = UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL;
+               else
+                  connectionType = UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE;
+            }
+            zoteroConnection_.setType(connectionType);
+            
+            // manage ui. if the user ever interact with the control then 'auto' is gone
+            manageZoteroUI(true);
+            zoteroConnection_.addChangeHandler((event) -> { 
+               zoteroIsAuto_ = false;
+               // connection type change invalidates libraries (as they were
+               // retrived from the previous connection)
+               zoteroLibs_.setLibraries(JsArrayString.createArray().cast());
+               manageZoteroUI(false); 
+            });
          }
          
          @Override
@@ -438,21 +459,18 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       visualModeWrap_.setValue(prefs.visualMarkdownEditingWrap().getGlobalValue());
       visualModeReferences_.setValue(prefs.visualMarkdownEditingReferencesLocation().getGlobalValue());
-      
-      zoteroConnection_.setType(prefs.zoteroConnectionType().getValue());
-      manageZoteroUI();
-      zoteroConnection_.addChangeHandler((event) -> { manageZoteroUI(); });
-      
+        
       zoteroApiKey_.setProgressIndicator(getProgressIndicator());
       
       zoteroLibs_.setLibraries(prefs.zoteroLibraries().getValue());
  
    }
    
-   private void manageZoteroUI()
+   private void manageZoteroUI(boolean showLibs)
    {
       zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB));
       zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
+      zoteroLibs_.setVisible(showLibs && !zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE));
       zoteroUseBetterBibtex_.setVisible(zoteroDataDir_.isVisible() && zoteroLocalConfig_.betterBibtex);
    }
 
@@ -485,7 +503,24 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                knitWorkingDir_.getValue());
       }
       
-      prefs_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
+      if (zoteroIsAuto_)
+      {
+         prefs_.zoteroConnectionType().setGlobalValue(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
+      }
+      else if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL) &&
+               zoteroDataDir_.getText().isEmpty())
+      {
+         // not a valid set
+      }
+      else if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB) &&
+               zoteroApiKey_.getKey().isEmpty())
+      {
+         // not a valid set
+      }
+      else
+      {
+         prefs_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
+      }
       
       prefs_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
       
@@ -523,4 +558,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final ZoteroLibrariesWidget zoteroLibs_;
    private final CheckBox zoteroUseBetterBibtex_;
    private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
+   private boolean zoteroIsAuto_ = false;
 }

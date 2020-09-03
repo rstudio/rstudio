@@ -84,28 +84,33 @@ public class ZoteroLibrariesWidget extends Composite
          libraries_.addItem(chkLibrary);
       }
       
-      // query for additional libraries
-      server_.zoteroGetCollectionSpecs(new SimpleRequestCallback<JavaScriptObject>() {
-         @Override
-         public void onResponseReceived(JavaScriptObject response)
-         {
-            PanmirrorZoteroResult result = response.cast();
-            if (result.getStatus().equals("ok"))
-            {
-               JsArray<PanmirrorZoteroCollectionSpec> specs = result.getMessage().cast();
-               for (int i = 0; i<specs.length(); i++)
+      // query for additional libraries if we haven't already
+      if (!queriedForLibs_)
+      {
+         queriedForLibs_ = true;
+         
+         server_.zoteroGetCollectionSpecs(new SimpleRequestCallback<JavaScriptObject>() {
+            @Override
+            public void onResponseReceived(JavaScriptObject response)
+            {     
+               PanmirrorZoteroResult result = response.cast();
+               if (result.getStatus().equals("ok"))
                {
-                  String name = specs.get(i).getName();
-                  if (!selectedLibraries.contains(name))
+                  JsArray<PanmirrorZoteroCollectionSpec> specs = result.getMessage().cast();
+                  for (int i = 0; i<specs.length(); i++)
                   {
-                     CheckBox chkLibrary = new CheckBox(name);
-                     libraries_.addItem(chkLibrary);
+                     String name = specs.get(i).getName();
+                     if (!selectedLibraries.contains(name))
+                     {
+                        CheckBox chkLibrary = new CheckBox(name);
+                        libraries_.addItem(chkLibrary);
+                     }
                   }
                }
+              
             }
-           
-         }
-      });
+         });
+      }
    }
    
    public JsArrayString getLibraries()
@@ -138,4 +143,6 @@ public class ZoteroLibrariesWidget extends Composite
    private final CheckBoxList libraries_;
    
    private final PanmirrorZoteroServerOperations server_;
+   
+   private boolean queriedForLibs_ = false;
 }

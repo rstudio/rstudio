@@ -2795,12 +2795,16 @@ public class UserPrefsAccessor extends Prefs
          "Zotero connection type", 
          "Zotero connection type (local or web)", 
          new String[] {
+            ZOTERO_CONNECTION_TYPE_AUTO,
+            ZOTERO_CONNECTION_TYPE_NONE,
             ZOTERO_CONNECTION_TYPE_LOCAL,
             ZOTERO_CONNECTION_TYPE_WEB
          },
-         "local");
+         "auto");
    }
 
+   public final static String ZOTERO_CONNECTION_TYPE_AUTO = "auto";
+   public final static String ZOTERO_CONNECTION_TYPE_NONE = "none";
    public final static String ZOTERO_CONNECTION_TYPE_LOCAL = "local";
    public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
 

@@ -264,27 +264,28 @@ struct Connection
 
 Connection zoteroConnection()
 {
-   // determine the zotero connection type (deafult to local)
+   // use local connection if available for 'auto'
    std::string type = prefs::userPrefs().zoteroConnectionType();
-   if (type.empty())
+   if ((type.empty() || type == kZoteroConnectionTypeAuto) && localZoteroAvailable())
        type = kZoteroConnectionTypeLocal;
 
-   // force it to web if local is not available in this config
-   if (!localZoteroAvailable())
-      type = kZoteroConnectionTypeWeb;
+   // return empty connection if it's none or auto (as auto would have already been resolved)
+   if (type == kZoteroConnectionTypeAuto || type == kZoteroConnectionTypeNone)
+   {
+      return Connection();
+   }
 
    // initialize context
    std::string context;
    if (type == kZoteroConnectionTypeLocal)
    {
       FilePath localDataDir = zoteroDataDirectory();
-      if (localDataDir.exists())
+      if (!localDataDir.isEmpty())
       {
-         context = localDataDir.getAbsolutePath();
-      }
-      else
-      {
-         LOG_ERROR(core::fileNotFoundError(localDataDir, ERROR_LOCATION));
+         if (localDataDir.exists())
+            context = localDataDir.getAbsolutePath();
+         else
+            LOG_ERROR(core::fileNotFoundError(localDataDir, ERROR_LOCATION));
       }
    }
    else

@@ -1299,8 +1299,8 @@
         },
         "zotero_connection_type": {
             "type": "string",
-            "enum": ["local", "web"],
-            "default": "local",
+            "enum": ["auto", "none", "local", "web"],
+            "default": "auto",
             "title": "Zotero connection type",
             "description": "Zotero connection type (local or web)"
         },
