@@ -307,7 +307,8 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
             exec: () => {
               const tr = view.state.tr;
               tr.setSelection(TextSelection.create(tr.doc, from, to));
-              tr.replaceSelectionWith(schema.text(suggestion), true);
+              const marks = tr.selection.$from.marks();
+              tr.replaceSelectionWith(schema.text(suggestion, marks), false);
               setTextSelection(from + suggestion.length)(tr);
               view.dispatch(tr);
               view.focus();

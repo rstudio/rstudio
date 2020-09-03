@@ -21,6 +21,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -38,6 +39,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       add(headerLabel("Display"));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Different color for error or message output (requires restart)", prefs_.highlightConsoleErrors()));
+      add(checkboxPref("Limit console display to a subset of total content (requires restart)", prefs_.limitVisibleConsole()));
       NumericValueWidget limitLengthPref =
          numericPref("Limit output line length to:", prefs_.consoleLineLengthLimit());
       add(nudgeRightPlus(limitLengthPref));
@@ -90,6 +92,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    {
       consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
+      initialLimitVisibleConsole_ = prefs.limitVisibleConsole().getValue();
    }
 
    @Override
@@ -103,6 +106,14 @@ public class ConsolePreferencesPane extends PreferencesPane
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
          restartRequirement.setRestartRequired();
       }
+      if (!restartRequirement.getDesktopRestartRequired() && !restartRequirement.getUiReloadRequired())
+      {
+         if (prefs_.limitVisibleConsole().getValue() != initialLimitVisibleConsole_)
+         {
+            initialLimitVisibleConsole_ = prefs_.limitVisibleConsole().getValue();
+            restartRequirement.setRestartRequired();
+         }
+      }
       return restartRequirement;
    }
 
@@ -113,6 +124,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    }
 
    private boolean initialHighlightConsoleErrors_;
+   private boolean initialLimitVisibleConsole_;
    private final SelectWidget consoleColorMode_;
 
    // Injected
