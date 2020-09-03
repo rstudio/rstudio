@@ -876,7 +876,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void showDataItem(DataItem data)
    {
-      columnList_.forEach((column) -> {
+      for (SourceColumn column : columnList_)
+      {
          for (EditingTarget target : column.getEditors())
          {
             String path = target.getPath();
@@ -889,7 +890,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
          }
-      });
+      }
 
       ensureVisible(true);
       server_.newDocument(
