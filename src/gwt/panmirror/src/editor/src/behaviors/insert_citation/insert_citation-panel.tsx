@@ -34,6 +34,7 @@ import { CitationBibliographyPicker } from "./insert_citation-bibliography-picke
 
 import './insert_citation-panel.css';
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
+import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
@@ -95,7 +96,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       // Load the panels
       const allPanels = [
         bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager),
-        doiSourcePanel(props.ui)
+        doiSourcePanel(props.ui),
+        crossrefSourcePanel(props.ui)
       ];
       setProviderPanels(allPanels);
 
@@ -209,8 +211,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             nodeSelected={nodeSelected}
           />
         </div>
-
-        <div className='pm-cite-panel-cite-selection-items pm-block-border-color pm-background-color'>
+        <div className='pm-cite-panel-cite-selection-items'>
           {panelToDisplay}
         </div>
       </div>

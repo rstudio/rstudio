@@ -16,15 +16,13 @@
 
 import React from "react";
 
-import debounce from "lodash.debounce";
-
 import { EditorUI } from "../../../api/ui";
 import { BibliographySource } from "../../../api/bibliography/bibliography";
 import { suggestCiteId } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 
 import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-import { CitationSourceSearchPanel } from "./insert_citation-source-panel-search";
+import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
@@ -45,49 +43,62 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
 export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => {
   const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = React.useState<string>('');
 
-  React.useEffect(debounce(() => {
-    async function loadData() {
-      if (props.selectedNode) {
-        if (searchTerm) {
-          const works = await props.server.crossref.works(searchTerm);
-          const bibSources = works.items.map(item => {
-            const sanitizedItem = sanitizeForCiteproc(item as unknown as CSL);
-            const source = {
-              ...sanitizedItem,
-              id: suggestCiteId(props.bibliographyManager.allSources().map(src => src.id), sanitizedItem),
-              providerKey: 'crossref',
-              collectionKeys: [],
-            };
-            return source;
-          });
-          setItemData(bibSources);
-        } else {
-          setItemData([]);
-        }
+  React.useEffect(() => {
+    let mounted = true;
+    const performSearch = async () => {
+      if (mounted) {
+        setLoading(true);
       }
+      const works = await props.server.crossref.works(searchTerm);
+
+      // Get the list of ids already in the bibliography
+      const existingIds = props.bibliographyManager.allSources().map(src => src.id);
+
+      const bibSources = works.items.map(item => {
+        const sanitizedItem = sanitizeForCiteproc(item as unknown as CSL);
+        const suggestedId = suggestCiteId(existingIds, sanitizedItem);
+
+        // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+        existingIds.push(suggestedId);
+        const source = {
+          ...sanitizedItem,
+          id: suggestedId,
+          providerKey: 'crossref',
+          collectionKeys: [],
+        };
+        return source;
+      });
+      if (mounted) {
+        setItemData(bibSources);
+        setLoading(false);
+      }
+    };
+    if (searchTerm.length > 0) {
+      performSearch();
     }
-    loadData();
+    return () => { mounted = false; };
 
-    // load the right panel
-  }, 250), [searchTerm]);
+  }, [searchTerm]);
 
-  // Search the user search terms
-  const searchChanged = (term: string) => {
-    setSearchTerm(term);
+  const doSearch = (search: string) => {
+    setSearchTerm(search);
   };
 
   return (
-    <CitationSourceSearchPanel
+    <CitationSourceLatentSearchPanel
       height={props.height}
       itemData={itemData}
-      selectedNode={props.selectedNode}
       sourcesToAdd={props.sourcesToAdd}
-      searchTermChanged={searchChanged}
+      doSearch={doSearch}
       addSource={props.addSource}
       removeSource={props.removeSource}
       confirm={props.confirm}
+      loading={loading}
+      defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
+      placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
       ui={props.ui}
     />
   );

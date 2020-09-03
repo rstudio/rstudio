@@ -1,5 +1,5 @@
 /*
- * insert_citation-source-panel-search.tsx
+ * insert_citation-source-panel-list.tsx
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -17,67 +17,33 @@ import React from "react";
 import { FixedSizeList } from "react-window";
 
 import { EditorUI } from "../../../api/ui";
-import { TextInput } from "../../../api/widgets/text";
 import { BibliographySource } from "../../../api/bibliography/bibliography";
 import { WidgetProps } from "../../../api/widgets/react";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
-import './insert_citation-source-panel-search.css';
+import './insert_citation-source-panel-list.css';
 
-export interface CitationSourceSearchPanelProps extends WidgetProps {
+export interface CitationSourceListProps extends WidgetProps {
+  height: number;
   itemData: BibliographySource[];
   sourcesToAdd: BibliographySource[];
-  height: number;
-  selectedNode?: NavigationTreeNode;
+  noResultsText: string;
   addSource: (source: BibliographySource) => void;
   removeSource: (source: BibliographySource) => void;
-  searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
 }
 
-export const CitationSourceSearchPanel: React.FC<CitationSourceSearchPanelProps> = props => {
-
+export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>((props: CitationSourceListProps, ref) => {
   const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
   const [focused, setFocused] = React.useState<boolean>(false);
   const fixedList = React.useRef<FixedSizeList>(null);
-  const listContainer = React.useRef<HTMLDivElement>(null);
-
-  // Search the user search terms
-  const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value;
-    props.searchTermChanged(search);
-  };
 
   // Whenever selection changed, ensure that we are scrolled to that item
   React.useLayoutEffect(() => {
     fixedList.current?.scrollToItem(selectedIndex);
   }, [selectedIndex]);
-
-  // Perform first load tasks
-  const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    if (searchBoxHeight) {
-      setListHeight(props.height - searchBoxHeight);
-    }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
-    }
-  }, []);
-
-  React.useLayoutEffect(() => {
-    if (searchBoxRef.current) {
-      searchBoxRef.current.value = '';
-    }
-  }, [props.selectedNode]);
 
   // Reset the index whenever the data changes
   React.useEffect(() => {
@@ -139,15 +105,6 @@ export const CitationSourceSearchPanel: React.FC<CitationSourceSearchPanelProps>
     }
   };
 
-  // If the user arrows down in the search text box, advance to the list of items
-  const handleTextKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        listContainer.current?.focus();
-        break;
-    }
-  };
-
   // Focus / Blur are used to track whether to show selection highlighting
   const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(true);
@@ -157,50 +114,41 @@ export const CitationSourceSearchPanel: React.FC<CitationSourceSearchPanelProps>
     setFocused(false);
   };
 
-  return (
-    <div style={props.style} className='pm-insert-citation-panel-search'>
-      <div className='pm-insert-citation-search-panel-textbox-container'>
-        <TextInput
-          width='100%'
-          iconAdornment={props.ui.images.search}
-          tabIndex={0}
-          className='pm-insert-citation-panel-search-textbox pm-block-border-color'
-          placeholder={props.ui.context.translateText('Search for citation')}
-          onKeyDown={handleTextKeyDown}
-          onChange={searchChanged}
-          ref={searchBoxRef}
-        />
 
-      </div>
-      {props.itemData.length === 0 ?
-        (<div className='pm-insert-citation-panel-search-noresults' style={{ height: listHeight + 'px' }}>
-          <div className='pm-insert-citation-panel-search-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
-        </div>) :
-        (
-          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={listContainer}>
-            <FixedSizeList
-              height={listHeight}
-              width='100%'
-              itemCount={props.itemData.length}
-              itemSize={itemHeight}
-              itemData={{
-                selectedIndex,
-                allSources: props.itemData,
-                sourcesToAdd: props.sourcesToAdd,
-                addSource: props.addSource,
-                removeSource: props.removeSource,
-                ui: props.ui,
-                showSeparator: true,
-                showSelection: focused,
-                preventFocus: true
-              }}
-              ref={fixedList}
-            >
-              {CitationSourcePanelListItem}
-            </FixedSizeList>
-          </div>
-        )}
-    </div>);
-};
+
+  const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
+
+  return (
+    props.itemData.length === 0 ?
+      (<div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+        <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.noResultsText}</div>
+      </div >) :
+      (
+        <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
+          <FixedSizeList
+            height={props.height}
+            width='100%'
+            itemCount={props.itemData.length}
+            itemSize={itemHeight}
+            itemData={{
+              selectedIndex,
+              allSources: props.itemData,
+              sourcesToAdd: props.sourcesToAdd,
+              addSource: props.addSource,
+              removeSource: props.removeSource,
+              ui: props.ui,
+              showSeparator: true,
+              showSelection: focused,
+              preventFocus: true
+            }}
+            ref={fixedList}
+          >
+            {CitationSourcePanelListItem}
+          </FixedSizeList>
+        </div>
+      )
+  );
+});
+
 
 

@@ -91,7 +91,7 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
 
   // This field list was create speculatively, so may contain fields that do not require
   // sanitization (or may omit fields that require it). 
-  const sanitizeProperties = ['ISSN', 'ISBN', 'subject', 'archive', 'original-title', 'short-title', 'subtitle', 'container-title', 'short-container-title'];
+  const sanitizeProperties = ['ISSN', 'ISBN', 'title', 'subject', 'archive', 'original-title', 'short-title', 'subtitle', 'container-title', 'short-container-title'];
   const cslAny: { [key: string]: any } = {
     ...csl
   };

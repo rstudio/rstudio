@@ -5,6 +5,7 @@
 }
 
 .pm-insert-doi-source-panel-textbox-container {
+  display: flex;
   width: 100%;
 }
 
@@ -13,6 +14,12 @@
   border: solid 1px;
   box-sizing:border-box;
   height: 28px !important;
+  margin-bottom: 10px;
+}
+
+.pm-insert-doi-source-panel-results {
+  border: solid 1px;
+  border-radius: 3px;  
 }
 
 .pm-insert-doi-source-panel-heading {

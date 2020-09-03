@@ -26,7 +26,7 @@ import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provi
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
 import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-import { CitationSourceSearchPanel } from "./insert_citation-source-panel-search";
+import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -102,7 +102,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   };
 
   return (
-    <CitationSourceSearchPanel
+    <CitationSourceTypeheadSearchPanel
       height={props.height}
       itemData={itemData}
       selectedNode={props.selectedNode}
