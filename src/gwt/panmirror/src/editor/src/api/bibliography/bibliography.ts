@@ -50,6 +50,7 @@ export interface BibliographyDataProvider {
 export interface BibliographyCollection {
   name: string;
   key: string;
+  provider: string;
   parentKey?: string;
 }
 

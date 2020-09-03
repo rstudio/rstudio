@@ -285,8 +285,13 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   const rootNodes: NavigationTreeNode[] = [];
 
   // Sort the folder in alphabetical order at each level of the tree
-  containers.sort((a, b) => a.name.localeCompare(b.name)).forEach(container => {
-
+  containers.sort((a, b) => {
+    // For Zotero collection, sort the 'My Library to the top always'
+    if (a.provider === kZoteroProviderKey && a.key === '1') {
+      return -1;
+    }
+    return a.name.localeCompare(b.name);
+  }).forEach(container => {
     // First see if we have an existing node for this item
     // A node could already be there if we had to insert a 'placeholder' 
     // node to contain the node's children before we encountered the node.

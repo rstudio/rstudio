@@ -100,7 +100,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
-    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
+    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey }));
   }
 
   public items(): BibliographySource[] {
