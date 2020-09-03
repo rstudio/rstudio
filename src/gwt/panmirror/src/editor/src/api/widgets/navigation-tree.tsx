@@ -37,7 +37,7 @@ interface NavigationTreeProps extends WidgetProps {
 }
 
 // Indent level for each level
-const kNavigationTreeIndent = 16;
+const kNavigationTreeIndent = 10;
 
 // Select Tree is a single selection tree that is useful in 
 // hierarchical navigation type contexts. It does not support
