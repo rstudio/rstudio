@@ -76,9 +76,14 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
         setLoading(false);
       }
     };
+
+    // Either do the search, or if the search is empty, clear the results
     if (searchTerm.length > 0) {
       performSearch();
+    } else {
+      setItemData([]);
     }
+
     return () => { mounted = false; };
 
   }, [searchTerm]);

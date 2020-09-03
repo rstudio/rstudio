@@ -43,6 +43,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
+  const [searchImmediate, setSearchImmediate] = React.useState<boolean>(false);
 
   // Track whether this component is mounted so we can safely ignore debounced searches
   // if they return after the component has been unmounted
@@ -53,21 +54,21 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
     };
   }, []);
 
+  const performSearch = (search: string) => {
+    if (isMountedRef.current) {
+      props.doSearch(search);
+      setSearchImmediate(false);
+    }
+  };
 
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
     setSearchTerm(search);
-    debouncedSearch(search);
-  };
-
-  // If the user stops typing, search automatically
-  const debouncedSearch = React.useCallback(debounce((search: string) => {
-    if (isMountedRef.current) {
-      props.doSearch(search);
+    if (searchImmediate) {
+      performSearch(search);
     }
-  }, 500, { leading: false, trailing: true }), []);
-
+  };
 
   // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
@@ -98,15 +99,17 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
       case 'Enter':
         event.preventDefault();
         event.stopPropagation();
-        props.doSearch(searchTerm);
+        performSearch(searchTerm);
         break;
     }
   };
 
   const handleButtonClick = () => {
-    if (searchTerm.length > 0) {
-      props.doSearch(searchTerm);
-    }
+    performSearch(searchTerm);
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    setSearchImmediate(true);
   };
 
   const placeholder = props.placeholderText || props.ui.context.translateText('Search for citation');
@@ -123,6 +126,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
           placeholder={placeholder}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
+          onPaste={onPaste}
           ref={searchBoxRef}
         />
 
