@@ -365,9 +365,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       citations.add(zoteroDataDir_);
       
       
-      ZoteroLibrariesWidget zoteroLibs = new ZoteroLibrariesWidget();
-      lessSpaced(zoteroLibs);
-      citations.add(zoteroLibs);
+      zoteroLibs_ = new ZoteroLibrariesWidget(zoteroServer);
+      lessSpaced(zoteroLibs_);
+      citations.add(zoteroLibs_);
       
       zoteroUseBetterBibtex_ = checkboxPref(
          "Use Better BibTeX for citation keys and BibTeX export",
@@ -444,6 +444,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       zoteroConnection_.addChangeHandler((event) -> { manageZoteroUI(); });
       
       zoteroApiKey_.setProgressIndicator(getProgressIndicator());
+      
+      zoteroLibs_.setLibraries(prefs.zoteroLibraries().getValue());
  
    }
    
@@ -485,6 +487,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
       
+      prefs_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
+      
       // if the zotero data dir is same as the detected data dir then 
       // set it to empty (allowing the server to always get the right default)
       if (zoteroDataDir_.getText().equals(zoteroLocalConfig_.dataDirectory))
@@ -516,6 +520,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final ZoteroConnectionWidget zoteroConnection_;
    private final DirectoryChooserTextBox zoteroDataDir_;
    private final ZoteroApiKeyWidget zoteroApiKey_;
+   private final ZoteroLibrariesWidget zoteroLibs_;
    private final CheckBox zoteroUseBetterBibtex_;
    private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
 }
