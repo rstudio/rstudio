@@ -174,13 +174,13 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          items.key as key,
          items.version,
          'collectionKeys' as name,
-         libraries.libraryID || ',' || group_concat(collections.key) as value,
+         libraries.libraryID || ',' || IFNULL(group_concat(collections.key), '') as value,
          10000 as fieldOrder
       FROM
          items
-	 join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
          left join collectionItems on items.itemID = collectionItems.itemID
-	 left join collections on collectionItems.collectionID = collections.collectionID
+         left join collections on collectionItems.collectionID = collections.collectionID
          join libraries on items.libraryID = libraries.libraryID
       WHERE
          itemTypes.typeName <> 'attachment'
@@ -312,26 +312,23 @@ ZoteroCollectionSpecs getCollectionSpecs(boost::shared_ptr<database::IConnection
 {
    std::string sql = R"(
       SELECT
-            libraries.libraryID,
-            IFNULL(groups.name, 'My Library') as libraryName,
-            collections.key as collectionKey,
-            collections.collectionName as collectionName,
-            parentCollections.key as parentCollectionKey,
-            IFNULL(MAX(items.version), 0) AS version
-         FROM
-            items
-            join itemTypes on items.itemTypeID = itemTypes.itemTypeID
-            join libraries on libraries.libraryID = collections.libraryID
-            join collectionItems on items.itemID = collectionItems.itemID
-            join collections on collectionItems.collectionID = collections.collectionID
-       left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
-       left join groups as groups on libraries.libraryID = groups.libraryID
-         WHERE
-            itemTypes.typeName <> 'attachment'
-            AND itemTypes.typeName <> 'note'
-         GROUP BY
-      collections.key
-   )";
+         libraries.libraryID,
+         IFNULL(groups.name, 'My Library') as libraryName,
+         collections.key as collectionKey,
+         collections.collectionName as collectionName,
+         parentCollections.key as parentCollectionKey,
+         IFNULL(MAX(items.version), 0) AS version
+      FROM
+         collections
+         join libraries on libraries.libraryID = collections.libraryID
+         left join collectionItems on collections.collectionID = collectionItems.collectionID
+         left join items on collectionItems.itemID = items.itemID
+         left join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
+         left join groups as groups on libraries.libraryID = groups.libraryID
+      GROUP BY
+         collections.key
+    )";
 
    // library map
    std::map<std::string, LibraryInfo> libraries;
