@@ -18,18 +18,17 @@ import { ListChildComponentProps } from "react-window";
 
 import { EditorUI } from "../../../api/ui";
 import { OutlineButton } from "../../../api/widgets/button";
-import { entryForSource } from "../../../marks/cite/cite-bibliography_entry";
 
-import { BibliographySource } from "../../../api/bibliography/bibliography";
+import { CitationListEntry } from "../insert_citation-panel";
 
 import './insert_citation-source-panel-list-item.css';
 
 interface CitationSourcePanelListData {
   selectedIndex: number;
-  allSources: BibliographySource[];
-  sourcesToAdd: BibliographySource[];
-  addSource: (source: BibliographySource) => void;
-  removeSource: (source: BibliographySource) => void;
+  citations: CitationListEntry[];
+  citationsToAdd: CitationListEntry[];
+  addCitation: (source: CitationListEntry) => void;
+  removeCitation: (source: CitationListEntry) => void;
   ui: EditorUI;
   showSeparator?: boolean;
   showSelection?: boolean;
@@ -39,26 +38,23 @@ interface CitationSourcePanelListData {
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
   const citationListData: CitationSourcePanelListData = props.data;
-  const source = citationListData.allSources[props.index];
 
-  // An entry contains formatted values for display
-  // NOTE: Dark mode is disabled right here since this is currently hosted in a 
-  // dialog. It would be nice to use a style or something to signal this
-  const entry = entryForSource(source, props.data.ui, true);
+  const citationEntry = citationListData.citations[props.index];
 
   // NOTE: Could consider making this length dynamic to account for item width
   const maxIdLength = 30;
-  const id = entry.source.id.length > maxIdLength ? `@${entry.source.id.substr(0, maxIdLength - 1)}…` : `@${entry.source.id}`;
+  const id = citationEntry.id.length > maxIdLength ? `@${citationEntry.id.substr(0, maxIdLength - 1)}…` : `@${citationEntry.id}`;
   const authorWidth = Math.max(10, 50 - id.length);
 
   // Whether this item is already in the list of items to add
-  const alreadyAdded = citationListData.sourcesToAdd.map(src => src.id).includes(source.id);
+  console.log(citationListData.citationsToAdd);
+  const alreadyAdded = citationListData.citationsToAdd.map(src => src.id).includes(citationEntry.id);
 
   const onClick = () => {
     if (alreadyAdded) {
-      citationListData.removeSource(source);
+      citationListData.removeCitation(citationEntry);
     } else {
-      citationListData.addSource(source);
+      citationListData.addCitation(citationEntry);
     }
   };
 
@@ -70,15 +66,15 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
       <div className={`pm-insert-citation-source-panel-item ${selected ? 'pm-list-item-selected' : ''}`} style={props.style}>
         <div className='pm-insert-citation-source-panel-item-container'>
           <div className='pm-insert-citation-source-panel-item-type'>
-            {entry.adornmentImage ? <img className='pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color' src={entry.adornmentImage} /> : undefined}
-            <img className='pm-insert-citation-source-panel-item-icon pm-block-border-color' src={entry.image} />
+            {citationEntry.imageAdornment ? <img className='pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color' src={citationEntry.imageAdornment} /> : undefined}
+            <img className='pm-insert-citation-source-panel-item-icon pm-block-border-color' src={citationEntry.image} />
           </div>
           <div className='pm-insert-citation-source-panel-item-summary'>
             <div className='pm-insert-citation-source-panel-item-id'>
               <div className='pm-insert-citation-source-panel-item-title pm-fixedwidth-font pm-text-color'>{id}</div>
-              <div className='pm-insert-citation-source-panel-item-detail pm-text-color'>{entry.authorsFormatter(source.author, authorWidth)} {entry.issuedDateFormatter(source.issued)}</div>
+              <div className='pm-insert-citation-source-panel-item-detail pm-text-color'>{citationEntry.authors(authorWidth)} {citationEntry.date}</div>
             </div>
-            <div className='pm-insert-citation-source-panel-item-subtitle-text pm-text-color'>{source.title}</div>
+            <div className='pm-insert-citation-source-panel-item-subtitle-text pm-text-color'>{citationEntry.title}</div>
           </div>
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton

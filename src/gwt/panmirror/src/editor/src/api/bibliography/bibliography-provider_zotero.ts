@@ -19,7 +19,7 @@ import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLib
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
@@ -101,13 +101,13 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
   }
 
-  public items(): BibliographySource[] {
+  public items(): BibliographySourceWithCollections[] {
     const entryArrays = this.allCollections?.map(collection => this.bibliographySources(collection)) || [];
-    const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
+    const zoteroEntries = ([] as BibliographySourceWithCollections[]).concat(...entryArrays);
     return zoteroEntries;
   }
 
-  public itemsForCollection(collectionKey?: string): BibliographySource[] {
+  public itemsForCollection(collectionKey?: string): BibliographySourceWithCollections[] {
     if (!collectionKey) {
       return this.items();
     }
@@ -138,7 +138,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return this.warning;
   }
 
-  private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
+  private bibliographySources(collection: ZoteroCollection): BibliographySourceWithCollections[] {
 
     const items = collection.items?.map(item => {
       return {

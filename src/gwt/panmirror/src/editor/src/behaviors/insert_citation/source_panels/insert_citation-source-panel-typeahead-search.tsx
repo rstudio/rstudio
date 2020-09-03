@@ -16,20 +16,20 @@ import React from "react";
 
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
-import { BibliographySource } from "../../../api/bibliography/bibliography";
 import { WidgetProps } from "../../../api/widgets/react";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import './insert_citation-source-panel-typeahead-search.css';
 import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationListEntry } from "../insert_citation-panel";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
-  itemData: BibliographySource[];
-  sourcesToAdd: BibliographySource[];
   height: number;
   selectedNode?: NavigationTreeNode;
-  addSource: (source: BibliographySource) => void;
-  removeSource: (source: BibliographySource) => void;
+  citations: CitationListEntry[];
+  citationsToAdd: CitationListEntry[];
+  addCitation: (citation: CitationListEntry) => void;
+  removeCitation: (citation: CitationListEntry) => void;
   searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
@@ -93,12 +93,12 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
       </div>
       <CitationSourceList
         height={listHeight}
-        itemData={props.itemData}
-        sourcesToAdd={props.sourcesToAdd}
+        citations={props.citations}
+        citationsToAdd={props.citationsToAdd}
         noResultsText={props.ui.context.translateText(searchBoxRef.current?.value ? 'No matching results' : '')}
         confirm={props.confirm}
-        addSource={props.addSource}
-        removeSource={props.removeSource}
+        addCitation={props.addCitation}
+        removeCitation={props.removeCitation}
         ui={props.ui}
         ref={listContainer}
       />

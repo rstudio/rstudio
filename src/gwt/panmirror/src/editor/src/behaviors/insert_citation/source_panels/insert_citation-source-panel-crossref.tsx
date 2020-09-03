@@ -17,12 +17,13 @@
 import React from "react";
 
 import { EditorUI } from "../../../api/ui";
-import { BibliographySource } from "../../../api/bibliography/bibliography";
-import { suggestCiteId } from "../../../api/cite";
+import { BibliographySource, BibliographyManager } from "../../../api/bibliography/bibliography";
+import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
+import { CrossrefWork, imageForCrossrefType } from "../../../api/crossref";
 
 export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
@@ -42,7 +43,7 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 }
 
 export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => {
-  const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
+  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
 
@@ -57,22 +58,17 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
       // Get the list of ids already in the bibliography
       const existingIds = props.bibliographyManager.allSources().map(src => src.id);
 
-      const bibSources = works.items.map(item => {
-        const sanitizedItem = sanitizeForCiteproc(item as unknown as CSL);
-        const suggestedId = suggestCiteId(existingIds, sanitizedItem);
-
-        // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-        existingIds.push(suggestedId);
-        const source = {
-          ...sanitizedItem,
-          id: suggestedId,
-          providerKey: 'crossref',
-          collectionKeys: [],
-        };
-        return source;
+      const citationEntries = works.items.map(work => {
+        const citationEntry = toCitationEntry(work, existingIds, props.ui);
+        if (citationEntry) {
+          // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+          existingIds.push(citationEntry.id);
+        }
+        return citationEntry;
       });
+
       if (mounted) {
-        setItemData(bibSources);
+        setCitations(citationEntries);
         setLoading(false);
       }
     };
@@ -81,7 +77,7 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
     if (searchTerm.length > 0) {
       performSearch();
     } else {
-      setItemData([]);
+      setCitations([]);
     }
 
     return () => { mounted = false; };
@@ -95,11 +91,11 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
   return (
     <CitationSourceLatentSearchPanel
       height={props.height}
-      itemData={itemData}
-      sourcesToAdd={props.sourcesToAdd}
+      citations={citations}
+      citationsToAdd={props.citationsToAdd}
+      addCitation={props.addCitation}
+      removeCitation={props.removeCitation}
       doSearch={doSearch}
-      addSource={props.addSource}
-      removeSource={props.removeSource}
       confirm={props.confirm}
       loading={loading}
       defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
@@ -109,4 +105,25 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
   );
 };
 
+function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI): CitationListEntry {
+
+  // TODO: need to implement a better toBibliographySource
+  const coercedCSL = sanitizeForCiteproc(crossrefWork as unknown as CSL);
+  const id = suggestCiteId(existingIds, coercedCSL);
+  const providerKey = 'crossref';
+  return {
+    id,
+    title: crossrefWork.title[0] || '',
+    providerKey,
+    authors: (length: number) => {
+      return formatAuthors(coercedCSL.author, length);
+    },
+    date: formatIssuedDate(crossrefWork.issued),
+    journal: '',
+    image: imageForCrossrefType(ui, crossrefWork.type)[0],
+    toBibliographySource: () => {
+      return Promise.resolve({ id, providerKey, ...coercedCSL });
+    }
+  };
+}
 

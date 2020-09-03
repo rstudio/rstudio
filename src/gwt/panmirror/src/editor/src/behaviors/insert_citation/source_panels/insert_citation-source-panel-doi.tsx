@@ -19,13 +19,14 @@ import { EditorUI } from "../../../api/ui";
 
 import { CSL } from "../../../api/csl";
 import { TextInput } from "../../../api/widgets/text";
-import { formatForPreview, CiteField, suggestCiteId } from "../../../api/cite";
-import { BibliographyManager, BibliographySource } from "../../../api/bibliography/bibliography";
+import { formatForPreview, CiteField, suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 import './insert_citation-source-panel-doi.css';
+import { cellAround } from "prosemirror-tables";
 
 const kDOIType = 'DOI Search';
 
@@ -121,10 +122,10 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
             <CitationSourcePanelListItem
               index={0}
               data={{
-                allSources: toBibliographyEntry(csl, props.bibliographyManager, props.ui),
-                sourcesToAdd: props.sourcesToAdd,
-                addSource: props.addSource,
-                removeSource: props.removeSource,
+                citations: toCitationEntry(csl, props.bibliographyManager, props.ui),
+                citationsToAdd: props.citationsToAdd,
+                addCitation: props.addCitation,
+                removeCitation: props.removeCitation,
                 ui: props.ui
               }}
               style={{}}
@@ -153,16 +154,25 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
   );
 };
 
-function toBibliographyEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): BibliographySource[] {
+function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry[] {
   if (csl) {
+    const id = suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl);
+    const providerKey = 'doi';
     return [
       {
-        ...csl,
-        id: suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl),
-        providerKey: 'doi',
-        collectionKeys: [],
-      }
-    ];
+        id,
+        title: csl.title || '',
+        providerKey,
+        authors: (length: number) => {
+          return formatAuthors(csl.author, length);
+        },
+        date: formatIssuedDate(csl.issued),
+        journal: '',
+        image: imageForType(ui, csl.type)[0],
+        toBibliographySource: () => {
+          return Promise.resolve({ ...csl, id, providerKey });
+        }
+      }];
   }
   return [];
 }

@@ -667,7 +667,6 @@ export async function insertCitation(
           ...result.csl,
           id: result.id,
           providerKey: provider || '',
-          collectionKeys: [],
         };
 
 

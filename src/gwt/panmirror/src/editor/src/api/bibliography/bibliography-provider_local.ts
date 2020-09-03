@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -98,7 +98,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
 
-  public items(): BibliographySource[] {
+  public items(): BibliographySourceWithCollections[] {
 
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
@@ -112,7 +112,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     }));
   }
 
-  public itemsForCollection(collectionKey: string): BibliographySource[] {
+  public itemsForCollection(collectionKey: string): BibliographySourceWithCollections[] {
     // NOTE: IF we add support, need to filter by biblio file
     return [];
   }

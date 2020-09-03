@@ -21,12 +21,13 @@ import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
+import { BibliographyManager, BibliographyCollection, BibliographySource } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
+import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -59,7 +60,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props => {
 
   const bibMgr = props.bibliographyManager;
-  const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
+  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>();
 
   React.useEffect(debounce(() => {
@@ -84,7 +85,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kZoteroProviderKey &&
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
-        setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
+        setCitations(toCitationEntry(bibMgr.search(searchTerm, providerKey, collectionKey), props.ui));
       }
     }
     loadData();
@@ -104,12 +105,12 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
   return (
     <CitationSourceTypeheadSearchPanel
       height={props.height}
-      itemData={itemData}
+      citations={citations}
       selectedNode={props.selectedNode}
-      sourcesToAdd={props.sourcesToAdd}
+      citationsToAdd={props.citationsToAdd}
       searchTermChanged={searchChanged}
-      addSource={props.addSource}
-      removeSource={props.removeSource}
+      addCitation={props.addCitation}
+      removeCitation={props.removeCitation}
       confirm={props.confirm}
       ui={props.ui}
     />
@@ -170,4 +171,26 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   });
   return rootNodes;
 }
+
+function toCitationEntry(bibliographyEntries: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+  return bibliographyEntries.map(bibliographyEntry => {
+    return {
+      id: bibliographyEntry.id,
+      title: bibliographyEntry.title || '',
+      providerKey: bibliographyEntry.providerKey,
+      authors: (length: number) => {
+        return formatAuthors(bibliographyEntry.author, length);
+      },
+      date: formatIssuedDate(bibliographyEntry.issued),
+      journal: '',
+      image: imageForType(ui, bibliographyEntry.type)[0],
+      toBibliographySource: () => {
+        return Promise.resolve(bibliographyEntry);
+      }
+    };
+  });
+}
+
+
+
 

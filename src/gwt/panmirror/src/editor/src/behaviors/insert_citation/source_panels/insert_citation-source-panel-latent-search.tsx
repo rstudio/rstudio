@@ -16,21 +16,20 @@ import React from "react";
 
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
-import { BibliographySource } from "../../../api/bibliography/bibliography";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import { CitationSourceList } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
+import { CitationListEntry } from "../insert_citation-panel";
 
 import './insert_citation-source-panel-latent-search.css';
-import debounce from "lodash.debounce";
 
 export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
-  itemData: BibliographySource[];
-  sourcesToAdd: BibliographySource[];
   height: number;
-  addSource: (source: BibliographySource) => void;
-  removeSource: (source: BibliographySource) => void;
+  citations: CitationListEntry[];
+  citationsToAdd: CitationListEntry[];
+  addCitation: (citation: CitationListEntry) => void;
+  removeCitation: (citation: CitationListEntry) => void;
   doSearch: (searchTerm: string) => void;
   confirm: VoidFunction;
   loading: boolean;
@@ -141,11 +140,11 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
 
       <CitationSourceList
         height={listHeight}
-        itemData={props.itemData}
-        sourcesToAdd={props.sourcesToAdd}
+        citations={props.citations}
+        citationsToAdd={props.citationsToAdd}
         confirm={props.confirm}
-        addSource={props.addSource}
-        removeSource={props.removeSource}
+        addCitation={props.addCitation}
+        removeCitation={props.removeCitation}
         ui={props.ui}
         noResultsText={defaultText}
         classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}

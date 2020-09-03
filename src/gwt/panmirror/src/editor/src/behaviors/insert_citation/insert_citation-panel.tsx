@@ -22,19 +22,19 @@ import { EditorUI } from "../../api/ui";
 import { EditorServer } from "../../api/server";
 import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
+import { CSL } from "../../api/csl";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
-
-import { BibliographyManager, BibliographySource, BibliographyFile } from "../../api/bibliography/bibliography";
+import { DialogButtons } from "../../api/widgets/dialog-buttons";
+import { BibliographyManager, BibliographyFile, BibliographySource } from "../../api/bibliography/bibliography";
+import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
 import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
+import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 
-import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation-panel.css';
-import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
@@ -42,6 +42,18 @@ export interface CitationSourcePanel {
   key: string;
   panel: React.FC<CitationSourcePanelProps>;
   treeNode: NavigationTreeNode;
+}
+
+export interface CitationListEntry {
+  id: string;
+  authors: (width: number) => string;
+  date: string;
+  journal: string | undefined;
+  title: string;
+  providerKey: string;
+  image?: string;
+  imageAdornment?: string;
+  toBibliographySource: () => Promise<BibliographySource>;
 }
 
 // Panels get a variety of information as properties to permit them to search
@@ -52,9 +64,9 @@ export interface CitationSourcePanelProps extends WidgetProps {
   server: EditorServer;
   height: number;
   selectedNode?: NavigationTreeNode;
-  sourcesToAdd: BibliographySource[];
-  addSource: (source: BibliographySource) => void;
-  removeSource: (source: BibliographySource) => void;
+  citationsToAdd: CitationListEntry[];
+  addCitation: (citation: CitationListEntry) => void;
+  removeCitation: (citation: CitationListEntry) => void;
   confirm: VoidFunction;
 }
 
@@ -67,7 +79,7 @@ interface InsertCitationPanelProps extends WidgetProps {
   width: number;
   bibliographyManager: BibliographyManager;
   server: EditorServer;
-  onSourceChanged: (sources: BibliographySource[]) => void;
+  onCitationsChanged: (sources: CitationListEntry[]) => void;
   onBibliographyChanged: (bibliographyFile: BibliographyFile) => void;
   onOk: () => void;
   onCancel: () => void;
@@ -86,7 +98,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>([]);
 
   // The accumulated bibliography sources to be inserted
-  const [sourcesToAdd, setSourcesToAdd] = React.useState<BibliographySource[]>([]);
+  const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
 
   // The initial loading of data for the panel. 
   React.useEffect(() => {
@@ -142,14 +154,14 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     server: props.server,
     height: panelHeight,
     selectedNode,
-    sourcesToAdd,
-    addSource: (source: BibliographySource) => {
-      const newSources = [...sourcesToAdd, source];
-      setSourcesToAdd(newSources);
-      props.onSourceChanged(newSources);
+    citationsToAdd,
+    addCitation: (citation: CitationListEntry) => {
+      const newCitations = [...citationsToAdd, citation];
+      setCitationsToAdd(newCitations);
+      props.onCitationsChanged(newCitations);
     },
-    removeSource: (src: BibliographySource) => {
-      deleteSource(src.id);
+    removeCitation: (citation: CitationListEntry) => {
+      deleteCitation(citation.id);
     },
     confirm: props.onOk
   };
@@ -161,18 +173,18 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     setSelectedNode(node);
   };
 
-  const deleteSource = (id: string) => {
-    const filteredSources = sourcesToAdd.filter(source => source.id !== id);
-    setSourcesToAdd(filteredSources);
-    props.onSourceChanged(sourcesToAdd);
+  const deleteCitation = (id: string) => {
+    const filteredCitations = citationsToAdd.filter(source => source.id !== id);
+    setCitationsToAdd(filteredCitations);
+    props.onCitationsChanged(citationsToAdd);
   };
 
   const deleteTag = (tag: TagItem) => {
-    deleteSource(tag.key);
+    deleteCitation(tag.key);
   };
 
   const tagEdited = (key: string, text: string) => {
-    const targetSource = sourcesToAdd.find(source => source.id === key);
+    const targetSource = citationsToAdd.find(source => source.id === key);
     if (targetSource) {
       targetSource.id = text;
     }
@@ -219,7 +231,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'
       >
         <TagInput
-          tags={sourcesToAdd.map(source => ({
+          tags={citationsToAdd.map(source => ({
             key: source.id,
             displayText: source.id,
             displayPrefix: '@',

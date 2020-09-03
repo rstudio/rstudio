@@ -22,13 +22,13 @@ import { EditorUI } from '../../api/ui';
 import { EditorServer } from '../../api/server';
 import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
 
-import { InsertCitationPanel } from './insert_citation-panel';
+import { InsertCitationPanel, CitationListEntry } from './insert_citation-panel';
 
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
 export interface InsertCitationDialogResult {
-  sources: BibliographySource[];
+  citations: CitationListEntry[];
   bibliography: BibliographyFile;
 }
 
@@ -40,9 +40,9 @@ export async function showInsertCitationDialog(
 ): Promise<InsertCitationDialogResult | undefined> {
 
   // The citations that the user would like to insert
-  let sources: BibliographySource[] = [];
-  const onSourceChanged = (srcs: BibliographySource[]) => {
-    sources = srcs;
+  let citations: CitationListEntry[] = [];
+  const onCitationsChanged = (c: CitationListEntry[]) => {
+    citations = c;
   };
 
   // The bibliography into which entries should be written
@@ -78,7 +78,7 @@ export async function showInsertCitationDialog(
           ui={ui}
           bibliographyManager={bibliographyManager}
           server={server}
-          onSourceChanged={onSourceChanged}
+          onCitationsChanged={onCitationsChanged}
           onBibliographyChanged={onBibliographyChanged}
           onOk={confirm}
           onCancel={cancel}
@@ -92,15 +92,15 @@ export async function showInsertCitationDialog(
       // TODO: Focus the correct control (text filtering)?
     },
     () => {
-      if (sources.length === 0) {
+      if (citations.length === 0) {
         return "Please select a citation to insert.";
       }
       return null;
     });
 
-  if (performInsert && sources.length > 0 && bibliography) {
+  if (performInsert && citations.length > 0 && bibliography) {
     return {
-      sources,
+      citations,
       bibliography
     };
   } else {
