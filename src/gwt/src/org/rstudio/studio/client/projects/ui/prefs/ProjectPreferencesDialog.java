@@ -173,6 +173,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 else
                    uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
                 
+                // zotero prefs (remove if set to defaults)
+                if (config.getZoteroLibraries() != null)
+                   uiPrefs.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
+                else
+                   uiPrefs.zoteroLibraries().removeProjectValue(true);
+                
                 // propagate spelling prefs
                 if (!config.getSpellingDictionary().isEmpty())
                    uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());

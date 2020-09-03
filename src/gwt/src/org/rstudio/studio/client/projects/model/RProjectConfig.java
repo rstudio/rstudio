@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RProjectConfig extends JavaScriptObject
 {
@@ -407,6 +408,13 @@ public class RProjectConfig extends JavaScriptObject
       this.spelling_dictionary = dictionary;
    }-*/;
    
+   public native final JsArrayString getZoteroLibraries()  /*-{
+      return this.zotero_libraries || null;
+   }-*/;
+   
+   public native final void setZoteroLibraries(JsArrayString libraries) /*-{
+      this.zotero_libraries = libraries;
+   }-*/;
    
    
    

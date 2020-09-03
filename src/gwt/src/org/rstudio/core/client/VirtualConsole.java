@@ -25,7 +25,6 @@ import java.util.TreeSet;
 
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;

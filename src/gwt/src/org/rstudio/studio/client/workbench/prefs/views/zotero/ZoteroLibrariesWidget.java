@@ -36,15 +36,33 @@ public class ZoteroLibrariesWidget extends Composite
 {
    public ZoteroLibrariesWidget(PanmirrorZoteroServerOperations server)
    {
+      this(server, false);
+   }
+   
+   public ZoteroLibrariesWidget(PanmirrorZoteroServerOperations server, boolean includeUseDefault)
+   {
       server_ = server;
       
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().librariesWidget());
       
+      ArrayList<String> options = new ArrayList<String>();
+      ArrayList<String> values = new ArrayList<String>();
+      
+      if (includeUseDefault)
+      {
+         options.add("(Default)");
+         values.add(USE_DEFAULT);
+      }
+      options.add("All Libraries");
+      values.add(ALL_LIBRARIES);
+      options.add("Selected Libraries");
+      values.add(SELECTED_LIBRARIES);
+      
       selectedLibs_ = new SelectWidget(
          "Use libraries:", 
-         new String[] { "All Libraries", "Selected Libraries" },
-         new String[] { ALL_LIBRARIES, SELECTED_LIBRARIES },
+         options.toArray(new String[] {}),
+         values.toArray(new String[] {}),
          false,
          true,
          false
@@ -69,19 +87,26 @@ public class ZoteroLibrariesWidget extends Composite
    
    public void setLibraries(JsArrayString libraries)
    {
-      // set select widget based on whether we have a library whitelist
-      selectedLibs_.setValue(libraries.length() == 0 ? ALL_LIBRARIES : SELECTED_LIBRARIES);
-      manageUI();
-      
-      // start with selected libraries
       ArrayList<String> selectedLibraries = new ArrayList<String>();
-      for (int i = 0; i<libraries.length(); i++)
+      if (libraries != null)
       {
-         String library = libraries.get(i);
-         selectedLibraries.add(library);
-         CheckBox chkLibrary = new CheckBox(library);
-         chkLibrary.setValue(true);
-         libraries_.addItem(chkLibrary);
+         // set select widget based on whether we have a library whitelist
+         selectedLibs_.setValue(libraries.length() == 0 ? ALL_LIBRARIES : SELECTED_LIBRARIES);
+         manageUI();
+         
+         // start with selected libraries
+         for (int i = 0; i<libraries.length(); i++)
+         {
+            String library = libraries.get(i);
+            selectedLibraries.add(library);
+            CheckBox chkLibrary = new CheckBox(library);
+            chkLibrary.setValue(true);
+            libraries_.addItem(chkLibrary);
+         }
+      }
+      else
+      {
+         selectedLibs_.setValue(USE_DEFAULT);
       }
       
       // query for additional libraries if we haven't already
@@ -115,17 +140,24 @@ public class ZoteroLibrariesWidget extends Composite
    
    public JsArrayString getLibraries()
    {   
-      JsArrayString libraries = JsArrayString.createArray().cast();
-      if (selectedLibs_.getValue().equals(SELECTED_LIBRARIES))
+      if (!selectedLibs_.getValue().equals(USE_DEFAULT))
       {
-         for (int i = 0; i<libraries_.getItemCount(); i++)
+         JsArrayString libraries = JsArrayString.createArray().cast();
+         if (selectedLibs_.getValue().equals(SELECTED_LIBRARIES))
          {
-            CheckBox chkLibrary = libraries_.getItemAtIdx(i);
-            if (chkLibrary.getValue())
-               libraries.push(chkLibrary.getText());
+            for (int i = 0; i<libraries_.getItemCount(); i++)
+            {
+               CheckBox chkLibrary = libraries_.getItemAtIdx(i);
+               if (chkLibrary.getValue())
+                  libraries.push(chkLibrary.getText());
+            }
          }
+         return libraries;
       }
-      return libraries;
+      else
+      {
+         return null;
+      }
    }
    
    private void manageUI()
@@ -136,6 +168,7 @@ public class ZoteroLibrariesWidget extends Composite
    private static ZoteroResources RES = ZoteroResources.INSTANCE;
    
    
+   private final static String USE_DEFAULT = "default";
    private final static String ALL_LIBRARIES = "all";
    private final static String SELECTED_LIBRARIES = "selected";
    
