@@ -40,7 +40,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public name: string = "Zotero";
   public key: string = kZoteroProviderKey;
 
-  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[], forceAll: boolean): Promise<boolean> {
 
     let hasUpdates = false;
     const config = zoteroConfig(yamlBlocks);
@@ -63,7 +63,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         const collections = Array.isArray(config) ? config : [];
 
-        const result = await this.server.getCollections(docPath, collections, collectionSpecs || [], useCache);
+        const result = await this.server.getCollections(docPath, collections, forceAll, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {
 

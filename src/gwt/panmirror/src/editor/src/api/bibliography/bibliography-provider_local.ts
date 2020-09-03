@@ -45,7 +45,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   public name: string = "Bibliography";
   public key: string = kLocalBiliographyProviderKey;
 
-  public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], _forceAll: boolean): Promise<boolean> {
     // Gather the biblography files from the document
     const bibliographiesRelative = bibliographyFilesFromDoc(yamlBlocks);
     const bibliographiesAbsolute = expandPaths(resourcePath, bibliographiesRelative || []);
@@ -76,8 +76,6 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
   public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
     return [];
-
-    // JJA: assuming this method being commented out is intentional?
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs

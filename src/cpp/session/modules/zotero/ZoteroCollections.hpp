@@ -41,9 +41,6 @@ extern const char * const kKey;
 extern const char * const kParentKey;
 extern const char * const kItems;
 
-extern const char * const kMyLibrary;
-extern const char * const kMyLibraryCollectionKey;
-
 extern const int kNoVersion;
 
 // collection spec
@@ -92,10 +89,6 @@ typedef boost::function<void(core::Error,ZoteroCollections,std::string)> ZoteroC
 struct ZoteroCollectionSource
 {
    boost::function<void(std::string,
-                        ZoteroCollectionSpec cacheSpec,
-                        ZoteroCollectionsHandler)> getLibrary;
-
-   boost::function<void(std::string,
                         std::vector<std::string>,
                         ZoteroCollectionSpecs,
                         ZoteroCollectionsHandler)> getCollections;
@@ -103,13 +96,8 @@ struct ZoteroCollectionSource
    boost::function<void(std::string, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
 };
 
-// get the entire library using the currently configured source
-void getLibrary(ZoteroCollectionSpec cacheSpec,
-                bool useCache,
-                ZoteroCollectionsHandler handler);
-
 // get collections using the currently configured source
-void getCollections(std::vector<std::string> collections,
+void getCollectionSpecs(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,
                     ZoteroCollectionsHandler handler);

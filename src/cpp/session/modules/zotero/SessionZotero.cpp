@@ -200,8 +200,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // extract params
    std::string file;
    json::Array collectionsJson, cachedJson;
-   bool useCache;
-   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson, &useCache);
+   bool forceAll, useCache;
+   Error error = json::readParams(request.params, &file, &collectionsJson, &forceAll, &cachedJson, &useCache);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -209,63 +209,69 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // did the user pass us collections?
+   // collections filter (empty means all collections)
    std::vector<std::string> collections;
-   collectionsJson.toVectorString(collections);
 
-   // if the didn't, see if there are project level or global prefs that provide collections
-   if (collections.size() == 0)
+   if (!forceAll)
    {
-      // determine whether the file the zotero collections are requested for is part of the current project
-      bool isProjectFile = false;
-      if (!file.empty() && projects::projectContext().hasProject())
-      {
-         FilePath filePath = module_context::resolveAliasedPath(file);
-         if (filePath.isWithin(projects::projectContext().buildTargetPath()))
-         {
-            isProjectFile = true;
-         }
-      }
+      // read user request
+      collectionsJson.toVectorString(collections);
 
-      // if it's a project, check for global bookdown disable of zotero
-      if (isProjectFile)
+      // if the didn't, see if there are project level or global prefs that provide collections
+      if (collections.size() == 0 && !forceAll)
       {
-         // check for global disable of zotero for bookdown
-         const std::string kLogicalPrefix = "LOGICAL:";
-         std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
-
-         // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
-         if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
+         // determine whether the file the zotero collections are requested for is part of the current project
+         bool isProjectFile = false;
+         if (!file.empty() && projects::projectContext().hasProject())
          {
-            std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
-            if (value == "TRUE")
+            FilePath filePath = module_context::resolveAliasedPath(file);
+            if (filePath.isWithin(projects::projectContext().buildTargetPath()))
             {
-                session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
+               isProjectFile = true;
+            }
+         }
+
+         // if it's a project, check for global bookdown disable of zotero
+         if (isProjectFile)
+         {
+            // check for global disable of zotero for bookdown
+            const std::string kLogicalPrefix = "LOGICAL:";
+            std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+
+            // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
+            if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
+            {
+               std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
+               if (value == "TRUE")
+               {
+                   session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
+               }
+               else
+               {
+                  ZoteroCollections noCollections;
+                  handleGetCollections(Success(), noCollections, "", cont);
+                  return;
+               }
+            }
+            else if (bookdownCollections.size() > 0)
+            {
+               collections = bookdownCollections;
             }
             else
             {
-               ZoteroCollections noCollections;
-               handleGetCollections(Success(), noCollections, "", cont);
-               return;
+               session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
             }
          }
-         else if (bookdownCollections.size() > 0)
-         {
-            collections = bookdownCollections;
-         }
+
+         // read global pref (ignore project b/c this file isn't in the project)
          else
          {
-            session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
+            auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
+            if (libsPref.has_value() && libsPref.get().isArray())
+               libsPref->getArray().toVectorString(collections);
          }
       }
 
-      // read global pref (ignore project b/c this file isn't in the project)
-      else
-      {
-         auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
-         if (libsPref.has_value() && libsPref.get().isArray())
-            libsPref->getArray().toVectorString(collections);
-      }
    }
 
 
@@ -284,27 +290,9 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // create handler for request
    auto handler =  boost::bind(handleGetCollections, _1, _2, _3, cont);
 
-   // if there are no explicit collections defined then this is a request for all
-   if (collections.size() == 0)
-   {
-      // we just need the kMyLibrary cache spec
-      ZoteroCollectionSpec librarySpec(kMyLibrary);
-      ZoteroCollectionSpecs::iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [](const ZoteroCollectionSpec& spec) {
-         return spec.name == kMyLibrary;
-      });
-      if (it != cacheSpecs.end())
-         librarySpec = *it;
+   // get the collections
+   getCollectionSpecs(collections, cacheSpecs, useCache, handler);
 
-      // get the library
-      getLibrary(librarySpec, useCache, handler);
-
-   }
-
-   // otherwise get the requested collections
-   else
-   {
-      getCollections(collections, cacheSpecs, useCache, handler);
-   }
 }
 
 

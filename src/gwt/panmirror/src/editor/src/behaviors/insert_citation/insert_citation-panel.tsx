@@ -90,7 +90,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // The initial loading of data for the panel. 
   React.useEffect(() => {
     async function loadData() {
-      await props.bibliographyManager.load(props.ui, props.doc);
+      await props.bibliographyManager.load(props.ui, props.doc, true);
 
       // Load the panels
       const allPanels = [

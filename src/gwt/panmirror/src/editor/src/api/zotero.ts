@@ -52,6 +52,7 @@ export interface ZoteroServer {
   getCollections: (
     file: string | null,
     collections: string[],
+    forceAll: boolean,
     cached: ZoteroCollectionSpec[],
     useCache: boolean
   ) => Promise<ZoteroResult>;

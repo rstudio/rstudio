@@ -323,86 +323,7 @@ const char * const kKey = "key";
 const char * const kParentKey = "parentKey";
 const char * const kItems = "items";
 
-const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
-const char * const kMyLibraryCollectionKey = "A033E139-E005-49D0-8C0A-689B12A80F4F";
-
 const int kNoVersion = -1;
-
-
-void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollectionsHandler handler)
-{
-   // clear out the client cache if the cache is disabled
-   if (!useCache)
-      cacheSpec.version = kNoVersion;
-
-   // get connection if we have one
-   Connection conn = zoteroConnection();
-   if (!conn.empty())
-   {    
-      // use server cache if directed
-      ZoteroCollectionSpec serverCacheSpec = useCache ? cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary) : ZoteroCollectionSpec();
-      conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary, std::string warning) {
-
-         ZoteroCollection collection;
-         if (error)
-         {
-            // if it's a host error then see if we can use a cached version
-            if (isHostError(core::errorDescription(error)))
-            {
-               collection = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
-               if (collection.empty())
-               {
-                  handler(error, std::vector<ZoteroCollection>(), warning);
-               }
-            }
-            else
-            {
-               handler(error, std::vector<ZoteroCollection>(), warning);
-            }
-         }
-         else
-         {
-            collection = webLibrary[0];
-         }
-
-         // if we don't have a collection then we are done (handler has already been called w/ the error)
-         if (collection.empty())
-            return;
-
-         // see if we need to update our server side cache. if we do then just return that version
-         if (serverCacheSpec.empty() || serverCacheSpec.version != collection.version)
-         {
-            TRACE("Updating server cache for <library>", collection.items.getSize());
-            updateCachedCollection(conn.type, conn.cacheContext, collection.name, collection);
-            TRACE("Returning server cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
-         }
-
-         // see if the client already has the version we are serving. in that case
-         // just return w/o items
-         else if (cacheSpec.version == collection.version)
-         {
-            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.key, cacheSpec.parentKey, cacheSpec.version);
-            TRACE("Using client cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) }, warning);
-         }
-
-         // otherwise return the server cache (it's guaranteed to exist and be >=
-         // the returned collection based on the first conditional)
-         else
-         {
-            ZoteroCollection serverCache = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
-            collection.items = serverCache.items;
-            TRACE("Returning server cache for <library>", collection.items.getSize());
-            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
-         }
-      });
-   }
-   else
-   {
-      handler(Success(), std::vector<ZoteroCollection>(), "");
-   }
-}
 
 void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
 {
@@ -418,7 +339,7 @@ void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
    }
 }
 
-void getCollections(std::vector<std::string> collections,
+void getCollectionSpecs(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,
                     ZoteroCollectionsHandler handler)
