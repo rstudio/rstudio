@@ -265,6 +265,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
+   public double getLeftWidgetsSize()
+   {
+      double sum = 0.0;
+      for (Widget w : leftList_)
+         sum += getWidgetSize(w);
+      return sum;
+   }
+   
    public void removeLeftWidget(Widget widget)
    {
       clearForRefresh();
@@ -272,16 +280,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
-   public double getLeftWidgetSize()
-   {
-      double size = 0.0;
-      for (Widget w : leftList_)
-      {
-         size += getWidgetSize(w);
-      }
-      return size;
-   }
-   
+   /*
    public void resizeLeftWidgets(double size)
    {
       double difference = size - getLeftWidgetSize();
@@ -321,6 +320,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          }
       }
    }
+    */
    
    public void onSplitterResized(SplitterResizedEvent event)
    {
