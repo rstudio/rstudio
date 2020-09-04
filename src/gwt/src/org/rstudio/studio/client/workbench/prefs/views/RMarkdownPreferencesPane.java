@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -47,6 +46,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroApiKeyWidget;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroConnectionWidget;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroLibrariesWidget;
@@ -372,7 +372,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       zoteroUseBetterBibtex_ = checkboxPref(
          "Use Better BibTeX for citation keys and BibTeX export",
-         prefs_.zoteroUseBetterBibtex(),
+         state_.zoteroUseBetterBibtex(),
          false);
       spaced(zoteroUseBetterBibtex_);
       citations.add(zoteroUseBetterBibtex_);
@@ -389,14 +389,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                zoteroDataDir_.setText(zoteroLocalConfig_.dataDirectory);
             
             // resolve 'auto'
-            String connectionType = prefs.zoteroConnectionType().getValue();
-            zoteroIsAuto_ = connectionType.equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
+            String connectionType = state_.zoteroConnectionType().getValue();
+            zoteroIsAuto_ = connectionType.equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
             if (zoteroIsAuto_)
             {
                if (!zoteroDataDir_.getText().isEmpty())
-                  connectionType = UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL;
+                  connectionType = UserStateAccessor.ZOTERO_CONNECTION_TYPE_LOCAL;
                else
-                  connectionType = UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE;
+                  connectionType = UserStateAccessor.ZOTERO_CONNECTION_TYPE_NONE;
             }
             zoteroConnection_.setType(connectionType);
             
@@ -405,8 +405,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             zoteroConnection_.addChangeHandler((event) -> { 
                zoteroIsAuto_ = false;
                // connection type change invalidates libraries (as they were
-               // retrived from the previous connection)
-               zoteroLibs_.setLibraries(JsArrayString.createArray().cast());
+               // retrived from the previous connection). default back to
+               // 'My Library'
+               zoteroLibs_.setMyLibrary();
                manageZoteroUI(false); 
             });
          }
@@ -462,15 +463,16 @@ public class RMarkdownPreferencesPane extends PreferencesPane
         
       zoteroApiKey_.setProgressIndicator(getProgressIndicator());
       
-      zoteroLibs_.setLibraries(prefs.zoteroLibraries().getValue());
+      zoteroLibs_.setLibraries(state_.zoteroLibraries().getValue());
+      zoteroLibs_.addAvailableLibraries();
  
    }
    
    private void manageZoteroUI(boolean showLibs)
    {
-      zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB));
-      zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
-      zoteroLibs_.setVisible(showLibs && !zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE));
+      zoteroApiKey_.setVisible(zoteroConnection_.getType().equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_WEB));
+      zoteroDataDir_.setVisible(zoteroConnection_.getType().equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_LOCAL));
+      zoteroLibs_.setVisible(showLibs && !zoteroConnection_.getType().equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_NONE));
       zoteroUseBetterBibtex_.setVisible(zoteroDataDir_.isVisible() && zoteroLocalConfig_.betterBibtex);
    }
 
@@ -505,24 +507,24 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       if (zoteroIsAuto_)
       {
-         prefs_.zoteroConnectionType().setGlobalValue(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
+         state_.zoteroConnectionType().setGlobalValue(UserStateAccessor.ZOTERO_CONNECTION_TYPE_AUTO);
       }
-      else if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL) &&
+      else if (zoteroConnection_.getType().equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_LOCAL) &&
                zoteroDataDir_.getText().isEmpty())
       {
          // not a valid set
       }
-      else if (zoteroConnection_.getType().equals(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB) &&
+      else if (zoteroConnection_.getType().equals(UserStateAccessor.ZOTERO_CONNECTION_TYPE_WEB) &&
                zoteroApiKey_.getKey().isEmpty())
       {
          // not a valid set
       }
       else
       {
-         prefs_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
+         state_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
       }
       
-      prefs_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
+      state_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
       
       // if the zotero data dir is same as the detected data dir then 
       // set it to empty (allowing the server to always get the right default)

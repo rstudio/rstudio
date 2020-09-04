@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 #include <session/prefs/Preferences.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -244,7 +245,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
                std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
                if (value == "TRUE")
                {
-                   session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
+                   session::prefs::userState().zoteroLibraries().toVectorString(collections);
                }
                else
                {
@@ -259,7 +260,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
             }
             else
             {
-               session::prefs::userPrefs().zoteroLibraries().toVectorString(collections);
+               session::prefs::userState().zoteroLibraries().toVectorString(collections);
             }
          }
 
@@ -309,6 +310,7 @@ Error initialize()
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
        (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))
+       (betterBibtexInit)
    ;
    return initBlock.execute();
 }

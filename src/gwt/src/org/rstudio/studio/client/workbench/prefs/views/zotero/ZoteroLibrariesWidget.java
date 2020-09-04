@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -47,22 +49,17 @@ public class ZoteroLibrariesWidget extends Composite
       panel.addStyleName(RES.styles().librariesWidget());
       
       ArrayList<String> options = new ArrayList<String>();
-      ArrayList<String> values = new ArrayList<String>();
       
       if (includeUseDefault)
-      {
-         options.add("(Default)");
-         values.add(USE_DEFAULT);
-      }
-      options.add("All Libraries");
-      values.add(ALL_LIBRARIES);
-      options.add("Selected Libraries");
-      values.add(SELECTED_LIBRARIES);
-      
+         options.add(USE_DEFAULT);
+      options.add(MY_LIBRARY);
+      options.add(ALL_LIBRARIES);
+      options.add(SELECTED_LIBRARIES);
+
       selectedLibs_ = new SelectWidget(
          "Use libraries:", 
          options.toArray(new String[] {}),
-         values.toArray(new String[] {}),
+         options.toArray(new String[] {}),
          false,
          true,
          false
@@ -85,16 +82,25 @@ public class ZoteroLibrariesWidget extends Composite
       initWidget(panel);
    }
    
+   public void setMyLibrary()
+   {
+      selectedLibs_.setValue(MY_LIBRARY);
+   }
+   
    public void setLibraries(JsArrayString libraries)
    {
       ArrayList<String> selectedLibraries = new ArrayList<String>();
       if (libraries != null)
       {
          // set select widget based on whether we have a library whitelist
-         selectedLibs_.setValue(libraries.length() == 0 ? ALL_LIBRARIES : SELECTED_LIBRARIES);
-         manageUI();
+         if (libraries.length() == 0)
+            selectedLibs_.setValue(ALL_LIBRARIES);
+         else if (libraries.length() == 1 && libraries.get(0).equals(MY_LIBRARY))
+            selectedLibs_.setValue(MY_LIBRARY);
+         else
+            selectedLibs_.setValue(SELECTED_LIBRARIES);
          
-         // start with selected libraries
+         // popupulate selected libraries
          for (int i = 0; i<libraries.length(); i++)
          {
             String library = libraries.get(i);
@@ -109,55 +115,72 @@ public class ZoteroLibrariesWidget extends Composite
          selectedLibs_.setValue(USE_DEFAULT);
       }
       
-      // query for additional libraries if we haven't already
-      if (!queriedForLibs_)
+      // manage visibility of selectedLibs_
+      manageUI();
+   }
+   
+   public JsArrayString getLibraries()
+   {   
+      JsArrayString libraries = JsArrayString.createArray().cast();
+      switch(selectedLibs_.getValue())
       {
-         queriedForLibs_ = true;
-         
-         server_.zoteroGetCollectionSpecs(new SimpleRequestCallback<JavaScriptObject>() {
-            @Override
-            public void onResponseReceived(JavaScriptObject response)
-            {     
-               PanmirrorZoteroResult result = response.cast();
-               if (result.getStatus().equals("ok"))
+      case USE_DEFAULT:
+         libraries = null;
+         break;
+      case MY_LIBRARY:
+         libraries.push(MY_LIBRARY); 
+         break;
+      case ALL_LIBRARIES:
+         // empty array == all libs
+         break;
+      case SELECTED_LIBRARIES:
+         for (int i = 0; i<libraries_.getItemCount(); i++)
+         {
+            CheckBox chkLibrary = libraries_.getItemAtIdx(i);
+            if (chkLibrary.getValue())
+               libraries.push(chkLibrary.getText());
+         }
+      }
+      return libraries;
+   }
+   
+   public void addAvailableLibraries()
+   {
+      server_.zoteroGetCollectionSpecs(new SimpleRequestCallback<JavaScriptObject>() {
+         @Override
+         public void onResponseReceived(JavaScriptObject response)
+         {     
+            PanmirrorZoteroResult result = response.cast();
+            if (result.getStatus().equals("ok"))
+            {
+               // get specs
+               JsArray<PanmirrorZoteroCollectionSpec> specsJs = result.getMessage().cast();
+               ArrayList<PanmirrorZoteroCollectionSpec> specs = JsArrayUtil.toArrayList(specsJs);
+               
+               // order by name
+               specs.sort((PanmirrorZoteroCollectionSpec a, PanmirrorZoteroCollectionSpec b) -> {
+                  return a.getName().compareTo(b.getName());
+               });
+               
+               // display
+               for (int i = 0; i<specs.size(); i++)
                {
-                  JsArray<PanmirrorZoteroCollectionSpec> specs = result.getMessage().cast();
-                  for (int i = 0; i<specs.length(); i++)
+                  PanmirrorZoteroCollectionSpec spec = specs.get(i);
+                  if (StringUtil.isNullOrEmpty(spec.getParentKey()))
                   {
                      String name = specs.get(i).getName();
-                     if (!selectedLibraries.contains(name))
+                     
+                     if (!libraries_.contains(name))
                      {
                         CheckBox chkLibrary = new CheckBox(name);
                         libraries_.addItem(chkLibrary);
                      }
                   }
                }
-              
             }
-         });
-      }
-   }
-   
-   public JsArrayString getLibraries()
-   {   
-      if (!selectedLibs_.getValue().equals(USE_DEFAULT))
-      {
-         JsArrayString libraries = JsArrayString.createArray().cast();
-         if (selectedLibs_.getValue().equals(SELECTED_LIBRARIES))
-         {
-            for (int i = 0; i<libraries_.getItemCount(); i++)
-            {
-               CheckBox chkLibrary = libraries_.getItemAtIdx(i);
-               if (chkLibrary.getValue())
-                  libraries.push(chkLibrary.getText());
-            }
+           
          }
-         return libraries;
-      }
-      else
-      {
-         return null;
-      }
+      });
    }
    
    private void manageUI()
@@ -168,14 +191,14 @@ public class ZoteroLibrariesWidget extends Composite
    private static ZoteroResources RES = ZoteroResources.INSTANCE;
    
    
-   private final static String USE_DEFAULT = "default";
-   private final static String ALL_LIBRARIES = "all";
-   private final static String SELECTED_LIBRARIES = "selected";
+   private final static String USE_DEFAULT = "(Default)";
+   private final static String MY_LIBRARY = "My Library";
+   private final static String ALL_LIBRARIES = "All Libraries";
+   private final static String SELECTED_LIBRARIES = "Selected Libraries";
    
    private final SelectWidget selectedLibs_;
    private final CheckBoxList libraries_;
    
    private final PanmirrorZoteroServerOperations server_;
    
-   private boolean queriedForLibs_ = false;
 }

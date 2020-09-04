@@ -344,13 +344,6 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
-#define kZoteroConnectionType "zotero_connection_type"
-#define kZoteroConnectionTypeAuto "auto"
-#define kZoteroConnectionTypeNone "none"
-#define kZoteroConnectionTypeLocal "local"
-#define kZoteroConnectionTypeWeb "web"
-#define kZoteroLibraries "zotero_libraries"
-#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1565,24 +1558,6 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
-
-   /**
-    * Zotero connection type (local or web)
-    */
-   std::string zoteroConnectionType();
-   core::Error setZoteroConnectionType(std::string val);
-
-   /**
-    * Zotero libraries to insert citations from.
-    */
-   core::json::Array zoteroLibraries();
-   core::Error setZoteroLibraries(core::json::Array val);
-
-   /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
-    */
-   bool zoteroUseBetterBibtex();
-   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Preferred emoji skintone

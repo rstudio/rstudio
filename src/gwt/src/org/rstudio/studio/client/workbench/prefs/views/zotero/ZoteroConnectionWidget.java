@@ -20,7 +20,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogResources;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -43,10 +43,10 @@ public class ZoteroConnectionWidget extends Composite
       options.add("Web");
       
       ArrayList<String> values = new ArrayList<String>();
-      values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_NONE);
+      values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_NONE);
       if (!webOnly())
-         values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL);
-      values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB);
+         values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_LOCAL);
+      values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_WEB);
 
       zoteroConnection_ = new SelectWidget(
             "Zotero Library:",

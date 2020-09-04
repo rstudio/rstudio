@@ -49,7 +49,7 @@ FilePath collectionsCacheDir(const std::string& type, const std::string& context
 {
    // cache dir name (depends on whether bbt is enabled as when that changes it should invalidate all cache entries)
    std::string dirName = "collections-v2";
-   if (session::prefs::userPrefs().zoteroUseBetterBibtex())
+   if (session::prefs::userState().zoteroUseBetterBibtex())
       dirName += "-bbt";
 
    // ~/.local/share/rstudio/zotero-collections
@@ -265,7 +265,7 @@ struct Connection
 Connection zoteroConnection()
 {
    // use local connection if available for 'auto'
-   std::string type = prefs::userPrefs().zoteroConnectionType();
+   std::string type = prefs::userState().zoteroConnectionType();
    if ((type.empty() || type == kZoteroConnectionTypeAuto) && localZoteroAvailable())
        type = kZoteroConnectionTypeLocal;
 

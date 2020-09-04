@@ -137,6 +137,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       canonical_.setSelectedIndex(config.getMarkdownCanonical());
       
       zoteroLibs_.setLibraries(config.getZoteroLibraries());
+      zoteroLibs_.addAvailableLibraries();
    }
 
   
