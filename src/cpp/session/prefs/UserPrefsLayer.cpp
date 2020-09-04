@@ -109,6 +109,19 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
       lastSync_ = prefsFile_.getLastWriteTime();
    }
 
+   // Modify the error to be more descriptive
+   if (isFileNotFoundError(error) && prefsFile_.getParent().exists())
+   {
+      error = Error(
+         error.getName(),
+         error.getCode(),
+         "Unable to save preferences. Please verify that " + 
+            prefsFile_.getParent().getAbsolutePath() +
+            " exists and it and all its children are owned by the user '" +
+            system::username() + "'",
+         error.getLocation());
+   }
+
    return error;
 }
 
