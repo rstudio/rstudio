@@ -40,6 +40,7 @@ export interface CitationSourceListProps extends WidgetProps {
   confirm: VoidFunction;
   status: CitationSourceListStatus;
   placeholderText?: string;
+  focusPrevious?: () => void;
   ui: EditorUI;
 }
 
@@ -93,7 +94,11 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   const handleListKeyDown = (event: React.KeyboardEvent) => {
     switch (event.key) {
       case 'ArrowUp':
-        incrementIndex(event, selectedIndex - 1);
+        if (selectedIndex === 0 && props.focusPrevious) {
+          props.focusPrevious();
+        } else {
+          incrementIndex(event, selectedIndex - 1);
+        }
         break;
 
       case 'ArrowDown':
@@ -127,6 +132,10 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     setFocused(false);
   };
 
+  const onSetSelectedIndex = (index: number) => {
+    setSelectedIndex(index);
+  }
+
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
 
   switch (props.status) {
@@ -141,6 +150,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               itemSize={itemHeight}
               itemData={{
                 selectedIndex,
+                setSelectedIndex: onSetSelectedIndex,
                 citations: props.citations || [],
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
@@ -154,7 +164,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
             >
               {CitationSourcePanelListItem}
             </FixedSizeList>
-          </div>
+          </div >
         );
       } else {
         return (

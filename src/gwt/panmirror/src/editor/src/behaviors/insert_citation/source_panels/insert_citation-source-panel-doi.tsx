@@ -26,7 +26,6 @@ import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 import './insert_citation-source-panel-doi.css';
-import { cellAround } from "prosemirror-tables";
 
 const kDOIType = 'DOI Search';
 
@@ -36,7 +35,7 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
     panel: DOISourcePanel,
     treeNode: {
       key: 'DOI',
-      name: ui.context.translateText('Lookup DOI'),
+      name: ui.context.translateText('From DOI'),
       image: ui.images.citations?.doi,
       type: kDOIType,
       children: [],

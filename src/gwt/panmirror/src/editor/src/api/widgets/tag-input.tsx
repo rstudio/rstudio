@@ -164,7 +164,7 @@ const Tag: React.FC<TagProps> = props => {
       {!editing ?
         <div onClick={onEditClick} className='pm-tag-input-text-raw pm-text-color'>{props.tag.displayPrefix}{displayText}</div> :
         <TextInput
-          width={`${editingText.length} ch`}
+          width={`${editingText.length}ch`}
           ref={editTextInput}
           className='pm-tag-input-text-edit'
           value={editingText}

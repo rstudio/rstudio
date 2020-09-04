@@ -1,14 +1,10 @@
 
-
-.pm-navigation-tree-node-indent {
-  margin-left: 10px;
-}
-
 .pm-navigation-tree-node {
   padding-top: 4px;
   padding-bottom: 4px;
   display: flex;
   align-items: center;
+  margin-top: 2px;
 }
 
 .pm-navigation-tree-node-image {

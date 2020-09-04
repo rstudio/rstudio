@@ -77,6 +77,11 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     }
   };
 
+  // Used to focus the search box
+  const focusSearch = () => {
+    searchBoxRef.current?.focus();
+  };
+
   return (
     <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color'>
       <div className='pm-insert-citation-search-panel-textbox-container'>
@@ -98,6 +103,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
         confirm={props.confirm}
         addCitation={props.addCitation}
         removeCitation={props.removeCitation}
+        focusPrevious={focusSearch}
         status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
         ui={props.ui}
         ref={listContainer}

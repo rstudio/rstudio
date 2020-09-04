@@ -22,7 +22,6 @@ import { EditorUI } from "../../api/ui";
 import { EditorServer } from "../../api/server";
 import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
-import { CSL } from "../../api/csl";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
 import { BibliographyManager, BibliographyFile, BibliographySource } from "../../api/bibliography/bibliography";
@@ -109,7 +108,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       const allPanels = [
         bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager),
         doiSourcePanel(props.ui),
-        crossrefSourcePanel(props.ui)
+        crossrefSourcePanel(props.ui),
       ];
       setProviderPanels(allPanels);
 

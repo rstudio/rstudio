@@ -34,12 +34,14 @@ const kAllLocalSourcesRootNodeType = 'All Local Sources';
 export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
   const localProviderNodes = providers.map(provider => {
-    const node: any = {};
-    node.key = provider.key;
-    node.name = ui.context.translateText(provider.name);
-    node.type = provider.key;
-    node.image = libraryImageForProvider(provider.key, ui);
-    node.children = toTree(provider.key, provider.collections(doc, ui), folderImageForProvider(provider.key, ui));
+    const node: NavigationTreeNode = {
+      key: provider.key,
+      name: ui.context.translateText(provider.name),
+      type: provider.key,
+      image: libraryImageForProvider(provider.key, ui),
+      children: toTree(provider.key, provider.collections(doc, ui), folderImageForProvider(provider.key, ui)),
+      expanded: true
+    };
     return node;
   });
 
@@ -172,25 +174,22 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
-function toCitationEntry(bibliographyEntries: BibliographySource[], ui: EditorUI): CitationListEntry[] {
-  return bibliographyEntries.map(bibliographyEntry => {
+function toCitationEntry(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+  return sources.map(source => {
     return {
-      id: bibliographyEntry.id,
-      title: bibliographyEntry.title || '',
-      providerKey: bibliographyEntry.providerKey,
+      id: source.id,
+      title: source.title || '',
+      providerKey: source.providerKey,
       authors: (length: number) => {
-        return formatAuthors(bibliographyEntry.author, length);
+        return formatAuthors(source.author, length);
       },
-      date: formatIssuedDate(bibliographyEntry.issued),
+      date: formatIssuedDate(source.issued),
       journal: '',
-      image: imageForType(ui, bibliographyEntry.type)[0],
+      image: imageForType(ui, source.type)[0],
+      imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
       toBibliographySource: () => {
-        return Promise.resolve(bibliographyEntry);
+        return Promise.resolve(source);
       }
     };
   });
 }
-
-
-
-

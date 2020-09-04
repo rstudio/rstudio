@@ -27,7 +27,7 @@ import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
 
 export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
-  const kCrossrefType = 'DOI Search';
+  const kCrossrefType = 'Crossref';
   return {
     key: 'E38370AA-78AE-450B-BBE8-878E1C817C04',
     panel: CrossRefSourcePanel,

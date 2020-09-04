@@ -24,9 +24,10 @@ import { CitationListEntry } from "../insert_citation-panel";
 import './insert_citation-source-panel-list-item.css';
 
 interface CitationSourcePanelListData {
-  selectedIndex: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
+  selectedIndex: number;
+  setSelectedIndex: (index: number) => void;
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
   ui: EditorUI;
@@ -47,10 +48,9 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   const authorWidth = Math.max(10, 50 - id.length);
 
   // Whether this item is already in the list of items to add
-  console.log(citationListData.citationsToAdd);
   const alreadyAdded = citationListData.citationsToAdd.map(src => src.id).includes(citationEntry.id);
 
-  const onClick = () => {
+  const onButtonClick = () => {
     if (alreadyAdded) {
       citationListData.removeCitation(citationEntry);
     } else {
@@ -58,11 +58,19 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
+  const onItemClick = () => {
+    citationListData.setSelectedIndex(props.index);
+  };
+
+  const onDoubleClick = () => {
+    citationListData.addCitation(citationEntry);
+  };
+
   // Wheher this item is selected
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
 
   return (
-    <div>
+    <div onClick={onItemClick} onDoubleClick={onDoubleClick}>
       <div className={`pm-insert-citation-source-panel-item ${selected ? 'pm-list-item-selected' : ''}`} style={props.style}>
         <div className='pm-insert-citation-source-panel-item-container'>
           <div className='pm-insert-citation-source-panel-item-type'>
@@ -81,7 +89,7 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
               tabIndex={citationListData.preventFocus ? -1 : 0}
               style={{ width: '70px' }}
               title={alreadyAdded ? 'Remove' : 'Add'}
-              onClick={onClick}
+              onClick={onButtonClick}
             />
           </div>
         </div>

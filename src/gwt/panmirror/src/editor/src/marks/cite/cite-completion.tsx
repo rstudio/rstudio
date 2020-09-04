@@ -219,7 +219,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
-      adornmentImage={entry.adornmentImage}
+      imageAdornment={entry.imageAdornment}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
       detail={detail}

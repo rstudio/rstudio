@@ -111,6 +111,11 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
     setSearchImmediate(true);
   };
 
+  // Used to focus the search box
+  const focusSearch = () => {
+    searchBoxRef.current?.focus();
+  };
+
   return (
     <div style={props.style} className='pm-insert-citation-panel-latent-search'>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
@@ -143,6 +148,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
           confirm={props.confirm}
           addCitation={props.addCitation}
           removeCitation={props.removeCitation}
+          focusPrevious={focusSearch}
           ui={props.ui}
           placeholderText={props.defaultText}
           status={props.status}
