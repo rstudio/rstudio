@@ -1,10 +1,16 @@
 .pm-insert-citation-source-panel-item {
+  width: 100%;
+}
+
+.pm-insert-citation-source-panel-item-border {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 8px) !important;
   margin-left: 4px;
   margin-right: 4px;
-  margin-top: 4px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  width: calc(100% - 8px);
+  height: calc(100% - 6px);
 }
 
 .pm-insert-citation-source-panel-item-type {

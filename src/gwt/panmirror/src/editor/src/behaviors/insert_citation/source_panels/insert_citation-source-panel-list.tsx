@@ -134,7 +134,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
-  }
+  };
 
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
 
@@ -144,6 +144,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
         return (
           <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
             <FixedSizeList
+              className='pm-insert-citation-source-panel-list'
               height={props.height}
               width='100%'
               itemCount={(props.citations || []).length}

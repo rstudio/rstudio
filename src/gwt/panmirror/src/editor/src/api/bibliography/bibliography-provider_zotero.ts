@@ -64,8 +64,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
           this.allCollectionSpecs = allCollectionSpecsResult.message;
         }
 
-        const collections = Array.isArray(config) ? config : [];
-
         const result = await this.server.getCollections(docPath, collections, forceAll, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {

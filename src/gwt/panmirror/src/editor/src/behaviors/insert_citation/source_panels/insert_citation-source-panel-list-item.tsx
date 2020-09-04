@@ -70,8 +70,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
 
   return (
-    <div onClick={onItemClick} onDoubleClick={onDoubleClick}>
-      <div className={`pm-insert-citation-source-panel-item ${selected ? 'pm-list-item-selected' : ''}`} style={props.style}>
+    <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
+      <div className={`pm-insert-citation-source-panel-item-border ${selected ? 'pm-list-item-selected' : ''}`}>
         <div className='pm-insert-citation-source-panel-item-container'>
           <div className='pm-insert-citation-source-panel-item-type'>
             {citationEntry.imageAdornment ? <img className='pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color' src={citationEntry.imageAdornment} /> : undefined}
@@ -93,10 +93,6 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
             />
           </div>
         </div>
-        {
-
-          <div className={`pm-block-border-color  ${citationListData.showSeparator && !selected ? 'pm-insert-citation-source-panel-item-separator' : 'pm-insert-citation-source-panel-item-noseparator'}`} />
-        }
       </div>
     </div>
   );
