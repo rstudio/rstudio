@@ -236,8 +236,4 @@ public class JsUtil
       return list;
    }
    
-   public static final native JavaScriptObject createString(String string)
-   /*-{
-      return string;
-   }-*/;
 }

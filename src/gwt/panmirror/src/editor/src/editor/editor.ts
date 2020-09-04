@@ -16,7 +16,7 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Selection, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Selection, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -637,10 +637,21 @@ export class Editor {
   }
 
   public replaceSelection(value: string): void {
-    this.view.dispatch(
-      this.view.state.tr.replaceSelectionWith(this.schema.text(value))
-    );
-    this.focus();
+
+    let empty = this.view.state.selection.empty;
+    let {from, to} = this.view.state.selection;
+
+    // insert text
+    let tr = this.view.state.tr.insertText(value);
+    this.view.dispatch(tr);
+
+    // update selection
+    if (!empty) {
+      let sel = TextSelection.create(this.view.state.doc, from, from + value.length);
+      let tr = this.view.state.tr.setSelection(sel);
+      this.view.dispatch(tr);
+    }
+
   }
 
   public getYamlFrontMatter() {
