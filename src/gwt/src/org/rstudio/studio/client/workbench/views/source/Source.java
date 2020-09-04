@@ -2846,12 +2846,23 @@ public class Source implements InsertSourceHandler,
    private void invokeEditorApiAction(String docId,
                                       CommandWithArg<TextEditingTarget> callback)
    {
-      columnManager_.withTarget(docId, callback, () ->
+      try
       {
+         columnManager_.withTarget(docId, callback, () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
+      }
+      catch (Exception e)
+      {
+         // ensure server receives a response in case
+         // an exception interrupts regular execution
          server_.rstudioApiResponse(
                JavaScriptObject.createObject(),
                new VoidServerRequestCallback());
-      });
+      }
    }
    
    @Override
