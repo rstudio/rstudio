@@ -8,5 +8,12 @@
   font-size: 10pt;
   font-style: italic;
   opacity: 0.8;
-  padding-top: 30px;
+  padding-top: 40px;
+}
+
+.pm-insert-citation-source-panel-list-progress {
+  height: 24px;
+  width: 24px;
+  padding-right: 2px;
+  vertical-align:middle
 }

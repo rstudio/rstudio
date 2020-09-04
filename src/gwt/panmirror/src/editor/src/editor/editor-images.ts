@@ -23,6 +23,7 @@ import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
 import runprevchunksImage from './images/runprevchunks.png';
 import searchImage from './images/search.png';
+import searchProgressImage from './images/search_progress.gif';
 
 import omniInsertGenericImage from './images/omni_insert/generic.png';
 import heading1Image from './images/omni_insert/heading1.png';
@@ -140,6 +141,7 @@ export function defaultEditorUIImages(): EditorUIImages {
     runchunk: runchunkImage,
     runprevchunks: runprevchunksImage,
     search: searchImage,
+    search_progress: searchProgressImage,
     omni_insert: {
       generic: omniInsertGenericImage,
       heading1: heading1Image,

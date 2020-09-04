@@ -20,7 +20,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
 import { EditorServer } from '../../api/server';
-import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
+import { BibliographyManager, BibliographyFile } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPanel, CitationListEntry } from './insert_citation-panel';
 
@@ -32,7 +32,7 @@ export interface InsertCitationDialogResult {
   bibliography: BibliographyFile;
 }
 
-export async function showInsertCitationDialog(
+export async function selectCitations(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,

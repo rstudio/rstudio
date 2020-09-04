@@ -17,13 +17,13 @@
 import React from "react";
 
 import { EditorUI } from "../../../api/ui";
-import { BibliographySource, BibliographyManager } from "../../../api/bibliography/bibliography";
-import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
+import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 
 import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 import { CrossrefWork, imageForCrossrefType } from "../../../api/crossref";
+import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
 
 export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
@@ -44,14 +44,14 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
 export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => {
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(false);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
+  const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
 
   React.useEffect(() => {
     let mounted = true;
     const performSearch = async () => {
       if (mounted) {
-        setLoading(true);
+        setStatus(CitationSourceListStatus.loading);
       }
       const works = await props.server.crossref.works(searchTerm);
 
@@ -69,7 +69,7 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
 
       if (mounted) {
         setCitations(citationEntries);
-        setLoading(false);
+        setStatus(citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults);
       }
     };
 
@@ -97,7 +97,7 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
       removeCitation={props.removeCitation}
       doSearch={doSearch}
       confirm={props.confirm}
-      loading={loading}
+      status={status}
       defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
       placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
       ui={props.ui}

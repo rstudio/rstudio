@@ -18,7 +18,7 @@ import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
-import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
 import { CitationListEntry } from "../insert_citation-panel";
 
@@ -32,10 +32,10 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   removeCitation: (citation: CitationListEntry) => void;
   doSearch: (searchTerm: string) => void;
   confirm: VoidFunction;
-  loading: boolean;
   ui: EditorUI;
   defaultText?: string;
   placeholderText?: string;
+  status: CitationSourceListStatus;
 }
 
 export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearchPanelProps> = props => {
@@ -111,9 +111,6 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
     setSearchImmediate(true);
   };
 
-  const placeholder = props.placeholderText || props.ui.context.translateText('Search for citation');
-  const defaultText = searchTerm.length > 0 ? props.ui.context.translateText('No matching results') : props.defaultText || '';
-
   return (
     <div style={props.style} className='pm-insert-citation-panel-latent-search'>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
@@ -122,7 +119,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
           iconAdornment={props.ui.images.search}
           tabIndex={0}
           className='pm-insert-citation-panel-latent-search-textbox pm-block-border-color'
-          placeholder={placeholder}
+          placeholder={props.placeholderText}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
           onPaste={onPaste}
@@ -130,26 +127,30 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
         />
 
         <TextButton
-          title={props.ui.context.translateText(props.loading ? 'Loading' : 'Search')}
+          title={props.ui.context.translateText('Search')}
           classes={['pm-insert-citation-panel-latent-search-button']}
           onClick={handleButtonClick}
-          disabled={props.loading}
+          disabled={props.status === CitationSourceListStatus.loading}
         />
 
       </div>
 
-      <CitationSourceList
-        height={listHeight}
-        citations={props.citations}
-        citationsToAdd={props.citationsToAdd}
-        confirm={props.confirm}
-        addCitation={props.addCitation}
-        removeCitation={props.removeCitation}
-        ui={props.ui}
-        noResultsText={defaultText}
-        classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}
-        ref={listContainer}
-      />
+      <div className='pm-insert-citation-panel-latent-search-list-container'>
+        <CitationSourceList
+          height={listHeight}
+          citations={props.citations}
+          citationsToAdd={props.citationsToAdd}
+          confirm={props.confirm}
+          addCitation={props.addCitation}
+          removeCitation={props.removeCitation}
+          ui={props.ui}
+          placeholderText={props.defaultText}
+          status={props.status}
+          classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}
+          ref={listContainer}
+        />
+      </div>
+
     </div>);
 };
 

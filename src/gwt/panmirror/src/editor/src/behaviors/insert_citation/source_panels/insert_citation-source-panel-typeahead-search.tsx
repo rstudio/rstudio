@@ -20,7 +20,7 @@ import { WidgetProps } from "../../../api/widgets/react";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import './insert_citation-source-panel-typeahead-search.css';
-import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
 import { CitationListEntry } from "../insert_citation-panel";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
@@ -95,10 +95,10 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
         height={listHeight}
         citations={props.citations}
         citationsToAdd={props.citationsToAdd}
-        noResultsText={props.ui.context.translateText(searchBoxRef.current?.value ? 'No matching results' : '')}
         confirm={props.confirm}
         addCitation={props.addCitation}
         removeCitation={props.removeCitation}
+        status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
         ui={props.ui}
         ref={listContainer}
       />

@@ -24,16 +24,25 @@ import { CitationListEntry } from "../insert_citation-panel";
 
 import './insert_citation-source-panel-list.css';
 
+
+export enum CitationSourceListStatus {
+  default,
+  loading,
+  noResults
+}
+
 export interface CitationSourceListProps extends WidgetProps {
   height: number;
-  noResultsText: string;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
   confirm: VoidFunction;
+  status: CitationSourceListStatus;
+  placeholderText?: string;
   ui: EditorUI;
 }
+
 
 export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>((props: CitationSourceListProps, ref) => {
   const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
@@ -58,8 +67,10 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
     event.stopPropagation();
     event.preventDefault();
-    const maxIndex = props.citations.length - 1;
-    setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
+    if (props.citations) {
+      const maxIndex = props.citations.length - 1;
+      setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
+    }
   };
 
   // Toggle the currently selected item as added or removed
@@ -67,12 +78,14 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     event.stopPropagation();
     event.preventDefault();
 
-    const source = props.citations[selectedIndex];
-    if (source) {
-      if (props.citationsToAdd.includes(source)) {
-        props.removeCitation(source);
-      } else {
-        props.addCitation(source);
+    if (props.citations) {
+      const source = props.citations[selectedIndex];
+      if (source) {
+        if (props.citationsToAdd.includes(source)) {
+          props.removeCitation(source);
+        } else {
+          props.addCitation(source);
+        }
       }
     }
   };
@@ -114,40 +127,60 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     setFocused(false);
   };
 
-
-
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
 
-  return (
-    props.citations.length === 0 ?
-      (<div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-        <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.noResultsText}</div>
-      </div >) :
-      (
-        <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
-          <FixedSizeList
-            height={props.height}
-            width='100%'
-            itemCount={props.citations.length}
-            itemSize={itemHeight}
-            itemData={{
-              selectedIndex,
-              citations: props.citations,
-              citationsToAdd: props.citationsToAdd,
-              addCitation: props.addCitation,
-              removeCitation: props.removeCitation,
-              ui: props.ui,
-              showSeparator: true,
-              showSelection: focused,
-              preventFocus: true
-            }}
-            ref={fixedList}
-          >
-            {CitationSourcePanelListItem}
-          </FixedSizeList>
+  switch (props.status) {
+    case CitationSourceListStatus.default:
+      if (props.citations.length > 0) {
+        return (
+          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
+            <FixedSizeList
+              height={props.height}
+              width='100%'
+              itemCount={(props.citations || []).length}
+              itemSize={itemHeight}
+              itemData={{
+                selectedIndex,
+                citations: props.citations || [],
+                citationsToAdd: props.citationsToAdd,
+                addCitation: props.addCitation,
+                removeCitation: props.removeCitation,
+                showSeparator: true,
+                showSelection: focused,
+                preventFocus: true,
+                ui: props.ui,
+              }}
+              ref={fixedList}
+            >
+              {CitationSourcePanelListItem}
+            </FixedSizeList>
+          </div>
+        );
+      } else {
+        return (
+          <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.placeholderText}</div>
+          </div>
+        );
+      }
+
+    case CitationSourceListStatus.loading:
+      return (
+        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>
+            <img src={props.ui.images.search_progress} className='pm-insert-citation-source-panel-list-progress' />
+            {props.ui.context.translateText('Searching…')}
+          </div>
         </div>
-      )
-  );
+      );
+
+    case CitationSourceListStatus.noResults:
+      return (
+        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.ui.context.translateText('No matching items')}</div>
+        </div >
+      );
+  }
 });
 
 

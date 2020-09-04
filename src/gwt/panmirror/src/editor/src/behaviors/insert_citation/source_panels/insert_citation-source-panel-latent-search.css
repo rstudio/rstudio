@@ -24,6 +24,10 @@
   min-width: 76px;
 }
 
+.pm-insert-citation-panel-latent-search-list-container {
+  position: relative;
+}
+
 .pm-insert-citation-panel-latent-search-list {
   border: solid 1px;
   border-radius: 3px;  

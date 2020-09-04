@@ -22,6 +22,7 @@ export interface EditorUIImages {
   runchunk?: string;
   runprevchunks?: string;
   search?: string;
+  search_progress?: string;
   omni_insert?: {
     generic?: string;
     heading1?: string;
