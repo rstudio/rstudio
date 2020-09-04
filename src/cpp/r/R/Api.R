@@ -342,14 +342,16 @@
    # in such cases, we replace the current selection. we pass an empty range
    # and let upstream interpret this as a request to replace the current
    # selection.
-
-   if (missing(text) && is.character(location)) {
-      text <- location
-      location <- list()
-   } else if (missing(location) && is.character(text)) {
-      text <- text
-      location <- list()
-   } else if (length(location) == 0) {
+   if (missing(text) && is.character(location))
+   {
+      return(.rs.api.selectionSet(location))
+   }
+   else if (missing(location) && is.character(text))
+   {
+      return(.rs.api.selectionSet(text))
+   }
+   else if (length(location) == 0)
+   {
       return()
    }
 
