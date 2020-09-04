@@ -907,7 +907,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 .rs.addApiFunction("sendRequest", function(request)
 {
-   .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
+   response <- .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
+   invisible(response)
 })
 
 .rs.addApiFunction("selectionGet", function()
@@ -921,11 +922,12 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .rs.api.sendRequest(request)
 })
 
-.rs.addApiFunction("selectionSet", function(text = NULL)
+.rs.addApiFunction("selectionSet", function(value = NULL)
 {
-   request <- .rs.apiRequest(
+   value <- paste(value, collapse = "\n")
+   request <- .rs.api.createRequest(
       type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
-      data = list(text = paste(text, collapse = "\n")),
+      data = list(value = .rs.scalar(value)),
       sync = TRUE
    )
    

@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateE
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
@@ -795,7 +796,7 @@ public class Workbench implements BusyEvent.Handler,
       
       if (type == RStudioApiRequestEvent.TYPE_UNKNOWN)
       {
-         assert false : "Unknown request";
+         assert false : "Unknown or malformed request";
       }
       else if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
       {
@@ -804,7 +805,8 @@ public class Workbench implements BusyEvent.Handler,
       }
       else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
       {
-         
+         sourceWindowManager_.fireEventToLastFocusedWindow(
+               new SetEditorSelectionEvent(data.cast()));
       }
       else
       {

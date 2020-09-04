@@ -65,6 +65,8 @@ public class PanmirrorEditor
    public native String getHTML();
    
    public native String getSelectedText();
+   public native void replaceSelection(String value);
+   
    public native PanmirrorSelection getSelection();
    
    public native PanmirrorMenus getMenus();

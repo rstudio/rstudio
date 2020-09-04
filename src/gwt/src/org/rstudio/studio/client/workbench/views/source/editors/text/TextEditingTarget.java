@@ -2481,6 +2481,26 @@ public class TextEditingTarget implements
          view_.editorContainer().focus();
       }
    }
+   
+   public void replaceSelection(String value, Command callback)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() ->
+         {
+            visualMode_.replaceSelection(value);
+            callback.execute();
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() ->
+         {
+            docDisplay_.replaceSelection(value);
+            callback.execute();
+         });
+      }
+   }
 
    public String getSelectedText()
    {
@@ -7753,25 +7773,29 @@ public class TextEditingTarget implements
       });
    }
    
-   public void withEditorSelection(CommandWithArg<String> callback)
+   public void withEditorSelection(final CommandWithArg<String> callback)
    {
       if (visualMode_.isActivated())
       {
-         Command onActivated = () ->
+         ensureVisualModeActive(new Command()
          {
-            callback.execute(visualMode_.getSelectedText());
-         };
-               
-         ensureVisualModeActive(onActivated);
+            @Override
+            public void execute()
+            {
+               callback.execute(visualMode_.getSelectedText());
+            }
+         });
       }
       else
       {
-         Command onActivated = () ->
+         ensureTextEditorActive(new Command()
          {
-            callback.execute(docDisplay_.getSelectionValue());
-         };
-         
-         ensureTextEditorActive(onActivated);
+            @Override
+            public void execute()
+            {
+               callback.execute(docDisplay_.getSelectionValue());
+            }
+         });
       }
    }
 

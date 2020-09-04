@@ -102,7 +102,6 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
-import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -144,6 +143,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
@@ -221,7 +221,8 @@ public class Source implements InsertSourceHandler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
                                MouseNavigateSourceHistoryEvent.Handler,
-                               GetEditorSelectionEvent.Handler
+                               GetEditorSelectionEvent.Handler,
+                               SetEditorSelectionEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -460,6 +461,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
       events_.addHandler(GetEditorSelectionEvent.TYPE, this);
+      events_.addHandler(SetEditorSelectionEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
@@ -2862,6 +2864,31 @@ public class Source implements InsertSourceHandler,
          server_.rstudioApiResponse(response, new VoidServerRequestCallback());
       });
    }
+   
+   @Override
+   public void onSetEditorSelection(SetEditorSelectionEvent event)
+   {
+      // get active editor (if any)
+      EditingTarget editingTarget = columnManager_.getActiveEditor();
+      if (editingTarget == null || !(editingTarget instanceof TextEditingTarget))
+      {
+         server_.rstudioApiResponse(
+               JavaScriptObject.createObject(),
+               new VoidServerRequestCallback());
+         return;
+      }
+      
+      TextEditingTarget target = (TextEditingTarget) editingTarget;
+      target.replaceSelection(
+            event.getData().getValue(),
+            () ->
+            {
+               server_.rstudioApiResponse(
+                     JavaScriptObject.createObject(),
+                     new VoidServerRequestCallback());
+            });
+   }
+   
 
    private class StatFileEntry
    {

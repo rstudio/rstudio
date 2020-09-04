@@ -258,10 +258,9 @@ SEXP rs_sendApiRequest(SEXP requestSEXP)
             client_events::kRStudioApiRequest,
             requestJson);
       
-   // the async version is simple -- just fire the event
    if (sync)
    {
-      // send request
+      // use waitfor method to ensure we wait for response from client
       json::JsonRpcRequest request;
       if (!s_waitForRStudioApiResponse(&request, event))
       {
@@ -283,6 +282,7 @@ SEXP rs_sendApiRequest(SEXP requestSEXP)
    }
    else
    {
+      // just fire the event and immediately return
       module_context::enqueClientEvent(event);
       r::sexp::Protect protect;
       return r::sexp::create(true, &protect);
