@@ -339,7 +339,7 @@ void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
    }
 }
 
-void getCollectionSpecs(std::vector<std::string> collections,
+void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,
                     ZoteroCollectionsHandler handler)

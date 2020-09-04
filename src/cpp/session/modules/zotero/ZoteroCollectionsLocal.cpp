@@ -308,7 +308,7 @@ struct LibraryInfo
 };
 
 
-ZoteroCollectionSpecs getCollectionSpecs(boost::shared_ptr<database::IConnection> pConnection, bool librariesOnly = false)
+ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection, bool librariesOnly = false)
 {
    std::string sql = R"(
       SELECT
@@ -458,7 +458,7 @@ void getLocalCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handl
       return;
    }
 
-   ZoteroCollectionSpecs userCollections = getCollectionSpecs(pConnection);
+   ZoteroCollectionSpecs userCollections = getCollections(pConnection);
    handler(Success(), userCollections);
 }
 
@@ -486,7 +486,7 @@ void getLocalCollections(std::string key,
    std::vector<std::pair<std::string, ZoteroCollectionSpec>> downloadCollections;
 
    // get all of the user's libraries
-   ZoteroCollectionSpecs userCollections = getCollectionSpecs(pConnection, true);
+   ZoteroCollectionSpecs userCollections = getCollections(pConnection, true);
 
    for (auto userCollection : userCollections)
    {  

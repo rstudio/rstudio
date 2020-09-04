@@ -183,7 +183,7 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    cont(Success(), &response);
 }
 
-void zoteroGetCollectionSpecs(const json::JsonRpcRequest& request,
+void zoteroGetCollectionSpecs(const json::JsonRpcRequest&,
                               const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
@@ -292,7 +292,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    auto handler =  boost::bind(handleGetCollections, _1, _2, _3, cont);
 
    // get the collections
-   getCollectionSpecs(collections, cacheSpecs, useCache, handler);
+   getCollections(collections, cacheSpecs, useCache, handler);
 
 }
 
