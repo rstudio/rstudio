@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.widget.FormLabel;
@@ -25,9 +25,6 @@ import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperation
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -123,24 +120,8 @@ public class ZoteroApiKeyWidget extends Composite
       
    }
 
-   interface Styles extends CssResource
-   {
-      String apiKey();
-      String apiKeyPanel();
-   }
-
-   interface Resources extends ClientBundle
-   {
-      @Source("ZoteroApiKeyWidget.css")
-      Styles styles();
-   }
-
-   static final Resources RES = GWT.create(Resources.class);
-   public static void ensureStylesInjected()
-   {
-      RES.styles().ensureInjected();
-   }
-
+   static final ZoteroResources RES = ZoteroResources.INSTANCE;
+  
    private final TextBox txtApiKey_;
 
    private PanmirrorZoteroServerOperations server_;

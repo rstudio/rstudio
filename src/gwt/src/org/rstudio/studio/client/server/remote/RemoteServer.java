@@ -4619,6 +4619,19 @@ public class RemoteServer implements Server
                   REQUERY_CONTEXT,
                   requestCallback);
    }
+   
+   @Override
+   public void isFunctionMasked(String functionName,
+                                String packageName,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(functionName)
+            .add(packageName)
+            .get();
+      
+      sendRequest(RPC_SCOPE, IS_FUNCTION_MASKED, params, requestCallback);
+   }
 
    @Override
    public void environmentSetLanguage(String language,
@@ -6233,6 +6246,7 @@ public class RemoteServer implements Server
    @Override
    public void zoteroGetCollections(String file,
                                     JsArrayString collections,
+                                    boolean forceAll,
                                     JsArray<PanmirrorZoteroCollectionSpec> cached,
                                     boolean useCache,
                                     ServerRequestCallback<JavaScriptObject> callback)
@@ -6240,8 +6254,9 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(file)));
       params.set(1, new JSONArray(collections));
-      params.set(2, new JSONArray(cached));
-      params.set(3,  JSONBoolean.getInstance(useCache));
+      params.set(2, JSONBoolean.getInstance(forceAll));
+      params.set(3, new JSONArray(cached));
+      params.set(4,  JSONBoolean.getInstance(useCache));
       sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
    }
 
@@ -6656,6 +6671,7 @@ public class RemoteServer implements Server
    private static final String REQUERY_CONTEXT = "requery_context";
    private static final String ENVIRONMENT_SET_LANGUAGE = "environment_set_language";
    private static final String SET_ENVIRONMENT_MONITORING = "set_environment_monitoring";
+   private static final String IS_FUNCTION_MASKED = "is_function_masked";
 
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";

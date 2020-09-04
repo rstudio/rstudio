@@ -70,6 +70,17 @@ public class CheckBoxList extends Composite
          return (CheckBox)panel_.getWidget(i);
       return null;
    }
+   
+   public boolean contains(String value)
+   {
+      int count = getItemCount();
+      for (int i = 0; i<count; i++)
+      {
+         if (getItemAtIdx(i).getText().equals(value))
+            return true;
+      }
+      return false;
+   }
 
    public void clearItems()
    {

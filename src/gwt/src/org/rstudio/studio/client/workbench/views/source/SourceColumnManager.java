@@ -876,7 +876,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void showDataItem(DataItem data)
    {
-      columnList_.forEach((column) -> {
+      for (SourceColumn column : columnList_)
+      {
          for (EditingTarget target : column.getEditors())
          {
             String path = target.getPath();
@@ -889,7 +890,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
          }
-      });
+      }
 
       ensureVisible(true);
       server_.newDocument(
@@ -1488,7 +1489,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      ArrayList<SourceDocument> moveEditors = new ArrayList<>();
       SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
       if (num < columnList_.size())
       {

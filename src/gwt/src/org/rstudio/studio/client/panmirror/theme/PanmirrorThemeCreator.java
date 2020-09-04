@@ -34,6 +34,7 @@ public class PanmirrorThemeCreator
       
       // set mode info
       theme.darkMode = aceTheme.isDark();
+      theme.solarizedMode = aceTheme.isSolarizedLight();
       
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       

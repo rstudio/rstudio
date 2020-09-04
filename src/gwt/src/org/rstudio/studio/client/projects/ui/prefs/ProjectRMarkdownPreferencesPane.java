@@ -22,9 +22,11 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroLibrariesWidget;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -38,18 +40,19 @@ import com.google.inject.Inject;
 public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectRMarkdownPreferencesPane()
+   public ProjectRMarkdownPreferencesPane(PanmirrorZoteroServerOperations zoteroServer)
    {
-      addHeader("Visual Mode: Markdown Writer");
-      
-      LayoutGrid grid = new LayoutGrid(4, 2);
-      grid.addStyleName(RESOURCES.styles().workspaceGrid());
-      grid.addStyleName(RES.styles().grid());
-      grid.setCellSpacing(12);
+   
+   
+      addHeader("Visual Mode: Markdown Output");
       
       Label infoLabel = new Label("Use (Default) to inherit the global default setting");
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
-      grid.setWidget(0, 0, infoLabel);
+      add(infoLabel);
+      
+      LayoutGrid grid = new LayoutGrid(3, 2);
+      grid.addStyleName(RESOURCES.styles().workspaceGrid());
+      grid.addStyleName(RES.styles().grid());
       
       // wrap mode
       wrap_ = new ListBox();
@@ -70,8 +73,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       wrapPanel.add(new FormLabel("Automatic text wrapping (line breaks)", wrap_));
       wrapPanel.add(wrapColumn_);
       
-      grid.setWidget(1, 0, wrapPanel);
-      grid.setWidget(1, 1, wrap_);
+      grid.setWidget(0, 0, wrapPanel);
+      grid.setWidget(0, 1, wrap_);
       
       
       // references
@@ -81,8 +84,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_BLOCK.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_BLOCK);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_SECTION.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_SECTION);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT);
-      grid.setWidget(2, 0, new FormLabel("Write references at end of current", references_));
-      grid.setWidget(2, 1, references_);
+      grid.setWidget(1, 0, new FormLabel("Write references at end of current", references_));
+      grid.setWidget(1, 1, references_);
       
       // canonical mode
       canonical_ = new ListBox();
@@ -90,8 +93,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       canonical_.addItem("true");
       canonical_.addItem("false");
       canonical_.addStyleName(RES.styles().listBox());
-      grid.setWidget(3, 0, new FormLabel("Write canonical visual mode markdown in source mode", canonical_));
-      grid.setWidget(3, 1, canonical_);
+      grid.setWidget(2, 0, new FormLabel("Write canonical visual mode markdown in source mode", canonical_));
+      grid.setWidget(2, 1, canonical_);
       
       add(grid);
       
@@ -102,6 +105,12 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
             false // no version info
       );
       add(markdownPerFileOptions);
+      
+      addHeader("Visual Mode: Zotero");
+      mediumSpaced(markdownPerFileOptions);
+      
+      zoteroLibs_ = new ZoteroLibrariesWidget(zoteroServer, true);
+      add(zoteroLibs_);
    }
 
    @Override
@@ -126,6 +135,9 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       wrapColumn_.setVisible(wrap_.getSelectedValue().equals(RProjectConfig.MARKDOWN_WRAP_COLUMN));
       setListBoxValue(references_, config.getMarkdownReferences());
       canonical_.setSelectedIndex(config.getMarkdownCanonical());
+      
+      zoteroLibs_.setLibraries(config.getZoteroLibraries());
+      zoteroLibs_.addAvailableLibraries();
    }
 
   
@@ -139,6 +151,9 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       config.setMarkdownWrapAtColumn(StringUtil.parseInt(wrapColumn_.getValue(), 72));
       config.setMarkdownReferences(references_.getSelectedValue());
       config.setMarkdownCanonical(canonical_.getSelectedIndex());
+      
+      if (zoteroLibs_.getLibraries() != null)
+         config.setZoteroLibraries(zoteroLibs_.getLibraries());
       
       return new RestartRequirement();
    }
@@ -181,6 +196,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
    private NumericValueWidget wrapColumn_;
    private ListBox references_;
    private ListBox canonical_;
+   private ZoteroLibrariesWidget zoteroLibs_;
 
 
 }

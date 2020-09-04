@@ -136,7 +136,7 @@ public class VisualModePanmirrorFormat
             format.rmdExtensions = new PanmirrorRmdExtensions();
             
             // chunk execution enabled if the target can execute
-            format.rmdExtensions.codeChunks = target_.canExecuteChunks();
+            format.rmdExtensions.codeChunks = isRMarkdownDocument();
             
             // support for bookdown part headers is always enabled b/c typing 
             // (PART\*) in the visual editor would result in an escaped \, which
@@ -172,7 +172,18 @@ public class VisualModePanmirrorFormat
    }
    
    
-  
+   public boolean isRMarkdownDocument()
+   {
+      if (target_.canExecuteChunks()) 
+      {
+         return true;
+      }
+      else
+      {
+         String path = docUpdateSentinel_.getPath();
+         return (path != null && path.toLowerCase().endsWith(".rmd"));
+      }
+   }
    
    public boolean isHugoProjectDocument()
    {

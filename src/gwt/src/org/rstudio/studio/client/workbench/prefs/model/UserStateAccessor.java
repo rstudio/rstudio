@@ -19,11 +19,13 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -443,6 +445,53 @@ public class UserStateAccessor extends Prefs
    public final static String BIBLIOGRAPHY_DEFAULT_TYPE_JSON = "json";
 
    /**
+    * Zotero connection type (local or web)
+    */
+   public PrefValue<String> zoteroConnectionType()
+   {
+      return enumeration(
+         "zotero_connection_type",
+         "Zotero connection type", 
+         "Zotero connection type (local or web)", 
+         new String[] {
+            ZOTERO_CONNECTION_TYPE_AUTO,
+            ZOTERO_CONNECTION_TYPE_NONE,
+            ZOTERO_CONNECTION_TYPE_LOCAL,
+            ZOTERO_CONNECTION_TYPE_WEB
+         },
+         "auto");
+   }
+
+   public final static String ZOTERO_CONNECTION_TYPE_AUTO = "auto";
+   public final static String ZOTERO_CONNECTION_TYPE_NONE = "none";
+   public final static String ZOTERO_CONNECTION_TYPE_LOCAL = "local";
+   public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
+
+   /**
+    * Zotero libraries to insert citations from.
+    */
+   public PrefValue<JsArrayString> zoteroLibraries()
+   {
+      return object(
+         "zotero_libraries",
+         "Zotero libraries", 
+         "Zotero libraries to insert citations from.", 
+         JsArrayUtil.createStringArray("My Library"));
+   }
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   public PrefValue<Boolean> zoteroUseBetterBibtex()
+   {
+      return bool(
+         "zotero_use_better_bibtex",
+         "Use Better BibTeX for citation keys and BibLaTeX export", 
+         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
+         false);
+   }
+
+   /**
     * Key for making Zotero API calls
     */
    public PrefValue<String> zoteroApiKey()
@@ -506,6 +555,12 @@ public class UserStateAccessor extends Prefs
          visualModeConfirmed().setValue(layer, source.getBool("visual_mode_confirmed"));
       if (source.hasKey("bibliography_default_type"))
          bibliographyDefaultType().setValue(layer, source.getString("bibliography_default_type"));
+      if (source.hasKey("zotero_connection_type"))
+         zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
+      if (source.hasKey("zotero_libraries"))
+         zoteroLibraries().setValue(layer, source.getObject("zotero_libraries"));
+      if (source.hasKey("zotero_use_better_bibtex"))
+         zoteroUseBetterBibtex().setValue(layer, source.getBool("zotero_use_better_bibtex"));
       if (source.hasKey("zotero_api_key"))
          zoteroApiKey().setValue(layer, source.getString("zotero_api_key"));
       if (source.hasKey("zotero_data_dir"))
@@ -533,6 +588,9 @@ public class UserStateAccessor extends Prefs
       prefs.add(usingMingwGcc49());
       prefs.add(visualModeConfirmed());
       prefs.add(bibliographyDefaultType());
+      prefs.add(zoteroConnectionType());
+      prefs.add(zoteroLibraries());
+      prefs.add(zoteroUseBetterBibtex());
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
       return prefs;

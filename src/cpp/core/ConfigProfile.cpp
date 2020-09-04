@@ -88,7 +88,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
    for (const ptree::value_type& child : profileTree)
    {
       boost::optional<Level> matchingLevel;
-      for (const Level& level : sections_)
+      for (Level level : sections_)
       {
          // if the section level starts with the defined section name
          // from a prior call to addSections, we have a matching section level
@@ -109,7 +109,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
       }
 
       std::map<std::string, std::string> values;
-      for (const ptree::value_type val : child.second)
+      for (const ptree::value_type& val : child.second)
       {
          // check to see if the parameter within the section has been registered
          const std::string& paramName = val.first;

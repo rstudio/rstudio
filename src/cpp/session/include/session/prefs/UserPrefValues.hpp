@@ -155,6 +155,7 @@ namespace prefs {
 #define kAnsiConsoleModeOff "off"
 #define kAnsiConsoleModeOn "on"
 #define kAnsiConsoleModeStrip "strip"
+#define kLimitVisibleConsole "limit_visible_console"
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
@@ -343,10 +344,6 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
-#define kZoteroConnectionType "zotero_connection_type"
-#define kZoteroConnectionTypeLocal "local"
-#define kZoteroConnectionTypeWeb "web"
-#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -835,6 +832,12 @@ public:
     */
    std::string ansiConsoleMode();
    core::Error setAnsiConsoleMode(std::string val);
+
+   /**
+    * Whether to only show a limited window of the total console output
+    */
+   bool limitVisibleConsole();
+   core::Error setLimitVisibleConsole(bool val);
 
    /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
@@ -1555,18 +1558,6 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
-
-   /**
-    * Zotero connection type (local or web)
-    */
-   std::string zoteroConnectionType();
-   core::Error setZoteroConnectionType(std::string val);
-
-   /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
-    */
-   bool zoteroUseBetterBibtex();
-   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Preferred emoji skintone

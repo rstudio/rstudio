@@ -22,10 +22,12 @@
 #include <core/http/SocketUtils.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
 #include "ZoteroCollections.hpp"
+#include "ZoteroCollectionsLocal.hpp"
 
 namespace rstudio {
 
@@ -113,7 +115,7 @@ bool betterBibtexInConfig(const std::string& config)
 
 bool betterBibtexEnabled()
 {
-   return session::prefs::userPrefs().zoteroUseBetterBibtex();
+   return session::prefs::userState().zoteroUseBetterBibtex();
 }
 
 void betterBibtexProvideIds(const collections::ZoteroCollections& collections,
@@ -236,6 +238,19 @@ Error betterBibtexExport(const json::JsonRpcRequest& request,
    else
    {
       setBetterBibtexNotFoundResult(warning, pResponse);
+   }
+
+   return Success();
+}
+
+Error betterBibtexInit()
+{
+   // force better bibtex pref off if the config isn't found
+   if (collections::localZoteroAvailable())
+   {
+      collections::DetectedLocalZoteroConfig config = collections::detectedLocalZoteroConfig();
+      if (prefs::userState().zoteroUseBetterBibtex() && !config.betterBibtex)
+         prefs::userState().setZoteroUseBetterBibtex(false);
    }
 
    return Success();

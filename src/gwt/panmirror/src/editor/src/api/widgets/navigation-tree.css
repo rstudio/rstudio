@@ -1,7 +1,7 @@
 
 .pm-navigation-tree-node {
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   display: flex;
   align-items: center;
   margin-top: 2px;
@@ -11,7 +11,7 @@
   width:20px;
   height:20px;
   padding-right: 3px;
-  padding-left: 4px;
+  padding-left: 2px;
   vertical-align: middle;
 }
 

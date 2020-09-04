@@ -745,6 +745,14 @@ json::Object ProjectContext::uiPrefs() const
    if (config_.markdownCanonical != DefaultValue)
       uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
 
+   // zotero prefs (only activate when non-empty)
+   if (config_.zoteroLibraries.has_value())
+      uiPrefs[kZoteroLibraries] = json::toJsonArray(config_.zoteroLibraries.get());
+
+   // spelling prefs (only activate when non-empty)
+   if (!config_.spellingDictionary.empty())
+      uiPrefs[kSpellingDictionaryLanguage] = config_.spellingDictionary;
+
    return uiPrefs;
 }
 

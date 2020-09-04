@@ -290,7 +290,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.clearLiveRegion();
       server_.consoleInput(event.getInput(), 
                            event.getConsole(),
-                           new ServerRequestCallback<Void>() {
+                           new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+         }
+         
          @Override
          public void onError(ServerError error) 
          {

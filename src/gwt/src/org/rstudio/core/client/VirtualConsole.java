@@ -27,6 +27,7 @@ import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -47,6 +48,7 @@ public class VirtualConsole
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
       boolean screenReaderEnabled();
+      boolean limitConsoleVisible();
    }
 
    public static class PreferencesImpl extends UserPrefsSubset
@@ -75,6 +77,12 @@ public class VirtualConsole
       {
          return getUserPrefs().enableScreenReader().getValue();
       }
+
+      @Override
+      public boolean limitConsoleVisible()
+      {
+         return getUserPrefs().limitVisibleConsole().getValue();
+      }
    }
 
    @Inject
@@ -82,11 +90,32 @@ public class VirtualConsole
    {
       prefs_ = prefs;
       parent_ = parent;
+
+      VirtualScrollerManager.init();
    }
 
    public void clear()
    {
-      formfeed();
+      if (isVirtualized())
+         clearVirtualScroller();
+      else
+         formfeed();
+   }
+
+   public boolean isLimitConsoleVisible() { return prefs_.limitConsoleVisible(); }
+
+   public boolean isVirtualized()
+   {
+      return prefs_.limitConsoleVisible() && parent_ != null &&
+          VirtualScrollerManager.scrollerForElement(VirtualScrollerManager.getVirtualScrollerAncestor(parent_)) != null;
+   }
+
+   public void clearVirtualScroller()
+   {
+      if (isVirtualized())
+      {
+         VirtualScrollerManager.clear(parent_.getParentElement());
+      }
    }
 
    private void backspace()
@@ -203,7 +232,7 @@ public class VirtualConsole
     */
    private void appendText(String text, String clazz, boolean forceNewRange)
    {
-      Entry <Integer, ClassRange> last = class_.lastEntry();
+      Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
       if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
@@ -214,7 +243,7 @@ public class VirtualConsole
       {
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text);
-         parent_.appendChild(newRange.element);
+         appendChild(newRange.element);
          class_.put(cursor_, newRange);
       }
    }
@@ -247,7 +276,7 @@ public class VirtualConsole
       {
          class_.put(start, range);
          if (parent_ != null)
-            parent_.appendChild(range.element);
+            appendChild(range.element);
          return;
       }
 
@@ -299,8 +328,8 @@ public class VirtualConsole
                if (overlap.length == 0)
                {
                   deletions.add(l);
-                  if (parent_ != null)
-                     parent_.removeChild(overlap.element);
+                  if (overlap.element.getParentElement() != null)
+                     overlap.element.removeFromParent();
                }
                else
                {
@@ -338,7 +367,7 @@ public class VirtualConsole
             // this range is fully overwritten, just delete it
             deletions.add(l);
             if (parent_ != null)
-               parent_.removeChild(overlap.element);
+               overlap.element.removeFromParent();
          }
          else if (start > l && end < r)
          {
@@ -390,6 +419,18 @@ public class VirtualConsole
       {
          class_.put(val.start, val);
       }
+   }
+
+   /**
+    * Add a child to the parent or the virtual scroller, depending on preference
+    * @param element to add
+    */
+   private void appendChild(Element element)
+   {
+      if (prefs_.limitConsoleVisible())
+         VirtualScrollerManager.append(parent_.getParentElement(), element);
+      else
+         parent_.appendChild(element);
    }
 
    /**

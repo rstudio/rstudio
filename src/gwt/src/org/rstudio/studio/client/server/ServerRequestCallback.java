@@ -19,17 +19,14 @@ import org.rstudio.core.client.jsonrpc.RpcRequest;
 
 public abstract class ServerRequestCallback<T>
 { 
+   public abstract void onResponseReceived(T response);
+   public abstract void onError(ServerError error);
+   
    public void onRequestInitiated(RpcRequest request)
    {
       request_ = request;
    }
 
-   public void onResponseReceived(T response)
-   {
-   }
-   
-   public abstract void onError(ServerError error);
-   
    public void cancel()
    {
       if (request_ != null)

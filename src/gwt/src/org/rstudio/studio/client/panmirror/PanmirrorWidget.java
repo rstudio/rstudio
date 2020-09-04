@@ -273,14 +273,29 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       };
       
+      // don't sync ui eagerly (wait for 300ms delay in typing)
+      DebouncedCommand syncUI = new DebouncedCommand(300) {
+
+         @Override
+         protected void execute()
+         {
+            if (editor_ != null)
+            {
+               // sync toolbar commands
+               if (toolbar_ != null)
+                  toolbar_.sync(false);
+               
+               // sync outline selection
+               outline_.updateSelection(editor_.getSelection()); 
+            }
+         }
+         
+      };
+      
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, (data) -> {
          
-         // sync toolbar commands
-         if (toolbar_ != null)
-            toolbar_.sync(false);
-         
-         // sync outline selection
-         outline_.updateSelection(editor_.getSelection());
+         // sync ui (debounced)
+         syncUI.nudge();
          
          // fire to clients
          fireEvent(new PanmirrorStateChangeEvent());

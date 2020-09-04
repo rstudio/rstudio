@@ -531,6 +531,11 @@ public class VisualMode implements VisualModeEditorSync,
          
       });
    }
+   
+   public boolean canWriteCanonical()
+   {
+      return validateActivation() == null;
+   }
  
    public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   

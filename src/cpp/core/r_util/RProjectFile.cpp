@@ -30,6 +30,7 @@
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -63,6 +64,8 @@ const char * const kMarkdownReferencesUseDefault = "Default";
 const char * const kMarkdownReferencesBlock = "Block";
 const char * const kMarkdownReferencesSection = "Section";
 const char * const kMarkdownReferencesDocument = "Document";
+
+const char * const kZoteroLibrariesAll = "All";
 
 namespace {
 
@@ -237,6 +240,24 @@ bool interpretMarkdownReferencesValue(const std::string& value, std::string *pVa
       return false;
    }
 
+}
+
+void interpretZoteroLibraries(const std::string& value, boost::optional<std::vector<std::string>>* pValue)
+{
+   if (value == "" || value == kZoteroLibrariesAll)
+   {
+      pValue->reset(std::vector<std::string>());
+   }
+   else
+   {
+      std::vector<std::string> parsedLibraries;
+      text::parseCsvLine(value.begin(), value.end(), true, &parsedLibraries);
+      std::vector<std::string> libraries;
+      std::transform(parsedLibraries.begin(), parsedLibraries.end(), std::back_inserter(libraries), [](const std::string& str) {
+         return boost::algorithm::trim_copy(str);
+      });
+      pValue->reset(libraries);
+   }
 }
 
 
@@ -915,6 +936,17 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->markdownCanonical = defaultConfig.markdownCanonical;
    }
+
+   // extract zotero libraries
+   it = dcfFields.find("ZoteroLibraries");
+   if (it != dcfFields.end())
+   {
+      interpretZoteroLibraries(it->second, &(pConfig->zoteroLibraries));
+   }
+   else
+   {
+      pConfig->zoteroLibraries = defaultConfig.zoteroLibraries;
+   }
    
    // extract python fields
    it = dcfFields.find("PythonType");
@@ -933,6 +965,13 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (it != dcfFields.end())
    {
       pConfig->pythonPath = it->second;
+   }
+
+   // extract spelling fields
+   it = dcfFields.find("SpellingDictionary");
+   if (it != dcfFields.end())
+   {
+      pConfig->spellingDictionary = it->second;
    }
 
    return Success();
@@ -1175,6 +1214,19 @@ Error writeProjectFile(const FilePath& projectFilePath,
          contents.append(boost::str(fmt % yesNoAskValueToString(config.markdownCanonical)));
       }
    }
+
+   // if we have zotero config create a zotero section
+   if (config.zoteroLibraries.has_value())
+   {
+      auto libraries = config.zoteroLibraries.get();
+      std::string librariesConfig;
+      if (libraries.empty())
+         librariesConfig = kZoteroLibrariesAll;
+      else
+         librariesConfig = text::encodeCsvLine(libraries);
+      boost::format fmt("\nZoteroLibraries: %1%\n");
+      contents.append(boost::str(fmt % librariesConfig));
+   }
    
    // if any Python configs deviate from default, then create Python section
    if (!config.pythonType.empty() ||
@@ -1193,6 +1245,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
             % config.pythonPath;
       
       contents.append(boost::str(pythonConfig));
+   }
+
+   // add spelling dictioanry if present
+   if (!config.spellingDictionary.empty())
+   {
+      boost::format fmt("\nSpellingDictionary: %1%\n");
+      contents.append(boost::str(fmt % config.spellingDictionary));
    }
    
 

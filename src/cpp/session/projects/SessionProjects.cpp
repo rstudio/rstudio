@@ -402,6 +402,11 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["python_type"] = config.pythonType;
    configJson["python_version"] = config.pythonVersion;
    configJson["python_path"] = config.pythonPath;
+   configJson["spelling_dictionary"] = config.spellingDictionary;
+   if (config.zoteroLibraries.has_value())
+      configJson["zotero_libraries"] = json::toJsonArray(config.zoteroLibraries.get());
+   else
+      configJson["zotero_libraries"] = json::Value(); // null
 
    return configJson;
 }
@@ -655,13 +660,24 @@ Error writeProjectConfig(const json::Object& configJson)
                             "markdown_canonical", config.markdownCanonical);
    if (error)
       return error;
-   
+
+   // read zotero options
+   error = json::readObject(configJson, "zotero_libraries", config.zoteroLibraries);
+   if (error)
+      return error;
+
    // read python options
    error = json::readObject(configJson,
                             "python_type", config.pythonType,
                             "python_version", config.pythonVersion,
                             "python_path", config.pythonPath);
    
+   if (error)
+      return error;
+
+   // read spelling options
+   error = json::readObject(configJson,
+                            "spelling_dictionary", config.spellingDictionary);
    if (error)
       return error;
 

@@ -15,6 +15,7 @@
 
 export interface EditorTheme {
   darkMode: boolean;
+  solarizedMode: boolean;
   cursorColor: string;
   selectionColor: string;
   nodeSelectionColor: string;
@@ -69,6 +70,7 @@ export interface CodeTheme {
 export function defaultTheme(): EditorTheme {
   return {
     darkMode: false,
+    solarizedMode: false,
     cursorColor: 'black',
     selectionColor: '#8cf',
     nodeSelectionColor: 'rgb(102,155,243)',

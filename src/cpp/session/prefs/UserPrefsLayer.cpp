@@ -72,7 +72,7 @@ void UserPrefsLayer::onPrefsFileChanged()
    }
 
    // Figure out what prefs changed in the file
-   for (const auto key: UserPrefValues::allKeys())
+   for (const auto& key: UserPrefValues::allKeys())
    {
       const auto itOld = old.find(key);
       const auto itNew = cache_->find(key);

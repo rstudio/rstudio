@@ -330,7 +330,7 @@ export class AceNodeView implements NodeView {
   }
 
   private onEditorDispatch(tr: Transaction) {
-    if (tr.selectionSet) {
+    if (!tr.docChanged && tr.selectionSet) {
       this.highlightSelectionAcross(tr.selection);
     }
   }

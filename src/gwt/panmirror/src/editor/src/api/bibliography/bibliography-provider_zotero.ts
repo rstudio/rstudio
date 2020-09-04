@@ -40,10 +40,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public name: string = "Zotero";
   public key: string = kZoteroProviderKey;
 
-  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[], forceAll: boolean): Promise<boolean> {
 
     let hasUpdates = false;
-    if (zoteroEnabled(docPath, yamlBlocks)) {
+    const config = zoteroConfig(yamlBlocks);
+    if (config) {
 
       try {
 
@@ -60,8 +61,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
           this.allCollectionSpecs = allCollectionSpecsResult.message;
         }
 
-        // TODO: remove collection names from server call
-        const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
+        const collections = Array.isArray(config) ? config : [];
+
+        const result = await this.server.getCollections(docPath, collections, forceAll, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {
 
@@ -98,7 +100,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   }
 
   public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
-    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
+    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey }));
   }
 
   public items(): BibliographySourceWithCollections[] {
@@ -159,7 +161,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 //
 // By default, zotero integration is enabled. Add this header to disable integration
 //
-function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
+function zoteroConfig(parsedYamls: ParsedYaml[]): boolean | string[] {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
   );
@@ -168,21 +170,20 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
     // Pandoc will use the last biblography node when generating a bibliography.
     // So replicate this and use the last biblography node that we find
     const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
-    const zoteroConfig = zoteroParsedYaml.yaml.zotero;
+    const zotero = zoteroParsedYaml.yaml.zotero;
 
-    if (typeof zoteroConfig === 'boolean') {
-      return zoteroConfig;
+    if (typeof zotero === 'boolean') {
+      return zotero;
+    } else if (typeof zotero === 'string') {
+      return [zotero];
+    } else if (Array.isArray(zotero)) {
+      return zotero.map(String);
+    } else {
+      return true;
     }
 
-    // There is a zotero header that isn't boolean, 
-    // It is enabled
-    return true;
-
-    // any doc with a path could have project level zotero
-  } else if (docPath !== null) {
-    return true;
   } else {
-    return false;
+    return true;
   }
 }
 

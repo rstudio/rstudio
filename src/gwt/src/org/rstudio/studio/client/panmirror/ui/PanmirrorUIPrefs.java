@@ -61,7 +61,7 @@ public class PanmirrorUIPrefs {
    
    public Boolean zoteroUseBetterBibtex()
    {
-      return pUIPrefs_.get().zoteroUseBetterBibtex().getValue();
+      return pUserState_.get().zoteroUseBetterBibtex().getValue();
    }
    
    public String bibliographyDefaultType()

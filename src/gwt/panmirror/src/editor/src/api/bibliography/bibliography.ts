@@ -38,7 +38,7 @@ export interface BibliographyDataProvider {
   key: string;
   name: string;
 
-  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], forceAll: boolean): Promise<boolean>;
   collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
@@ -50,6 +50,7 @@ export interface BibliographyDataProvider {
 export interface BibliographyCollection {
   name: string;
   key: string;
+  provider: string;
   parentKey?: string;
 }
 
@@ -91,7 +92,7 @@ export class BibliographyManager {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode, forceAll = false): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -100,7 +101,7 @@ export class BibliographyManager {
     const docPath = ui.context.getDocumentPath();
 
     // Load each provider
-    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
+    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, forceAll)));
 
     // Note whether there is anything writable
     this.writable = this.shouldAllowWrites(doc, ui);
@@ -124,9 +125,9 @@ export class BibliographyManager {
 
   public allSources(): BibliographySourceWithCollections[] {
     if (this.sources && this.isWritable()) {
-      return uniqby(this.sources, source => source.id);
+      return this.sources;
     } else {
-      return uniqby(this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [], source => source.id);
+      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
     }
     return [];
   }

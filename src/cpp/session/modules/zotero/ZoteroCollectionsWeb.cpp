@@ -372,12 +372,15 @@ void getWebLibraryForUser(std::string key,
                      version = itemVersion;
                });
 
+               // comment this out so we can compile
+                handler(Success(), std::vector<ZoteroCollection>(), "");
+
                // create collection
-               ZoteroCollectionSpec spec(kMyLibrary, kMyLibraryCollectionKey, version);
-               ZoteroCollection collection = collectionFromItemsDownload(spec, json);
+               // ZoteroCollectionSpec spec(kMyLibrary, kMyLibraryCollectionKey, version);
+               // ZoteroCollection collection = collectionFromItemsDownload(spec, json);
 
                // return it
-               handler(Success(), std::vector<ZoteroCollection>{ collection }, "");
+               // handler(Success(), std::vector<ZoteroCollection>{ collection }, "");
             }
          });
       }
@@ -601,7 +604,6 @@ ZoteroCollectionSource webCollections()
    }
 
    ZoteroCollectionSource source;
-   source.getLibrary = getWebLibrary;
    source.getCollections = getWebCollections;
    source.getCollectionSpecs = getWebCollectionSpecs;
    return source;

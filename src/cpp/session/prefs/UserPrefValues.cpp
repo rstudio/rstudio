@@ -1012,6 +1012,19 @@ core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
 }
 
 /**
+ * Whether to only show a limited window of the total console output
+ */
+bool UserPrefValues::limitVisibleConsole()
+{
+   return readPref<bool>("limit_visible_console");
+}
+
+core::Error UserPrefValues::setLimitVisibleConsole(bool val)
+{
+   return writePref("limit_visible_console", val);
+}
+
+/**
  * Whether to show a toolbar on code chunks in R Markdown documents.
  */
 bool UserPrefValues::showInlineToolbarForRCodeChunks()
@@ -2572,32 +2585,6 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
 }
 
 /**
- * Zotero connection type (local or web)
- */
-std::string UserPrefValues::zoteroConnectionType()
-{
-   return readPref<std::string>("zotero_connection_type");
-}
-
-core::Error UserPrefValues::setZoteroConnectionType(std::string val)
-{
-   return writePref("zotero_connection_type", val);
-}
-
-/**
- * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
- */
-bool UserPrefValues::zoteroUseBetterBibtex()
-{
-   return readPref<bool>("zotero_use_better_bibtex");
-}
-
-core::Error UserPrefValues::setZoteroUseBetterBibtex(bool val)
-{
-   return writePref("zotero_use_better_bibtex", val);
-}
-
-/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2819,6 +2806,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
+      kLimitVisibleConsole,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
@@ -2939,8 +2927,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
-      kZoteroConnectionType,
-      kZoteroUseBetterBibtex,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

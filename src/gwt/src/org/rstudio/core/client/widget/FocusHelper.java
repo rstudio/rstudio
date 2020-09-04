@@ -122,6 +122,7 @@ public class FocusHelper
    /**
     * Gets an ordered list of keyboard-focusable elements
     */
+   @SuppressWarnings("unused")
    private ArrayList<Element> getFocusableElements()
    {
       return DomUtils.getFocusableElements(parent_);

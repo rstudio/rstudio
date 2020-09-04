@@ -271,6 +271,45 @@ core::Error UserStateValues::setBibliographyDefaultType(std::string val)
 }
 
 /**
+ * Zotero connection type (local or web)
+ */
+std::string UserStateValues::zoteroConnectionType()
+{
+   return readPref<std::string>("zotero_connection_type");
+}
+
+core::Error UserStateValues::setZoteroConnectionType(std::string val)
+{
+   return writePref("zotero_connection_type", val);
+}
+
+/**
+ * Zotero libraries to insert citations from.
+ */
+core::json::Array UserStateValues::zoteroLibraries()
+{
+   return readPref<core::json::Array>("zotero_libraries");
+}
+
+core::Error UserStateValues::setZoteroLibraries(core::json::Array val)
+{
+   return writePref("zotero_libraries", val);
+}
+
+/**
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ */
+bool UserStateValues::zoteroUseBetterBibtex()
+{
+   return readPref<bool>("zotero_use_better_bibtex");
+}
+
+core::Error UserStateValues::setZoteroUseBetterBibtex(bool val)
+{
+   return writePref("zotero_use_better_bibtex", val);
+}
+
+/**
  * Key for making Zotero API calls
  */
 std::string UserStateValues::zoteroApiKey()
@@ -318,6 +357,9 @@ std::vector<std::string> UserStateValues::allKeys()
       kUsingMingwGcc49,
       kVisualModeConfirmed,
       kBibliographyDefaultType,
+      kZoteroConnectionType,
+      kZoteroLibraries,
+      kZoteroUseBetterBibtex,
       kZoteroApiKey,
       kZoteroDataDir,
    });
