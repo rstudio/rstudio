@@ -33,6 +33,7 @@ public class SetEditorSelectionEvent extends CrossWindowEvent<SetEditorSelection
       }
       
       public final native String getValue() /*-{ return this["value"]; }-*/;
+      public final native String getDocId() /*-{ return this["doc_id"]; }-*/;
    }
 
    

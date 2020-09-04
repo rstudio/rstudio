@@ -344,11 +344,11 @@
    # selection.
    if (missing(text) && is.character(location))
    {
-      return(.rs.api.selectionSet(location))
+      return(.rs.api.selectionSet(value = location, id = id))
    }
    else if (missing(location) && is.character(text))
    {
-      return(.rs.api.selectionSet(text))
+      return(.rs.api.selectionSet(value = text, id = id))
    }
    else if (length(location) == 0)
    {
@@ -913,25 +913,42 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    invisible(response)
 })
 
-.rs.addApiFunction("selectionGet", function()
+.rs.addApiFunction("selectionGet", function(id = NULL)
 {
+   # create data payload
+   data <- list(
+      doc_id = .rs.scalar(id)
+   )
+   
+   # create request
    request <- .rs.api.createRequest(
       type = .rs.api.events$TYPE_GET_EDITOR_SELECTION,
-      data = list(),
+      data = data,
       sync = TRUE
    )
    
+   # fire away
    .rs.api.sendRequest(request)
 })
 
-.rs.addApiFunction("selectionSet", function(value = NULL)
+.rs.addApiFunction("selectionSet", function(value = NULL, id = NULL)
 {
+   # collapse value into single string
    value <- paste(value, collapse = "\n")
+   
+   # create data payload
+   data <- list(
+      value  = .rs.scalar(value),
+      doc_id = .rs.scalar(id)
+   )
+   
+   # create request
    request <- .rs.api.createRequest(
       type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
-      data = list(value = .rs.scalar(value)),
+      data = data,
       sync = TRUE
    )
    
+   # fire away
    .rs.api.sendRequest(request)
 })

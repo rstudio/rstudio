@@ -31,6 +31,8 @@ public class GetEditorSelectionEvent extends CrossWindowEvent<GetEditorSelection
       {
          return JavaScriptObject.createObject().cast();
       }
+      
+      public final native String getDocId() /*-{ return this["doc_id"]; }-*/;
    }
 
    

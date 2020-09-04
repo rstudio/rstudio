@@ -2843,52 +2843,47 @@ public class Source implements InsertSourceHandler,
       docDisplay.focus();
    }
    
-   @Override
-   public void onGetEditorSelection(GetEditorSelectionEvent event)
+   private void invokeEditorApiAction(String docId,
+                                      CommandWithArg<TextEditingTarget> callback)
    {
-      // get active editor (if any)
-      EditingTarget editingTarget = columnManager_.getActiveEditor();
-      if (editingTarget == null || !(editingTarget instanceof TextEditingTarget))
+      columnManager_.withTarget(docId, callback, () ->
       {
          server_.rstudioApiResponse(
                JavaScriptObject.createObject(),
                new VoidServerRequestCallback());
-         return;
-      }
-      
-      TextEditingTarget target = (TextEditingTarget) editingTarget;
-      target.withEditorSelection((String selection) ->
+      });
+   }
+   
+   @Override
+   public void onGetEditorSelection(GetEditorSelectionEvent event)
+   {
+      invokeEditorApiAction(event.getData().getDocId(), (TextEditingTarget target) ->
       {
-         JsObject response = JsObject.createJsObject();
-         response.setString("value", selection);
-         server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         target.withEditorSelection((String selection) ->
+         {
+            JsObject response = JsObject.createJsObject();
+            response.setString("value", selection);
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
       });
    }
    
    @Override
    public void onSetEditorSelection(SetEditorSelectionEvent event)
    {
-      // get active editor (if any)
-      EditingTarget editingTarget = columnManager_.getActiveEditor();
-      if (editingTarget == null || !(editingTarget instanceof TextEditingTarget))
+      String docId = event.getData().getDocId();
+      invokeEditorApiAction(docId, (TextEditingTarget target) ->
       {
-         server_.rstudioApiResponse(
-               JavaScriptObject.createObject(),
-               new VoidServerRequestCallback());
-         return;
-      }
-      
-      TextEditingTarget target = (TextEditingTarget) editingTarget;
-      target.replaceSelection(
-            event.getData().getValue(),
-            () ->
-            {
-               server_.rstudioApiResponse(
-                     JavaScriptObject.createObject(),
-                     new VoidServerRequestCallback());
-            });
+         target.replaceSelection(
+               event.getData().getValue(),
+               () ->
+               {
+                  server_.rstudioApiResponse(
+                        JavaScriptObject.createObject(),
+                        new VoidServerRequestCallback());
+               });
+      });
    }
-   
 
    private class StatFileEntry
    {
