@@ -192,6 +192,114 @@ void zoteroGetCollectionSpecs(const json::JsonRpcRequest&,
    getCollectionSpecs(handler);
 }
 
+bool getConfiguredCollections(const std::string& file, std::vector<std::string>* pCollections)
+{
+   // determine whether the file the zotero collections are requested for is part of the current project
+   bool isProjectFile = false;
+   if (!file.empty() && projects::projectContext().hasProject())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(file);
+      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
+      {
+         isProjectFile = true;
+      }
+   }
+
+   // if it's a project, check for global bookdown disable of zotero
+   if (isProjectFile)
+   {
+      // check for global disable of zotero for bookdown
+      const std::string kLogicalPrefix = "LOGICAL:";
+      std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+
+      // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
+      if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
+      {
+         std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
+         if (value == "TRUE")
+         {
+             session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
+         }
+         else
+         {
+            return false;
+         }
+      }
+      else if (bookdownCollections.size() > 0)
+      {
+         *pCollections = bookdownCollections;
+      }
+      else
+      {
+         session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
+      }
+   }
+
+   // read global pref (ignore project b/c this file isn't in the project)
+   else
+   {
+      auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
+      if (libsPref.has_value() && libsPref.get().isArray())
+         libsPref->getArray().toVectorString(*pCollections);
+   }
+
+   return true;
+
+}
+
+void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
+                                        const json::JsonRpcFunctionContinuation& cont)
+{
+   // extract params
+   std::string file;
+   json::Array collectionsJson;
+   Error error = json::readParams(request.params, &file, &collectionsJson);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      json::setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   // collections filter (empty means all collections)
+   std::vector<std::string> collections;
+
+   // see if the user provided some collections
+   collectionsJson.toVectorString(collections);
+
+   // if the didn't, see if there are project level or global prefs that provide collections
+   if (collections.size() == 0)
+   {
+      if (!getConfiguredCollections(file, &collections))
+      {
+         ZoteroCollectionSpecs noCollections;
+         handleGetCollectionSpecs(Success(), noCollections, cont);
+         return;
+      }
+   }
+
+   getCollectionSpecs([cont, collections](core::Error error ,ZoteroCollectionSpecs specs) {
+
+      json::JsonRpcResponse response;
+      if (error)
+      {
+         json::setErrorResponse(error, &response);
+         cont(Success(), &response);
+      }
+      else
+      {
+         // filter the returned specs based on 'collections'
+
+         // exercise for the reader.....
+
+         handleGetCollectionSpecs(Success(), specs, cont);
+
+      }
+   });
+
+}
+
 void zoteroGetCollections(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& cont)
 {
@@ -219,62 +327,16 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       collectionsJson.toVectorString(collections);
 
       // if the didn't, see if there are project level or global prefs that provide collections
-      if (collections.size() == 0 && !forceAll)
+      if (collections.size() == 0)
       {
-         // determine whether the file the zotero collections are requested for is part of the current project
-         bool isProjectFile = false;
-         if (!file.empty() && projects::projectContext().hasProject())
+         if (!getConfiguredCollections(file, &collections))
          {
-            FilePath filePath = module_context::resolveAliasedPath(file);
-            if (filePath.isWithin(projects::projectContext().buildTargetPath()))
-            {
-               isProjectFile = true;
-            }
-         }
-
-         // if it's a project, check for global bookdown disable of zotero
-         if (isProjectFile)
-         {
-            // check for global disable of zotero for bookdown
-            const std::string kLogicalPrefix = "LOGICAL:";
-            std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
-
-            // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
-            if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
-            {
-               std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
-               if (value == "TRUE")
-               {
-                   session::prefs::userState().zoteroLibraries().toVectorString(collections);
-               }
-               else
-               {
-                  ZoteroCollections noCollections;
-                  handleGetCollections(Success(), noCollections, "", cont);
-                  return;
-               }
-            }
-            else if (bookdownCollections.size() > 0)
-            {
-               collections = bookdownCollections;
-            }
-            else
-            {
-               session::prefs::userState().zoteroLibraries().toVectorString(collections);
-            }
-         }
-
-         // read global pref (ignore project b/c this file isn't in the project)
-         else
-         {
-            auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
-            if (libsPref.has_value() && libsPref.get().isArray())
-               libsPref->getArray().toVectorString(collections);
+            ZoteroCollections noCollections;
+            handleGetCollections(Success(), noCollections, "", cont);
+            return;
          }
       }
-
    }
-
 
    // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;
@@ -307,6 +369,7 @@ Error initialize()
    initBlock.addFunctions()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_configured_collection_specs", zoteroGetConfiguredCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
        (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))

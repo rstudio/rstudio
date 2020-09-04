@@ -71,6 +71,17 @@ public class PanmirrorZoteroServer
             });
    }
    
+   public Promise<JavaScriptObject> getConfiguredCollectionSpecs(String file, JsArrayString collections)
+   {
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetConfiguredCollectionSpecs(file, collections,
+                  new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading Collections...", 2000));
+            });
+   }
+   
+   
+   
    public Promise<JavaScriptObject> betterBibtexExport(JsArrayString itemKeys, 
                                                        String translatorId, 
                                                        int libraryID)

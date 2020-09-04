@@ -60,6 +60,11 @@ export interface ZoteroServer {
   getCollectionSpecs: ()
     => Promise<ZoteroResult>;
 
+  getConfiguredCollectionSpecs: (
+    file: string | null,
+    collections: string[]
+  ) => Promise<ZoteroResult>;
+
   // Return status: nohost w/ warning text if it fails to 
   // communciate w/ Better BibTeX. Otherwise returns 
   // status: ok with exported text in message.
