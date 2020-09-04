@@ -1303,6 +1303,19 @@
             "title": "Editor for code chunks in visual editing mode",
             "description": "The name of the editor to use to provide code editing in visual mode"
         },
+        "zotero_connection_type": {
+            "type": "string",
+            "enum": ["local", "web"],
+            "default": "local",
+            "title": "Zotero connection type",
+            "description": "Zotero connection type (local or web)"
+        },
+        "zotero_use_better_bibtex": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use Better BibTeX for citation keys and BibLaTeX export",
+            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies"
+        },
         "emoji_skintone" : {
           "type": "string",
           "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],

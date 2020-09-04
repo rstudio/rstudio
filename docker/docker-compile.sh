@@ -113,13 +113,15 @@ fi
 ENV="$ENV GIT_COMMIT=$(git rev-parse HEAD)"
 ENV="$ENV BUILD_ID=local"
 
-# if we have an nproc command, use it to infer make parallelism
-if hash nproc 2>/dev/null; then
+# infer make parallelism
+if hash sysctl 2>/dev/null; then
+    # macos; we could use `sysctl -n hw.ncpu` but that would likely be too
+    # high. Docker for Mac defaults to half that value. Instead, use -j2 
+    # to match what we currently do in the official build.
+    ENV="$ENV MAKEFLAGS=-j2"
+elif hash nproc 2>/dev/null; then
     # linux
     ENV="$ENV MAKEFLAGS=-j$(nproc --all)"
-elif hash sysctl 2>/dev/null; then
-    # macos
-    ENV="$ENV MAKEFLAGS=-j$(sysctl -n hw.ncpu)"
 fi
 
 # forward build type if set
