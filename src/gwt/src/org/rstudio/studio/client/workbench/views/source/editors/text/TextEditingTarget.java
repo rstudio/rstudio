@@ -144,6 +144,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileS
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -7740,22 +7741,37 @@ public class TextEditingTarget implements
       visualMode_.onUserSwitchingToVisualMode();
    }
    
+   public void getEditorContext()
+   {
+      ensureTextEditorActive(() ->
+      {
+         SourceColumnManager.getEditorContext(
+               getId(),
+               getPath(),
+               getDocDisplay(),
+               server_);
+      });
+   }
+   
    public void withEditorSelection(CommandWithArg<String> callback)
    {
-      // TODO
       if (visualMode_.isActivated())
       {
-         ensureVisualModeActive(() ->
+         Command onActivated = () ->
          {
-            callback.execute(visualMode_.getSelectionValue());
-         });
+            callback.execute(visualMode_.getSelectedText());
+         };
+               
+         ensureVisualModeActive(onActivated);
       }
       else
       {
-         ensureTextEditorActive(() ->
+         Command onActivated = () ->
          {
             callback.execute(docDisplay_.getSelectionValue());
-         });
+         };
+         
+         ensureTextEditorActive(onActivated);
       }
    }
 

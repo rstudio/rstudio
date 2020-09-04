@@ -898,7 +898,11 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 .rs.addApiFunction("createRequest", function(type, data, sync)
 {
-   list(type = type, data = data, sync = sync)
+   list(
+      type = .rs.scalar(type),
+      data = as.list(data),
+      sync = .rs.scalar(sync)
+   )
 })
 
 .rs.addApiFunction("sendRequest", function(request)
@@ -908,19 +912,17 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 .rs.addApiFunction("selectionGet", function()
 {
-   
    request <- .rs.api.createRequest(
       type = .rs.api.events$TYPE_GET_EDITOR_SELECTION,
-      data = NULL,
+      data = list(),
       sync = TRUE
    )
    
    .rs.api.sendRequest(request)
-   
 })
 
-.rs.addApiFunction("selectionSet", function(text = NULL) {
-   
+.rs.addApiFunction("selectionSet", function(text = NULL)
+{
    request <- .rs.apiRequest(
       type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
       data = list(text = paste(text, collapse = "\n")),
@@ -928,5 +930,4 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    )
    
    .rs.api.sendRequest(request)
-   
 })

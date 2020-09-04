@@ -235,8 +235,10 @@ SEXP rs_systemUsername()
 
 SEXP rs_sendApiRequest(SEXP requestSEXP)
 {
+   Error error;
+   
    bool sync = false;
-   Error error = r::sexp::getNamedListElement(requestSEXP, "sync", &sync);
+   error = r::sexp::getNamedListElement(requestSEXP, "sync", &sync);
    if (error)
    {
       LOG_ERROR(error);
@@ -244,7 +246,17 @@ SEXP rs_sendApiRequest(SEXP requestSEXP)
    }
    
    // build client event
-   ClientEvent event(client_events::kRStudioApiRequest, requestSEXP);
+   json::Object requestJson;
+   error = r::json::jsonValueFromObject(requestSEXP, &requestJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   ClientEvent event(
+            client_events::kRStudioApiRequest,
+            requestJson);
       
    // the async version is simple -- just fire the event
    if (sync)

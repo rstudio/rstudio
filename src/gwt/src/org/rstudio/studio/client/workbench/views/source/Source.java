@@ -459,6 +459,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
+      events_.addHandler(GetEditorSelectionEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
@@ -2796,7 +2797,7 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         if (columnManager_.attemptTextEditorActivate())
+         if (columnManager_.requestActiveEditorContext())
             return;
       }
 
@@ -2844,8 +2845,8 @@ public class Source implements InsertSourceHandler,
    public void onGetEditorSelection(GetEditorSelectionEvent event)
    {
       // get active editor (if any)
-      EditingTarget target = columnManager_.getActiveEditor();
-      if (target == null || !(target instanceof TextEditingTarget))
+      EditingTarget editingTarget = columnManager_.getActiveEditor();
+      if (editingTarget == null || !(editingTarget instanceof TextEditingTarget))
       {
          server_.rstudioApiResponse(
                JavaScriptObject.createObject(),
@@ -2853,7 +2854,13 @@ public class Source implements InsertSourceHandler,
          return;
       }
       
-      TextEditingTarget editor = (TextEditingTarget) target;
+      TextEditingTarget target = (TextEditingTarget) editingTarget;
+      target.withEditorSelection((String selection) ->
+      {
+         JsObject response = JsObject.createJsObject();
+         response.setString("value", selection);
+         server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+      });
    }
 
    private class StatFileEntry

@@ -235,4 +235,9 @@ public class JsUtil
          list.add(array.get(i));
       return list;
    }
+   
+   public static final native JavaScriptObject createString(String string)
+   /*-{
+      return string;
+   }-*/;
 }

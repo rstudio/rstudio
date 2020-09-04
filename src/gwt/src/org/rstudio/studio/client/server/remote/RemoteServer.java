@@ -552,6 +552,13 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, SET_USER_CRASH_HANDLER_PROMPTED, enableCrashHandling, requestCallback);
    }
+   
+   @Override
+   public void rstudioApiResponse(JavaScriptObject response,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
+   }
 
    @Override
    public void getTerminalOptions(
@@ -6351,6 +6358,7 @@ public class RemoteServer implements Server
    private static final String QUIT_SESSION = "quit_session";
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
    private static final String PING = "ping";
+   private static final String RSTUDIOAPI_RESPONSE = "rstudioapi_response";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";

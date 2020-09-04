@@ -627,6 +627,15 @@ export class Editor {
     return this.getMarkdownCode(tr, options);
   }
 
+  public getSelectedText(): string {
+    
+    return this.state.doc.textBetween(
+      this.state.selection.from,
+      this.state.selection.to
+    );
+
+  }
+
   public getYamlFrontMatter() {
     if (this.schema.nodes.yaml_metadata) {
       return yamlFrontMatter(this.view.state.doc);
