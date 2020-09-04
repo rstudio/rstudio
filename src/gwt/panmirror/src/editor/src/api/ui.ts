@@ -35,7 +35,7 @@ export interface EditorUI {
 
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string) => ChunkEditor;
+  createChunkEditor: (type: string, index: number, getPos: () => number) => ChunkEditor;
 }
 
 export interface ChunkEditor {
@@ -86,10 +86,6 @@ export interface EditorMenuItem {
   subMenu?: {
     items: EditorMenuItem[];
   };
-}
-
-export interface EditorUIExecute {
-  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
 }
 
 export interface EditorUIMath {

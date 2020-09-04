@@ -95,12 +95,25 @@
    {
       right: 71px;
    }
-
+   
+   .embedded {
+	  line-height: 0;
+	  top: 3px;
+   }
+   
+   .embedded .frame {
+	  border: none;
+   }
+   
    .frame
    {
       border: 1px solid #e5e5e5;
       padding-top: 10px;
       overflow: hidden;
+   }
+   
+   .embedded .root {
+      line-height: normal;
    }
 
    .fullsize .frame

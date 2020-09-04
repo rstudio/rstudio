@@ -24,4 +24,5 @@ public class PanmirrorEditingOutlineLocationItem
    public int level;
    public String title; 
    public boolean active;
+   public int position;
 }

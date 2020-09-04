@@ -124,8 +124,6 @@ export class AceNodeView implements NodeView {
   private readonly options: CodeViewOptions;
   private readonly events: EditorEvents;
 
-  private readonly runChunkToolbar: HTMLDivElement;
-
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
@@ -191,10 +189,6 @@ export class AceNodeView implements NodeView {
     if (options.firstLineMeta) {
       this.dom.classList.add('pm-ace-first-line-meta');
     }
-
-    // add a chunk execution button if execution is supported
-    this.runChunkToolbar = this.initRunChunkToolbar(ui);
-    this.dom.append(this.runChunkToolbar);
 
     // update mode
     this.updateMode();
@@ -389,12 +383,14 @@ export class AceNodeView implements NodeView {
     if (change) {
       // update content
       const start = this.getPos() + 1;
-      const tr = this.view.state.tr.replaceWith(
-        start + change.from,
-        start + change.to,
-        change.text ? this.node.type.schema.text(change.text) : null,
-      );
-      this.view.dispatch(tr);
+      if (!isNaN(start)) {
+        const tr = this.view.state.tr.replaceWith(
+          start + change.from,
+          start + change.to,
+          change.text ? this.node.type.schema.text(change.text) : null,
+        );
+        this.view.dispatch(tr);
+      }
     }
     this.updateMode();
   }
@@ -409,10 +405,16 @@ export class AceNodeView implements NodeView {
       return;
     }
 
-    // call host factory to instantiate editor and populate with initial content
-    this.chunk = this.ui.chunks.createChunkEditor('ace');
+    // call host factory to instantiate editor
+    this.chunk = this.ui.chunks.createChunkEditor('ace',
+      this.node.attrs.md_index, this.getPos);
+
+    // populate initial contents
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
+    this.updating = true;
     this.aceEditor.setValue(this.node.textContent);
+    this.updating = false;
+
     this.aceEditor.clearSelection();
 
     // cache edit session for convenience; most operations happen on the session
@@ -421,7 +423,6 @@ export class AceNodeView implements NodeView {
     // remove the preview and recreate chunk toolbar
     this.dom.innerHTML = "";
     this.dom.appendChild(this.chunk.element);
-    this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
     this.aceEditor.on("changeSelection", () => {
@@ -663,16 +664,6 @@ export class AceNodeView implements NodeView {
       }
       this.mode = lang;
     }
-
-    // if we have a language check whether execution should be enabled for this language
-    if (lang && this.canExecuteChunks()) {
-      const enabled = !!this.editorOptions.rmdChunkExecution!.find(rmdChunkLang => {
-        return lang.localeCompare(rmdChunkLang, undefined, { sensitivity: 'accent' }) === 0;
-      });
-      this.enableChunkExecution(enabled);
-    } else {
-      this.enableChunkExecution(false);
-    }
   }
 
   private backspaceMaybeDeleteNode() {
@@ -728,71 +719,6 @@ export class AceNodeView implements NodeView {
     // set focus
     this.view.focus();
     this.escaping = false;
-  }
-
-  private initRunChunkToolbar(ui: EditorUI) {
-    const toolbar = window.document.createElement('div');
-    toolbar.classList.add('pm-ace-toolbar');
-    if (this.options.executeRmdChunkFn) {
-      // run previous chunks button
-      const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
-      const runPreviousChunksButton = createImageButton(
-        ui.images.runprevchunks!,
-        ['pm-run-previous-chunks-button'],
-        `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
-      );
-      runPreviousChunksButton.tabIndex = -1;
-      runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
-      toolbar.append(runPreviousChunksButton);
-
-      // run chunk button
-      const runChunkShortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
-      const runChunkButton = createImageButton(
-        ui.images.runchunk!,
-        ['pm-run-chunk-button'],
-        `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
-      );
-      runChunkButton.tabIndex = -1;
-      runChunkButton.onclick = this.executeChunk.bind(this);
-      toolbar.append(runChunkButton);
-    }
-
-    return toolbar;
-  }
-
-  private executeChunk() {
-    // ensure editor is rendered
-    if (!this.aceEditor) {
-      this.initEditor();
-    }
-    if (this.isChunkExecutionEnabled()) {
-      const chunk = rmdChunk(this.node.textContent);
-      if (chunk != null) {
-        this.options.executeRmdChunkFn!(chunk);
-      }
-    }
-  }
-
-  private executePreviousChunks() {
-    if (this.isChunkExecutionEnabled()) {
-      const prevChunks = previousExecutableRmdChunks(this.view.state, this.getPos());
-      const mergedChunk = mergeRmdChunks(prevChunks);
-      if (mergedChunk) {
-        this.options.executeRmdChunkFn!(mergedChunk);
-      }
-    }
-  }
-
-  private canExecuteChunks() {
-    return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
-  }
-
-  private enableChunkExecution(enable: boolean) {
-    this.runChunkToolbar.style.display = enable ? 'initial' : 'none';
-  }
-
-  private isChunkExecutionEnabled() {
-    return this.runChunkToolbar.style.display !== 'none';
   }
 
   private getContents(): string {
