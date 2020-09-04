@@ -638,14 +638,14 @@ export class Editor {
 
   public replaceSelection(value: string): void {
 
-    let empty = this.view.state.selection.empty;
-    let {from, to} = this.view.state.selection;
+    // retrieve properties we need from selection
+    let {from, empty} = this.view.state.selection;
 
     // insert text
     let tr = this.view.state.tr.insertText(value);
     this.view.dispatch(tr);
 
-    // update selection
+    // update selection if necessary
     if (!empty) {
       let sel = TextSelection.create(this.view.state.doc, from, from + value.length);
       let tr = this.view.state.tr.setSelection(sel);
