@@ -3061,37 +3061,46 @@ public class TextEditingTarget implements
 
    private void applyVisualModeFixups(Command onComplete)
    {
-      // check canonical pref
-      boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
-    
-      // check for a file based canonical setting
-      String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
-      String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
-      if (!yamlCanonical.isEmpty())
-         canonical = YamlTree.isTrue(yamlCanonical);
-
-      // if visual mode is active then we need to grab its edits before proceeding
-      if (visualMode_.isActivated())
+      // only do this for markdown files
+      if (fileType_.isMarkdown())
       {
-         visualMode_.syncToEditor(SyncType.SyncTypeNormal, onComplete);
-      }
+         // check canonical pref
+         boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+       
+         // check for a file based canonical setting
+         String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+         String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
+         if (!yamlCanonical.isEmpty())
+            canonical = YamlTree.isTrue(yamlCanonical);
 
-      // if visual mode is not active and we are doing canonical saves
-      // then we need to apply any changes implied by canonical transformation
-      // of our source
-      else if (canonical && visualMode_.canWriteCanonical())
-      {
-         String code = docDisplay_.getCode();
-         visualMode_.getCanonicalChanges(code, (changes) -> {
-            if (changes.changes != null)
-               docDisplay_.applyChanges(changes.changes, true);
-            else if (changes.code != null)
-               docDisplay_.setCode(changes.code, true);
+         // if visual mode is active then we need to grab its edits before proceeding
+         if (visualMode_.isActivated())
+         {
+            visualMode_.syncToEditor(SyncType.SyncTypeNormal, onComplete);
+         }
+
+         // if visual mode is not active and we are doing canonical saves
+         // then we need to apply any changes implied by canonical transformation
+         // of our source
+         else if (canonical && visualMode_.canWriteCanonical())
+         {
+            String code = docDisplay_.getCode();
+            visualMode_.getCanonicalChanges(code, (changes) -> {
+               if (changes.changes != null)
+                  docDisplay_.applyChanges(changes.changes, true);
+               else if (changes.code != null)
+                  docDisplay_.setCode(changes.code, true);
+               onComplete.execute();
+            });
+         }
+
+         // otherwise nothing to do
+         else
+         {
             onComplete.execute();
-         });
+         }
       }
-
-      // otherwise nothing to do
+      // not a markdown file
       else
       {
          onComplete.execute();
