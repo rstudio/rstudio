@@ -862,6 +862,16 @@ public class TextEditingTargetNotebook
             removeChunk(event.getChunkId(), event.getRequestId());
             break;
       }
+      
+      // In source mode, creating and removing chunks causes a LineWidget to be
+      // created or destroyed, which in turn triggers a FoldChangeEvent, which
+      // in turn triggers an autosave. No line widgets are present in the visual
+      // editor, so nudge autosave directly so that the new set of chunk
+      // definitions is persisted.
+      if (editingTarget_.isVisualEditorActive())
+      {
+         docUpdateSentinel_.nudgeAutosave();
+      }
    }
 
    @Override

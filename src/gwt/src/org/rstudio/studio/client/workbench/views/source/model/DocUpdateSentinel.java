@@ -803,16 +803,16 @@ public class DocUpdateSentinel
 
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
-      if (suspendDetectChanges_ > 0)
-         return;
-
-      changesPending_ = true;
-      if (autosaver_ != null)
-         autosaver_.nudge();
+      nudgeAutosave();
    }
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
+   {
+      nudgeAutosave();
+   }
+   
+   public void nudgeAutosave()
    {
       if (suspendDetectChanges_ > 0)
          return;
