@@ -383,12 +383,14 @@ export class AceNodeView implements NodeView {
     if (change) {
       // update content
       const start = this.getPos() + 1;
-      const tr = this.view.state.tr.replaceWith(
-        start + change.from,
-        start + change.to,
-        change.text ? this.node.type.schema.text(change.text) : null,
-      );
-      this.view.dispatch(tr);
+      if (!isNaN(start)) {
+        const tr = this.view.state.tr.replaceWith(
+          start + change.from,
+          start + change.to,
+          change.text ? this.node.type.schema.text(change.text) : null,
+        );
+        this.view.dispatch(tr);
+      }
     }
     this.updateMode();
   }
@@ -403,11 +405,16 @@ export class AceNodeView implements NodeView {
       return;
     }
 
-    // call host factory to instantiate editor and populate with initial content
+    // call host factory to instantiate editor
     this.chunk = this.ui.chunks.createChunkEditor('ace',
       this.node.attrs.md_index, this.getPos);
+
+    // populate initial contents
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
+    this.updating = true;
     this.aceEditor.setValue(this.node.textContent);
+    this.updating = false;
+
     this.aceEditor.clearSelection();
 
     // cache edit session for convenience; most operations happen on the session

@@ -1421,10 +1421,21 @@ public class TextEditingTargetNotebook
       // Check existing visual outputs
       for (ChunkOutputUi output: visualOutputs_.values())
       {
+         boolean matches = false;
          if (output.getScope() == null)
-            continue;
-         if (output.getScope().getPreamble().getRow() == 
-             scope.getPreamble().getRow())
+         {
+            // We don't know the scope for this output; check to see if its
+            // chunk definition matches the scope we're migrating
+            int row = output.getDefinition().getRow();
+            matches = row >= scope.getPreamble().getRow() && row <= scope.getEnd().getRow();
+         }
+         else
+         {
+            // We do know the scope for this output; match the start row
+            matches = output.getScope().getPreamble().getRow() == scope.getPreamble().getRow();
+         }
+         
+         if (matches)
          {
             // If there's also a code output, detach it
             if (codeOutputs_.containsKey(output.getChunkId()))
@@ -1432,9 +1443,12 @@ public class TextEditingTargetNotebook
                codeOutputs_.get(output.getChunkId()).detach();
             }
 
-            // Found an existing visual output; reattach it
+            // Found an existing visual output; reattach it.
             ChunkOutputPanmirrorUi visualOutput = (ChunkOutputPanmirrorUi)output;
+            visualOutput.setVisualModeChunk(chunk);
+            chunk.setDefinition(visualOutput.getDefinition());
             visualOutput.reattach();
+            
             return visualOutput;
          }
       }

@@ -57,19 +57,6 @@ public class VisualModeChunks implements ChunkDefinition.Provider
             return null;
          }
          
-         // make sure we don't double create by checking for an existing
-         // instance at the same visual position
-         if (index > 0)
-         {
-            for (VisualModeChunk visualChunk: chunks_)
-            {
-               if (visualChunk.getVisualPosition() == getPos.getVisualPosition())
-               {
-                  return visualChunk.getEditor();
-               }
-            }
-         }
-         
          VisualModeChunk chunk = new VisualModeChunk(
                index, getPos, sentinel_, target_, sync_);
 

@@ -235,4 +235,8 @@ public class JsUtil
          list.add(array.get(i));
       return list;
    }
+   
+   public native static boolean isUndefined(int val) /*-{
+      return typeof(val) === "undefined"; 
+   }-*/;
 }

@@ -155,7 +155,7 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       
       if (chunk_ != null)
       {
-         chunk_.reloadWidget();
+         chunk_.setOutputWidget(getOutputWidget());
       }
 
       attached_ = true;
@@ -170,6 +170,11 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       return chunk_.getScope();
    }
    
+   public void setVisualModeChunk(VisualModeChunk chunk)
+   {
+      chunk_ = chunk;
+   }
+   
    /**
     * Prepare output widget for hosting in visual mode
     */
@@ -182,5 +187,5 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       outputWidget_.getElement().getStyle().clearHeight();
    }
    
-   private final VisualModeChunk chunk_;
+   private VisualModeChunk chunk_;
 }

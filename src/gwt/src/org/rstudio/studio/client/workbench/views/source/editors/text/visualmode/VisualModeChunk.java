@@ -68,6 +68,7 @@ public class VisualModeChunk
       parent_ = target.getDocDisplay();
       target_ = target;
       active_ = false;
+      markdownIndex_ = index;
 
       // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
@@ -123,9 +124,13 @@ public class VisualModeChunk
       execHost_.getStyle().setProperty("top", "3px");
       host_.appendChild(execHost_);
       
-      if (output != null && widget_ == null)
+      if (output != null)
       {
-         setOutputWidget(output.getOutputWidget());
+         setDefinition(output.getDefinition());
+         if (widget_ == null)
+         {
+            setOutputWidget(output.getOutputWidget());
+         }
       }
       host_.appendChild(outputHost_);
       
@@ -210,6 +215,16 @@ public class VisualModeChunk
    public PanmirrorUIChunkEditor getEditor()
    {
       return chunk_;
+   }
+   
+   /**
+    * Sets the function used to get the visual position.
+    * 
+    * @param getPos The new function used for retrieving the visual position.
+    */
+   public void setGetPos(PanmirrorUIChunks.GetVisualPosition getPos)
+   {
+      getPos_ = getPos;
    }
    
    /**
@@ -384,6 +399,18 @@ public class VisualModeChunk
       return active_;
    }
    
+   /**
+    * Returns the position/index of the chunk in the original Markdown document,
+    * if known. Note that this value may not be correct if the Markdown document
+    * has been mutated since the chunk was created.
+    * 
+    * @return The index of the chunk in Markdown
+    */
+   public int getMarkdownIndex()
+   {
+      return markdownIndex_;
+   }
+   
    private void setMode(AceEditor editor, String mode)
    {
       switch(mode)
@@ -522,8 +549,8 @@ public class VisualModeChunk
    private Scope scope_;
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
+   private PanmirrorUIChunks.GetVisualPosition getPos_;
 
-   private final PanmirrorUIChunks.GetVisualPosition getPos_;
    private final DivElement outputHost_;
    private final DivElement host_;
    private final DivElement execHost_;
@@ -536,4 +563,5 @@ public class VisualModeChunk
    private final EditingTargetCodeExecution codeExecution_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
+   private final int markdownIndex_;
 }
