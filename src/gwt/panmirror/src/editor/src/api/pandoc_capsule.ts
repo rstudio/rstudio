@@ -23,6 +23,7 @@ import { PandocToken, ProsemirrorWriter, mapTokens, PandocTokenType } from './pa
 const kFieldDelimiter = '\n';
 const kValueDelimiter = ':';
 const kTypeField = 'type';
+const kPositionField = 'position';
 const kPrefixField = 'prefix';
 const kSourceField = 'source';
 const kSuffixField = 'suffix';
@@ -31,6 +32,7 @@ const kBlockCapsuleSentinel = '31B8E172-B470-440E-83D8-E6B185028602'.toLowerCase
 // block capsule
 export interface PandocBlockCapsule {
   type: string;
+  position: number;
   prefix: string;
   source: string;
   suffix: string;
@@ -92,7 +94,7 @@ export interface PandocBlockCapsuleFilter {
 // after pandoc has yielded an ast. block capsules are a single base64 encoded pieced of
 // text that include the original content, the matched prefix and suffix, and a type
 // identifier for orchestrating the unpacking.
-export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter: PandocBlockCapsuleFilter) {
+export function pandocMarkdownWithBlockCapsules(original: string, markdown: string, capsuleFilter: PandocBlockCapsuleFilter) {
   // default extractor
   const defaultExtractor = (match: string, p1: string, p2: string, p3: string) => {
     return {
@@ -102,10 +104,28 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
     };
   };
 
+  // find the original position of all the matches
+  const positions: number[] = [];
+  let match = capsuleFilter.match.exec(original);
+  while (match != null) {
+    positions.push(match.index);
+    match = capsuleFilter.match.exec(original);
+  }
+
+  // reset capsule filter match index
+  capsuleFilter.match.lastIndex = 0;
+
   // replace all w/ source preservation capsules
   return markdown.replace(capsuleFilter.match, (match: string, p1: string, p2: string, p3: string, p4: string) => {
 
-    // if the capsuleFilter has a discard expression then check it it
+    // read the original position of the match
+    let position = 0;
+    const originalPos = positions.shift();
+    if (originalPos) {
+      position = originalPos;
+    }
+
+    // if the capsuleFilter has a discard expression then check it
     if (capsuleFilter.discard && !!match.match(capsuleFilter.discard)) {
       return match;
     }
@@ -117,17 +137,20 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
     // make the capsule
     const capsule: PandocBlockCapsule = {
       [kTypeField]: capsuleFilter.type,
+      [kPositionField]: position,
       [kPrefixField]: prefix,
       [kSourceField]: source,
       [kSuffixField]: suffix,
     };
 
-    // constuct a field
+    // construct a field
     const field = (name: string, value: string) => `${name}${kValueDelimiter}${base64Encode(value)}`;
 
     // construct a record
     const record =
       field(kTypeField, capsule.type) +
+      kFieldDelimiter +
+      field(kPositionField, capsule.position.toString()) +
       kFieldDelimiter +
       field(kPrefixField, capsule.prefix) +
       kFieldDelimiter +
@@ -256,9 +279,10 @@ export function parsePandocBlockCapsule(text: string): PandocBlockCapsule {
   const fieldValue = (i: number) => base64Decode(fields[i].split(kValueDelimiter)[1]);
   return {
     [kTypeField]: fieldValue(0),
-    [kPrefixField]: fieldValue(1),
-    [kSourceField]: fieldValue(2),
-    [kSuffixField]: fieldValue(3),
+    [kPositionField]: parseInt(fieldValue(1), 10),
+    [kPrefixField]: fieldValue(2),
+    [kSourceField]: fieldValue(3),
+    [kSuffixField]: fieldValue(4),
   };
 }
 

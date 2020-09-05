@@ -23,8 +23,14 @@ public class PanmirrorUIChunks
    public CreateChunkEditor createChunkEditor;
    
    @JsFunction
+   public interface GetVisualPosition
+   {
+      int getVisualPosition();
+   }
+
+   @JsFunction
    public interface CreateChunkEditor
    {
-      PanmirrorUIChunkEditor create(String type);
+      PanmirrorUIChunkEditor create(String type, int position, GetVisualPosition getPos);
    }
 }

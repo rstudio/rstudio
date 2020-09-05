@@ -168,6 +168,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
@@ -1530,7 +1531,19 @@ public class TextEditingTarget implements
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
             events_,
-            prefs_);
+            prefs_,
+            () ->
+            {
+               // Implement chunk definition provider
+               if (visualMode_.isVisualEditorActive())
+               {
+                  return visualMode_.getChunkDefs();
+               }
+               else
+               {
+                  return docDisplay_.getChunkDefs();
+               }
+            });
 
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
@@ -2358,6 +2371,18 @@ public class TextEditingTarget implements
    {
       return 2 * 1024 * 1024;
    }
+   
+   public int getPixelWidth()
+   {
+      if (isVisualEditorActive())
+      {
+         return visualMode_.getPixelWidth();
+      }
+      else
+      {
+         return docDisplay_.getPixelWidth();
+      }
+   }
 
    public void insertCode(String source, boolean blockMode)
    {
@@ -2473,7 +2498,16 @@ public class TextEditingTarget implements
    {
       if (isVisualModeActivated())
       {
-         visualMode_.focus();
+         visualMode_.focus(() ->
+         {
+            // Initialize notebook after activation if present (and notebook is
+            // uninitialized)
+            if (notebook_ != null && 
+                notebook_.getState() == TextEditingTargetNotebook.STATE_NONE)
+            {
+               notebook_.onRenderFinished(null);
+            }
+         });
       }
       else
       {
@@ -3039,10 +3073,10 @@ public class TextEditingTarget implements
          if (!yamlCanonical.isEmpty())
             canonical = YamlTree.isTrue(yamlCanonical);
 
-         // if visual mode is active then we need to grab it's edits before proceeding
+         // if visual mode is active then we need to grab its edits before proceeding
          if (visualMode_.isActivated())
          {
-            visualMode_.syncToEditor(false, onComplete);
+            visualMode_.syncToEditor(SyncType.SyncTypeNormal, onComplete);
          }
 
          // if visual mode is not active and we are doing canonical saves
@@ -7406,6 +7440,16 @@ public class TextEditingTarget implements
    {
       return notebook_;
    }
+   
+   public VisualMode getVisualMode()
+   {
+      return visualMode_;
+   }
+   
+   public EditingTargetCodeExecution getCodeExecutor()
+   {
+      return codeExecution_;
+   }
 
    /**
     * Updates the path of the file loaded in the editor, as though the user
@@ -7737,7 +7781,7 @@ public class TextEditingTarget implements
    }
    
    // physical state (guaranteed to be loaded and addressable)
-   private boolean isVisualEditorActive() 
+   public boolean isVisualEditorActive() 
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
