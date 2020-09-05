@@ -279,7 +279,7 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
       }
    }
 
-   getCollectionSpecs([cont, collections](core::Error error ,ZoteroCollectionSpecs specs) {
+   getCollectionSpecs([cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
 
       json::JsonRpcResponse response;
       if (error)
@@ -289,11 +289,39 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
       }
       else
       {
-         // filter the returned specs based on 'collections'
+         // filter the specs if there is a collections whitelist
+         ZoteroCollectionSpecs filteredSpecs;
+         if (collections.size() > 0)
+         {
+            std::copy_if(specs.begin(), specs.end(), std::back_inserter(filteredSpecs),
+                         [collections, specs](const ZoteroCollectionSpec& spec) {
 
-         // exercise for the reader.....
+               // find the top-level library of the spec (when the loop terminates
+               // the targetSpec will be the library spec)
+               ZoteroCollectionSpec targetSpec = spec;
+               while (true)
+               {
+                   ZoteroCollectionSpec parentSpec = findParentSpec(targetSpec, specs);
+                   if (parentSpec.empty())
+                      break;
+                   else
+                      targetSpec = parentSpec;
+               }
 
-         handleGetCollectionSpecs(Success(), specs, cont);
+               // include if the library is within the list of collections
+               return std::count_if(collections.begin(), collections.end(), [targetSpec](const std::string& name) {
+                  return name == targetSpec.name;
+               }) > 0;
+
+            });
+         }
+         else
+         {
+            filteredSpecs = specs;
+         }
+
+
+         handleGetCollectionSpecs(Success(), filteredSpecs, cont);
 
       }
    });
@@ -309,8 +337,8 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // extract params
    std::string file;
    json::Array collectionsJson, cachedJson;
-   bool forceAll, useCache;
-   Error error = json::readParams(request.params, &file, &collectionsJson, &forceAll, &cachedJson, &useCache);
+   bool useCache;
+   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson, &useCache);
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -318,25 +346,22 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       return;
    }
 
-   // collections filter (empty means all collections)
+   // read user request
    std::vector<std::string> collections;
+   collectionsJson.toVectorString(collections);
 
-   if (!forceAll)
+   // if there is no user request, see if there are project level or global prefs that provide collections
+   if (collections.size() == 0)
    {
-      // read user request
-      collectionsJson.toVectorString(collections);
-
-      // if the didn't, see if there are project level or global prefs that provide collections
-      if (collections.size() == 0)
+      if (!getConfiguredCollections(file, &collections))
       {
-         if (!getConfiguredCollections(file, &collections))
-         {
-            ZoteroCollections noCollections;
-            handleGetCollections(Success(), noCollections, "", cont);
-            return;
-         }
+         ZoteroCollections noCollections;
+         handleGetCollections(Success(), noCollections, "", cont);
+         return;
       }
    }
+
+   // ... note that if no collections are provided that means 'All Collections'
 
    // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;

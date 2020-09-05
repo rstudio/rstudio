@@ -45,7 +45,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   public name: string = "Bibliography";
   public key: string = kLocalBiliographyProviderKey;
 
-  public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], _forceAll: boolean): Promise<boolean> {
+  public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
     const bibliographiesRelative = bibliographyFilesFromDoc(yamlBlocks);
     const bibliographiesAbsolute = expandPaths(resourcePath, bibliographiesRelative || []);

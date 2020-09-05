@@ -84,6 +84,9 @@ struct ZoteroCollection : ZoteroCollectionSpec
 typedef std::vector<ZoteroCollection> ZoteroCollections;
 typedef boost::function<void(core::Error,ZoteroCollections,std::string)> ZoteroCollectionsHandler;
 
+// find the parent spec within a set of specs
+ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs);
+
 
 // requirements for implementing a collection source
 struct ZoteroCollectionSource

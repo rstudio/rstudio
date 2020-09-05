@@ -135,8 +135,10 @@ public class VisualModePanmirrorFormat
             // create extensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             
-            // chunk execution enabled if the target can execute
-            format.rmdExtensions.codeChunks = isRMarkdownDocument();
+            // chunk execution is always enabled b/c sometimes users will have 
+            // code chunks in a .md file and w/o these handler the code chunks
+            // get butchered (b/c source capsules aren't run)
+            format.rmdExtensions.codeChunks = true;
             
             // support for bookdown part headers is always enabled b/c typing 
             // (PART\*) in the visual editor would result in an escaped \, which
