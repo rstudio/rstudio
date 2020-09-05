@@ -20,11 +20,12 @@
 #endif
 
 #include <core/Algorithm.hpp>
-#include <shared_core/SafeConvert.hpp>
-
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace core {
@@ -108,10 +109,10 @@ FilePath resolveXdgDir(const std::string& envVar,
 } // anonymous namespace
 
 FilePath userConfigDir(
-        const boost::optional<std::string>& user,
-        const boost::optional<FilePath>& homeDir)
+   const boost::optional<std::string>& user,
+   const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("XDG_CONFIG_HOME", 
+   FilePath confDir = resolveXdgDir("XDG_CONFIG_HOME", 
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
 #endif
@@ -119,6 +120,42 @@ FilePath userConfigDir(
          user,
          homeDir
    );
+
+   Error permError;
+   Error error = confDir.ensureDirectory();
+   if (!error)
+   {
+      // Test permissions here.
+      error = confDir.testWritePermissions();
+      if (error)
+      {
+         permError = Error(
+            error.getName(),
+            error.getCode(),
+            "Missing write permissions to " + confDir.getAbsolutePath() + ". Some features may not work correctly.",
+            ERROR_LOCATION);
+
+         system::User currUser;
+         error = system::User::getUserFromIdentifier(system::username(), currUser);
+         if (!error)
+            error = confDir.changeOwnership(currUser, true);
+      }
+   }
+
+   if (error)
+   {
+      std::string message;
+      message.append("Encounterd an issue while testing config dir \"")
+         .append(confDir.getAbsolutePath())
+         .append(":\n  ")
+         .append(error.asString());
+      if (permError)
+         message.append("\n  ").append(permError.asString());
+
+      log::logWarningMessage(message, ERROR_LOCATION);
+   }
+
+   return confDir;
 }
 
 FilePath userDataDir(
