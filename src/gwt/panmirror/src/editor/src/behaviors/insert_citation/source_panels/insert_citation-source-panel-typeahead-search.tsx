@@ -82,6 +82,12 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     searchBoxRef.current?.focus();
   };
 
+
+  const filterExisting = (citations: CitationListEntry[], citationsToAdd: CitationListEntry[]): CitationListEntry[] => {
+    const citationsToAddIds = citationsToAdd.map(citation => citation.id);
+    return citations.filter(citation => !citationsToAddIds.includes(citation.id));
+  };
+
   return (
     <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color'>
       <div className='pm-insert-citation-search-panel-textbox-container'>
@@ -98,7 +104,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
       </div>
       <CitationSourceList
         height={listHeight}
-        citations={props.citations}
+        citations={filterExisting(props.citations, props.citationsToAdd)}
         citationsToAdd={props.citationsToAdd}
         confirm={props.confirm}
         addCitation={props.addCitation}
