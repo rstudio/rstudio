@@ -177,7 +177,10 @@ export class AceRenderQueue {
 
     // Render this view
     if (view) {
-      view.initEditor();
+      // Don't render if the view no longer has a position (this can happen if the view was moved or deleted before it got a chance to render)
+      if (view.getPos() !== undefined) {
+         view.initEditor();
+      }
     }
 
     if (this.renderQueue.length > 0) {

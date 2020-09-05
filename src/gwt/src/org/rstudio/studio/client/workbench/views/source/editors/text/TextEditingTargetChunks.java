@@ -32,7 +32,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextCodeUi;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -47,7 +47,7 @@ public class TextEditingTargetChunks
    public TextEditingTargetChunks(TextEditingTarget target)
    {
       target_ = target;
-      toolbars_ = new ArrayList<ChunkContextUi>();
+      toolbars_ = new ArrayList<ChunkContextCodeUi>();
       modifiedRanges_ = new ArrayList<Range>();
       renderPass_ = 0;
       
@@ -78,7 +78,7 @@ public class TextEditingTargetChunks
    public void onLineWidgetRemoved(LineWidget widget)
    {
       // remove the widget from our internal list
-      for (ChunkContextUi toolbar: toolbars_)
+      for (ChunkContextCodeUi toolbar: toolbars_)
       {
          if (toolbar.getLineWidget() == widget)
          {
@@ -106,7 +106,7 @@ public class TextEditingTargetChunks
    
    public void setChunkState(int preambleRow, int state)
    {
-      for (ChunkContextUi toolbar: toolbars_)
+      for (ChunkContextCodeUi toolbar: toolbars_)
       {
          if (toolbar.getPreambleRow() == preambleRow)
          {
@@ -163,7 +163,7 @@ public class TextEditingTargetChunks
    
    private void removeAllToolbars()
    {
-      for (ChunkContextUi toolbar: toolbars_)
+      for (ChunkContextCodeUi toolbar: toolbars_)
          toolbar.detach();
       toolbars_.clear();
    }
@@ -198,7 +198,7 @@ public class TextEditingTargetChunks
       }
 
       // we should have touched every toolbar--remove those we didn't
-      for (ChunkContextUi toolbar: toolbars_)
+      for (ChunkContextCodeUi toolbar: toolbars_)
       {
          if (toolbar.getRenderPass() != renderPass_)
          {
@@ -223,7 +223,7 @@ public class TextEditingTargetChunks
          {
             Position chunkPos = Position.create(row, 0);
             Scope scope = target_.getDocDisplay().getChunkAtPosition(chunkPos);
-            ChunkContextUi toolbar = getToolbarForRow(row);
+            ChunkContextCodeUi toolbar = getToolbarForRow(row);
             
             if (toolbar != null && scope == null)
             {
@@ -248,9 +248,9 @@ public class TextEditingTargetChunks
          syncChunkToolbar(scope);
    }
    
-   private ChunkContextUi getToolbarForRow(int row)
+   private ChunkContextCodeUi getToolbarForRow(int row)
    {
-      for (ChunkContextUi toolbar : toolbars_)
+      for (ChunkContextCodeUi toolbar : toolbars_)
       {
          if (toolbar.getPreambleRow() == row)
          {
@@ -265,7 +265,7 @@ public class TextEditingTargetChunks
    {
       // see if we've already drawn a toolbar for this chunk; if so, just
       // update it
-      for (ChunkContextUi toolbar: toolbars_)
+      for (ChunkContextCodeUi toolbar: toolbars_)
       {
          int preambleRow = chunk.getPreamble().getRow();
          if (toolbar.getPreambleRow() == preambleRow)
@@ -290,8 +290,8 @@ public class TextEditingTargetChunks
       // doesn't have one
       if (chunk.isChunk() && isRunnableChunk(chunk.getPreamble().getRow()))
       {
-         ChunkContextUi ui = new ChunkContextUi(target_, renderPass_, dark_,
-               chunk, this);
+         ChunkContextCodeUi ui = new ChunkContextCodeUi(target_, dark_,
+               chunk, this, renderPass_);
          toolbars_.add(ui);
       }
    }
@@ -326,7 +326,7 @@ public class TextEditingTargetChunks
    }
    
    private final TextEditingTarget target_;
-   private final ArrayList<ChunkContextUi> toolbars_;
+   private final ArrayList<ChunkContextCodeUi> toolbars_;
    private final List<Range> modifiedRanges_;
    
    private boolean dark_;

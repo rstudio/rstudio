@@ -53,7 +53,6 @@ public class VisualModePanmirrorContext
    
    public VisualModePanmirrorContext(DocUpdateSentinel docUpdateSentinel,
                                      TextEditingTarget target,
-                                     VisualModeChunkExec exec,
                                      VisualModeChunks chunks,
                                      VisualModePanmirrorFormat format,
                                      VisualModeSpelling spelling)
@@ -61,7 +60,6 @@ public class VisualModePanmirrorContext
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
       target_ = target;
-      exec_ = exec;
       chunks_ = chunks;
       format_ = format;
       spelling_ = spelling;
@@ -92,7 +90,6 @@ public class VisualModePanmirrorContext
          uiContext(), 
          uiDisplay(showContextMenu), 
          chunks_.uiChunks(),
-         exec_.uiExecute(),
          spelling_.uiSpelling()
       );
    }
@@ -267,12 +264,10 @@ public class VisualModePanmirrorContext
    }
    private HashSet<FileWatcher> fileWatchers_ = new HashSet<FileWatcher>();
    
-  
 
    private final DocUpdateSentinel docUpdateSentinel_;
    private final TextEditingTarget target_;
    
-   private final VisualModeChunkExec exec_;
    private final VisualModePanmirrorFormat format_;
    private final VisualModeChunks chunks_;
    private final VisualModeSpelling spelling_;
@@ -280,5 +275,4 @@ public class VisualModePanmirrorContext
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;
    private EventBus events_;
-   
 }

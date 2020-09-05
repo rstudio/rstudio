@@ -22,8 +22,8 @@ import com.google.gwt.user.client.Command;
 
 public interface VisualModeEditorSync
 {
-   void syncToEditor(boolean activatingEditor);
-   void syncToEditor(boolean activatingEditor, Command ready);
+   void syncToEditor(VisualMode.SyncType syncType);
+   void syncToEditor(VisualMode.SyncType syncType, Command ready);
    
    void syncFromEditorIfActivated();
    void syncFromEditor(CommandWithArg<Boolean> done, boolean focus);
