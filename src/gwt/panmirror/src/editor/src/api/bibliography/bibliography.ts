@@ -133,7 +133,7 @@ export class BibliographyManager {
   }
 
   public sourcesForProvider(providerKey: string): BibliographySourceWithCollections[] {
-    return uniqby(this.allSources().filter(item => item.providerKey === providerKey), source => source.id);
+    return this.allSources().filter(item => item.providerKey === providerKey);
   }
 
   public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySourceWithCollections[] {
