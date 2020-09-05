@@ -137,7 +137,7 @@ export class BibliographyManager {
   }
 
   public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySourceWithCollections[] {
-    return uniqby(this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey)), source => source.id);
+    return this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey));
   }
 
   public localSources(): BibliographySourceWithCollections[] {
@@ -274,7 +274,7 @@ export class BibliographyManager {
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
 
-      return uniqby(filteredItems, (source: BibliographySourceWithCollections) => source.id);
+      return filteredItems;
 
     } else {
       return [];
