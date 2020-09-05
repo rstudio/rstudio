@@ -61,6 +61,7 @@ class PandocWriter implements PandocOutput {
   public readonly extensions: PandocExtensions;
 
   private readonly escapeCharacters: string[] = [];
+  private readonly manualEscapeCharacters: Map<string, string> = new Map<string, string>();
   private readonly preventEscapeCharacters: string[] = [];
 
   constructor(
@@ -249,6 +250,9 @@ class PandocWriter implements PandocOutput {
         } else if (preventEscapeCharacters.includes(ch)) {
           flushTextRun();
           this.writeRawMarkdown(ch);
+        } else if (this.manualEscapeCharacters.has(ch)) {
+          flushTextRun();
+          this.writeRawMarkdown(this.manualEscapeCharacters.get(ch)!);
         } else {
           textRun += ch;
         }
@@ -420,6 +424,12 @@ class PandocWriter implements PandocOutput {
     }
     this.escapeCharacters.push(...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch)));
 
-
+    // Manual escape characters are ones we can't rely on pandoc to automatically escape (b/c
+    // they represent valid syntax for a markdown extension, e.g. '@' for citations). 
+    // For '@', since we already do special writing for spans we know are citation ids, we can 
+    // globally prescribe escaping behavior and never stomp over a citation. We also check
+    // that '@' can be escaped in the current markdown format, and if not use an html escape.
+    const atEscape = this.extensions.all_symbols_escapable ? '\\@' : '&#x0040;';
+    this.manualEscapeCharacters.set('@', atEscape);
   }
 }
