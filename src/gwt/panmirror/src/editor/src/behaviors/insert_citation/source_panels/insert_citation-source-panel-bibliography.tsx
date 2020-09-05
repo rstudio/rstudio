@@ -34,7 +34,7 @@ const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
 export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
-  const localProviderNodes = providers.map(provider => {
+  const localProviderNodes = providers.filter(provider => provider.isEnabled()).map(provider => {
     const node: NavigationTreeNode = {
       key: provider.key,
       name: ui.context.translateText(provider.name),

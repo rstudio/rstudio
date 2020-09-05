@@ -38,6 +38,7 @@ export interface BibliographyDataProvider {
   key: string;
   name: string;
 
+  isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
   collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];

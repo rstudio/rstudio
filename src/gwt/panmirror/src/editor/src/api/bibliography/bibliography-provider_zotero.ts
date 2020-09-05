@@ -32,6 +32,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   private allCollectionSpecs: ZoteroCollectionSpec[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
+  private enabled = true;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
@@ -46,6 +47,8 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     const config = zoteroConfig(yamlBlocks);
     if (config) {
 
+      // Enabled
+      this.enabled = true;
       try {
 
         // Don't send the items back through to the server
@@ -95,9 +98,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       if (this.collections.length > 0) {
         hasUpdates = true;
       }
+      // Disabled
+      this.enabled = false;
       this.allCollections = [];
+      this.allCollectionSpecs = [];
     }
     return hasUpdates;
+  }
+
+  // Respect enabled;
+  public isEnabled(): boolean {
+    return this.enabled;
   }
 
   public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
