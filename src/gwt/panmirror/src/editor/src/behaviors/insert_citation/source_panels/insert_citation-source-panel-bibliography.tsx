@@ -28,6 +28,7 @@ import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite
 
 import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
+import uniqBy from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -87,7 +88,9 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kZoteroProviderKey &&
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
-        setCitations(toCitationEntry(bibMgr.search(searchTerm, providerKey, collectionKey), props.ui));
+        const sources = bibMgr.search(searchTerm, providerKey, collectionKey);
+        const uniqueSources = uniqBy(sources, source => source.id);
+        setCitations(toCitationEntries(uniqueSources, props.ui));
       }
     }
     loadData();
@@ -179,7 +182,7 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
-function toCitationEntry(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+function toCitationEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
   return sources.map(source => {
     return {
       id: source.id,
