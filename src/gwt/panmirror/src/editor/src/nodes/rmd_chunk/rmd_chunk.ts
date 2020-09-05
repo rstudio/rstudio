@@ -23,11 +23,10 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import { EditorUI } from '../../api/ui';
 import { kBookdownDocType } from '../../api/format';
-import { rmdChunk, EditorRmdChunk, insertRmdChunk } from '../../api/rmd';
+import { rmdChunk, insertRmdChunk } from '../../api/rmd';
 import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
-import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';

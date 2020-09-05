@@ -24,7 +24,6 @@ import { EditorUISpelling } from './spelling';
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
-  execute: EditorUIExecute;
   math: EditorUIMath;
   context: EditorUIContext;
   prefs: EditorUIPrefs;
