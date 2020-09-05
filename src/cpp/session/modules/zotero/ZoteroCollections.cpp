@@ -325,6 +325,21 @@ const char * const kItems = "items";
 
 const int kNoVersion = -1;
 
+ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs)
+{
+   // search for parentKey if we have one
+   if (!spec.parentKey.empty())
+   {
+      auto it = std::find_if(specs.begin(), specs.end(), [spec](const ZoteroCollectionSpec& s) { return s.key == spec.parentKey; });
+      if (it != specs.end())
+         return *it;
+   }
+
+   // not found
+   return ZoteroCollectionSpec();
+}
+
+
 void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
 {
    // get connection if we have o ne
