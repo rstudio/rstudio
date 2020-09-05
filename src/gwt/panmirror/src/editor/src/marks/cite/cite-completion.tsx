@@ -36,6 +36,7 @@ import { parseCitation, insertCitation as insertSingleCitation, performCiteCompl
 
 import './cite-completion.css';
 
+
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
 const kHeaderHeight = 20;
@@ -124,7 +125,7 @@ function filterCitations(
   }
 
   const search = (str: string) => {
-    const results = manager.searchAllSources(str, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry => entryForSource(entry, ui));
     return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
   };
 

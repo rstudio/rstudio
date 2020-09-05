@@ -28,7 +28,7 @@ import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite
 
 import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
-import uniqBy from "lodash.uniqby";
+import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -89,7 +89,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
         const sources = bibMgr.search(searchTerm, providerKey, collectionKey);
-        const uniqueSources = uniqBy(sources, source => source.id);
+        const uniqueSources = uniqby(sources, source => source.id);
         setCitations(toCitationEntries(uniqueSources, props.ui));
       }
     }

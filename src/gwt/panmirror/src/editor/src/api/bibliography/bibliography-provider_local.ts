@@ -79,7 +79,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
+  public collections(): BibliographyCollection[] {
     return [];
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
