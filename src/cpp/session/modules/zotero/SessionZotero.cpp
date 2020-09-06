@@ -31,6 +31,7 @@
 #include "ZoteroCollectionsWeb.hpp"
 #include "ZoteroCollectionsLocal.hpp"
 #include "ZoteroBetterBibTeX.hpp"
+#include "ZoteroUtil.hpp"
 
 using namespace rstudio::core;
 
@@ -361,7 +362,11 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
-   // ... note that if no collections are provided that means 'All Collections'
+   // if at this point we still don't have any collections (likely due to migrating
+   // from a dev version that had support for 'All Collections') then just default
+   // to 'My Library'
+   if (collections.size() == 0)
+      collections.push_back(kMyLibrary);
 
    // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;

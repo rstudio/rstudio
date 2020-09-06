@@ -440,7 +440,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {  
-      return visualModeWrapColumn_.validate() && visualModeContentWidth_.validate();
+      return visualModeWrapColumn_.validate() && 
+             visualModeContentWidth_.validate() &&
+             zoteroLibs_.validate();
    }
 
    @Override

@@ -497,7 +497,6 @@ void getLocalCollections(std::string key,
 
       // see if this is a requested collection
       bool requested =
-        collections.empty() ||
         std::count_if(collections.begin(),
                       collections.end(),
                       [name](const std::string& str) { return boost::algorithm::iequals(name, str); }) > 0 ;

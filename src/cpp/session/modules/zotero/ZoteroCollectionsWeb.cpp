@@ -44,8 +44,6 @@ const char * const kZoteroApiVersion = "3";
 const char * const kUserScope = "users";
 const char * const kGroupScope = "groups";
 
-const char * const kMyLibrary = "My Library";
-
 typedef boost::function<void(core::Error,int,core::json::Value)> ZoteroJsonResponseHandler;
 
 void zoteroJsonRequest(std::string key,

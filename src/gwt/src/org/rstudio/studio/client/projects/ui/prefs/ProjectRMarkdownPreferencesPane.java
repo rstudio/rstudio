@@ -139,6 +139,12 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       zoteroLibs_.setLibraries(config.getZoteroLibraries());
       zoteroLibs_.addAvailableLibraries();
    }
+   
+   @Override
+   public boolean validate()
+   {
+      return zoteroLibs_.validate();
+   }
 
   
 

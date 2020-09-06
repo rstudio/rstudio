@@ -20,6 +20,7 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroCollectionSpec;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroResult;
@@ -53,7 +54,6 @@ public class ZoteroLibrariesWidget extends Composite
       if (includeUseDefault)
          options.add(USE_DEFAULT);
       options.add(MY_LIBRARY);
-      options.add(ALL_LIBRARIES);
       options.add(SELECTED_LIBRARIES);
 
       selectedLibs_ = new SelectWidget(
@@ -94,7 +94,7 @@ public class ZoteroLibrariesWidget extends Composite
       {
          // set select widget based on whether we have a library whitelist
          if (libraries.length() == 0)
-            selectedLibs_.setValue(ALL_LIBRARIES);
+            selectedLibs_.setValue(MY_LIBRARY); // migrate from 'All Libraries'
          else if (libraries.length() == 1 && libraries.get(0).equals(MY_LIBRARY))
             selectedLibs_.setValue(MY_LIBRARY);
          else
@@ -119,6 +119,21 @@ public class ZoteroLibrariesWidget extends Composite
       manageUI();
    }
    
+   public boolean validate()
+   {
+      if (selectedLibs_.getValue().equals(SELECTED_LIBRARIES) &&
+          (getLibraries().length() == 0))
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            "Error", "You must select at least one Zotero library");
+         return false;
+      }
+      else
+      {
+         return true;
+      }
+   }
+   
    public JsArrayString getLibraries()
    {   
       JsArrayString libraries = JsArrayString.createArray().cast();
@@ -129,9 +144,6 @@ public class ZoteroLibrariesWidget extends Composite
          break;
       case MY_LIBRARY:
          libraries.push(MY_LIBRARY); 
-         break;
-      case ALL_LIBRARIES:
-         // empty array == all libs
          break;
       case SELECTED_LIBRARIES:
          for (int i = 0; i<libraries_.getItemCount(); i++)
@@ -193,7 +205,6 @@ public class ZoteroLibrariesWidget extends Composite
    
    private final static String USE_DEFAULT = "(Default)";
    private final static String MY_LIBRARY = "My Library";
-   private final static String ALL_LIBRARIES = "All Libraries";
    private final static String SELECTED_LIBRARIES = "Selected Libraries";
    
    private final SelectWidget selectedLibs_;
