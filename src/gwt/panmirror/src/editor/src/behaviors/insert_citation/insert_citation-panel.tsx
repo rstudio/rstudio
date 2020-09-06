@@ -80,6 +80,8 @@ interface InsertCitationPanelProps extends WidgetProps {
   server: EditorServer;
   onCitationsChanged: (sources: CitationListEntry[]) => void;
   onBibliographyChanged: (bibliographyFile: BibliographyFile) => void;
+  onSelectedNodeChanged: (node: NavigationTreeNode) => void;
+  selectedNode?: NavigationTreeNode;
   onOk: () => void;
   onCancel: () => void;
 }
@@ -115,7 +117,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       // Load the tree and select the root node
       const treeNodes = allPanels.map(panel => panel.treeNode);
       setTreeSourceData(treeNodes);
-      setSelectedNode(treeNodes[0]);
+
+      if (props.selectedNode) {
+        setSelectedNode(props.selectedNode);
+      } else {
+        setSelectedNode(treeNodes[0]);
+      }
     }
     loadData();
   }, []);
@@ -170,6 +177,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   const nodeSelected = (node: NavigationTreeNode) => {
     setSelectedNode(node);
+    props.onSelectedNodeChanged(node);
   };
 
   const deleteCitation = (id: string) => {
