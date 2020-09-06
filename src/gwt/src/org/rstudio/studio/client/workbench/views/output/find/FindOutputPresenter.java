@@ -267,6 +267,9 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            if (dialogState_ == null)
+               return;
+
             String message = "Are you sure you wish to permanently replace all? This will ";
             if (StringUtil.isNullOrEmpty(view_.getReplaceText()))
                message += "remove ";
