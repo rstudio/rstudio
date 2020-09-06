@@ -23,6 +23,7 @@ import { EditorServer } from '../../api/server';
 import { BibliographyManager, BibliographyFile } from '../../api/bibliography/bibliography';
 
 import { InsertCitationPanel, CitationListEntry } from './insert_citation-panel';
+import { NavigationTreeNode } from '../../api/widgets/navigation-tree';
 
 
 // When the dialog has completed, it will return this result
@@ -30,6 +31,7 @@ import { InsertCitationPanel, CitationListEntry } from './insert_citation-panel'
 export interface InsertCitationDialogResult {
   citations: CitationListEntry[];
   bibliography: BibliographyFile;
+  selectedNode?: NavigationTreeNode;
 }
 
 export async function selectCitations(
@@ -37,6 +39,7 @@ export async function selectCitations(
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
+  selectedNode?: NavigationTreeNode,
 ): Promise<InsertCitationDialogResult | undefined> {
 
   // The citations that the user would like to insert
@@ -49,6 +52,11 @@ export async function selectCitations(
   let bibliography: BibliographyFile | undefined;
   const onBibliographyChanged = (bibliographyFile: BibliographyFile) => {
     bibliography = bibliographyFile;
+  };
+
+  let lastSelectedNode: NavigationTreeNode | undefined;
+  const onSelectedNodeChanged = (node: NavigationTreeNode) => {
+    lastSelectedNode = node;
   };
 
   // Render the element into the window
@@ -80,6 +88,8 @@ export async function selectCitations(
           server={server}
           onCitationsChanged={onCitationsChanged}
           onBibliographyChanged={onBibliographyChanged}
+          onSelectedNodeChanged={onSelectedNodeChanged}
+          selectedNode={selectedNode}
           onOk={confirm}
           onCancel={cancel}
           height={height}
@@ -101,7 +111,8 @@ export async function selectCitations(
   if (performInsert && citations.length > 0 && bibliography) {
     return {
       citations,
-      bibliography
+      bibliography,
+      selectedNode: lastSelectedNode
     };
   } else {
     return undefined;

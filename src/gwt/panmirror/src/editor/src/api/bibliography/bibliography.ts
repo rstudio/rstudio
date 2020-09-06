@@ -40,7 +40,7 @@ export interface BibliographyDataProvider {
 
   isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
+  collections(): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];

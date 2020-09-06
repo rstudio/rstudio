@@ -108,10 +108,10 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   // Respect enabled;
   public isEnabled(): boolean {
-    return this.enabled;
+    return this.enabled && this.collections().length > 0;
   }
 
-  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
+  public collections(): BibliographyCollection[] {
     return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey }));
   }
 
