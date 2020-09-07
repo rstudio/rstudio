@@ -156,6 +156,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
                 removeCitation: props.removeCitation,
+                confirm: props.confirm,
                 showSeparator: true,
                 showSelection: focused,
                 preventFocus: true,
