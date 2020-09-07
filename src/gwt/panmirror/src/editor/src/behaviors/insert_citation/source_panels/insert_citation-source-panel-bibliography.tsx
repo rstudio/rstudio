@@ -35,12 +35,16 @@ const kAllLocalSourcesRootNodeType = 'All Local Sources';
 export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
   const localProviderNodes = providers.filter(provider => provider.isEnabled()).map(provider => {
+
+    const getFolder = (prov: string, hasParent: boolean) => {
+      return folderImageForProvider(prov, hasParent, ui);
+    };
     const node: NavigationTreeNode = {
       key: provider.key,
       name: ui.context.translateText(provider.name),
       type: provider.key,
-      image: libraryImageForProvider(provider.key, ui),
-      children: toTree(provider.key, provider.collections(), folderImageForProvider(provider.key, ui)),
+      image: rootImageForProvider(provider.key, ui),
+      children: toTree(provider.key, provider.collections(), getFolder),
       expanded: true
     };
     return node;
@@ -124,19 +128,24 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 };
 
 
-function libraryImageForProvider(providerKey: string, ui: EditorUI) {
+function rootImageForProvider(providerKey: string, ui: EditorUI) {
   switch (providerKey) {
     case kZoteroProviderKey:
-      return ui.images.citations?.zotero_library;
+      return ui.images.citations?.zotero_root;
     case kLocalBiliographyProviderKey:
       return ui.images.citations?.bibligraphy;
   }
 }
 
-function folderImageForProvider(providerKey: string, ui: EditorUI) {
+function folderImageForProvider(providerKey: string, hasParent: boolean, ui: EditorUI) {
+
   switch (providerKey) {
     case kZoteroProviderKey:
-      return ui.images.citations?.zotero_folder;
+      if (hasParent) {
+        return ui.images.citations?.zotero_collection;
+      } else {
+        return ui.images.citations?.zotero_library;
+      }
     case kLocalBiliographyProviderKey:
       return ui.images.citations?.bibligraphy_folder;
   }
@@ -144,7 +153,7 @@ function folderImageForProvider(providerKey: string, ui: EditorUI) {
 
 // Takes a flat data structure of containers and turns it into a hierarchical
 // tree structure for display as TreeNodes.
-function toTree(type: string, containers: BibliographyCollection[], folderImage?: string): NavigationTreeNode[] {
+function toTree(type: string, containers: BibliographyCollection[], folderImage?: (providerKey: string, hasParent: boolean) => string | undefined): NavigationTreeNode[] {
 
   const treeMap: { [id: string]: NavigationTreeNode } = {};
   const rootNodes: NavigationTreeNode[] = [];
@@ -160,10 +169,12 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
     // First see if we have an existing node for this item
     // A node could already be there if we had to insert a 'placeholder' 
     // node to contain the node's children before we encountered the node.
-    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, image: folderImage, children: [], type };
+    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, children: [], type };
 
     // Always set its name to be sure we fill this in when we encounter it
+    const hasParent = container.parentKey !== undefined && container.parentKey.length > 0;
     currentNode.name = container.name;
+    currentNode.image = folderImage ? folderImage(container.provider, hasParent) : undefined;
 
     if (container.parentKey) {
       let parentNode = treeMap[container.parentKey];
@@ -171,7 +182,7 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
         // This is a placeholder node - we haven't yet encountered this child's parent
         // so we insert this to hold the child. Once we encounter the true parent node, 
         // we will fix up the values in this placeholder node.
-        parentNode = { key: container.parentKey, name: '', image: folderImage, children: [], type };
+        parentNode = { key: container.parentKey, name: '', children: [], type };
         treeMap[container.parentKey] = parentNode;
       }
       parentNode.children?.push(currentNode);

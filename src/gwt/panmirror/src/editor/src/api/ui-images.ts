@@ -124,7 +124,8 @@ export interface EditorUIImages {
     bibligraphy?: string;
     bibligraphy_folder?: string;
     zotero_library?: string;
-    zotero_folder?: string;
+    zotero_collection?: string;
+    zotero_root?: string;
     doi?: string;
     crossref?: string;
   };
