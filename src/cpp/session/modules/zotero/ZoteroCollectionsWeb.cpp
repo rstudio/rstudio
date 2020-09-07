@@ -230,6 +230,7 @@ void zoteroItemVersions(std::string key, const std::string& scope, int id, int s
 {
    http::Fields params;
    params.push_back(std::make_pair("format", "versions"));
+   params.push_back(std::make_pair("itemType", "-attachment"));
    params.push_back(std::make_pair("since", safe_convert::numberToString(since)));
    boost::format fmt("%s/%d/items");
    zoteroJsonRequest(key, boost::str(fmt % scope % id), params, "", handler);
