@@ -623,12 +623,16 @@ void getWebCollectionsForUser(std::string key,
          return;
       }
 
-      // create download requests
+      // create download requests for valid groups
       for (auto collection : collections)
       {
-         int groupId = groups[collection];
-         ZoteroCollectionSpec spec(collection, safe_convert::numberToString(groupId), "");
-         pDownloads->push_back(DownloadRequest(kGroupScope, groupId, spec));
+         auto it = groups.find(collection);
+         if (it != groups.end())
+         {
+            int groupId = it->second;
+            ZoteroCollectionSpec spec(collection, safe_convert::numberToString(groupId), "");
+            pDownloads->push_back(DownloadRequest(kGroupScope, groupId, spec));
+         }
       }
 
       // associate cache specs with download requests (so we can propogate the version)
