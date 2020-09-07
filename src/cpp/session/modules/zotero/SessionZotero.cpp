@@ -255,7 +255,7 @@ bool getConfiguredCollections(const std::string& file, std::vector<std::string>*
    // read global pref (ignore project b/c this file isn't in the project)
    else
    {
-      auto libsPref = session::prefs::userPrefs().readValue(kUserPrefsUserLayer, "zotero_libraries");
+      auto libsPref = session::prefs::userState().readValue(kUserStateUserLayer, "zotero_libraries");
       if (libsPref.has_value() && libsPref.get().isArray())
          libsPref->getArray().toVectorString(*pCollections);
    }
