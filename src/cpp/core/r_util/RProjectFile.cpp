@@ -244,9 +244,13 @@ bool interpretMarkdownReferencesValue(const std::string& value, std::string *pVa
 
 void interpretZoteroLibraries(const std::string& value, boost::optional<std::vector<std::string>>* pValue)
 {
-   if (value == "" || value == kZoteroLibrariesAll)
+   if (value == "")
    {
       pValue->reset(std::vector<std::string>());
+   }
+   else if (value == kZoteroLibrariesAll) // migration
+   {
+      pValue->reset(std::vector<std::string>( { "My Library" }));
    }
    else
    {
@@ -1216,14 +1220,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
    }
 
    // if we have zotero config create a zotero section
-   if (config.zoteroLibraries.has_value())
+   if (config.zoteroLibraries.has_value() && !config.zoteroLibraries.get().empty())
    {
       auto libraries = config.zoteroLibraries.get();
-      std::string librariesConfig;
-      if (libraries.empty())
-         librariesConfig = kZoteroLibrariesAll;
-      else
-         librariesConfig = text::encodeCsvLine(libraries);
+      std::string librariesConfig = text::encodeCsvLine(libraries);
       boost::format fmt("\nZoteroLibraries: %1%\n");
       contents.append(boost::str(fmt % librariesConfig));
    }
