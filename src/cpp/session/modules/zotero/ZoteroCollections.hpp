@@ -46,10 +46,10 @@ extern const int kNoVersion;
 // collection spec
 struct ZoteroCollectionSpec
 {
-   ZoteroCollectionSpec(const std::string& name = "",
-                        const std::string& key = "",
-                        const std::string& parentKey = "",
-                        int version = kNoVersion)
+   explicit ZoteroCollectionSpec(const std::string& name = "",
+                                 const std::string& key = "",
+                                 const std::string& parentKey = "",
+                                 int version = kNoVersion)
       : name(name), key(key), parentKey(parentKey), version(version)
    {
    }
@@ -96,7 +96,7 @@ struct ZoteroCollectionSource
                         ZoteroCollectionSpecs,
                         ZoteroCollectionsHandler)> getCollections;
 
-   boost::function<void(std::string, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
+   boost::function<void(std::string, std::vector<std::string>, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
 };
 
 // get collections using the currently configured source
@@ -105,8 +105,8 @@ void getCollections(std::vector<std::string> collections,
                     bool useCache,
                     ZoteroCollectionsHandler handler);
 
-// get the collection specs for all the collections in the library
-void getCollectionSpecs(ZoteroCollectionSpecsHandler handler);
+// get the collection specs for the specified collections
+void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler);
 
 
 } // end namespace collections

@@ -446,7 +446,7 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
 }
 
 
-void getLocalCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handler)
+void getLocalCollectionSpecs(std::string key, std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler)
 {
    // connect to the database (log and return cache on error)
    boost::shared_ptr<database::IConnection> pConnection;
@@ -458,8 +458,41 @@ void getLocalCollectionSpecs(std::string key, ZoteroCollectionSpecsHandler handl
       return;
    }
 
-   ZoteroCollectionSpecs userCollections = getCollections(pConnection);
-   handler(Success(), userCollections);
+   // get all collections
+   ZoteroCollectionSpecs specs = getCollections(pConnection);
+
+   // filter the specs if there is a collections whitelist
+   ZoteroCollectionSpecs filteredSpecs;
+   if (collections.size() > 0)
+   {
+      std::copy_if(specs.begin(), specs.end(), std::back_inserter(filteredSpecs),
+                   [collections, specs](const ZoteroCollectionSpec& spec) {
+
+         // find the top-level library of the spec (when the loop terminates
+         // the targetSpec will be the library spec)
+         ZoteroCollectionSpec targetSpec = spec;
+         while (true)
+         {
+             ZoteroCollectionSpec parentSpec = findParentSpec(targetSpec, specs);
+             if (parentSpec.empty())
+                break;
+             else
+                targetSpec = parentSpec;
+         }
+
+         // include if the library is within the list of collections
+         return std::count_if(collections.begin(), collections.end(), [targetSpec](const std::string& name) {
+            return name == targetSpec.name;
+         }) > 0;
+
+      });
+   }
+   else
+   {
+      filteredSpecs = specs;
+   }
+
+   handler(Success(), filteredSpecs);
 }
 
 void getLocalCollections(std::string key,

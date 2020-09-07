@@ -89,7 +89,6 @@ public class ZoteroLibrariesWidget extends Composite
    
    public void setLibraries(JsArrayString libraries)
    {
-      ArrayList<String> selectedLibraries = new ArrayList<String>();
       if (libraries != null)
       {
          // set select widget based on whether we have a library whitelist
@@ -100,14 +99,24 @@ public class ZoteroLibrariesWidget extends Composite
          else
             selectedLibs_.setValue(SELECTED_LIBRARIES);
          
+         // always start with 'My Library'
+         CheckBox chkMyLibrary = new CheckBox(MY_LIBRARY);
+         libraries_.addItem(chkMyLibrary);
+         
          // popupulate selected libraries
          for (int i = 0; i<libraries.length(); i++)
          {
             String library = libraries.get(i);
-            selectedLibraries.add(library);
-            CheckBox chkLibrary = new CheckBox(library);
-            chkLibrary.setValue(true);
-            libraries_.addItem(chkLibrary);
+            if (library.equals(MY_LIBRARY))
+            {
+               chkMyLibrary.setValue(true);
+            }
+            else
+            {
+               CheckBox chkLibrary = new CheckBox(library);
+               chkLibrary.setValue(true);
+               libraries_.addItem(chkLibrary);
+            }
          }
       }
       else

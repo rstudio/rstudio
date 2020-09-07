@@ -48,11 +48,11 @@ const char * const kFile = "file";
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
    // cache dir name (depends on whether bbt is enabled as when that changes it should invalidate all cache entries)
-   std::string dirName = "collections-v2";
+   std::string dirName = "libraries";
    if (session::prefs::userState().zoteroUseBetterBibtex())
       dirName += "-bbt";
 
-   // ~/.local/share/rstudio/zotero-collections
+   // ~/.local/share/rstudio/zotero/libraries
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero")
       .completeChildPath(dirName)
@@ -340,13 +340,13 @@ ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const Zote
 }
 
 
-void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
+void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler)
 {
    // get connection if we have o ne
    Connection conn = zoteroConnection();
    if (!conn.empty())
    {
-      conn.source.getCollectionSpecs(conn.context, handler);
+      conn.source.getCollectionSpecs(conn.context, collections, handler);
    }
    else
    {

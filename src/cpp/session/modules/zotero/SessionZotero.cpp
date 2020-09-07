@@ -190,7 +190,7 @@ void zoteroGetCollectionSpecs(const json::JsonRpcRequest&,
    json::JsonRpcResponse response;
    auto handler =  boost::bind(handleGetCollectionSpecs, _1, _2, cont);
 
-   getCollectionSpecs(handler);
+   getCollectionSpecs(std::vector<std::string>(), handler);
 }
 
 bool getConfiguredCollections(const std::string& file, std::vector<std::string>* pCollections)
@@ -269,7 +269,7 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
    // see if the user provided some collections
    collectionsJson.toVectorString(collections);
 
-   // if the didn't, see if there are project level or global prefs that provide collections
+   // if they didn't, see if there are project level or global prefs that provide collections
    if (collections.size() == 0)
    {
       if (!getConfiguredCollections(file, &collections))
@@ -280,8 +280,8 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
       }
    }
 
-   getCollectionSpecs([cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
-
+   // get the specs
+   getCollectionSpecs(collections, [cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
       json::JsonRpcResponse response;
       if (error)
       {
@@ -290,40 +290,7 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
       }
       else
       {
-         // filter the specs if there is a collections whitelist
-         ZoteroCollectionSpecs filteredSpecs;
-         if (collections.size() > 0)
-         {
-            std::copy_if(specs.begin(), specs.end(), std::back_inserter(filteredSpecs),
-                         [collections, specs](const ZoteroCollectionSpec& spec) {
-
-               // find the top-level library of the spec (when the loop terminates
-               // the targetSpec will be the library spec)
-               ZoteroCollectionSpec targetSpec = spec;
-               while (true)
-               {
-                   ZoteroCollectionSpec parentSpec = findParentSpec(targetSpec, specs);
-                   if (parentSpec.empty())
-                      break;
-                   else
-                      targetSpec = parentSpec;
-               }
-
-               // include if the library is within the list of collections
-               return std::count_if(collections.begin(), collections.end(), [targetSpec](const std::string& name) {
-                  return name == targetSpec.name;
-               }) > 0;
-
-            });
-         }
-         else
-         {
-            filteredSpecs = specs;
-         }
-
-
-         handleGetCollectionSpecs(Success(), filteredSpecs, cont);
-
+         handleGetCollectionSpecs(Success(), specs, cont);
       }
    });
 
