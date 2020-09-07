@@ -91,7 +91,7 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton
               tabIndex={citationListData.preventFocus ? -1 : 0}
-              style={{ width: '24px', fontWeight: 600 }}
+              style={{ width: '24px', height: '24px' }}
               title={alreadyAdded ? '-' : '+'}
               onClick={onButtonClick}
             />
