@@ -22,6 +22,7 @@ const extension = {
     return [
       new InsertCharacterCommand(EditorCommandId.EmDash, '—', []),
       new InsertCharacterCommand(EditorCommandId.EnDash, '–', []),
+      new InsertCharacterCommand(EditorCommandId.HardLineBreak, '\n', ['Shift-Enter'])
     ];
   },
 };
