@@ -40,9 +40,9 @@ public interface PanmirrorZoteroServerOperations
    
    void zoteroGetCollectionSpecs(ServerRequestCallback<JavaScriptObject> callback);
    
-   void zoteroGetConfiguredCollectionSpecs(String file, 
-                                           JsArrayString collections,
-                                           ServerRequestCallback<JavaScriptObject> callback);
+   void zoteroGetActiveCollectionSpecs(String file, 
+                                       JsArrayString collections,
+                                       ServerRequestCallback<JavaScriptObject> callback);
 
    void zoteroBetterBibtexExport(JsArrayString itemKeys, 
                                  String translatorId, 

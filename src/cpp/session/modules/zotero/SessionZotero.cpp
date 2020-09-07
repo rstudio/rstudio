@@ -248,8 +248,8 @@ bool getConfiguredCollections(const std::string& file, std::vector<std::string>*
 
 }
 
-void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
-                                        const json::JsonRpcFunctionContinuation& cont)
+void zoteroGetActiveCollectionSpecs(const json::JsonRpcRequest& request,
+                                    const json::JsonRpcFunctionContinuation& cont)
 {
    // extract params
    std::string file;
@@ -279,6 +279,12 @@ void zoteroGetConfiguredCollectionSpecs(const json::JsonRpcRequest& request,
          return;
       }
    }
+
+   // if at this point we still don't have any collections (likely due to migrating
+   // from a dev version that had support for 'All Collections') then just default
+   // to 'My Library'
+   if (collections.size() == 0)
+      collections.push_back(kMyLibrary);
 
    // get the specs
    getCollectionSpecs(collections, [cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
@@ -366,7 +372,7 @@ Error initialize()
    initBlock.addFunctions()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
-       (boost::bind(registerAsyncRpcMethod, "zotero_get_configured_collection_specs", zoteroGetConfiguredCollectionSpecs))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_active_collection_specs", zoteroGetActiveCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
        (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))

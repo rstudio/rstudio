@@ -59,7 +59,7 @@ export interface ZoteroServer {
   getCollectionSpecs: ()
     => Promise<ZoteroResult>;
 
-  getConfiguredCollectionSpecs: (
+  getActiveCollectionSpecs: (
     file: string | null,
     collections: string[]
   ) => Promise<ZoteroResult>;

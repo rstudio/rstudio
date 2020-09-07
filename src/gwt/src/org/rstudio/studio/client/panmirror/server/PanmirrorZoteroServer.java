@@ -70,11 +70,11 @@ public class PanmirrorZoteroServer
             });
    }
    
-   public Promise<JavaScriptObject> getConfiguredCollectionSpecs(String file, JsArrayString collections)
+   public Promise<JavaScriptObject> getActiveCollectionSpecs(String file, JsArrayString collections)
    {
       return new Promise<JavaScriptObject>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-               server_.zoteroGetConfiguredCollectionSpecs(file, collections,
+               server_.zoteroGetActiveCollectionSpecs(file, collections,
                   new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading Collections...", 2000));
             });
    }

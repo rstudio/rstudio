@@ -62,7 +62,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         const collections = Array.isArray(config) ? config : [];
 
         // Read collection specs (this is required to discover the entire tree structure, not just the root collections)
-        const allCollectionSpecsResult = await this.server.getConfiguredCollectionSpecs(docPath, collections);
+        const allCollectionSpecsResult = await this.server.getActiveCollectionSpecs(docPath, collections);
         if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
           this.allCollectionSpecs = allCollectionSpecsResult.message;
         }
