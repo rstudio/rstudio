@@ -30,6 +30,7 @@ interface CitationSourcePanelListData {
   setSelectedIndex: (index: number) => void;
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
+  confirm: () => void;
   ui: EditorUI;
   showSeparator?: boolean;
   showSelection?: boolean;
@@ -64,6 +65,7 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
   const onDoubleClick = () => {
     citationListData.addCitation(citationEntry);
+    citationListData.confirm();
   };
 
   // Wheher this item is selected
