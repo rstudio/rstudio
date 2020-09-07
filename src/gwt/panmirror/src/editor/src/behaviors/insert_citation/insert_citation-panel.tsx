@@ -110,7 +110,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       const allPanels = [
         bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager),
         doiSourcePanel(props.ui),
-        crossrefSourcePanel(props.ui),
+        // crossrefSourcePanel(props.ui),
       ];
       setProviderPanels(allPanels);
 
