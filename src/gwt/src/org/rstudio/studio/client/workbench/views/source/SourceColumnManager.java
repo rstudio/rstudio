@@ -2577,14 +2577,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       cpsExecuteForEachEditor(editors, command, null);
    }
    
-   public EditingTarget getActiveEditor()
-   {
-      if (!hasActiveEditor())
-         return null;
-      
-      return activeColumn_.getActiveEditor();
-   }
-
    private static class OpenFileEntry
    {
       public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,

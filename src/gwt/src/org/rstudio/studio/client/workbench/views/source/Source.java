@@ -2885,14 +2885,12 @@ public class Source implements InsertSourceHandler,
       String docId = event.getData().getDocId();
       invokeEditorApiAction(docId, (TextEditingTarget target) ->
       {
-         target.replaceSelection(
-               event.getData().getValue(),
-               () ->
-               {
-                  server_.rstudioApiResponse(
-                        JavaScriptObject.createObject(),
-                        new VoidServerRequestCallback());
-               });
+         target.replaceSelection(event.getData().getValue(), () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
       });
    }
 
