@@ -30,6 +30,7 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation: CitationListEntry) => void;
   doSearch: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
@@ -148,6 +149,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
           confirm={props.confirm}
           addCitation={props.addCitation}
           removeCitation={props.removeCitation}
+          selectedCitation={props.selectedCitation}
           focusPrevious={focusSearch}
           ui={props.ui}
           placeholderText={props.defaultText}

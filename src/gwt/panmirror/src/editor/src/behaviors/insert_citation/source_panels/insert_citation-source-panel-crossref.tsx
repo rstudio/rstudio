@@ -95,6 +95,7 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
       citationsToAdd={props.citationsToAdd}
       addCitation={props.addCitation}
       removeCitation={props.removeCitation}
+      selectedCitation={props.selectedCitation}
       doSearch={doSearch}
       confirm={props.confirm}
       status={status}

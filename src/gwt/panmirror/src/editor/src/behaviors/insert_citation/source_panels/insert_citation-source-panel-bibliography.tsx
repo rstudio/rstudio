@@ -116,6 +116,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
       searchTermChanged={searchChanged}
       addCitation={props.addCitation}
       removeCitation={props.removeCitation}
+      selectedCitation={props.selectedCitation}
       confirm={props.confirm}
       ui={props.ui}
     />

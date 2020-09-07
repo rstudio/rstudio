@@ -37,6 +37,7 @@ export interface CitationSourceListProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
+  selectedCitation: (source: CitationListEntry) => void;
   confirm: VoidFunction;
   status: CitationSourceListStatus;
   placeholderText?: string;
@@ -58,11 +59,19 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   // Reset the index whenever the data changes
   React.useEffect(() => {
     setSelectedIndex(0);
+    selectEntry(0);
   }, [props.citations]);
 
   // Item height and consequently page height
   const itemHeight = 64;
   const itemsPerPage = Math.floor(props.height / itemHeight);
+
+  const selectEntry = (index: number) => {
+    const selectedEntry = props.citations[index];
+    if (selectedEntry) {
+      props.selectedCitation(selectedEntry);
+    }
+  };
 
   // Upddate selected item index (this will manage bounds)
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
@@ -70,7 +79,9 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     event.preventDefault();
     if (props.citations) {
       const maxIndex = props.citations.length - 1;
-      setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
+      const newIndex = Math.min(Math.max(0, index), maxIndex);
+      setSelectedIndex(newIndex);
+      selectEntry(newIndex);
     }
   };
 
@@ -126,6 +137,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   // Focus / Blur are used to track whether to show selection highlighting
   const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(true);
+    onSetSelectedIndex(selectedIndex);
   };
 
   const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
@@ -134,6 +146,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
+    selectEntry(index);
   };
 
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
@@ -158,7 +171,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
                 removeCitation: props.removeCitation,
                 confirm: props.confirm,
                 showSeparator: true,
-                showSelection: focused,
+                showSelection: true,
                 preventFocus: true,
                 ui: props.ui,
               }}

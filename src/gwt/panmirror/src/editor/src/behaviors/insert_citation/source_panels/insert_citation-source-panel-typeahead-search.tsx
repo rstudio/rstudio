@@ -30,6 +30,7 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation: CitationListEntry) => void;
   searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
@@ -82,12 +83,6 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     searchBoxRef.current?.focus();
   };
 
-
-  const filterExisting = (citations: CitationListEntry[], citationsToAdd: CitationListEntry[]): CitationListEntry[] => {
-    const citationsToAddIds = citationsToAdd.map(citation => citation.id);
-    return citations.filter(citation => !citationsToAddIds.includes(citation.id));
-  };
-
   return (
     <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color'>
       <div className='pm-insert-citation-search-panel-textbox-container'>
@@ -104,11 +99,12 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
       </div>
       <CitationSourceList
         height={listHeight}
-        citations={filterExisting(props.citations, props.citationsToAdd)}
+        citations={props.citations}
         citationsToAdd={props.citationsToAdd}
         confirm={props.confirm}
         addCitation={props.addCitation}
         removeCitation={props.removeCitation}
+        selectedCitation={props.selectedCitation}
         focusPrevious={focusSearch}
         status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
         ui={props.ui}
