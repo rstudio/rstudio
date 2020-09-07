@@ -66,7 +66,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   React.useEffect(() => {
     setSelectedIndex(0);
     selectEntry(0);
-  }, [props.citations]);
+  }, [props.citations, props.citationsToAdd]);
 
   // Upddate selected item index (this will manage bounds)
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
