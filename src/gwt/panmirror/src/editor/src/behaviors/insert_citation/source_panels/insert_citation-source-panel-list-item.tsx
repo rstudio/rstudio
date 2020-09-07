@@ -71,6 +71,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   // Wheher this item is selected
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
 
+  // TODO: Localize +/- button
+
   return (
     <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
       <div className={`pm-insert-citation-source-panel-item-border ${selected ? 'pm-list-item-selected' : ''}`}>

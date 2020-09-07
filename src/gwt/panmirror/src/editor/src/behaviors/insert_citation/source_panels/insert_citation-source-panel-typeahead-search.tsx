@@ -86,6 +86,9 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
   const addCitation = (citation: CitationListEntry) => {
     props.addCitation(citation);
     focusSearch();
+    if (searchBoxRef.current) {
+      searchBoxRef.current.value = '';
+    }
   };
 
   // On focus, select the search term for overtype
