@@ -40,7 +40,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       name: ui.context.translateText(provider.name),
       type: provider.key,
       image: libraryImageForProvider(provider.key, ui),
-      children: toTree(provider.key, provider.collections(doc, ui), folderImageForProvider(provider.key, ui)),
+      children: toTree(provider.key, provider.collections(), folderImageForProvider(provider.key, ui)),
       expanded: true
     };
     return node;
