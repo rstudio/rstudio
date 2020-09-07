@@ -30,7 +30,7 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
-  selectedCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
@@ -88,6 +88,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     focusSearch();
     if (searchBoxRef.current) {
       searchBoxRef.current.value = '';
+      props.searchTermChanged('');
     }
   };
 

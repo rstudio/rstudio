@@ -30,7 +30,7 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
-  selectedCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   doSearch: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;

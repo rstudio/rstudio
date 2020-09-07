@@ -37,7 +37,7 @@ export interface CitationSourceListProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
-  selectedCitation: (source: CitationListEntry) => void;
+  selectedCitation: (source?: CitationListEntry) => void;
   confirm: VoidFunction;
   status: CitationSourceListStatus;
   placeholderText?: string;
@@ -64,8 +64,8 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   // Reset the index whenever the data changes
   React.useEffect(() => {
-    setSelectedIndex(0);
-    selectEntry(0);
+    setSelectedIndex(undefined);
+    props.selectedCitation(undefined);
   }, [props.citations, props.citationsToAdd]);
 
   // Upddate selected item index (this will manage bounds)
@@ -139,22 +139,17 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(false);
+    setSelectedIndex(undefined);
+    props.selectedCitation(undefined);
   };
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
-    selectEntry(index);
-  };
-
-  const selectEntry = (index: number) => {
-    const selectedEntry = props.citations[index];
-    if (selectedEntry) {
-      props.selectedCitation(selectedEntry);
-    }
+    props.selectedCitation(props.citations[index]);
   };
 
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
-  const filteredCitations = props.citations.filter(citation => !props.citationsToAdd.includes(citation));
+  const filteredCitations = props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
 
   switch (props.status) {
     case CitationSourceListStatus.default:
