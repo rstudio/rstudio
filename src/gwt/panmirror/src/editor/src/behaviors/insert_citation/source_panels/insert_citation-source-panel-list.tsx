@@ -35,9 +35,9 @@ export interface CitationSourceListProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  addCitation: (source: CitationListEntry) => void;
-  removeCitation: (source: CitationListEntry) => void;
-  selectedCitation: (source?: CitationListEntry) => void;
+  addCitation: (citation: CitationListEntry) => void;
+  removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   confirm: VoidFunction;
   status: CitationSourceListStatus;
   placeholderText?: string;
