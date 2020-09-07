@@ -61,11 +61,11 @@ public class PanmirrorZoteroServer
             });
    }
 
-   public Promise<JavaScriptObject> getCollectionSpecs()
+   public Promise<JavaScriptObject> getLibraryNames()
    {
       return new Promise<JavaScriptObject>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-               server_.zoteroGetCollectionSpecs(
+               server_.zoteroGetLibraryNames(
                      new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
             });
    }

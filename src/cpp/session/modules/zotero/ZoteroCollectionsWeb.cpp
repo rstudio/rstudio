@@ -651,6 +651,37 @@ void getWebCollectionsForUser(std::string key,
 
 }
 
+void getWebLibraryNames(std::string key, ZoteroLibrariesHandler handler)
+{
+   withUserId(key,[key,handler](Error error, int userID) {
+      if (error)
+      {
+         handler(error, std::vector<std::string>());
+         return;
+      }
+      else
+      {
+         withGroupsIds(key, userID, std::vector<std::string>(), true, [handler](Error error,std::map<std::string,int> groups) {
+
+            if (error)
+            {
+               handler(error, std::vector<std::string>());
+               return;
+            }
+
+            std::vector<std::string> libraries;
+            for (auto group : groups)
+               libraries.push_back(group.first);
+
+            handler(Success(), libraries);
+
+         });
+
+
+      }
+   });
+}
+
 void getWebCollectionSpecs(std::string key, std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler)
 {  
    withUserId(key, [key,collections,handler](Error error, int userID) {
@@ -762,6 +793,7 @@ ZoteroCollectionSource webCollections()
 
    ZoteroCollectionSource source;
    source.getCollections = getWebCollections;
+   source.getLibraryNames = getWebLibraryNames;
    source.getCollectionSpecs = getWebCollectionSpecs;
    return source;
 }

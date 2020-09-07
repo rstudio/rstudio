@@ -342,7 +342,7 @@ ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const Zote
 
 void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler)
 {
-   // get connection if we have o ne
+   // get connection if we have one
    Connection conn = zoteroConnection();
    if (!conn.empty())
    {
@@ -351,6 +351,20 @@ void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSp
    else
    {
       handler(Success(), std::vector<ZoteroCollectionSpec>());
+   }
+}
+
+void getLibraryNames(ZoteroLibrariesHandler handler)
+{
+   // get connection if we have one
+   Connection conn = zoteroConnection();
+   if (!conn.empty())
+   {
+      conn.source.getLibraryNames(conn.context, handler);
+   }
+   else
+   {
+      handler(Success(), std::vector<std::string>());
    }
 }
 

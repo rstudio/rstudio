@@ -38,7 +38,7 @@ public interface PanmirrorZoteroServerOperations
                              boolean useCache,
                              ServerRequestCallback<JavaScriptObject> callback);
    
-   void zoteroGetCollectionSpecs(ServerRequestCallback<JavaScriptObject> callback);
+   void zoteroGetLibraryNames(ServerRequestCallback<JavaScriptObject> callback);
    
    void zoteroGetActiveCollectionSpecs(String file, 
                                        JsArrayString collections,

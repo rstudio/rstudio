@@ -569,6 +569,33 @@ void getLocalCollections(std::string key,
       handler(Success(), resultCollections, "");
 }
 
+void getLocalLibraryNames(std::string key, ZoteroLibrariesHandler handler)
+{
+   // connect to the database (log and return cache on error)
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = connect(key, &pConnection);
+   if (error)
+   {
+      LOG_ERROR(error);
+      handler(error, std::vector<std::string>());
+      return;
+   }
+
+   // get all collections
+   ZoteroCollectionSpecs specs = getCollections(pConnection);
+
+   // build library names
+   std::vector<std::string> libraries;
+   for (auto spec : specs)
+   {
+      if (spec.parentKey.empty())
+         libraries.push_back(spec.name);
+   }
+
+   // return them
+   handler(Success(), libraries);
+}
+
 
 FilePath userHomeDir()
 {
@@ -713,6 +740,7 @@ ZoteroCollectionSource localCollections()
 {
    ZoteroCollectionSource source;
    source.getCollections = getLocalCollections;
+   source.getLibraryNames = getLocalLibraryNames;
    source.getCollectionSpecs = getLocalCollectionSpecs;
    return source;
 }

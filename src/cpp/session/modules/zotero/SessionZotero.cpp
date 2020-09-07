@@ -88,6 +88,24 @@ void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
    });
 }
 
+std::string errorResultStatus(Error error, const ErrorLocation& location)
+{
+   std::string err = core::errorDescription(error);
+   if (is404Error(err))
+   {
+      return kStatusNotFound;
+   }
+   else if (isHostError(err))
+   {
+      return kStatusNoHost;
+   }
+   else
+   {
+      core::log::logErrorMessage(err, location);
+      return kStatusError;
+   }
+}
+
 void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs, const json::JsonRpcFunctionContinuation& cont)
 {
    // result defaults
@@ -113,26 +131,38 @@ void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs
    }
    else
    {
-      std::string err = core::errorDescription(error);
-      if (is404Error(err))
-      {
-         resultJson[kStatus] = kStatusNotFound;
-      }
-      else if (isHostError(err))
-      {
-         resultJson[kStatus] = kStatusNoHost;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE(err);
-         resultJson[kStatus] = kStatusError;
-      }
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
    }
 
    json::JsonRpcResponse response;
    response.setResult(resultJson);
    cont(Success(), &response);
 
+}
+
+void handleGetLibraries(Error error, std::vector<std::string> libraries, const json::JsonRpcFunctionContinuation& cont)
+{
+   // result defaults
+   json::Object resultJson;
+   resultJson[kMessage] = json::Value();
+   resultJson[kWarning] = "";
+   resultJson[kError] = "";
+
+   // handle success & error
+   if (!error)
+   {
+      json::Array collectionsJson = json::toJsonArray(libraries);
+      resultJson[kStatus] = kStatusOK;
+      resultJson[kMessage] = collectionsJson;
+   }
+   else
+   {
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
+   }
+
+   json::JsonRpcResponse response;
+   response.setResult(resultJson);
+   cont(Success(), &response);
 }
 
 void handleGetCollections(Error error, ZoteroCollections collections, std::string warning, const json::JsonRpcFunctionContinuation& cont)
@@ -163,20 +193,7 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    }
    else
    {
-      std::string err = core::errorDescription(error);
-      if (is404Error(err))
-      {
-         resultJson[kStatus] = kStatusNotFound;
-      }
-      else if (isHostError(err))
-      {
-         resultJson[kStatus] = kStatusNoHost;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE(err);
-         resultJson[kStatus] = kStatusError;
-      }
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
    }
 
    json::JsonRpcResponse response;
@@ -184,13 +201,12 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    cont(Success(), &response);
 }
 
-void zoteroGetCollectionSpecs(const json::JsonRpcRequest&,
-                              const json::JsonRpcFunctionContinuation& cont)
+void zoteroGetLibraryNames(const json::JsonRpcRequest&,
+                           const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
-   auto handler =  boost::bind(handleGetCollectionSpecs, _1, _2, cont);
-
-   getCollectionSpecs(std::vector<std::string>(), handler);
+   auto handler =  boost::bind(handleGetLibraries, _1, _2, cont);
+   getLibraryNames(handler);
 }
 
 bool getConfiguredCollections(const std::string& file, std::vector<std::string>* pCollections)
@@ -371,7 +387,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
-       (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_library_names", zoteroGetLibraryNames))
        (boost::bind(registerAsyncRpcMethod, "zotero_get_active_collection_specs", zoteroGetActiveCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))

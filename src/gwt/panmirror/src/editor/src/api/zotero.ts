@@ -56,7 +56,7 @@ export interface ZoteroServer {
     useCache: boolean
   ) => Promise<ZoteroResult>;
 
-  getCollectionSpecs: ()
+  getLibraryNames: ()
     => Promise<ZoteroResult>;
 
   getActiveCollectionSpecs: (

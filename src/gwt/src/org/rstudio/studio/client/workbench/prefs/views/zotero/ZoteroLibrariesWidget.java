@@ -15,21 +15,19 @@
 package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroCollectionSpec;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroResult;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
@@ -167,39 +165,26 @@ public class ZoteroLibrariesWidget extends Composite
    
    public void addAvailableLibraries()
    {
-      server_.zoteroGetCollectionSpecs(new SimpleRequestCallback<JavaScriptObject>() {
+      server_.zoteroGetLibraryNames(new SimpleRequestCallback<JavaScriptObject>() {
          @Override
          public void onResponseReceived(JavaScriptObject response)
          {     
             PanmirrorZoteroResult result = response.cast();
             if (result.getStatus().equals("ok"))
             {
-               // get specs
-               JsArray<PanmirrorZoteroCollectionSpec> specsJs = result.getMessage().cast();
-               ArrayList<PanmirrorZoteroCollectionSpec> specs = JsArrayUtil.toArrayList(specsJs);
-               
-               // order by name
-               specs.sort((PanmirrorZoteroCollectionSpec a, PanmirrorZoteroCollectionSpec b) -> {
-                  return a.getName().compareTo(b.getName());
-               });
-               
-               // display
-               for (int i = 0; i<specs.size(); i++)
+               JsArrayString librariesJs = result.getMessage().cast();
+               ArrayList<String> libraries = JsArrayUtil.fromJsArrayString(librariesJs);
+               Collections.sort(libraries);
+               for (int i = 0; i<libraries.size(); i++)
                {
-                  PanmirrorZoteroCollectionSpec spec = specs.get(i);
-                  if (StringUtil.isNullOrEmpty(spec.getParentKey()))
+                  String name = libraries.get(i);   
+                  if (!libraries_.contains(name))
                   {
-                     String name = specs.get(i).getName();
-                     
-                     if (!libraries_.contains(name))
-                     {
-                        CheckBox chkLibrary = new CheckBox(name);
-                        libraries_.addItem(chkLibrary);
-                     }
-                  }
+                     CheckBox chkLibrary = new CheckBox(name);
+                     libraries_.addItem(chkLibrary);
+                  }  
                }
             }
-           
          }
       });
    }

@@ -84,6 +84,8 @@ struct ZoteroCollection : ZoteroCollectionSpec
 typedef std::vector<ZoteroCollection> ZoteroCollections;
 typedef boost::function<void(core::Error,ZoteroCollections,std::string)> ZoteroCollectionsHandler;
 
+typedef boost::function<void(core::Error,std::vector<std::string>)> ZoteroLibrariesHandler;
+
 // find the parent spec within a set of specs
 ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs);
 
@@ -96,6 +98,8 @@ struct ZoteroCollectionSource
                         ZoteroCollectionSpecs,
                         ZoteroCollectionsHandler)> getCollections;
 
+   boost::function<void(std::string,ZoteroLibrariesHandler)> getLibraryNames;
+
    boost::function<void(std::string, std::vector<std::string>, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
 };
 
@@ -104,6 +108,9 @@ void getCollections(std::vector<std::string> collections,
                     ZoteroCollectionSpecs cacheSpecs,
                     bool useCache,
                     ZoteroCollectionsHandler handler);
+
+// get library names for the currently configured source
+void getLibraryNames(ZoteroLibrariesHandler handler);
 
 // get the collection specs for the specified collections
 void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler);
