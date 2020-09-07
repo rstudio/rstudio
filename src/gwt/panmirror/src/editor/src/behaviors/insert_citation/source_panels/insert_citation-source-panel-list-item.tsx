@@ -30,6 +30,7 @@ interface CitationSourcePanelListData {
   setSelectedIndex: (index: number) => void;
   addCitation: (source: CitationListEntry) => void;
   removeCitation: (source: CitationListEntry) => void;
+  confirm: () => void;
   ui: EditorUI;
   showSeparator?: boolean;
   showSelection?: boolean;
@@ -64,10 +65,13 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
   const onDoubleClick = () => {
     citationListData.addCitation(citationEntry);
+    citationListData.confirm();
   };
 
   // Wheher this item is selected
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
+
+  // TODO: Localize +/- button
 
   return (
     <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
@@ -87,8 +91,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
           <div className='pm-insert-citation-source-panel-item-button'>
             <OutlineButton
               tabIndex={citationListData.preventFocus ? -1 : 0}
-              style={{ width: '70px' }}
-              title={alreadyAdded ? 'Remove' : 'Add'}
+              style={{ width: '24px', height: '24px' }}
+              title={alreadyAdded ? '-' : '+'}
               onClick={onButtonClick}
             />
           </div>

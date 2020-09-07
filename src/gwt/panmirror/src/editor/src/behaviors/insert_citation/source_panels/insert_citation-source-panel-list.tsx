@@ -35,8 +35,9 @@ export interface CitationSourceListProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  addCitation: (source: CitationListEntry) => void;
-  removeCitation: (source: CitationListEntry) => void;
+  addCitation: (citation: CitationListEntry) => void;
+  removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   confirm: VoidFunction;
   status: CitationSourceListStatus;
   placeholderText?: string;
@@ -46,23 +47,26 @@ export interface CitationSourceListProps extends WidgetProps {
 
 
 export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>((props: CitationSourceListProps, ref) => {
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
+  const [selectedIndex, setSelectedIndex] = React.useState<number>();
   const [focused, setFocused] = React.useState<boolean>(false);
   const fixedList = React.useRef<FixedSizeList>(null);
 
   // Whenever selection changed, ensure that we are scrolled to that item
   React.useLayoutEffect(() => {
-    fixedList.current?.scrollToItem(selectedIndex);
+    if (selectedIndex) {
+      fixedList.current?.scrollToItem(selectedIndex);
+    }
   }, [selectedIndex]);
-
-  // Reset the index whenever the data changes
-  React.useEffect(() => {
-    setSelectedIndex(0);
-  }, [props.citations]);
 
   // Item height and consequently page height
   const itemHeight = 64;
   const itemsPerPage = Math.floor(props.height / itemHeight);
+
+  // Reset the index whenever the data changes
+  React.useEffect(() => {
+    setSelectedIndex(undefined);
+    props.selectedCitation(undefined);
+  }, [props.citations, props.citationsToAdd]);
 
   // Upddate selected item index (this will manage bounds)
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
@@ -70,7 +74,8 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     event.preventDefault();
     if (props.citations) {
       const maxIndex = props.citations.length - 1;
-      setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
+      const newIndex = Math.min(Math.max(0, index), maxIndex);
+      onSetSelectedIndex(newIndex);
     }
   };
 
@@ -79,7 +84,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     event.stopPropagation();
     event.preventDefault();
 
-    if (props.citations) {
+    if (props.citations && selectedIndex !== undefined) {
       const source = props.citations[selectedIndex];
       if (source) {
         if (props.citationsToAdd.includes(source)) {
@@ -92,25 +97,26 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   };
 
   const handleListKeyDown = (event: React.KeyboardEvent) => {
+    const currentIndex = selectedIndex || 0;
     switch (event.key) {
       case 'ArrowUp':
-        if (selectedIndex === 0 && props.focusPrevious) {
+        if (currentIndex === 0 && props.focusPrevious) {
           props.focusPrevious();
         } else {
-          incrementIndex(event, selectedIndex - 1);
+          incrementIndex(event, currentIndex - 1);
         }
         break;
 
       case 'ArrowDown':
-        incrementIndex(event, selectedIndex + 1);
+        incrementIndex(event, currentIndex + 1);
         break;
 
       case 'PageDown':
-        incrementIndex(event, selectedIndex + itemsPerPage);
+        incrementIndex(event, currentIndex + itemsPerPage);
         break;
 
       case 'PageUp':
-        incrementIndex(event, selectedIndex - itemsPerPage);
+        incrementIndex(event, currentIndex - itemsPerPage);
         break;
 
       case 'Enter':
@@ -126,17 +132,24 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   // Focus / Blur are used to track whether to show selection highlighting
   const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(true);
+    if (selectedIndex === undefined) {
+      onSetSelectedIndex(0);
+    }
   };
 
   const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(false);
+    setSelectedIndex(undefined);
+    props.selectedCitation(undefined);
   };
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
+    props.selectedCitation(props.citations[index]);
   };
 
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
+  const filteredCitations = props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
 
   switch (props.status) {
     case CitationSourceListStatus.default:
@@ -147,15 +160,16 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               className='pm-insert-citation-source-panel-list'
               height={props.height}
               width='100%'
-              itemCount={(props.citations || []).length}
+              itemCount={filteredCitations.length}
               itemSize={itemHeight}
               itemData={{
                 selectedIndex,
                 setSelectedIndex: onSetSelectedIndex,
-                citations: props.citations || [],
+                citations: filteredCitations,
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
                 removeCitation: props.removeCitation,
+                confirm: props.confirm,
                 showSeparator: true,
                 showSelection: focused,
                 preventFocus: true,

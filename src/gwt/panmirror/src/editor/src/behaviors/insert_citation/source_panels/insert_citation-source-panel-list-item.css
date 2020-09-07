@@ -50,6 +50,7 @@
   flex-shrink: 0;
   padding-right: 20px;
   padding-left: 20px;
+  opacity: 0.8;
 }
 
 .pm-insert-citation-source-panel-item-button-selected {

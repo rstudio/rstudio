@@ -30,6 +30,7 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
@@ -82,10 +83,18 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     searchBoxRef.current?.focus();
   };
 
+  const addCitation = (citation: CitationListEntry) => {
+    props.addCitation(citation);
+    focusSearch();
+    if (searchBoxRef.current) {
+      searchBoxRef.current.value = '';
+      props.searchTermChanged('');
+    }
+  };
 
-  const filterExisting = (citations: CitationListEntry[], citationsToAdd: CitationListEntry[]): CitationListEntry[] => {
-    const citationsToAddIds = citationsToAdd.map(citation => citation.id);
-    return citations.filter(citation => !citationsToAddIds.includes(citation.id));
+  // On focus, select the search term for overtype
+  const searchBoxFocused = (event: React.FocusEvent<HTMLInputElement>) => {
+    event.target.select();
   };
 
   return (
@@ -99,16 +108,18 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
           placeholder={props.ui.context.translateText('Search for citation')}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
+          onFocus={searchBoxFocused}
           ref={searchBoxRef}
         />
       </div>
       <CitationSourceList
         height={listHeight}
-        citations={filterExisting(props.citations, props.citationsToAdd)}
+        citations={props.citations}
         citationsToAdd={props.citationsToAdd}
         confirm={props.confirm}
-        addCitation={props.addCitation}
+        addCitation={addCitation}
         removeCitation={props.removeCitation}
+        selectedCitation={props.selectedCitation}
         focusPrevious={focusSearch}
         status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
         ui={props.ui}

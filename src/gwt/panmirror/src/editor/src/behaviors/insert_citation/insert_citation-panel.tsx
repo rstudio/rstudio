@@ -34,6 +34,7 @@ import { crossrefSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation-panel.css';
+import { selectCitations } from "./insert_citation-dialog";
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
@@ -66,6 +67,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
+  selectedCitation: (citation?: CitationListEntry) => void;
   confirm: VoidFunction;
 }
 
@@ -101,6 +103,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // The accumulated bibliography sources to be inserted
   const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
 
+  const [selectedCitation, setSelectedCitation] = React.useState<CitationListEntry>();
+
   // The initial loading of data for the panel. 
   React.useEffect(() => {
     async function loadData() {
@@ -120,6 +124,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
       if (props.selectedNode) {
         setSelectedNode(props.selectedNode);
+
       } else {
         setSelectedNode(treeNodes[0]);
       }
@@ -168,6 +173,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     },
     removeCitation: (citation: CitationListEntry) => {
       deleteCitation(citation.id);
+    },
+    selectedCitation: (citation?: CitationListEntry) => {
+      setSelectedCitation(citation);
     },
     confirm: props.onOk
   };
@@ -218,6 +226,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   };
 
+  const citationList = (selectedCitation && !citationsToAdd.includes(selectedCitation) ? [...citationsToAdd, selectedCitation] : citationsToAdd);
+
   return (
     <div className='pm-cite-panel-container' style={style} onKeyPress={onKeyPress} onKeyDown={onKeyDown}>
 
@@ -238,7 +248,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         className='pm-cite-panel-selected-cites pm-block-border-color pm-background-color'
       >
         <TagInput
-          tags={citationsToAdd.map(source => ({
+          tags={citationList.map(source => ({
             key: source.id,
             displayText: source.id,
             displayPrefix: '@',

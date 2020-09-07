@@ -77,7 +77,9 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
 
   React.useEffect(() => {
     if (props.selectedNode) {
-      setExpandedNodes(pathToNode(props.selectedNode, props.nodes));
+      const expanded = pathToNode(props.selectedNode, props.nodes);
+      expanded.forEach(node => node.expanded = true);
+      setExpandedNodes(expanded);
     }
   }, [props.selectedNode]);
 
@@ -130,7 +132,6 @@ const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
   React.useEffect(() => {
     setExpanded(props.expandedNodes.map(node => node.key).includes(props.node.key) || expanded);
   }, [props.expandedNodes]);
-
 
   // Whether this node is expanded
   const [expanded, setExpanded] = React.useState<boolean>(props.node.expanded || false);
