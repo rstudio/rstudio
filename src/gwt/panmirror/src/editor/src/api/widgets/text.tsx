@@ -32,6 +32,7 @@ export interface TextInputProps extends WidgetProps {
   onKeyPress?: KeyboardEventHandler<HTMLInputElement>;
   onBlur?: FocusEventHandler<HTMLInputElement>;
   onPaste?: ClipboardEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
@@ -70,6 +71,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
         onKeyUp={props.onKeyUp}
         onKeyPress={props.onKeyPress}
         onBlur={props.onBlur}
+        onFocus={props.onFocus}
         tabIndex={props.tabIndex}
         onPaste={props.onPaste}
         ref={ref}

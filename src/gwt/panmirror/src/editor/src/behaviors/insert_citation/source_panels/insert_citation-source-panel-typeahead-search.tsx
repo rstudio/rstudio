@@ -83,6 +83,16 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     searchBoxRef.current?.focus();
   };
 
+  const addCitation = (citation: CitationListEntry) => {
+    props.addCitation(citation);
+    focusSearch();
+  };
+
+  // On focus, select the search term for overtype
+  const searchBoxFocused = (event: React.FocusEvent<HTMLInputElement>) => {
+    event.target.select();
+  };
+
   return (
     <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color'>
       <div className='pm-insert-citation-search-panel-textbox-container'>
@@ -94,6 +104,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
           placeholder={props.ui.context.translateText('Search for citation')}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
+          onFocus={searchBoxFocused}
           ref={searchBoxRef}
         />
       </div>
@@ -102,7 +113,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
         citations={props.citations}
         citationsToAdd={props.citationsToAdd}
         confirm={props.confirm}
-        addCitation={props.addCitation}
+        addCitation={addCitation}
         removeCitation={props.removeCitation}
         selectedCitation={props.selectedCitation}
         focusPrevious={focusSearch}
