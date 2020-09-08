@@ -14,3 +14,4 @@
 - Fix an issue where sharing a project would cause extra rserver processes to be spawned into a hanging state, requiring external cleanup (Pro #1736)
 - Fix an issue where invalid logging statements were not properly skipped in the Admin log page, causing a crash of the rserver-admin process (Pro #1766)
 - Fix an issue where sessions running on Slurm compute nodes with names longer than 20 characters could not be entered (Pro #1906)
+- Fix an issue where users could not launch sessions via Kubernetes or Slurm if they belonged to a group that was innumerable (Pro #1895)
