@@ -488,7 +488,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="activateJobs"/>
           </menu>
-         <menu label="Launcher">
+         <menu label="_Launcher">
             <cmd refid="startLauncherJob"/>
             <separator/>
             <cmd refid="activateLauncherJobs"/>
@@ -955,7 +955,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="setWorkingDirToProjectDir"
         label="Set Working Directory to Project Directory"
         buttonLabel=""
-        menuLabel="To Project Directory"
+        menuLabel="To _Project Directory"
         desc="Change working directory to project root directory"/>
 
    <cmd id="setWorkingDirToActiveDoc"
@@ -1243,7 +1243,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="shareProject"
         label="Share Project..."
-        menuLabel="Share Project..."
+        menuLabel="S_hare Project..."
         buttonLabel=""
         desc="Share this project with others"
         windowMode="main"/>
@@ -1413,7 +1413,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="activateLauncherJobs"
         label="Show Launcher Pane"
-        menuLabel = "Show Launcher"
+        menuLabel = "Show _Launcher"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
@@ -1472,7 +1472,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="layoutZoomVcs"
         checkable="true"
         label="Zoom VCS"
-        menuLabel="Zoom VCS"
+        menuLabel="Zoom _VCS"
         windowMode="main"/>
 
    <cmd id="layoutZoomTutorial"
@@ -1582,7 +1582,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Go to Line..."/>
 
    <cmd id="toggleFullScreen"
-        menuLabel="Toggle Full Screen"/>
+        menuLabel="Toggle _Full Screen"/>
 
    <cmd id="findFromSelection"
         context="editor"
@@ -1864,12 +1864,12 @@ well as menu structures (for main menu and popup menus).
         context="editor"/>
 
    <cmd id="executePreviousChunks"
-        menuLabel="Run All Chunks Above"
+        menuLabel="_Run All Chunks Above"
         desc="Run all above the current one"
         context="r"/>
 
    <cmd id="executeSubsequentChunks"
-        menuLabel="Run All Chunks Below"
+        menuLabel="Run All C_hunks Below"
         desc="Run all chunks after the current one"
         context="r"/>
 
@@ -1936,12 +1936,12 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="previewJS"
         buttonLabel="Preview"
-        menuLabel="Preview JS"
+        menuLabel="Preview J_S"
         desc="Preview the active JavaScript document"/>
 
    <cmd id="previewSql"
         buttonLabel="Preview"
-        menuLabel="Preview SQL"
+        menuLabel="Preview S_QL"
         desc="Preview the active SQL document"/>
 
    <cmd id="sourceActiveDocument"
@@ -2151,7 +2151,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="previewHTML"
         label="Preview Document as HTML"
         buttonLabel="Preview"
-        menuLabel="Preview"
+        menuLabel="Previe_w"
         desc="Show a preview of the current document as HTML"
         context="markdown"/>
 
@@ -2192,7 +2192,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="notebookExpandAllOutput"
         buttonLabel=""
-        menuLabel="Expand All Output"
+        menuLabel="E_xpand All Output"
         desc="Expand all code chunk output in the current file"/>
 
    <cmd id="notebookToggleExpansion"
@@ -2202,17 +2202,17 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="notebookCollapseAllOutput"
         buttonLabel=""
-        menuLabel="Collapse All Output"
+        menuLabel="Collapse All _Output"
         desc="Collapse all code chunk output in the current file"/>
 
    <cmd id="notebookClearOutput"
         buttonLabel=""
-        menuLabel="Clear Output"
+        menuLabel="Cl_ear Output"
         desc="Clear the output of the current notebook chunk" />
 
    <cmd id="notebookClearAllOutput"
         buttonLabel=""
-        menuLabel="Clear All Output"
+        menuLabel="Clear A_ll Output"
         desc="Remove all code chunk output in the current file"/>
 
    <cmd id="synctexSearch"
@@ -2447,12 +2447,12 @@ well as menu structures (for main menu and popup menus).
 
   <cmd id="restartRClearOutput"
         label="Restart R Session and Clear Chunk Output"
-        menuLabel="Restart R and Clear Output"
+        menuLabel="Restart R and Clear _Output"
         desc="Restart R session and clear chunk output" />
 
    <cmd id="restartRRunAllChunks"
         label="Restart R Session and Run All Chunks"
-        menuLabel="Restart R and Run All Chunks"
+        menuLabel="Restart R and Run _All Chunks"
         desc="Restart R session and run all chunks" />
 
    <cmd id="terminateR"
@@ -3198,7 +3198,7 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
 
    <cmd id="openDeveloperConsole"
-        menuLabel="Open Developer Console"
+        menuLabel="_Open Developer Console"
         rebindable="false"
         context="diagnostics"
         windowMode="main"/>
@@ -3741,7 +3741,7 @@ well as menu structures (for main menu and popup menus).
          windowMode="any"/>
 
     <cmd id="startLauncherJob"
-         menuLabel="Start Launcher Job..."
+         menuLabel="Start Launcher _Job..."
          buttonLabel="Start Launcher Job"
          desc="Run a background job on a cluster"
          windowMode="main"/>
@@ -3752,7 +3752,7 @@ well as menu structures (for main menu and popup menus).
          windowMode="any"/>
 
     <cmd id="runSelectionAsLauncherJob"
-         menuLabel="Run Selection as Launcher Job"
+         menuLabel="Run Selection as _Launcher Job"
          desc="Run the selected code as a launcher job"
          windowMode="any"/>
 
@@ -3891,7 +3891,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="focusSourceColumnSeparator"
-        menuLabel="Adjust Source Column Splitter"
+        menuLabel="Adjust Source Column Spli_tter"
         windowMode="main"/>
 
    <cmd id="showShortcutCommand"
