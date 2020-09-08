@@ -37,7 +37,7 @@ interface NavigationTreeProps extends WidgetProps {
 }
 
 // Indent level for each level
-const kNavigationTreeIndent = 16;
+const kNavigationTreeIndent = 10;
 
 // Select Tree is a single selection tree that is useful in 
 // hierarchical navigation type contexts. It does not support
@@ -71,16 +71,36 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
     }
   };
 
+  const onNodeSelected = (node: NavigationTreeNode) => {
+    props.nodeSelected(node);
+  };
+
+  React.useEffect(() => {
+    if (props.selectedNode) {
+      const expanded = pathToNode(props.selectedNode, props.nodes);
+      expanded.forEach(node => node.expanded = true);
+      setExpandedNodes(expanded);
+    }
+  }, [props.selectedNode]);
+
+  const [expandedNodes, setExpandedNodes] = React.useState<NavigationTreeNode[]>([]);
+
   return (
     <div style={style} tabIndex={0} onKeyDown={processKey} >
-      {props.nodes.map(treeNode => <NavigationTreeItem key={treeNode.key} node={treeNode} onSelected={props.nodeSelected} selectedNode={props.selectedNode} />)}
+      {props.nodes.map(treeNode =>
+        <NavigationTreeItem key={treeNode.key}
+          node={treeNode}
+          onSelected={onNodeSelected}
+          selectedNode={props.selectedNode}
+          expandedNodes={expandedNodes} />
+      )}
     </div>
   );
 };
 
-
 interface NavigationTreeItemProps extends WidgetProps {
   node: NavigationTreeNode;
+  expandedNodes: NavigationTreeNode[];
   onSelected: (node: NavigationTreeNode) => void;
   indentLevel?: number;
   selectedNode?: NavigationTreeNode;
@@ -93,22 +113,31 @@ const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    props.onSelected(props.node);
+    if (props.selectedNode && props.node.key !== props.selectedNode.key) {
+      props.onSelected(props.node);
+    } else {
+      setExpanded(!expanded);
+    }
   };
 
   // Anytime the selected node changes, expand the selected node
   React.useEffect(() => {
-    if (props.node === props.selectedNode) {
-      props.node.expanded = true;
-      setExpanded(props.node.expanded);
+    if (props.selectedNode && props.node.key === props.selectedNode.key) {
+      setExpanded(true);
     }
   }, [props.selectedNode]);
+
+  // If the expanded nodes change (e.g. something external expands this node) or
+  // if this node is already expanded, leave it expanded.
+  React.useEffect(() => {
+    setExpanded(props.expandedNodes.map(node => node.key).includes(props.node.key) || expanded);
+  }, [props.expandedNodes]);
 
   // Whether this node is expanded
   const [expanded, setExpanded] = React.useState<boolean>(props.node.expanded || false);
 
-  // Whether this node is elected
-  const selected = props.selectedNode && props.selectedNode === props.node;
+  // Whether this node is selected
+  const selected = props.selectedNode && props.selectedNode.key === props.node.key;
 
   // Indent this node the proper amount
   const indentLevel = props.indentLevel || 0;
@@ -123,7 +152,7 @@ const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
         {props.node.image ? <div className='pm-navigation-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-navigation-tree-node-image' /></div> : null}
         <div className='pm-navigation-tree-node-label-div pm-text-color'>{props.node.name}</div>
       </div>
-      {expanded ? props.node.children?.map(childNode => <NavigationTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} />) : undefined}
+      {expanded ? props.node.children?.map(childNode => <NavigationTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} expandedNodes={props.expandedNodes} />) : undefined}
     </div >
   );
 };
@@ -144,6 +173,23 @@ export function containsChild(key: string, node: NavigationTreeNode): boolean {
   return false;
 }
 
+// enumerate the nodes that lead to a selected node
+function pathToNode(node: NavigationTreeNode, nodes: NavigationTreeNode[]): NavigationTreeNode[] {
+  const path = [];
+  for (const root of nodes) {
+    if (root.key === node.key) {
+      path.push(node);
+      return path;
+    }
+
+    const childPath = pathToNode(node, root.children);
+    if (childPath.length > 0) {
+      path.push(root, ...childPath);
+    }
+  }
+  return path;
+}
+
 // Creates an ordered flattened list of visible nodes in the
 // tree. Useful for incrementing through visible nodes :)
 function visibleNodes(nodes: NavigationTreeNode[]) {
@@ -156,7 +202,6 @@ function visibleNodes(nodes: NavigationTreeNode[]) {
     }
   });
   return ([] as NavigationTreeNode[]).concat(...nodeList);
-
 }
 
 // Get the next node for the current node

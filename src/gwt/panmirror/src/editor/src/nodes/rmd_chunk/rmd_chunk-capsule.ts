@@ -68,7 +68,11 @@ export function rmdChunkBlockCapsuleFilter() {
     // level implied by the prefix
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
       // open node
-      writer.openNode(schema.nodes.rmd_chunk, { navigation_id: uuidv4() });
+      writer.openNode(schema.nodes.rmd_chunk,
+        {
+          navigation_id: uuidv4(),
+          md_index: capsule.position
+        });
 
       // source still has leading and trailing backticks, remove them
       const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');

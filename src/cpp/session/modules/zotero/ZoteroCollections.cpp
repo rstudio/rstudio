@@ -48,11 +48,11 @@ const char * const kFile = "file";
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
    // cache dir name (depends on whether bbt is enabled as when that changes it should invalidate all cache entries)
-   std::string dirName = "collections-v2";
-   if (session::prefs::userPrefs().zoteroUseBetterBibtex())
+   std::string dirName = "libraries";
+   if (session::prefs::userState().zoteroUseBetterBibtex())
       dirName += "-bbt";
 
-   // ~/.local/share/rstudio/zotero-collections
+   // ~/.local/share/rstudio/zotero/libraries
    FilePath cachePath = module_context::userScratchPath()
       .completeChildPath("zotero")
       .completeChildPath(dirName)
@@ -264,27 +264,28 @@ struct Connection
 
 Connection zoteroConnection()
 {
-   // determine the zotero connection type (deafult to local)
-   std::string type = prefs::userPrefs().zoteroConnectionType();
-   if (type.empty())
+   // use local connection if available for 'auto'
+   std::string type = prefs::userState().zoteroConnectionType();
+   if ((type.empty() || type == kZoteroConnectionTypeAuto) && localZoteroAvailable())
        type = kZoteroConnectionTypeLocal;
 
-   // force it to web if local is not available in this config
-   if (!localZoteroAvailable())
-      type = kZoteroConnectionTypeWeb;
+   // return empty connection if it's none or auto (as auto would have already been resolved)
+   if (type == kZoteroConnectionTypeAuto || type == kZoteroConnectionTypeNone)
+   {
+      return Connection();
+   }
 
    // initialize context
    std::string context;
    if (type == kZoteroConnectionTypeLocal)
    {
       FilePath localDataDir = zoteroDataDirectory();
-      if (localDataDir.exists())
+      if (!localDataDir.isEmpty())
       {
-         context = localDataDir.getAbsolutePath();
-      }
-      else
-      {
-         LOG_ERROR(core::fileNotFoundError(localDataDir, ERROR_LOCATION));
+         if (localDataDir.exists())
+            context = localDataDir.getAbsolutePath();
+         else
+            LOG_ERROR(core::fileNotFoundError(localDataDir, ERROR_LOCATION));
       }
    }
    else
@@ -322,98 +323,48 @@ const char * const kKey = "key";
 const char * const kParentKey = "parentKey";
 const char * const kItems = "items";
 
-const char * const kMyLibrary = "C5EC606F-5FF7-4CFD-8873-533D6C31DDF0";
-const char * const kMyLibraryCollectionKey = "A033E139-E005-49D0-8C0A-689B12A80F4F";
-
 const int kNoVersion = -1;
 
-
-void getLibrary(ZoteroCollectionSpec cacheSpec, bool useCache, ZoteroCollectionsHandler handler)
+ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs)
 {
-   // clear out the client cache if the cache is disabled
-   if (!useCache)
-      cacheSpec.version = kNoVersion;
+   // search for parentKey if we have one
+   if (!spec.parentKey.empty())
+   {
+      auto it = std::find_if(specs.begin(), specs.end(), [spec](const ZoteroCollectionSpec& s) { return s.key == spec.parentKey; });
+      if (it != specs.end())
+         return *it;
+   }
 
+   // not found
+   return ZoteroCollectionSpec();
+}
+
+
+void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler)
+{
    // get connection if we have one
    Connection conn = zoteroConnection();
    if (!conn.empty())
-   {    
-      // use server cache if directed
-      ZoteroCollectionSpec serverCacheSpec = useCache ? cachedCollectionSpec(conn.type, conn.cacheContext, kMyLibrary) : ZoteroCollectionSpec();
-      conn.source.getLibrary(conn.context, serverCacheSpec, [conn, handler, cacheSpec, serverCacheSpec](Error error, ZoteroCollections webLibrary, std::string warning) {
-
-         ZoteroCollection collection;
-         if (error)
-         {
-            // if it's a host error then see if we can use a cached version
-            if (isHostError(core::errorDescription(error)))
-            {
-               collection = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
-               if (collection.empty())
-               {
-                  handler(error, std::vector<ZoteroCollection>(), warning);
-               }
-            }
-            else
-            {
-               handler(error, std::vector<ZoteroCollection>(), warning);
-            }
-         }
-         else
-         {
-            collection = webLibrary[0];
-         }
-
-         // if we don't have a collection then we are done (handler has already been called w/ the error)
-         if (collection.empty())
-            return;
-
-         // see if we need to update our server side cache. if we do then just return that version
-         if (serverCacheSpec.empty() || serverCacheSpec.version != collection.version)
-         {
-            TRACE("Updating server cache for <library>", collection.items.getSize());
-            updateCachedCollection(conn.type, conn.cacheContext, collection.name, collection);
-            TRACE("Returning server cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
-         }
-
-         // see if the client already has the version we are serving. in that case
-         // just return w/o items
-         else if (cacheSpec.version == collection.version)
-         {
-            ZoteroCollectionSpec spec(kMyLibrary, cacheSpec.key, cacheSpec.parentKey, cacheSpec.version);
-            TRACE("Using client cache for <library>");
-            handler(Success(), std::vector<ZoteroCollection>{ ZoteroCollection(spec) }, warning);
-         }
-
-         // otherwise return the server cache (it's guaranteed to exist and be >=
-         // the returned collection based on the first conditional)
-         else
-         {
-            ZoteroCollection serverCache = cachedCollection(conn.type, conn.cacheContext, kMyLibrary);
-            collection.items = serverCache.items;
-            TRACE("Returning server cache for <library>", collection.items.getSize());
-            handler(Success(), std::vector<ZoteroCollection>{ collection }, warning);
-         }
-      });
-   }
-   else
    {
-      handler(Success(), std::vector<ZoteroCollection>(), "");
-   }
-}
-
-void getCollectionSpecs(ZoteroCollectionSpecsHandler handler)
-{
-   // get connection if we have o ne
-   Connection conn = zoteroConnection();
-   if (!conn.empty())
-   {
-      conn.source.getCollectionSpecs(conn.context, handler);
+      conn.source.getCollectionSpecs(conn.context, collections, handler);
    }
    else
    {
       handler(Success(), std::vector<ZoteroCollectionSpec>());
+   }
+}
+
+void getLibraryNames(ZoteroLibrariesHandler handler)
+{
+   // get connection if we have one
+   Connection conn = zoteroConnection();
+   if (!conn.empty())
+   {
+      conn.source.getLibraryNames(conn.context, handler);
+   }
+   else
+   {
+      handler(Success(), std::vector<std::string>());
    }
 }
 

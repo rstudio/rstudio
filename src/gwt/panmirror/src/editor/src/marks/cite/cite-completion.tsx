@@ -36,6 +36,7 @@ import { parseCitation, insertCitation as insertSingleCitation, performCiteCompl
 
 import './cite-completion.css';
 
+
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
 const kHeaderHeight = 20;
@@ -124,7 +125,7 @@ function filterCitations(
   }
 
   const search = (str: string) => {
-    const results = manager.searchAllSources(str, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry => entryForSource(entry, ui));
     return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
   };
 
@@ -219,7 +220,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
-      adornmentImage={entry.adornmentImage}
+      imageAdornment={entry.imageAdornment}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
       detail={detail}

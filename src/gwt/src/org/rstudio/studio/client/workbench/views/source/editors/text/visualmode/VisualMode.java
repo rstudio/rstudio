@@ -22,11 +22,13 @@ import org.rstudio.core.client.BrowseCap;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.PreemptiveTaskQueue;
 import org.rstudio.core.client.Rendezvous;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
@@ -34,6 +36,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -48,6 +51,9 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItemType;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
@@ -57,10 +63,13 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
@@ -68,8 +77,10 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -106,8 +117,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeExec_ = new VisualModeChunkExec(docUpdateSentinel_, rmarkdownHelper, this);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, target.getRCompletionContext());
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -116,7 +126,6 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
          target_, 
-         visualModeExec_, 
          visualModeChunks_, 
          visualModeFormat_,
          visualModeSpelling_
@@ -145,6 +154,21 @@ public class VisualMode implements VisualModeEditorSync,
       }));
    } 
    
+   /**
+    * Classification of synchronization types from the visual editor to the code
+    * editor.
+    */
+   public enum SyncType
+   {
+      // A normal synchronization (usually performed on idle)
+      SyncTypeNormal,
+      
+      // A synchronization performed prior to executing code
+      SyncTypeExecution,
+      
+      // A synchronization performed in order to activate the code editor
+      SyncTypeActivate
+   }
    
    @Inject
    public void initialize(Commands commands, 
@@ -216,13 +240,13 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    @Override
-   public void syncToEditor(boolean activatingEditor)
+   public void syncToEditor(SyncType syncType)
    {
-      syncToEditor(activatingEditor, null);
+      syncToEditor(syncType, null);
    }
 
    @Override
-   public void syncToEditor(boolean activatingEditor, Command ready)
+   public void syncToEditor(SyncType syncType, Command ready)
    {
       // This is an asynchronous task, that we want to behave in a mostly FIFO
       // way when overlapping calls to syncToEditor are made.
@@ -279,13 +303,14 @@ public class VisualMode implements VisualModeEditorSync,
          }
       });
 
-      if (isVisualEditorActive() && (activatingEditor || isDirty_)) {
+      if (isVisualEditorActive() && (syncType == SyncType.SyncTypeActivate || isDirty_)) {
          // set flags
          isDirty_ = false;
          
          withPanmirror(() -> {
             
-            VisualModeMarkdownWriter.Options writerOptions = visualModeWriterOptions_.optionsFromConfig(panmirror_.getPandocFormatConfig(true));
+            VisualModeMarkdownWriter.Options writerOptions = 
+                  visualModeWriterOptions_.optionsFromConfig(panmirror_.getPandocFormatConfig(true));
             
             panmirror_.getMarkdown(writerOptions.options, kSerializationProgressDelayMs, 
                                    new CommandWithArg<JsObject>() {
@@ -293,26 +318,44 @@ public class VisualMode implements VisualModeEditorSync,
                public void execute(JsObject obj)
                {
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
-                  rv.arrive(() -> {
-                     if (markdown == null) {
+                  rv.arrive(() ->
+                  {
+                     if (markdown == null)
+                     {
                         // note that ready.execute() is never called in the error case
                         return;
+                     }
+                     
+                     // we are about to mutate the document, so create a single
+                     // shot handler that will adjust the known position of
+                     // items in the outline (we do this opportunistically
+                     // unless executing code)
+                     if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
+                     {
+                        final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+                        handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
+                        {
+                           alignScopeOutline(markdown.location);
+                           handler.getValue().removeHandler();
+                        }));
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
                      if (!writerOptions.wrapChanged) 
                      {
                         TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                        getSourceEditor().applyChanges(changes, activatingEditor); 
+                        getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
                      }
                      else
                      {
                         getSourceEditor().setCode(markdown.code);
                      }
-                    
+                     
                      // if the format comment has changed then show the reload prompt
-                     if (panmirrorFormatConfig_.requiresReload()) {
-                        view_.showPanmirrorFormatChanged(() -> {
+                     if (panmirrorFormatConfig_.requiresReload())
+                     {
+                        view_.showPanmirrorFormatChanged(() ->
+                        {
                            // dismiss the warning bar
                            view_.hideWarningBar();
                            // this will trigger the refresh b/c the format changed
@@ -321,8 +364,15 @@ public class VisualMode implements VisualModeEditorSync,
                         });
                      }
                      
-                     // callback
-                     if (ready != null) {
+                     if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                     {
+                        // if syncing for execution, force a rebuild of the scope tree 
+                        alignScopeOutline(markdown.location);
+                     }
+
+                     // invoke ready callback if supplied
+                     if (ready != null)
+                     {
                         ready.execute();
                      }
                   }, true);  
@@ -332,7 +382,8 @@ public class VisualMode implements VisualModeEditorSync,
       } else {
          // Even if ready is null, it's important to arrive() so the
          // syncToEditorQueue knows it can continue
-         rv.arrive(() -> {
+         rv.arrive(() ->
+         {
             if (ready != null) {
                ready.execute();
             }
@@ -463,7 +514,7 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
-                     
+
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();
                      
@@ -495,7 +546,7 @@ public class VisualMode implements VisualModeEditorSync,
                               { 
                                  panmirror_.focus();
                                  panmirror_.setEditingLocation(
-                                       visualModeLocation_.getSourceOutlneLocation(), 
+                                       visualModeLocation_.getSourceOutlineLocation(), 
                                        visualModeLocation_.savedEditingLocation()
                                        ); 
                               }
@@ -564,6 +615,33 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+   /**
+    * Returns the width of the entire visual editor
+    * 
+    * @return The visual editor's width.
+    */
+   public int getPixelWidth()
+   {
+      return panmirror_.getOffsetWidth();
+   }
+   
+   /**
+    * Returns the width of the content inside the visual editor
+    * 
+    * @return Width of content.
+    */
+   public int getContentWidth()
+   {
+      Element[] elements = DomUtils.getElementsByClassName(panmirror_.getElement(), 
+            "pm-content");
+      if (elements.length < 1)
+      {
+         // if no root node, use the entire surface
+         return getPixelWidth();
+      }
+
+      return elements[0].getOffsetWidth();
+   }
    
    public void manageCommands()
    {
@@ -638,14 +716,14 @@ public class VisualMode implements VisualModeEditorSync,
    
    public void executeChunk()
    {
-      panmirror_.execCommand(PanmirrorCommands.ExecuteCurrentRmdChunk);
+      visualModeChunks_.executeCurrentChunk();
    }
    
    public void executePreviousChunks()
    {
-      panmirror_.execCommand(PanmirrorCommands.ExecutePreviousRmdChunks);
+      visualModeChunks_.executePreviousChunks();
    }
-   
+
    public void goToNextSection()
    {
       panmirror_.execCommand(PanmirrorCommands.GoToNextSection);
@@ -791,7 +869,24 @@ public class VisualMode implements VisualModeEditorSync,
       if (saveLocationOnIdle_ != null)
          saveLocationOnIdle_.suspend();
    }
-  
+   
+   public VisualModeChunk getChunkAtRow(int row)
+   {
+      return visualModeChunks_.getChunkAtRow(row);
+   }
+   
+   public JsArray<ChunkDefinition> getChunkDefs()
+   {
+      return visualModeChunks_.getChunkDefs();
+   }
+   
+   public ChunkDefinition getChunkDefAtRow(int row)
+   {
+      VisualModeChunk chunk = getChunkAtRow(row);
+      if (chunk == null)
+         return null;
+      return chunk.getDefinition();
+   }
 
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
@@ -799,9 +894,26 @@ public class VisualMode implements VisualModeEditorSync,
       return panmirror_.getCommandPaletteItems();
    }
 
-   public void focus()
+   public void focus(Command onComplete)
    {
-      activate(() -> panmirror_.focus());
+      activate(() ->
+      {
+         panmirror_.focus(); 
+         if (onComplete != null)
+         {
+            onComplete.execute();
+         }
+      });
+   }
+
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      visualModeChunks_.setChunkLineExecState(start, end, state);
+   }
+   
+   public void setChunkState(Scope chunk, int state)
+   {
+      visualModeChunks_.setChunkState(chunk, state);
    }
    
    public void onUserSwitchingToVisualMode()
@@ -879,6 +991,9 @@ public class VisualMode implements VisualModeEditorSync,
                syncOnIdle_.resume();
                saveLocationOnIdle_.resume();
                
+               // (re)inject notebook output from the editor
+               target_.getNotebook().migrateCodeModeOutput();
+               
                // execute completed hook
                Scheduler.get().scheduleDeferred(completed);  
                
@@ -926,12 +1041,15 @@ public class VisualMode implements VisualModeEditorSync,
             if (saveLocationOnIdle_ != null)
                saveLocationOnIdle_.suspend();
             
+            // move notebook outputs from visual mode
+            target_.getNotebook().migrateVisualModeOutput();
+            
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          };
          
          // if we are deactivating to allow the user to edit invalid source code then don't sync
-         // back to the source editor (as this would have happended b/c we inspected the contents
+         // back to the source editor (as this would have happened b/c we inspected the contents
          // of the source editor in syncFromEditorIfActivated() and decided we couldn't edit it)
          if (deactivatingForInvalidSource_)
          {
@@ -940,7 +1058,7 @@ public class VisualMode implements VisualModeEditorSync,
          }
          else
          {
-            syncToEditor(true, activateSourceEditor);
+            syncToEditor(SyncType.SyncTypeActivate, activateSourceEditor);
          }
       }
    }
@@ -971,7 +1089,7 @@ public class VisualMode implements VisualModeEditorSync,
       // return changes w/ cursor
       return new TextEditorContainer.Changes(
          changes, 
-         panmirrorCode.location != null 
+         panmirrorCode.selection_only 
             ? new TextEditorContainer.Navigator()
             {
                @Override
@@ -1020,7 +1138,7 @@ public class VisualMode implements VisualModeEditorSync,
                protected void execute()
                {
                   if (isDirty_ && !panmirror_.isInitialDoc())
-                     syncToEditor(false);
+                     syncToEditor(SyncType.SyncTypeNormal);
                }
             };
             
@@ -1238,9 +1356,6 @@ public class VisualMode implements VisualModeEditorSync,
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       
-      // enable chunk execution for R and Python
-      options.rmdChunkExecution = VisualModeChunkExec.kRmdChunkExecutionLangs;
-      
       // add focus-visible class to prevent interaction with focus-visible.js
       // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
       // is contentEditable, and that triggers a dom mutation event for ProseMirror,
@@ -1279,6 +1394,58 @@ public class VisualMode implements VisualModeEditorSync,
       view_.showWarningBar(message);
    }
    
+   /**
+    * Align the document's scope tree with the code chunks in visual mode.
+    * 
+    * @param location Array of outline locations from visual mode
+    */
+   private void alignScopeOutline(PanmirrorEditingOutlineLocation location)
+   {
+      // Get all of the chunks from the document (code view)
+      ArrayList<Scope> chunkScopes = new ArrayList<Scope>();
+      ScopeList chunks = new ScopeList(docDisplay_);
+      chunks.selectAll(ScopeList.CHUNK);
+      for (Scope chunk : chunks)
+      {
+         chunkScopes.add(chunk);
+      }
+      
+      // Get all of the chunks from the outline emitted by visual mode
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = 
+            new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      for (int j = 0; j < location.items.length; j++)
+      {
+         if (location.items[j].type == PanmirrorOutlineItemType.RmdChunk)
+         {
+            chunkItems.add(location.items[j]);
+         }
+      }
+      
+      // Refuse to proceed if cardinality doesn't match (consider: does this
+      // need to account for deeply nested chunks that might appear in one
+      // outline but not the other?)
+      if (chunkScopes.size() != chunkItems.size())
+      {
+         Debug.logWarning(chunkScopes.size() + " chunks in scope tree, but " + 
+                  chunkItems.size() + " chunks in visual editor.");
+         return;
+      }
+
+      for (int k = 0; k < chunkItems.size(); k++)
+      {
+         PanmirrorEditingOutlineLocationItem visualItem = 
+               Js.uncheckedCast(chunkItems.get(k));
+         VisualModeChunk chunk = visualModeChunks_.getChunkAtVisualPosition(
+               visualItem.position);
+         if (chunk == null)
+         {
+            // This is normal; it is possible that we haven't created a chunk
+            // editor at this position yet.
+            continue;
+         }
+         chunk.setScope(chunkScopes.get(k));
+      }
+   }
    
    private Commands commands_;
    private UserPrefs prefs_;
@@ -1291,7 +1458,6 @@ public class VisualMode implements VisualModeEditorSync,
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private final VisualModePanmirrorFormat visualModeFormat_;
-   private final VisualModeChunkExec visualModeExec_;
    private final VisualModeChunks visualModeChunks_;
    private final VisualModePanmirrorContext visualModeContext_;
    private final VisualModeEditingLocation visualModeLocation_;

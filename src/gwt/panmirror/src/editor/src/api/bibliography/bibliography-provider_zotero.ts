@@ -19,7 +19,7 @@ import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLib
 import { ParsedYaml } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
+import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
@@ -32,6 +32,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   private allCollectionSpecs: ZoteroCollectionSpec[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
+  private enabled = true;
 
   public constructor(server: ZoteroServer) {
     this.server = server;
@@ -43,8 +44,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
     let hasUpdates = false;
-    if (zoteroEnabled(docPath, yamlBlocks)) {
+    const config = zoteroConfig(yamlBlocks);
+    if (config) {
 
+      // Enabled
+      this.enabled = true;
       try {
 
         // Don't send the items back through to the server
@@ -54,14 +58,16 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // through the whole pipeline to be sure we're trying to clear that warning
         const useCache = this.warning === undefined || this.warning.length === 0;
 
-        // Read collection specs.
-        const allCollectionSpecsResult = await this.server.getCollectionSpecs();
+        // The collection specified in the document header
+        const collections = Array.isArray(config) ? config : [];
+
+        // Read collection specs (this is required to discover the entire tree structure, not just the root collections)
+        const allCollectionSpecsResult = await this.server.getActiveCollectionSpecs(docPath, collections);
         if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
           this.allCollectionSpecs = allCollectionSpecsResult.message;
         }
 
-        // TODO: remove collection names from server call
-        const result = await this.server.getCollections(docPath, null, collectionSpecs || [], useCache);
+        const result = await this.server.getCollections(docPath, collections, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {
 
@@ -92,22 +98,30 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
       if (this.collections.length > 0) {
         hasUpdates = true;
       }
+      // Disabled
+      this.enabled = false;
       this.allCollections = [];
+      this.allCollectionSpecs = [];
     }
     return hasUpdates;
   }
 
-  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
-    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey }));
+  // Respect enabled;
+  public isEnabled(): boolean {
+    return this.enabled && this.collections().length > 0;
   }
 
-  public items(): BibliographySource[] {
+  public collections(): BibliographyCollection[] {
+    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey }));
+  }
+
+  public items(): BibliographySourceWithCollections[] {
     const entryArrays = this.allCollections?.map(collection => this.bibliographySources(collection)) || [];
-    const zoteroEntries = ([] as BibliographySource[]).concat(...entryArrays);
+    const zoteroEntries = ([] as BibliographySourceWithCollections[]).concat(...entryArrays);
     return zoteroEntries;
   }
 
-  public itemsForCollection(collectionKey?: string): BibliographySource[] {
+  public itemsForCollection(collectionKey?: string): BibliographySourceWithCollections[] {
     if (!collectionKey) {
       return this.items();
     }
@@ -138,7 +152,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return this.warning;
   }
 
-  private bibliographySources(collection: ZoteroCollection): BibliographySource[] {
+  private bibliographySources(collection: ZoteroCollection): BibliographySourceWithCollections[] {
 
     const items = collection.items?.map(item => {
       return {
@@ -159,7 +173,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 //
 // By default, zotero integration is enabled. Add this header to disable integration
 //
-function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boolean | undefined {
+function zoteroConfig(parsedYamls: ParsedYaml[]): boolean | string[] {
   const zoteroYaml = parsedYamls.filter(
     parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
   );
@@ -168,21 +182,20 @@ function zoteroEnabled(docPath: string | null, parsedYamls: ParsedYaml[]): boole
     // Pandoc will use the last biblography node when generating a bibliography.
     // So replicate this and use the last biblography node that we find
     const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
-    const zoteroConfig = zoteroParsedYaml.yaml.zotero;
+    const zotero = zoteroParsedYaml.yaml.zotero;
 
-    if (typeof zoteroConfig === 'boolean') {
-      return zoteroConfig;
+    if (typeof zotero === 'boolean') {
+      return zotero;
+    } else if (typeof zotero === 'string') {
+      return [zotero];
+    } else if (Array.isArray(zotero)) {
+      return zotero.map(String);
+    } else {
+      return true;
     }
 
-    // There is a zotero header that isn't boolean, 
-    // It is enabled
-    return true;
-
-    // any doc with a path could have project level zotero
-  } else if (docPath !== null) {
-    return true;
   } else {
-    return false;
+    return true;
   }
 }
 

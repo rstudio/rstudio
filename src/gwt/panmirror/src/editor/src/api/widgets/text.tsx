@@ -13,7 +13,7 @@
  *
  */
 
-import React, { ChangeEventHandler, KeyboardEventHandler, FocusEventHandler } from 'react';
+import React, { ChangeEventHandler, KeyboardEventHandler, FocusEventHandler, ClipboardEventHandler } from 'react';
 
 import { WidgetProps } from './react';
 
@@ -31,13 +31,21 @@ export interface TextInputProps extends WidgetProps {
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
   onKeyPress?: KeyboardEventHandler<HTMLInputElement>;
   onBlur?: FocusEventHandler<HTMLInputElement>;
+  onPaste?: ClipboardEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
+
+  // Allow specifying an actual width (e.g. a percentage) or a character width
+  // If a character width is specified, we should prefer to use the size attribute of the input
+  // as the focus widget that is added to focus elements is confused by the 'ch' size in styles
+  const characterWidth = (props.width.endsWith('ch') ? parseInt(props.width.substr(0, props.width.length - 2), 10) : undefined);
   const style: React.CSSProperties = {
     ...props.style,
-    width: props.width,
+    width: characterWidth ? undefined : props.width,
   };
+
 
   return (
     <div className="pm-textinput-container" style={style}>
@@ -49,6 +57,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
       <input
         type="text"
         placeholder={props.placeholder}
+        size={characterWidth}
         className={`
           pm-input-text 
           pm-textinput-input 
@@ -62,8 +71,11 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
         onKeyUp={props.onKeyUp}
         onKeyPress={props.onKeyPress}
         onBlur={props.onBlur}
+        onFocus={props.onFocus}
         tabIndex={props.tabIndex}
+        onPaste={props.onPaste}
         ref={ref}
+        spellCheck={false}
       />
     </div>
   );

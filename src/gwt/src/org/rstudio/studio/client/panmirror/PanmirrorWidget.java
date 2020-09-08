@@ -279,12 +279,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          protected void execute()
          {
-            // sync toolbar commands
-            if (toolbar_ != null)
-               toolbar_.sync(false);
-            
-            // sync outline selection
-            outline_.updateSelection(editor_.getSelection()); 
+            if (editor_ != null)
+            {
+               // sync toolbar commands
+               if (toolbar_ != null)
+                  toolbar_.sync(false);
+               
+               // sync outline selection
+               outline_.updateSelection(editor_.getSelection()); 
+            }
          }
          
       };

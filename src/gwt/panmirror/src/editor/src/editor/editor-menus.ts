@@ -16,6 +16,7 @@
 import { EditorMenuItem, EditorUI } from '../api/ui';
 import { tableMenu } from '../api/table';
 import { EditorCommandId, EditorCommand } from '../api/command';
+import { Editor } from './editor';
 
 export interface EditorMenus {
   format: EditorMenuItem[];
@@ -159,6 +160,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           { command: EditorCommandId.EmDash },
           { separator: true },
           { command: EditorCommandId.NonBreakingSpace },
+          { separator: true },
+          { command: EditorCommandId.HardLineBreak }
         ],
       },
     },

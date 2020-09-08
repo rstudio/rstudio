@@ -98,6 +98,7 @@ public class PanmirrorCommands
    public static final String EmDash = "5B0DD33B-6209-4713-B8BB-60B5CA0BC3B3";
    public static final String EnDash = "C32AFE32-0E57-4A16-9C39-88EB1D82B8B4";
    public static final String NonBreakingSpace = "CF6428AB-F36E-446C-8661-2781B2CD1169";
+   public static final String HardLineBreak = "3606FF87-866C-4729-8F3F-D065388FC339";
    
    // raw
    public static final String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
@@ -118,8 +119,6 @@ public class PanmirrorCommands
    public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
    public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
    public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
-   public static final String ExecuteCurrentRmdChunk = "31C799F3-EF18-4F3A-92E6-51F7A3193A1B";
-   public static final String ExecutePreviousRmdChunks = "D3FDE96-0264-4364-ADFF-E87A75405B0B";
    
    // outline
    public static final String GoToNextSection = "AE827BDA-96F8-4E84-8030-298D98386765";

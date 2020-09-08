@@ -34,6 +34,14 @@ public class PanmirrorZoteroCollectionSpec extends JavaScriptObject
    public native final int getVersion() /*-{
       return this.version;
    }-*/;
+   
+   public native final String getKey() /*-{
+      return this.key;
+   }-*/;
+   
+   public native final String getParentKey() /*-{
+      return this.parentKey;
+   }-*/;
 
 }
 

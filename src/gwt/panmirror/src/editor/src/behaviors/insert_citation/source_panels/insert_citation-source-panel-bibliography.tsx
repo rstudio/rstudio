@@ -17,33 +17,36 @@ import React from "react";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { FixedSizeList } from "react-window";
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
-import { TextInput } from "../../../api/widgets/text";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-
-import { BibliographySource, BibliographyManager, BibliographyCollection } from "../../../api/bibliography/bibliography";
+import { BibliographyManager, BibliographyCollection, BibliographySource } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
+import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
-import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
-
-import './insert_citation-source-panel-bibliography.css';
+import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
+import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
 export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
-  const localProviderNodes = providers.map(provider => {
-    const node: any = {};
-    node.key = provider.key;
-    node.name = ui.context.translateText(provider.name);
-    node.type = provider.key;
-    node.image = libraryImageForProvider(provider.key, ui);
-    node.children = toTree(provider.key, provider.collections(doc, ui), folderImageForProvider(provider.key, ui));
+  const localProviderNodes = providers.filter(provider => provider.isEnabled()).map(provider => {
+
+    const getFolder = (prov: string, hasParent: boolean) => {
+      return folderImageForProvider(prov, hasParent, ui);
+    };
+    const node: NavigationTreeNode = {
+      key: provider.key,
+      name: ui.context.translateText(provider.name),
+      type: provider.key,
+      image: rootImageForProvider(provider.key, ui),
+      children: toTree(provider.key, provider.collections(), getFolder),
+      expanded: true
+    };
     return node;
   });
 
@@ -64,12 +67,8 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props => {
 
   const bibMgr = props.bibliographyManager;
-  const [itemData, setItemData] = React.useState<BibliographySource[]>([]);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
+  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>();
-  const [focused, setFocused] = React.useState<boolean>(false);
-  const fixedList = React.useRef<FixedSizeList>(null);
-  const listContainer = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(debounce(() => {
     async function loadData() {
@@ -93,8 +92,9 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
           selectedNode.key !== kZoteroProviderKey &&
           selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
 
-        setItemData(bibMgr.search(searchTerm, providerKey, collectionKey));
-        setSelectedIndex(0);
+        const sources = bibMgr.search(searchTerm, providerKey, collectionKey);
+        const uniqueSources = uniqby(sources, source => source.id);
+        setCitations(toCitationEntries(uniqueSources, props.ui));
       }
     }
     loadData();
@@ -103,174 +103,49 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   // If the nodes change, clear the search box value
   React.useLayoutEffect(() => {
-    if (searchBoxRef.current) {
-      searchBoxRef.current.value = '';
-      setSearchTerm('');
-    }
+    // TODO: Clear search term when node changes
   }, [props.selectedNode]);
 
-  // Whenever selection changed, ensure that we are scrolled to that item
-  React.useLayoutEffect(() => {
-    fixedList.current?.scrollToItem(selectedIndex);
-  }, [selectedIndex]);
-
   // Search the user search terms
-  const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-  };
-
-  // Perform first load tasks
-  const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    if (searchBoxHeight) {
-      setListHeight(props.height - searchBoxHeight);
-    }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
-    }
-  }, []);
-
-
-  // Item height and consequently page height
-  const itemHeight = 64;
-  const itemsPerPage = Math.floor(props.height / itemHeight);
-
-  // Upddate selected item index (this will manage bounds)
-  const incrementIndex = (event: React.KeyboardEvent, index: number) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const maxIndex = itemData.length - 1;
-    setSelectedIndex(Math.min(Math.max(0, index), maxIndex));
-  };
-
-  // Toggle the currently selected item as added or removed
-  const toggleSelectedSource = (event: React.KeyboardEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-
-    const source = itemData[selectedIndex];
-    if (source) {
-      if (props.sourcesToAdd.includes(source)) {
-        props.removeSource(source);
-      } else {
-        props.addSource(source);
-      }
-    }
-  };
-
-  const handleListKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowUp':
-        incrementIndex(event, selectedIndex - 1);
-        break;
-
-      case 'ArrowDown':
-        incrementIndex(event, selectedIndex + 1);
-        break;
-
-      case 'PageDown':
-        incrementIndex(event, selectedIndex + itemsPerPage);
-        break;
-
-      case 'PageUp':
-        incrementIndex(event, selectedIndex - itemsPerPage);
-        break;
-
-      case 'Enter':
-        toggleSelectedSource(event);
-        props.confirm();
-        break;
-      case ' ':
-        toggleSelectedSource(event);
-        break;
-    }
-  };
-
-  // If the user arrows down in the search text box, advance to the list of items
-  const handleTextKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        listContainer.current?.focus();
-        break;
-    }
-  };
-
-  // Focus / Blur are used to track whether to show selection highlighting
-  const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(true);
-  };
-
-  const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(false);
+  const searchChanged = (term: string) => {
+    setSearchTerm(term);
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel'>
-      <div className='pm-insert-citation-panel-textbox-container'>
-        <TextInput
-          width='100%'
-          iconAdornment={props.ui.images.search}
-          tabIndex={0}
-          className='pm-insert-citation-panel-textbox pm-block-border-color'
-          placeholder={props.ui.context.translateText('Search for citation')}
-          onKeyDown={handleTextKeyDown}
-          onChange={searchChanged}
-          ref={searchBoxRef}
-        />
-
-      </div>
-      {itemData.length === 0 ?
-        (<div className='pm-insert-citation-panel-noresults' style={{ height: listHeight + 'px' }}>
-          <div className='pm-insert-citation-panel-noresults-text'>{props.ui.context.translateText('No matching results.')}</div>
-        </div>) :
-        (
-          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={listContainer}>
-            <FixedSizeList
-              height={listHeight}
-              width='100%'
-              itemCount={itemData.length}
-              itemSize={itemHeight}
-              itemData={{
-                selectedIndex,
-                allSources: itemData,
-                sourcesToAdd: props.sourcesToAdd,
-                addSource: props.addSource,
-                removeSource: props.removeSource,
-                ui: props.ui,
-                showSeparator: true,
-                showSelection: focused,
-                preventFocus: true
-              }}
-              ref={fixedList}
-            >
-              {CitationSourcePanelListItem}
-            </FixedSizeList>
-          </div>
-        )}
-    </div>);
+    <CitationSourceTypeheadSearchPanel
+      height={props.height}
+      citations={citations}
+      selectedNode={props.selectedNode}
+      citationsToAdd={props.citationsToAdd}
+      searchTermChanged={searchChanged}
+      addCitation={props.addCitation}
+      removeCitation={props.removeCitation}
+      selectedCitation={props.selectedCitation}
+      confirm={props.confirm}
+      ui={props.ui}
+    />
+  );
 };
 
 
-function libraryImageForProvider(providerKey: string, ui: EditorUI) {
+function rootImageForProvider(providerKey: string, ui: EditorUI) {
   switch (providerKey) {
     case kZoteroProviderKey:
-      return ui.images.citations?.zotero_library;
+      return ui.images.citations?.zotero_root;
     case kLocalBiliographyProviderKey:
       return ui.images.citations?.bibligraphy;
   }
 }
 
-function folderImageForProvider(providerKey: string, ui: EditorUI) {
+function folderImageForProvider(providerKey: string, hasParent: boolean, ui: EditorUI) {
+
   switch (providerKey) {
     case kZoteroProviderKey:
-      return ui.images.citations?.zotero_folder;
+      if (hasParent) {
+        return ui.images.citations?.zotero_collection;
+      } else {
+        return ui.images.citations?.zotero_library;
+      }
     case kLocalBiliographyProviderKey:
       return ui.images.citations?.bibligraphy_folder;
   }
@@ -278,21 +153,28 @@ function folderImageForProvider(providerKey: string, ui: EditorUI) {
 
 // Takes a flat data structure of containers and turns it into a hierarchical
 // tree structure for display as TreeNodes.
-function toTree(type: string, containers: BibliographyCollection[], folderImage?: string): NavigationTreeNode[] {
+function toTree(type: string, containers: BibliographyCollection[], folderImage?: (providerKey: string, hasParent: boolean) => string | undefined): NavigationTreeNode[] {
 
   const treeMap: { [id: string]: NavigationTreeNode } = {};
   const rootNodes: NavigationTreeNode[] = [];
 
   // Sort the folder in alphabetical order at each level of the tree
-  containers.sort((a, b) => a.name.localeCompare(b.name)).forEach(container => {
-
+  containers.sort((a, b) => {
+    // For Zotero collection, sort the 'My Library to the top always'
+    if (a.provider === kZoteroProviderKey && a.key === '1') {
+      return -1;
+    }
+    return a.name.localeCompare(b.name);
+  }).forEach(container => {
     // First see if we have an existing node for this item
     // A node could already be there if we had to insert a 'placeholder' 
     // node to contain the node's children before we encountered the node.
-    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, image: folderImage, children: [], type };
+    const currentNode = treeMap[container.key] || { key: container.key, name: container.name, children: [], type };
 
     // Always set its name to be sure we fill this in when we encounter it
+    const hasParent = container.parentKey !== undefined && container.parentKey.length > 0;
     currentNode.name = container.name;
+    currentNode.image = folderImage ? folderImage(container.provider, hasParent) : undefined;
 
     if (container.parentKey) {
       let parentNode = treeMap[container.parentKey];
@@ -300,7 +182,7 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
         // This is a placeholder node - we haven't yet encountered this child's parent
         // so we insert this to hold the child. Once we encounter the true parent node, 
         // we will fix up the values in this placeholder node.
-        parentNode = { key: container.parentKey, name: '', image: folderImage, children: [], type };
+        parentNode = { key: container.parentKey, name: '', children: [], type };
         treeMap[container.parentKey] = parentNode;
       }
       parentNode.children?.push(currentNode);
@@ -312,3 +194,22 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
+function toCitationEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+  return sources.map(source => {
+    return {
+      id: source.id,
+      title: source.title || '',
+      providerKey: source.providerKey,
+      authors: (length: number) => {
+        return formatAuthors(source.author, length);
+      },
+      date: formatIssuedDate(source.issued),
+      journal: '',
+      image: imageForType(ui, source.type)[0],
+      imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
+      toBibliographySource: () => {
+        return Promise.resolve(source);
+      }
+    };
+  });
+}

@@ -29,5 +29,6 @@ public class PanmirrorCode
    }
    
    public String code;
+   public boolean selection_only;
    public PanmirrorEditingOutlineLocation location;
 }

@@ -112,7 +112,8 @@ import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  location?: EditingOutlineLocation;
+  selection_only: boolean;
+  location: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
@@ -261,7 +262,6 @@ export class Editor {
   private minContentPadding = 0;
 
   // keep track of whether the last transaction was selection-only
-  // (indicates that we should forward an editing outline location when going to source mode)
   private lastTrSelectionOnly = false;
 
   // create the editor -- note that the markdown argument does not substitute for calling
@@ -477,7 +477,7 @@ export class Editor {
     const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
-    // (resets the undo stack so that the intial setting of the document can't be undone)
+    // (resets the undo stack so that the initial setting of the document can't be undone)
     if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
@@ -536,9 +536,6 @@ export class Editor {
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
 
-    // do we need to provide an outline location
-    const useOutlineLocation = this.lastTrSelectionOnly;
-
     // get the code
     const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
@@ -546,7 +543,8 @@ export class Editor {
     // return code + perhaps outline location
     return {
       code,
-      location: useOutlineLocation ? getEditingOutlineLocation(this.state) : undefined
+      selection_only: this.lastTrSelectionOnly,
+      location: getEditingOutlineLocation(this.state)
     };
   }
 

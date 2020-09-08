@@ -76,6 +76,7 @@ export interface TextButtonProps extends WidgetProps {
   title: string;
   onClick?: () => void;
   tabIndex?: number;
+  disabled?: boolean;
 }
 
 export const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>((props: TextButtonProps, ref) => {
@@ -94,6 +95,7 @@ export const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>((
       style={props.style}
       ref={ref}
       tabIndex={props.tabIndex}
+      disabled={props.disabled}
     >
       {props.title}
     </button>

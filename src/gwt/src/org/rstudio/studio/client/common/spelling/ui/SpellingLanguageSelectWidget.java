@@ -25,6 +25,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
@@ -50,7 +51,9 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       includeDefaultOption_ = includeDefaultOption;
       languageOffset_ = includeDefaultOption_ ? 1 : 0;
       
-      HelpButton.addHelpButton(this, "spelling_dictionaries", "Help on spelling dictionaries");
+      getLabel().getElement().getStyle().setMarginBottom(4, Unit.PX);
+      
+      HelpButton.addHelpButton(this, "spelling_dictionaries", "Help on spelling dictionaries", 0);
       
       getListBox().addChangeHandler(new ChangeHandler() {
 
@@ -126,7 +129,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       String[] values = new String[languages.length()+1 + languageOffset_];
       if (includeDefaultOption_)
       {
-         choices[0] = "(Use Default)";
+         choices[0] = "(Default)";
          values[0] = "";
       }
       for (int i=0; i<languages.length(); i++)

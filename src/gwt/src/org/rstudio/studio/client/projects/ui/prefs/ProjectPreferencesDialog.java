@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
@@ -56,6 +57,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UserPrefs> pUIPrefs,
+                                   Provider<UserState> pUserState,
                                    Provider<EventBus> pEventBus,
                                    Provider<Session> session,
                                    ProjectGeneralPreferencesPane general,
@@ -90,6 +92,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       pSession_ = session;
       server_ = server;
       pUIPrefs_ = pUIPrefs;
+      pUserState_ = pUserState;
       pEventBus_ = pEventBus;
       pQuit_ = pQuit;
       pGlobalDisplay_ = pGlobalDisplay;
@@ -134,6 +137,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
                 UserPrefs uiPrefs = pUIPrefs_.get();
+                UserState uiState = pUserState_.get();
+                
                 uiPrefs.useSpacesForTab().setProjectValue(
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
@@ -172,6 +177,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.visualMarkdownEditingCanonical().setProjectValue(config.getMarkdownCanonical() == RProjectConfig.YES_VALUE);
                 else
                    uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
+                
+                // zotero prefs (remove if set to defaults)
+                if (config.getZoteroLibraries() != null)
+                   uiState.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
+                else
+                   uiState.zoteroLibraries().removeProjectValue(true);
                 
                 // propagate spelling prefs
                 if (!config.getSpellingDictionary().isEmpty())
@@ -226,6 +237,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    private final Provider<Session> pSession_;
    private final ProjectsServerOperations server_;
    private final Provider<UserPrefs> pUIPrefs_;
+   private final Provider<UserState> pUserState_;
    private final Provider<EventBus> pEventBus_;
    private final Provider<ApplicationQuit> pQuit_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;

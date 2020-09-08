@@ -19,7 +19,6 @@ export interface EditorOptions {
   readonly codeEditor?: string;
   readonly rmdImagePreview?: boolean;
   readonly rmdExampleHighlight?: boolean;
-  readonly rmdChunkExecution?: string[];
   readonly hideFormatComment?: boolean;
   readonly className?: string;
 }

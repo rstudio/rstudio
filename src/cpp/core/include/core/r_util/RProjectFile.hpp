@@ -107,6 +107,7 @@ struct RProjectConfig
         markdownWrapAtColumn(kMarkdownWrapAtColumnDefault),
         markdownReferences(kMarkdownReferencesUseDefault),
         markdownCanonical(DefaultValue),
+        zoteroLibraries(),
         pythonType(),
         pythonVersion(),
         pythonPath(),
@@ -149,6 +150,7 @@ struct RProjectConfig
    int markdownWrapAtColumn;
    std::string markdownReferences;
    int markdownCanonical;
+   boost::optional<std::vector<std::string>> zoteroLibraries;
    std::string pythonType;
    std::string pythonVersion;
    std::string pythonPath;

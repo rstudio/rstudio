@@ -19,10 +19,10 @@ import { EditorUI } from "../../../api/ui";
 
 import { CSL } from "../../../api/csl";
 import { TextInput } from "../../../api/widgets/text";
-import { formatForPreview, CiteField, suggestCiteId } from "../../../api/cite";
-import { BibliographyManager, BibliographySource } from "../../../api/bibliography/bibliography";
+import { formatForPreview, CiteField, suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
 
-import { CitationSourcePanelProps, CitationSourcePanel } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 import './insert_citation-source-panel-doi.css';
@@ -35,7 +35,7 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
     panel: DOISourcePanel,
     treeNode: {
       key: 'DOI',
-      name: ui.context.translateText('Lookup DOI'),
+      name: ui.context.translateText('From DOI'),
       image: ui.images.citations?.doi,
       type: kDOIType,
       children: [],
@@ -58,22 +58,41 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
     setCsl(undefined);
     setPreviewFields([]);
     setNoResultsText(message);
-
   };
+
+  // Perform first load tasks
+  const searchBoxRef = React.useRef<HTMLInputElement>(null);
+  const [listHeight, setListHeight] = React.useState<number>(props.height);
+  React.useLayoutEffect(() => {
+
+    // Size the list Box
+    const searchBoxHeight = searchBoxRef.current?.clientHeight;
+    const padding = 10;
+    if (searchBoxHeight) {
+      setListHeight(props.height - padding - searchBoxHeight);
+    }
+
+    // Focus the search box
+    if (searchBoxRef.current) {
+      searchBoxRef.current.focus();
+    }
+  }, []);
+
+  const debouncedCSL = React.useCallback(debounce(async (doi: string) => {
+    const result = await props.server.doi.fetchCSL(doi, 350);
+    if (result.status === 'ok') {
+      setCsl(result.message);
+      const preview = formatForPreview(result.message);
+      setPreviewFields(preview);
+    } else {
+      clearResults(noMatchingResultsMessage);
+    }
+
+  }, 100), []);
 
   React.useEffect(() => {
     if (searchText) {
-      const debounced = debounce(async () => {
-        const result = await props.server.doi.fetchCSL(searchText, 350);
-        if (result.status === 'ok') {
-          setCsl(result.message);
-          const preview = formatForPreview(result.message);
-          setPreviewFields(preview);
-        } else {
-          clearResults(noMatchingResultsMessage);
-        }
-      }, 50);
-      debounced();
+      debouncedCSL(searchText);
     } else {
       clearResults(defaultMessage);
     }
@@ -91,56 +110,68 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
           iconAdornment={props.ui.images.search}
           tabIndex={0}
           className='pm-insert-doi-source-panel-textbox pm-block-border-color'
-          placeholder={props.ui.context.translateText('Search for a DOI')}
+          placeholder={props.ui.context.translateText('Paste a DOI to search')}
           onChange={doiChanged}
+          ref={searchBoxRef}
         />
       </div>
-      <div className='pm-insert-doi-source-panel-heading'>
-        {csl ?
-          <CitationSourcePanelListItem
-            index={0}
-            data={{
-              allSources: toBibliographyEntry(csl, props.bibliographyManager, props.ui),
-              sourcesToAdd: props.sourcesToAdd,
-              addSource: props.addSource,
-              removeSource: props.removeSource,
-              ui: props.ui
-            }}
-            style={{}}
-            isScrolling={false}
-          /> :
-          <div className='pm-insert-doi-source-panel-no-result'>
-            <div className='pm-insert-doi-source-panel-no-result-text pm-text-color'>
-              {props.ui.context.translateText(noResultsText)}
-            </div>
-          </div>}
-      </div>
-      <div className='pm-insert-doi-source-panel-fields'>
-        <table>
-          <tbody>
-            {previewFields.map(previewField =>
-              (<tr key={previewField.name}>
-                <td className='pm-insert-doi-source-panel-fields-name pm-text-color'>{previewField.name}:</td>
-                <td className='pm-insert-doi-source-panel-fields-value pm-text-color'>{previewField.value}</td>
-              </tr>)
-            )}
-          </tbody>
-        </table>
+      <div className='pm-insert-doi-source-panel-results pm-block-border-color pm-background-color' style={{ height: listHeight }}>
+        <div className='pm-insert-doi-source-panel-heading'>
+          {csl ?
+            <CitationSourcePanelListItem
+              index={0}
+              data={{
+                citations: toCitationEntry(csl, props.bibliographyManager, props.ui),
+                citationsToAdd: props.citationsToAdd,
+                addCitation: props.addCitation,
+                removeCitation: props.removeCitation,
+                ui: props.ui
+              }}
+              style={{}}
+              isScrolling={false}
+            /> :
+            <div className='pm-insert-doi-source-panel-no-result'>
+              <div className='pm-insert-doi-source-panel-no-result-text pm-text-color'>
+                {props.ui.context.translateText(noResultsText)}
+              </div>
+            </div>}
+        </div>
+        <div className='pm-insert-doi-source-panel-fields'>
+          <table>
+            <tbody>
+              {previewFields.map(previewField =>
+                (<tr key={previewField.name}>
+                  <td className='pm-insert-doi-source-panel-fields-name pm-text-color'>{previewField.name}:</td>
+                  <td className='pm-insert-doi-source-panel-fields-value pm-text-color'>{previewField.value}</td>
+                </tr>)
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 };
 
-function toBibliographyEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): BibliographySource[] {
+function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry[] {
   if (csl) {
+    const id = suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl);
+    const providerKey = 'doi';
     return [
       {
-        ...csl,
-        id: suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl),
-        providerKey: 'doi',
-        collectionKeys: [],
-      }
-    ];
+        id,
+        title: csl.title || '',
+        providerKey,
+        authors: (length: number) => {
+          return formatAuthors(csl.author, length);
+        },
+        date: formatIssuedDate(csl.issued),
+        journal: '',
+        image: imageForType(ui, csl.type)[0],
+        toBibliographySource: () => {
+          return Promise.resolve({ ...csl, id, providerKey });
+        }
+      }];
   }
   return [];
 }

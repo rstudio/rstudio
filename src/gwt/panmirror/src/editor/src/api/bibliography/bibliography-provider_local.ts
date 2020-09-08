@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -44,6 +44,11 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
   public name: string = "Bibliography";
   public key: string = kLocalBiliographyProviderKey;
+
+  // Always enabled;
+  public isEnabled(): boolean {
+    return true;
+  }
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
@@ -74,10 +79,8 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[] {
+  public collections(): BibliographyCollection[] {
     return [];
-
-    // JJA: assuming this method being commented out is intentional?
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
@@ -98,7 +101,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
 
-  public items(): BibliographySource[] {
+  public items(): BibliographySourceWithCollections[] {
 
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
@@ -112,7 +115,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     }));
   }
 
-  public itemsForCollection(collectionKey: string): BibliographySource[] {
+  public itemsForCollection(collectionKey: string): BibliographySourceWithCollections[] {
     // NOTE: IF we add support, need to filter by biblio file
     return [];
   }

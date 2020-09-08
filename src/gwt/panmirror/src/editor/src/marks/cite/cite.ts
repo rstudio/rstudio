@@ -19,7 +19,7 @@ import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemir
 import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
-import uniqBy from 'lodash.uniqby';
+import uniqby from 'lodash.uniqby';
 
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
@@ -667,7 +667,6 @@ export async function insertCitation(
           ...result.csl,
           id: result.id,
           providerKey: provider || '',
-          collectionKeys: [],
         };
 
 
@@ -715,7 +714,7 @@ export async function ensureSourcesInBibliography(
 
   // See if there is a warning for the selected provider. If there is, we may need to surface
   // that to the user. If there is no provider specified, no need to care about warnings.
-  const providers = uniqBy(sources, (source: BibliographySource) => source.providerKey).map(source => source.providerKey);
+  const providers = uniqby(sources, (source: BibliographySource) => source.providerKey).map(source => source.providerKey);
 
   // Find any providers that have warnings
   const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));

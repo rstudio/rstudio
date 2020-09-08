@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
@@ -39,6 +40,11 @@ public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
    
 
       addHeader("Dictionaries");
+      
+      Label infoLabel = new Label("Use (Default) to inherit the global default dictionary");
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+      spaced(infoLabel);
+      add(infoLabel);
       
       languageWidget_ = new SpellingLanguageSelectWidget(spellingService, true);
       

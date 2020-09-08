@@ -22,6 +22,7 @@ export interface EditorUIImages {
   runchunk?: string;
   runprevchunks?: string;
   search?: string;
+  search_progress?: string;
   omni_insert?: {
     generic?: string;
     heading1?: string;
@@ -123,7 +124,8 @@ export interface EditorUIImages {
     bibligraphy?: string;
     bibligraphy_folder?: string;
     zotero_library?: string;
-    zotero_folder?: string;
+    zotero_collection?: string;
+    zotero_root?: string;
     doi?: string;
     crossref?: string;
   };

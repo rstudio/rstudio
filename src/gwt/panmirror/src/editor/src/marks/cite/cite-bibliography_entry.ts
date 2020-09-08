@@ -26,7 +26,7 @@ export interface BibliographyEntry {
   authorsFormatter: (authors?: CSLName[], maxLength?: number) => string;
   issuedDateFormatter: (issueDate?: CSLDate) => string;
   image?: string;
-  adornmentImage?: string;
+  imageAdornment?: string;
 }
 
 export function entryForSource(source: BibliographySource, ui: EditorUI, forceLightMode?: boolean): BibliographyEntry {
@@ -49,7 +49,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI, forceLi
     authorsFormatter,
     issuedDateFormatter,
     image: imageForType(ui, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
-    adornmentImage: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
+    imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
   };
 }
 

@@ -41,18 +41,15 @@ extern const char * const kKey;
 extern const char * const kParentKey;
 extern const char * const kItems;
 
-extern const char * const kMyLibrary;
-extern const char * const kMyLibraryCollectionKey;
-
 extern const int kNoVersion;
 
 // collection spec
 struct ZoteroCollectionSpec
 {
-   ZoteroCollectionSpec(const std::string& name = "",
-                        const std::string& key = "",
-                        const std::string& parentKey = "",
-                        int version = kNoVersion)
+   explicit ZoteroCollectionSpec(const std::string& name = "",
+                                 const std::string& key = "",
+                                 const std::string& parentKey = "",
+                                 int version = kNoVersion)
       : name(name), key(key), parentKey(parentKey), version(version)
    {
    }
@@ -87,26 +84,24 @@ struct ZoteroCollection : ZoteroCollectionSpec
 typedef std::vector<ZoteroCollection> ZoteroCollections;
 typedef boost::function<void(core::Error,ZoteroCollections,std::string)> ZoteroCollectionsHandler;
 
+typedef boost::function<void(core::Error,std::vector<std::string>)> ZoteroLibrariesHandler;
+
+// find the parent spec within a set of specs
+ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs);
+
 
 // requirements for implementing a collection source
 struct ZoteroCollectionSource
 {
    boost::function<void(std::string,
-                        ZoteroCollectionSpec cacheSpec,
-                        ZoteroCollectionsHandler)> getLibrary;
-
-   boost::function<void(std::string,
                         std::vector<std::string>,
                         ZoteroCollectionSpecs,
                         ZoteroCollectionsHandler)> getCollections;
 
-   boost::function<void(std::string, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
-};
+   boost::function<void(std::string,ZoteroLibrariesHandler)> getLibraryNames;
 
-// get the entire library using the currently configured source
-void getLibrary(ZoteroCollectionSpec cacheSpec,
-                bool useCache,
-                ZoteroCollectionsHandler handler);
+   boost::function<void(std::string, std::vector<std::string>, ZoteroCollectionSpecsHandler)> getCollectionSpecs;
+};
 
 // get collections using the currently configured source
 void getCollections(std::vector<std::string> collections,
@@ -114,8 +109,11 @@ void getCollections(std::vector<std::string> collections,
                     bool useCache,
                     ZoteroCollectionsHandler handler);
 
-// get the collection specs for all the collections in the library
-void getCollectionSpecs(ZoteroCollectionSpecsHandler handler);
+// get library names for the currently configured source
+void getLibraryNames(ZoteroLibrariesHandler handler);
+
+// get the collection specs for the specified collections
+void getCollectionSpecs(std::vector<std::string> collections, ZoteroCollectionSpecsHandler handler);
 
 
 } // end namespace collections

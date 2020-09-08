@@ -236,4 +236,8 @@ public class JsUtil
       return list;
    }
    
+   public native static boolean isUndefined(int val) /*-{
+      return typeof(val) === "undefined"; 
+   }-*/;
+
 }

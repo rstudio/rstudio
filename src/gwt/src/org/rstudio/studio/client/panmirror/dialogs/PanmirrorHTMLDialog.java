@@ -131,6 +131,7 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
       case KeyCodes.KEY_PAGEUP:
       case KeyCodes.KEY_SPACE:
       case KeyCodes.KEY_ESCAPE:
+      case KeyCodes.KEY_ENTER:
             return false;
       }
       return true;

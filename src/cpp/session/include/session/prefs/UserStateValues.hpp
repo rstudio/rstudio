@@ -82,6 +82,13 @@ namespace prefs {
 #define kBibliographyDefaultTypeBib "bib"
 #define kBibliographyDefaultTypeYaml "yaml"
 #define kBibliographyDefaultTypeJson "json"
+#define kZoteroConnectionType "zotero_connection_type"
+#define kZoteroConnectionTypeAuto "auto"
+#define kZoteroConnectionTypeNone "none"
+#define kZoteroConnectionTypeLocal "local"
+#define kZoteroConnectionTypeWeb "web"
+#define kZoteroLibraries "zotero_libraries"
+#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
 
@@ -202,6 +209,24 @@ public:
     */
    std::string bibliographyDefaultType();
    core::Error setBibliographyDefaultType(std::string val);
+
+   /**
+    * Zotero connection type (local or web)
+    */
+   std::string zoteroConnectionType();
+   core::Error setZoteroConnectionType(std::string val);
+
+   /**
+    * Zotero libraries to insert citations from.
+    */
+   core::json::Array zoteroLibraries();
+   core::Error setZoteroLibraries(core::json::Array val);
+
+   /**
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    */
+   bool zoteroUseBetterBibtex();
+   core::Error setZoteroUseBetterBibtex(bool val);
 
    /**
     * Key for making Zotero API calls

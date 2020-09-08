@@ -20,35 +20,43 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
 import { EditorServer } from '../../api/server';
-import { BibliographyManager, BibliographySource, BibliographyFile } from '../../api/bibliography/bibliography';
+import { BibliographyManager, BibliographyFile } from '../../api/bibliography/bibliography';
 
-import { InsertCitationPanel } from './insert_citation-panel';
+import { InsertCitationPanel, CitationListEntry } from './insert_citation-panel';
+import { NavigationTreeNode } from '../../api/widgets/navigation-tree';
 
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
 export interface InsertCitationDialogResult {
-  sources: BibliographySource[];
+  citations: CitationListEntry[];
   bibliography: BibliographyFile;
+  selectedNode?: NavigationTreeNode;
 }
 
-export async function showInsertCitationDialog(
+export async function selectCitations(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
+  selectedNode?: NavigationTreeNode,
 ): Promise<InsertCitationDialogResult | undefined> {
 
   // The citations that the user would like to insert
-  let sources: BibliographySource[] = [];
-  const onSourceChanged = (srcs: BibliographySource[]) => {
-    sources = srcs;
+  let citations: CitationListEntry[] = [];
+  const onCitationsChanged = (c: CitationListEntry[]) => {
+    citations = c;
   };
 
   // The bibliography into which entries should be written
   let bibliography: BibliographyFile | undefined;
   const onBibliographyChanged = (bibliographyFile: BibliographyFile) => {
     bibliography = bibliographyFile;
+  };
+
+  let lastSelectedNode: NavigationTreeNode | undefined;
+  const onSelectedNodeChanged = (node: NavigationTreeNode) => {
+    lastSelectedNode = node;
   };
 
   // Render the element into the window
@@ -78,8 +86,10 @@ export async function showInsertCitationDialog(
           ui={ui}
           bibliographyManager={bibliographyManager}
           server={server}
-          onSourceChanged={onSourceChanged}
+          onCitationsChanged={onCitationsChanged}
           onBibliographyChanged={onBibliographyChanged}
+          onSelectedNodeChanged={onSelectedNodeChanged}
+          selectedNode={selectedNode}
           onOk={confirm}
           onCancel={cancel}
           height={height}
@@ -92,16 +102,17 @@ export async function showInsertCitationDialog(
       // TODO: Focus the correct control (text filtering)?
     },
     () => {
-      if (sources.length === 0) {
+      if (citations.length === 0) {
         return "Please select a citation to insert.";
       }
       return null;
     });
 
-  if (performInsert && sources.length > 0 && bibliography) {
+  if (performInsert && citations.length > 0 && bibliography) {
     return {
-      sources,
-      bibliography
+      citations,
+      bibliography,
+      selectedNode: lastSelectedNode
     };
   } else {
     return undefined;

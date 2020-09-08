@@ -38,10 +38,11 @@ export interface BibliographyDataProvider {
   key: string;
   name: string;
 
+  isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  collections(doc: ProsemirrorNode, ui: EditorUI): BibliographyCollection[];
-  items(): BibliographySource[];
-  itemsForCollection(collectionKey: string): BibliographySource[];
+  collections(): BibliographyCollection[];
+  items(): BibliographySourceWithCollections[];
+  itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
   generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
   warningMessage(): string | undefined;
@@ -50,6 +51,7 @@ export interface BibliographyDataProvider {
 export interface BibliographyCollection {
   name: string;
   key: string;
+  provider: string;
   parentKey?: string;
 }
 
@@ -62,6 +64,9 @@ export interface Bibliography {
 export interface BibliographySource extends CSL {
   id: string;
   providerKey: string;
+}
+
+export interface BibliographySourceWithCollections extends BibliographySource {
   collectionKeys: string[];
 }
 
@@ -79,9 +84,9 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
 
 export class BibliographyManager {
 
-  private fuse: Fuse<BibliographySource, Fuse.IFuseOptions<any>> | undefined;
+  private fuse: Fuse<BibliographySourceWithCollections, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
-  private sources?: BibliographySource[];
+  private sources?: BibliographySourceWithCollections[];
   private writable?: boolean;
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
@@ -109,7 +114,7 @@ export class BibliographyManager {
     if (needsIndexUpdate) {
       // Get the entries
       const providersEntries = this.providers.map(provider => provider.items());
-      this.sources = ([] as BibliographySource[]).concat(...providersEntries);
+      this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
 
       this.updateIndex(this.sources);
     }
@@ -119,24 +124,24 @@ export class BibliographyManager {
     return this.allSources().length > 0;
   }
 
-  public allSources(): BibliographySource[] {
+  public allSources(): BibliographySourceWithCollections[] {
     if (this.sources && this.isWritable()) {
-      return uniqby(this.sources, source => source.id);
+      return this.sources;
     } else {
-      return uniqby(this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [], source => source.id);
+      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
     }
     return [];
   }
 
-  public sourcesForProvider(providerKey: string): BibliographySource[] {
-    return uniqby(this.allSources().filter(item => item.providerKey === providerKey), source => source.id);
+  public sourcesForProvider(providerKey: string): BibliographySourceWithCollections[] {
+    return this.allSources().filter(item => item.providerKey === providerKey);
   }
 
-  public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySource[] {
-    return uniqby(this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey)), source => source.id);
+  public sourcesForProviderCollection(provider: string, collectionKey: string): BibliographySourceWithCollections[] {
+    return this.sourcesForProvider(provider).filter(item => item.collectionKeys.includes(collectionKey));
   }
 
-  public localSources(): BibliographySource[] {
+  public localSources(): BibliographySourceWithCollections[] {
     return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
   }
 
@@ -203,7 +208,7 @@ export class BibliographyManager {
     }
   }
 
-  public findDoiInLocalBibliography(doi: string): BibliographySource | undefined {
+  public findDoiInLocalBibliography(doi: string): BibliographySourceWithCollections | undefined {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
@@ -211,7 +216,7 @@ export class BibliographyManager {
     return this.localSources().find(source => source.DOI === doi);
   }
 
-  public findIdInLocalBibliography(id: string): BibliographySource | undefined {
+  public findIdInLocalBibliography(id: string): BibliographySourceWithCollections | undefined {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a DOI if the
@@ -221,7 +226,7 @@ export class BibliographyManager {
   }
 
   // A general purpose search interface for filtered searching
-  public search(query?: string, providerKey?: string, collectionKey?: string) {
+  public search(query?: string, providerKey?: string, collectionKey?: string): BibliographySourceWithCollections[] {
     const limit = 1000;
     if (query) {
       if (providerKey && collectionKey) {
@@ -242,7 +247,7 @@ export class BibliographyManager {
     }
   }
 
-  public searchAllSources(query: string, limit: number): BibliographySource[] {
+  public searchAllSources(query: string, limit: number): BibliographySourceWithCollections[] {
 
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
@@ -270,7 +275,7 @@ export class BibliographyManager {
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
 
-      return uniqby(filteredItems, (source: BibliographySource) => source.id);
+      return filteredItems;
 
     } else {
       return [];
@@ -278,16 +283,16 @@ export class BibliographyManager {
   }
 
   // Search only a specific provider
-  public searchProvider(query: string, limit: number, providerKey: string): BibliographySource[] {
+  public searchProvider(query: string, limit: number, providerKey: string): BibliographySourceWithCollections[] {
     return this.searchAllSources(query, limit).filter(item => item.providerKey === providerKey);
   }
 
   // Search a specific provider and collection
-  public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySource[] {
+  public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySourceWithCollections[] {
     return this.searchProvider(query, limit, providerKey).filter(item => item.collectionKeys.includes(collectionKey));
   }
 
-  private updateIndex(bibSources: BibliographySource[]) {
+  private updateIndex(bibSources: BibliographySourceWithCollections[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),

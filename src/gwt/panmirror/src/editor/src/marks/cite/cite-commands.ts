@@ -25,12 +25,16 @@ import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { EditorEvents } from '../../api/events';
 import { EditorServer } from '../../api/server';
-import { showInsertCitationDialog as selectCitations } from '../../behaviors/insert_citation/insert_citation-dialog';
+import { selectCitations } from '../../behaviors/insert_citation/insert_citation-dialog';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
+import { NavigationTreeNode } from '../../api/widgets/navigation-tree';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
+
+  private selectedNode: NavigationTreeNode | undefined;
+
   constructor(ui: EditorUI, events: EditorEvents, bibliographyManager: BibliographyManager, server: EditorServer) {
     super(
       EditorCommandId.Citation,
@@ -44,11 +48,18 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          selectCitations(ui, state.doc, bibliographyManager, server).then(async result => {
+          selectCitations(ui, state.doc, bibliographyManager, server, this.selectedNode).then(async result => {
             if (result) {
 
-              // The sources that we should insert
-              const sources = result.sources;
+              // Remember the last tree node that was selected
+              this.selectedNode = result.selectedNode;
+
+              // The citations that we should insert
+              const citationEntries = result.citations;
+
+              // Convert these to sources to be inserted
+              // TODO: Need to potentially deal with progress here as this might be very expensive
+              const sources = await Promise.all(citationEntries.map(entry => entry.toBibliographySource()));
 
               // The bibliography that we should insert sources into (if needed)
               const bibliography = result.bibliography;
@@ -79,11 +90,11 @@ export class InsertCitationCommand extends ProsemirrorCommand {
               setTextSelection(tr.selection.from - 1)(tr);
 
               // insert the CiteId marks and text
-              sources.forEach((source, i) => {
+              citationEntries.forEach((citation, i) => {
                 const citeIdMark = schema.marks.cite_id.create();
-                const citeIdText = schema.text(`@${source.id}`, [citeIdMark]);
+                const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
                 tr.insert(tr.selection.from, citeIdText);
-                if (sources.length > 1 && i !== sources.length - 1) {
+                if (citationEntries.length > 1 && i !== citationEntries.length - 1) {
                   tr.insert(tr.selection.from, schema.text('; ', []));
                 }
               });

@@ -23,6 +23,7 @@ import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
 import runprevchunksImage from './images/runprevchunks.png';
 import searchImage from './images/search.png';
+import searchProgressImage from './images/search_progress.gif';
 
 import omniInsertGenericImage from './images/omni_insert/generic.png';
 import heading1Image from './images/omni_insert/heading1.png';
@@ -122,8 +123,9 @@ import zoteroOverlayImage from './images/citations/zotero-overlay.png';
 import localSourcesImage from './images/citations/insert/local-sources.png';
 import bibliographyImage from './images/citations/insert/bibliography.png';
 import bibliographyFolderImage from './images/citations/insert/bibliography-folder.png';
+import zoteroRootImage from './images/citations/insert/zotero-root.png';
 import zoteroLibraryImage from './images/citations/insert/zotero-library.png';
-import zoteroFolderImage from './images/citations/insert/zotero-folder.png';
+import zoteroCollectionImage from './images/citations/insert/zotero-collection.png';
 import doiImage from './images/citations/insert/doi.png';
 import crossRefImage from './images/citations/insert/crossref.png';
 
@@ -140,6 +142,7 @@ export function defaultEditorUIImages(): EditorUIImages {
     runchunk: runchunkImage,
     runprevchunks: runprevchunksImage,
     search: searchImage,
+    search_progress: searchProgressImage,
     omni_insert: {
       generic: omniInsertGenericImage,
       heading1: heading1Image,
@@ -241,7 +244,8 @@ export function defaultEditorUIImages(): EditorUIImages {
       bibligraphy: bibliographyImage,
       bibligraphy_folder: bibliographyFolderImage,
       zotero_library: zoteroLibraryImage,
-      zotero_folder: zoteroFolderImage,
+      zotero_collection: zoteroCollectionImage,
+      zotero_root: zoteroRootImage,
       doi: doiImage,
       crossref: crossRefImage
     },

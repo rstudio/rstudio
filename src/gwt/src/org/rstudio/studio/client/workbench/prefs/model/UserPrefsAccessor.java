@@ -2798,37 +2798,6 @@ public class UserPrefsAccessor extends Prefs
    public final static String VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR = "codemirror";
 
    /**
-    * Zotero connection type (local or web)
-    */
-   public PrefValue<String> zoteroConnectionType()
-   {
-      return enumeration(
-         "zotero_connection_type",
-         "Zotero connection type", 
-         "Zotero connection type (local or web)", 
-         new String[] {
-            ZOTERO_CONNECTION_TYPE_LOCAL,
-            ZOTERO_CONNECTION_TYPE_WEB
-         },
-         "local");
-   }
-
-   public final static String ZOTERO_CONNECTION_TYPE_LOCAL = "local";
-   public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
-
-   /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
-    */
-   public PrefValue<Boolean> zoteroUseBetterBibtex()
-   {
-      return bool(
-         "zotero_use_better_bibtex",
-         "Use Better BibTeX for citation keys and BibLaTeX export", 
-         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
-         false);
-   }
-
-   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -3399,10 +3368,6 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
-      if (source.hasKey("zotero_connection_type"))
-         zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
-      if (source.hasKey("zotero_use_better_bibtex"))
-         zoteroUseBetterBibtex().setValue(layer, source.getBool("zotero_use_better_bibtex"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3626,8 +3591,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingShowMargin());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
-      prefs.add(zoteroConnectionType());
-      prefs.add(zoteroUseBetterBibtex());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

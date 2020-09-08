@@ -258,11 +258,15 @@ export function applyTheme(theme: EditorTheme) {
     .pm-navigation-tree-item {
       border: 1px solid ${theme.backgroundColor} !important;
       border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
     }
     .pm-selected-navigation-tree-item {
       background-color: ${theme.findTextBackgroundColor} !important;
       border: 1px solid ${theme.findTextBorderColor} !important;
       border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;

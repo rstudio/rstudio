@@ -30,6 +30,7 @@
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -63,6 +64,8 @@ const char * const kMarkdownReferencesUseDefault = "Default";
 const char * const kMarkdownReferencesBlock = "Block";
 const char * const kMarkdownReferencesSection = "Section";
 const char * const kMarkdownReferencesDocument = "Document";
+
+const char * const kZoteroLibrariesAll = "All";
 
 namespace {
 
@@ -237,6 +240,28 @@ bool interpretMarkdownReferencesValue(const std::string& value, std::string *pVa
       return false;
    }
 
+}
+
+void interpretZoteroLibraries(const std::string& value, boost::optional<std::vector<std::string>>* pValue)
+{
+   if (value == "")
+   {
+      pValue->reset(std::vector<std::string>());
+   }
+   else if (value == kZoteroLibrariesAll) // migration
+   {
+      pValue->reset(std::vector<std::string>( { "My Library" }));
+   }
+   else
+   {
+      std::vector<std::string> parsedLibraries;
+      text::parseCsvLine(value.begin(), value.end(), true, &parsedLibraries);
+      std::vector<std::string> libraries;
+      std::transform(parsedLibraries.begin(), parsedLibraries.end(), std::back_inserter(libraries), [](const std::string& str) {
+         return boost::algorithm::trim_copy(str);
+      });
+      pValue->reset(libraries);
+   }
 }
 
 
@@ -915,6 +940,17 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->markdownCanonical = defaultConfig.markdownCanonical;
    }
+
+   // extract zotero libraries
+   it = dcfFields.find("ZoteroLibraries");
+   if (it != dcfFields.end())
+   {
+      interpretZoteroLibraries(it->second, &(pConfig->zoteroLibraries));
+   }
+   else
+   {
+      pConfig->zoteroLibraries = defaultConfig.zoteroLibraries;
+   }
    
    // extract python fields
    it = dcfFields.find("PythonType");
@@ -1181,6 +1217,15 @@ Error writeProjectFile(const FilePath& projectFilePath,
          boost::format fmt("MarkdownCanonical: %1%\n");
          contents.append(boost::str(fmt % yesNoAskValueToString(config.markdownCanonical)));
       }
+   }
+
+   // if we have zotero config create a zotero section
+   if (config.zoteroLibraries.has_value() && !config.zoteroLibraries.get().empty())
+   {
+      auto libraries = config.zoteroLibraries.get();
+      std::string librariesConfig = text::encodeCsvLine(libraries);
+      boost::format fmt("\nZoteroLibraries: %1%\n");
+      contents.append(boost::str(fmt % librariesConfig));
    }
    
    // if any Python configs deviate from default, then create Python section

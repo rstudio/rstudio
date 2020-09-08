@@ -1,9 +1,16 @@
 .pm-insert-citation-source-panel-item {
+  width: 100%;
+}
+
+.pm-insert-citation-source-panel-item-border {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 2px) !important;
-  margin-left: 1px;
-  margin-right: 1px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  width: calc(100% - 8px);
+  height: calc(100% - 6px);
 }
 
 .pm-insert-citation-source-panel-item-type {
@@ -43,6 +50,7 @@
   flex-shrink: 0;
   padding-right: 20px;
   padding-left: 20px;
+  opacity: 0.8;
 }
 
 .pm-insert-citation-source-panel-item-button-selected {

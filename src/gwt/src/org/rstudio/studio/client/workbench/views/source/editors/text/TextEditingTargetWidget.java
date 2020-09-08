@@ -678,18 +678,27 @@ public class TextEditingTargetWidget
             boolean visible = !isVisualMode();
             target_.recordCurrentNavigationPosition();
             docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, visible);
-            toggleRmdVisualModeButton_.setLatched(visible);
+            setToggleRmdVisualModeButtonLatched(visible);
             if (visible)
                onUserSwitchingToVisualMode();
          });
       docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
-         toggleRmdVisualModeButton_.setLatched(isVisualMode());
+         setToggleRmdVisualModeButtonLatched(isVisualMode());
          if (isVisualMode())
             findReplace_.hideFindReplace();
       });
-      toggleRmdVisualModeButton_.setLatched(isVisualMode());
+      setToggleRmdVisualModeButtonLatched(isVisualMode());
       toggleRmdVisualModeButton_.addStyleName("rstudio-themes-inverts");
       return toggleRmdVisualModeButton_;
+   }
+   
+   private void setToggleRmdVisualModeButtonLatched(boolean latched)
+   {
+      toggleRmdVisualModeButton_.setLatched(latched);
+      if (!latched)
+         toggleRmdVisualModeButton_.setTitle("Switch to visual markdown editor");
+      else
+         toggleRmdVisualModeButton_.setTitle("Switch to source editor");
    }
 
    private void addVisualModeOutlineButton(Toolbar toolbar)

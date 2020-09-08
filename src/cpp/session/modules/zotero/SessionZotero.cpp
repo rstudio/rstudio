@@ -22,12 +22,16 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+#include <session/prefs/Preferences.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "ZoteroCollections.hpp"
 #include "ZoteroCollectionsWeb.hpp"
 #include "ZoteroCollectionsLocal.hpp"
 #include "ZoteroBetterBibTeX.hpp"
+#include "ZoteroUtil.hpp"
 
 using namespace rstudio::core;
 
@@ -84,6 +88,24 @@ void zoteroValidateWebApiKey(const json::JsonRpcRequest& request,
    });
 }
 
+std::string errorResultStatus(Error error, const ErrorLocation& location)
+{
+   std::string err = core::errorDescription(error);
+   if (is404Error(err))
+   {
+      return kStatusNotFound;
+   }
+   else if (isHostError(err))
+   {
+      return kStatusNoHost;
+   }
+   else
+   {
+      core::log::logErrorMessage(err, location);
+      return kStatusError;
+   }
+}
+
 void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs, const json::JsonRpcFunctionContinuation& cont)
 {
    // result defaults
@@ -109,26 +131,38 @@ void handleGetCollectionSpecs(Error error, ZoteroCollectionSpecs collectionSpecs
    }
    else
    {
-      std::string err = core::errorDescription(error);
-      if (is404Error(err))
-      {
-         resultJson[kStatus] = kStatusNotFound;
-      }
-      else if (isHostError(err))
-      {
-         resultJson[kStatus] = kStatusNoHost;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE(err);
-         resultJson[kStatus] = kStatusError;
-      }
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
    }
 
    json::JsonRpcResponse response;
    response.setResult(resultJson);
    cont(Success(), &response);
 
+}
+
+void handleGetLibraries(Error error, std::vector<std::string> libraries, const json::JsonRpcFunctionContinuation& cont)
+{
+   // result defaults
+   json::Object resultJson;
+   resultJson[kMessage] = json::Value();
+   resultJson[kWarning] = "";
+   resultJson[kError] = "";
+
+   // handle success & error
+   if (!error)
+   {
+      json::Array collectionsJson = json::toJsonArray(libraries);
+      resultJson[kStatus] = kStatusOK;
+      resultJson[kMessage] = collectionsJson;
+   }
+   else
+   {
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
+   }
+
+   json::JsonRpcResponse response;
+   response.setResult(resultJson);
+   cont(Success(), &response);
 }
 
 void handleGetCollections(Error error, ZoteroCollections collections, std::string warning, const json::JsonRpcFunctionContinuation& cont)
@@ -159,20 +193,7 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    }
    else
    {
-      std::string err = core::errorDescription(error);
-      if (is404Error(err))
-      {
-         resultJson[kStatus] = kStatusNotFound;
-      }
-      else if (isHostError(err))
-      {
-         resultJson[kStatus] = kStatusNoHost;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE(err);
-         resultJson[kStatus] = kStatusError;
-      }
+      resultJson[kStatus] = errorResultStatus(error, ERROR_LOCATION);
    }
 
    json::JsonRpcResponse response;
@@ -180,41 +201,16 @@ void handleGetCollections(Error error, ZoteroCollections collections, std::strin
    cont(Success(), &response);
 }
 
-void zoteroGetCollectionSpecs(const json::JsonRpcRequest& request,
-                              const json::JsonRpcFunctionContinuation& cont)
+void zoteroGetLibraryNames(const json::JsonRpcRequest&,
+                           const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
-   auto handler =  boost::bind(handleGetCollectionSpecs, _1, _2, cont);
-
-   getCollectionSpecs(handler);
+   auto handler =  boost::bind(handleGetLibraries, _1, _2, cont);
+   getLibraryNames(handler);
 }
 
-void zoteroGetCollections(const json::JsonRpcRequest& request,
-                          const json::JsonRpcFunctionContinuation& cont)
+bool getConfiguredCollections(const std::string& file, std::vector<std::string>* pCollections)
 {
-   // response object
-   json::JsonRpcResponse response;
-
-   // extract params
-   std::string file;
-   json::Value collectionsJsonValue;
-   json::Array collectionsJson, cachedJson;
-   bool useCache;
-   Error error = json::readParams(request.params, &file, &collectionsJsonValue, &cachedJson, &useCache);
-   if (error)
-   {
-      json::setErrorResponse(error, &response);
-      cont(Success(), &response);
-      return;
-   }
-
-   // determine whether this is a request for all collections.
-   bool allCollections = collectionsJsonValue.isNull();
-
-   // if it isn't then cast to collectionsJson
-   if (!allCollections)
-      collectionsJson = collectionsJsonValue.getArray();
-
    // determine whether the file the zotero collections are requested for is part of the current project
    bool isProjectFile = false;
    if (!file.empty() && projects::projectContext().hasProject())
@@ -226,38 +222,140 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       }
    }
 
-    // determine collections to request
-   std::vector<std::string> collections;
-
-   // explicit request
-   if (collectionsJson.getSize() > 0)
+   // if it's a project, check for global bookdown disable of zotero
+   if (isProjectFile)
    {
-      collectionsJson.toVectorString(collections);
-   }
-   // based on project
-   else if (!allCollections && isProjectFile)
-   {
-      // look for special logical values
+      // check for global disable of zotero for bookdown
       const std::string kLogicalPrefix = "LOGICAL:";
       std::vector<std::string> bookdownCollections = module_context::bookdownZoteroCollections();
+
+      // logical value. non-TRUE value means zotero has been disabled in YAML, TRUE value means all collections
       if (bookdownCollections.size() == 1 && boost::algorithm::starts_with(bookdownCollections[0], kLogicalPrefix))
       {
          std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
-         allCollections = value == "TRUE";
+         if (value == "TRUE")
+         {
+             session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
+         }
+         else
+         {
+            return false;
+         }
+      }
+      else if (bookdownCollections.size() > 0)
+      {
+         *pCollections = bookdownCollections;
       }
       else
       {
-         collections = bookdownCollections;
+         session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
       }
    }
 
-   // return empty array if no collections were requested and we aren't getting allCollections
-   if (collections.size() == 0 && !allCollections)
+   // read global pref (ignore project b/c this file isn't in the project)
+   else
    {
-      ZoteroCollections noCollections;
-      handleGetCollections(Success(), noCollections, "", cont);
+      auto libsPref = session::prefs::userState().readValue(kUserStateUserLayer, "zotero_libraries");
+      if (libsPref.has_value() && libsPref.get().isArray())
+         libsPref->getArray().toVectorString(*pCollections);
+   }
+
+   return true;
+
+}
+
+void zoteroGetActiveCollectionSpecs(const json::JsonRpcRequest& request,
+                                    const json::JsonRpcFunctionContinuation& cont)
+{
+   // extract params
+   std::string file;
+   json::Array collectionsJson;
+   Error error = json::readParams(request.params, &file, &collectionsJson);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      json::setErrorResponse(error, &response);
+      cont(Success(), &response);
       return;
    }
+
+   // collections filter (empty means all collections)
+   std::vector<std::string> collections;
+
+   // see if the user provided some collections
+   collectionsJson.toVectorString(collections);
+
+   // if they didn't, see if there are project level or global prefs that provide collections
+   if (collections.size() == 0)
+   {
+      if (!getConfiguredCollections(file, &collections))
+      {
+         ZoteroCollectionSpecs noCollections;
+         handleGetCollectionSpecs(Success(), noCollections, cont);
+         return;
+      }
+   }
+
+   // if at this point we still don't have any collections (likely due to migrating
+   // from a dev version that had support for 'All Collections') then just default
+   // to 'My Library'
+   if (collections.size() == 0)
+      collections.push_back(kMyLibrary);
+
+   // get the specs
+   getCollectionSpecs(collections, [cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
+      json::JsonRpcResponse response;
+      if (error)
+      {
+         json::setErrorResponse(error, &response);
+         cont(Success(), &response);
+      }
+      else
+      {
+         handleGetCollectionSpecs(Success(), specs, cont);
+      }
+   });
+
+}
+
+void zoteroGetCollections(const json::JsonRpcRequest& request,
+                          const json::JsonRpcFunctionContinuation& cont)
+{
+   // response object
+   json::JsonRpcResponse response;
+
+   // extract params
+   std::string file;
+   json::Array collectionsJson, cachedJson;
+   bool useCache;
+   Error error = json::readParams(request.params, &file, &collectionsJson, &cachedJson, &useCache);
+   if (error)
+   {
+      json::setErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   // read user request
+   std::vector<std::string> collections;
+   collectionsJson.toVectorString(collections);
+
+   // if there is no user request, see if there are project level or global prefs that provide collections
+   if (collections.size() == 0)
+   {
+      if (!getConfiguredCollections(file, &collections))
+      {
+         ZoteroCollections noCollections;
+         handleGetCollections(Success(), noCollections, "", cont);
+         return;
+      }
+   }
+
+   // if at this point we still don't have any collections (likely due to migrating
+   // from a dev version that had support for 'All Collections') then just default
+   // to 'My Library'
+   if (collections.size() == 0)
+      collections.push_back(kMyLibrary);
 
    // extract client cache specs
    ZoteroCollectionSpecs cacheSpecs;
@@ -274,27 +372,9 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
    // create handler for request
    auto handler =  boost::bind(handleGetCollections, _1, _2, _3, cont);
 
-   // allCollections is a request for the library
-   if (allCollections)
-   {
-      // we just need the kMyLibrary cache spec
-      ZoteroCollectionSpec librarySpec(kMyLibrary);
-      ZoteroCollectionSpecs::iterator it = std::find_if(cacheSpecs.begin(), cacheSpecs.end(), [](const ZoteroCollectionSpec& spec) {
-         return spec.name == kMyLibrary;
-      });
-      if (it != cacheSpecs.end())
-         librarySpec = *it;
+   // get the collections
+   getCollections(collections, cacheSpecs, useCache, handler);
 
-      // get the library
-      getLibrary(librarySpec, useCache, handler);
-
-   }
-
-   // otherwise get the requested collections
-   else
-   {
-      getCollections(collections, cacheSpecs, useCache, handler);
-   }
 }
 
 
@@ -307,10 +387,12 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
        (boost::bind(registerAsyncRpcMethod, "zotero_get_collections", zoteroGetCollections))
-       (boost::bind(registerAsyncRpcMethod, "zotero_get_collection_specs", zoteroGetCollectionSpecs))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_library_names", zoteroGetLibraryNames))
+       (boost::bind(registerAsyncRpcMethod, "zotero_get_active_collection_specs", zoteroGetActiveCollectionSpecs))
        (boost::bind(registerAsyncRpcMethod, "zotero_validate_web_api_key", zoteroValidateWebApiKey))
        (boost::bind(registerRpcMethod, "zotero_detect_local_config", zoteroDetectLocalConfig))
        (boost::bind(registerRpcMethod, "zotero_better_bibtex_export", betterBibtexExport))
+       (betterBibtexInit)
    ;
    return initBlock.execute();
 }
@@ -319,3 +401,5 @@ Error initialize()
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
+
+

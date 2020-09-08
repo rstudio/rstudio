@@ -51,13 +51,18 @@ export interface ZoteroServer {
 
   getCollections: (
     file: string | null,
-    collections: string[] | null,
+    collections: string[],
     cached: ZoteroCollectionSpec[],
     useCache: boolean
   ) => Promise<ZoteroResult>;
 
-  getCollectionSpecs: ()
+  getLibraryNames: ()
     => Promise<ZoteroResult>;
+
+  getActiveCollectionSpecs: (
+    file: string | null,
+    collections: string[]
+  ) => Promise<ZoteroResult>;
 
   // Return status: nohost w/ warning text if it fails to 
   // communciate w/ Better BibTeX. Otherwise returns 

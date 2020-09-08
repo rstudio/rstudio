@@ -61,14 +61,25 @@ public class PanmirrorZoteroServer
             });
    }
 
-   public Promise<JavaScriptObject> getCollectionSpecs()
+   public Promise<JavaScriptObject> getLibraryNames()
    {
       return new Promise<JavaScriptObject>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-               server_.zoteroGetCollectionSpecs(
+               server_.zoteroGetLibraryNames(
                      new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
             });
    }
+   
+   public Promise<JavaScriptObject> getActiveCollectionSpecs(String file, JsArrayString collections)
+   {
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetActiveCollectionSpecs(file, collections,
+                  new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading Collections...", 2000));
+            });
+   }
+   
+   
    
    public Promise<JavaScriptObject> betterBibtexExport(JsArrayString itemKeys, 
                                                        String translatorId, 

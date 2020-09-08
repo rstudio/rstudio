@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import java.util.ArrayList;
 
@@ -20,7 +20,8 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogResources;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -36,14 +37,16 @@ public class ZoteroConnectionWidget extends Composite
       HorizontalPanel panel = new HorizontalPanel();
       
       ArrayList<String> options = new ArrayList<String>();
+      options.add("(None)");
       if (!webOnly())
          options.add("Local");
       options.add("Web");
       
       ArrayList<String> values = new ArrayList<String>();
+      values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_NONE);
       if (!webOnly())
-         values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_LOCAL);
-      values.add(UserPrefsAccessor.ZOTERO_CONNECTION_TYPE_WEB);
+         values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_LOCAL);
+      values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_WEB);
 
       zoteroConnection_ = new SelectWidget(
             "Zotero Library:",
@@ -53,6 +56,7 @@ public class ZoteroConnectionWidget extends Composite
             true,
             false
          );
+      zoteroConnection_.addStyleName(ZoteroResources.INSTANCE.styles().connection());
       zoteroConnection_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       panel.add(zoteroConnection_);
       
