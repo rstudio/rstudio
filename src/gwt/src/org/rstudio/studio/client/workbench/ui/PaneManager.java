@@ -893,22 +893,11 @@ public class PaneManager
      
       final double leftStartSum = tempStartSum;
       final double leftEndSum = tempEndSum;
-      Debug.logToConsole("=== horizontalResizeAnimation ===");
-      Debug.logToConsole(" === leftStart ===");
-      for (int i = 0; i < leftStart.size(); i++)
-         Debug.logToConsole("  >" + leftStart.get(i) + "< ");
-      Debug.logToConsole(" === leftEnd ===");
-      for (int i = 0; i < leftEnd.size(); i++)
-         Debug.logToConsole("  >" + leftEnd.get(i) + "< ");
-      
-      Debug.logToConsole(" leftStartSum: " + leftStartSum);
-      Debug.logToConsole(" leftEndSum: " + leftEndSum);
       return new Animation()
       {
          @Override
          protected void onUpdate(double progress)
          {
-            Debug.logToConsole("  === onUpdate ===");
             double size = (1 - progress) * rightStart +
                progress * rightEnd;
             panel_.setWidgetSize(right_, size);
@@ -919,18 +908,13 @@ public class PaneManager
             size = (1 - progress) * leftStartSum +
                progress * leftEndSum;
 
-            Debug.logToConsole("  size: " + size);
             double currentSize = panel_.getLeftWidgetsSize();
-            Debug.logToConsole("  currentSize: " + currentSize);
             if (currentSize > size) // we are shrinking
             {
-               Debug.logToConsole("  === shrinking ===");
                double difference = currentSize - size;
-               Debug.logToConsole("  difference: " + difference);
                for (int i = 0; i < leftStart.size() && difference > 0; i++)
                {
                   double widgetSize = panel_.getWidgetSize(leftColumnList_.get(i));
-                  Debug.logToConsole("   widget" + i + " size: " + widgetSize);
                   if (widgetSize > 0)
                   {
                      if (widgetSize > difference)
@@ -943,23 +927,15 @@ public class PaneManager
                         panel_.setWidgetSize(leftColumnList_.get(i), 0.0);
                         difference -= widgetSize;
                      }
-                     Debug.logToConsole("   widget" + i + " newSize: " + panel_.getWidgetSize(leftColumnList_.get(i)));
-                     Debug.logToConsole("   difference: " + difference);
                   }
                }
             }
             else if (currentSize < size)// we are growing
             {
-               Debug.logToConsole("  === growing ===");
-               Debug.logToConsole("     === endSizes ===");
-               for (int i = 0; i < leftEnd.size(); i++)
-                     Debug.logToConsole("      widget" + i + " endSize: " + leftEnd.get(i));
-               Debug.logToConsole("   size: " + size);
                // iterate backwards
                for (int i = leftStart.size() - 1; i >= 0 && size > 0; i--)
                {
                   double widgetSize = panel_.getWidgetSize(leftColumnList_.get(i));
-                  Debug.logToConsole("   widget" + i + " size: " + widgetSize);
                   if (widgetSize < leftEnd.get(i))
                   {
                      if (size > leftEnd.get(i))
@@ -977,13 +953,7 @@ public class PaneManager
                   {
                      size -= widgetSize;
                   }
-                  Debug.logToConsole("   widget" + i + " newSize: " + panel_.getWidgetSize(leftColumnList_.get(i)));
-                  Debug.logToConsole("   size: " + size);
                }
-            }
-            else
-            {
-               Debug.logToConsole("  === equal ===");
             }
          }  
 
