@@ -28,9 +28,11 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -68,11 +70,12 @@ public class VisualModePanmirrorContext
    }
    
    @Inject
-   void initialize(WorkbenchContext workbenchContext, Session session, EventBus events)
+   void initialize(WorkbenchContext workbenchContext, Session session, EventBus events, RMarkdownServerOperations server)
    {
       workbenchContext_ = workbenchContext;
       sessionInfo_ = session.getSessionInfo();
       events_ = events;
+      server_ = server;
       
       // notify watchers of file changes
       events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
@@ -176,6 +179,7 @@ public class VisualModePanmirrorContext
          return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
            
             JsArrayString resolvedUris = JsArrayString.createArray().cast();
+            JsArrayString unresolvedUris = JsArrayString.createArray().cast();
             for (int i=0; i<imageUris.length(); i++)
             {
                String uri = imageUris.get(i);
@@ -188,12 +192,29 @@ public class VisualModePanmirrorContext
                   String path = uiContext.mapPathToResource.map(uri);
                   if (path != null)
                      resolvedUris.push(path); 
-                  
-                  // TODO: copy files to 'images' (managing uniqueness)
+                  else
+                     unresolvedUris.push(uri);
                }
             }
             
-            resolve.onInvoke(resolvedUris);
+            // import unresolved uris
+            if (unresolvedUris.length() > 0)
+            {
+               FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+               String imagesDir = resourceDir.completePath("images");
+               server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
+                  @Override
+                  public void onResponseReceived(JsArrayString importedUris)
+                  {
+                     resolve.onInvoke(JsArrayUtil.concat(resolvedUris, importedUris));
+                  }
+               });
+            }
+            // no unresolved, continue on
+            else
+            {
+               resolve.onInvoke(resolvedUris);
+            }
          });
       };
    
@@ -310,7 +331,6 @@ public class VisualModePanmirrorContext
    }
    private HashSet<FileWatcher> fileWatchers_ = new HashSet<FileWatcher>();
    
-
    private final DocUpdateSentinel docUpdateSentinel_;
    private final TextEditingTarget target_;
    
@@ -321,4 +341,5 @@ public class VisualModePanmirrorContext
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;
    private EventBus events_;
+   private RMarkdownServerOperations server_;
 }
