@@ -17,7 +17,6 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import Fuse from 'fuse.js';
 import { PandocServer } from '../pandoc';
-import uniqby from 'lodash.uniqby';
 
 import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
