@@ -226,8 +226,9 @@ export class BibliographyManager {
 
   // A general purpose search interface for filtered searching
   public search(query?: string, providerKey?: string, collectionKey?: string): BibliographySourceWithCollections[] {
-    const limit = 1000;
-    if (query) {
+    const limit = 100;
+    if (query && query.length > 0) {
+      // These are ordered by search score, so leave as is
       if (providerKey && collectionKey) {
         return this.searchProviderCollection(query, limit, providerKey, collectionKey);
       } else if (providerKey) {
@@ -236,12 +237,18 @@ export class BibliographyManager {
         return this.searchAllSources(query, limit);
       }
     } else {
+
+      // These are in arbitrary order, so sort them alphabetically
+      const idSort = (a: BibliographySource, b: BibliographySource) => {
+        return a.id.localeCompare(b.id);
+      };
+
       if (providerKey && collectionKey) {
-        return this.sourcesForProviderCollection(providerKey, collectionKey);
+        return this.sourcesForProviderCollection(providerKey, collectionKey).sort(idSort);
       } else if (providerKey) {
-        return this.sourcesForProvider(providerKey);
+        return this.sourcesForProvider(providerKey).sort(idSort);
       } else {
-        return this.allSources();
+        return this.allSources().sort(idSort);
       }
     }
   }
