@@ -20,6 +20,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
@@ -255,6 +258,17 @@ public class DesktopHooks
    void mouseNavigateButtonClick(boolean forward, int x, int y)
    {
       events_.fireEvent(new MouseNavigateSourceHistoryEvent(forward, x, y));
+   }
+   
+   void onDragStart()
+   {
+      workbenchContext_.setDroppedUrls(null);
+   }
+   
+   void onUrlsDropped(String droppedUrls)
+   {   
+      List<String> urls = Arrays.asList(droppedUrls.split("%0A"));
+      workbenchContext_.setDroppedUrls(urls); 
    }
 
    private final Commands commands_;

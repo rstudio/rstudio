@@ -65,6 +65,8 @@ protected:
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEvent) override;
    void closeEvent(QCloseEvent* pEv) override;
+   void dragEnterEvent(QDragEnterEvent *e) override;
+   void dropEvent(QDropEvent *e) override;
 
 protected Q_SLOTS:
    void openFile(QString file);

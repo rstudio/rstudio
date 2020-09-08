@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import java.util.List;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -247,10 +249,21 @@ public class WorkbenchContext
    {
       return session_.getSessionInfo().getUserIdentity();
    }
+   
+   public List<String> getDroppedUrls()
+   {
+      return droppedUrls_;
+   }
+   
+   public void setDroppedUrls(List<String> droppedUrls)
+   {
+      droppedUrls_ = droppedUrls;
+   }
 
    private boolean isServerBusy_ = false;
    private boolean isRestartInProgress_ = false;
    private boolean isBuildInProgress_ = false;
+   private List<String> droppedUrls_ = null;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem defaultWorkingDir_ = null;

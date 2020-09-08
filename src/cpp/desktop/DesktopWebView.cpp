@@ -139,6 +139,7 @@ void WebView::init()
 #endif
 
    setPage(pWebPage_);
+   setAcceptDrops(true);
 }
 
 void WebView::setBaseUrl(const QUrl& baseUrl)
@@ -203,6 +204,46 @@ void WebView::keyPressEvent(QKeyEvent* pEvent)
    // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);
    
+}
+
+void WebView::dragEnterEvent(QDragEnterEvent *pEvent)
+{
+   // notify GWT context of drag start
+   QString command = QString::fromUtf8(
+     "if (window.desktopHooks) "
+     "  window.desktopHooks.onDragStart();");
+   webPage()->runJavaScript(command);
+
+   // delegate to default
+   QWebEngineView::dragEnterEvent(pEvent);
+}
+
+void WebView::dropEvent(QDropEvent *pEvent)
+{
+   // notify GWT context of dropped urls (as in the JS layer
+   // the dataTransfer object comes up empty)
+   if (pEvent->mimeData()->hasUrls())
+   {
+      // build buffer of urls
+      QString urlsBuffer;
+      auto urls = pEvent->mimeData()->urls();
+      for (auto url : urls)
+      {
+         urlsBuffer.append(url.toString());
+         urlsBuffer.append(QString::fromUtf8("%0A"));
+      }
+
+      // notify desktop of dropped urls
+      QString command = QStringLiteral(
+        "if (window.desktopHooks) "
+        "  window.desktopHooks.onUrlsDropped(\"%1\");")
+           .arg(urlsBuffer);
+      webPage()->runJavaScript(command);
+   }
+
+   // delegate to default (will end up in standard drag/drop
+   // handling but w/ empty dataTransfer)
+   QWebEngineView::dropEvent(pEvent);
 }
 
 void WebView::openFile(QString fileName)
