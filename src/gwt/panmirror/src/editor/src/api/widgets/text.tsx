@@ -65,7 +65,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
           pm-background-color 
           ${props.className}
           ${props.iconAdornment ? 'pm-textinput-input-with-icon' : ''}`}
-        value={props.value || undefined}
+        value={props.value !== undefined ? props.value : undefined}
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}
         onKeyUp={props.onKeyUp}
