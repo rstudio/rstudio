@@ -16,6 +16,8 @@ package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 public class FileIcon
@@ -63,8 +65,14 @@ public class FileIcon
 
    public FileIcon(ImageResource imageResource, String description)
    {
+      this(imageResource, description, null);
+   }
+   
+   public FileIcon(ImageResource imageResource, String description, FileSystemItem fsi)
+   {
       imageResource_ = imageResource;
       description_ = description;
+      fsi_ = fsi;
    }
 
    public ImageResource getImageResource()
@@ -94,7 +102,19 @@ public class FileIcon
       return icon;
    }
 
+   
+   public FileSystemItem getFileSystemItem()
+   {
+      return fsi_;
+   }
+   
+   public void setFileSystemItem(FileSystemItem fsi)
+   {
+      fsi_ = fsi;
+   }
+
    private ImageResource imageResource_;
    private String description_;
+   private FileSystemItem fsi_;
 }
 

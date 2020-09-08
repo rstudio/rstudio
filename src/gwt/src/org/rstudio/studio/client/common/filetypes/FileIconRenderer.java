@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.impl.ImageResourcePrototype;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -31,7 +33,7 @@ public class FileIconRenderer extends AbstractSafeHtmlRenderer<FileIcon>
    interface Template extends SafeHtmlTemplates
    {
       @SafeHtmlTemplates.Template("<img src='{0}' border='0' width='{1}' height='{2}' alt='{3}'>")
-      SafeHtml image(SafeUri imageUri, int width, int height, String altText);
+      SafeHtml image(SafeUri imageUri, int width, int height, String altText);   
    }
 
    private static final Template TEMPLATE = GWT.create(Template.class);
@@ -39,7 +41,25 @@ public class FileIconRenderer extends AbstractSafeHtmlRenderer<FileIcon>
    @Override
    public SafeHtml render(FileIcon image)
    {
-      if (image.getImageResource() instanceof ImageResourcePrototype.Bundle)
+      if (image.getFileSystemItem() != null)
+      {
+         ImageResource imageRez = image.getImageResource();
+         String escapedPath = image.getFileSystemItem().getPath();
+         StringBuffer buffer = new StringBuffer();
+         buffer.append("<span draggable='true' ondragstart='event.dataTransfer.setData(\"text/uri-list\",\"");
+         buffer.append(escapedPath);
+         buffer.append("\");'><img draggable='false' src='");
+         buffer.append(image.getImage().getUrl());
+         buffer.append("' border='0' width='");
+         buffer.append(Integer.toString(imageRez.getWidth()));
+         buffer.append("' height='");
+         buffer.append(Integer.toString(imageRez.getHeight()));
+         buffer.append("' alt='");
+         buffer.append(escapedPath);
+         buffer.append("'></span>");
+         return SafeHtmlUtils.fromTrustedString(buffer.toString());
+      }
+      else if (image.getImageResource() instanceof ImageResourcePrototype.Bundle)
       {
          return AbstractImagePrototype.create(image.getImageResource()).getSafeHtml();
       } 

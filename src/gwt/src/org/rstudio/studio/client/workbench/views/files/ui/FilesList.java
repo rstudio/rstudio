@@ -156,11 +156,11 @@ public class FilesList extends Composite
 
             @Override
             public FileIcon getValue(FileSystemItem object)
-            {
-               if (object == parentPath_)
-                  return FileIcon.PARENT_FOLDER_ICON;
-               else
-                  return fileTypeRegistry.getIconForFile(object);
+            {   
+               FileIcon baseIcon = object == parentPath_ 
+                     ? FileIcon.PARENT_FOLDER_ICON
+                     : fileTypeRegistry.getIconForFile(object);
+               return new FileIcon(baseIcon.getImageResource(), baseIcon.getDescription(), object);
             }
          };
       iconColumn.setSortable(true);
