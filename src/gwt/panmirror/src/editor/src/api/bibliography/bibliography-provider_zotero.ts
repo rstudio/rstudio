@@ -19,7 +19,7 @@ import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLib
 import { ParsedYaml, valueFromYamlText } from "../yaml";
 import { suggestCiteId } from "../cite";
 
-import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
+import { BibliographyDataProvider, BibliographyFile, BibliographySourceWithCollections, BibliographyCollectionStream, BibliographyCollection } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibLaTeX } from './bibDB';
@@ -29,7 +29,7 @@ export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 export class BibliographyDataProviderZotero implements BibliographyDataProvider {
 
   private allCollections: ZoteroCollection[] = [];
-  private allCollectionSpecs: ZoteroCollectionSpec[] = [];
+  private allCollectionSpecs: BibliographyCollection[] = [];
   private server: ZoteroServer;
   private warning: string | undefined;
   private enabled = true;
@@ -106,17 +106,27 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   // Respect enabled;
   public isEnabled(): boolean {
-    return this.enabled && this.allCollections.length > 0;
+    return this.enabled && (this.allCollections.length > 0 || this.allCollectionSpecs.length > 0);
   }
 
-  public async collections(): Promise<BibliographyCollection[]> {
-    // Read collection specs (this is required to discover the entire tree structure, not just the root collections)
-    const allCollectionSpecsResult = await this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []);
-    if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
-      this.allCollectionSpecs = allCollectionSpecsResult.message;
-    }
+  public collections(): BibliographyCollectionStream {
+    let updatedCollectionSpecs: BibliographyCollection[] | null = null;
 
-    return Promise.resolve(this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey })));
+    this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []).then((specResult) => {
+      if (specResult && specResult.status === 'ok') {
+        this.allCollectionSpecs = specResult.message.map((spec: ZoteroCollectionSpec) => this.toBibliographyCollection(spec));
+      }
+      updatedCollectionSpecs = this.allCollectionSpecs;
+    });
+
+    return {
+      collections: this.allCollectionSpecs || [],
+      stream: () => updatedCollectionSpecs
+    };
+  }
+
+  private toBibliographyCollection(zoteroSpec: ZoteroCollectionSpec) {
+    return { name: zoteroSpec.name, key: zoteroSpec.key, parentKey: zoteroSpec.parentKey, provider: kZoteroProviderKey };
   }
 
   public items(): BibliographySourceWithCollections[] {

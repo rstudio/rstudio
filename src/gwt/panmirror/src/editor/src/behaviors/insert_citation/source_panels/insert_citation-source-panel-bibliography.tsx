@@ -15,8 +15,6 @@
 
 import React from "react";
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
@@ -32,38 +30,78 @@ import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export async function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): Promise<CitationSourcePanel> {
+export function bibliographySourcePanel(ui: EditorUI, bibliographyManager: BibliographyManager, treeDataChanged: () => void): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
 
+  const providerNodes: { [key: string]: NavigationTreeNode } = {};
+
   // For each of the providers, discover their collections
-  const localProviderNodes = await Promise.all(providers.filter(provider => provider.isEnabled()).map(async provider => {
+  providers.filter(provider => provider.isEnabled()).forEach(provider => {
 
     const getFolder = (prov: string, hasParent: boolean) => {
       return folderImageForProvider(prov, hasParent, ui);
     };
 
-    const collections = await provider.collections();
-    const node: NavigationTreeNode = {
-      key: provider.key,
-      name: ui.context.translateText(provider.name),
-      type: provider.key,
-      image: rootImageForProvider(provider.key, ui),
-      children: toTree(provider.key, collections, getFolder),
-      expanded: true
-    };
-    return Promise.resolve(node);
-  }));
+    // Get the response which could be items or could be a stream
+    const response = provider.collections();
+
+    // If this is a stream, poll the stream for tree data
+    if (!Array.isArray(response)) {
+
+      // Note the temporary collections
+      providerNodes[provider.key] = {
+        key: provider.key,
+        name: ui.context.translateText(provider.name),
+        type: provider.key,
+        image: rootImageForProvider(provider.key, ui),
+        children: toTree(provider.key, response.collections, getFolder),
+        expanded: true
+      };
+
+      const pollingInterval = setInterval(() => {
+        // if the document has been updated then invalidate
+        // otherwise check the stream
+        const result = response.stream();
+        if (result) {
+          // Got results. Update the tree data and notify the 
+          // caller that the data has changed
+          clearInterval(pollingInterval);
+          providerNodes[provider.key] = {
+            key: provider.key,
+            name: ui.context.translateText(provider.name),
+            type: provider.key,
+            image: rootImageForProvider(provider.key, ui),
+            children: toTree(provider.key, result, getFolder),
+            expanded: true
+          };
+          treeDataChanged();
+        }
+      }, 350);
+    } else {
+      // This is just an array of results, just pass them and move on
+      providerNodes[provider.key] = {
+        key: provider.key,
+        name: ui.context.translateText(provider.name),
+        type: provider.key,
+        image: rootImageForProvider(provider.key, ui),
+        children: toTree(provider.key, response, getFolder),
+        expanded: true
+      };
+    }
+  });
 
   return {
     key: '17373086-77FE-410F-A319-33E314482125',
     panel: BibligraphySourcePanel,
-    treeNode: {
-      key: 'My Sources',
-      name: ui.context.translateText('My Sources'),
-      image: ui.images.citations?.local_sources,
-      type: kAllLocalSourcesRootNodeType,
-      children: localProviderNodes,
-      expanded: true
+    treeNode: () => {
+      return {
+        key: 'My Sources',
+        name: ui.context.translateText('My Sources'),
+        image: ui.images.citations?.local_sources,
+        type: kAllLocalSourcesRootNodeType,
+        children: Object.values(providerNodes),
+        expanded: true
+      };
     }
   };
 }

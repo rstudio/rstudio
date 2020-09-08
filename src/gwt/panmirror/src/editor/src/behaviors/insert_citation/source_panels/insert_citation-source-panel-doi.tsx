@@ -33,13 +33,15 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
     panel: DOISourcePanel,
-    treeNode: {
-      key: 'DOI',
-      name: ui.context.translateText('From DOI'),
-      image: ui.images.citations?.doi,
-      type: kDOIType,
-      children: [],
-      expanded: true
+    treeNode: () => {
+      return {
+        key: 'DOI',
+        name: ui.context.translateText('From DOI'),
+        image: ui.images.citations?.doi,
+        type: kDOIType,
+        children: [],
+        expanded: true
+      };
     }
   };
 }

@@ -31,13 +31,15 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
   return {
     key: 'E38370AA-78AE-450B-BBE8-878E1C817C04',
     panel: CrossRefSourcePanel,
-    treeNode: {
-      key: 'CrossRef',
-      name: ui.context.translateText('Crossref'),
-      image: ui.images.citations?.crossref,
-      type: kCrossrefType,
-      children: [],
-      expanded: true
+    treeNode: () => {
+      return {
+        key: 'CrossRef',
+        name: ui.context.translateText('Crossref'),
+        image: ui.images.citations?.crossref,
+        type: kCrossrefType,
+        children: [],
+        expanded: true
+      };
     }
   };
 }

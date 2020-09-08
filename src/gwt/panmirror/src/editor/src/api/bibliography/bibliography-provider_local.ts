@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections, BibliographyCollectionStream } from "./bibliography";
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -83,8 +83,9 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public collections(): Promise<BibliographyCollection[]> {
-    return Promise.resolve([]);
+  public collections(): BibliographyCollection[] {
+
+    return [];
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
