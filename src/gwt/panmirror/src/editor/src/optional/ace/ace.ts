@@ -132,6 +132,8 @@ export class AceNodeView implements NodeView {
   private queuedSelection: QueuedSelection | null;
   private resizeTimer: number;
   private renderedWidth: number;
+  private scrollRow: number;
+  private cursorDirty: boolean;
 
   private readonly subscriptions: VoidFunction[];
 
@@ -166,6 +168,8 @@ export class AceNodeView implements NodeView {
     this.subscriptions = [];
     this.resizeTimer = 0;
     this.renderedWidth = 0;
+    this.scrollRow = 0;
+    this.cursorDirty = false;
 
     // options
     this.editorOptions = editorOptions;
@@ -455,6 +459,16 @@ export class AceNodeView implements NodeView {
       }
     });
 
+    // If the cursor moves and we're in focus, ensure that the cursor is
+    // visible. Ace's own cursor visiblity mechanisms don't work in embedded
+    // editors.
+    this.editSession.getSelection().on('changeCursor', () => {
+      // We can't change the scroll position during a cursorChange (as Ace will
+      // treat it as a selection drag if the mouse is down), so mark the
+      // position as dirty and process it when the keyboard/mouse is released.
+      this.cursorDirty = true;
+    });
+
     // Add custom escape commands for movement keys (left/right/up/down); these
     // will check to see whether the movement should leave the editor, and if
     // so will do so instead of moving the cursor.
@@ -629,6 +643,19 @@ export class AceNodeView implements NodeView {
     this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
       this.debounceResize();
     }));
+
+    // When key/mouse up events occur, check to see whether we need to scroll
+    // the cursor into view.
+    let eventHandler = (evt: any) => {
+      window.setTimeout(() => {
+        if (this.cursorDirty) {
+          this.scrollCursorIntoView();
+          this.cursorDirty = false;
+        }
+      }, 0);
+    };
+    this.dom.addEventListener("keyup", eventHandler);
+    this.dom.addEventListener("mouseup", eventHandler);
   }
 
   /**
@@ -726,6 +753,53 @@ export class AceNodeView implements NodeView {
       return this.editSession.getValue();
     } else {
       return this.dom.innerText;
+    }
+  }
+
+  /**
+   * Ensures that the Ace cursor is visible in the scrollable region of the document.
+   */
+  private scrollCursorIntoView(): void {
+
+    // No need to try to enforce cursor position if we're already scrolled to
+    // this row
+    if (this.editSession &&
+      this.editSession.getSelection().getCursor().row === this.scrollRow) {
+      return;
+    }
+
+    // Ensure we still have focus before proceeding
+    if (this.dom.contains(document.activeElement)) {
+      const cursor = document.activeElement as HTMLElement;
+
+      // Ace doesn't actually move the cursor but uses CSS translations to
+      // make it appear in the right place, so we need to use the somewhat
+      // expensive getBoundingClientRect call to get a resolved position.
+      // (The alternative would be parse the translate: transform(10px 20px))
+      // call from the style property.)
+      const editingRoot = editingRootNode(this.view.state.selection)!;
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const containerRect = container.getBoundingClientRect();
+      const cursorRect = cursor.getBoundingClientRect();
+
+      // Scrolling down
+      let down = (cursorRect.bottom + cursorRect.height + 5) - containerRect.bottom;
+      if (down > 0) {
+        container.scrollTop += down;
+        return;
+      }
+
+      // Scrolling up
+      let up = (containerRect.top + cursorRect.height + 15) - cursorRect.top;
+      if (up > 0) {
+        container.scrollTop -= up;
+        return;
+      }
+
+      // Update cached scroll row so we don't unnecessarily redo these computations
+      if (this.editSession) {
+        this.scrollRow = this.editSession.getSelection().getCursor().row;
+      }
     }
   }
 }
