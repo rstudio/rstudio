@@ -103,7 +103,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   // If the nodes change, clear the search box value
   React.useLayoutEffect(() => {
-    // TODO: Clear search term when node changes
+    setSearchTerm('');
   }, [props.selectedNode]);
 
   // Search the user search terms
