@@ -1359,14 +1359,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onLayoutZoomSource()
    {
-      onActivateSource(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            events_.fireEvent(new ZoomPaneEvent("Source"));
-         }
-      });
+      events_.fireEvent(new ZoomPaneEvent("Source"));
    }
 
    @Override
