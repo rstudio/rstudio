@@ -21,6 +21,7 @@ import { EditorView } from 'prosemirror-view';
 
 import uniqby from 'lodash.uniqby';
 
+import { FocusEvent } from '../../api/event-types';
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
@@ -77,12 +78,15 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-
-
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, ui } = context;
 
-  const mgr = new BibliographyManager(context.server.pandoc, context.server.zotero);
+  // prime bibliography on initial focus
+  const bibliographyManager = new BibliographyManager(context.server.pandoc, context.server.zotero);
+  const focusUnsubscribe = context.events.subscribe(FocusEvent, (doc) => {
+    bibliographyManager.prime(ui, doc!);
+    focusUnsubscribe();
+  });
 
   if (!pandocExtensions.citations) {
     return null;
@@ -181,7 +185,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (_schema: Schema) => {
-      return [new InsertCitationCommand(ui, context.events, mgr, context.server)];
+      return [new InsertCitationCommand(ui, context.events, bibliographyManager, context.server)];
     },
 
     appendMarkTransaction: (schema: Schema) => {
@@ -222,8 +226,8 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     completionHandlers: () => [
-      citationDoiCompletionHandler(context.ui, mgr, context.server),
-      citationCompletionHandler(context.ui, context.events, mgr, context.server.pandoc),
+      citationDoiCompletionHandler(context.ui, bibliographyManager, context.server),
+      citationCompletionHandler(context.ui, context.events, bibliographyManager, context.server.pandoc),
     ],
 
     plugins: (schema: Schema) => {
@@ -232,11 +236,11 @@ const extension = (context: ExtensionContext): Extension | null => {
           {
             key: new PluginKey('paste_cite_doi'),
             props: {
-              handlePaste: handlePaste(ui, mgr, context.server.pandoc),
+              handlePaste: handlePaste(ui, bibliographyManager, context.server.pandoc),
             }
           }),
         citeHighlightPlugin(schema),
-        citePopupPlugin(schema, ui, mgr, context.server.pandoc)
+        citePopupPlugin(schema, ui, bibliographyManager, context.server.pandoc)
       ];
     },
   };

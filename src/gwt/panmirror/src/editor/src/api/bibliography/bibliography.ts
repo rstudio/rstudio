@@ -92,6 +92,16 @@ export class BibliographyManager {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
   }
 
+  public async prime(ui: EditorUI, doc: ProsemirrorNode) {
+    // Load the bibliography
+    await this.load(ui, doc);
+
+    // Prime any of the providers by downloading collection specs
+    await Promise.all(this.providers.map(async provider => {
+      await provider.collections();
+    }));
+  }
+
   public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
 
     // read the Yaml blocks from the document
