@@ -21,7 +21,7 @@ import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
 import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
-import { ParsedYaml, parseYamlNodes } from '../yaml';
+import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
 
@@ -163,17 +163,17 @@ function bibliographyFilesFromDocument(doc: ProsemirrorNode, ui: EditorUI): stri
 }
 
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[]): string[] | undefined {
-  const bibliographyParsedYamls = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object' && parsedYaml.yaml.bibliography,
-  );
 
-  // Look through any yaml nodes to see whether any contain bibliography information
-  if (bibliographyParsedYamls.length > 0) {
+  // Read the values of any yaml blocks that include bibliography headers
+  // filter out blocks that don't include such headers
+  const bibliographyValues = parsedYamls.map(parsedYaml => {
+    return valueFromYamlText('bibliography', parsedYaml.yamlCode);
+  }).filter(val => val !== null);
+
+  if (bibliographyValues.length > 0) {
     // Pandoc will use the last biblography node when generating a bibliography.
     // So replicate this and use the last biblography node that we find
-    const bibliographyParsedYaml = bibliographyParsedYamls[bibliographyParsedYamls.length - 1];
-    const bibliographyFiles = bibliographyParsedYaml.yaml.bibliography;
-
+    const bibliographyFiles = bibliographyValues[bibliographyValues.length - 1];
     if (
       Array.isArray(bibliographyFiles) &&
       bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')) {

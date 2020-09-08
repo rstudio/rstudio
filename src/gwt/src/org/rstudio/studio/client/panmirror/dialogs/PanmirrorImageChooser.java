@@ -22,15 +22,18 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
 public class PanmirrorImageChooser extends TextBoxWithButton {
 
    
-   public PanmirrorImageChooser(PanmirrorUIContext uiContext)
+   public PanmirrorImageChooser(PanmirrorUIContext uiContext, RMarkdownServerOperations server)
    {
       super("Image (File or URL):", "", "Browse...", null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
       PanmirrorDialogsUtil.setFullWidthStyles(this);
@@ -59,18 +62,28 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                      if (mappedPath != null) 
                      {
                         setText(mappedPath);
+                        indicator.onCompleted();
                      }
                      else
                      {
-                        RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           "Image Location Error",
-                           "The selected image cannot be included in this document.\n\n" +
-                           "Normally, images should be located within the document directory (" + 
-                           uiContext.getDefaultResourceDir.get() + ")");
-                          
+                        JsArrayString images = JsArrayString.createArray().cast();
+                        images.push(input.getPath());
+                        FileSystemItem defaultDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+                        String imagesDir = defaultDir.completePath("images");
+                        server.rmdImportImages(images, imagesDir, new SimpleRequestCallback<JsArrayString>() {
+                           @Override
+                           public void onResponseReceived(JsArrayString resolvedImages)
+                           {
+                              if (resolvedImages.length() > 0)
+                              {
+                                 String mappedPath = uiContext.mapPathToResource.map(resolvedImages.get(0));
+                                 setText(mappedPath);
+                              }
+                              indicator.onCompleted();
+                           }
+                        });
                      }
-                     indicator.onCompleted();
-                    
+
                   }
                });
          }

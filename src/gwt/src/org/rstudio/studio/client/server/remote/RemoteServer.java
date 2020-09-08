@@ -5455,6 +5455,16 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(input));
       sendRequest(RPC_SCOPE, GET_RMD_OUTPUT_INFO, params, requestCallback);
    }
+   
+   @Override
+   public void rmdImportImages(JsArrayString images, String imagesDir,
+                               ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(images));
+      params.set(1,  new JSONString(imagesDir));
+      sendRequest(RPC_SCOPE, RMD_IMPORT_IMAGES, params, requestCallback);
+   }
 
    @Override
    public void unsatisfiedDependencies(
@@ -6741,6 +6751,7 @@ public class RemoteServer implements Server
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
    private static final String GET_RMD_TEMPLATES = "get_rmd_templates";
    private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
+   private static final String RMD_IMPORT_IMAGES = "rmd_import_images";
 
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
    private static final String INSTALL_PACKRAT = "install_packrat";

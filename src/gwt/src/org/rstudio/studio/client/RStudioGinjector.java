@@ -68,6 +68,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditImageDialog;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorInsertCiteDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
@@ -319,6 +320,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
    void injectMembers(PanmirrorInsertCiteDialog panmirrorInsertCiteDialog);
+   void injectMembers(PanmirrorEditImageDialog panmirrorEditImageDialog);
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(PanmirrorUIPrefs panmirrorUIPrefs);
    void injectMembers(VisualMode visualMode);

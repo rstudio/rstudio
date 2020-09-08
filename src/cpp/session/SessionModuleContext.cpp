@@ -2512,8 +2512,16 @@ bool hasStem(const FilePath& filePath, const std::string& stem)
 
 } // anonymous namespace
 
+Error uniqueSaveStem(const core::FilePath& directoryPath,
+                     const std::string& base,
+                     std::string* pStem)
+{
+   return uniqueSaveStem(directoryPath, base, "", pStem);
+}
+
 Error uniqueSaveStem(const FilePath& directoryPath,
                      const std::string& base,
+                     const std::string& delimiter,
                      std::string* pStem)
 {
    // determine unique file name
@@ -2537,7 +2545,7 @@ Error uniqueSaveStem(const FilePath& directoryPath,
          break;
 
       // update stem and search again
-      boost::format fmt(base + "%1%");
+      boost::format fmt(base + delimiter + "%1%");
       *pStem = boost::str(fmt % boost::io::group(std::setfill('0'),
                                                  std::setw(2),
                                                  ++i));
