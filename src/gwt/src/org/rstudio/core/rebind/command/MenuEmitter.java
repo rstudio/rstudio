@@ -78,7 +78,7 @@ public class MenuEmitter
             return;
          }
 
-         char accessKey = menuText.charAt(index + 1);
+         char accessKey = Character.toLowerCase(menuText.charAt(index + 1));
          availableKeys_.remove(accessKey);
       }
 
@@ -98,6 +98,7 @@ public class MenuEmitter
          }
          message.append("]");
          logger_.log(TreeLogger.Type.ERROR, message.toString());
+         throw new UnableToCompleteException();
       }
 
       private final List<String> missingKeys_ = new ArrayList<>();
