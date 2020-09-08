@@ -229,8 +229,15 @@ void WebView::dropEvent(QDropEvent *pEvent)
       auto urls = pEvent->mimeData()->urls();
       for (auto url : urls)
       {
-         urlsBuffer.append(url.toString());
-         urlsBuffer.append(QString::fromUtf8("%0A"));
+         // append (converting file-based urls)
+         if (url.scheme() == QString::fromUtf8("file"))
+            urlsBuffer.append(createAliasedPath(url.toLocalFile()));
+         else
+            urlsBuffer.append(url.toString());
+
+         // append unique separator
+         const char * const kUrlSeparator = "26D63FFA-995F-4E9A-B4AA-04DA9F93B538";
+         urlsBuffer.append(QString::fromUtf8(kUrlSeparator));
       }
 
       // notify desktop of dropped urls

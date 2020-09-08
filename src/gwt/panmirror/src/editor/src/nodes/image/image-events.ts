@@ -16,21 +16,22 @@
 import { EditorView } from 'prosemirror-view';
 
 import { Plugin, PluginKey } from 'prosemirror-state';
+import { EditorUI } from '../../api/ui';
 
 const pluginKey = new PluginKey('image-events');
 
-export function imageEventsPlugin() {
+export function imageEventsPlugin(ui: EditorUI) {
   return new Plugin({
     key: pluginKey,
     props: {
       handleDOMEvents: {
-        drop: imageDrop(),
+        drop: imageDrop(ui),
       },
     },
   });
 }
 
-function imageDrop() {
+function imageDrop(ui: EditorUI) {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer
     const dragEvent = event as DragEvent;
@@ -49,15 +50,25 @@ function imageDrop() {
       return false;
     }
 
-    // see if this is a drag of image uris
+    // array of uris
+    let uris: string[] | null = null;
+
+    // see if this is a drag of uris
     const uriList = dragEvent.dataTransfer.getData('text/uri-list');
-    if (!uriList) {
+    if (uriList) {
+      uris = uriList.split('\r?\n');
+    } else {
+      // see if the ui context has some dropped uris
+      uris = ui.context.droppedUris();
+    }
+
+    // exit if there are no uris
+    if (!uris) {
       return false;
     }
 
-    // insert the images (track whether we handled at least one)
-    const tr = view.state.tr;
-    uriList.split('\r?\n').forEach(src => {
+    // filter out images
+    const imageUris = uris.filter(uri => {
       // get extension and check it it's an image
       // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
       const kImageExtensions = [
@@ -77,23 +88,32 @@ function imageDrop() {
         'tiff',
         'webp',
       ];
-      const extension = src
+      const extension = uri
         .split(/\./)
         .pop()!
         .toLowerCase();
-      if (kImageExtensions.includes(extension)) {
-        const node = view.state.schema.nodes.image.create({ src });
-        tr.insert(coordinates.pos, node);
-      }
+      return kImageExtensions.includes(extension);
     });
 
-    // if we inserted an image then indicate that we handled the drop
-    if (tr.docChanged) {
-      view.dispatch(tr);
-      event.preventDefault();
-      return true;
-    } else {
+    // exit if we have no image uris
+    if (imageUris.length === 0) {
       return false;
     }
+
+    // resolve image uris then insert them. note that this is done
+    // async so we return true indicating we've handled the drop and
+    // then we actually do the insertion once it returns
+    ui.context.resolveImageUris(imageUris).then(images => {
+      const tr = view.state.tr;
+      images.forEach(image => {
+        const node = view.state.schema.nodes.image.create({ src: image });
+        tr.insert(coordinates.pos, node);
+      });
+      view.dispatch(tr);
+    });
+
+    // indicate that we will handle the event
+    event.preventDefault();
+    return true;
   };
 }

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -41,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -161,12 +163,56 @@ public class VisualModePanmirrorContext
          return text;
       };
       
+      
+      uiContext.droppedUris = () -> {
+        List<String> uris = workbenchContext_.getDroppedUrls();
+        if (uris != null)
+           return JsArrayUtil.createStringArray(uris);
+        else
+           return null;
+      };
+      
+      uiContext.resolveImageUris = (imageUris) -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+           
+            JsArrayString resolvedUris = JsArrayString.createArray().cast();
+            for (int i=0; i<imageUris.length(); i++)
+            {
+               String uri = imageUris.get(i);
+               if (isValidURL(uri))
+               {
+                  resolvedUris.push(uri);
+               }
+               else
+               {
+                  String path = uiContext.mapPathToResource.map(uri);
+                  if (path != null)
+                     resolvedUris.push(path); 
+                  
+                  // TODO: copy files to 'images' (managing uniqueness)
+               }
+            }
+            
+            resolve.onInvoke(resolvedUris);
+         });
+      };
+   
+      
       uiContext.isWindowsDesktop = () -> {
          return BrowseCap.isWindowsDesktop();
       };
       
       return uiContext;
    }
+   
+   private native boolean isValidURL(String url)  /*-{
+      try {
+         new URL(url);
+      } catch (_) {
+         return false;  
+      }
+      return true;
+   }-*/;
    
    private PanmirrorUIDisplay uiDisplay(PanmirrorUIDisplay.ShowContextMenu showContextMenu)
    {
