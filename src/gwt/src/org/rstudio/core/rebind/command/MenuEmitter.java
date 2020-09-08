@@ -82,14 +82,14 @@ public class MenuEmitter
          availableKeys_.remove(accessKey);
       }
 
-      public void report()
+      public void report() throws UnableToCompleteException
       {
          if (missingKeys_.isEmpty())
             return;
 
-         logger_.log(TreeLogger.Type.WARN, "Menu [" + menuName_ + "]");
+         logger_.log(TreeLogger.Type.ERROR, "Menu [" + menuName_ + "]");
          for (String commandId : missingKeys_)
-            logger_.log(TreeLogger.Type.WARN, "   [" + commandId + "] has no access key");
+            logger_.log(TreeLogger.Type.ERROR, "   [" + commandId + "] has no access key");
 
          StringBuilder message = new StringBuilder("   Available keys are: [");
          for (char ch : availableKeys_)
@@ -97,7 +97,8 @@ public class MenuEmitter
             message.append(ch);
          }
          message.append("]");
-         logger_.log(TreeLogger.Type.INFO, message.toString());
+         logger_.log(TreeLogger.Type.ERROR, message.toString());
+         throw new UnableToCompleteException();
       }
 
       private final List<String> missingKeys_ = new ArrayList<>();
