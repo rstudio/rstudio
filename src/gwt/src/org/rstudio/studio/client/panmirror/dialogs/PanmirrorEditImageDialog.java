@@ -33,6 +33,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsImage;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
@@ -44,6 +45,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 
 public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
@@ -58,6 +60,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          // cancel returns null
          operation.execute(null);
       });
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
 
       // natural width, height, and containerWidth (will be null if this
       // is an insert image dialog)
@@ -82,7 +86,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       sizePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
       // image url picker
-      imageTab.add(url_ = new PanmirrorImageChooser(uiContext));
+      imageTab.add(url_ = new PanmirrorImageChooser(uiContext, server_));
       url_.addStyleName(RES.styles().spaced());
       if (!StringUtil.isNullOrEmpty(props.src))
          url_.setText(props.src);
@@ -206,6 +210,12 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       {
          mainWidget_ = imageTab;
       }
+   }
+   
+   @Inject
+   void initialize(RMarkdownServerOperations server)
+   {
+      server_ = server;
    }
 
    @Override
@@ -418,6 +428,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
 
    // UI utility functions from panmirror
    private final PanmirrorUIToolsImage uiTools_ = new PanmirrorUITools().image;
+   
+   private RMarkdownServerOperations server_;
 
    // original image/container dimensions
    private PanmirrorImageDimensions dims_;
