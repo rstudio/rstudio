@@ -641,8 +641,11 @@ export class Editor {
     // retrieve properties we need from selection
     let {from, empty} = this.view.state.selection;
 
+    // retrieve selection marks
+    let marks = this.view.state.selection.$from.marks();
+
     // insert text
-    let tr = this.view.state.tr.insertText(value);
+    let tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
     this.view.dispatch(tr);
 
     // update selection if necessary
