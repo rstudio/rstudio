@@ -476,6 +476,26 @@ QString GwtCallback::getClipboardText()
    return pClipboard->text(QClipboard::Clipboard);
 }
 
+QJsonArray GwtCallback::getClipboardUris()
+{
+   QJsonArray urisJson;
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasUrls())
+   {
+      // build buffer of urls
+      auto urls = pClipboard->mimeData()->urls();
+      for (auto url : urls)
+      {
+         // append (converting file-based urls)
+         if (url.scheme() == QString::fromUtf8("file"))
+            urisJson.append(QJsonValue(createAliasedPath(url.toLocalFile())));
+         else
+            urisJson.append(QJsonValue(url.toString()));
+      }
+   }
+   return urisJson;
+}
+
 void GwtCallback::setGlobalMouseSelection(QString selection)
 {
 #ifdef Q_OS_LINUX

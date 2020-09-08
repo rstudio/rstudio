@@ -36,6 +36,7 @@ public class PanmirrorUIContext
    public WatchResource watchResource;
    public Mapper translateText;
    public StringArrayGetter droppedUris;
+   public ClipboardUris clipboardUris;
    public ResolveImageUris resolveImageUris;
    public BooleanGetter isWindowsDesktop;
 
@@ -73,6 +74,12 @@ public class PanmirrorUIContext
    public interface WithSavedDocument
    {
       Promise<Boolean> withSavedDocument();
+   }
+   
+   @JsFunction
+   public interface ClipboardUris
+   {
+      Promise<JsArrayString> clipboardUris();
    }
    
    @JsFunction

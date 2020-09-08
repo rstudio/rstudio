@@ -18,6 +18,8 @@ import { EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorUI } from '../../api/ui';
 
+const kTextUriList = 'text/uri-list';
+
 const pluginKey = new PluginKey('image-events');
 
 export function imageEventsPlugin(ui: EditorUI) {
@@ -27,8 +29,30 @@ export function imageEventsPlugin(ui: EditorUI) {
       handleDOMEvents: {
         drop: imageDrop(ui),
       },
-    },
+      handlePaste: imagePaste(ui),
+    }
   });
+}
+
+// detect file pastes where there is no payload, in that case check to see
+// if there is clipboard data we can get from our context (e.g. from Qt)
+function imagePaste(ui: EditorUI) {
+  return (view: EditorView, event: Event) => {
+    const clipboardEvent = event as ClipboardEvent;
+    if (clipboardEvent.clipboardData && clipboardEvent.clipboardData.types.includes(kTextUriList)) {
+      const uriList = clipboardEvent.clipboardData.getData(kTextUriList);
+      if (uriList.length === 0) {
+        ui.context.clipboardUris().then(uris => {
+          if (uris) {
+            handleImageUris(view, view.state.selection.from, event, uris, ui);
+          }
+        });
+        event.preventDefault();
+        return true;
+      }
+    }
+    return false;
+  };
 }
 
 function imageDrop(ui: EditorUI) {
@@ -54,7 +78,7 @@ function imageDrop(ui: EditorUI) {
     let uris: string[] | null = null;
 
     // see if this is a drag of uris
-    const uriList = dragEvent.dataTransfer.getData('text/uri-list');
+    const uriList = dragEvent.dataTransfer.getData(kTextUriList);
     if (uriList) {
       uris = uriList.split('\r?\n');
     } else {
@@ -62,58 +86,63 @@ function imageDrop(ui: EditorUI) {
       uris = ui.context.droppedUris();
     }
 
-    // exit if there are no uris
-    if (!uris) {
+    // process uris if we have them
+    if (uris && handleImageUris(view, coordinates.pos, event, uris, ui)) {
+      event.preventDefault();
+      return true;
+    } else {
       return false;
     }
-
-    // filter out images
-    const imageUris = uris.filter(uri => {
-      // get extension and check it it's an image
-      // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
-      const kImageExtensions = [
-        'apng',
-        'bmp',
-        'gif',
-        'ico',
-        'cur',
-        'jpg',
-        'jpeg',
-        'jfif',
-        'pjpeg',
-        'pjp',
-        'png',
-        'svg',
-        'tif',
-        'tiff',
-        'webp',
-      ];
-      const extension = uri
-        .split(/\./)
-        .pop()!
-        .toLowerCase();
-      return kImageExtensions.includes(extension);
-    });
-
-    // exit if we have no image uris
-    if (imageUris.length === 0) {
-      return false;
-    }
-
-    // resolve image uris then insert them. note that this is done
-    // async so we return true indicating we've handled the drop and
-    // then we actually do the insertion once it returns
-    ui.context.resolveImageUris(imageUris).then(images => {
-      const tr = view.state.tr;
-      images.forEach(image => {
-        const node = view.state.schema.nodes.image.create({ src: image });
-        tr.insert(coordinates.pos, node);
-      });
-      view.dispatch(tr);
-    });
-
-    // indicate that we will handle the event
-    event.preventDefault();
-    return true;
   };
+}
+
+function handleImageUris(view: EditorView, pos: number, event: Event, uris: string[], ui: EditorUI): boolean {
+
+  // filter out images
+  const imageUris = uris.filter(uri => {
+    // get extension and check it it's an image
+    // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
+    const kImageExtensions = [
+      'apng',
+      'bmp',
+      'gif',
+      'ico',
+      'cur',
+      'jpg',
+      'jpeg',
+      'jfif',
+      'pjpeg',
+      'pjp',
+      'png',
+      'svg',
+      'tif',
+      'tiff',
+      'webp',
+    ];
+    const extension = uri
+      .split(/\./)
+      .pop()!
+      .toLowerCase();
+    return kImageExtensions.includes(extension);
+  });
+
+  // exit if we have no image uris
+  if (imageUris.length === 0) {
+    return false;
+  }
+
+  // resolve image uris then insert them. note that this is done
+  // async so we return true indicating we've handled the drop and
+  // then we actually do the insertion once it returns
+  ui.context.resolveImageUris(imageUris).then(images => {
+    const tr = view.state.tr;
+    images.forEach(image => {
+      const node = view.state.schema.nodes.image.create({ src: image });
+      tr.insert(pos, node);
+    });
+    view.dispatch(tr);
+  });
+
+  // indicate that we will handle the event
+  return true;
 }

@@ -21,11 +21,13 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -168,11 +170,33 @@ public class VisualModePanmirrorContext
       
       
       uiContext.droppedUris = () -> {
-        List<String> uris = workbenchContext_.getDroppedUrls();
-        if (uris != null)
-           return JsArrayUtil.createStringArray(uris);
+        if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+        {
+           List<String> uris = workbenchContext_.getDroppedUrls();
+           if (uris != null)
+              return JsArrayUtil.createStringArray(uris);
+           else
+              return null;
+        }
         else
+        {
            return null;
+        }
+      };
+      
+      uiContext.clipboardUris = () -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+           if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+           {
+              Desktop.getFrame().getClipboardUris(uris -> {
+                 resolve.onInvoke(uris);
+              });
+           }
+           else
+           {
+              resolve.onInvoke((JsArrayString)null);
+           } 
+         });
       };
       
       uiContext.resolveImageUris = (imageUris) -> {
