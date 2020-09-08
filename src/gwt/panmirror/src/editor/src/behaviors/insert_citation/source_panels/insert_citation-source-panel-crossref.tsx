@@ -42,7 +42,7 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
   };
 }
 
-export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => {
+export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
   const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
@@ -102,9 +102,10 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
       defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
       placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
       ui={props.ui}
+      ref={ref}
     />
   );
-};
+});
 
 function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI): CitationListEntry {
 

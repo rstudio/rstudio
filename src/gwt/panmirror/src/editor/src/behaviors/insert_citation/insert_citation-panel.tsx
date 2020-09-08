@@ -69,6 +69,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
   removeCitation: (citation: CitationListEntry) => void;
   selectedCitation: (citation?: CitationListEntry) => void;
   confirm: VoidFunction;
+  ref: React.Ref<any>;
 }
 
 // The picker is a full featured UI for finding and selecting citation data
@@ -103,7 +104,13 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // The accumulated bibliography sources to be inserted
   const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
 
+  // The selected citation, if any
   const [selectedCitation, setSelectedCitation] = React.useState<CitationListEntry>();
+
+  // Used to track whether initial focus has been set
+  const [initialFocus, setInitialFocus] = React.useState<boolean>(true);
+
+  const panelRef = React.useRef<any>(undefined);
 
   // The initial loading of data for the panel. 
   React.useEffect(() => {
@@ -149,6 +156,14 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   }, [selectedNode]);
 
+  // If we should set initial focus, go ahead and set it 
+  React.useEffect(() => {
+    if (panelRef.current && initialFocus) {
+      panelRef.current.focus();
+      setInitialFocus(false);
+    }
+  }, [selectedProviderPanel]);
+
   // Style properties
   const style: React.CSSProperties = {
     width: props.width + 'px',
@@ -177,7 +192,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     selectedCitation: (citation?: CitationListEntry) => {
       setSelectedCitation(citation);
     },
-    confirm: props.onOk
+    confirm: props.onOk,
+    ref: panelRef
   };
 
   // Create the panel that should be displayed for the selected node of the tree

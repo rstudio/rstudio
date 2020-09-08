@@ -64,11 +64,11 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
   };
 }
 
-export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props => {
+export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
 
   const bibMgr = props.bibliographyManager;
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>();
+  const [searchTerm, setSearchTerm] = React.useState<string>('');
 
   React.useEffect(debounce(() => {
     async function loadData() {
@@ -115,17 +115,18 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     <CitationSourceTypeheadSearchPanel
       height={props.height}
       citations={citations}
-      selectedNode={props.selectedNode}
       citationsToAdd={props.citationsToAdd}
-      searchTermChanged={searchChanged}
       addCitation={props.addCitation}
       removeCitation={props.removeCitation}
       selectedCitation={props.selectedCitation}
       confirm={props.confirm}
+      searchTerm={searchTerm}
+      searchTermChanged={searchChanged}
       ui={props.ui}
+      ref={ref}
     />
   );
-};
+});
 
 
 function rootImageForProvider(providerKey: string, ui: EditorUI) {

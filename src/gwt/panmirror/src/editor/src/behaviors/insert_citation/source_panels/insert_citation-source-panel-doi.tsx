@@ -44,7 +44,7 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
   };
 }
 
-export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
+export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props, ref) => {
 
   const defaultMessage = props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.');
   const noMatchingResultsMessage = props.ui.context.translateText('No item matching this identifier could be located.');
@@ -70,11 +70,6 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
     const padding = 10;
     if (searchBoxHeight) {
       setListHeight(props.height - padding - searchBoxHeight);
-    }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
     }
   }, []);
 
@@ -103,7 +98,7 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
   };
 
   return (
-    <div style={props.style} className='pm-insert-doi-source-panel'>
+    <div style={props.style} className='pm-insert-doi-source-panel' ref={ref}>
       <div className='pm-insert-doi-source-panel-textbox-container'>
         <TextInput
           width='100%'
@@ -151,7 +146,7 @@ export const DOISourcePanel: React.FC<CitationSourcePanelProps> = props => {
       </div>
     </div>
   );
-};
+});
 
 function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry[] {
   if (csl) {
