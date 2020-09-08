@@ -77,7 +77,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
     // Size the list Box
     const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 12;
+    const padding = 8;
     if (searchBoxHeight) {
       setListHeight(props.height - padding - searchBoxHeight);
     }
