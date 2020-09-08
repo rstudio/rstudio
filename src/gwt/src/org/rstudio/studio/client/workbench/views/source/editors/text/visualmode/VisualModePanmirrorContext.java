@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
