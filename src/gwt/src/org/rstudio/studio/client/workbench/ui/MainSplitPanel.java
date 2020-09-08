@@ -273,6 +273,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return sum;
    }
    
+   public ArrayList<Double> getLeftWidgetSizes()
+   {
+      ArrayList<Double> result = new ArrayList<>();
+      for (Widget w : leftList_)
+         result.add(getWidgetSize(w));
+      return result;
+   }
+   
    public void removeLeftWidget(Widget widget)
    {
       clearForRefresh();

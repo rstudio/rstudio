@@ -418,8 +418,10 @@ public class PaneManager
 
          final Command afterAnimation = () -> window.getNormal().onResize();
 
-         int newWidth = computeAppropriateWidth();
-         resizeHorizontally(0, newWidth, new ArrayList<>(), new ArrayList<>(), afterAnimation);
+         int newWidth = computeAppropriateRightWidth();
+         ArrayList<Double> leftWidth = computeAppropriateLeftWidths();
+         
+         resizeHorizontally(0, newWidth, panel_.getLeftWidgetSizes(), leftWidth, afterAnimation);
       });
 
       eventBus_.addHandler(
@@ -443,13 +445,35 @@ public class PaneManager
       new ZoomedTabStateValue();
    }
 
-   int computeAppropriateWidth()
+   int computeAppropriateRightWidth()
    {
       double windowWidth = Window.getClientWidth();
-      double candidateWidth = 2.0 * windowWidth / 5.0;
+      double candidateWidth;
+      if (additionalSourceCount_ > 0)
+         candidateWidth = windowWidth / getColumnCount();
+      else
+         candidateWidth = 2.0 * windowWidth / 5.0;
       return (int) candidateWidth;
    }
 
+   ArrayList<Double> computeAppropriateLeftWidths()
+   {
+      ArrayList<Double> result = new ArrayList<>();
+      if (additionalSourceCount_ == 0)
+         return result;
+
+      double windowWidth = Window.getClientWidth();
+      double totalSize = panel_.getLeftWidgetsSize();
+      double columnWidth = (windowWidth / getColumnCount()) * additionalSourceCount_;
+      if (totalSize > columnWidth)
+      {
+         for (int i = 0; i < leftList_.size(); i++)
+            result.add(columnWidth);
+         return result;
+      }
+      return panel_.getLeftWidgetSizes();
+   }
+   
    LogicalWindow getLogicalWindow(WindowFrame frame)
    {
       for (LogicalWindow window : panes_)
@@ -824,13 +848,12 @@ public class PaneManager
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
 
-      ArrayList<Double> leftStart = new ArrayList<>();
+      ArrayList<Double> leftStart = panel_.getLeftWidgetSizes();
       ArrayList<Double> leftEnd = new ArrayList<>();
       leftWidgetSizePriorToZoom_.clear();
       for (Widget column : leftList_)
       {
          leftWidgetSizePriorToZoom_.add(panel_.getWidgetSize(column));
-         leftStart.add(panel_.getWidgetSize(column));
          leftEnd.add(0.0);
       }
 
@@ -849,7 +872,6 @@ public class PaneManager
       }
 
       resizeHorizontally(initialSize, targetSize, leftStart, leftEnd, onActivation);
-
    }
 
    private void resizeHorizontally(final double rightStart,
@@ -1013,41 +1035,49 @@ public class PaneManager
       setValidColumnWidths(new ArrayList<> (Arrays.asList(w)),
          new ArrayList<>(Arrays.asList(panel_.getWidgetSize(w))));
    }
-   
+
+   /**
+    * Set a visible column width for each widget provided while attempting to keep each 
+    * widget as close to its requested size. The non-allocated portion of the total panel should 
+    * be enough to display columns not provided.
+    * @param widgets List of widgets to set sizes of. These widgets must be part of panel_.
+    * @param widths List of ideal widths for each widget. This can be empty.
+    */
    private void setValidColumnWidths(
       final ArrayList<Widget> widgets,
       final ArrayList<Double> widths)
    {
-      final double originalDenominator = ((2 * (2 + additionalSourceCount_)) + 1);
-      double denominator = originalDenominator;
+      double columnWidth = panel_.getOffsetWidth() / getColumnCount();
       
-      double centerWidth = (2.0 / denominator) * panel_.getOffsetWidth();
-      double panelWidth = panel_.getOffsetWidth() - centerWidth;
-      
+      // The pixels allocated for the widgets provided leave enough pixels so that each column 
+      // not provided can have a width between half columnWidth and twice columnWidth.
+      int remainingColumns = getColumnCount() - widgets.size();
+      double minAllocated =
+         panel_.getOffsetWidth() - (remainingColumns * (columnWidth / 2));
+      double maxAllocated =
+         panel_.getOffsetWidth() - (remainingColumns * (columnWidth * 2)); 
+      double minThreshold = minAllocated / widgets.size();
+      double maxThreshold = maxAllocated / widgets.size();
+
+      // Analyze each provided width to see if it falls within our threshold. If not, set the 
+      // column width to the min or max threshold. If no width is provided, the width is set to the
+      // columnWidth calculated above. 
       for (int i = 0; i < widgets.size(); i++)
       {
-         double minThreshold = (2.0 / denominator) * panelWidth;
-         double maxThreshold = (3.0 / denominator) * panelWidth;
-         double width;
+         Widget widget = widgets.get(i);
          if (widths.size() > i)
          {
-            if (widths.get(i) < minThreshold)
-               width = minThreshold;
-            else if (widths.get(i) > maxThreshold)
-               width = maxThreshold;
+            double width = widths.get(i);
+            if (width < minThreshold)
+               panel_.setWidgetSize(widget, minThreshold);
+            else if (width > maxThreshold)
+               panel_.setWidgetSize(widget, maxThreshold);
             else
-               width = widths.get(i);
+               panel_.setWidgetSize(widget, width);
          }
          else
-         {
-            width = minThreshold;
-         }
-         panel_.setWidgetSize(widgets.get(i), width);
-
-         panelWidth -= width;
-         denominator = denominator - 2;
+            panel_.setWidgetSize(widget, columnWidth);
       }
-      assert(denominator == originalDenominator - (2 * widths.size()));
    }
 
    private void restoreColumnLayout()
@@ -1349,9 +1379,7 @@ public class PaneManager
    public void zoomColumn(String columnId)
    {
       final double rightInitialSize = panel_.getWidgetSize(right_);
-      final ArrayList<Double> leftInitialSize = new ArrayList<>();
-      for (Widget w : leftList_)
-         leftInitialSize.add(panel_.getWidgetSize(w));
+      final ArrayList<Double> leftInitialSize = panel_.getLeftWidgetSizes();
 
       String currentZoomedColumn = getZoomedColumn();
       double rightTargetSize;
@@ -1834,6 +1862,11 @@ public class PaneManager
       return commands;
    }
 
+   private int getColumnCount()
+   {
+      return additionalSourceCount_ + 2;
+   }
+   
    private PaneConfig getCurrentConfig()
    {
       PaneConfig config = userPrefs_.panes().getValue().cast();
