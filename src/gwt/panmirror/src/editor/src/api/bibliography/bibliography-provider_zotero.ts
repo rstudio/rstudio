@@ -34,6 +34,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   private warning: string | undefined;
   private enabled = true;
 
+  private docPath: string | undefined;
+  private zoteroConfig: boolean | string[] | undefined;
+
   public constructor(server: ZoteroServer) {
     this.server = server;
   }
@@ -44,8 +47,9 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
     let hasUpdates = false;
-    const config = zoteroConfig(yamlBlocks);
-    if (config) {
+    this.docPath = docPath;
+    this.zoteroConfig = zoteroConfig(yamlBlocks);
+    if (this.zoteroConfig) {
 
       // Enabled
       this.enabled = true;
@@ -59,13 +63,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         const useCache = this.warning === undefined || this.warning.length === 0;
 
         // The collection specified in the document header
-        const collections = Array.isArray(config) ? config : [];
-
-        // Read collection specs (this is required to discover the entire tree structure, not just the root collections)
-        const allCollectionSpecsResult = await this.server.getActiveCollectionSpecs(docPath, collections);
-        if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
-          this.allCollectionSpecs = allCollectionSpecsResult.message;
-        }
+        const collections = Array.isArray(this.zoteroConfig) ? this.zoteroConfig : [];
 
         const result = await this.server.getCollections(docPath, collections, collectionSpecs || [], useCache);
         this.warning = result.warning;
@@ -108,11 +106,17 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   // Respect enabled;
   public isEnabled(): boolean {
-    return this.enabled && this.collections().length > 0;
+    return this.enabled && this.allCollections.length > 0;
   }
 
-  public collections(): BibliographyCollection[] {
-    return this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey }));
+  public async collections(): Promise<BibliographyCollection[]> {
+    // Read collection specs (this is required to discover the entire tree structure, not just the root collections)
+    const allCollectionSpecsResult = await this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []);
+    if (allCollectionSpecsResult && allCollectionSpecsResult.status === 'ok') {
+      this.allCollectionSpecs = allCollectionSpecsResult.message;
+    }
+
+    return Promise.resolve(this.allCollectionSpecs.map(spec => ({ name: spec.name, key: spec.key, parentKey: spec.parentKey, provider: kZoteroProviderKey })));
   }
 
   public items(): BibliographySourceWithCollections[] {

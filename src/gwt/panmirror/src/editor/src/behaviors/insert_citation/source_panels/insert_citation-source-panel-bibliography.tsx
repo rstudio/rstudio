@@ -32,23 +32,27 @@ import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
+export async function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): Promise<CitationSourcePanel> {
   const providers = bibliographyManager.localProviders();
-  const localProviderNodes = providers.filter(provider => provider.isEnabled()).map(provider => {
+
+  // For each of the providers, discover their collections
+  const localProviderNodes = await Promise.all(providers.filter(provider => provider.isEnabled()).map(async provider => {
 
     const getFolder = (prov: string, hasParent: boolean) => {
       return folderImageForProvider(prov, hasParent, ui);
     };
+
+    const collections = await provider.collections();
     const node: NavigationTreeNode = {
       key: provider.key,
       name: ui.context.translateText(provider.name),
       type: provider.key,
       image: rootImageForProvider(provider.key, ui),
-      children: toTree(provider.key, provider.collections(), getFolder),
+      children: toTree(provider.key, collections, getFolder),
       expanded: true
     };
-    return node;
-  });
+    return Promise.resolve(node);
+  }));
 
   return {
     key: '17373086-77FE-410F-A319-33E314482125',

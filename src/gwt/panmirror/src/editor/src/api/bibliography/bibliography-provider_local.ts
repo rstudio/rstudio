@@ -79,8 +79,8 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return updateIndex;
   }
 
-  public collections(): BibliographyCollection[] {
-    return [];
+  public collections(): Promise<BibliographyCollection[]> {
+    return Promise.resolve([]);
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
     // bibliography files here. Right now, the server generates the CSL for all the bibligraphy runs
