@@ -16,7 +16,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
 
-import { ParsedYaml } from "../yaml";
+import { ParsedYaml, valueFromYamlText } from "../yaml";
 import { suggestCiteId } from "../cite";
 
 import { BibliographyDataProvider, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
@@ -174,28 +174,26 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 // By default, zotero integration is enabled. Add this header to disable integration
 //
 function zoteroConfig(parsedYamls: ParsedYaml[]): boolean | string[] {
-  const zoteroYaml = parsedYamls.filter(
-    parsedYaml => parsedYaml.yaml !== null && typeof parsedYaml.yaml === 'object'
-  );
+  // Read the values of any yaml blocks that include bibliography headers
+  // filter out blocks that don't include such headers
+  const zoteroValues = parsedYamls.map(parsedYaml => {
+    return valueFromYamlText('zotero', parsedYaml.yamlCode);
+  }).filter(val => val !== null);
 
-  if (zoteroYaml.length > 0) {
+  if (zoteroValues.length > 0) {
     // Pandoc will use the last biblography node when generating a bibliography.
-    // So replicate this and use the last biblography node that we find
-    const zoteroParsedYaml = zoteroYaml[zoteroYaml.length - 1];
-    const zotero = zoteroParsedYaml.yaml.zotero;
-
-    if (typeof zotero === 'boolean') {
-      return zotero;
-    } else if (typeof zotero === 'string') {
-      return [zotero];
-    } else if (Array.isArray(zotero)) {
-      return zotero.map(String);
+    // Take the same approach to the Zotero header and use the last node
+    const zoteroConfigValue = zoteroValues[zoteroValues.length - 1];
+    if (typeof zoteroConfigValue === 'boolean') {
+      return zoteroConfigValue;
+    } else if (typeof zoteroConfigValue === 'string') {
+      return [zoteroConfigValue];
+    } else if (Array.isArray(zoteroConfigValue)) {
+      return zoteroConfigValue.map(String);
     } else {
       return true;
     }
-
-  } else {
-    return true;
   }
+  return true;
 }
 
