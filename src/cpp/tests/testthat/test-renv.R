@@ -27,7 +27,7 @@ test_that(".rs.rpc.renv_init() preserves current repositories", {
    # initialize project
    project <- tempfile("renv-project-")
    on.exit(unlink(project, recursive = TRUE), add = TRUE)
-   .rs.rpc.renv_init(project)
+   renv:::quietly(.rs.rpc.renv_init(project))
    
    # check that the renv lockfile has the expected repositories
    lockpath <- file.path(project, "renv.lock")
