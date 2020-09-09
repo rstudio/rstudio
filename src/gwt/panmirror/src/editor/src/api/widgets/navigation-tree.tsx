@@ -75,13 +75,14 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
     props.nodeSelected(node);
   };
 
+  // Whenever selection or the node data changes, refresh any expanded nodes
   React.useEffect(() => {
     if (props.selectedNode) {
       const expanded = pathToNode(props.selectedNode, props.nodes);
       expanded.forEach(node => node.expanded = true);
       setExpandedNodes(expanded);
     }
-  }, [props.selectedNode]);
+  }, [props.selectedNode, props.nodes]);
 
   const [expandedNodes, setExpandedNodes] = React.useState<NavigationTreeNode[]>([]);
 
@@ -207,7 +208,7 @@ function visibleNodes(nodes: NavigationTreeNode[]) {
 // Get the next node for the current node
 function nextNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
   const nodes = visibleNodes(allNodes);
-  const currentIndex = nodes.indexOf(node);
+  const currentIndex = nodes.map(n => n.key).indexOf(node.key);
   if (currentIndex < nodes.length - 1) {
     return nodes[currentIndex + 1];
   } else {
@@ -218,7 +219,7 @@ function nextNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): Nav
 // Get the previous node for the current node
 function previousNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
   const nodes = visibleNodes(allNodes);
-  const currentIndex = nodes.indexOf(node);
+  const currentIndex = nodes.map(n => n.key).indexOf(node.key);
   if (currentIndex > 0) {
     return nodes[currentIndex - 1];
   } else {
