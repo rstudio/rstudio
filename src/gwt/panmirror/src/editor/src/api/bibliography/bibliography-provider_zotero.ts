@@ -72,9 +72,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         if (result.status === 'ok') {
 
           if (result.message) {
-
-            console.log(result.message);
-
             const newCollections = (result.message as ZoteroCollection[]).map(collection => {
               const existingCollection = this.allCollections.find(col => col.name === collection.name);
               if (useCache && existingCollection && existingCollection.version === collection.version) {
