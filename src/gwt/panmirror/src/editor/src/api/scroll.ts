@@ -1,5 +1,5 @@
 /*
- * zenscroll.ts
+ * scroll.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *

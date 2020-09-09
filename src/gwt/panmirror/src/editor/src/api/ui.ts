@@ -32,6 +32,9 @@ export interface EditorUI {
   spelling: EditorUISpelling;
 }
 
+/**
+ * Callbacks supplied to the host to interact with a code chunk and its output.
+ */
 export interface EditorUIChunkCallbacks {
   getPos: () => number;
   scrollIntoView: (ele: HTMLElement) => void;
