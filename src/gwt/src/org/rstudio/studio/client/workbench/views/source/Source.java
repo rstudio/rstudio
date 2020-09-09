@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -140,7 +141,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
@@ -217,7 +220,9 @@ public class Source implements InsertSourceHandler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateSourceHistoryEvent.Handler
+                               MouseNavigateSourceHistoryEvent.Handler,
+                               GetEditorSelectionEvent.Handler,
+                               SetEditorSelectionEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -455,6 +460,8 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
+      events_.addHandler(GetEditorSelectionEvent.TYPE, this);
+      events_.addHandler(SetEditorSelectionEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
@@ -2792,7 +2799,7 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         if (columnManager_.attemptTextEditorActivate())
+         if (columnManager_.requestActiveEditorContext())
             return;
       }
 
@@ -2834,6 +2841,57 @@ public class Source implements InsertSourceHandler,
          docDisplay.replaceRange(range, text);
       }
       docDisplay.focus();
+   }
+   
+   private void invokeEditorApiAction(String docId,
+                                      CommandWithArg<TextEditingTarget> callback)
+   {
+      try
+      {
+         columnManager_.withTarget(docId, callback, () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
+      }
+      catch (Exception e)
+      {
+         // ensure server receives a response in case
+         // an exception interrupts regular execution
+         server_.rstudioApiResponse(
+               JavaScriptObject.createObject(),
+               new VoidServerRequestCallback());
+      }
+   }
+   
+   @Override
+   public void onGetEditorSelection(GetEditorSelectionEvent event)
+   {
+      invokeEditorApiAction(event.getData().getDocId(), (TextEditingTarget target) ->
+      {
+         target.withEditorSelection((String selection) ->
+         {
+            JsObject response = JsObject.createJsObject();
+            response.setString("value", selection);
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
+      });
+   }
+   
+   @Override
+   public void onSetEditorSelection(SetEditorSelectionEvent event)
+   {
+      String docId = event.getData().getDocId();
+      invokeEditorApiAction(docId, (TextEditingTarget target) ->
+      {
+         target.replaceSelection(event.getData().getValue(), () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
+      });
    }
 
    private class StatFileEntry

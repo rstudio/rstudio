@@ -16,7 +16,7 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Selection, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -623,6 +623,36 @@ export class Editor {
 
     // return markdown (will apply save fixups)
     return this.getMarkdownCode(tr, options);
+  }
+
+  public getSelectedText(): string {
+    
+    return this.state.doc.textBetween(
+      this.state.selection.from,
+      this.state.selection.to
+    );
+
+  }
+
+  public replaceSelection(value: string): void {
+
+    // retrieve properties we need from selection
+    let {from, empty} = this.view.state.selection;
+
+    // retrieve selection marks
+    let marks = this.view.state.selection.$from.marks();
+
+    // insert text
+    let tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
+    this.view.dispatch(tr);
+
+    // update selection if necessary
+    if (!empty) {
+      let sel = TextSelection.create(this.view.state.doc, from, from + value.length);
+      let tr = this.view.state.tr.setSelection(sel);
+      this.view.dispatch(tr);
+    }
+
   }
 
   public getYamlFrontMatter() {

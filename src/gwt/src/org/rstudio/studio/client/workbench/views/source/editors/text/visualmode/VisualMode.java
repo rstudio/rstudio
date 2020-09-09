@@ -921,6 +921,16 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeConfirm_.onUserSwitchToVisualModePending();
    }
    
+   public String getSelectedText()
+   {
+      return panmirror_.getSelectedText();
+   }
+   
+   public void replaceSelection(String value)
+   {
+      panmirror_.replaceSelection(value);
+   }
+   
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});

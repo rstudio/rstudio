@@ -239,4 +239,5 @@ public class JsUtil
    public native static boolean isUndefined(int val) /*-{
       return typeof(val) === "undefined"; 
    }-*/;
+
 }

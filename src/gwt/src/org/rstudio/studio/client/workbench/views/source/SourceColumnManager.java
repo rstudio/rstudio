@@ -762,20 +762,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return getByName(name) == null || getByName(name).getTabCount() == 0;
    }
 
-   public boolean attemptTextEditorActivate()
+   public boolean requestActiveEditorContext()
    {
-      if (!(hasActiveEditor() ||
-            activeColumn_.getActiveEditor() instanceof TextEditingTarget))
+      boolean hasActiveEditor =
+            hasActiveEditor() &&
+            activeColumn_.getActiveEditor() instanceof TextEditingTarget;
+      
+      if (!hasActiveEditor)
          return false;
 
       TextEditingTarget editingTarget = (TextEditingTarget) activeColumn_.getActiveEditor();
-      editingTarget.ensureTextEditorActive(() -> {
-         getEditorContext(
-            editingTarget.getId(),
-            editingTarget.getPath(),
-            editingTarget.getDocDisplay()
-         );
-      });
+      editingTarget.getEditorContext();
       return true;
    }
 
@@ -2579,7 +2576,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       cpsExecuteForEachEditor(editors, command, null);
    }
-
+   
    private static class OpenFileEntry
    {
       public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,

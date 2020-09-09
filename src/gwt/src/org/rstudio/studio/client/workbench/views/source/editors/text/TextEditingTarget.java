@@ -144,6 +144,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileS
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -2512,6 +2513,26 @@ public class TextEditingTarget implements
       else
       {
          view_.editorContainer().focus();
+      }
+   }
+   
+   public void replaceSelection(String value, Command callback)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() ->
+         {
+            visualMode_.replaceSelection(value);
+            callback.execute();
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() ->
+         {
+            docDisplay_.replaceSelection(value);
+            callback.execute();
+         });
       }
    }
 
@@ -7792,6 +7813,43 @@ public class TextEditingTarget implements
       visualMode_.onUserSwitchingToVisualMode();
    }
    
+   public void getEditorContext()
+   {
+      ensureTextEditorActive(() ->
+      {
+         SourceColumnManager.getEditorContext(
+               getId(),
+               getPath(),
+               getDocDisplay(),
+               server_);
+      });
+   }
+   
+   public void withEditorSelection(final CommandWithArg<String> callback)
+   {
+      if (visualMode_.isActivated())
+      {
+         ensureVisualModeActive(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               callback.execute(visualMode_.getSelectedText());
+            }
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               callback.execute(docDisplay_.getSelectionValue());
+            }
+         });
+      }
+   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
