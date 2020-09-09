@@ -502,9 +502,14 @@ QString GwtCallback::getClipboardImage()
    if (pClipboard->mimeData()->hasImage())
    {
       QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
+
+      // create temp file name for paste (trim back the size of the random hex chars
+      // created by boost::unique_patch since we don't need that much uniqueness)
       FilePath imagePath;
       FilePath::tempFilePath(".png", imagePath);
-      imagePath = imagePath.getParent().completeChildPath("paste-" + imagePath.getFilename());
+      std::string stem = imagePath.getStem();
+      stem = stem.substr(0, stem.find('-'));
+      imagePath = imagePath.getParent().completeChildPath("paste-" + stem + ".png");
       QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
       if (image.save(imageFile))
          return imageFile;
