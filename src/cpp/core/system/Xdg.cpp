@@ -126,33 +126,7 @@ FilePath userConfigDir(
    if (!error)
    {
       // Test permissions here.
-      error = confDir.testWritePermissions();
-      if (error)
-      {
-         permError = Error(
-            error.getName(),
-            error.getCode(),
-            "Missing write permissions to " + confDir.getAbsolutePath() + ". Some features may not work correctly.",
-            ERROR_LOCATION);
-
-         system::User currUser;
-         error = system::User::getUserFromIdentifier(system::username(), currUser);
-         if (!error)
-            error = confDir.changeOwnership(currUser, true);
-      }
-   }
-
-   if (error)
-   {
-      std::string message;
-      message.append("Encounterd an issue while testing config dir \"")
-         .append(confDir.getAbsolutePath())
-         .append(":\n  ")
-         .append(error.asString());
-      if (permError)
-         message.append("\n  ").append(permError.asString());
-
-      log::logWarningMessage(message, ERROR_LOCATION);
+      
    }
 
    return confDir;
@@ -170,6 +144,52 @@ FilePath userDataDir(
          user,
          homeDir
    );
+}
+
+void verifyUserDirs(
+   const boost::optional<std::string>& user,
+   const boost::optional<FilePath>& homeDir)
+{
+   auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
+   {
+      Error permError;
+      Error error = dir.ensureDirectory();
+      if (error)
+         error.addOrUpdateProperty("path", dir.getAbsolutePath());
+      else
+      {
+         error = dir.testWritePermissions();
+         if (error)
+         {
+            permError = Error(
+               error.getName(),
+               error.getCode(),
+               "Missing write permissions to " + dir.getAbsolutePath() + ". Some features may not work correctly.",
+               ERROR_LOCATION);
+
+            system::User currUser;
+            error = system::User::getUserFromIdentifier(system::username(), currUser);
+            if (!error)
+               error = dir.changeOwnership(currUser, true);
+         }
+      }
+
+      if (error)
+      {
+         std::string message;
+         message.append("Unable to access \"")
+            .append(dir.getAbsolutePath())
+            .append(":\n  ")
+            .append(error.asString());
+         if (permError)
+            message.append("\n  ").append(permError.asString());
+
+         log::logWarningMessage(message, ERROR_LOCATION);
+      }
+   };
+
+   testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
+   testDir(userDataDir(user, homeDir), ERROR_LOCATION);
 }
 
 FilePath systemConfigDir()
