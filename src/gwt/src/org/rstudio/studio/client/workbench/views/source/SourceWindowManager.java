@@ -588,7 +588,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
-   private <T extends EventHandler>
+   public <T extends EventHandler>
    void fireEventToLastFocusedWindow(CrossWindowEvent<T> event)
    {
       String id = getLastFocusedWindowId();

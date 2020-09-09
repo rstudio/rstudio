@@ -534,6 +534,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getPandocFormatConfig(isRmd);
    }
    
+   public String getSelectedText()
+   {
+      return editor_.getSelectedText();
+   }
+   
+   public void replaceSelection(String value)
+   {
+      editor_.replaceSelection(value);
+   }
+   
    public PanmirrorSelection getSelection()
    {
       return editor_.getSelection();

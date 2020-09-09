@@ -15,8 +15,11 @@
 
 context("document API")
 
+# TODO: These rely on client WaitFor methods, and so cannot be tested
 test_that("insertText() handles various invocations", {
    
+   skip("NYI")
+
    # Replace current selection
    .rs.api.insertText("foo")
    .rs.api.insertText(text = "foo")

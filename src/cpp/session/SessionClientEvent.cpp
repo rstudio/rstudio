@@ -203,6 +203,7 @@ const int kTutorialCommand = 185;
 const int kTutorialLaunch = 186;
 const int kReticulateEvent = 187;
 const int kEnvironmentChanged = 188;
+const int kRStudioApiRequest = 189;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -222,7 +223,7 @@ void ClientEvent::asJsonObject(int id, json::Object* pObject) const
    
 std::string ClientEvent::typeName() const 
 {
-   switch(type_)
+   switch (type_)
    {
       case client_events::kBusy:
          return "busy";
@@ -564,6 +565,8 @@ std::string ClientEvent::typeName() const
          return "reticulate_event";
       case client_events::kEnvironmentChanged:
          return "environment_changed";
+      case client_events::kRStudioApiRequest:
+         return "rstudioapi_request";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
