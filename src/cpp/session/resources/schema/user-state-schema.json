@@ -228,8 +228,8 @@
         "zotero_use_better_bibtex": {
             "type": "boolean",
             "default": false,
-            "title": "Use Better BibTeX for citation keys and BibLaTeX export",
-            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies"
+            "title": "Use Better BibTeX for citation keys and BibTeX export",
+            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies"
         },
         "zotero_api_key": {
             "type": "string",

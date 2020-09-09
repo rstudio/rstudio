@@ -192,6 +192,11 @@ Error betterBibtexExport(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // include library in item keys
+   boost::format fmt("%1%:%2%");
+   for (std::size_t i=0; i<itemKeysJson.getSize(); i++)
+      itemKeysJson[i] = boost::str(fmt % libraryId % itemKeysJson[i].getString());
+
    // get citation keys
    std::string warning;
    json::Object keyMapJson;

@@ -39,7 +39,7 @@ export interface PandocServer {
     project: boolean,
     id: string,
     sourceAsJson: string,
-    sourceAsBibLaTeX: string,
+    sourceAsBibTeX: string,
   ): Promise<boolean>;
   citationHTML(
     file: string | null,

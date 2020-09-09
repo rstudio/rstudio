@@ -297,7 +297,7 @@ core::Error UserStateValues::setZoteroLibraries(core::json::Array val)
 }
 
 /**
- * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
  */
 bool UserStateValues::zoteroUseBetterBibtex()
 {

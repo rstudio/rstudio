@@ -14,7 +14,7 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibTeXTranslator, ZoteroCollectionSpec, ZoteroCSL } from "../zotero";
 
 import { ParsedYaml, valueFromYamlText } from "../yaml";
 import { suggestCiteId } from "../cite";
@@ -43,6 +43,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   public name: string = "Zotero";
   public key: string = kZoteroProviderKey;
+  public requiresWritable: boolean = true;
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -109,7 +110,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return this.enabled && (this.allCollections.length > 0 || this.allCollectionSpecs.length > 0);
   }
 
-  public collections(): BibliographyCollectionStream {
+  public collections(): BibliographyCollection[] | BibliographyCollectionStream {
     let updatedCollectionSpecs: BibliographyCollection[] | null = null;
 
     this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []).then((specResult) => {
@@ -152,11 +153,12 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return [];
   }
 
-  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
+  public async generateBibTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
     if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
-      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, kZoteroMyLibrary);
-      if (bibLaTeX) {
-        return Promise.resolve(bibLaTeX.message);
+      // TODO: Why is the libraryID no longer available here?
+      const bibTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibTeXTranslator, parseInt((csl as ZoteroCSL).libraryID, 10));
+      if (bibTeX) {
+        return Promise.resolve(bibTeX.message);
       }
     }
     return Promise.resolve(toBibLaTeX(id, csl));
@@ -173,7 +175,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         ...item,
         id: item.id || suggestCiteId([], item),
         providerKey: this.key,
-        collectionKeys: item.collectionKeys || []
+        collectionKeys: item.collectionKeys
       };
     });
     return items || [];

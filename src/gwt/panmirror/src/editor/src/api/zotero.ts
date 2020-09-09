@@ -37,13 +37,12 @@ export interface ZoteroCollection extends ZoteroCollectionSpec {
 }
 
 export interface ZoteroCSL extends CSL {
-  collectionKeys?: string[];
+  libraryID: string;
+  collectionKeys: string[];
 }
 
-export const kZoteroMyLibrary = 1;
-
-// https://github.com/retorquere/zotero-better-bibtex/blob/master/translators/Better%20BibLaTeX.json
-export const kZoteroBibLaTeXTranslator = 'f895aa0d-f28e-47fe-b247-2ea77c6ed583';
+// https://github.com/retorquere/zotero-better-bibtex/blob/master/translators/Better%20BibTeX.json
+export const kZoteroBibTeXTranslator = 'ca65189f-8815-4afe-8c8b-8c7c15f0edca';
 
 export interface ZoteroServer {
 

@@ -15,6 +15,8 @@
 
 import React from "react";
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
@@ -30,10 +32,11 @@ import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export function bibliographySourcePanel(ui: EditorUI, bibliographyManager: BibliographyManager, treeDataChanged: () => void): CitationSourcePanel {
+export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager, treeDataChanged: () => void): CitationSourcePanel {
+  const allowsWrites = bibliographyManager.refreshWritable(doc, ui);
   const providers = bibliographyManager.localProviders();
-
   const providerNodes: { [key: string]: NavigationTreeNode } = {};
+
 
   // For each of the providers, discover their collections
   providers.filter(provider => provider.isEnabled()).forEach(provider => {

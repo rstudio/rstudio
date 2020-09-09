@@ -68,6 +68,11 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     props.selectedCitation(undefined);
   }, [props.citations, props.citationsToAdd]);
 
+  // Filter citations that we're adding out of the list of citations
+  const filteredCitations = React.useMemo<CitationListEntry[]>(() => {
+    return props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
+  }, [props.citations, props.citationsToAdd]);
+
   // Upddate selected item index (this will manage bounds)
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
     event.stopPropagation();
@@ -84,8 +89,8 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     event.stopPropagation();
     event.preventDefault();
 
-    if (props.citations && selectedIndex !== undefined) {
-      const source = props.citations[selectedIndex];
+    if (filteredCitations && selectedIndex !== undefined) {
+      const source = filteredCitations[selectedIndex];
       if (source) {
         if (props.citationsToAdd.includes(source)) {
           props.removeCitation(source);
@@ -147,15 +152,13 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
-    props.selectedCitation(props.citations[index]);
+    props.selectedCitation(filteredCitations[index]);
   };
 
   const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
-  const filteredCitations = props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
-
   switch (props.status) {
     case CitationSourceListStatus.default:
-      if (props.citations.length > 0) {
+      if (filteredCitations.length > 0) {
         return (
           <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
             <FixedSizeList
