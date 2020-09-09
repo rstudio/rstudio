@@ -39,7 +39,7 @@ export interface BibliographyDataProvider {
 
   isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  collections(): BibliographyCollection[];
+  collections(): BibliographyCollection[] | BibliographyCollectionStream;
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
@@ -52,6 +52,11 @@ export interface BibliographyCollection {
   key: string;
   provider: string;
   parentKey?: string;
+}
+
+export interface BibliographyCollectionStream {
+  collections: BibliographyCollection[];
+  stream: () => BibliographyCollection[] | null;
 }
 
 export interface Bibliography {
@@ -90,6 +95,16 @@ export class BibliographyManager {
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
+  }
+
+  public async prime(ui: EditorUI, doc: ProsemirrorNode) {
+    // Load the bibliography
+    await this.load(ui, doc);
+
+    // Prime any of the providers by downloading collection specs
+    await Promise.all(this.providers.map(async provider => {
+      await provider.collections();
+    }));
   }
 
   public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
@@ -226,8 +241,9 @@ export class BibliographyManager {
 
   // A general purpose search interface for filtered searching
   public search(query?: string, providerKey?: string, collectionKey?: string): BibliographySourceWithCollections[] {
-    const limit = 1000;
-    if (query) {
+    const limit = 100;
+    if (query && query.length > 0) {
+      // These are ordered by search score, so leave as is
       if (providerKey && collectionKey) {
         return this.searchProviderCollection(query, limit, providerKey, collectionKey);
       } else if (providerKey) {
@@ -236,12 +252,18 @@ export class BibliographyManager {
         return this.searchAllSources(query, limit);
       }
     } else {
+
+      // These are in arbitrary order, so sort them alphabetically
+      const idSort = (a: BibliographySource, b: BibliographySource) => {
+        return a.id.localeCompare(b.id);
+      };
+
       if (providerKey && collectionKey) {
-        return this.sourcesForProviderCollection(providerKey, collectionKey);
+        return this.sourcesForProviderCollection(providerKey, collectionKey).sort(idSort);
       } else if (providerKey) {
-        return this.sourcesForProvider(providerKey);
+        return this.sourcesForProvider(providerKey).sort(idSort);
       } else {
-        return this.allSources();
+        return this.allSources().sort(idSort);
       }
     }
   }

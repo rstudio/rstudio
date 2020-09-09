@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections, BibliographyCollectionStream } from "./bibliography";
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';
@@ -48,6 +48,10 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   // Always enabled;
   public isEnabled(): boolean {
     return true;
+  }
+
+  public prime(): Promise<any> {
+    return Promise.resolve();
   }
 
   public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
@@ -80,6 +84,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public collections(): BibliographyCollection[] {
+
     return [];
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various

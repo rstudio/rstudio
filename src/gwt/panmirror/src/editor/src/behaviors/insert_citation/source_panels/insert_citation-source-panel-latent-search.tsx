@@ -39,7 +39,7 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   status: CitationSourceListStatus;
 }
 
-export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearchPanelProps> = props => {
+export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceLatentSearchPanelProps>((props, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
@@ -77,14 +77,9 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
 
     // Size the list Box
     const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 10;
+    const padding = 8;
     if (searchBoxHeight) {
       setListHeight(props.height - padding - searchBoxHeight);
-    }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
     }
   }, []);
 
@@ -123,7 +118,7 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel-latent-search'>
+    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
         <TextInput
           width='100%'
@@ -165,6 +160,6 @@ export const CitationSourceLatentSearchPanel: React.FC<CitationSourceLatentSearc
       </div>
 
     </div>);
-};
+});
 
 

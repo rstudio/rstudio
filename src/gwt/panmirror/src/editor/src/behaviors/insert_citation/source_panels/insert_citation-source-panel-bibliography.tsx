@@ -15,8 +15,6 @@
 
 import React from "react";
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
@@ -32,43 +30,87 @@ import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanel {
+export function bibliographySourcePanel(ui: EditorUI, bibliographyManager: BibliographyManager, treeDataChanged: () => void): CitationSourcePanel {
   const providers = bibliographyManager.localProviders();
-  const localProviderNodes = providers.filter(provider => provider.isEnabled()).map(provider => {
+
+  const providerNodes: { [key: string]: NavigationTreeNode } = {};
+
+  // For each of the providers, discover their collections
+  providers.filter(provider => provider.isEnabled()).forEach(provider => {
 
     const getFolder = (prov: string, hasParent: boolean) => {
       return folderImageForProvider(prov, hasParent, ui);
     };
-    const node: NavigationTreeNode = {
-      key: provider.key,
-      name: ui.context.translateText(provider.name),
-      type: provider.key,
-      image: rootImageForProvider(provider.key, ui),
-      children: toTree(provider.key, provider.collections(), getFolder),
-      expanded: true
-    };
-    return node;
+
+    // Get the response which could be items or could be a stream
+    const response = provider.collections();
+
+    // If this is a stream, poll the stream for tree data
+    if (!Array.isArray(response)) {
+
+      // Note the temporary collections
+      providerNodes[provider.key] = {
+        key: provider.key,
+        name: ui.context.translateText(provider.name),
+        type: provider.key,
+        image: rootImageForProvider(provider.key, ui),
+        children: toTree(provider.key, response.collections, getFolder),
+        expanded: true
+      };
+
+      const pollingInterval = setInterval(() => {
+        // if the document has been updated then invalidate
+        // otherwise check the stream
+        const result = response.stream();
+        if (result) {
+          // Got results. Update the tree data and notify the 
+          // caller that the data has changed
+          clearInterval(pollingInterval);
+          providerNodes[provider.key] = {
+            key: provider.key,
+            name: ui.context.translateText(provider.name),
+            type: provider.key,
+            image: rootImageForProvider(provider.key, ui),
+            children: toTree(provider.key, result, getFolder),
+            expanded: true
+          };
+          treeDataChanged();
+        }
+      }, 350);
+    } else {
+      // This is just an array of results, just pass them and move on
+      providerNodes[provider.key] = {
+        key: provider.key,
+        name: ui.context.translateText(provider.name),
+        type: provider.key,
+        image: rootImageForProvider(provider.key, ui),
+        children: toTree(provider.key, response, getFolder),
+        expanded: true
+      };
+    }
   });
 
   return {
     key: '17373086-77FE-410F-A319-33E314482125',
     panel: BibligraphySourcePanel,
-    treeNode: {
-      key: 'My Sources',
-      name: ui.context.translateText('My Sources'),
-      image: ui.images.citations?.local_sources,
-      type: kAllLocalSourcesRootNodeType,
-      children: localProviderNodes,
-      expanded: true
+    treeNode: () => {
+      return {
+        key: 'My Sources',
+        name: ui.context.translateText('My Sources'),
+        image: ui.images.citations?.local_sources,
+        type: kAllLocalSourcesRootNodeType,
+        children: Object.values(providerNodes),
+        expanded: true
+      };
     }
   };
 }
 
-export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props => {
+export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
 
   const bibMgr = props.bibliographyManager;
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>();
+  const [searchTerm, setSearchTerm] = React.useState<string>('');
 
   React.useEffect(debounce(() => {
     async function loadData() {
@@ -103,7 +145,7 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
 
   // If the nodes change, clear the search box value
   React.useLayoutEffect(() => {
-    // TODO: Clear search term when node changes
+    setSearchTerm('');
   }, [props.selectedNode]);
 
   // Search the user search terms
@@ -115,17 +157,18 @@ export const BibligraphySourcePanel: React.FC<CitationSourcePanelProps> = props 
     <CitationSourceTypeheadSearchPanel
       height={props.height}
       citations={citations}
-      selectedNode={props.selectedNode}
       citationsToAdd={props.citationsToAdd}
-      searchTermChanged={searchChanged}
       addCitation={props.addCitation}
       removeCitation={props.removeCitation}
       selectedCitation={props.selectedCitation}
       confirm={props.confirm}
+      searchTerm={searchTerm}
+      searchTermChanged={searchChanged}
       ui={props.ui}
+      ref={ref}
     />
   );
-};
+});
 
 
 function rootImageForProvider(providerKey: string, ui: EditorUI) {

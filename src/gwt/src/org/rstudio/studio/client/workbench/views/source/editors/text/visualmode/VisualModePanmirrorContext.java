@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -198,6 +199,24 @@ public class VisualModePanmirrorContext
          });
       };
       
+      uiContext.clipboardImage = () -> {
+         return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+            if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+            {
+               Desktop.getFrame().getClipboardImage(image -> {
+                  if (!StringUtil.isNullOrEmpty(image))
+                     resolve.onInvoke(image);
+                  else
+                     resolve.onInvoke((String)null);
+               });
+            }
+            else
+            {
+               resolve.onInvoke((String)null);
+            } 
+          });
+      };
+      
       uiContext.resolveImageUris = (imageUris) -> {
          return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
            
@@ -229,7 +248,13 @@ public class VisualModePanmirrorContext
                   @Override
                   public void onResponseReceived(JsArrayString importedUris)
                   {
-                     resolve.onInvoke(JsArrayUtil.concat(resolvedUris, importedUris));
+                     for (int i=0; i<importedUris.length(); i++)
+                     {
+                        String path = uiContext.mapPathToResource.map(importedUris.get(i));
+                        if (path != null)
+                           resolvedUris.push(path); 
+                     }
+                     resolve.onInvoke(resolvedUris);
                   }
                });
             }

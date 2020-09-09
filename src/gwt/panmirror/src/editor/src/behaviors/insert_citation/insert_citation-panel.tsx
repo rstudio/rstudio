@@ -34,14 +34,13 @@ import { crossrefSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation-panel.css';
-import { selectCitations } from "./insert_citation-dialog";
 
 // Citation Panels are the coreUI element of ths dialog. Each panel provides
 // the main panel UI as well as the tree to display when the panel is displayed.
 export interface CitationSourcePanel {
   key: string;
   panel: React.FC<CitationSourcePanelProps>;
-  treeNode: NavigationTreeNode;
+  treeNode(): NavigationTreeNode;
 }
 
 export interface CitationListEntry {
@@ -69,6 +68,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
   removeCitation: (citation: CitationListEntry) => void;
   selectedCitation: (citation?: CitationListEntry) => void;
   confirm: VoidFunction;
+  ref: React.Ref<any>;
 }
 
 // The picker is a full featured UI for finding and selecting citation data
@@ -91,63 +91,107 @@ interface InsertCitationPanelProps extends WidgetProps {
 export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
 
   // The panels that are being displayed and which one is selected
-  const [providerPanels, setProviderPanels] = React.useState<CitationSourcePanel[]>([]);
-  const [selectedProviderPanel, setSelectedProviderPanel] = React.useState<CitationSourcePanel>();
+  const providerPanels = React.useMemo<CitationSourcePanel[]>(() => [
+    bibliographySourcePanel(props.ui, props.bibliographyManager, () => {
+      // Load the tree and select the root node
+      const treeNodes = providerPanels.map(panel => panel.treeNode());
+      setTreeSourceData(treeNodes);
+    }),
+    doiSourcePanel(props.ui),
+    crossrefSourcePanel(props.ui),
+  ], []);
 
-  // The node of the SelectTree that is selected
-  const [selectedNode, setSelectedNode] = React.useState<NavigationTreeNode>();
+  // The default tree nodes
+  const defaultTreeNodes = React.useMemo<NavigationTreeNode[]>(() => {
+    return providerPanels.map(panel => panel.treeNode());
+  }, [providerPanels]);
+
+  // The default selected node
+  const defaultNode = React.useMemo<NavigationTreeNode>(() => {
+    return props.selectedNode || defaultTreeNodes[0];
+  }, [props.selectedNode]);
+
+  // Find the panel associated with the selected tree node
+  const panelForNode = (node: NavigationTreeNode, sourcePanels: CitationSourcePanel[]) => {
+    const panelItem = sourcePanels.find(panel => {
+      const panelTreeNode = panel.treeNode();
+      return containsChild(node.key, panelTreeNode);
+    });
+    return panelItem;
+  };
+
+  // The selected panel
+  const [selectedProviderPanel, setSelectedProviderPanel] = React.useState<CitationSourcePanel>(panelForNode(defaultNode, providerPanels) || providerPanels[0]);
+
+  // The node of the tree that is selected
+  const [selectedNode, setSelectedNode] = React.useState<NavigationTreeNode>(defaultNode);
 
   // Data for the Navigation Tree
-  const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>([]);
+  const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>(defaultTreeNodes);
 
   // The accumulated bibliography sources to be inserted
+  // We need to track these specially to deal with merging the explicitly added items
+  // with the currently selected item
   const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
-
   const [selectedCitation, setSelectedCitation] = React.useState<CitationListEntry>();
+
+  // Used to track whether initial focus has been set
+  const [initialFocus, setInitialFocus] = React.useState<boolean>(true);
+
+  // The loadded panel reference (used for focus, etc...)
+  const panelRef = React.useRef<any>(undefined);
 
   // The initial loading of data for the panel. 
   React.useEffect(() => {
     async function loadData() {
       await props.bibliographyManager.load(props.ui, props.doc);
 
-      // Load the panels
-      const allPanels = [
-        bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager),
-        doiSourcePanel(props.ui),
-        // crossrefSourcePanel(props.ui),
-      ];
-      setProviderPanels(allPanels);
-
-      // Load the tree and select the root node
-      const treeNodes = allPanels.map(panel => panel.treeNode);
-      setTreeSourceData(treeNodes);
-
       if (props.selectedNode) {
         setSelectedNode(props.selectedNode);
-
       } else {
-        setSelectedNode(treeNodes[0]);
+        setSelectedNode(treeSourceData[0]);
       }
     }
     loadData();
   }, []);
 
+  const mergeCitations = (toAdd: CitationListEntry[], selected?: CitationListEntry) => {
+    if (!selected) {
+      return toAdd;
+    } else {
+      if (toAdd.map(citation => citation.id).includes(selected.id)) {
+        return toAdd;
+      } else {
+        return (toAdd || []).concat(selected);
+      }
+    }
+  };
+
+  // As citations to add or selection changes, notify of updated citationsToAdd
+  React.useEffect(() => {
+    props.onCitationsChanged(mergeCitations(citationsToAdd, selectedCitation));
+  }, [selectedCitation, citationsToAdd]);
+
   // Whenever the user selects a new node, lookup the correct panel for that node and 
   // select that panel.
   React.useEffect(() => {
-    const panelForNode = (treeNode: NavigationTreeNode, panelItems: CitationSourcePanel[]) => {
-      const panelItem = panelItems.find(panel => {
-        return containsChild(treeNode.key, panel.treeNode);
-      });
-      return panelItem;
-    };
     if (selectedNode) {
       const rootPanel = panelForNode(selectedNode, providerPanels);
-      if (rootPanel?.key !== selectedProviderPanel?.key) {
+      if (rootPanel && rootPanel?.key !== selectedProviderPanel?.key) {
         setSelectedProviderPanel(rootPanel);
       }
     }
   }, [selectedNode]);
+
+  // If we should set initial focus, go ahead and set it 
+  React.useEffect(() => {
+    if (panelRef.current && initialFocus) {
+      setTimeout(() => {
+        panelRef.current.focus();
+      }, 200);
+      setInitialFocus(false);
+    }
+  }, []);
 
   // Style properties
   const style: React.CSSProperties = {
@@ -169,7 +213,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     addCitation: (citation: CitationListEntry) => {
       const newCitations = [...citationsToAdd, citation];
       setCitationsToAdd(newCitations);
-      props.onCitationsChanged(newCitations);
     },
     removeCitation: (citation: CitationListEntry) => {
       deleteCitation(citation.id);
@@ -177,7 +220,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     selectedCitation: (citation?: CitationListEntry) => {
       setSelectedCitation(citation);
     },
-    confirm: props.onOk
+    confirm: props.onOk,
+    ref: panelRef
   };
 
   // Create the panel that should be displayed for the selected node of the tree

@@ -31,18 +31,20 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
   return {
     key: 'E38370AA-78AE-450B-BBE8-878E1C817C04',
     panel: CrossRefSourcePanel,
-    treeNode: {
-      key: 'CrossRef',
-      name: ui.context.translateText('Crossref'),
-      image: ui.images.citations?.crossref,
-      type: kCrossrefType,
-      children: [],
-      expanded: true
+    treeNode: () => {
+      return {
+        key: 'CrossRef',
+        name: ui.context.translateText('Crossref'),
+        image: ui.images.citations?.crossref,
+        type: kCrossrefType,
+        children: [],
+        expanded: true
+      };
     }
   };
 }
 
-export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => {
+export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
   const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
@@ -102,9 +104,10 @@ export const CrossRefSourcePanel: React.FC<CitationSourcePanelProps> = props => 
       defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
       placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
       ui={props.ui}
+      ref={ref}
     />
   );
-};
+});
 
 function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI): CitationListEntry {
 

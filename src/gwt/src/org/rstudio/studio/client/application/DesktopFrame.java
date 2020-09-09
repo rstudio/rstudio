@@ -68,6 +68,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setClipboardText(String text);
    void getClipboardText(CommandWithArg<String> callback);
    void getClipboardUris(CommandWithArg<JsArrayString> callback);
+   void getClipboardImage(CommandWithArg<String> callback);
    
    void setGlobalMouseSelection(String selection);
    void getGlobalMouseSelection(CommandWithArg<String> callback);

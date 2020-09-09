@@ -53,12 +53,6 @@ export function citationCompletionHandler(
   server: PandocServer
 ): CompletionHandler<BibliographyEntry> {
 
-  // prime bibliography on initial focus
-  const focusUnsubscribe = events.subscribe(FocusEvent, (doc) => {
-    bibManager.load(ui, doc!);
-    focusUnsubscribe();
-  });
-
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 

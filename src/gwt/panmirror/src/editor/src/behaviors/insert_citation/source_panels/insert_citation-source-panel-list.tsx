@@ -135,12 +135,14 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     if (selectedIndex === undefined) {
       onSetSelectedIndex(0);
     }
+    event.stopPropagation();
+    event.preventDefault();
   };
 
   const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     setFocused(false);
-    setSelectedIndex(undefined);
-    props.selectedCitation(undefined);
+    event.stopPropagation();
+    event.preventDefault();
   };
 
   const onSetSelectedIndex = (index: number) => {

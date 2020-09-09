@@ -17,7 +17,6 @@ import React from "react";
 import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import './insert_citation-source-panel-typeahead-search.css';
 import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
@@ -25,18 +24,18 @@ import { CitationListEntry } from "../insert_citation-panel";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   height: number;
-  selectedNode?: NavigationTreeNode;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
   addCitation: (citation: CitationListEntry) => void;
   removeCitation: (citation: CitationListEntry) => void;
   selectedCitation: (citation?: CitationListEntry) => void;
+  searchTerm: string;
   searchTermChanged: (searchTerm: string) => void;
   confirm: VoidFunction;
   ui: EditorUI;
 }
 
-export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeaheadSearchPanelProps> = props => {
+export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceTypeaheadSearchPanelProps>((props: CitationSourceTypeaheadSearchPanelProps, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
 
@@ -56,18 +55,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
     if (searchBoxHeight) {
       setListHeight(props.height - searchBoxHeight);
     }
-
-    // Focus the search box
-    if (searchBoxRef.current) {
-      searchBoxRef.current.focus();
-    }
   }, []);
-
-  React.useLayoutEffect(() => {
-    if (searchBoxRef.current) {
-      searchBoxRef.current.value = '';
-    }
-  }, [props.selectedNode]);
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -98,7 +86,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color'>
+    <div style={props.style} className='pm-insert-citation-panel-search pm-block-border-color pm-background-color' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-citation-search-panel-textbox-container'>
         <TextInput
           width='100%'
@@ -109,6 +97,7 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
           onFocus={searchBoxFocused}
+          value={props.searchTerm}
           ref={searchBoxRef}
         />
       </div>
@@ -126,6 +115,6 @@ export const CitationSourceTypeheadSearchPanel: React.FC<CitationSourceTypeahead
         ref={listContainer}
       />
     </div>);
-};
+});
 
 

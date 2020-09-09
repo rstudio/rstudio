@@ -29,6 +29,7 @@
 #include <QtPrintSupport/QPrintPreviewDialog>
 
 #include <shared_core/FilePath.hpp>
+#include <core/FileUtils.hpp>
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
@@ -494,6 +495,21 @@ QJsonArray GwtCallback::getClipboardUris()
       }
    }
    return urisJson;
+}
+
+QString GwtCallback::getClipboardImage()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasImage())
+   {
+      QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
+      FilePath tempDir = options().scratchTempDir();
+      FilePath imagePath = file_utils::uniqueFilePath(tempDir, "paste-", ".png");
+      QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
+      if (image.save(imageFile))
+         return imageFile;
+   }
+   return QString();
 }
 
 void GwtCallback::setGlobalMouseSelection(QString selection)
