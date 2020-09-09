@@ -223,7 +223,7 @@ public:
    core::Error setZoteroLibraries(core::json::Array val);
 
    /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
     */
    bool zoteroUseBetterBibtex();
    core::Error setZoteroUseBetterBibtex(bool val);

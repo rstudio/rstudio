@@ -480,14 +480,14 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
     */
    public PrefValue<Boolean> zoteroUseBetterBibtex()
    {
       return bool(
          "zotero_use_better_bibtex",
-         "Use Better BibTeX for citation keys and BibLaTeX export", 
-         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
+         "Use Better BibTeX for citation keys and BibTeX export", 
+         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies", 
          false);
    }
 

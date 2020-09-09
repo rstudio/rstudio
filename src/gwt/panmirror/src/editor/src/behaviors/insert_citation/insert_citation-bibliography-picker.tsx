@@ -51,7 +51,7 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   // The types of bibliography files and the default value
   const bibliographyTypes: BibliographyType[] = [
     {
-      displayName: props.ui.context.translateText('BibLaTeX'),
+      displayName: props.ui.context.translateText('BibTeX'),
       extension: 'bib',
     },
     {

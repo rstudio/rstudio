@@ -14,7 +14,7 @@
  */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ZoteroCollection, ZoteroServer, kZoteroBibLaTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
+import { ZoteroCollection, ZoteroServer, kZoteroBibTeXTranslator, kZoteroMyLibrary, ZoteroCollectionSpec } from "../zotero";
 
 import { ParsedYaml, valueFromYamlText } from "../yaml";
 import { suggestCiteId } from "../cite";
@@ -155,7 +155,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
     if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
-      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibLaTeXTranslator, kZoteroMyLibrary);
+      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibTeXTranslator, kZoteroMyLibrary);
       if (bibLaTeX) {
         return Promise.resolve(bibLaTeX.message);
       }
