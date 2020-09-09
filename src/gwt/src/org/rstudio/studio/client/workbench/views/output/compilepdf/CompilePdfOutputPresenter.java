@@ -20,6 +20,8 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -37,6 +39,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
@@ -51,20 +54,26 @@ public class CompilePdfOutputPresenter extends BusyPresenter
               CompilePdfErrorsEvent.Handler,
               CompilePdfCompletedEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, CompilePdfOutputPresenter> {}
+
    @Inject
    public CompilePdfOutputPresenter(CompileOutputPaneFactory outputFactory,
+                                    Binder binder,
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
                                     FileTypeRegistry fileTypeRegistry,
+                                    Commands commands,
                                     EventBus events)
    {
       super(outputFactory.create("Compile PDF",
                                  "View the LaTeX compilation log"));
+      binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
+      commands_ = commands;
 
       view_.stopButton().addClickHandler(event ->
       {
@@ -207,6 +216,14 @@ public class CompilePdfOutputPresenter extends BusyPresenter
       });
    }
 
+   @Handler
+   public void onActivateCompilePDF()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private void compileStarted(String targetFile)
    {
       targetFile_ = FileSystemItem.createFile(targetFile);
@@ -283,6 +300,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final EventBus events_;
+   private final Commands commands_;
 
    private boolean switchToConsoleOnSuccessfulCompile_;
 }

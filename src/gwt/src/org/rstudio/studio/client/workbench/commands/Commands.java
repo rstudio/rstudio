@@ -326,6 +326,11 @@ public abstract class
    public abstract AppCommand moveTabToFirst();
    public abstract AppCommand moveTabToLast();
 
+   // Other Panes
+   public abstract AppCommand activateCompilePDF();
+   public abstract AppCommand activateSQLResults();
+   public abstract AppCommand activateDeployContent();
+
    // History
    public abstract AppCommand historySendToSource();
    public abstract AppCommand historySendToConsole();

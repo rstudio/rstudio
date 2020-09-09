@@ -333,10 +333,15 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
-         <cmd refid="activateTutorial"/>
-         <cmd refid="activateJobs"/>
-         <cmd refid="activateLauncherJobs"/>
-         <cmd refid="activateFindInFiles"/>
+         <menu label="Show Other _Panes">
+            <cmd refid="activateTutorial"/>
+            <cmd refid="activateJobs"/>
+            <cmd refid="activateLauncherJobs"/>
+            <cmd refid="activateFindInFiles"/>
+            <cmd refid="activateCompilePDF"/>
+            <cmd refid="activateSQLResults"/>
+            <cmd refid="activateDeployContent"/>
+         </menu>
 
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -1408,12 +1413,27 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="activateFindInFiles"
         label="Show Find in Files"
-        menuLabel="Show Fin_d in Files"
+        menuLabel="Show _Find in Files"
         windowMode="main"/>
 
    <cmd id="activateLauncherJobs"
         label="Show Launcher Pane"
         menuLabel = "Show _Launcher"
+        windowMode="main"/>
+
+   <cmd id="activateCompilePDF"
+        label="Show Compile PDF Pane"
+        menuLabel = "Show Compile _PDF"
+        windowMode="main"/>
+
+   <cmd id="activateSQLResults"
+        label="Show SQL Results Pane"
+        menuLabel = "Show S_QL Results"
+        windowMode="main"/>
+
+   <cmd id="activateDeployContent"
+        label="Show Deploy Content Pane"
+        menuLabel = "Show Deploy _Content"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
