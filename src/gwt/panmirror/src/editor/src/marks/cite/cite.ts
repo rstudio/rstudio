@@ -723,12 +723,16 @@ export async function ensureSourcesInBibliography(
   // Find any providers that have warnings
   const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));
 
+  // Is this a bibtex bibliography?
+  const bibliographyFileExtension = getExtension(bibliographyFile.fullPath);
+  const isBibTexBibliography = bibliographyFileExtension === 'bib' || bibliographyFileExtension === 'bibtex';
+
   // If there is a warning message and we're exporting to BibTeX, show the warning
   // message to the user and confirm that they'd like to proceed. This would ideally
   // know more about the warning type and not have this filter here (e.g. it would just
   // always show the warning)
   let proceedWithInsert = true;
-  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && getExtension(bibliographyFile.fullPath) === 'bib') {
+  if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && isBibTexBibliography) {
     const results = await Promise.all<boolean>(providersWithWarnings.map(async withWarning => {
       const warning = bibManager.warningForProvider(withWarning);
       if (warning) {
@@ -748,7 +752,7 @@ export async function ensureSourcesInBibliography(
           const cslToWrite = sanitizeForCiteproc(source);
 
           if (!bibManager.findIdInLocalBibliography(source.id)) {
-            const sourceAsBibTex = await bibManager.generateBibTeX(ui, source.id, source, source.providerKey);
+            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, source, source.providerKey) : undefined;
             await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibTex || '');
           }
 

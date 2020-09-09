@@ -114,20 +114,22 @@ std::string creatorsSQL(const ZoteroCollectionSpec& spec)
         items
         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
         join libraries on items.libraryID = libraries.libraryID
-        join collections on libraries.libraryID = collections.libraryID
+        %1%
         join itemCreators on items.itemID = itemCreators.itemID
         join creators on creators.creatorID = itemCreators.creatorID
         join creatorTypes on itemCreators.creatorTypeID = creatorTypes.creatorTypeID
       WHERE
         itemTypes.typeName <> 'attachment'
         AND itemTypes.typeName <> 'note'
-        %1%
+        %2%
       ORDER BY
         items.key ASC,
         itemCreators.orderIndex
    )");
    return boost::str(fmt %
-      (spec.parentKey.empty() ? "AND libraries.libraryID = " + spec.key : "AND collections.key = '" + spec.key + "'"));
+        (spec.parentKey.empty() ? "" :  R"(join collectionItems on items.itemID = collectionItems.itemID
+         join collections on collectionItems.collectionID = collections.collectionID)") %
+        (spec.parentKey.empty() ? "AND libraries.libraryID = " + spec.key : "AND collections.key = '" + spec.key + "'"));
 }
 
 std::string collectionSQL(const ZoteroCollectionSpec& spec)
