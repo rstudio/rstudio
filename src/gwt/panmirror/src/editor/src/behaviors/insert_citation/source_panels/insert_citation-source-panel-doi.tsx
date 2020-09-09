@@ -110,6 +110,10 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
     searchBoxRef.current?.focus();
   };
 
+  const selectedIndexChanged = () => {
+    // No op - there is always only a single result
+  };
+
   return (
     <div style={props.style} className='pm-insert-doi-source-panel' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-doi-source-panel-textbox-container'>
@@ -133,7 +137,7 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
                 removeCitation: props.removeCitation,
-                setSelectedIndex: () => { },
+                setSelectedIndex: selectedIndexChanged,
                 ui: props.ui
               }}
               style={{}}
