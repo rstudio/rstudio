@@ -105,7 +105,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
           // paste handler is expected to deal with this case. If the user is typing
           // a DOI, we may need to still check for completions below, but this should be 
           // unusual
-          if (!completionContext.isPaste && bibliographyManager.isWritable()) {
+          if (!completionContext.isPaste && bibliographyManager.allowsWrites()) {
             // Check with the server to see if we can get citation data for this DOI
             const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
             if (result.status === "ok") {

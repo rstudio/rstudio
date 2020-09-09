@@ -44,6 +44,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
   public name: string = "Bibliography";
   public key: string = kLocalBiliographyProviderKey;
+  public requiresWritable: boolean = false;
 
   // Always enabled;
   public isEnabled(): boolean {

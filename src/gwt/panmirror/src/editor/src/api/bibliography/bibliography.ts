@@ -36,6 +36,7 @@ export interface BibliographyFile {
 export interface BibliographyDataProvider {
   key: string;
   name: string;
+  requiresWritable: boolean;
 
   isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
@@ -103,8 +104,13 @@ export class BibliographyManager {
 
     // Prime any of the providers by downloading collection specs
     await Promise.all(this.providers.map(async provider => {
-      await provider.collections();
+      provider.collections();
     }));
+  }
+
+  public refreshWritable(doc: ProsemirrorNode, ui: EditorUI) {
+    // Note whether there is anything writable
+    this.writable = this.isWritable(doc, ui);
   }
 
   public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
@@ -119,7 +125,7 @@ export class BibliographyManager {
     const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
 
     // Note whether there is anything writable
-    this.writable = this.shouldAllowWrites(doc, ui);
+    this.refreshWritable(doc, ui);
 
     // Once loaded, see if any of the providers required an index update
     const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
@@ -139,7 +145,7 @@ export class BibliographyManager {
   }
 
   public allSources(): BibliographySourceWithCollections[] {
-    if (this.sources && this.isWritable()) {
+    if (this.sources && this.allowsWrites()) {
       return this.sources;
     } else {
       return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
@@ -159,11 +165,11 @@ export class BibliographyManager {
     return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
   }
 
-  public isWritable(): boolean {
+  public allowsWrites(): boolean {
     return this.writable || false;
   }
 
-  private shouldAllowWrites(doc: ProsemirrorNode, ui: EditorUI): boolean {
+  private isWritable(doc: ProsemirrorNode, ui: EditorUI): boolean {
     const bibliographyFiles = this.bibliographyFiles(doc, ui);
     if (bibliographyFiles.length === 0) {
       // Since there are no bibliographies, we can permit writing a fresh one
@@ -182,7 +188,11 @@ export class BibliographyManager {
   }
 
   public localProviders(): BibliographyDataProvider[] {
-    return this.providers;
+    if (this.allowsWrites()) {
+      return this.providers;
+    } else {
+      return this.providers.filter(provider => provider.requiresWritable === false);
+    }
   }
 
   public providerName(providerKey: string): string | undefined {
@@ -294,7 +304,7 @@ export class BibliographyManager {
       const items = results.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
-      const filteredItems = this.isWritable() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
+      const filteredItems = this.allowsWrites() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
 
       return filteredItems;
 

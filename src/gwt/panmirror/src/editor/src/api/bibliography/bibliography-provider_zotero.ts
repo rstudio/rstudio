@@ -43,6 +43,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   public name: string = "Zotero";
   public key: string = kZoteroProviderKey;
+  public requiresWritable: boolean = true;
 
   public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
 
@@ -109,7 +110,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return this.enabled && (this.allCollections.length > 0 || this.allCollectionSpecs.length > 0);
   }
 
-  public collections(): BibliographyCollectionStream {
+  public collections(): BibliographyCollection[] | BibliographyCollectionStream {
     let updatedCollectionSpecs: BibliographyCollection[] | null = null;
 
     this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []).then((specResult) => {

@@ -58,7 +58,7 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       const works = await props.server.crossref.works(searchTerm);
 
       // Get the list of ids already in the bibliography
-      const existingIds = props.bibliographyManager.allSources().map(src => src.id);
+      const existingIds = props.bibliographyManager.localSources().map(src => src.id);
 
       const citationEntries = works.items.map(work => {
         const citationEntry = toCitationEntry(work, existingIds, props.ui);

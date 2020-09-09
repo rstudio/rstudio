@@ -92,7 +92,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // The panels that are being displayed and which one is selected
   const providerPanels = React.useMemo<CitationSourcePanel[]>(() => [
-    bibliographySourcePanel(props.ui, props.bibliographyManager, () => {
+    bibliographySourcePanel(props.doc, props.ui, props.bibliographyManager, () => {
       // Load the tree and select the root node
       const treeNodes = providerPanels.map(panel => panel.treeNode());
       setTreeSourceData(treeNodes);

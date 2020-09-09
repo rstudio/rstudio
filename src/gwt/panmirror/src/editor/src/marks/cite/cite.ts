@@ -268,7 +268,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
 
-        if (!source && bibManager.isWritable()) {
+        if (!source && bibManager.allowsWrites()) {
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
