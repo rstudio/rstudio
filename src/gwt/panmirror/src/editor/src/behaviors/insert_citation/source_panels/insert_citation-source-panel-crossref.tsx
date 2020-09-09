@@ -24,6 +24,8 @@ import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 import { CrossrefWork, imageForCrossrefType } from "../../../api/crossref";
 import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
+import { DOIServer } from "../../../api/doi";
+import { resolve } from "url";
 
 export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
@@ -61,7 +63,7 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       const existingIds = props.bibliographyManager.localSources().map(src => src.id);
 
       const citationEntries = works.items.map(work => {
-        const citationEntry = toCitationEntry(work, existingIds, props.ui);
+        const citationEntry = toCitationEntry(work, existingIds, props.ui, props.server.doi);
         if (citationEntry) {
           // Add this id to the list of existing Ids so future ids will de-duplicate against this one
           existingIds.push(citationEntry.id);
@@ -109,9 +111,8 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
   );
 });
 
-function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI): CitationListEntry {
+function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
 
-  // TODO: need to implement a better toBibliographySource
   const coercedCSL = sanitizeForCiteproc(crossrefWork as unknown as CSL);
   const id = suggestCiteId(existingIds, coercedCSL);
   const providerKey = 'crossref';
@@ -125,8 +126,13 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
     date: formatIssuedDate(crossrefWork.issued),
     journal: '',
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
-    toBibliographySource: () => {
-      return Promise.resolve({ id, providerKey, ...coercedCSL });
+    toBibliographySource: async () => {
+
+      // Generate CSL using the DOI
+      return doiServer.fetchCSL(crossrefWork.DOI, 1000).then(doiResult => {
+        const csl = doiResult.message as CSL;
+        return { id, providerKey, ...csl };
+      });
     }
   };
 }
