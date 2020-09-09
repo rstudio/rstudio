@@ -103,6 +103,7 @@ public Q_SLOTS:
    void setClipboardText(QString text);
    QString getClipboardText();
    QJsonArray getClipboardUris();
+   QString getClipboardImage();
    
    void setGlobalMouseSelection(QString selection);
    QString getGlobalMouseSelection();

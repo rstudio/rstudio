@@ -496,6 +496,22 @@ QJsonArray GwtCallback::getClipboardUris()
    return urisJson;
 }
 
+QString GwtCallback::getClipboardImage()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasImage())
+   {
+      QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
+      FilePath imagePath;
+      FilePath::tempFilePath(".png", imagePath);
+      imagePath = imagePath.getParent().completeChildPath("paste-" + imagePath.getFilename());
+      QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
+      if (image.save(imageFile))
+         return imageFile;
+   }
+   return QString();
+}
+
 void GwtCallback::setGlobalMouseSelection(QString selection)
 {
 #ifdef Q_OS_LINUX
