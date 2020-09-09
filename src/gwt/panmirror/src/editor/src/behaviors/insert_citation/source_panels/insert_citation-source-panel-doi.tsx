@@ -51,13 +51,13 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
   const defaultMessage = props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.');
   const noMatchingResultsMessage = props.ui.context.translateText('No item matching this identifier could be located.');
 
-  const [csl, setCsl] = React.useState<CSL>();
+  const [citation, setCitation] = React.useState<CitationListEntry>();
   const [noResultsText, setNoResultsText] = React.useState<string>(defaultMessage);
   const [searchText, setSearchText] = React.useState<string>('');
   const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
 
   const clearResults = (message: string) => {
-    setCsl(undefined);
+    setCitation(undefined);
     setPreviewFields([]);
     setNoResultsText(message);
   };
@@ -78,13 +78,20 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
   const debouncedCSL = React.useCallback(debounce(async (doi: string) => {
     const result = await props.server.doi.fetchCSL(doi, 350);
     if (result.status === 'ok') {
-      setCsl(result.message);
-      const preview = formatForPreview(result.message);
+      // Form the entry
+      const csl = result.message;
+      const entry = toCitationEntry(csl, props.bibliographyManager, props.ui);
+      setCitation(entry);
+
+      // Display the preview
+      const preview = formatForPreview(csl);
       setPreviewFields(preview);
+
+      // Select the item
+      props.selectedCitation(entry);
     } else {
       clearResults(noMatchingResultsMessage);
     }
-
   }, 100), []);
 
   React.useEffect(() => {
@@ -99,8 +106,12 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
     setSearchText(e.target.value);
   };
 
+  const focusSearch = () => {
+    searchBoxRef.current?.focus();
+  };
+
   return (
-    <div style={props.style} className='pm-insert-doi-source-panel' ref={ref}>
+    <div style={props.style} className='pm-insert-doi-source-panel' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-doi-source-panel-textbox-container'>
         <TextInput
           width='100%'
@@ -114,14 +125,15 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
       </div>
       <div className='pm-insert-doi-source-panel-results pm-block-border-color pm-background-color' style={{ height: listHeight }}>
         <div className='pm-insert-doi-source-panel-heading'>
-          {csl ?
+          {citation ?
             <CitationSourcePanelListItem
               index={0}
               data={{
-                citations: toCitationEntry(csl, props.bibliographyManager, props.ui),
+                citations: [citation],
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
                 removeCitation: props.removeCitation,
+                setSelectedIndex: () => { },
                 ui: props.ui
               }}
               style={{}}
@@ -150,25 +162,24 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
   );
 });
 
-function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry[] {
+function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
     const id = suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl);
     const providerKey = 'doi';
-    return [
-      {
-        id,
-        title: csl.title || '',
-        providerKey,
-        authors: (length: number) => {
-          return formatAuthors(csl.author, length);
-        },
-        date: formatIssuedDate(csl.issued),
-        journal: '',
-        image: imageForType(ui, csl.type)[0],
-        toBibliographySource: () => {
-          return Promise.resolve({ ...csl, id, providerKey });
-        }
-      }];
+    return {
+      id,
+      title: csl.title || '',
+      providerKey,
+      authors: (length: number) => {
+        return formatAuthors(csl.author, length);
+      },
+      date: formatIssuedDate(csl.issued),
+      journal: '',
+      image: imageForType(ui, csl.type)[0],
+      toBibliographySource: () => {
+        return Promise.resolve({ ...csl, id, providerKey });
+      }
+    };
   }
-  return [];
+  return undefined;
 }
