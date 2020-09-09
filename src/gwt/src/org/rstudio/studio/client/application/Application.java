@@ -876,6 +876,9 @@ public class Application implements ApplicationEventHandlers
          removeTerminalCommands();
       }
 
+      if (!sessionInfo.getPresentationState().isActive())
+         commands_.activatePresentation().remove();
+
       if (!sessionInfo.getAllowVcs())
          commands_.showVcsOptions().remove();
 
