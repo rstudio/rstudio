@@ -37,6 +37,7 @@ public class PanmirrorUIContext
    public Mapper translateText;
    public StringArrayGetter droppedUris;
    public ClipboardUris clipboardUris;
+   public ClipboardImage clipboardImage;
    public ResolveImageUris resolveImageUris;
    public BooleanGetter isWindowsDesktop;
 
@@ -80,6 +81,12 @@ public class PanmirrorUIContext
    public interface ClipboardUris
    {
       Promise<JsArrayString> clipboardUris();
+   }
+   
+   @JsFunction
+   public interface ClipboardImage
+   {
+      Promise<String> clipboardImage();
    }
    
    @JsFunction

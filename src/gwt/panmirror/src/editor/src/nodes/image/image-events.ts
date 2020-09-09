@@ -19,6 +19,7 @@ import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorUI } from '../../api/ui';
 
 const kTextUriList = 'text/uri-list';
+const kApplicationQtImage = 'application/x-qt-image';
 
 const pluginKey = new PluginKey('image-events');
 
@@ -34,23 +35,37 @@ export function imageEventsPlugin(ui: EditorUI) {
   });
 }
 
-// detect file pastes where there is no payload, in that case check to see
-// if there is clipboard data we can get from our context (e.g. from Qt)
+
 function imagePaste(ui: EditorUI) {
   return (view: EditorView, event: Event) => {
     const clipboardEvent = event as ClipboardEvent;
-    if (clipboardEvent.clipboardData && clipboardEvent.clipboardData.types.includes(kTextUriList)) {
-      const uriList = clipboardEvent.clipboardData.getData(kTextUriList);
-      if (uriList.length === 0) {
-        ui.context.clipboardUris().then(uris => {
-          if (uris) {
-            handleImageUris(view, view.state.selection.from, event, uris, ui);
+
+    if (clipboardEvent.clipboardData) {
+      // detect file pastes where there is no payload, in that case check to see
+      // if there is clipboard data we can get from our context (e.g. from Qt)
+      if (clipboardEvent.clipboardData.types.includes(kTextUriList)) {
+        const uriList = clipboardEvent.clipboardData.getData(kTextUriList);
+        if (uriList.length === 0) {
+          ui.context.clipboardUris().then(uris => {
+            if (uris) {
+              handleImageUris(view, view.state.selection.from, event, uris, ui);
+            }
+          });
+          event.preventDefault();
+          return true;
+        }
+        // raw image paste (e.g. from an office doc)
+      } else if (clipboardEvent.clipboardData.types.includes('application/x-qt-image')) {
+        ui.context.clipboardImage().then(image => {
+          if (image) {
+            handleImageUris(view, view.state.selection.from, event, [image], ui);
           }
+          event.preventDefault();
+          return true;
         });
-        event.preventDefault();
-        return true;
       }
     }
+
     return false;
   };
 }
