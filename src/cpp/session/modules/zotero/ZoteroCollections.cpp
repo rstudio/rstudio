@@ -48,7 +48,7 @@ const char * const kFile = "file";
 FilePath collectionsCacheDir(const std::string& type, const std::string& context)
 {
    // cache dir name (depends on whether bbt is enabled as when that changes it should invalidate all cache entries)
-   std::string dirName = "libraries";
+   std::string dirName = "libraries-cache";
    if (session::prefs::userState().zoteroUseBetterBibtex())
       dirName += "-bbt";
 
