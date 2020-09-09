@@ -122,7 +122,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // The loadded panel reference (used for focus, etc...)
   const panelRef = React.useRef<any>(undefined);
 
-
   // The initial loading of data for the panel. 
   React.useEffect(() => {
     async function loadData() {
@@ -136,6 +135,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
     loadData();
   }, []);
+
+  // As citations to add or selection changes, notify of updated citationsToAdd
+  React.useEffect(() => {
+    const cites = selectedCitation ? (citationsToAdd || []).concat(selectedCitation) : (citationsToAdd || []);
+    props.onCitationsChanged(cites);
+  }, [selectedCitation, citationsToAdd]);
 
   // Whenever the user selects a new node, lookup the correct panel for that node and 
   // select that panel.
@@ -183,7 +188,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     addCitation: (citation: CitationListEntry) => {
       const newCitations = [...citationsToAdd, citation];
       setCitationsToAdd(newCitations);
-      props.onCitationsChanged(newCitations);
     },
     removeCitation: (citation: CitationListEntry) => {
       deleteCitation(citation.id);
