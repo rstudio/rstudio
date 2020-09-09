@@ -248,7 +248,13 @@ public class VisualModePanmirrorContext
                   @Override
                   public void onResponseReceived(JsArrayString importedUris)
                   {
-                     resolve.onInvoke(JsArrayUtil.concat(resolvedUris, importedUris));
+                     for (int i=0; i<importedUris.length(); i++)
+                     {
+                        String path = uiContext.mapPathToResource.map(importedUris.get(i));
+                        if (path != null)
+                           resolvedUris.push(path); 
+                     }
+                     resolve.onInvoke(resolvedUris);
                   }
                });
             }
