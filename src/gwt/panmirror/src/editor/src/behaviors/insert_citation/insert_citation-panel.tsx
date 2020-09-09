@@ -108,7 +108,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const [selectedNode, setSelectedNode] = React.useState<NavigationTreeNode>();
 
   // Data for the Navigation Tree
-  const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>([]);
+  const [treeSourceData, setTreeSourceData] = React.useState<NavigationTreeNode[]>(providerPanels.map(panel => panel.treeNode()));
 
   // The accumulated bibliography sources to be inserted
   const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
@@ -128,15 +128,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     async function loadData() {
       await props.bibliographyManager.load(props.ui, props.doc);
 
-      // Load the tree and select the root node
-      const treeNodes = providerPanels.map(panel => panel.treeNode());
-      setTreeSourceData(treeNodes);
-
       if (props.selectedNode) {
         setSelectedNode(props.selectedNode);
-
       } else {
-        setSelectedNode(treeNodes[0]);
+        setSelectedNode(treeSourceData[0]);
       }
     }
     loadData();
