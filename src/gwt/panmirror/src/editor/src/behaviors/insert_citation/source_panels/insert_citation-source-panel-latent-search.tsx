@@ -118,7 +118,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref}>
+    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
         <TextInput
           width='100%'
