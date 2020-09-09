@@ -204,6 +204,7 @@ extern const int kTutorialCommand;
 extern const int kTutorialLaunch;
 extern const int kReticulateEvent;
 extern const int kEnvironmentChanged;
+extern const int kRStudioApiRequest;
 }
    
 class ClientEvent

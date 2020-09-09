@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -266,4 +267,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                                     String path,
                                     String code,
                                     ServerRequestCallback<String> requestCallback);
+   
+   public void rstudioApiResponse(JavaScriptObject response,
+                                  ServerRequestCallback<Void> requestCallback);
 }
