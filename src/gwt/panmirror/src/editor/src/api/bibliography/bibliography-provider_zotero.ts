@@ -153,11 +153,11 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
     return [];
   }
 
-  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
+  public async generateBibTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
     if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
-      const bibLaTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibTeXTranslator, kZoteroMyLibrary);
-      if (bibLaTeX) {
-        return Promise.resolve(bibLaTeX.message);
+      const bibTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibTeXTranslator, kZoteroMyLibrary);
+      if (bibTeX) {
+        return Promise.resolve(bibTeX.message);
       }
     }
     return Promise.resolve(toBibLaTeX(id, csl));

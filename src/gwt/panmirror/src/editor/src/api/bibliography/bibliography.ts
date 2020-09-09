@@ -44,7 +44,7 @@ export interface BibliographyDataProvider {
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
-  generateBibLaTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
+  generateBibTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined>;
   warningMessage(): string | undefined;
 }
 
@@ -200,17 +200,17 @@ export class BibliographyManager {
     return dataProvider?.name;
   }
 
-  // Allows providers to generate bibLaTeX, if needed. This is useful in contexts
+  // Allows providers to generate bibTeX, if needed. This is useful in contexts
   // like Zotero where a user may be using the Better Bibtex plugin which can generate
-  // superior BibLaTeX using things like stable citekeys with custom rules, and more.
+  // superior BibTeX using things like stable citekeys with custom rules, and more.
   // 
-  // If the provider doesn't provide BibLaTeX, we can generate it ourselves
-  public async generateBibLaTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
+  // If the provider doesn't provide BibTeX, we can generate it ourselves
+  public async generateBibTeX(ui: EditorUI, id: string, csl: CSL, provider?: string): Promise<string | undefined> {
     const dataProvider = this.providers.find(prov => prov.key === provider);
     if (dataProvider) {
-      const dataProviderBibLaTeX = dataProvider.generateBibLaTeX(ui, id, csl);
-      if (dataProviderBibLaTeX) {
-        return dataProviderBibLaTeX;
+      const dataProviderBibTeX = dataProvider.generateBibTeX(ui, id, csl);
+      if (dataProviderBibTeX) {
+        return dataProviderBibTeX;
       }
     }
     return Promise.resolve(toBibLaTeX(id, csl));

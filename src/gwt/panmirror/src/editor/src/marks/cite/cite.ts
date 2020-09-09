@@ -723,7 +723,7 @@ export async function ensureSourcesInBibliography(
   // Find any providers that have warnings
   const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));
 
-  // If there is a warning message and we're exporting to BibLaTeX, show the warning
+  // If there is a warning message and we're exporting to BibTeX, show the warning
   // message to the user and confirm that they'd like to proceed. This would ideally
   // know more about the warning type and not have this filter here (e.g. it would just
   // always show the warning)
@@ -748,8 +748,8 @@ export async function ensureSourcesInBibliography(
           const cslToWrite = sanitizeForCiteproc(source);
 
           if (!bibManager.findIdInLocalBibliography(source.id)) {
-            const sourceAsBibLaTeX = await bibManager.generateBibLaTeX(ui, source.id, source, source.providerKey);
-            await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibLaTeX || '');
+            const sourceAsBibTex = await bibManager.generateBibTeX(ui, source.id, source, source.providerKey);
+            await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibTex || '');
           }
 
           if (!bibliographyFile.isProject) {

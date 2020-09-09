@@ -6224,7 +6224,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibLaTeX,
+   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibTeX,
                                        ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
@@ -6232,7 +6232,7 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(project));
       params.set(2, new JSONString(id));
       params.set(3, new JSONString(sourceAsJson));
-      params.set(4, new JSONString(sourceAsBibLaTeX));
+      params.set(4, new JSONString(sourceAsBibTeX));
       sendRequest(RPC_SCOPE, PANDOC_ADD_TO_BIBLIOGRAPHY, params, callback);
    }
 
