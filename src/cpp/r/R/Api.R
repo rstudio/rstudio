@@ -843,16 +843,10 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 # store callback functions to be executed after a specified chunk
 # and return a handle to unregister the chunk
-.rs.addApiFunction("registerChunkCallback", function(chunkCallback = function(chunkName, chunkCode){}) {
+.rs.addApiFunction("registerChunkCallback", function(chunkCallback) {
 
    if (!is.function(chunkCallback))
       stop("'chunkCallback' must be a function")
-
-   # if one does not already exist, add an environment which will host registered callbacks
-   if (!exists(".rs.notebookChunkCallbacks"))
-      assign(".rs.notebookChunkCallbacks",
-             value = new.env(parent = emptyenv()),
-             envir = .rs.toolsEnv())
 
    data <- chunkCallback
    handler <- .Call("rs_createUUID")
@@ -863,9 +857,12 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 # unregister a chunk callback functions
 .rs.addApiFunction("unregisterChunkCallback", function(handle) {
-  if (exists(".rs.notebookChunkCallbacks") &&
-      !is.null(handle))
-    rm(list = handle, envir = .rs.notebookChunkCallbacks)
+   if (!exists(".rs.notebookChunkCallbacks", envir = .rs.toolsEnv()))
+      warning("No registered callbacks found")
+   else if (is.null(handle) || !exists(handle, envir = .rs.notebookChunkCallbacks))
+      warning("Handle not found.")
+   else
+      rm (list = handle, envir = .rs.notebookChunkCallbacks)
 })
 
 # Tutorial ----
