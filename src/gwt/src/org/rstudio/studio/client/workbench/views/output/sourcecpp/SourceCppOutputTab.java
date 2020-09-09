@@ -14,12 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.output.sourcecpp;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
+import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
 
@@ -30,12 +35,17 @@ public class SourceCppOutputTab extends DelayLoadWorkbenchTab<SourceCppOutputPre
       implements SourceCppStartedEvent.Handler,
                  SourceCppCompletedEvent.Handler
    {
+      @Handler public abstract void onActivateSourceCpp();
    }
 
+   interface Binder extends CommandBinder<Commands, Shim> {}
+
    @Inject
-   public SourceCppOutputTab(Shim shim, EventBus events)
+   public SourceCppOutputTab(Shim shim, Commands commands, EventBus events)
    {
       super("Source Cpp", shim);
+      GWT.<Binder>create(Binder.class).bind(commands, shim);
+
       events.addHandler(SourceCppStartedEvent.TYPE, shim);
       events.addHandler(SourceCppCompletedEvent.TYPE, shim);
    }

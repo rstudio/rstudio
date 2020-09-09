@@ -339,6 +339,8 @@ well as menu structures (for main menu and popup menus).
          <menu label="Show Other _Panes">
             <cmd refid="activateCompilePDF"/>
             <cmd refid="activateFindInFiles"/>
+            <cmd refid="activateSourceCpp"/>
+            <cmd refid="activateRMarkdown"/>
             <cmd refid="activateDeployContent"/>
             <cmd refid="activateMarkers"/>
             <cmd refid="activateSQLResults"/>
@@ -1412,11 +1414,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show _Jobs"
         windowMode="main"/>
 
-   <cmd id="activateFindInFiles"
-        label="Show Find in Files"
-        menuLabel="Show _Find in Files"
-        windowMode="main"/>
-
    <cmd id="activateLauncherJobs"
         label="Show Launcher Pane"
         menuLabel = "Show _Launcher"
@@ -1427,9 +1424,19 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show Compile _PDF"
         windowMode="main"/>
 
-   <cmd id="activateSQLResults"
-        label="Show SQL Results Pane"
-        menuLabel = "Show S_QL Results"
+   <cmd id="activateFindInFiles"
+        label="Show Find in Files"
+        menuLabel="Show _Find in Files"
+        windowMode="main"/>
+
+   <cmd id="activateSourceCpp"
+        label="Show Source Cpp Pane"
+        menuLabel="Show Sou_rce Cpp"
+        windowMode="main"/>
+
+   <cmd id="activateRMarkdown"
+        label="Show R Markdown Pane"
+        menuLabel = "Show _R Markdown"
         windowMode="main"/>
 
    <cmd id="activateDeployContent"
@@ -1440,6 +1447,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="activateMarkers"
         label="Show Markers Pane"
         menuLabel = "Show _Markers"
+        windowMode="main"/>
+
+   <cmd id="activateSQLResults"
+        label="Show SQL Results Pane"
+        menuLabel = "Show S_QL Results"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"

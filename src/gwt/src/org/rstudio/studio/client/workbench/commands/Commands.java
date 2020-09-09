@@ -141,7 +141,6 @@ public abstract class
    public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
-   public abstract AppCommand activateFindInFiles();
    public abstract AppCommand newSourceColumn();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
@@ -328,9 +327,12 @@ public abstract class
 
    // Other Panes
    public abstract AppCommand activateCompilePDF();
-   public abstract AppCommand activateSQLResults();
+   public abstract AppCommand activateFindInFiles();
+   public abstract AppCommand activateSourceCpp();
+   public abstract AppCommand activateRMarkdown();
    public abstract AppCommand activateDeployContent();
    public abstract AppCommand activateMarkers();
+   public abstract AppCommand activateSQLResults();
 
    // History
    public abstract AppCommand historySendToSource();
