@@ -208,7 +208,7 @@ function textNodes(str: string): NodeArray {
       nodes.push({
         type: 'text',
         text: node.textContent,
-        marks: node.marks.map((mark: Mark) => { return { type: mark.type.name }; })
+        marks: node.marks.map((mark: Mark) => ({ type: mark.type.name }))
       });
     });
     return nodes;
@@ -285,31 +285,31 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
 function sortedKeys(csl: CSL) {
   let pos = 0;
   const keySortOrder: { [id: string]: number; } = {};
-  keySortOrder['title'] = pos++;
+  keySortOrder.title = pos++;
 
-  keySortOrder['author'] = pos++;
-  keySortOrder['editor'] = pos++;
-  keySortOrder['director'] = pos++;
-  keySortOrder['illustrator'] = pos++;
+  keySortOrder.author = pos++;
+  keySortOrder.editor = pos++;
+  keySortOrder.director = pos++;
+  keySortOrder.illustrator = pos++;
   keySortOrder['collection-editor'] = pos++;
-  keySortOrder['translator'] = pos++;
+  keySortOrder.translator = pos++;
 
-  keySortOrder['doi'] = pos++;
+  keySortOrder.doi = pos++;
 
-  keySortOrder['issued'] = pos++;
+  keySortOrder.issued = pos++;
   keySortOrder['event-date'] = pos++;
 
   keySortOrder['container-title'] = pos++;
   keySortOrder['collection-title'] = pos++;
 
-  keySortOrder['url'] = pos++;
+  keySortOrder.url = pos++;
 
-  keySortOrder['page'] = pos++;
-  keySortOrder['publisher'] = pos++;
+  keySortOrder.page = pos++;
+  keySortOrder.publisher = pos++;
 
   const enumerableCSL = csl as any;
   const keys = Object.keys(enumerableCSL);
-  const sortedKeys = keys.sort((a, b) => {
+  const sorted = keys.sort((a, b) => {
     const aOrder = keySortOrder[a.toLowerCase()];
     const bOrder = keySortOrder[b.toLowerCase()];
     if (aOrder && bOrder) {
@@ -321,6 +321,6 @@ function sortedKeys(csl: CSL) {
     }
     return a.localeCompare(b);
   });
-  return sortedKeys;
+  return sorted;
 }
 
