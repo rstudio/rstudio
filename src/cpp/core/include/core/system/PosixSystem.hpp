@@ -214,8 +214,9 @@ core::Error userBelongsToGroup(const User& user,
 // query priv state
 bool realUserIsRoot();
 
-// privilege management (not thread safe, call from main thread at app startup
-// or just after fork() prior to exec() for new processes)
+// privilege management - not thread safe
+// call from main thread at app startup or just after fork() prior to exec() for new processes
+// do not call after a fork in a multithreaded process, as this can cause deadlock!
 core::Error temporarilyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error restorePriv();

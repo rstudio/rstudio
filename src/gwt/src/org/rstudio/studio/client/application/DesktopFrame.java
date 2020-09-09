@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JavaScriptPassthrough;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
 /**
@@ -66,6 +67,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setClipboardText(String text);
    void getClipboardText(CommandWithArg<String> callback);
+   void getClipboardUris(CommandWithArg<JsArrayString> callback);
+   void getClipboardImage(CommandWithArg<String> callback);
    
    void setGlobalMouseSelection(String selection);
    void getGlobalMouseSelection(CommandWithArg<String> callback);

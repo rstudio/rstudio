@@ -476,6 +476,47 @@ QString GwtCallback::getClipboardText()
    return pClipboard->text(QClipboard::Clipboard);
 }
 
+QJsonArray GwtCallback::getClipboardUris()
+{
+   QJsonArray urisJson;
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasUrls())
+   {
+      // build buffer of urls
+      auto urls = pClipboard->mimeData()->urls();
+      for (auto url : urls)
+      {
+         // append (converting file-based urls)
+         if (url.scheme() == QString::fromUtf8("file"))
+            urisJson.append(QJsonValue(createAliasedPath(url.toLocalFile())));
+         else
+            urisJson.append(QJsonValue(url.toString()));
+      }
+   }
+   return urisJson;
+}
+
+QString GwtCallback::getClipboardImage()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasImage())
+   {
+      QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
+
+      // create temp file name for paste (trim back the size of the random hex chars
+      // created by boost::unique_patch since we don't need that much uniqueness)
+      FilePath imagePath;
+      FilePath::tempFilePath(".png", imagePath);
+      std::string stem = imagePath.getStem();
+      stem = stem.substr(0, stem.find('-'));
+      imagePath = imagePath.getParent().completeChildPath("paste-" + stem + ".png");
+      QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
+      if (image.save(imageFile))
+         return imageFile;
+   }
+   return QString();
+}
+
 void GwtCallback::setGlobalMouseSelection(QString selection)
 {
 #ifdef Q_OS_LINUX

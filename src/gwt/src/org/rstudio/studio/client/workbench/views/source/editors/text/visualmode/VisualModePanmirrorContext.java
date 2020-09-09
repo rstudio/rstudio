@@ -21,15 +21,20 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -41,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -66,11 +72,12 @@ public class VisualModePanmirrorContext
    }
    
    @Inject
-   void initialize(WorkbenchContext workbenchContext, Session session, EventBus events)
+   void initialize(WorkbenchContext workbenchContext, Session session, EventBus events, RMarkdownServerOperations server)
    {
       workbenchContext_ = workbenchContext;
       sessionInfo_ = session.getSessionInfo();
       events_ = events;
+      server_ = server;
       
       // notify watchers of file changes
       events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
@@ -161,12 +168,114 @@ public class VisualModePanmirrorContext
          return text;
       };
       
+      
+      uiContext.droppedUris = () -> {
+        if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+        {
+           List<String> uris = workbenchContext_.getDroppedUrls();
+           if (uris != null)
+              return JsArrayUtil.createStringArray(uris);
+           else
+              return null;
+        }
+        else
+        {
+           return null;
+        }
+      };
+      
+      uiContext.clipboardUris = () -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+           if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+           {
+              Desktop.getFrame().getClipboardUris(uris -> {
+                 resolve.onInvoke(uris);
+              });
+           }
+           else
+           {
+              resolve.onInvoke((JsArrayString)null);
+           } 
+         });
+      };
+      
+      uiContext.clipboardImage = () -> {
+         return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+            if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+            {
+               Desktop.getFrame().getClipboardImage(image -> {
+                  if (!StringUtil.isNullOrEmpty(image))
+                     resolve.onInvoke(image);
+                  else
+                     resolve.onInvoke((String)null);
+               });
+            }
+            else
+            {
+               resolve.onInvoke((String)null);
+            } 
+          });
+      };
+      
+      uiContext.resolveImageUris = (imageUris) -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+           
+            JsArrayString resolvedUris = JsArrayString.createArray().cast();
+            JsArrayString unresolvedUris = JsArrayString.createArray().cast();
+            for (int i=0; i<imageUris.length(); i++)
+            {
+               String uri = imageUris.get(i);
+               if (isValidURL(uri))
+               {
+                  resolvedUris.push(uri);
+               }
+               else
+               {
+                  String path = uiContext.mapPathToResource.map(uri);
+                  if (path != null)
+                     resolvedUris.push(path); 
+                  else
+                     unresolvedUris.push(uri);
+               }
+            }
+            
+            // import unresolved uris
+            if (unresolvedUris.length() > 0)
+            {
+               FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+               String imagesDir = resourceDir.completePath("images");
+               server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
+                  @Override
+                  public void onResponseReceived(JsArrayString importedUris)
+                  {
+                     resolve.onInvoke(JsArrayUtil.concat(resolvedUris, importedUris));
+                  }
+               });
+            }
+            // no unresolved, continue on
+            else
+            {
+               resolve.onInvoke(resolvedUris);
+            }
+         });
+      };
+   
+      
       uiContext.isWindowsDesktop = () -> {
          return BrowseCap.isWindowsDesktop();
       };
       
       return uiContext;
    }
+   
+   private native boolean isValidURL(String url)  /*-{
+      try {
+         new URL(url);
+      } catch (_) {
+         return false;  
+      }
+      return true;
+   }-*/;
    
    private PanmirrorUIDisplay uiDisplay(PanmirrorUIDisplay.ShowContextMenu showContextMenu)
    {
@@ -264,7 +373,6 @@ public class VisualModePanmirrorContext
    }
    private HashSet<FileWatcher> fileWatchers_ = new HashSet<FileWatcher>();
    
-
    private final DocUpdateSentinel docUpdateSentinel_;
    private final TextEditingTarget target_;
    
@@ -275,4 +383,5 @@ public class VisualModePanmirrorContext
    private WorkbenchContext workbenchContext_;
    private SessionInfo sessionInfo_;
    private EventBus events_;
+   private RMarkdownServerOperations server_;
 }

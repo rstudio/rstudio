@@ -763,6 +763,11 @@ core::Error uniqueSaveStem(const core::FilePath& directoryPath,
                            const std::string& base,
                            std::string* pStem);
 
+core::Error uniqueSaveStem(const core::FilePath& directoryPath,
+                           const std::string& base,
+                           const std::string& delimiter,
+                           std::string* pStem);
+
 core::json::Object plotExportFormat(const std::string& name,
                                     const std::string& extension);
 

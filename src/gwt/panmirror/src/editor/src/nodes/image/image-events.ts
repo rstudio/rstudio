@@ -16,21 +16,61 @@
 import { EditorView } from 'prosemirror-view';
 
 import { Plugin, PluginKey } from 'prosemirror-state';
+import { EditorUI } from '../../api/ui';
+
+const kTextUriList = 'text/uri-list';
+const kApplicationQtImage = 'application/x-qt-image';
 
 const pluginKey = new PluginKey('image-events');
 
-export function imageEventsPlugin() {
+export function imageEventsPlugin(ui: EditorUI) {
   return new Plugin({
     key: pluginKey,
     props: {
       handleDOMEvents: {
-        drop: imageDrop(),
+        drop: imageDrop(ui),
       },
-    },
+      handlePaste: imagePaste(ui),
+    }
   });
 }
 
-function imageDrop() {
+
+function imagePaste(ui: EditorUI) {
+  return (view: EditorView, event: Event) => {
+    const clipboardEvent = event as ClipboardEvent;
+
+    if (clipboardEvent.clipboardData) {
+      // detect file pastes where there is no payload, in that case check to see
+      // if there is clipboard data we can get from our context (e.g. from Qt)
+      if (clipboardEvent.clipboardData.types.includes(kTextUriList)) {
+        const uriList = clipboardEvent.clipboardData.getData(kTextUriList);
+        if (uriList.length === 0) {
+          ui.context.clipboardUris().then(uris => {
+            if (uris) {
+              handleImageUris(view, view.state.selection.from, event, uris, ui);
+            }
+          });
+          event.preventDefault();
+          return true;
+        }
+        // raw image paste (e.g. from an office doc)
+      } else if (clipboardEvent.clipboardData.types.includes('application/x-qt-image')) {
+        ui.context.clipboardImage().then(image => {
+          if (image) {
+            handleImageUris(view, view.state.selection.from, event, [image], ui);
+          }
+          event.preventDefault();
+          return true;
+        });
+      }
+    }
+
+    return false;
+  };
+}
+
+function imageDrop(ui: EditorUI) {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer
     const dragEvent = event as DragEvent;
@@ -49,51 +89,75 @@ function imageDrop() {
       return false;
     }
 
-    // see if this is a drag of image uris
-    const uriList = dragEvent.dataTransfer.getData('text/uri-list');
-    if (!uriList) {
-      return false;
+    // array of uris
+    let uris: string[] | null = null;
+
+    // see if this is a drag of uris
+    const uriList = dragEvent.dataTransfer.getData(kTextUriList);
+    if (uriList) {
+      uris = uriList.split('\r?\n');
+    } else {
+      // see if the ui context has some dropped uris
+      uris = ui.context.droppedUris();
     }
 
-    // insert the images (track whether we handled at least one)
-    const tr = view.state.tr;
-    uriList.split('\r?\n').forEach(src => {
-      // get extension and check it it's an image
-      // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
-      const kImageExtensions = [
-        'apng',
-        'bmp',
-        'gif',
-        'ico',
-        'cur',
-        'jpg',
-        'jpeg',
-        'jfif',
-        'pjpeg',
-        'pjp',
-        'png',
-        'svg',
-        'tif',
-        'tiff',
-        'webp',
-      ];
-      const extension = src
-        .split(/\./)
-        .pop()!
-        .toLowerCase();
-      if (kImageExtensions.includes(extension)) {
-        const node = view.state.schema.nodes.image.create({ src });
-        tr.insert(coordinates.pos, node);
-      }
-    });
-
-    // if we inserted an image then indicate that we handled the drop
-    if (tr.docChanged) {
-      view.dispatch(tr);
+    // process uris if we have them
+    if (uris && handleImageUris(view, coordinates.pos, event, uris, ui)) {
       event.preventDefault();
       return true;
     } else {
       return false;
     }
   };
+}
+
+function handleImageUris(view: EditorView, pos: number, event: Event, uris: string[], ui: EditorUI): boolean {
+
+  // filter out images
+  const imageUris = uris.filter(uri => {
+    // get extension and check it it's an image
+    // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
+    const kImageExtensions = [
+      'apng',
+      'bmp',
+      'gif',
+      'ico',
+      'cur',
+      'jpg',
+      'jpeg',
+      'jfif',
+      'pjpeg',
+      'pjp',
+      'png',
+      'svg',
+      'tif',
+      'tiff',
+      'webp',
+    ];
+    const extension = uri
+      .split(/\./)
+      .pop()!
+      .toLowerCase();
+    return kImageExtensions.includes(extension);
+  });
+
+  // exit if we have no image uris
+  if (imageUris.length === 0) {
+    return false;
+  }
+
+  // resolve image uris then insert them. note that this is done
+  // async so we return true indicating we've handled the drop and
+  // then we actually do the insertion once it returns
+  ui.context.resolveImageUris(imageUris).then(images => {
+    const tr = view.state.tr;
+    images.forEach(image => {
+      const node = view.state.schema.nodes.image.create({ src: image });
+      tr.insert(pos, node);
+    });
+    view.dispatch(tr);
+  });
+
+  // indicate that we will handle the event
+  return true;
 }

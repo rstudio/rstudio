@@ -1368,6 +1368,62 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error rmdImportImages(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // read params
+   json::Array imagesJson;
+   std::string imagesDir;
+   Error error = json::readParams(request.params, &imagesJson, &imagesDir);
+   if (error)
+      return error;
+
+   // determine images dir
+   FilePath imagesPath = module_context::resolveAliasedPath(imagesDir);
+   error = imagesPath.ensureDirectory();
+   if (error)
+      return error;
+
+   // build list of target image paths
+   json::Array importedImagesJson;
+
+   // copy each image to the target directory (renaming with a unique stem as required)
+   std::vector<std::string> images;
+   imagesJson.toVectorString(images);
+   for (auto image : images)
+   {
+      // skip if it doesn't exist
+      FilePath imagePath = module_context::resolveAliasedPath(image);
+      if (!imagePath.exists())
+         continue;
+
+      // find a unique target path
+      std::string targetStem = imagePath.getStem();
+      std::string extension = imagePath.getExtension();
+      FilePath targetPath = imagesPath.completeChildPath(targetStem + extension);
+      if (imagesPath.completeChildPath(targetStem + extension).exists())
+      {
+         std::string resolvedStem;
+         module_context::uniqueSaveStem(imagesPath, targetStem, "-", &resolvedStem);
+         targetPath = imagesPath.completeChildPath(resolvedStem + extension);
+      }
+
+      // only copy it if it's not the same path
+      if (imagePath != targetPath)
+      {
+         Error error = imagePath.copy(targetPath);
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      // update imported images
+      importedImagesJson.push_back(module_context::createAliasedPath(targetPath));
+   }
+
+   pResponse->setResult(importedImagesJson);
+   return Success();
+}
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1521,6 +1577,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
+      (bind(registerRpcMethod, "rmd_import_images", rmdImportImages))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

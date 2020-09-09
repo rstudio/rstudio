@@ -73,6 +73,18 @@ export interface EditorUIContext {
   // translate a string
   translateText: (text: string) => string;
 
+  // are there dropped uris available?
+  droppedUris: () => string[] | null;
+
+  // uris from the clipboard
+  clipboardUris: () => Promise<string[] | null>;
+
+  // image from the clipboard (returned as file path)
+  clipboardImage: () => Promise<string | null>;
+
+  // resolve image uris (make relative, copy to doc local 'images' dir, etc)
+  resolveImageUris: (uris: string[]) => Promise<string[]>;
+
   // are we running in windows desktop mode?
   isWindowsDesktop: () => boolean;
 }
