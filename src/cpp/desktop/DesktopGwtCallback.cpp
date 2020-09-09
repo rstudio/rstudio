@@ -29,6 +29,7 @@
 #include <QtPrintSupport/QPrintPreviewDialog>
 
 #include <shared_core/FilePath.hpp>
+#include <core/FileUtils.hpp>
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
@@ -502,14 +503,8 @@ QString GwtCallback::getClipboardImage()
    if (pClipboard->mimeData()->hasImage())
    {
       QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
-
-      // create temp file name for paste (trim back the size of the random hex chars
-      // created by boost::unique_patch since we don't need that much uniqueness)
-      FilePath imagePath;
-      FilePath::tempFilePath(".png", imagePath);
-      std::string stem = imagePath.getStem();
-      stem = stem.substr(0, stem.find('-'));
-      imagePath = imagePath.getParent().completeChildPath("paste-" + stem + ".png");
+      FilePath tempDir = options().scratchTempDir();
+      FilePath imagePath = file_utils::uniqueFilePath(tempDir, "paste-", ".png");
       QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
       if (image.save(imageFile))
          return imageFile;
