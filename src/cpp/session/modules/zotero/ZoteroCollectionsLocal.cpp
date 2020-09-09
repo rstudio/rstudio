@@ -173,6 +173,22 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
       SELECT
          items.key as key,
          items.version,
+         'libraryID' as name,
+         CAST(items.libraryID as text) as value,
+         500 as fieldOrder
+      FROM
+         items
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join libraries on items.libraryID = libraries.libraryID
+         %1%
+      WHERE
+         itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+         %2%
+   UNION
+      SELECT
+         items.key as key,
+         items.version,
          'collectionKeys' as name,
          libraries.libraryID || ',' || IFNULL(group_concat(collections.key), '') as value,
          10000 as fieldOrder
