@@ -68,8 +68,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import static org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit.TYPE_HTML;
-
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputEvent.Handler,
                                           ConsoleWriteErrorEvent.Handler,
@@ -281,7 +279,6 @@ public class ChunkOutputWidget extends Composite
    {
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      final RenderTimer renderTimer = new RenderTimer();
       presenter_.showCallbackHtml(htmlOutput);
    }
 
@@ -620,7 +617,7 @@ public class ChunkOutputWidget extends Composite
       case RmdChunkOutputUnit.TYPE_TEXT:
          presenter_.showConsoleOutput(unit.getArray());
          break;
-      case TYPE_HTML:
+      case RmdChunkOutputUnit.TYPE_HTML:
          final RenderTimer widgetTimer = new RenderTimer();
          presenter_.showHtmlOutput(unit.getString(), 
                (NotebookHtmlMetadata)unit.getMetadata().cast(), 
@@ -928,7 +925,7 @@ public class ChunkOutputWidget extends Composite
       {
       case RmdChunkOutputUnit.TYPE_PLOT:
       case RmdChunkOutputUnit.TYPE_DATA:
-      case TYPE_HTML:
+      case RmdChunkOutputUnit.TYPE_HTML:
           return true;
       case RmdChunkOutputUnit.TYPE_TEXT:
       case RmdChunkOutputUnit.TYPE_ERROR:

@@ -847,12 +847,15 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
    if (!is.function(chunkCallback))
       stop("'chunkCallback' must be a function")
+   if (length(formals(chunkCallback)) != 2)
+      stop("'chunkCallback' must contain two parameters: chunkName and chunkCode")
 
    data <- chunkCallback
-   handler <- .Call("rs_createUUID")
-   assign(handler, value = data, envir = .rs.notebookChunkCallbacks)
+   handle <- .Call("rs_createUUID",
+                   PACKAGE = "(embedding)")
+   assign(handle, value = data, envir = .rs.notebookChunkCallbacks)
 
-   return(handler)
+   return(handle)
 })
 
 # unregister a chunk callback functions

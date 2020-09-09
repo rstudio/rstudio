@@ -800,7 +800,6 @@ public class TextEditingTargetNotebook
          ArrayList<String> callbacks = data.getHtmlCallback();
          for (String callback : callbacks)
             outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(callback);
-         setDirtyState();
       }
    }
 

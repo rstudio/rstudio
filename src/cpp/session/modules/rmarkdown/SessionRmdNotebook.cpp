@@ -189,7 +189,14 @@ void onChunkExecCompleted(const std::string& docId,
    if (error)
       LOG_ERROR(error);
    else if (!r::sexp::isNull(resultSEXP))
+   {
       Error error = r::json::jsonValueFromList(resultSEXP, &results);
+      if (error)
+      {
+         LOG_ERROR(error);
+         results.clear();
+      }
+   }
 
    emitOutputFinished(docId, chunkId, results, ExecScopeChunk);
 }
