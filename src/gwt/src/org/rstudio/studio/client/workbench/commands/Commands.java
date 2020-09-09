@@ -330,6 +330,7 @@ public abstract class
    public abstract AppCommand activateCompilePDF();
    public abstract AppCommand activateSQLResults();
    public abstract AppCommand activateDeployContent();
+   public abstract AppCommand activateMarkers();
 
    // History
    public abstract AppCommand historySendToSource();

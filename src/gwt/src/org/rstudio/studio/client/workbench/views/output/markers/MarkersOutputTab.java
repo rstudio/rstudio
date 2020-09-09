@@ -19,6 +19,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -36,6 +37,7 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
    {
       abstract void showInitialMarkers(MarkersState state);
       abstract void onClosing();
+      @Handler abstract void onActivateMarkers();
    }
 
    static interface Binder extends CommandBinder<Commands, Shim>

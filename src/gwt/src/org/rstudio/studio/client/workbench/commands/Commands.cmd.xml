@@ -333,14 +333,15 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activateTutorial"/>
+         <cmd refid="activateJobs"/>
+         <cmd refid="activateLauncherJobs"/>
          <menu label="Show Other _Panes">
-            <cmd refid="activateTutorial"/>
-            <cmd refid="activateJobs"/>
-            <cmd refid="activateLauncherJobs"/>
-            <cmd refid="activateFindInFiles"/>
             <cmd refid="activateCompilePDF"/>
-            <cmd refid="activateSQLResults"/>
+            <cmd refid="activateFindInFiles"/>
             <cmd refid="activateDeployContent"/>
+            <cmd refid="activateMarkers"/>
+            <cmd refid="activateSQLResults"/>
          </menu>
 
          <separator/>
@@ -1434,6 +1435,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="activateDeployContent"
         label="Show Deploy Content Pane"
         menuLabel = "Show Deploy _Content"
+        windowMode="main"/>
+
+   <cmd id="activateMarkers"
+        label="Show Markers Pane"
+        menuLabel = "Show _Markers"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
