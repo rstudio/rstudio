@@ -1,5 +1,5 @@
 /*
- * rmd.ts
+ * zenscroll.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *

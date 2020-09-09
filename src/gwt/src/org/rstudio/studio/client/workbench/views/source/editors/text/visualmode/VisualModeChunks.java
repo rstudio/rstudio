@@ -48,7 +48,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    public PanmirrorUIChunks uiChunks()
    {
       PanmirrorUIChunks chunks = new PanmirrorUIChunks();
-      chunks.createChunkEditor = (type, index, getPos) ->
+      chunks.createChunkEditor = (type, index, callbacks) ->
       {
          // only know how to create ace instances right now
          if (!type.equals("ace"))
@@ -58,7 +58,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
          
          VisualModeChunk chunk = new VisualModeChunk(
-               index, getPos, sentinel_, target_, sync_);
+               index, callbacks, sentinel_, target_, sync_);
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror

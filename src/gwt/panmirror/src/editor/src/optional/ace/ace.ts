@@ -51,6 +51,8 @@ import { AceRenderQueue } from './ace-render-queue';
 import { AcePlaceholder } from './ace-placeholder';
 import { AceNodeViews } from './ace-node-views';
 
+import zenscroll from 'zenscroll';
+
 import './ace.css';
 
 const plugin = new PluginKey('ace');
@@ -400,6 +402,43 @@ export class AceNodeView implements NodeView {
   }
 
   /**
+   * Scrolls a child of the editor chunk into view.
+   * 
+   * @param ele The child to scroll.
+   */
+  private scrollIntoView(ele: HTMLElement) {
+    const editingRoot = editingRootNode(this.view.state.selection);
+    if (editingRoot) {
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const scroller = zenscroll.createScroller(container);
+
+      // Since the element we want to scroll into view is not a direct child of
+      // the scrollable container, do a little math to figure out the
+      // destination scroll position.
+      const top = ele.offsetTop + this.dom.offsetTop;
+      const bottom = top + ele.offsetHeight;
+      const viewTop = container.scrollTop;
+      const viewBottom = container.scrollTop + container.offsetHeight;
+
+      // Scroll based on element's current position and size
+      if (top > viewTop && bottom < viewBottom) {
+        // Element is already fully contained in the viewport
+        return;
+      } else if (ele.offsetHeight > container.offsetHeight) {
+        // Element is taller than the viewport, so show the first part of it
+        scroller.toY(top);
+      } else if (top < viewTop) {
+        // Element is above viewport, so scroll it into view
+        scroller.toY(top);
+      } else if (bottom > viewBottom) {
+        // Part of the element is beneath the viewport, so scroll just enough to
+        // bring it into view
+        scroller.toY(container.scrollTop - (viewBottom - bottom));
+      }
+    }
+  }
+
+  /**
    * Initializes the editing surface by creating and injecting an Ace editor
    * instance from the host.
    */
@@ -411,7 +450,10 @@ export class AceNodeView implements NodeView {
 
     // call host factory to instantiate editor
     this.chunk = this.ui.chunks.createChunkEditor('ace',
-      this.node.attrs.md_index, this.getPos);
+      this.node.attrs.md_index, {
+      getPos: () => this.getPos(),
+      scrollIntoView: (ele) => this.scrollIntoView(ele)
+    });
 
     // populate initial contents
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
@@ -646,7 +688,7 @@ export class AceNodeView implements NodeView {
 
     // When key/mouse up events occur, check to see whether we need to scroll
     // the cursor into view.
-    let eventHandler = (evt: any) => {
+    const eventHandler = (evt: any) => {
       window.setTimeout(() => {
         if (this.cursorDirty) {
           this.scrollCursorIntoView();
@@ -782,21 +824,20 @@ export class AceNodeView implements NodeView {
       const containerRect = container.getBoundingClientRect();
       const cursorRect = cursor.getBoundingClientRect();
 
-      // Scrolling down
-      let down = (cursorRect.bottom + cursorRect.height + 5) - containerRect.bottom;
+      // Scrolling down?
+      const down = (cursorRect.bottom + cursorRect.height + 5) - containerRect.bottom;
       if (down > 0) {
         container.scrollTop += down;
-        return;
+      } else {
+        // Scrolling up?
+        const up = (containerRect.top + cursorRect.height + 15) - cursorRect.top;
+        if (up > 0) {
+          container.scrollTop -= up;
+        }
       }
 
-      // Scrolling up
-      let up = (containerRect.top + cursorRect.height + 15) - cursorRect.top;
-      if (up > 0) {
-        container.scrollTop -= up;
-        return;
-      }
-
-      // Update cached scroll row so we don't unnecessarily redo these computations
+      // Update cached scroll row so we don't unnecessarily redo these
+      // computations
       if (this.editSession) {
         this.scrollRow = this.editSession.getSelection().getCursor().row;
       }
