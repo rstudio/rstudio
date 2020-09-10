@@ -953,7 +953,7 @@ export class Editor {
     return new Plugin({
       key: keybindingsPlugin,
       props: {
-        handleKeyDown: (view: EditorView, event: Event) => {
+        handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
           // workaround for Ctrl+ keys on windows desktop
           if (this.context.ui.context.isWindowsDesktop()) {
             const keyEvent = event as KeyboardEvent;
