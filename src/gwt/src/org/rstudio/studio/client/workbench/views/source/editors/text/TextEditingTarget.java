@@ -231,6 +231,7 @@ public class TextEditingTarget implements
 
       void findSelectAll();
       void findFromSelection();
+      void findFromSelection(String selectionValue);
 
       StatusBar getStatusBar();
 
@@ -6711,8 +6712,11 @@ public class TextEditingTarget implements
    @Handler
    void onFindFromSelection()
    {
-      view_.findFromSelection();
-      docDisplay_.focus();
+      withActiveEditor((disp) ->
+      {
+         view_.findFromSelection(disp.getSelectionValue());
+         disp.focus();
+      });
    }
 
    @Handler
