@@ -41,7 +41,7 @@ export interface CrossrefWork {
   publisher: string;
 
   // Work titles, including translated titles
-  title: string[];
+  title?: string[];
 
   // DOI of the work 
   DOI: string;
