@@ -39,6 +39,11 @@ void asyncDownloadFile(const std::string& url,
                        const core::http::Fields& headers,
                        const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
+void asyncDownloadFile(const std::string& url,
+                       const std::string& userAgent,
+                       const core::http::Fields& headers,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
 // wrapper for asyncDownloadFile that parses it's payload as JSON and satisfies a JsonRpcFunctionContinuation
 // (including checking for and reporting errors on the continuation)
 
@@ -48,8 +53,8 @@ void asyncJsonRpcRequest(const std::string& url,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont);
 
-
 void asyncJsonRpcRequest(const std::string& url,
+                         const std::string& userAgent,
                          const core::http::Fields& headers,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont);
