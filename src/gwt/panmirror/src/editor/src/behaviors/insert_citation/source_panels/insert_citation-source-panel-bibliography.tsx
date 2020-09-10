@@ -115,45 +115,46 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
 
-  React.useEffect(debounce(() => {
-    async function loadData() {
-      if (props.selectedNode) {
+  const loadCitations = (term: string) => {
+    if (props.selectedNode) {
 
-        // Ignore other nodes
-        if (props.selectedNode.type !== kLocalBiliographyProviderKey &&
-          props.selectedNode.type !== kZoteroProviderKey &&
-          props.selectedNode.type !== kAllLocalSourcesRootNodeType) {
-          return;
-        }
-
-        const selectedNode = props.selectedNode;
-
-        // The node could be the root node, no provider
-        const providerKey = selectedNode.type === kAllLocalSourcesRootNodeType ? undefined : selectedNode.type;
-
-        // The node could be a provider root or a collection
-        const collectionKey = (
-          selectedNode.type !== kAllLocalSourcesRootNodeType &&
-          selectedNode.key !== kZoteroProviderKey &&
-          selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
-
-        const sources = bibMgr.search(searchTerm, providerKey, collectionKey);
-        const uniqueSources = uniqby(sources, source => source.id);
-        setCitations(toCitationEntries(uniqueSources, props.ui));
+      // Ignore other nodes
+      if (props.selectedNode.type !== kLocalBiliographyProviderKey &&
+        props.selectedNode.type !== kZoteroProviderKey &&
+        props.selectedNode.type !== kAllLocalSourcesRootNodeType) {
+        return;
       }
-    }
-    loadData();
-    // load the right panel
-  }, 50), [props.selectedNode, searchTerm]);
 
-  // If the nodes change, clear the search box value
-  React.useLayoutEffect(() => {
+      const selectedNode = props.selectedNode;
+
+      // The node could be the root node, no provider
+      const providerKey = selectedNode.type === kAllLocalSourcesRootNodeType ? undefined : selectedNode.type;
+
+      // The node could be a provider root or a collection
+      const collectionKey = (
+        selectedNode.type !== kAllLocalSourcesRootNodeType &&
+        selectedNode.key !== kZoteroProviderKey &&
+        selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
+
+      const sources = bibMgr.search(term, providerKey, collectionKey);
+      const uniqueSources = uniqby(sources, source => source.id);
+      setCitations(toCitationEntries(uniqueSources, props.ui));
+    }
+  };
+
+  const debounceFilter = React.useCallback(debounce((term: string) => {
+    loadCitations(term);
+  }, 25), []);
+
+  // If the nodes change, clear the search box value and reload
+  React.useEffect(() => {
     setSearchTerm('');
+    loadCitations('');
   }, [props.selectedNode]);
 
-  // Search the user search terms
   const searchChanged = (term: string) => {
     setSearchTerm(term);
+    debounceFilter(term);
   };
 
   return (
