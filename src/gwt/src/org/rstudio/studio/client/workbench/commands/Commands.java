@@ -301,7 +301,6 @@ public abstract class
    public abstract AppCommand presentationEdit();
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
-   public abstract AppCommand activatePresentation();
    public abstract AppCommand clearPresentationCache();
 
    // View
@@ -326,6 +325,7 @@ public abstract class
    public abstract AppCommand moveTabToLast();
 
    // Other Panes
+   public abstract AppCommand activatePresentation();
    public abstract AppCommand activateCompilePDF();
    public abstract AppCommand activateFindInFiles();
    public abstract AppCommand activateSourceCpp();
