@@ -9,6 +9,7 @@
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
 * The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
 * Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
+* The autocompletion system can now auto-complete virtual environment names in `reticulate::virtualenv()`.
 
 ### Plots
 
