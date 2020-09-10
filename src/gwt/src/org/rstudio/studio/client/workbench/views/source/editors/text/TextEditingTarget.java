@@ -563,14 +563,14 @@ public class TextEditingTarget implements
                   prefs_.continueCommentsOnNewline().getValue() &&
                   !docDisplay_.isPopupVisible() &&
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode()))
+                    (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode(docDisplay_)))
             {
                String line = docDisplay_.getCurrentLineUpToCursor();
                Pattern pattern = null;
 
                if (isCursorInRMode(docDisplay_))
                   pattern = Pattern.create("^(\\s*#+'?\\s*)");
-               else if (isCursorInTexMode())
+               else if (isCursorInTexMode(docDisplay_))
                   pattern = Pattern.create("^(\\s*%+'?\\s*)");
                else if (fileType_.isC())
                {
@@ -3870,18 +3870,26 @@ public class TextEditingTarget implements
    @Handler
    void onCommentUncomment()
    {
-      if (isCursorInTexMode())
-         doCommentUncomment("%", null);
-      else if (isCursorInRMode(docDisplay_) || isCursorInYamlMode())
-         doCommentUncomment("#", null);
+      withActiveEditor((disp) ->
+      {
+         commentUncomment(disp);
+      });
+   }
+   
+   void commentUncomment(DocDisplay display)
+   {
+      if (isCursorInTexMode(display))
+         doCommentUncomment(display, "%", null);
+      else if (isCursorInRMode(display) || isCursorInYamlMode(display))
+         doCommentUncomment(display, "#", null);
       else if (fileType_.isCpp() || fileType_.isStan() || fileType_.isC())
-         doCommentUncomment("//", null);
+         doCommentUncomment(display, "//", null);
       else if (fileType_.isPlainMarkdown())
-         doCommentUncomment("<!--", "-->");
-      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
-         doCommentUncomment("<!--", "-->");
-      else if (DocumentMode.isSelectionInPythonMode(docDisplay_))
-         doCommentUncomment("#", null);
+         doCommentUncomment(display, "<!--", "-->");
+      else if (DocumentMode.isSelectionInMarkdownMode(display))
+         doCommentUncomment(display, "<!--", "-->");
+      else if (DocumentMode.isSelectionInPythonMode(display))
+         doCommentUncomment(display, "#", null);
    }
 
    /**
@@ -4002,10 +4010,11 @@ public class TextEditingTarget implements
    }
 
    @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
-   private void doCommentUncomment(String commentStart,
+   private void doCommentUncomment(DocDisplay display,
+                                   String commentStart,
                                    String commentEnd)
    {
-      Range initialRange = docDisplay_.getSelectionRange();
+      Range initialRange = display.getSelectionRange();
 
       int rowStart = initialRange.getStart().getRow();
       int rowEnd = initialRange.getEnd().getRow();
@@ -4026,11 +4035,11 @@ public class TextEditingTarget implements
             rowStart,
             0,
             rowEnd,
-            dontCommentLastLine ? 0 : docDisplay_.getLine(rowEnd).length());
-      docDisplay_.setSelectionRange(expanded);
+            dontCommentLastLine ? 0 : display.getLine(rowEnd).length());
+      display.setSelectionRange(expanded);
 
       String[] lines = JsUtil.toStringArray(
-            docDisplay_.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
+            display.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
 
       String commonPrefix = StringUtil.getCommonPrefix(
             lines,
@@ -4082,7 +4091,7 @@ public class TextEditingTarget implements
                isCommentAction = true;
          }
 
-         if (docDisplay_.getFileType().isR())
+         if (display.getFileType().isR())
          {
             if (!looksLikeRoxygen)
             {
@@ -4173,7 +4182,7 @@ public class TextEditingTarget implements
             builder.toString() :
             builder.substring(0, builder.length() - 1);
 
-      docDisplay_.replaceSelection(newSelection);
+      display.replaceSelection(newSelection);
 
       // Nudge the selection to match the commented action.
       if (isSingleLineAction)
@@ -4191,7 +4200,7 @@ public class TextEditingTarget implements
                colStart + diff,
                rowStart,
                colEnd + diff);
-         docDisplay_.setSelectionRange(newRange);
+         display.setSelectionRange(newRange);
       }
    }
 
@@ -7175,14 +7184,14 @@ public class TextEditingTarget implements
       return SourcePosition.create(pos.getRow(), pos.getColumn());
    }
 
-   private boolean isCursorInTexMode()
+   private boolean isCursorInTexMode(DocDisplay display)
    {
       if (fileType_.canCompilePDF())
       {
          if (fileType_.isRnw())
          {
             return SweaveFileType.TEX_LANG_MODE.equals(
-               docDisplay_.getLanguageMode(docDisplay_.getCursorPosition()));
+               display.getLanguageMode(display.getCursorPosition()));
          }
          else
          {
@@ -7205,9 +7214,9 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private boolean isCursorInYamlMode()
+   private boolean isCursorInYamlMode(DocDisplay display)
    {
-      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      String mode = display.getLanguageMode(display.getCursorPosition());
       if (mode == null)
          return false;
 
