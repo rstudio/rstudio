@@ -109,9 +109,18 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-      // Track activation state
-      editor_.addFocusHandler((evt) -> { active_ = true; });
-      editor_.addBlurHandler((evt) -> { active_ = false; });
+      // Track activation state and notify visual mode
+      editor_.addFocusHandler((evt) -> 
+      { 
+         active_ = true; 
+         target_.getVisualMode().setActiveEditor(editor_);
+      });
+      editor_.addBlurHandler((evt) ->
+      {
+         active_ = false;
+         target_.getVisualMode().setActiveEditor(null);
+      });
+       
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();

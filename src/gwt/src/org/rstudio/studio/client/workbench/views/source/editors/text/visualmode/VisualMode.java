@@ -650,14 +650,13 @@ public class VisualMode implements VisualModeEditorSync,
       
       // disable commands
       disableForVisualMode(
+        // Disabled since it just opens the scope tree widget (which doens't
+        // exist in visual mode)
         commands_.jumpTo(),
-        commands_.jumpToMatching(),
+
+        // Disabled since diagnostics aren't active in visual mode
         commands_.showDiagnosticsActiveDocument(),
-        commands_.goToHelp(),
-        commands_.goToDefinition(),
-        commands_.extractFunction(),
-        commands_.extractLocalVariable(),
-        commands_.renameInScope(),
+
         commands_.reflowComment(),
         commands_.commentUncomment(),
         commands_.insertRoxygenSkeleton(),
@@ -722,6 +721,16 @@ public class VisualMode implements VisualModeEditorSync,
    public void executePreviousChunks()
    {
       visualModeChunks_.executePreviousChunks();
+   }
+   
+   public DocDisplay getActiveEditor()
+   {
+      return activeEditor_;
+   }
+   
+   public void setActiveEditor(DocDisplay editor)
+   {
+      activeEditor_ = editor;
    }
 
    public void goToNextSection()
@@ -1450,10 +1459,11 @@ public class VisualMode implements VisualModeEditorSync,
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
+   private DocDisplay activeEditor_;  // the current embedded editor
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
-   private final DocDisplay docDisplay_;
+   private final DocDisplay docDisplay_;   // the parent editor
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
    

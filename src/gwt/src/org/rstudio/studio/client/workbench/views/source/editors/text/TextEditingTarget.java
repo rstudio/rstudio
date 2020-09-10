@@ -487,7 +487,6 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
-      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -564,12 +563,12 @@ public class TextEditingTarget implements
                   prefs_.continueCommentsOnNewline().getValue() &&
                   !docDisplay_.isPopupVisible() &&
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
+                    (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode()))
             {
                String line = docDisplay_.getCurrentLineUpToCursor();
                Pattern pattern = null;
 
-               if (isCursorInRMode())
+               if (isCursorInRMode(docDisplay_))
                   pattern = Pattern.create("^(\\s*#+'?\\s*)");
                else if (isCursorInTexMode())
                   pattern = Pattern.create("^(\\s*%+'?\\s*)");
@@ -3339,23 +3338,31 @@ public class TextEditingTarget implements
    @Handler
    void onRenameInScope()
    {
-      docDisplay_.focus();
+      withActiveEditor((disp) ->
+      {
+         renameInScope(disp);
+      });
+   }
+   
+   void renameInScope(DocDisplay display)
+   {
+      display.focus();
 
       // Save folds (we need to remove them temporarily for the rename helper)
-      final JsArray<AceFold> folds = docDisplay_.getFolds();
-      docDisplay_.unfoldAll();
+      final JsArray<AceFold> folds = display.getFolds();
+      display.unfoldAll();
 
-      int matches = renameHelper_.renameInScope();
+      int matches = (new TextEditingTargetRenameHelper(display)).renameInScope();
       if (matches <= 0)
       {
-         if (!docDisplay_.getSelectionValue().isEmpty())
+         if (!display.getSelectionValue().isEmpty())
          {
-            String message = "No matches for '" + docDisplay_.getSelectionValue() + "'";
+            String message = "No matches for '" + display.getSelectionValue() + "'";
             view_.getStatusBar().showMessage(message, 1000);
          }
 
          for (AceFold fold : JsUtil.asIterable(folds))
-            docDisplay_.addFold(fold.getRange());
+            display.addFold(fold.getRange());
          return;
       }
 
@@ -3365,16 +3372,16 @@ public class TextEditingTarget implements
       else
          message += " matches";
 
-      String selectedItem = docDisplay_.getSelectionValue();
+      String selectedItem = display.getSelectionValue();
       message += " for " + selectedItem + ".";
 
-      docDisplay_.disableSearchHighlight();
+      display.disableSearchHighlight();
       view_.getStatusBar().showMessage(message, new HideMessageHandler()
       {
          private boolean onRenameFinished(boolean value)
          {
             for (AceFold fold : JsUtil.asIterable(folds))
-               docDisplay_.addFold(fold.getRange());
+               display.addFold(fold.getRange());
             return value;
          }
 
@@ -3382,15 +3389,15 @@ public class TextEditingTarget implements
          public boolean onNativePreviewEvent(NativePreviewEvent preview)
          {
             int type = preview.getTypeInt();
-            if (docDisplay_.isPopupVisible())
+            if (display.isPopupVisible())
                return false;
 
             // End if the user clicks somewhere
             if (type == Event.ONCLICK)
             {
-               docDisplay_.exitMultiSelectMode();
-               docDisplay_.clearSelection();
-               docDisplay_.enableSearchHighlight();
+               display.exitMultiSelectMode();
+               display.clearSelection();
+               display.enableSearchHighlight();
                return onRenameFinished(true);
             }
 
@@ -3404,9 +3411,9 @@ public class TextEditingTarget implements
                case KeyCodes.KEY_UP:
                case KeyCodes.KEY_DOWN:
                case KeyCodes.KEY_ESCAPE:
-                  docDisplay_.exitMultiSelectMode();
-                  docDisplay_.clearSelection();
-                  docDisplay_.enableSearchHighlight();
+                  display.exitMultiSelectMode();
+                  display.clearSelection();
+                  display.enableSearchHighlight();
                   return onRenameFinished(true);
                }
             }
@@ -3678,15 +3685,23 @@ public class TextEditingTarget implements
    @Handler
    void onExtractLocalVariable()
    {
-      if (!isCursorInRMode())
+      withActiveEditor((disp) ->
+      {
+         extractLocalVariable(disp);
+      });
+   }
+   
+   void extractLocalVariable(DocDisplay display)
+   {
+      if (!isCursorInRMode(display))
       {
          showRModeWarning("Extract Variable");
          return;
       }
 
-      docDisplay_.focus();
+      display.focus();
 
-      String initialSelection = docDisplay_.getSelectionValue();
+      String initialSelection = display.getSelectionValue();
       final String refactoringName = "Extract local variable";
       final String pleaseSelectCodeMessage = "Please select the code to " +
                                              "extract into a variable.";
@@ -3694,17 +3709,17 @@ public class TextEditingTarget implements
                                  pleaseSelectCodeMessage,
                                  initialSelection)) return;
 
-      docDisplay_.fitSelectionToLines(false);
+      display.fitSelectionToLines(false);
 
-      final String code = docDisplay_.getSelectionValue();
+      final String code = display.getSelectionValue();
       if (checkSelectionAndAlert(refactoringName,
                                  pleaseSelectCodeMessage,
                                  code))
          return;
 
       // get the first line of the selection and calculate it's indentation
-      String firstLine = docDisplay_.getLine(
-                        docDisplay_.getSelectionStart().getRow());
+      String firstLine = display.getLine(
+                        display.getSelectionStart().getRow());
       final String indentation = extractIndentation(firstLine);
 
       // used to parse the code
@@ -3727,13 +3742,13 @@ public class TextEditingTarget implements
                                                             + " <- "
                                                             + code
                                                             + "\n";
-                               InputEditorPosition insertPosition = docDisplay_
+                               InputEditorPosition insertPosition = display
                                        .getSelection()
                                        .extendToLineStart()
                                        .getStart();
-                               docDisplay_.replaceSelection(
+                               display.replaceSelection(
                                        input.trim());
-                               docDisplay_.insertCode(
+                               display.insertCode(
                                        insertPosition,
                                        extractedCode);
                             }
@@ -3757,15 +3772,23 @@ public class TextEditingTarget implements
    @Handler
    void onExtractFunction()
    {
-      if (!isCursorInRMode())
+      withActiveEditor((disp) ->
+      {
+         extractActiveFunction(disp);
+      });
+   }
+   
+   void extractActiveFunction(DocDisplay display)
+   {
+      if (!isCursorInRMode(display))
       {
          showRModeWarning("Extract Function");
          return;
       }
 
-      docDisplay_.focus();
+      display.focus();
 
-      String initialSelection = docDisplay_.getSelectionValue();
+      String initialSelection = display.getSelectionValue();
       final String refactoringName = "Extract Function";
       final String pleaseSelectCodeMessage = "Please select the code to " +
                                              "extract into a function.";
@@ -3773,9 +3796,9 @@ public class TextEditingTarget implements
                                  pleaseSelectCodeMessage,
                                  initialSelection)) return;
 
-      docDisplay_.fitSelectionToLines(false);
+      display.fitSelectionToLines(false);
 
-      final String code = docDisplay_.getSelectionValue();
+      final String code = display.getSelectionValue();
       if (checkSelectionAndAlert(refactoringName,
                                  pleaseSelectCodeMessage,
                                  code)) return;
@@ -3796,12 +3819,12 @@ public class TextEditingTarget implements
                       public void execute(String input)
                       {
                          String prefix;
-                         if (docDisplay_.getSelectionOffset(true) == 0)
+                         if (display.getSelectionOffset(true) == 0)
                             prefix = "";
                          else prefix = "\n";
                          String args = response != null ? response.join(", ")
                                                         : "";
-                         docDisplay_.replaceSelection(
+                         display.replaceSelection(
                                  prefix
                                  + indentation
                                  + input.trim()
@@ -3849,7 +3872,7 @@ public class TextEditingTarget implements
    {
       if (isCursorInTexMode())
          doCommentUncomment("%", null);
-      else if (isCursorInRMode() || isCursorInYamlMode())
+      else if (isCursorInRMode(docDisplay_) || isCursorInYamlMode())
          doCommentUncomment("#", null);
       else if (fileType_.isCpp() || fileType_.isStan() || fileType_.isC())
          doCommentUncomment("//", null);
@@ -5667,19 +5690,28 @@ public class TextEditingTarget implements
    @Handler
    void onCodeCompletion()
    {
-      docDisplay_.codeCompletion();
+      withActiveEditor((disp) ->
+      {
+         disp.codeCompletion();
+      });
    }
 
    @Handler
    void onGoToHelp()
    {
-      docDisplay_.goToHelp();
+      withActiveEditor((disp) -> 
+      {
+         disp.goToHelp();
+      });
    }
 
    @Handler
    void onGoToDefinition()
    {
-      docDisplay_.goToDefinition();
+      withActiveEditor((disp) ->
+      {
+         disp.goToDefinition();
+      });
    }
 
    @Handler
@@ -7159,9 +7191,9 @@ public class TextEditingTarget implements
       }
    }
 
-   private boolean isCursorInRMode()
+   private boolean isCursorInRMode(DocDisplay display)
    {
-      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      String mode = display.getLanguageMode(display.getCursorPosition());
       if (mode == null)
          return true;
       if (mode.equals(TextFileType.R_LANG_MODE))
@@ -7806,6 +7838,29 @@ public class TextEditingTarget implements
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
+   
+   /**
+    * Executes a command with the active Ace instance. If there is no active
+    * instance (e.g. in visual mode when focus is not in an editor), then the
+    * command is not executed.
+    * 
+    * @param cmd The command to execute.
+    */
+   private void withActiveEditor(CommandWithArg<DocDisplay> cmd)
+   {
+      if (isVisualEditorActive())
+      {
+         DocDisplay activeEditor = visualMode_.getActiveEditor();
+         if (activeEditor != null)
+         {
+            cmd.execute(activeEditor);
+         }
+      }
+      else
+      {
+         cmd.execute(docDisplay_);
+      }
+   }
 
    // user is switching to visual mode
    void onUserSwitchingToVisualMode()
@@ -7901,7 +7956,6 @@ public class TextEditingTarget implements
    private TextEditingTargetChunks chunks_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
-   private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;
