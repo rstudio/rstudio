@@ -118,7 +118,7 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
   const providerKey = 'crossref';
   return {
     id,
-    title: crossrefWork.title[0] || '',
+    title: crossrefWorkTitle(crossrefWork, ui),
     providerKey,
     authors: (length: number) => {
       return formatAuthors(coercedCSL.author, length);
@@ -137,3 +137,15 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
   };
 }
 
+
+function crossrefWorkTitle(work: CrossrefWork, ui: EditorUI) {
+  if (work.title) {
+    return work.title[0];
+  } else if (work["container-title"]) {
+    return work["container-title"][0];
+  } else if (work["short-container-title"]) {
+    return work["short-container-title"];
+  } else {
+    return ui.context.translateText('(Untitled)');
+  }
+}

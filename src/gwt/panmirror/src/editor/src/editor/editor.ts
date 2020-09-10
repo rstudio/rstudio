@@ -626,7 +626,7 @@ export class Editor {
   }
 
   public getSelectedText(): string {
-    
+
     return this.state.doc.textBetween(
       this.state.selection.from,
       this.state.selection.to
@@ -637,20 +637,20 @@ export class Editor {
   public replaceSelection(value: string): void {
 
     // retrieve properties we need from selection
-    let {from, empty} = this.view.state.selection;
+    const { from, empty } = this.view.state.selection;
 
     // retrieve selection marks
-    let marks = this.view.state.selection.$from.marks();
+    const marks = this.view.state.selection.$from.marks();
 
     // insert text
-    let tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
+    const tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
     this.view.dispatch(tr);
 
     // update selection if necessary
     if (!empty) {
-      let sel = TextSelection.create(this.view.state.doc, from, from + value.length);
-      let tr = this.view.state.tr.setSelection(sel);
-      this.view.dispatch(tr);
+      const sel = TextSelection.create(this.view.state.doc, from, from + value.length);
+      const trSetSel = this.view.state.tr.setSelection(sel);
+      this.view.dispatch(trSetSel);
     }
 
   }
@@ -953,7 +953,7 @@ export class Editor {
     return new Plugin({
       key: keybindingsPlugin,
       props: {
-        handleKeyDown: (view: EditorView, event: Event) => {
+        handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
           // workaround for Ctrl+ keys on windows desktop
           if (this.context.ui.context.isWindowsDesktop()) {
             const keyEvent = event as KeyboardEvent;
