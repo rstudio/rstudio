@@ -5384,16 +5384,23 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteNextChunk()
    {
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
+      if (visualMode_.isActivated())
+      {
+         visualMode_.executeNextChunk();
+      }
+      else
+      {
+         // HACK: This is just to force the entire function tree to be built.
+         // It's the easiest way to make sure getCurrentScope() returns
+         // a Scope with an end.
+         docDisplay_.getScopeTree();
 
-      Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
-            true);
-      docDisplay_.setCursorPosition(nextChunk.getBodyStart());
-      docDisplay_.ensureCursorVisible();
+         Scope nextChunk = scopeHelper_.getNextSweaveChunk();
+         executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
+               true);
+         docDisplay_.setCursorPosition(nextChunk.getBodyStart());
+         docDisplay_.ensureCursorVisible();
+      }
    }
 
    @Handler
@@ -5518,6 +5525,11 @@ public class TextEditingTarget implements
 
    @Handler
    public void onExecuteSetupChunk()
+   {
+      prepareForVisualExecution(() -> executeSetupChunk());
+   }
+   
+   private void executeSetupChunk()
    {
       // attempt to find the setup scope by name
       Scope setupScope = null;
@@ -7867,6 +7879,24 @@ public class TextEditingTarget implements
    public boolean isVisualEditorActive() 
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
+   }
+   
+   /**
+    * Prepares to execute code when visual mode is active; ensures that the
+    * underlying editor has a complete copy of the code and scope tree.
+    * 
+    * @param onComplete Command to run when sync is complete.
+    */
+   public void prepareForVisualExecution(Command onComplete)
+   {
+      if (isVisualEditorActive())
+      {
+         visualMode_.syncToEditor(SyncType.SyncTypeExecution, onComplete);
+      }
+      else
+      {
+         onComplete.execute();
+      }
    }
    
    /**

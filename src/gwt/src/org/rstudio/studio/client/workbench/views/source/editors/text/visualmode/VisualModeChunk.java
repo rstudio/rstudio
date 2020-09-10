@@ -409,6 +409,14 @@ public class VisualModeChunk
    }
    
    /**
+    * Sets focus to the editor instance inside the chunk.
+    */
+   public void focus()
+   {
+      editor_.focus();
+   }
+   
+   /**
     * Returns the position/index of the chunk in the original Markdown document,
     * if known. Note that this value may not be correct if the Markdown document
     * has been mutated since the chunk was created.

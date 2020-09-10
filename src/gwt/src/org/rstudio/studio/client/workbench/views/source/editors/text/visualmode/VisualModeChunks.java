@@ -151,6 +151,27 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    }
    
    /**
+    * Executes the next chunk
+    */
+   public void executeNextChunk()
+   {
+      boolean next = false;
+      for (VisualModeChunk chunk: chunks_)
+      {
+         if (next)
+         {
+            chunk.focus();
+            chunk.execute();
+            break;
+         }
+         if (chunk.isActive())
+         {
+            next = true;
+         }
+      }
+   }
+   
+   /**
     * Make a list of the chunk definitions known in visual mode.
     */
    public JsArray<ChunkDefinition> getChunkDefs()
