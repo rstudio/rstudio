@@ -657,7 +657,6 @@ public class VisualMode implements VisualModeEditorSync,
         // Disabled since diagnostics aren't active in visual mode
         commands_.showDiagnosticsActiveDocument(),
 
-        commands_.reflowComment(),
         commands_.commentUncomment(),
         commands_.insertRoxygenSkeleton(),
         commands_.reindent(),

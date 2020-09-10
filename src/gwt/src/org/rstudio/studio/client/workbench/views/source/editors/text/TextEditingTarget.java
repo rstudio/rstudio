@@ -4198,27 +4198,34 @@ public class TextEditingTarget implements
    @Handler
    void onReflowComment()
    {
-      if (DocumentMode.isSelectionInRMode(docDisplay_) ||
-          DocumentMode.isSelectionInPythonMode(docDisplay_))
+      withActiveEditor((disp) ->
       {
-         doReflowComment("(#)");
+         reflowComment(disp);
+      });
+   }
+   
+   void reflowComment(DocDisplay display)
+   {
+      if (DocumentMode.isSelectionInRMode(display) ||
+          DocumentMode.isSelectionInPythonMode(display))
+      {
+         doReflowComment(display, "(#)");
       }
-      else if (DocumentMode.isSelectionInCppMode(docDisplay_))
+      else if (DocumentMode.isSelectionInCppMode(display))
       {
-         String currentLine = docDisplay_.getLine(
-                                    docDisplay_.getCursorPosition().getRow());
+         String currentLine = display.getLine(
+                                    display.getCursorPosition().getRow());
          if (currentLine.startsWith(" *"))
-            doReflowComment("( \\*[^/])", false);
+            doReflowComment(display, "( \\*[^/])", false);
          else
-            doReflowComment("(//)");
+            doReflowComment(display, "(//)");
       }
-      else if (DocumentMode.isSelectionInTexMode(docDisplay_))
-         doReflowComment("(%)");
-      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
-         doReflowComment("()");
-      else if (docDisplay_.getFileType().isText())
-         doReflowComment("()");
-
+      else if (DocumentMode.isSelectionInTexMode(display))
+         doReflowComment(display, "(%)");
+      else if (DocumentMode.isSelectionInMarkdownMode(display))
+         doReflowComment(display, "()");
+      else if (display.getFileType().isText())
+         doReflowComment(display, "()");
    }
 
    public void reflowText()
@@ -4587,16 +4594,16 @@ public class TextEditingTarget implements
       });
    }
 
-   void doReflowComment(String commentPrefix)
+   void doReflowComment(DocDisplay display, String commentPrefix)
    {
-      doReflowComment(commentPrefix, true);
+      doReflowComment(display, commentPrefix, true);
    }
 
-   void doReflowComment(String commentPrefix, boolean multiParagraphIndent)
+   void doReflowComment(DocDisplay display, String commentPrefix, boolean multiParagraphIndent)
    {
-      docDisplay_.focus();
+      display.focus();
 
-      InputEditorSelection originalSelection = docDisplay_.getSelection();
+      InputEditorSelection originalSelection = display.getSelection();
       InputEditorSelection selection = originalSelection;
 
       if (selection.isEmpty())
@@ -4612,7 +4619,8 @@ public class TextEditingTarget implements
       if (selection.isEmpty())
          return;
 
-      reflowComments(commentPrefix,
+      reflowComments(display,
+                     commentPrefix,
                      multiParagraphIndent,
                      selection,
                      originalSelection.isEmpty() ?
@@ -4620,17 +4628,13 @@ public class TextEditingTarget implements
                      null);
    }
 
-   private Position selectionToPosition(InputEditorPosition pos)
-   {
-      return docDisplay_.selectionToPosition(pos);
-   }
-
-   private void reflowComments(String commentPrefix,
+   private void reflowComments(DocDisplay display,
+                               String commentPrefix,
                                final boolean multiParagraphIndent,
                                InputEditorSelection selection,
                                final InputEditorPosition cursorPos)
    {
-      String code = docDisplay_.getCode(selection);
+      String code = display.getCode(selection);
       String[] lines = code.split("\n");
       String prefix = StringUtil.getCommonPrefix(lines, true, false);
       Pattern pattern = Pattern.create("^\\s*" + commentPrefix + "+('?)\\s*");
@@ -4645,8 +4649,8 @@ public class TextEditingTarget implements
       int cursorColIndex = 0;
       if (cursorPos != null)
       {
-         cursorRowIndex = selectionToPosition(cursorPos).getRow() -
-                          selectionToPosition(selection.getStart()).getRow();
+         cursorRowIndex = display.selectionToPosition(cursorPos).getRow() -
+                          display.selectionToPosition(selection.getStart()).getRow();
          cursorColIndex =
                Math.max(0, cursorPos.getPosition() - prefix.length());
       }
@@ -4734,10 +4738,10 @@ public class TextEditingTarget implements
       // Remove trailing whitespace that might have leaked in earlier
       reflowed = reflowed.replaceAll("\\s+\\n", "\n");
 
-      docDisplay_.setSelection(selection);
+      display.setSelection(selection);
       if (!reflowed.equals(code))
       {
-         docDisplay_.replaceSelection(reflowed);
+         display.replaceSelection(reflowed);
       }
 
       if (cursorPos != null)
@@ -4746,14 +4750,14 @@ public class TextEditingTarget implements
          {
             int row = wwct.getResult().getY();
             int col = wwct.getResult().getX();
-            row += selectionToPosition(selection.getStart()).getRow();
+            row += display.selectionToPosition(selection.getStart()).getRow();
             col += prefix.length();
             Position pos = Position.create(row, col);
-            docDisplay_.setSelection(docDisplay_.createSelection(pos, pos));
+            display.setSelection(docDisplay_.createSelection(pos, pos));
          }
          else
          {
-            docDisplay_.collapseSelection(false);
+            display.collapseSelection(false);
          }
       }
    }
