@@ -135,11 +135,15 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const [citationsToAdd, setCitationsToAdd] = React.useState<CitationListEntry[]>([]);
   const [selectedCitation, setSelectedCitation] = React.useState<CitationListEntry>();
 
-  // Used to track whether initial focus has been set
-  const [initialFocus, setInitialFocus] = React.useState<boolean>(true);
-
   // The loadded panel reference (used for focus, etc...)
   const panelRef = React.useRef<any>(undefined);
+
+  if (selectedNode) {
+    const rootPanel = panelForNode(selectedNode, providerPanels);
+    if (rootPanel && rootPanel?.key !== selectedProviderPanel?.key) {
+      setSelectedProviderPanel(rootPanel);
+    }
+  }
 
   // The initial loading of data for the panel. 
   React.useEffect(() => {
@@ -153,7 +157,18 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       }
     }
     loadData();
+    // Set initial focus
+    if (panelRef.current) {
+      setTimeout(() => {
+        panelRef.current.focus();
+      }, 200);
+    }
   }, []);
+
+  // As citations to add or selection changes, notify of updated citationsToAdd
+  React.useEffect(() => {
+    props.onCitationsChanged(mergeCitations(citationsToAdd, selectedCitation));
+  }, [selectedCitation, citationsToAdd]);
 
   const mergeCitations = (toAdd: CitationListEntry[], selected?: CitationListEntry) => {
     if (!selected) {
@@ -166,32 +181,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       }
     }
   };
-
-  // As citations to add or selection changes, notify of updated citationsToAdd
-  React.useEffect(() => {
-    props.onCitationsChanged(mergeCitations(citationsToAdd, selectedCitation));
-  }, [selectedCitation, citationsToAdd]);
-
-  // Whenever the user selects a new node, lookup the correct panel for that node and 
-  // select that panel.
-  React.useEffect(() => {
-    if (selectedNode) {
-      const rootPanel = panelForNode(selectedNode, providerPanels);
-      if (rootPanel && rootPanel?.key !== selectedProviderPanel?.key) {
-        setSelectedProviderPanel(rootPanel);
-      }
-    }
-  }, [selectedNode]);
-
-  // If we should set initial focus, go ahead and set it 
-  React.useEffect(() => {
-    if (panelRef.current && initialFocus) {
-      setTimeout(() => {
-        panelRef.current.focus();
-      }, 200);
-      setInitialFocus(false);
-    }
-  }, []);
 
   // Style properties
   const style: React.CSSProperties = {
