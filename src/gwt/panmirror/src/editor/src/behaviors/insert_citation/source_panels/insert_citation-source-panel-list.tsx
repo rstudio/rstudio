@@ -48,7 +48,6 @@ export interface CitationSourceListProps extends WidgetProps {
 
 export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>((props: CitationSourceListProps, ref) => {
   const [selectedIndex, setSelectedIndex] = React.useState<number>();
-  const [focused, setFocused] = React.useState<boolean>(false);
   const fixedList = React.useRef<FixedSizeList>(null);
 
   // Item height and consequently page height
@@ -128,16 +127,16 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   // Focus / Blur are used to track whether to show selection highlighting
   const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(true);
     if (selectedIndex === undefined) {
       onSetSelectedIndex(0);
+    } else {
+      props.selectedCitation(filteredCitations[selectedIndex]);
     }
     event.stopPropagation();
     event.preventDefault();
   };
 
   const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    setFocused(false);
     event.stopPropagation();
     event.preventDefault();
   };
@@ -169,7 +168,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
                 removeCitation: props.removeCitation,
                 confirm: props.confirm,
                 showSeparator: true,
-                showSelection: focused,
+                showSelection: true,
                 preventFocus: true,
                 ui: props.ui,
               }}
