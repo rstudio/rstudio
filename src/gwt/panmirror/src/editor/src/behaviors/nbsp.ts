@@ -22,6 +22,7 @@ import { forChangedNodes } from "../api/transaction";
 import { mergedTextNodes } from "../api/text";
 
 const kNbsp = '\u00A0';
+const kNbspRegEx = /\xA0+/g;
 
 const extension = {
   commands: () => {
@@ -32,16 +33,33 @@ const extension = {
 
   plugins: () => {
     return [
-      nonBreakingSpaceHighlightPlugin()
+      nonBreakingSpacePastePlugin(),
+      nonBreakingSpaceHighlightPlugin(),
     ];
   }
 };
 
-const pluginKey = new PluginKey('nbsp-highlight');
+
+const pastePluginKey = new PluginKey('nbsp-paste');
+
+function nonBreakingSpacePastePlugin() {
+  return new Plugin({
+    key: pastePluginKey,
+    props: {
+      transformPastedHTML: (html: string) => {
+        // strips spans that contain a single non-breaking space (chrome/webkit seem to 
+        // do this for spaces surrounding marked html)
+        return html.replace(/<span> <\/span>/g, ' ');
+      }
+    },
+  });
+}
+
+const highlightPluginKey = new PluginKey('nbsp-highlight');
 
 function nonBreakingSpaceHighlightPlugin() {
   return new Plugin<DecorationSet>({
-    key: pluginKey,
+    key: highlightPluginKey,
     state: {
       init(_config: { [key: string]: any }, instance: EditorState) {
         return DecorationSet.create(instance.doc, highlightNode(instance.doc));
@@ -68,13 +86,11 @@ function nonBreakingSpaceHighlightPlugin() {
     },
     props: {
       decorations(state: EditorState) {
-        return pluginKey.getState(state);
+        return highlightPluginKey.getState(state);
       },
     },
   });
 }
-
-const kHighlightRegEx = /\xA0+/g;
 
 function highlightNode(node: ProsemirrorNode, nodePos = 0) {
   const decorations: Decoration[] = [];
@@ -82,9 +98,9 @@ function highlightNode(node: ProsemirrorNode, nodePos = 0) {
   textNodes.forEach(textNode => {
     const text = textNode.text;
     let m;
-    kHighlightRegEx.lastIndex = 0;
+    kNbspRegEx.lastIndex = 0;
     // tslint:disable-next-line no-conditional-assignment
-    while ((m = kHighlightRegEx.exec(text))) {
+    while ((m = kNbspRegEx.exec(text))) {
       if (m[0] === '') {
         break;
       }
@@ -93,7 +109,7 @@ function highlightNode(node: ProsemirrorNode, nodePos = 0) {
       const classes = ['pm-nbsp', 'pm-invisible-text-color'];
       decorations.push(Decoration.inline(from, to, { class: classes.join(' ') }));
     }
-    kHighlightRegEx.lastIndex = 0;
+    kNbspRegEx.lastIndex = 0;
   });
   return decorations;
 }

@@ -235,7 +235,7 @@ bool getConfiguredCollections(const std::string& file, std::vector<std::string>*
          std::string value = bookdownCollections[0].substr(kLogicalPrefix.length());
          if (value == "TRUE")
          {
-             session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
+             session::prefs::userPrefs().zoteroLibraries().toVectorString(*pCollections);
          }
          else
          {
@@ -248,14 +248,14 @@ bool getConfiguredCollections(const std::string& file, std::vector<std::string>*
       }
       else
       {
-         session::prefs::userState().zoteroLibraries().toVectorString(*pCollections);
+         session::prefs::userPrefs().zoteroLibraries().toVectorString(*pCollections);
       }
    }
 
    // read global pref (ignore project b/c this file isn't in the project)
    else
    {
-      auto libsPref = session::prefs::userState().readValue(kUserStateUserLayer, "zotero_libraries");
+      auto libsPref = session::prefs::userPrefs().readValue(kUserStateUserLayer, "zotero_libraries");
       if (libsPref.has_value() && libsPref.get().isArray())
          libsPref->getArray().toVectorString(*pCollections);
    }

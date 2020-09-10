@@ -465,7 +465,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
         
       zoteroApiKey_.setProgressIndicator(getProgressIndicator());
       
-      zoteroLibs_.setLibraries(state_.zoteroLibraries().getValue());
+      zoteroLibs_.setLibraries(prefs_.zoteroLibraries().getValue());
       zoteroLibs_.addAvailableLibraries();
  
    }
@@ -526,7 +526,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          state_.zoteroConnectionType().setGlobalValue(zoteroConnection_.getType());
       }
       
-      state_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
+      prefs_.zoteroLibraries().setGlobalValue(zoteroLibs_.getLibraries());
       
       // if the zotero data dir is same as the detected data dir then 
       // set it to empty (allowing the server to always get the right default)
