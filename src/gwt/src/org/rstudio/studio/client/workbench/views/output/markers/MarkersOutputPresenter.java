@@ -23,6 +23,8 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
@@ -54,14 +57,20 @@ public class MarkersOutputPresenter extends BasePresenter
       HasClickHandlers getClearButton();
    }
 
+   public interface Binder extends CommandBinder<Commands, MarkersOutputPresenter> {}
+
    @Inject
    public MarkersOutputPresenter(Display view,
                                  MarkersServerOperations server,
+                                 Commands commands,
+                                 Binder binder,
                                  FileTypeRegistry fileTypeRegistry)
    {
       super(view);
+      binder.bind(commands, this);
       view_ = view;
       server_ = server;
+      commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
 
       // active marker set changed
@@ -142,13 +151,21 @@ public class MarkersOutputPresenter extends BasePresenter
       }
    }
 
-
    public void onClosing()
    {
       server_.markersTabClosed(new VoidServerRequestCallback());
    }
 
+   @Handler
+   public void onActivateMarkers()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private final Display view_;
    private final MarkersServerOperations server_;
+   private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
 }

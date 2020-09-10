@@ -141,7 +141,6 @@ public abstract class
    public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
-   public abstract AppCommand activateFindInFiles();
    public abstract AppCommand newSourceColumn();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
@@ -302,7 +301,6 @@ public abstract class
    public abstract AppCommand presentationEdit();
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
-   public abstract AppCommand activatePresentation();
    public abstract AppCommand clearPresentationCache();
 
    // View
@@ -325,6 +323,16 @@ public abstract class
    public abstract AppCommand moveTabRight();
    public abstract AppCommand moveTabToFirst();
    public abstract AppCommand moveTabToLast();
+
+   // Other Panes
+   public abstract AppCommand activatePresentation();
+   public abstract AppCommand activateCompilePDF();
+   public abstract AppCommand activateFindInFiles();
+   public abstract AppCommand activateSourceCpp();
+   public abstract AppCommand activateRMarkdown();
+   public abstract AppCommand activateDeployContent();
+   public abstract AppCommand activateMarkers();
+   public abstract AppCommand activateSQLResults();
 
    // History
    public abstract AppCommand historySendToSource();
