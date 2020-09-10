@@ -48,16 +48,23 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
 
 export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>('');
   const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
 
+  // Track whether we are mounted to allow a latent search that returns after the 
+  // component unmounts to nmot mutate state further
+  const isMounted = React.useRef(true);
   React.useEffect(() => {
-    let mounted = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const doSearch = (search: string) => {
     const performSearch = async () => {
-      if (mounted) {
+      if (isMounted.current) {
         setStatus(CitationSourceListStatus.loading);
       }
-      const works = await props.server.crossref.works(searchTerm);
+      const works = await props.server.crossref.works(search);
 
       // Get the list of ids already in the bibliography
       const existingIds = props.bibliographyManager.localSources().map(src => src.id);
@@ -71,25 +78,18 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
         return citationEntry;
       });
 
-      if (mounted) {
+      if (isMounted.current) {
         setCitations(citationEntries);
         setStatus(citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults);
       }
     };
 
     // Either do the search, or if the search is empty, clear the results
-    if (searchTerm.length > 0) {
+    if (search.length > 0) {
       performSearch();
     } else {
       setCitations([]);
     }
-
-    return () => { mounted = false; };
-
-  }, [searchTerm]);
-
-  const doSearch = (search: string) => {
-    setSearchTerm(search);
   };
 
   return (
