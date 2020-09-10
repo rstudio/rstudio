@@ -30,6 +30,7 @@
 
 .pm-insert-citation-panel-latent-search-list {
   border: solid 1px;
-  border-radius: 3px;  
+  border-radius: 3px;
+  height: calc(100% - 38px);  
 }
 

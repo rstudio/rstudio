@@ -39,6 +39,8 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   status: CitationSourceListStatus;
 }
 
+const kSearchBoxHeightWithMargin = 38;
+
 export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceLatentSearchPanelProps>((props, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
@@ -61,16 +63,6 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
   // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 8;
-    if (searchBoxHeight) {
-      setListHeight(props.height - padding - searchBoxHeight);
-    }
-  }, []);
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -106,6 +98,8 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
     focusSearch();
   };
 
+
+
   return (
     <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
@@ -132,7 +126,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
       <div className='pm-insert-citation-panel-latent-search-list-container'>
         <CitationSourceList
-          height={listHeight}
+          height={props.height - kSearchBoxHeightWithMargin}
           citations={props.citations}
           citationsToAdd={props.citationsToAdd}
           confirm={props.confirm}
