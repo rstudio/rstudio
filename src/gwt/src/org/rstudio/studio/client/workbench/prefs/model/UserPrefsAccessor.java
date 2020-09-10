@@ -1143,7 +1143,7 @@ public class UserPrefsAccessor extends Prefs
          "limit_visible_console",
          "Limit visible console output", 
          "Whether to only show a limited window of the total console output", 
-         true);
+         false);
    }
 
    /**
@@ -2798,6 +2798,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR = "codemirror";
 
    /**
+    * Zotero libraries to insert citations from.
+    */
+   public PrefValue<JsArrayString> zoteroLibraries()
+   {
+      return object(
+         "zotero_libraries",
+         "Zotero libraries", 
+         "Zotero libraries to insert citations from.", 
+         JsArrayUtil.createStringArray("My Library"));
+   }
+
+   /**
     * Preferred emoji skintone
     */
    public PrefValue<String> emojiSkintone()
@@ -3368,6 +3380,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
          visualMarkdownCodeEditor().setValue(layer, source.getString("visual_markdown_code_editor"));
+      if (source.hasKey("zotero_libraries"))
+         zoteroLibraries().setValue(layer, source.getObject("zotero_libraries"));
       if (source.hasKey("emoji_skintone"))
          emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
@@ -3591,6 +3605,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingShowMargin());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
+      prefs.add(zoteroLibraries());
       prefs.add(emojiSkintone());
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());

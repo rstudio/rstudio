@@ -114,20 +114,22 @@ std::string creatorsSQL(const ZoteroCollectionSpec& spec)
         items
         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
         join libraries on items.libraryID = libraries.libraryID
-        join collections on libraries.libraryID = collections.libraryID
+        %1%
         join itemCreators on items.itemID = itemCreators.itemID
         join creators on creators.creatorID = itemCreators.creatorID
         join creatorTypes on itemCreators.creatorTypeID = creatorTypes.creatorTypeID
       WHERE
         itemTypes.typeName <> 'attachment'
         AND itemTypes.typeName <> 'note'
-        %1%
+        %2%
       ORDER BY
         items.key ASC,
         itemCreators.orderIndex
    )");
    return boost::str(fmt %
-      (spec.parentKey.empty() ? "AND libraries.libraryID = " + spec.key : "AND collections.key = '" + spec.key + "'"));
+        (spec.parentKey.empty() ? "" :  R"(join collectionItems on items.itemID = collectionItems.itemID
+         join collections on collectionItems.collectionID = collections.collectionID)") %
+        (spec.parentKey.empty() ? "AND libraries.libraryID = " + spec.key : "AND collections.key = '" + spec.key + "'"));
 }
 
 std::string collectionSQL(const ZoteroCollectionSpec& spec)
@@ -160,6 +162,22 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          'type' as name,
          itemTypes.typeName as  value,
          0 as fieldOrder
+      FROM
+         items
+         join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+         join libraries on items.libraryID = libraries.libraryID
+         %1%
+      WHERE
+         itemTypes.typeName <> 'attachment'
+         AND itemTypes.typeName <> 'note'
+         %2%
+   UNION
+      SELECT
+         items.key as key,
+         items.version,
+         'libraryID' as name,
+         CAST(items.libraryID as text) as value,
+         500 as fieldOrder
       FROM
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
@@ -310,34 +328,53 @@ struct LibraryInfo
 
 ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pConnection, bool librariesOnly = false)
 {
-   std::string sql = R"(
-      SELECT
-         libraries.libraryID,
-         IFNULL(groups.name, 'My Library') as libraryName,
-         collections.key as collectionKey,
-         collections.collectionName as collectionName,
-         parentCollections.key as parentCollectionKey,
-         IFNULL(MAX(items.version), 0) AS version
-      FROM
-         collections
-         join libraries on libraries.libraryID = collections.libraryID
-         left join collectionItems on collections.collectionID = collectionItems.collectionID
-         left join items on collectionItems.itemID = items.itemID
-         left join itemTypes on items.itemTypeID = itemTypes.itemTypeID
-         left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
-         left join groups as groups on libraries.libraryID = groups.libraryID
-      GROUP BY
-         collections.key
-    )";
+   std::string librariesSql = R"(
+                              SELECT
+                                  CAST(libraries.libraryID as text) as collectionKey,
+                                  IFNULL(groups.name, 'My Library') as collectionName,
+                                  NULL as parentCollectionKey,
+                                  IFNULL(MAX(items.version), 0) AS version
+                              FROM
+                                  libraries
+                                  left join items on libraries.libraryID = items.libraryID
+                                  left join groups as groups on libraries.libraryID = groups.libraryID
+                              WHERE
+                                  libraries.type in ('user', 'group')
+                              GROUP
+                                  BY libraries.libraryID
+                          )";
 
-   // library map
-   std::map<std::string, LibraryInfo> libraries;
+   std::string collectionsSql = R"(
+                                SELECT
+                                    collections.key as collectionKey,
+                                    collections.collectionName as collectionName,
+                                    IFNULL(parentCollections.key, libraries.libraryId) as parentCollectionKey,
+                                    IFNULL(MAX(items.version), 0) AS version
+                                FROM
+                                    collections
+                                    join libraries on libraries.libraryID = collections.libraryID
+                                    left join collectionItems on collections.collectionID = collectionItems.collectionID
+                                    left join items on collectionItems.itemID = items.itemID
+                                    left join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+                                    left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
+                                    left join groups as groups on libraries.libraryID = groups.libraryID
+                                GROUP BY
+                                    collections.key
+                            )";
+
+    // If this is libraries only, just read the libraries, otherwise
+    // union the library and collection SQL
+    std::string sql = librariesSql;
+    if (!librariesOnly) {
+        sql = boost::str(boost::format("%1% UNION %2%") % librariesSql % collectionsSql);
+    }
 
    ZoteroCollectionSpecs specs;
-   Error error = execQuery(pConnection, sql, [&libraries, &specs](const database::Row& row) {
+   Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
+
       ZoteroCollectionSpec spec;
       spec.name = row.get<std::string>("collectionName");
-      spec.key = row.get<std::string>("collectionKey");
+      spec.key = readString(row, "collectionKey", "-1");
 
       std::string versionStr = readString(row, "version", "0");
       spec.version = safe_convert::stringTo<int>(versionStr, 0);
@@ -348,35 +385,11 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
          // If the parent key is not null, this is a child collection
          spec.parentKey = row.get<std::string>("parentCollectionKey");
       }
-      else
-      {
-         // If the parent key is null, this is a root level collection in a library
-         std::string libraryId = readString(row, "libraryID");
-         spec.parentKey = libraryId;
-
-         // update library
-         LibraryInfo libInfo = libraries[libraryId];
-         libInfo.name = readString(row, "libraryName");
-         libInfo.version = std::max(spec.version, libInfo.version);
-         libraries[libraryId] = libInfo;
-      }
-
       specs.push_back(spec);
    });
 
    if (error)
       LOG_ERROR(error);
-
-   // clear if this is libraries only
-   if (librariesOnly)
-      specs.clear();
-
-   // add rows for each library
-   for (auto library : libraries)
-   {
-      ZoteroCollectionSpec spec(library.second.name, library.first, "", library.second.version);
-      specs.push_back(spec);
-   }
 
    return specs;
 }

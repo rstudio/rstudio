@@ -2585,6 +2585,19 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
 }
 
 /**
+ * Zotero libraries to insert citations from.
+ */
+core::json::Array UserPrefValues::zoteroLibraries()
+{
+   return readPref<core::json::Array>("zotero_libraries");
+}
+
+core::Error UserPrefValues::setZoteroLibraries(core::json::Array val)
+{
+   return writePref("zotero_libraries", val);
+}
+
+/**
  * Preferred emoji skintone
  */
 std::string UserPrefValues::emojiSkintone()
@@ -2927,6 +2940,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
+      kZoteroLibraries,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

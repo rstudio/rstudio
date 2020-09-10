@@ -168,7 +168,7 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
 
 function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
-    const id = suggestCiteId(bibliographyManager.allSources().map(source => source.id), csl);
+    const id = suggestCiteId(bibliographyManager.localSources().map(source => source.id), csl);
     const providerKey = 'doi';
     return {
       id,

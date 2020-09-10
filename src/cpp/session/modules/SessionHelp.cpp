@@ -722,16 +722,28 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setError(error);
       return;
    }
+   
    shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
    rCmd << "Rdconv";
    rCmd << "--type=html";
+   
+   // add in package-specific information if available
    r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
    if (!pkgInfo.empty())
-      rCmd << "--package=" + pkgInfo.name();
+   {
+      if (!pkgInfo.name().empty())
+         rCmd << "--package=" + pkgInfo.name();
+      
+      std::string macros = pkgInfo.name();
+      if (!pkgInfo.rdMacros().empty())
+         macros = macros + "," + pkgInfo.rdMacros();
+      
+      rCmd << "--RdMacros=" + macros;
+   }
 
    rCmd << filePath;
 
-   // run the converstion and return it
+   // run the conversion and return it
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
    error = core::system::runCommand(rCmd, options, &result);

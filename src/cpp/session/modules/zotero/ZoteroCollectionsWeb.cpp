@@ -261,6 +261,9 @@ ZoteroCollection collectionFromItemsDownload(ZoteroCollectionSpec spec, const js
            }
         }
 
+        // set libraryId
+        cslResult["libraryID"] = spec.key;
+
         // get collectionKeys
         json::Array collectionKeys;
         collectionKeys.push_back(json::Value(spec.key));

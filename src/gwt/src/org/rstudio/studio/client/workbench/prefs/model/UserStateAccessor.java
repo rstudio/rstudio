@@ -19,13 +19,11 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -468,26 +466,14 @@ public class UserStateAccessor extends Prefs
    public final static String ZOTERO_CONNECTION_TYPE_WEB = "web";
 
    /**
-    * Zotero libraries to insert citations from.
-    */
-   public PrefValue<JsArrayString> zoteroLibraries()
-   {
-      return object(
-         "zotero_libraries",
-         "Zotero libraries", 
-         "Zotero libraries to insert citations from.", 
-         JsArrayUtil.createStringArray("My Library"));
-   }
-
-   /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
     */
    public PrefValue<Boolean> zoteroUseBetterBibtex()
    {
       return bool(
          "zotero_use_better_bibtex",
-         "Use Better BibTeX for citation keys and BibLaTeX export", 
-         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies", 
+         "Use Better BibTeX for citation keys and BibTeX export", 
+         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies", 
          false);
    }
 
@@ -557,8 +543,6 @@ public class UserStateAccessor extends Prefs
          bibliographyDefaultType().setValue(layer, source.getString("bibliography_default_type"));
       if (source.hasKey("zotero_connection_type"))
          zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
-      if (source.hasKey("zotero_libraries"))
-         zoteroLibraries().setValue(layer, source.getObject("zotero_libraries"));
       if (source.hasKey("zotero_use_better_bibtex"))
          zoteroUseBetterBibtex().setValue(layer, source.getBool("zotero_use_better_bibtex"));
       if (source.hasKey("zotero_api_key"))
@@ -589,7 +573,6 @@ public class UserStateAccessor extends Prefs
       prefs.add(visualModeConfirmed());
       prefs.add(bibliographyDefaultType());
       prefs.add(zoteroConnectionType());
-      prefs.add(zoteroLibraries());
       prefs.add(zoteroUseBetterBibtex());
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());

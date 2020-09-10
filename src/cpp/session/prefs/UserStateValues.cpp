@@ -284,20 +284,7 @@ core::Error UserStateValues::setZoteroConnectionType(std::string val)
 }
 
 /**
- * Zotero libraries to insert citations from.
- */
-core::json::Array UserStateValues::zoteroLibraries()
-{
-   return readPref<core::json::Array>("zotero_libraries");
-}
-
-core::Error UserStateValues::setZoteroLibraries(core::json::Array val)
-{
-   return writePref("zotero_libraries", val);
-}
-
-/**
- * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
  */
 bool UserStateValues::zoteroUseBetterBibtex()
 {
@@ -358,7 +345,6 @@ std::vector<std::string> UserStateValues::allKeys()
       kVisualModeConfirmed,
       kBibliographyDefaultType,
       kZoteroConnectionType,
-      kZoteroLibraries,
       kZoteroUseBetterBibtex,
       kZoteroApiKey,
       kZoteroDataDir,

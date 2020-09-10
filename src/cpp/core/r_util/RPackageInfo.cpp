@@ -93,6 +93,7 @@ Error RPackageInfo::read(const FilePath& packageDir)
    readField(fields, "LinkingTo", &linkingTo_);
    readField(fields, "SystemRequirements", &systemRequirements_);
    readField(fields, "Type", &type_, kPackageType);
+   readField(fields, "RdMacros", &rdMacros_);
 
    return Success();
 }

@@ -711,14 +711,14 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
 Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    // extract params
-   std::string bibliography, id, sourceAsJson, sourceAsBibLaTeX;
+   std::string bibliography, id, sourceAsJson, sourceAsBibTeX;
    bool project;
    Error error = json::readParams(request.params,
                                   &bibliography,
                                   &project,
                                   &id,
                                   &sourceAsJson,
-                                  &sourceAsBibLaTeX);
+                                  &sourceAsBibTeX);
    if (error)
       return error;
 
@@ -747,9 +747,9 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    }
    else
    {
-      if (sourceAsBibLaTeX.length() > 0)
+      if (sourceAsBibTeX.length() > 0)
       {
-         error = core::writeStringToFile(bibliographyPath, "\n" + sourceAsBibLaTeX + "\n",
+         error = core::writeStringToFile(bibliographyPath, "\n" + sourceAsBibTeX + "\n",
                                          string_utils::LineEndingPosix, false);
          if (error)
             return error;

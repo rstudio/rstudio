@@ -92,7 +92,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       pSession_ = session;
       server_ = server;
       pUIPrefs_ = pUIPrefs;
-      pUserState_ = pUserState;
       pEventBus_ = pEventBus;
       pQuit_ = pQuit;
       pGlobalDisplay_ = pGlobalDisplay;
@@ -137,7 +136,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
                 UserPrefs uiPrefs = pUIPrefs_.get();
-                UserState uiState = pUserState_.get();
                 
                 uiPrefs.useSpacesForTab().setProjectValue(
                                            config.getUseSpacesForTab());
@@ -180,9 +178,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 
                 // zotero prefs (remove if set to defaults)
                 if (config.getZoteroLibraries() != null)
-                   uiState.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
+                   uiPrefs.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
                 else
-                   uiState.zoteroLibraries().removeProjectValue(true);
+                   uiPrefs.zoteroLibraries().removeProjectValue(true);
                 
                 // propagate spelling prefs
                 if (!config.getSpellingDictionary().isEmpty())
@@ -237,7 +235,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    private final Provider<Session> pSession_;
    private final ProjectsServerOperations server_;
    private final Provider<UserPrefs> pUIPrefs_;
-   private final Provider<UserState> pUserState_;
    private final Provider<EventBus> pEventBus_;
    private final Provider<ApplicationQuit> pQuit_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;

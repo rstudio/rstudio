@@ -45,6 +45,7 @@
 * Improved error logging of mistyped usernames when using PAM authentication (#7501)
 * Add ability to go directly to various Global Option panes via Command Palette (#7678)
 * R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
+* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
 
 ### RStudio Server Pro
 

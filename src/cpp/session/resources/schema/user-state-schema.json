@@ -219,17 +219,11 @@
             "title": "Zotero connection type",
             "description": "Zotero connection type (local or web)"
         },
-        "zotero_libraries": {
-            "type": "array",
-            "default": ["My Library"],
-            "title": "Zotero libraries",
-            "description": "Zotero libraries to insert citations from."
-        },
         "zotero_use_better_bibtex": {
             "type": "boolean",
             "default": false,
-            "title": "Use Better BibTeX for citation keys and BibLaTeX export",
-            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies"
+            "title": "Use Better BibTeX for citation keys and BibTeX export",
+            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies"
         },
         "zotero_api_key": {
             "type": "string",
