@@ -39,49 +39,30 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   status: CitationSourceListStatus;
 }
 
+const kSearchBoxHeightWithMargin = 38;
+
 export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceLatentSearchPanelProps>((props, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
-  const [searchImmediate, setSearchImmediate] = React.useState<boolean>(false);
-
-  // Track whether this component is mounted so we can safely ignore debounced searches
-  // if they return after the component has been unmounted
-  const isMountedRef = React.useRef<boolean>(true);
-  React.useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const [pasted, setPasted] = React.useState<boolean>(false);
 
   const performSearch = (search: string) => {
-    if (isMountedRef.current) {
-      props.doSearch(search);
-      setSearchImmediate(false);
-    }
+    props.doSearch(search);
+    setPasted(false);
   };
 
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
     setSearchTerm(search);
-    if (searchImmediate) {
+    if (pasted) {
       performSearch(search);
     }
   };
 
   // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 8;
-    if (searchBoxHeight) {
-      setListHeight(props.height - padding - searchBoxHeight);
-    }
-  }, []);
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -104,7 +85,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    setSearchImmediate(true);
+    setPasted(true);
   };
 
   // Used to focus the search box
@@ -116,6 +97,8 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
     props.addCitation(citation);
     focusSearch();
   };
+
+
 
   return (
     <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
@@ -143,7 +126,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
       <div className='pm-insert-citation-panel-latent-search-list-container'>
         <CitationSourceList
-          height={listHeight}
+          height={props.height - kSearchBoxHeightWithMargin}
           citations={props.citations}
           citationsToAdd={props.citationsToAdd}
           confirm={props.confirm}

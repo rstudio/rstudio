@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import React from "react";
+import React, { CSSProperties } from "react";
 import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
@@ -46,64 +46,48 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
   };
 }
 
+interface CitationWithPreview {
+  citation: CitationListEntry;
+  preview: CiteField[];
+}
+
 export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props, ref) => {
 
-  const defaultMessage = props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.');
-  const noMatchingResultsMessage = props.ui.context.translateText('No item matching this identifier could be located.');
-
-  const [citation, setCitation] = React.useState<CitationListEntry>();
-  const [noResultsText, setNoResultsText] = React.useState<string>(defaultMessage);
-  const [searchText, setSearchText] = React.useState<string>('');
-  const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
-
-  const clearResults = (message: string) => {
-    setCitation(undefined);
-    setPreviewFields([]);
-    setNoResultsText(message);
-  };
+  // The citation entry returned for this DOI (if any)
+  const [citationWithPreview, setCitationWithPreview] = React.useState<CitationWithPreview>();
 
   // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
 
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 8;
-    if (searchBoxHeight) {
-      setListHeight(props.height - padding - searchBoxHeight);
-    }
-  }, []);
-
-  const debouncedCSL = React.useCallback(debounce(async (doi: string) => {
-    const result = await props.server.doi.fetchCSL(doi, 350);
-    if (result.status === 'ok') {
-      // Form the entry
-      const csl = result.message;
-      const entry = toCitationEntry(csl, props.bibliographyManager, props.ui);
-      setCitation(entry);
-
-      // Display the preview
-      const preview = formatForPreview(csl);
-      setPreviewFields(preview);
-
-      // Select the item
-      props.selectedCitation(entry);
+  // Debounced search function
+  const searchForDOI = React.useCallback(debounce(async (doi: string) => {
+    if (doi.length === 0) {
+      // No text, just clear the results
+      setCitationWithPreview(undefined);
     } else {
-      clearResults(noMatchingResultsMessage);
+      const result = await props.server.doi.fetchCSL(doi, 350);
+      if (result.status === 'ok') {
+        // Form the entry
+        const csl = result.message;
+        const citation = toCitationEntry(csl, props.bibliographyManager, props.ui);
+        if (citation) {
+          const preview = formatForPreview(csl);
+          setCitationWithPreview({ citation, preview });
+        } else {
+          setCitationWithPreview(undefined);
+        }
+
+        // Notify the call of this citation
+        props.selectedCitation(citation);
+      } else {
+        // Error / failure, just clear the results
+        setCitationWithPreview(undefined);
+      }
     }
   }, 100), []);
 
-  React.useEffect(() => {
-    if (searchText) {
-      debouncedCSL(searchText);
-    } else {
-      clearResults(defaultMessage);
-    }
-  }, [searchText]);
-
   const doiChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
+    searchForDOI(e.target.value);
   };
 
   const focusSearch = () => {
@@ -114,8 +98,13 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
     // No op - there is always only a single result
   };
 
+  const style: CSSProperties = {
+    height: props.height + 'px',
+    ...props.style
+  };
+
   return (
-    <div style={props.style} className='pm-insert-doi-source-panel' ref={ref} tabIndex={-1} onFocus={focusSearch}>
+    <div style={style} className='pm-insert-doi-source-panel' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-doi-source-panel-textbox-container'>
         <TextInput
           width='100%'
@@ -127,13 +116,13 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
           ref={searchBoxRef}
         />
       </div>
-      <div className='pm-insert-doi-source-panel-results pm-block-border-color pm-background-color' style={{ height: listHeight }}>
+      <div className='pm-insert-doi-source-panel-results pm-block-border-color pm-background-color'>
         <div className='pm-insert-doi-source-panel-heading'>
-          {citation ?
+          {citationWithPreview ?
             <CitationSourcePanelListItem
               index={0}
               data={{
-                citations: [citation],
+                citations: [citationWithPreview.citation],
                 citationsToAdd: props.citationsToAdd,
                 addCitation: props.addCitation,
                 removeCitation: props.removeCitation,
@@ -145,14 +134,16 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
             /> :
             <div className='pm-insert-doi-source-panel-no-result'>
               <div className='pm-insert-doi-source-panel-no-result-text pm-text-color'>
-                {props.ui.context.translateText(noResultsText)}
+                {searchBoxRef.current?.value.length || 0 === 0 ?
+                  props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.') :
+                  props.ui.context.translateText('No item matching this identifier could be located.')}
               </div>
             </div>}
         </div>
         <div className='pm-insert-doi-source-panel-fields'>
           <table>
             <tbody>
-              {previewFields.map(previewField =>
+              {citationWithPreview?.preview.map(previewField =>
                 (<tr key={previewField.name}>
                   <td className='pm-insert-doi-source-panel-fields-name pm-text-color'>{previewField.name}:</td>
                   <td className='pm-insert-doi-source-panel-fields-value pm-text-color'>{previewField.value}</td>

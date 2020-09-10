@@ -51,35 +51,27 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   const [focused, setFocused] = React.useState<boolean>(false);
   const fixedList = React.useRef<FixedSizeList>(null);
 
-  // Whenever selection changed, ensure that we are scrolled to that item
-  React.useLayoutEffect(() => {
-    if (selectedIndex) {
-      fixedList.current?.scrollToItem(selectedIndex);
-    }
-  }, [selectedIndex]);
-
   // Item height and consequently page height
   const itemHeight = 64;
   const itemsPerPage = Math.floor(props.height / itemHeight);
 
-  // Reset the index whenever the data changes
+  // If we get new citation data or the list of citations to add changes, clear the selection
   React.useEffect(() => {
     setSelectedIndex(undefined);
     props.selectedCitation(undefined);
   }, [props.citations, props.citationsToAdd]);
 
   // Filter citations that we're adding out of the list of citations
-  const filteredCitations = React.useMemo<CitationListEntry[]>(() => {
-    return props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
-  }, [props.citations, props.citationsToAdd]);
+  const filteredCitations = props.citations.filter(citation => !props.citationsToAdd.map(citationToAdd => citationToAdd.id).includes(citation.id));
 
-  // Upddate selected item index (this will manage bounds)
+  // Update selected item index (this will manage bounds)
   const incrementIndex = (event: React.KeyboardEvent, index: number) => {
     event.stopPropagation();
     event.preventDefault();
     if (props.citations) {
       const maxIndex = props.citations.length - 1;
       const newIndex = Math.min(Math.max(0, index), maxIndex);
+      fixedList.current?.scrollToItem(newIndex);
       onSetSelectedIndex(newIndex);
     }
   };
@@ -152,6 +144,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
 
   const onSetSelectedIndex = (index: number) => {
     setSelectedIndex(index);
+    fixedList.current?.scrollToItem(index);
     props.selectedCitation(filteredCitations[index]);
   };
 

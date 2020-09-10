@@ -71,20 +71,18 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
     }
   };
 
+  const [expandedNodes, setExpandedNodes] = React.useState<NavigationTreeNode[]>([]);
+
+  // If the selected node is not already expanded, expand it
+  if (props.selectedNode && !props.selectedNode.expanded) {
+    const expanded = pathToNode(props.selectedNode, props.nodes);
+    expanded.forEach(node => node.expanded = true);
+    setExpandedNodes(expanded);
+  }
+
   const onNodeSelected = (node: NavigationTreeNode) => {
     props.nodeSelected(node);
   };
-
-  // Whenever selection or the node data changes, refresh any expanded nodes
-  React.useEffect(() => {
-    if (props.selectedNode) {
-      const expanded = pathToNode(props.selectedNode, props.nodes);
-      expanded.forEach(node => node.expanded = true);
-      setExpandedNodes(expanded);
-    }
-  }, [props.selectedNode, props.nodes]);
-
-  const [expandedNodes, setExpandedNodes] = React.useState<NavigationTreeNode[]>([]);
 
   return (
     <div style={style} tabIndex={0} onKeyDown={processKey} >
@@ -114,28 +112,11 @@ const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (props.selectedNode && props.node.key !== props.selectedNode.key) {
-      props.onSelected(props.node);
-    } else {
-      setExpanded(!expanded);
-    }
+    props.onSelected(props.node);
   };
 
-  // Anytime the selected node changes, expand the selected node
-  React.useEffect(() => {
-    if (props.selectedNode && props.node.key === props.selectedNode.key) {
-      setExpanded(true);
-    }
-  }, [props.selectedNode]);
-
-  // If the expanded nodes change (e.g. something external expands this node) or
-  // if this node is already expanded, leave it expanded.
-  React.useEffect(() => {
-    setExpanded(props.expandedNodes.map(node => node.key).includes(props.node.key) || expanded);
-  }, [props.expandedNodes]);
-
   // Whether this node is expanded
-  const [expanded, setExpanded] = React.useState<boolean>(props.node.expanded || false);
+  const expanded = props.node.expanded;
 
   // Whether this node is selected
   const selected = props.selectedNode && props.selectedNode.key === props.node.key;

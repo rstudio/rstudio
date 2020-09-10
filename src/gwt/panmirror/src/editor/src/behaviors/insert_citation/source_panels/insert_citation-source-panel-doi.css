@@ -20,6 +20,7 @@
 .pm-insert-doi-source-panel-results {
   border: solid 1px;
   border-radius: 3px;  
+  height: calc(100% - 38px);
 }
 
 .pm-insert-doi-source-panel-heading {
