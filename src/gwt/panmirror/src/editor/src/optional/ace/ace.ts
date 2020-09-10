@@ -504,11 +504,18 @@ export class AceNodeView implements NodeView {
     // If the cursor moves and we're in focus, ensure that the cursor is
     // visible. Ace's own cursor visiblity mechanisms don't work in embedded
     // editors.
-    this.editSession.getSelection().on('changeCursor', () => {
-      // We can't change the scroll position during a cursorChange (as Ace will
-      // treat it as a selection drag if the mouse is down), so mark the
-      // position as dirty and process it when the keyboard/mouse is released.
-      this.cursorDirty = true;
+    if (this.editSession) {
+      this.editSession.getSelection().on('changeCursor', () => {
+        if (this.dom.contains(document.activeElement)) {
+          this.cursorDirty = true;
+        }
+      });
+    }
+    this.aceEditor.on('beforeEndOperation', () => {
+      if (this.cursorDirty) {
+        this.scrollCursorIntoView();
+        this.cursorDirty = false;
+      }
     });
 
     // Add custom escape commands for movement keys (left/right/up/down); these
@@ -685,19 +692,6 @@ export class AceNodeView implements NodeView {
     this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
       this.debounceResize();
     }));
-
-    // When key/mouse up events occur, check to see whether we need to scroll
-    // the cursor into view.
-    const eventHandler = (evt: any) => {
-      window.setTimeout(() => {
-        if (this.cursorDirty) {
-          this.scrollCursorIntoView();
-          this.cursorDirty = false;
-        }
-      }, 0);
-    };
-    this.dom.addEventListener("keyup", eventHandler);
-    this.dom.addEventListener("mouseup", eventHandler);
   }
 
   /**
@@ -825,12 +819,12 @@ export class AceNodeView implements NodeView {
       const cursorRect = cursor.getBoundingClientRect();
 
       // Scrolling down?
-      const down = (cursorRect.bottom + cursorRect.height + 5) - containerRect.bottom;
+      const down = (cursorRect.bottom + cursorRect.height + 20) - containerRect.bottom;
       if (down > 0) {
         container.scrollTop += down;
       } else {
         // Scrolling up?
-        const up = (containerRect.top + cursorRect.height + 15) - cursorRect.top;
+        const up = (containerRect.top + cursorRect.height + 35) - cursorRect.top;
         if (up > 0) {
           container.scrollTop -= up;
         }
