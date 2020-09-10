@@ -435,7 +435,7 @@ public class UserStateAccessor extends Prefs
             BIBLIOGRAPHY_DEFAULT_TYPE_YAML,
             BIBLIOGRAPHY_DEFAULT_TYPE_JSON
          },
-         "yaml");
+         "bib");
    }
 
    public final static String BIBLIOGRAPHY_DEFAULT_TYPE_BIB = "bib";

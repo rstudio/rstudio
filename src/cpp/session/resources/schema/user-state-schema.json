@@ -209,7 +209,7 @@
         "bibliography_default_type": {
             "type": "string",
             "enum": ["bib", "yaml", "json"],
-            "default": "yaml",
+            "default": "bib",
             "description": "The default type for new bibliographies."
         },
         "zotero_connection_type": {
