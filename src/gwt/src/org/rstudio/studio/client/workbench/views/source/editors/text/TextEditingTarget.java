@@ -1558,7 +1558,6 @@ public class TextEditingTarget implements
                                           session_,
                                           column);
 
-      roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
 
       // create notebook and forward resize events
@@ -3426,7 +3425,10 @@ public class TextEditingTarget implements
    @Handler
    void onInsertRoxygenSkeleton()
    {
-      roxygenHelper_.insertRoxygenSkeleton();
+      withActiveEditor((disp) ->
+      {
+         new RoxygenHelper(disp, view_).insertRoxygenSkeleton();
+      });
    }
 
    @Handler
@@ -7959,7 +7961,6 @@ public class TextEditingTarget implements
    private VisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
-   private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
