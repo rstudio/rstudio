@@ -46,6 +46,7 @@
 * Add ability to go directly to various Global Option panes via Command Palette (#7678)
 * R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 * The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
+* Some panes didn't have commands for making them visible, now they do (#5775)
 
 ### RStudio Server Pro
 
@@ -97,4 +98,4 @@
 * Reduced difference in font size and spacing between Terminal and Console (#6382)
 * Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
-
+* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.

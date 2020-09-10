@@ -21,6 +21,8 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
@@ -49,16 +51,20 @@ public class RenderRmdOutputPresenter extends BusyPresenter
               RmdRenderCompletedEvent.Handler,
               RestartStatusEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, RenderRmdOutputPresenter> {}
+
    @Inject
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
                                    RMarkdownServerOperations server,
                                    GlobalDisplay globalDisplay,
                                    PaneManager paneManager,
                                    Commands commands,
+                                   Binder binder,
                                    EventBus events)
    {
       super(outputFactory.create("R Markdown",
                                  "View the R Markdown render log"));
+      binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
@@ -181,6 +187,14 @@ public class RenderRmdOutputPresenter extends BusyPresenter
             events_.fireEvent(new ConsoleActivateEvent(false));
          }
       }
+   }
+
+   @Handler
+   public void onActivateRMarkdown()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
    }
 
    private void terminateRenderRmd()
