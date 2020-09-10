@@ -444,15 +444,9 @@ export class AceNodeView implements NodeView {
 
     this.aceEditor.on('blur', () => {
       // Add a class to editor; this class contains CSS rules that hide editor
-      // components that Ace cannot hide natively (such as the cursor and
-      // matching bracket indicator)
+      // components that Ace cannot hide natively (such as the cursor,
+      // matching bracket indicator, and active selection)
       this.dom.classList.add("pm-ace-editor-inactive");
-
-      // Clear the selection (otherwise could conflict with Prosemirror's
-      // selection)
-      if (this.editSession) {
-        this.editSession.selection.clearSelection();
-      }
     });
 
     // Add custom escape commands for movement keys (left/right/up/down); these
