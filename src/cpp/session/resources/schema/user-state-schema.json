@@ -219,12 +219,6 @@
             "title": "Zotero connection type",
             "description": "Zotero connection type (local or web)"
         },
-        "zotero_libraries": {
-            "type": "array",
-            "default": ["My Library"],
-            "title": "Zotero libraries",
-            "description": "Zotero libraries to insert citations from."
-        },
         "zotero_use_better_bibtex": {
             "type": "boolean",
             "default": false,

@@ -344,6 +344,7 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
+#define kZoteroLibraries "zotero_libraries"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -1558,6 +1559,12 @@ public:
     */
    std::string visualMarkdownCodeEditor();
    core::Error setVisualMarkdownCodeEditor(std::string val);
+
+   /**
+    * Zotero libraries to insert citations from.
+    */
+   core::json::Array zoteroLibraries();
+   core::Error setZoteroLibraries(core::json::Array val);
 
    /**
     * Preferred emoji skintone
