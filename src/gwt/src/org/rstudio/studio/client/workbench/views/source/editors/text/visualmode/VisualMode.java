@@ -657,8 +657,6 @@ public class VisualMode implements VisualModeEditorSync,
         // Disabled since diagnostics aren't active in visual mode
         commands_.showDiagnosticsActiveDocument(),
 
-        commands_.reindent(),
-        commands_.reformatCode(),
         commands_.findSelectAll(),
         commands_.findFromSelection(),
         commands_.executeSetupChunk(),

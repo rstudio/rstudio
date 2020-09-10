@@ -486,7 +486,6 @@ public class TextEditingTarget implements
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
-      reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -3324,14 +3323,17 @@ public class TextEditingTarget implements
    @Handler
    void onReformatCode()
    {
-      // Only allow if entire selection in R mode for now
-      if (!DocumentMode.isSelectionInRMode(docDisplay_))
+      withActiveEditor((disp) ->
       {
-         showRModeWarning("Reformat Code");
-         return;
-      }
+         // Only allow if entire selection in R mode for now
+         if (!DocumentMode.isSelectionInRMode(disp))
+         {
+            showRModeWarning("Reformat Code");
+            return;
+         }
 
-      reformatHelper_.insertPrettyNewlines();
+         new TextEditingTargetReformatHelper(disp).insertPrettyNewlines();
+      });
    }
 
    @Handler
@@ -3434,19 +3436,28 @@ public class TextEditingTarget implements
    @Handler
    void onExpandSelection()
    {
-      docDisplay_.expandSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.expandSelection();
+      });
    }
 
    @Handler
    void onShrinkSelection()
    {
-      docDisplay_.shrinkSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.shrinkSelection();
+      });
    }
 
    @Handler
    void onExpandRaggedSelection()
    {
-      docDisplay_.expandRaggedSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.expandRaggedSelection();
+      });
    }
 
    @Handler
@@ -7956,7 +7967,6 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
-   private final TextEditingTargetReformatHelper reformatHelper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
