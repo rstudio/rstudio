@@ -30,7 +30,7 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   searchTerm: string;
   onSearchTermChanged: (searchTerm: string) => void;
-  executeSearch: () => void;
+  executeSearch: (searchTerm: string) => void;
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
   onAddCitation: (citation: CitationListEntry) => void;
@@ -53,20 +53,14 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const pasted = React.useRef<boolean>(false);
 
-  const performSearch = (search: string) => {
-    props.executeSearch();
-    pasted.current = false;
-  };
-
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
-    props.onSearchTermChanged(search);
     if (pasted.current) {
-      performSearch(search);
+      props.executeSearch(search);
+      pasted.current = false;
     }
   };
-
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -79,13 +73,13 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
       case 'Enter':
         event.preventDefault();
         event.stopPropagation();
-        props.executeSearch();
+        props.executeSearch(props.searchTerm);
         break;
     }
   };
 
   const handleButtonClick = () => {
-    props.executeSearch();
+    props.executeSearch(props.searchTerm);
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {

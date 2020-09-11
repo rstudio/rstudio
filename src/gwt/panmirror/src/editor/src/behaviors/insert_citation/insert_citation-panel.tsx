@@ -34,6 +34,7 @@ import { bibliographySourcePanel } from "./source_panels/insert_citation-source-
 import ReactDOM from "react-dom";
 import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 import { CitationSourceListStatus, CitationSourceListStatusText } from "./source_panels/insert_citation-source-panel-list";
+import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 
 
 // When the dialog has completed, it will return this result
@@ -81,10 +82,9 @@ export async function showInsertCitationDialog(
         const isWritable = bibliographyManager.writableBibliographyFiles(doc, ui).length > 0;
         return isWritable ? [
           bibliographySourcePanel(doc, ui, bibliographyManager),
-          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi)] :
+          doiSourcePanel(ui, bibliographyManager, server.doi),
+          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi),] :
           [bibliographySourcePanel(doc, ui, bibliographyManager)];
-
-        // doiSourcePanel(ui, server.doi),
       };
 
       // Provide a configuration stream that will update after the bibliography loads
@@ -197,7 +197,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
 
   searchTerm: string;
   onSearchTermChanged: (term: string) => void;
-  onExecuteSearch: () => void;
+  onExecuteSearch: (term: string) => void;
 
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
@@ -360,11 +360,13 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         updateState({ citations: value, searchTerm: term });
       }
     },
-    onExecuteSearch: () => {
-      updateState({ status: CitationSourceListStatus.inProgress });
-      selectedPanelProvider.search(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode).then((value) => {
+    onExecuteSearch: (searchTerm: string) => {
+      updateState({ searchTerm, status: CitationSourceListStatus.inProgress });
+      selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode).then((value) => {
         if (value) {
-          updateState({ citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default });
+          updateState({ searchTerm, citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default });
+        } else {
+          updateState({ searchTerm, citations: [], status: CitationSourceListStatus.noResults });
         }
       });
     },
