@@ -845,6 +845,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # and return a handle to unregister the chunk
 .rs.addApiFunction("registerChunkCallback", function(chunkCallback) {
 
+   if (length(.rs.notebookChunkCallbacks) != 0)
+      stop("Callback is already registered.")
    if (!is.function(chunkCallback))
       stop("'chunkCallback' must be a function")
    if (length(formals(chunkCallback)) != 2)
@@ -859,13 +861,16 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # unregister a chunk callback functions
-.rs.addApiFunction("unregisterChunkCallback", function(handle) {
-   if (!exists(".rs.notebookChunkCallbacks", envir = .rs.toolsEnv()))
+.rs.addApiFunction("unregisterChunkCallback", function(id = NULL) {
+   if (length(.rs.notebookChunkCallbacks) == 0)
       warning("No registered callbacks found")
-   else if (is.null(handle) || !exists(handle, envir = .rs.notebookChunkCallbacks))
+   else if (!is.null(id) && !exists(id, envir = .rs.notebookChunkCallbacks))
       warning("Handle not found.")
    else
-      rm (list = handle, envir = .rs.notebookChunkCallbacks)
+   {
+      id = ls(.rs.notebookChunkCallbacks)
+      rm (list = id, envir = .rs.notebookChunkCallbacks)
+   }
 })
 
 # Tutorial ----
