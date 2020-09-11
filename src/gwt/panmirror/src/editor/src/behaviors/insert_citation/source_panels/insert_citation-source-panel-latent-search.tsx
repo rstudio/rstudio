@@ -28,41 +28,45 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  addCitation: (citation: CitationListEntry) => void;
-  removeCitation: (citation: CitationListEntry) => void;
-  selectedCitation: (citation?: CitationListEntry) => void;
-  doSearch: (searchTerm: string) => void;
-  confirm: VoidFunction;
+  searchTerm: string;
+  onSearchTermChanged: (searchTerm: string) => void;
+  executeSearch: () => void;
+  selectedIndex: number;
+  onSelectedIndexChanged: (index: number) => void;
+  onAddCitation: (citation: CitationListEntry) => void;
+  onRemoveCitation: (citation: CitationListEntry) => void;
+  onConfirm: VoidFunction;
   ui: EditorUI;
   defaultText?: string;
   placeholderText?: string;
   status: CitationSourceListStatus;
 }
 
+// TODO: Height issue
+// TODO: Focus tab order issue
+// TODO: Status / progress issue
+
 const kSearchBoxHeightWithMargin = 38;
 
 export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceLatentSearchPanelProps>((props, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
-  const [searchTerm, setSearchTerm] = React.useState<string>('');
-  const [pasted, setPasted] = React.useState<boolean>(false);
+  const pasted = React.useRef<boolean>(false);
 
   const performSearch = (search: string) => {
-    props.doSearch(search);
-    setPasted(false);
+    props.executeSearch();
+    pasted.current = false;
   };
 
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
-    setSearchTerm(search);
-    if (pasted) {
+    props.onSearchTermChanged(search);
+    if (pasted.current) {
       performSearch(search);
     }
   };
 
-  // Perform first load tasks
-  const searchBoxRef = React.useRef<HTMLInputElement>(null);
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -75,35 +79,35 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
       case 'Enter':
         event.preventDefault();
         event.stopPropagation();
-        performSearch(searchTerm);
+        props.executeSearch();
         break;
     }
   };
 
   const handleButtonClick = () => {
-    performSearch(searchTerm);
+    props.executeSearch();
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    setPasted(true);
+    pasted.current = true;
   };
 
   // Used to focus the search box
+  const searchBoxRef = React.useRef<HTMLInputElement>(null);
   const focusSearch = () => {
     searchBoxRef.current?.focus();
   };
 
-  const addCitation = (citation: CitationListEntry) => {
-    props.addCitation(citation);
+  const onAddCitation = (citation: CitationListEntry) => {
+    props.onAddCitation(citation);
     focusSearch();
   };
-
-
 
   return (
     <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
         <TextInput
+          value={props.searchTerm}
           width='100%'
           iconAdornment={props.ui.images.search}
           tabIndex={0}
@@ -119,7 +123,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           title={props.ui.context.translateText('Search')}
           classes={['pm-insert-citation-panel-latent-search-button']}
           onClick={handleButtonClick}
-          disabled={props.status === CitationSourceListStatus.loading}
+          disabled={props.status === CitationSourceListStatus.inProgress}
         />
 
       </div>
@@ -129,11 +133,12 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           height={props.height - kSearchBoxHeightWithMargin}
           citations={props.citations}
           citationsToAdd={props.citationsToAdd}
-          confirm={props.confirm}
-          addCitation={addCitation}
-          removeCitation={props.removeCitation}
-          selectedCitation={props.selectedCitation}
+          onAddCitation={onAddCitation}
+          onRemoveCitation={props.onRemoveCitation}
+          selectedIndex={props.selectedIndex}
+          onSelectedIndexChanged={props.onSelectedIndexChanged}
           focusPrevious={focusSearch}
+          onConfirm={props.onConfirm}
           ui={props.ui}
           placeholderText={props.defaultText}
           status={props.status}

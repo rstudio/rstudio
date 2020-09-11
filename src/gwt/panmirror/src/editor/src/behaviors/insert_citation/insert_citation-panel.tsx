@@ -32,6 +32,7 @@ import './insert_citation-panel.css';
 import { EditorServer } from "../../api/server";
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
 import ReactDOM from "react-dom";
+import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 
 
 // When the dialog has completed, it will return this result
@@ -72,18 +73,24 @@ export async function showInsertCitationDialog(
       const container = window.document.createElement('div');
       container.className = 'pm-default-theme';
 
-      const providers = [
-        bibliographySourcePanel(doc, ui, bibliographyManager),
-      ];
       const bibliographyFiles = bibliographyManager.writableBibliographyFiles(doc, ui);
-      // doiSourcePanel(ui, server.doi),
-      // crossrefSourcePanel(ui, server.crossref)
+
+      const providersForBibliography = () => {
+        // TODO: Should I optimize this a little bit (e.g. no need to pass doc/ui)?
+        const isWritable = bibliographyManager.writableBibliographyFiles(doc, ui).length > 0;
+        return isWritable ? [
+          bibliographySourcePanel(doc, ui, bibliographyManager),
+          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi)] :
+          [bibliographySourcePanel(doc, ui, bibliographyManager)];
+
+        // doiSourcePanel(ui, server.doi),
+      };
 
       // Provide a configuration stream that will update after the bibliography loads
       let updatedConfiguration: InsertCitationPanelConfiguration | undefined;
       const configurationStream: InsertCitationPanelConfigurationStream = {
         current: {
-          providers,
+          providers: providersForBibliography(),
           bibliographyFiles
         },
         stream: () => {
@@ -94,7 +101,7 @@ export async function showInsertCitationDialog(
       // Load the bibliography and then update the configuration
       bibliographyManager.load(ui, doc).then(() => {
         updatedConfiguration = {
-          providers: [bibliographySourcePanel(doc, ui, bibliographyManager)],
+          providers: providersForBibliography(),
           bibliographyFiles: bibliographyManager.writableBibliographyFiles(doc, ui)
         };
       });

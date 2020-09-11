@@ -25,8 +25,13 @@ import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-
 import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
 import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
 import { DOIServer } from "../../../api/doi";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
 
-export function crossrefSourcePanel(ui: EditorUI, server: CrossrefServer): CitationSourcePanelProvider {
+export function crossrefSourcePanel(ui: EditorUI,
+  bibliographyManager: BibliographyManager,
+  server: CrossrefServer,
+  doiServer: DOIServer): CitationSourcePanelProvider {
 
   const kCrossrefType = 'Crossref';
   return {
@@ -41,67 +46,44 @@ export function crossrefSourcePanel(ui: EditorUI, server: CrossrefServer): Citat
         children: [],
         expanded: true
       };
-    }
-  };
-}
-
-export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
-  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
-
-  // Track whether we are mounted to allow a latent search that returns after the 
-  // component unmounts to nmot mutate state further
-  const isMounted = React.useRef(true);
-  React.useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const doSearch = (search: string) => {
-    const performSearch = async () => {
-      if (isMounted.current) {
-        setStatus(CitationSourceListStatus.loading);
-      }
-      const works = await props.server.crossref.works(search);
-
-      // Get the list of ids already in the bibliography
-      const existingIds = props.bibliographyManager.localSources().map(src => src.id);
-
+    },
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+      return null;
+    },
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+      const works = await server.works(searchTerm);
+      const existingIds = bibliographyManager.localSources().map(src => src.id);
       const citationEntries = works.items.map(work => {
-        const citationEntry = toCitationEntry(work, existingIds, props.ui, props.server.doi);
+        const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
         if (citationEntry) {
           // Add this id to the list of existing Ids so future ids will de-duplicate against this one
           existingIds.push(citationEntry.id);
         }
         return citationEntry;
       });
-
-      if (isMounted.current) {
-        setCitations(citationEntries);
-        setStatus(citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults);
-      }
-    };
-
-    // Either do the search, or if the search is empty, clear the results
-    if (search.length > 0) {
-      performSearch();
-    } else {
-      setCitations([]);
+      return Promise.resolve(citationEntries);
     }
   };
+}
 
+export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
+
+  // Track whether we are mounted to allow a latent search that returns after the 
+  // component unmounts to nmot mutate state further
   return (
     <CitationSourceLatentSearchPanel
       height={props.height}
-      citations={citations}
+      citations={props.citations}
       citationsToAdd={props.citationsToAdd}
-      addCitation={props.addCitation}
-      removeCitation={props.removeCitation}
-      selectedCitation={props.selectedCitation}
-      doSearch={doSearch}
-      confirm={props.confirm}
-      status={status}
+      searchTerm={props.searchTerm}
+      onSearchTermChanged={props.onSearchTermChanged}
+      executeSearch={props.onExecuteSearch}
+      onAddCitation={props.onAddCitation}
+      onRemoveCitation={props.onRemoveCitation}
+      selectedIndex={props.selectedIndex}
+      onSelectedIndexChanged={props.onSelectedIndexChanged}
+      onConfirm={props.onConfirm}
+      status={CitationSourceListStatus.default}
       defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
       placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
       ui={props.ui}
