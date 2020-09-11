@@ -32,7 +32,7 @@ export interface NavigationTreeNode {
 interface NavigationTreeProps extends WidgetProps {
   height: number;
   nodes: NavigationTreeNode[];
-  selectedNode?: NavigationTreeNode;
+  selectedNode: NavigationTreeNode;
   nodeSelected: (node: NavigationTreeNode) => void;
 }
 
@@ -71,14 +71,8 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
     }
   };
 
-  const [expandedNodes, setExpandedNodes] = React.useState<NavigationTreeNode[]>([]);
-
-  // If the selected node is not already expanded, expand it
-  if (props.selectedNode && !props.selectedNode.expanded) {
-    const expanded = pathToNode(props.selectedNode, props.nodes);
-    expanded.forEach(node => node.expanded = true);
-    setExpandedNodes(expanded);
-  }
+  const expandedNodes = pathToNode(props.selectedNode, props.nodes);
+  expandedNodes.forEach(node => node.expanded = true);
 
   const onNodeSelected = (node: NavigationTreeNode) => {
     props.nodeSelected(node);
