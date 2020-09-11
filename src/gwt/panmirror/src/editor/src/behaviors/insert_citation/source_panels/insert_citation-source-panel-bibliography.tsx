@@ -110,42 +110,45 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 
 export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
 
-  const bibMgr = props.bibliographyManager;
   const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
 
-  const loadCitations = React.useCallback((term: string, node: NavigationTreeNode) => {
-    // Ignore other nodes
-    if (node.type !== kLocalBiliographyProviderKey &&
-      node.type !== kZoteroProviderKey &&
-      node.type !== kAllLocalSourcesRootNodeType) {
-      return;
-    }
-
+  const providerForNode = (node: NavigationTreeNode): string | undefined => {
     // The node could be the root node, no provider
-    const providerKey = node.type === kAllLocalSourcesRootNodeType ? undefined : node.type;
+    return node.type === kAllLocalSourcesRootNodeType ? undefined : node.type;
+  };
 
+  const collectionKeyForNode = (node: NavigationTreeNode): string | undefined => {
     // The node could be a provider root or a collection
-    const collectionKey = (
-      node.type !== kAllLocalSourcesRootNodeType &&
+    return (node.type !== kAllLocalSourcesRootNodeType &&
       node.key !== kZoteroProviderKey &&
       node.key !== kLocalBiliographyProviderKey) ? node.key : undefined;
+  };
 
-    const sources = bibMgr.search(term, providerKey, collectionKey);
+  const isThisPanel = (node: NavigationTreeNode): boolean => {
+    // Ignore other nodes
+    return (node.type === kLocalBiliographyProviderKey ||
+      node.type === kZoteroProviderKey ||
+      node.type === kAllLocalSourcesRootNodeType);
+  };
+
+  const loadCitations = (term: string, providerKey?: string, collectionKey?: string) => {
+    const sources = props.bibliographyManager.search(term, providerKey, collectionKey);
     const uniqueSources = uniqby(sources, source => source.id);
     setCitations(toCitationEntries(uniqueSources, props.ui));
-
-  }, []);
+  };
 
   // If the nodes change, clear the search box value and reload
   React.useEffect(() => {
     setSearchTerm('');
-    loadCitations('', props.selectedNode);
+    if (isThisPanel(props.selectedNode)) {
+      loadCitations('', providerForNode(props.selectedNode), collectionKeyForNode(props.selectedNode));
+    }
   }, [props.selectedNode]);
 
   const searchChanged = (term: string) => {
     setSearchTerm(term);
-    loadCitations(term, props.selectedNode);
+    loadCitations(term, providerForNode(props.selectedNode), collectionKeyForNode(props.selectedNode));
   };
 
   return (
