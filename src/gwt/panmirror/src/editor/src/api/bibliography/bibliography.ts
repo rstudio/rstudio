@@ -79,17 +79,25 @@ export interface BibliographySourceWithCollections extends BibliographySource {
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: .30 },
-  { name: 'author.family', weight: .275 },
-  { name: 'author.literal', weight: .275 },
-  { name: 'title', weight: .1 },
+  { name: 'author.family', weight: .30 },
+  { name: 'author.literal', weight: .30 },
+  { name: 'title', weight: .05 },
   { name: 'author.given', weight: .025 },
   { name: 'issued', weight: .025 },
   { name: 'provider', weight: 0 }
 ];
 
+const kSearchOptions = {
+  isCaseSensitive: false,
+  shouldSort: true,
+  includeMatches: false,
+  includeScore: false,
+  keys: kFields,
+};
+
+
 export class BibliographyManager {
 
-  private fuse: Fuse<BibliographySourceWithCollections, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySourceWithCollections[];
   private writable?: boolean;
@@ -135,8 +143,6 @@ export class BibliographyManager {
       // Get the entries
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
-
-      this.updateIndex(this.sources);
     }
   }
 
@@ -251,6 +257,7 @@ export class BibliographyManager {
 
   // A general purpose search interface for filtered searching
   public search(query?: string, providerKey?: string, collectionKey?: string): BibliographySourceWithCollections[] {
+    console.log(query, providerKey, collectionKey);
     const limit = 100;
     if (query && query.length > 0) {
       // These are ordered by search score, so leave as is
@@ -279,33 +286,25 @@ export class BibliographyManager {
   }
 
   public searchAllSources(query: string, limit: number): BibliographySourceWithCollections[] {
+    return this.searchSources(query, limit, this.allSources());
+  }
 
+  public searchSources(query: string, limit: number, sources: BibliographySourceWithCollections[]): BibliographySourceWithCollections[] {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a source if the
     // bibliography hasn't already been loaded.
-    if (this.fuse) {
-      const options = {
-        isCaseSensitive: false,
-        shouldSort: true,
-        includeMatches: false,
-        includeScore: false,
-        limit,
-        keys: kFields,
-      };
+    if (sources) {
 
       // NOTE: Search performance can really drop off for long strings
       // Test cases start at 20ms to search for a single character
       // grow to 270ms to search for 20 character string
       // grow to 1060ms to search for 40 character string 
-      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
-
-
+      const results = this.getFuse(sources).search(query, { ...kSearchOptions, limit });
       const items = results.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.allowsWrites() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
-
       return filteredItems;
 
     } else {
@@ -313,24 +312,25 @@ export class BibliographyManager {
     }
   }
 
+
   // Search only a specific provider
   public searchProvider(query: string, limit: number, providerKey: string): BibliographySourceWithCollections[] {
-    return this.searchAllSources(query, limit).filter(item => item.providerKey === providerKey);
+    return this.searchSources(query, limit, this.allSources().filter(item => item.providerKey === providerKey));
   }
 
   // Search a specific provider and collection
   public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySourceWithCollections[] {
-    return this.searchProvider(query, limit, providerKey).filter(item => item.collectionKeys.includes(collectionKey));
+    return this.searchSources(query, limit, this.allSources().filter(item => (item.providerKey === providerKey && item.collectionKeys.includes(collectionKey))));
   }
 
-  private updateIndex(bibSources: BibliographySourceWithCollections[]) {
+  private getFuse(bibSources: BibliographySourceWithCollections[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
     };
-    const index = Fuse.createIndex(options.keys, bibSources);
-    this.fuse = new Fuse(bibSources, options, index);
-  }
+    const index = Fuse.createIndex<BibliographySourceWithCollections>(options.keys, bibSources);
+    return new Fuse(bibSources, options, index);
 
+  }
 }
 
