@@ -683,10 +683,22 @@ public class VisualMode implements VisualModeEditorSync,
    {
       panmirror_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
    }
-   
+
+   /**
+    * Perform a command after synchronizing the selection state of the visual
+    * editor. Note that the command will not be performed unless focus is in a
+    * code editor (as otherwise we can't map selection 1-1).
+    * 
+    * @param command
+    */
    public void performWithSelection(Command command)
    {
-     visualModeChunks_.performWithSelection(command);
+      // Drive focus to the editing surface. This is necessary so we correctly
+      // identify the active (focused) editor on which to perform the command.
+      panmirror_.focus();
+      
+      // Perform the command in the active code editor, if any.
+      visualModeChunks_.performWithSelection(command);
    }
    
    public DocDisplay getActiveEditor()

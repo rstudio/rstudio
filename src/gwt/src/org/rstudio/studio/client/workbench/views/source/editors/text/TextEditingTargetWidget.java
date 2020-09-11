@@ -827,8 +827,8 @@ public class TextEditingTargetWidget
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       if (canSourceOnSave && fileType.isSql())
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
-      boolean canExecuteCode = fileType.canExecuteCode() && !visualRmdMode;
-      boolean canExecuteChunks = fileType.canExecuteChunks() && !visualRmdMode;
+      boolean canExecuteCode = fileType.canExecuteCode();
+      boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
@@ -855,8 +855,8 @@ public class TextEditingTargetWidget
       // otherwise just show the regular insert chunk button
       insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
 
-      goToPrevButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
-      goToNextButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
+      goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
+      goToNextButton_.setVisible(fileType.canGoNextPrevSection());
 
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
