@@ -661,22 +661,6 @@ public class VisualMode implements VisualModeEditorSync,
         // embedded editors simultaneously
         commands_.findSelectAll(),
 
-        commands_.executeAllCode(),
-        commands_.executeCode(),
-        commands_.executeCodeWithoutFocus(),
-        commands_.executeCodeWithoutMovingCursor(),
-        commands_.executeCurrentFunction(),
-        commands_.executeCurrentLine(),
-        commands_.executeCurrentParagraph(),
-        commands_.executeCurrentSection(),
-        commands_.executeCurrentStatement(),
-        commands_.executeFromCurrentLine(),
-        commands_.executeLastCode(),
-        commands_.executeSubsequentChunks(),
-        commands_.executeToCurrentLine(),
-        commands_.sendToTerminal(),
-        commands_.runSelectionAsJob(),
-        commands_.runSelectionAsLauncherJob(),
         commands_.sourceActiveDocument(),
         commands_.sourceActiveDocumentWithEcho(),
         commands_.pasteWithIndentDummy(),
@@ -708,19 +692,9 @@ public class VisualMode implements VisualModeEditorSync,
       panmirror_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
    }
    
-   public void executeChunk()
+   public void performWithSelection(Command command)
    {
-      visualModeChunks_.executeCurrentChunk();
-   }
-   
-   public void executePreviousChunks()
-   {
-      visualModeChunks_.executePreviousChunks();
-   }
-   
-   public void executeNextChunk()
-   {
-      visualModeChunks_.executeNextChunk();
+     visualModeChunks_.performWithSelection(command);
    }
    
    public DocDisplay getActiveEditor()

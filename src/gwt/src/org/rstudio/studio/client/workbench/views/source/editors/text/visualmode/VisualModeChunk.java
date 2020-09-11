@@ -502,9 +502,31 @@ public class VisualModeChunk
    }
    
    /**
-    * Executes the current selection inside the chunk
+    * Executes the active selection via the parent editor
     */
-   private void executeSelection()
+   public void executeSelection()
+   {
+      performWithSelection(() ->
+      {
+         codeExecution_.executeSelection(false);
+      });
+   }
+
+   /**
+    * Performs an arbitrary command after synchronizing the selection state of
+    * the child editor to the parent.
+    * 
+    * @param command The command to perform.
+    */
+   public void performWithSelection(Command command)
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         performWithSyncedSelection(command);
+      });
+   }
+   
+   private void performWithSyncedSelection(Command command)
    {
       // Ensure we have a scope. This should always exist since we sync the
       // scope outline prior to executing code.
@@ -532,7 +554,8 @@ public class VisualModeChunk
       
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
-      codeExecution_.executeSelection(false);
+
+      command.execute();
       
       // After the event loop, forward the parent selection back to the child if
       // it's changed (this allows us to advance the cursor after running a line)

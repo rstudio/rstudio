@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEdi
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 
 public class VisualModeChunks implements ChunkDefinition.Provider
 {
@@ -123,14 +125,10 @@ public class VisualModeChunks implements ChunkDefinition.Provider
     */
    public void executeCurrentChunk()
    {
-      for (VisualModeChunk chunk: chunks_)
+      withActiveChunk((chunk) ->
       {
-         if (chunk.isActive())
-         {
-            chunk.execute();
-            break;
-         }
-      }
+         chunk.execute();
+      });
    }
    
    /**
@@ -138,16 +136,12 @@ public class VisualModeChunks implements ChunkDefinition.Provider
     */
    public void executePreviousChunks()
    {
-      for (VisualModeChunk chunk: chunks_)
+      withActiveChunk((chunk) ->
       {
-         if (chunk.isActive())
-         {
-            target_.executeChunks(
-                  Position.create(chunk.getScope().getBodyStart().getRow(), 0),
-                  TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-            break;
-         }
-      }
+         target_.executeChunks(
+               Position.create(chunk.getScope().getBodyStart().getRow(), 0),
+               TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+      });
    }
    
    /**
@@ -169,6 +163,20 @@ public class VisualModeChunks implements ChunkDefinition.Provider
             next = true;
          }
       }
+   }
+   
+   /**
+    * Performs an arbitrary command after synchronizing the selection state of
+    * the child editor to the parent.
+    * 
+    * @param command The command to perform.
+    */
+   public void performWithSelection(Command command)
+   {
+      withActiveChunk((chunk) ->
+      {
+         chunk.performWithSelection(command);
+      });
    }
    
    /**
@@ -236,6 +244,18 @@ public class VisualModeChunks implements ChunkDefinition.Provider
              scope.getPreamble().getRow() == target.getPreamble().getRow())
          {
             chunk.setState(state);
+            break;
+         }
+      }
+   }
+   
+   private void withActiveChunk(CommandWithArg<VisualModeChunk> command)
+   {
+      for (VisualModeChunk chunk: chunks_)
+      {
+         if (chunk.isActive())
+         {
+            command.execute(chunk);
             break;
          }
       }

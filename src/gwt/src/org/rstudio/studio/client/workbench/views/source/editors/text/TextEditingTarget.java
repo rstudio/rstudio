@@ -4788,7 +4788,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeSelection(false);
+      });
    }
 
    @Handler
@@ -4807,55 +4810,105 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      if (docDisplay_.isFocused())
-         codeExecution_.executeSelection(true, false);
+      if (docDisplay_.isFocused() || visualMode_.isVisualEditorActive())
+      {
+         withVisualModeSelection(() ->
+         {
+            codeExecution_.executeSelection(true, false);
+         });
+      }
       else if (view_.isAttached())
+      {
          view_.findSelectAll();
+      }
    }
 
    @Handler
    void onExecuteCode()
    {
       if (fileType_.isScript())
+      {
          codeExecution_.sendSelectionToTerminal(true);
+      }
+      else 
+      {
+         withVisualModeSelection(() -> 
+         {
+            codeExecution_.executeSelection(true);
+         });
+      }
+   }
+   
+   /**
+    * Performs a command after synchronizing the document and selection state
+    * from visual mode (useful for executing code)
+    * 
+    * @param command The command to perform
+    */
+   void withVisualModeSelection(Command command)
+   {
+      if (isVisualEditorActive())
+      {
+         visualMode_.performWithSelection(command);
+      }
       else
-         codeExecution_.executeSelection(true);
+      {
+         command.execute();
+      }
    }
 
    @Handler
    void onRunSelectionAsJob()
    {
-      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      });
    }
 
    @Handler
    void onRunSelectionAsLauncherJob()
    {
-      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      });
    }
 
    @Handler
    void onExecuteCurrentLine()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
+      });
    }
 
    @Handler
    void onExecuteCurrentStatement()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+      });
    }
 
    @Handler
    void onExecuteCurrentParagraph()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
+      });
    }
 
    @Handler
    void onSendToTerminal()
    {
-      codeExecution_.sendSelectionToTerminal(false);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.sendSelectionToTerminal(false);
+      });
    }
 
    @Handler
@@ -4896,10 +4949,13 @@ public class TextEditingTarget implements
 
       if (executeChunks)
       {
-         executeChunks(Position.create(
-               docDisplay_.getDocumentEnd().getRow() + 1,
-               0),
-               TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+         prepareForVisualExecution(() ->
+         {
+            executeChunks(Position.create(
+                  docDisplay_.getDocumentEnd().getRow() + 1,
+                  0),
+                  TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+         });
       }
       else
       {
@@ -4910,70 +4966,97 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteToCurrentLine()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
+         int row = docDisplay_.getSelectionEnd().getRow();
+         int col = docDisplay_.getLength(row);
 
-      int row = docDisplay_.getSelectionEnd().getRow();
-      int col = docDisplay_.getLength(row);
-
-      codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
-                                  Position.create(row, col)));
+         codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
+                                     Position.create(row, col)));
+      });
    }
 
    @Handler
    void onExecuteFromCurrentLine()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
-      int startRow = docDisplay_.getSelectionStart().getRow();
-      int startColumn = 0;
-      Position start = Position.create(startRow, startColumn);
+         int startRow = docDisplay_.getSelectionStart().getRow();
+         int startColumn = 0;
+         Position start = Position.create(startRow, startColumn);
 
-      codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
+         codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
+      });
    }
 
    @Handler
    void onExecuteCurrentFunction()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
 
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
-      Scope currentFunction = docDisplay_.getCurrentFunction(false);
+            // HACK: This is just to force the entire function tree to be built.
+            // It's the easiest way to make sure getCurrentScope() returns
+            // a Scope with an end.
+            //
+            // We don't need to do this in visual mode since we force a scope
+            // tree rebuild in the process of synchronizing the selection.
+            docDisplay_.getScopeTree();
+         }
 
-      // Check if we're at the top level (i.e. not in a function), or in
-      // an unclosed function
-      if (currentFunction == null || currentFunction.getEnd() == null)
-         return;
+         Scope currentFunction = docDisplay_.getCurrentFunction(false);
 
-      Position start = currentFunction.getPreamble();
-      Position end = currentFunction.getEnd();
+         // Check if we're at the top level (i.e. not in a function), or in
+         // an unclosed function
+         if (currentFunction == null || currentFunction.getEnd() == null)
+            return;
 
-      codeExecution_.executeRange(Range.fromPoints(start, end));
+         Position start = currentFunction.getPreamble();
+         Position end = currentFunction.getEnd();
+
+         codeExecution_.executeRange(Range.fromPoints(start, end));
+      });
    }
 
    @Handler
    void onExecuteCurrentSection()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+            docDisplay_.getScopeTree();
+         }
 
-      // Determine the current section.
-      docDisplay_.getScopeTree();
-      Scope currentSection = docDisplay_.getCurrentSection();
-      if (currentSection == null)
-         return;
+         // Determine the current section.
+         Scope currentSection = docDisplay_.getCurrentSection();
+         if (currentSection == null)
+            return;
 
-      // Determine the start and end of the section
-      Position start = currentSection.getBodyStart();
-      if (start == null)
-         start = Position.create(0, 0);
-      Position end = currentSection.getEnd();
-      if (end == null)
-         end = endPosition();
+         // Determine the start and end of the section
+         Position start = currentSection.getBodyStart();
+         if (start == null)
+            start = Position.create(0, 0);
+         Position end = currentSection.getEnd();
+         if (end == null)
+            end = endPosition();
 
-      codeExecution_.executeRange(Range.fromPoints(start, end));
+         codeExecution_.executeRange(Range.fromPoints(start, end));
+      });
    }
 
    private Position endPosition()
@@ -5365,11 +5448,7 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
-      if (visualMode_.isActivated())
-      {
-         visualMode_.executeChunk();
-      }
-      else
+      withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
          // It's the easiest way to make sure getCurrentScope() returns
@@ -5378,17 +5457,13 @@ public class TextEditingTarget implements
 
          executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(),
               NotebookQueueUnit.EXEC_MODE_SINGLE, false);
-      }
+      });
    }
 
    @Handler
    void onExecuteNextChunk()
    {
-      if (visualMode_.isActivated())
-      {
-         visualMode_.executeNextChunk();
-      }
-      else
+      withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
          // It's the easiest way to make sure getCurrentScope() returns
@@ -5400,26 +5475,25 @@ public class TextEditingTarget implements
                true);
          docDisplay_.setCursorPosition(nextChunk.getBodyStart());
          docDisplay_.ensureCursorVisible();
-      }
+      });
    }
 
    @Handler
    void onExecutePreviousChunks()
    {
-      if (visualMode_.isActivated())
-      {
-         visualMode_.executePreviousChunks();
-      }
-      else
+      withVisualModeSelection(() ->
       {
          executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-      }
+      });
    }
 
    @Handler
    void onExecuteSubsequentChunks()
    {
-      executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+      withVisualModeSelection(() ->
+      {
+         executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+      });
    }
 
    public void executeChunks(Position position, int which)
@@ -6062,9 +6136,15 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteLastCode()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
-      codeExecution_.executeLastCode();
+         codeExecution_.executeLastCode();
+      });
    }
 
    @Handler
