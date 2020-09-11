@@ -40,7 +40,7 @@ export interface BibliographyDataProvider {
 
   isEnabled(): boolean;
   load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  collections(): BibliographyCollection[] | BibliographyCollectionStream;
+  collections(): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
@@ -53,11 +53,6 @@ export interface BibliographyCollection {
   key: string;
   provider: string;
   parentKey?: string;
-}
-
-export interface BibliographyCollectionStream {
-  collections: BibliographyCollection[];
-  stream: () => BibliographyCollection[] | null;
 }
 
 export interface Bibliography {
@@ -189,8 +184,8 @@ export class BibliographyManager {
   }
 
   private bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
-    const writablePaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
-    return ([] as BibliographyFile[]).concat(...writablePaths);
+    const bibliographyPaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
+    return ([] as BibliographyFile[]).concat(...bibliographyPaths);
   }
 
   public localProviders(): BibliographyDataProvider[] {

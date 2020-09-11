@@ -33,7 +33,7 @@ interface NavigationTreeProps extends WidgetProps {
   height: number;
   nodes: NavigationTreeNode[];
   selectedNode: NavigationTreeNode;
-  nodeSelected: (node: NavigationTreeNode) => void;
+  onNodeSelected: (node: NavigationTreeNode) => void;
 }
 
 // Indent level for each level
@@ -58,14 +58,14 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
       case 'ArrowDown':
         if (selectedNode) {
           const next = nextNode(selectedNode, props.nodes);
-          props.nodeSelected(next);
+          props.onNodeSelected(next);
         }
         break;
 
       case 'ArrowUp':
         if (selectedNode) {
           const previous = previousNode(selectedNode, props.nodes);
-          props.nodeSelected(previous);
+          props.onNodeSelected(previous);
         }
         break;
     }
@@ -75,7 +75,7 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
   expandedNodes.forEach(node => node.expanded = true);
 
   const onNodeSelected = (node: NavigationTreeNode) => {
-    props.nodeSelected(node);
+    props.onNodeSelected(node);
   };
 
   return (

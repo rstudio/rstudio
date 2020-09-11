@@ -20,7 +20,7 @@ import { PandocServer } from "../pandoc";
 import { expandPaths, getExtension, joinPaths } from "../path";
 import { EditorUI } from "../ui";
 
-import { BibliographyDataProvider, Bibliography, BibliographySource, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections, BibliographyCollectionStream } from "./bibliography";
+import { BibliographyDataProvider, Bibliography, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
 import { toBibLaTeX } from './bibDB';
 import { CSL } from '../csl';

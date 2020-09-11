@@ -21,15 +21,17 @@ import { CSL } from "../../../api/csl";
 import { TextInput } from "../../../api/widgets/text";
 import { formatForPreview, CiteField, suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
+import { DOIServer } from "../../../api/doi";
 
-import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
+
 
 import './insert_citation-source-panel-doi.css';
 
 const kDOIType = 'DOI Search';
 
-export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
+export function doiSourcePanel(ui: EditorUI, server: DOIServer): CitationSourcePanelProvider {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
     panel: DOISourcePanel,
@@ -42,6 +44,12 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
         children: [],
         expanded: true
       };
+    },
+    onExecuteSearch: (searchTerm: string) => {
+
+    },
+    onSearchTermChanged: (searchTerm: string) => {
+
     }
   };
 }

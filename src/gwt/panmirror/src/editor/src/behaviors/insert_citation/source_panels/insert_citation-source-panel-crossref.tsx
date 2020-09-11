@@ -20,14 +20,13 @@ import { EditorUI } from "../../../api/ui";
 import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 
-import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
-import { CrossrefWork, imageForCrossrefType } from "../../../api/crossref";
+import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
 import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
 import { DOIServer } from "../../../api/doi";
-import { resolve } from "url";
 
-export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
+export function crossrefSourcePanel(ui: EditorUI, server: CrossrefServer): CitationSourcePanelProvider {
 
   const kCrossrefType = 'Crossref';
   return {
