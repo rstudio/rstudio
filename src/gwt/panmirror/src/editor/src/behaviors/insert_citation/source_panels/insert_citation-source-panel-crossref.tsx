@@ -51,17 +51,25 @@ export function crossrefSourcePanel(ui: EditorUI,
       return null;
     },
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
-      const works = await server.works(searchTerm);
-      const existingIds = bibliographyManager.localSources().map(src => src.id);
-      const citationEntries = works.items.map(work => {
-        const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
-        if (citationEntry) {
-          // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-          existingIds.push(citationEntry.id);
-        }
-        return citationEntry;
-      });
-      return Promise.resolve(citationEntries);
+
+      // TODO: Error handling (try / catch)
+      try {
+        const works = await server.works(searchTerm);
+        const existingIds = bibliographyManager.localSources().map(src => src.id);
+        const citationEntries = works.items.map(work => {
+          const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
+          if (citationEntry) {
+            // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+            existingIds.push(citationEntry.id);
+          }
+          return citationEntry;
+        });
+
+        return Promise.resolve(citationEntries);
+      } catch {
+        // TODO: return citationentries or string (error)
+        return Promise.resolve([]);
+      }
     }
   };
 }

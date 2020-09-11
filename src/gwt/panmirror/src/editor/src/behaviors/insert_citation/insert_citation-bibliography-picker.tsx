@@ -26,7 +26,7 @@ import './insert_citation-bibliography-picker.css';
 
 export interface CitationBiblographyPickerProps extends WidgetProps {
   bibliographyFiles: BibliographyFile[];
-  biblographyFileChanged: (file: BibliographyFile) => void;
+  onBiblographyFileChanged: (file: BibliographyFile) => void;
   ui: EditorUI;
 }
 
@@ -68,20 +68,20 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   // Let the caller know about what bibfile is initially selected
   React.useEffect(() => {
     const initialBibFile = (props.bibliographyFiles.length > 0) ? props.bibliographyFiles[0] : newBibliographyFile(createFileName, props.ui);
-    props.biblographyFileChanged(initialBibFile);
+    props.onBiblographyFileChanged(initialBibFile);
   }, []);
 
   // Selection of file from list
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
-    props.biblographyFileChanged(props.bibliographyFiles[index]);
+    props.onBiblographyFileChanged(props.bibliographyFiles[index]);
   };
 
   // Whenever the create file changes, store the value and notify listeners
   const createFileChanged = (text: string) => {
     const newFile = newBibliographyFile(text, props.ui);
     setCreateFileName(text);
-    props.biblographyFileChanged(newFile);
+    props.onBiblographyFileChanged(newFile);
   };
 
   // Change to the file we should create

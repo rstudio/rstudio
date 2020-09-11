@@ -183,7 +183,7 @@ export class BibliographyManager {
     return this.bibliographyFiles(doc, ui).filter(bibFile => bibFile.writable);
   }
 
-  private bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+  public bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     const bibliographyPaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
     return ([] as BibliographyFile[]).concat(...bibliographyPaths);
   }

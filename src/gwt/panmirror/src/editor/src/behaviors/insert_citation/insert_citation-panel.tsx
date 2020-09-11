@@ -73,7 +73,7 @@ export async function showInsertCitationDialog(
       const container = window.document.createElement('div');
       container.className = 'pm-default-theme';
 
-      const bibliographyFiles = bibliographyManager.writableBibliographyFiles(doc, ui);
+
 
       const providersForBibliography = () => {
         // TODO: Should I optimize this a little bit (e.g. no need to pass doc/ui)?
@@ -91,7 +91,7 @@ export async function showInsertCitationDialog(
       const configurationStream: InsertCitationPanelConfigurationStream = {
         current: {
           providers: providersForBibliography(),
-          bibliographyFiles
+          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
         },
         stream: () => {
           return updatedConfiguration || null;
@@ -102,7 +102,7 @@ export async function showInsertCitationDialog(
       bibliographyManager.load(ui, doc).then(() => {
         updatedConfiguration = {
           providers: providersForBibliography(),
-          bibliographyFiles: bibliographyManager.writableBibliographyFiles(doc, ui)
+          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
         };
       });
 
@@ -406,7 +406,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   };
 
-  const bibliographyFileChanged = (biblographyFile: BibliographyFile) => {
+  const onBibliographyFileChanged = (biblographyFile: BibliographyFile) => {
     setBibliographyFile(bibliographyFile);
   };
 
@@ -460,11 +460,14 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           placeholder={props.ui.context.translateText('Selected Citation Keys')} />
       </div>
       <div className='pm-cite-panel-select-bibliography'>
-        <CitationBibliographyPicker
-          bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
-          biblographyFileChanged={bibliographyFileChanged}
-          ui={props.ui} />
-
+        {
+          // Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
+          insertCitationConfiguration.bibliographyFiles.length === 0 || insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ?
+            <CitationBibliographyPicker
+              bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
+              onBiblographyFileChanged={onBibliographyFileChanged}
+              ui={props.ui} /> : undefined
+        }
         <DialogButtons
           okLabel={props.ui.context.translateText('Insert')}
           cancelLabel={props.ui.context.translateText('Cancel')}
