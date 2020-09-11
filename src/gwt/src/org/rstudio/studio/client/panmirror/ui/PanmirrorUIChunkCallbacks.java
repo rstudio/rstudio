@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIChunkEditor.java
+ * PanmirrorUIChunkCallbacks.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -16,34 +16,24 @@ package org.rstudio.studio.client.panmirror.ui;
 
 import com.google.gwt.dom.client.Element;
 
-import elemental2.core.JsObject;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorUIChunkEditor
+public class PanmirrorUIChunkCallbacks
 {
-   public JsObject editor;
-   public Element element;
-   public SetMode setMode;
-   public Destroy destroy;
-   public ExecuteSelection executeSelection;
-   
+   public ScrollIntoView scrollIntoView;
+   public GetVisualPosition getPos;
+
    @JsFunction
-   public interface SetMode
+   public interface GetVisualPosition
    {
-      void setMode(String mode);
-   }
-   
-   @JsFunction
-   public interface Destroy
-   {
-      void destroy();
+      int getVisualPosition();
    }
 
    @JsFunction
-   public interface ExecuteSelection
+   public interface ScrollIntoView
    {
-      void executeSelection();
+      int scrollIntoView(Element ele);
    }
 }
