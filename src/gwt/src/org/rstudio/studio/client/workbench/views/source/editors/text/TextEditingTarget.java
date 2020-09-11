@@ -3475,29 +3475,40 @@ public class TextEditingTarget implements
    @Handler
    void onWordCount()
    {
-      int totalWords = 0;
-      int selectionWords = 0;
-
-      Range selectionRange = docDisplay_.getSelectionRange();
-      TextFileType fileType = docDisplay_.getFileType();
-      Iterator<Range> wordIter = docDisplay_.getWords(
-         fileType.getTokenPredicate(),
-         docDisplay_.getFileType().getCharPredicate(),
-         Position.create(0, 0),
-         null).iterator();
-
-      while (wordIter.hasNext())
+      prepareForVisualExecution(() ->
       {
-         Range r = wordIter.next();
-         totalWords++;
-         if (selectionRange.intersects(r))
-            selectionWords++;
-      }
+         int totalWords = 0;
+         int selectionWords = 0;
 
-      String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
-      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
-         "Word Count",
-         "Total words: " + totalWords + " " + selectedWordsText);
+         Range selectionRange = null;
+         
+         // A selection in visual mode may span multiple editors and blocks of
+         // prose, which we can't count here.
+         if (!isVisualEditorActive())
+         {
+            selectionRange = docDisplay_.getSelectionRange();
+         }
+
+         TextFileType fileType = docDisplay_.getFileType();
+         Iterator<Range> wordIter = docDisplay_.getWords(
+            fileType.getTokenPredicate(),
+            docDisplay_.getFileType().getCharPredicate(),
+            Position.create(0, 0),
+            null).iterator();
+
+         while (wordIter.hasNext())
+         {
+            Range r = wordIter.next();
+            totalWords++;
+            if (selectionRange != null && selectionRange.intersects(r))
+               selectionWords++;
+         }
+
+         String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
+         globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+            "Word Count",
+            "Total words: " + totalWords + " " + selectedWordsText);
+      });
    }
 
    @Handler
@@ -4802,7 +4813,10 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+            withVisualModeSelection(() ->
+            {
+               codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+            });
          }
       });
    }
@@ -5927,7 +5941,10 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+            withVisualModeSelection(() ->
+            {
+               codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+            });
          }
       });
    }

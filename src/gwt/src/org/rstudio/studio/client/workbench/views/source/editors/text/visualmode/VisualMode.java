@@ -668,9 +668,8 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.unfold(),
         commands_.unfoldAll(),
 
-        commands_.goToLine(),
-        commands_.wordCount(),
-        commands_.profileCode()
+        // Disabled since we don't have line numbers in the visual editor
+        commands_.goToLine()
       );
    }
    
