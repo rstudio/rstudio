@@ -336,7 +336,16 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateTutorial"/>
          <cmd refid="activateJobs"/>
          <cmd refid="activateLauncherJobs"/>
-         <cmd refid="activateFindInFiles"/>
+         <menu label="Show Other _Panes">
+            <cmd refid="activatePresentation"/>
+            <cmd refid="activateCompilePDF"/>
+            <cmd refid="activateFindInFiles"/>
+            <cmd refid="activateSourceCpp"/>
+            <cmd refid="activateRMarkdown"/>
+            <cmd refid="activateDeployContent"/>
+            <cmd refid="activateMarkers"/>
+            <cmd refid="activateSQLResults"/>
+         </menu>
 
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -1388,7 +1397,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="activatePresentation"
         label="Show Presentation Pane"
-        menuLabel="Show Presentation"
+        menuLabel="Show Prese_ntation"
         windowMode="main"/>
 
    <cmd id="activateConnections"
@@ -1406,14 +1415,44 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show _Jobs"
         windowMode="main"/>
 
-   <cmd id="activateFindInFiles"
-        label="Show Find in Files"
-        menuLabel="Show Fin_d in Files"
-        windowMode="main"/>
-
    <cmd id="activateLauncherJobs"
         label="Show Launcher Pane"
         menuLabel = "Show _Launcher"
+        windowMode="main"/>
+
+   <cmd id="activateCompilePDF"
+        label="Show Compile PDF Pane"
+        menuLabel = "Show Compile _PDF"
+        windowMode="main"/>
+
+   <cmd id="activateFindInFiles"
+        label="Show Find in Files"
+        menuLabel="Show _Find in Files"
+        windowMode="main"/>
+
+   <cmd id="activateSourceCpp"
+        label="Show Source Cpp Pane"
+        menuLabel="Show Sou_rce Cpp"
+        windowMode="main"/>
+
+   <cmd id="activateRMarkdown"
+        label="Show R Markdown Pane"
+        menuLabel = "Show _R Markdown"
+        windowMode="main"/>
+
+   <cmd id="activateDeployContent"
+        label="Show Deploy Content Pane"
+        menuLabel = "Show Deploy _Content"
+        windowMode="main"/>
+
+   <cmd id="activateMarkers"
+        label="Show Markers Pane"
+        menuLabel = "Show _Markers"
+        windowMode="main"/>
+
+   <cmd id="activateSQLResults"
+        label="Show SQL Results Pane"
+        menuLabel = "Show S_QL Results"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
