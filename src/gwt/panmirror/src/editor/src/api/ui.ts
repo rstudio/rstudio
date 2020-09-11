@@ -32,9 +32,17 @@ export interface EditorUI {
   spelling: EditorUISpelling;
 }
 
+/**
+ * Callbacks supplied to the host to interact with a code chunk and its output.
+ */
+export interface EditorUIChunkCallbacks {
+  getPos: () => number;
+  scrollIntoView: (ele: HTMLElement) => void;
+}
+
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string, index: number, getPos: () => number) => ChunkEditor;
+  createChunkEditor: (type: string, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
 }
 
 export interface ChunkEditor {

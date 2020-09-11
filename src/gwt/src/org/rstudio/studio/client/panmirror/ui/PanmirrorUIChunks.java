@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIChunkFactory.java
+ * PanmirrorUIChunks.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -21,16 +21,10 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIChunks
 {
    public CreateChunkEditor createChunkEditor;
-   
-   @JsFunction
-   public interface GetVisualPosition
-   {
-      int getVisualPosition();
-   }
 
    @JsFunction
    public interface CreateChunkEditor
    {
-      PanmirrorUIChunkEditor create(String type, int position, GetVisualPosition getPos);
+      PanmirrorUIChunkEditor create(String type, int position, PanmirrorUIChunkCallbacks callbacks);
    }
 }

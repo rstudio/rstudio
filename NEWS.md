@@ -9,6 +9,7 @@
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
 * The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
 * Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
+* The autocompletion system can now auto-complete virtual environment names in `reticulate::virtualenv()`.
 
 ### Plots
 
@@ -47,6 +48,7 @@
 * R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 * The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
+* Show correct symbol for Return key in Mac menus (#6524)
 
 ### RStudio Server Pro
 

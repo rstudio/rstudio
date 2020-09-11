@@ -57,6 +57,8 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
          chunk_.setOutputWidget(outputWidget);
          chunk_.setDefinition(def);
       }
+      
+      ensureVisible_ = false;
    }
    
 
@@ -67,6 +69,16 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
       // just cache the height in case the chunk needs to be rendered at a fixed
       // size later (in code view)
       height_ = heightPx;
+      
+      // Perform any deferred scrolling
+      if (ensureVisible_)
+      {
+         if (chunk_ != null)
+         {
+            chunk_.scrollOutputIntoView();
+         }
+         ensureVisible_ = false;
+      }
    }
 
    public ChunkOutputPanmirrorUi(ChunkOutputCodeUi codeOutput, VisualMode visualMode, 
@@ -94,7 +106,6 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    @Override
    public void onRenderFinished(RenderFinishedEvent event)
    {
-
    }
 
    @Override
@@ -110,8 +121,9 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    @Override
    public void ensureVisible()
    {
-      // This is used in code view to scroll the widget into view; currently we
-      // don't replicate that behavior in visual mode.
+      // Since chunk sizes are "natural" in visual mode, we wait until the chunk
+      // has been given its new height to scroll it into view.
+      ensureVisible_ = true;
    }
 
    @Override
@@ -188,4 +200,5 @@ public class ChunkOutputPanmirrorUi extends ChunkOutputUi
    }
    
    private VisualModeChunk chunk_;
+   private boolean ensureVisible_;
 }

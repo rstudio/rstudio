@@ -23,8 +23,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -57,12 +57,12 @@ import jsinterop.base.Js;
 public class VisualModeChunk
 {
    public VisualModeChunk(int index,
-                          PanmirrorUIChunks.GetVisualPosition getPos,
+                          PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
                           VisualModeEditorSync sync)
    {
-      getPos_ = getPos;
+      chunkCallbacks_ = chunkCallbacks;
       sync_ = sync;
       codeExecution_ = target.getCodeExecutor();
       parent_ = target.getDocDisplay();
@@ -72,6 +72,7 @@ public class VisualModeChunk
 
       // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
+      outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       ChunkOutputUi output = null; 
       if (index > 0)
@@ -116,6 +117,7 @@ public class VisualModeChunk
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
       host_.appendChild(chunkEditor.getContainer());
+      host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
@@ -218,16 +220,6 @@ public class VisualModeChunk
    }
    
    /**
-    * Sets the function used to get the visual position.
-    * 
-    * @param getPos The new function used for retrieving the visual position.
-    */
-   public void setGetPos(PanmirrorUIChunks.GetVisualPosition getPos)
-   {
-      getPos_ = getPos;
-   }
-   
-   /**
     * Add a callback to be invoked when the chunk editor is destroyed.
     * 
     * @param handler A callback to invoke on destruction
@@ -322,7 +314,22 @@ public class VisualModeChunk
     */
    public int getVisualPosition()
    {
-      return getPos_.getVisualPosition();
+      return chunkCallbacks_.getPos.getVisualPosition();
+   }
+   
+   /**
+    * Scroll the chunk's notebook output into view. 
+    */
+   public void scrollOutputIntoView()
+   {
+      // Defer this so the layout pass completes and the element has height.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (widget_ != null && widget_.isVisible())
+         {
+            chunkCallbacks_.scrollIntoView.scrollIntoView(outputHost_);
+         }
+      });
    }
    
    public void reloadWidget()
@@ -549,7 +556,7 @@ public class VisualModeChunk
    private Scope scope_;
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
-   private PanmirrorUIChunks.GetVisualPosition getPos_;
+   private PanmirrorUIChunkCallbacks chunkCallbacks_;
 
    private final DivElement outputHost_;
    private final DivElement host_;
