@@ -668,14 +668,8 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.unfold(),
         commands_.unfoldAll(),
 
-        commands_.notebookExpandAllOutput(),
-        commands_.notebookCollapseAllOutput(),
-        commands_.notebookClearAllOutput(),
-        commands_.notebookClearOutput(),
         commands_.goToLine(),
         commands_.wordCount(),
-        commands_.restartRClearOutput(),
-        commands_.restartRRunAllChunks(),
         commands_.profileCode()
       );
    }

@@ -1702,6 +1702,13 @@ public class TextEditingTargetNotebook
       {
          // clean any error state still attached to the output's scope
          cleanScopeErrorState(output.getScope());
+         output.detach();
+         output.remove();
+      }
+
+      for (ChunkOutputUi output: visualOutputs_.values())
+      {
+         output.detach();
          output.remove();
       }
 
