@@ -41,14 +41,16 @@ const char * const kPubMedEUtilsHost = "https://eutils.ncbi.nlm.nih.gov";
 
 struct PubMedDocument
 {
-   PubMedDocument(const std::string& doi) : doi(doi) {}
+   PubMedDocument(const std::string& doi = "") : doi(doi) {}
+   bool empty() { return doi.empty(); }
    std::string doi;
    std::vector<std::string> pubTypes;
    std::string title;
+   std::vector<std::string> authors;
+   std::string lastAuthor;
    std::string source;
    std::string volume;
    std::string issue;
-   std::vector<std::string> authors;
    std::string pubDate;
 };
 
@@ -70,6 +72,19 @@ json::Object pubMedDocumentJson(const PubMedDocument& doc)
       docJson["pubTypes"] = pubTypesJson;
    }
 
+   // authors
+   if (doc.authors.size() > 0)
+   {
+      json::Array authorsJson;
+      for (auto author : doc.authors)
+         authorsJson.push_back(author);
+      docJson["authors"] = authorsJson;
+   }
+
+   // lastAuthor
+   if (!doc.lastAuthor.empty())
+      docJson["lastAuthor"] = doc.lastAuthor;
+
    // title
    if (!doc.title.empty())
       docJson["title"] = doc.title;
@@ -84,15 +99,6 @@ json::Object pubMedDocumentJson(const PubMedDocument& doc)
          docJson["issue"] = doc.issue;
    }
 
-   // authors
-   if (doc.authors.size() > 0)
-   {
-      json::Array authorsJson;
-      for (auto author : doc.authors)
-         authorsJson.push_back(author);
-      docJson["authors"] = authorsJson;
-   }
-
    // pubDate
    if (!doc.pubDate.empty())
       docJson["pubDate"] = doc.pubDate;
@@ -101,11 +107,75 @@ json::Object pubMedDocumentJson(const PubMedDocument& doc)
 
 }
 
-json::Object transformPubMedResult(json::Object resultJson)
+PubMedDocument resultToPubMedDocument(json::Object resultJson)
 {
-   PubMedDocument doc(resultJson["uid"].getString());
+   // look for doi (the only required field)
+   std::string doi;
+   const char * const kArticleIds = "articleids";
+   if (resultJson.hasMember(kArticleIds) && resultJson[kArticleIds].isArray())
+   {
+     json::Array articleIdsJson = resultJson[kArticleIds].getArray();
+     for (json::Value articleIdJson : articleIdsJson)
+     {
+        if (articleIdJson.isObject())
+        {
+           std::string idtype, value;
+           json::readObject(articleIdJson.getObject(),
+                           "idtype", idtype,
+                           "value", value);
+           if (idtype == "doi")
+           {
+              doi = value;
+              break;
+           }
+        }
+     }
+   }
 
-   return pubMedDocumentJson(doc);
+   // if there is no doi then return an empty doc
+   if (doi.empty())
+      return PubMedDocument();
+
+   // create doc with doi
+   PubMedDocument doc(doi);
+
+   // look for pubtypes
+   json::Array pubTypesJson;
+   json::readObject(resultJson, "pubtype", pubTypesJson);
+   if (pubTypesJson.getSize() > 0)
+   {
+      for (auto pubTypeJson : pubTypesJson)
+      {
+         if (pubTypeJson.isString())
+            doc.pubTypes.push_back(pubTypeJson.getString());
+      }
+   }
+
+   // look for authors
+   json::Array authorsJson;
+   json::readObject(resultJson, "authors", authorsJson);
+   if (authorsJson.getSize() > 0)
+   {
+      for (auto authorJson : authorsJson)
+      {
+         if (authorJson.isObject() && authorJson.getObject().hasMember("name"))
+         {
+            json::Value nameJson = authorJson.getObject()["name"];
+            if (nameJson.isString())
+               doc.authors.push_back(nameJson.getString());
+         }
+      }
+   }
+
+   // read lastAuthor, title, source, volume, issue, pubDate
+   json::readObject(resultJson, "lastauthor", doc.lastAuthor);
+   json::readObject(resultJson, "title", doc.title);
+   json::readObject(resultJson, "source", doc.source);
+   json::readObject(resultJson, "volume", doc.volume);
+   json::readObject(resultJson, "issue", doc.issue);
+   json::readObject(resultJson, "pubdate", doc.pubDate);
+
+   return doc;
 }
 
 
@@ -116,6 +186,8 @@ void pubMedRequest(const std::string& resource,
 {
 
    // add json retmode
+   params.push_back(std::make_pair("tool", "rstudio"));
+   params.push_back(std::make_pair("email", "pubmed@rstudio.com"));
    params.push_back(std::make_pair("retmode", "json"));
 
    // build query string
@@ -149,7 +221,8 @@ void pubMedSearch(const json::JsonRpcRequest& request,
    http::Fields params;
    params.push_back(std::make_pair("db", "pubmed"));
    params.push_back(std::make_pair("term", query));
-   params.push_back(std::make_pair("retmax", "50"));
+   params.push_back(std::make_pair("sort", "relevance"));
+   params.push_back(std::make_pair("retmax", "30"));
 
    pubMedRequest("entrez/eutils/esearch.fcgi", params, cont,
                  [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
@@ -199,7 +272,9 @@ void pubMedSearch(const json::JsonRpcRequest& request,
             if (resultsJson.hasMember(id))
             {
                json::Object resultJson = resultsJson[id].getObject();
-               docsJson.push_back(transformPubMedResult(resultJson));
+               PubMedDocument doc = resultToPubMedDocument(resultJson);
+               if (!doc.empty())
+                  docsJson.push_back(pubMedDocumentJson(doc));
             }
          }
 

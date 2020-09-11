@@ -22,13 +22,13 @@ export interface PubMedResult {
 
 export interface PubMedDocument {
   doi: string;
-
   pubTypes?: string[];
+  authors?: string[];
+  lastAuthor?: string;
   title?: string;
   source?: string;
   volume?: string;
   issue?: string;
-  authors?: string[];
   pubDate?: string;
 }
 
