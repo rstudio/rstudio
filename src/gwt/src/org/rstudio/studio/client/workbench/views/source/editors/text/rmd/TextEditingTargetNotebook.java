@@ -184,7 +184,15 @@ public class TextEditingTargetNotebook
             String yaml = RmdEditorOptions.set(
                   YamlFrontMatter.getFrontMatter(docDisplay_), 
                   CHUNK_OUTPUT_TYPE, event.getValue());
-            YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+
+            if (editingTarget_.isVisualEditorActive())
+            {
+               editingTarget_.getVisualMode().applyYamlFrontMatter(yaml);
+            }
+            else
+            {
+               YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+            }
             
             // change the output mode in the document
             changeOutputMode(event.getValue());

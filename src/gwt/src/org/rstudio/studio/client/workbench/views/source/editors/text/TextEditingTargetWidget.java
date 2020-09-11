@@ -1725,36 +1725,34 @@ public class TextEditingTargetWidget
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
             DocUpdateSentinel.PROPERTY_TRUE));
          menu.addSeparator();
+      }
 
-         if (!isShinyFile)
-         {
-            boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
-            menu.addItem(new DocPropMenuItem(
-               "Chunk Output Inline", docUpdateSentinel_,
-               inline,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-            menu.addItem(new DocPropMenuItem(
-               "Chunk Output in Console", docUpdateSentinel_,
-               !inline,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+      if (!isShinyFile)
+      {
+         boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
+         menu.addItem(new DocPropMenuItem(
+            "Chunk Output Inline", docUpdateSentinel_,
+            inline,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+         menu.addItem(new DocPropMenuItem(
+            "Chunk Output in Console", docUpdateSentinel_,
+            !inline,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
 
-            menu.addSeparator();
+         menu.addSeparator();
 
-            SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookExpandAllOutput(), column_).createMenuItem());
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookCollapseAllOutput(), column_).createMenuItem());
-            menu.addSeparator();
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookClearOutput(), column_).createMenuItem());
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookClearAllOutput(), column_).createMenuItem());
-            menu.addSeparator();
-         }
-
+         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookExpandAllOutput(), column_).createMenuItem());
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookCollapseAllOutput(), column_).createMenuItem());
+         menu.addSeparator();
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookClearOutput(), column_).createMenuItem());
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookClearAllOutput(), column_).createMenuItem());
          menu.addSeparator();
       }
 
