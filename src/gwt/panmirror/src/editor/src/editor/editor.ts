@@ -330,6 +330,9 @@ export class Editor {
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
+    const results = await context.server.pubmed.search('covid treatment');
+    console.log(results);
+
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
 

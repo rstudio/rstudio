@@ -14,8 +14,10 @@
  */
 
 
-export interface PubMedServer {
-  search: (query: string) => Promise<PubMedDocument[]>;
+export interface PubMedResult {
+  status: "ok" | "notfound" | "nohost" | "error";
+  message: PubMedDocument[] | null;
+  error: string;
 }
 
 export interface PubMedDocument {
@@ -29,3 +31,9 @@ export interface PubMedDocument {
   authors?: string[];
   pubDate?: string;
 }
+
+
+export interface PubMedServer {
+  search: (query: string) => Promise<PubMedResult>;
+}
+

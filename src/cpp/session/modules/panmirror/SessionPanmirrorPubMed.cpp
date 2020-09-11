@@ -25,6 +25,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include "SessionPanmirrorUtils.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -34,6 +36,8 @@ namespace panmirror {
 namespace pubmed {
 
 namespace {
+
+const char * const kPubMedEUtilsHost = "https://eutils.ncbi.nlm.nih.gov";
 
 struct PubMedDocument
 {
@@ -97,6 +101,36 @@ json::Object pubMedDocumentJson(const PubMedDocument& doc)
 
 }
 
+json::Object transformPubMedResult(json::Object resultJson)
+{
+   PubMedDocument doc(resultJson["uid"].getString());
+
+   return pubMedDocumentJson(doc);
+}
+
+
+void pubMedRequest(const std::string& resource,
+                   http::Fields params,
+                   const json::JsonRpcFunctionContinuation& cont,
+                   const JsonHandler& handler)
+{
+
+   // add json retmode
+   params.push_back(std::make_pair("retmode", "json"));
+
+   // build query string
+   std::string queryString;
+   core::http::util::buildQueryString(params, &queryString);
+   if (queryString.length() > 0)
+      queryString = "?" + queryString;
+
+   // build the url and make the request
+   boost::format fmt("%s/%s%s");
+   const std::string url = boost::str(fmt % kPubMedEUtilsHost % resource % queryString);
+
+   asyncDownloadFile(url, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, handler));
+}
+
 
 void pubMedSearch(const json::JsonRpcRequest& request,
                   const json::JsonRpcFunctionContinuation& cont)
@@ -112,15 +146,71 @@ void pubMedSearch(const json::JsonRpcRequest& request,
      return;
    }
 
-   // return value
-   json::Array docsJson;
-   PubMedDocument doc("doi");
-   doc.title = query;
-   docsJson.push_back(pubMedDocumentJson(doc));
+   http::Fields params;
+   params.push_back(std::make_pair("db", "pubmed"));
+   params.push_back(std::make_pair("term", query));
+   params.push_back(std::make_pair("retmax", "50"));
 
-   json::JsonRpcResponse response;
-   response.setResult(docsJson);
-   cont(Success(), &response);
+   pubMedRequest("entrez/eutils/esearch.fcgi", params, cont,
+                 [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
+
+      // validate json
+      Error error =json.validate(module_context::resourceFileAsString("schema/pubmed-esearch.json"));
+      if (error)
+      {
+         resolveJsonRpcContinuation(cont, kStatusError, json::Value(), core::errorMessage(error));
+         return;
+      }
+      
+      // read ids
+      std::vector<std::string> ids;
+      json.getObject()["esearchresult"]
+          .getObject()["idlist"]
+          .getArray()
+          .toVectorString(ids);
+      
+      // fetch documents
+      http::Fields summaryParams;
+      summaryParams.push_back(std::make_pair("db", "pubmed"));
+      summaryParams.push_back(std::make_pair("id", boost::algorithm::join(ids, ",")));
+      pubMedRequest("entrez/eutils/esummary.fcgi", summaryParams, cont,
+                    [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
+
+         // validate json
+         Error error =json.validate(module_context::resourceFileAsString("schema/pubmed-esummary.json"));
+         if (error)
+         {
+            resolveJsonRpcContinuation(cont, kStatusError, json::Value(), core::errorMessage(error));
+            return;
+         }
+
+         // read ids
+         std::vector<std::string> ids;
+         json.getObject()["result"]
+             .getObject()["uids"]
+             .getArray()
+             .toVectorString(ids);
+
+         // read docs
+         json::Array docsJson;
+         json::Object resultsJson = json.getObject()["result"].getObject();
+         for (auto id : ids)
+         {
+            if (resultsJson.hasMember(id))
+            {
+               json::Object resultJson = resultsJson[id].getObject();
+               docsJson.push_back(transformPubMedResult(resultJson));
+            }
+         }
+
+         // resolve
+         resolveJsonRpcContinuation(cont, kStatusOK, docsJson);
+
+      });
+
+
+   });
+
 }
 
 

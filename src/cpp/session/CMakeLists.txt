@@ -200,6 +200,7 @@ set (SESSION_SOURCE_FILES
    modules/panmirror/SessionPanmirrorDOI.cpp
    modules/panmirror/SessionPanmirrorPandoc.cpp
    modules/panmirror/SessionPanmirrorPubMed.cpp
+   modules/panmirror/SessionPanmirrorUtils.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
