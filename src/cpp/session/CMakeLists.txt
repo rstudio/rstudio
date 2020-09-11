@@ -199,6 +199,7 @@ set (SESSION_SOURCE_FILES
    modules/panmirror/SessionPanmirrorCrossref.cpp
    modules/panmirror/SessionPanmirrorDOI.cpp
    modules/panmirror/SessionPanmirrorPandoc.cpp
+   modules/panmirror/SessionPanmirrorPubMed.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp

@@ -27,6 +27,7 @@ public class PanmirrorServer
    {
       this.pandoc = new PanmirrorPandocServer();
       this.crossref = new PanmirrorCrossrefServer();
+      this.pubmed = new PanmirrorPubMedServer();
       this.zotero = new PanmirrorZoteroServer();
       this.xref = new PanmirrorXRefServer();
       this.doi = new PanmirrorDOIServer();
@@ -34,6 +35,7 @@ public class PanmirrorServer
    
    public PanmirrorPandocServer pandoc;
    public PanmirrorCrossrefServer crossref;
+   public PanmirrorPubMedServer pubmed;
    public PanmirrorZoteroServer zotero;
    public PanmirrorXRefServer xref;
    public PanmirrorDOIServer doi;

@@ -22,6 +22,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperation
 
 public interface PanmirrorServerOperations extends PanmirrorPandocServerOperations,
                                                    PanmirrorCrossrefServerOperations,
+                                                   PanmirrorPubMedServerOperations,
                                                    PanmirrorZoteroServerOperations,
                                                    PanmirrorXRefServerOperations,
                                                    PanmirrorDOIServerOperations

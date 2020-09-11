@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * pubmed.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,19 +13,19 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { ZoteroServer } from './zotero';
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
-import { PubMedServer } from "./pubmed";
 
+export interface PubMedServer {
+  search: (query: string) => Promise<PubMedDocument[]>;
+}
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly pubmed: PubMedServer;
-  readonly zotero: ZoteroServer;
-  readonly xref: XRefServer;
+export interface PubMedDocument {
+  doi: string;
+
+  pubTypes?: string[];
+  title?: string;
+  source?: string;
+  volume?: string;
+  issue?: string;
+  authors?: string[];
+  pubDate?: string;
 }

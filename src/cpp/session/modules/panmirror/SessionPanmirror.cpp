@@ -24,6 +24,7 @@
 #include "SessionPanmirrorPandoc.hpp"
 #include "SessionPanmirrorBibliography.hpp"
 #include "SessionPanmirrorCrossref.hpp"
+#include "SessionPanmirrorPubMed.hpp"
 #include "SessionPanmirrorDOI.hpp"
 
 using namespace rstudio::core;
@@ -40,6 +41,7 @@ Error initialize()
       (pandoc::initialize)
       (bibliography::initialize)
       (crossref::initialize)
+      (pubmed::initialize)
       (doi::initialize)
     ;
    return initBlock.execute();
