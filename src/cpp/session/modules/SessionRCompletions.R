@@ -1893,6 +1893,18 @@ assign(x = ".rs.acCompletionTypes",
    }
 })
 
+.rs.addFunction("getCompletionsPythonVirtualEnvironments", function(token)
+{
+   home <- Sys.getenv("WORKON_HOME", unset = "~/.virtualenvs")
+   candidates <- list.files(home)
+   results <- .rs.selectFuzzyMatches(candidates, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results,
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+})
+
 .rs.addFunction("getCompletionsEnvironmentVariables", function(token)
 {
    candidates <- names(Sys.getenv())
@@ -2099,6 +2111,14 @@ assign(x = ".rs.acCompletionTypes",
        string[[1]] %in% c("Sys.getenv", "Sys.setenv") &&
        numCommas[[1]] == 0)
       return(.rs.getCompletionsEnvironmentVariables(token))
+   
+   # Python virtual environments
+   if (length(string) &&
+       string[[1]] %in% c("use_virtualenv", "reticulate::use_virtualenv") &&
+       numCommas[[1]] == 0)
+   {
+      return(.rs.getCompletionsPythonVirtualEnvironments(token))
+   }
    
    # No information on completions other than token
    if (!length(string))
