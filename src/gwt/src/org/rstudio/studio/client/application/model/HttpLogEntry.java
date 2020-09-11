@@ -25,16 +25,16 @@ public class HttpLogEntry extends JavaScriptObject
    public final static int CONNECTION_RESPONDED = 3;
    public final static int CONNECTION_TERMINATED = 4;
    public final static int CONNECTION_ERROR = 5;
-   
+
    protected HttpLogEntry()
    {
-      
+
    }
 
    public native final int getType() /*-{
       return this.type;
    }-*/;
-   
+
    public final String getTypeAsString()
    {
       switch(getType())
@@ -53,20 +53,20 @@ public class HttpLogEntry extends JavaScriptObject
          return "(Unknown)";
       }
    }
-   
+
    public native final String getRequestId() /*-{
       return this.id;
    }-*/;
-   
-   
-   public final Date getTimestamp() 
-   { 
+
+
+   public final Date getTimestamp()
+   {
       Double timestamp = new Double(getTimestampNative());
       return new Date(timestamp.longValue());
    }
-    
+
    private final native double getTimestampNative() /*-{
       return this.ts;
    }-*/;
-   
+
 }
