@@ -5934,7 +5934,10 @@ public class TextEditingTarget implements
 
    private void sourceActiveDocument(final boolean echo)
    {
-      docDisplay_.focus();
+      if (!isVisualEditorActive())
+      {
+         docDisplay_.focus();
+      }
 
       // If this is a Python file, use reticulate.
       if (fileType_.isPython())

@@ -661,14 +661,13 @@ public class VisualMode implements VisualModeEditorSync,
         // embedded editors simultaneously
         commands_.findSelectAll(),
 
-        commands_.sourceActiveDocument(),
-        commands_.sourceActiveDocumentWithEcho(),
-        commands_.pasteWithIndentDummy(),
+        // Disabled since code folding doesn't work in embedded editors (there's
+        // no gutter in which to toggle folds)
         commands_.fold(),
         commands_.foldAll(),
         commands_.unfold(),
         commands_.unfoldAll(),
-        commands_.yankAfterCursor(),
+
         commands_.notebookExpandAllOutput(),
         commands_.notebookCollapseAllOutput(),
         commands_.notebookClearAllOutput(),
