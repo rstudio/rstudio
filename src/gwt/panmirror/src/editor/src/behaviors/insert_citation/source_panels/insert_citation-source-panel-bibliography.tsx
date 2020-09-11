@@ -146,9 +146,12 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
     }
   }, [props.selectedNode]);
 
+  // Debounced search 
+  const debouncedLoadCitations = React.useCallback(debounce(loadCitations, 25), []);
+
   const searchChanged = (term: string) => {
     setSearchTerm(term);
-    loadCitations(term, providerForNode(props.selectedNode), collectionKeyForNode(props.selectedNode));
+    debouncedLoadCitations(term, providerForNode(props.selectedNode), collectionKeyForNode(props.selectedNode));
   };
 
   return (

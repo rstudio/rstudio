@@ -257,7 +257,6 @@ export class BibliographyManager {
 
   // A general purpose search interface for filtered searching
   public search(query?: string, providerKey?: string, collectionKey?: string): BibliographySourceWithCollections[] {
-    console.log(query, providerKey, collectionKey);
     const limit = 100;
     if (query && query.length > 0) {
       // These are ordered by search score, so leave as is
