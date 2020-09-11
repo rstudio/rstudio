@@ -19,7 +19,7 @@ import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import './insert_citation-source-panel-typeahead-search.css';
-import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
+import { CitationSourceList, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel-list";
 import { CitationListEntry } from "../insert_citation-panel";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
@@ -33,6 +33,8 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
+  status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
   ui: EditorUI;
 }
 
@@ -100,7 +102,8 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
         selectedIndex={props.selectedIndex}
         onSelectedIndexChanged={props.onSelectedIndexChanged}
         focusPrevious={focusSearch}
-        status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
+        status={props.status}
+        statusText={props.statusText}
         ui={props.ui}
         ref={listContainer}
       />

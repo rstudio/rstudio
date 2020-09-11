@@ -105,6 +105,15 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
       onAddCitation={props.onAddCitation}
       onRemoveCitation={props.onRemoveCitation}
       onConfirm={props.onConfirm}
+      status={props.status}
+      statusText={
+        {
+          placeholder: props.ui.context.translateText(''),
+          progress: props.ui.context.translateText(''),
+          noResults: props.ui.context.translateText('No matching items'),
+          error: props.ui.context.translateText('An error occurred'),
+        }
+      }
       ui={props.ui}
       ref={ref}
     />

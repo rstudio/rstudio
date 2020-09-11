@@ -18,7 +18,7 @@ import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
-import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
+import { CitationSourceList, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
 import { CitationListEntry } from "../insert_citation-panel";
 
@@ -37,9 +37,9 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
   ui: EditorUI;
-  defaultText?: string;
-  placeholderText?: string;
+  searchPlaceholderText?: string;
   status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
 }
 
 // TODO: Height issue
@@ -112,7 +112,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           iconAdornment={props.ui.images.search}
           tabIndex={0}
           className='pm-insert-citation-panel-latent-search-textbox pm-block-border-color'
-          placeholder={props.placeholderText}
+          placeholder={props.searchPlaceholderText}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
           onPaste={onPaste}
@@ -140,8 +140,8 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           focusPrevious={focusSearch}
           onConfirm={props.onConfirm}
           ui={props.ui}
-          placeholderText={props.defaultText}
           status={props.status}
+          statusText={props.statusText}
           classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}
           ref={listContainer}
         />

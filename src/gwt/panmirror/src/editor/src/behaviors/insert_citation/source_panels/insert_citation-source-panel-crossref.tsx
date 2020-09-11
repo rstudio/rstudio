@@ -23,7 +23,6 @@ import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
-import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
 import { DOIServer } from "../../../api/doi";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
@@ -91,9 +90,16 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       selectedIndex={props.selectedIndex}
       onSelectedIndexChanged={props.onSelectedIndexChanged}
       onConfirm={props.onConfirm}
-      status={CitationSourceListStatus.default}
-      defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
-      placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
+      searchPlaceholderText={props.ui.context.translateText('Search Crossref for Citations')}
+      status={props.status}
+      statusText={
+        {
+          placeholder: props.ui.context.translateText('Enter terms to search Crossref'),
+          progress: props.ui.context.translateText('Searching Crossref...'),
+          noResults: props.ui.context.translateText('No matching items'),
+          error: props.ui.context.translateText('An error occurred while searching Crossref'),
+        }
+      }
       ui={props.ui}
       ref={ref}
     />

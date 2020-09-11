@@ -27,22 +27,30 @@ import './insert_citation-source-panel-list.css';
 
 export enum CitationSourceListStatus {
   default,
-  loading,
-  noResults
+  inProgress,
+  noResults,
+  error
+}
+
+export interface CitationSourceListStatusText {
+  placeholder: string;
+  error: string;
+  progress: string;
+  noResults: string;
 }
 
 export interface CitationSourceListProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  placeholderText?: string;
-  status: CitationSourceListStatus;
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
   focusPrevious?: () => void;
+  status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
   ui: EditorUI;
 }
 
@@ -162,17 +170,17 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
       } else {
         return (
           <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.placeholderText}</div>
+            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.placeholder}</div>
           </div>
         );
       }
 
-    case CitationSourceListStatus.loading:
+    case CitationSourceListStatus.inProgress:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
           <div className='pm-insert-citation-source-panel-list-noresults-text'>
             <img src={props.ui.images.search_progress} className='pm-insert-citation-source-panel-list-progress' />
-            {props.ui.context.translateText('Searching…')}
+            {props.statusText.progress}
           </div>
         </div>
       );
@@ -180,7 +188,14 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     case CitationSourceListStatus.noResults:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.ui.context.translateText('No matching items')}</div>
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.noResults}</div>
+        </div >
+      );
+
+    case CitationSourceListStatus.error:
+      return (
+        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.error || props.ui.context.translateText('An error occurred.')}</div>
         </div >
       );
   }

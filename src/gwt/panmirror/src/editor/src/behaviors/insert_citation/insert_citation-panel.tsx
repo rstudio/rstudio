@@ -33,6 +33,7 @@ import { EditorServer } from "../../api/server";
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
 import ReactDOM from "react-dom";
 import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
+import { CitationSourceListStatus, CitationSourceListStatusText } from "./source_panels/insert_citation-source-panel-list";
 
 
 // When the dialog has completed, it will return this result
@@ -208,6 +209,7 @@ export interface CitationSourcePanelProps extends WidgetProps {
 
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
+  status: CitationSourceListStatus;
 
   ref: React.Ref<any>;
 }
@@ -231,6 +233,7 @@ interface InsertCitationPanelState {
   selectedIndex: number;
   searchTerm: string;
   selectedNode: NavigationTreeNode;
+  status: CitationSourceListStatus;
 }
 
 interface InsertCitationPanelUpdateState {
@@ -239,6 +242,7 @@ interface InsertCitationPanelUpdateState {
   selectedIndex?: number;
   searchTerm?: string;
   selectedNode?: NavigationTreeNode;
+  status?: CitationSourceListStatus;
 }
 
 export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
@@ -274,6 +278,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       selectedIndex: -1,
       searchTerm: '',
       selectedNode: props.initiallySelectedNode || selectedPanelProvider.treeNode(),
+      status: CitationSourceListStatus.default
     }
   );
 
@@ -356,9 +361,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       }
     },
     onExecuteSearch: () => {
+      updateState({ status: CitationSourceListStatus.inProgress });
       selectedPanelProvider.search(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode).then((value) => {
         if (value) {
-          updateState({ citations: value });
+          updateState({ citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default });
         }
       });
     },
@@ -374,6 +380,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       updateState({ selectedIndex: index });
     },
     onConfirm: onOk,
+    status: insertCitationPanelState.status,
     ref: panelRef
   };
 
