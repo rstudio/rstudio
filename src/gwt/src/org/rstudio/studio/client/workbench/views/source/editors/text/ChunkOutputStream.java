@@ -22,6 +22,7 @@ import java.util.Map;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.MutationObserver;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -444,10 +445,21 @@ public class ChunkOutputStream extends FlowPanel
             int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
             frame.getElement().getStyle().setWidth(100, Unit.PCT);
-
-            frame.getElement().getStyle().setOverflow(Overflow.VISIBLE);
-            frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.VISIBLE);
             onHeightChanged();
+
+            Command handler = () -> {
+               int newHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+               onHeightChanged();
+            };
+            
+            MutationObserver.Builder builder = new MutationObserver.Builder(handler);
+            builder.attributes(true);
+            builder.characterData(true);
+            builder.childList(true);
+            builder.subtree(true);
+            MutationObserver observer = builder.get();
+            observer.observe(frame.getIFrame().getContentDocument().getBody());
          }
       });
    }
