@@ -48,6 +48,7 @@
 * R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 * The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
+* Show correct symbol for Return key in Mac menus (#6524)
 
 ### RStudio Server Pro
 
