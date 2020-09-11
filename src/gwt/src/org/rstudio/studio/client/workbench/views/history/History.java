@@ -236,7 +236,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
                preservedScrollPos = view_.getRecentCommandsScrollPosition();
 
                if (historyPosition_ < commands.size())
-                  startIndex = new Long(historyPosition_).intValue();
+                  startIndex = Long.valueOf(historyPosition_).intValue();
             }
 
             // set recent commands
