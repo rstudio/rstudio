@@ -278,7 +278,7 @@ public class ChunkOutputUi
 
    public final static int MIN_CHUNK_HEIGHT = 25;
    public final static int CHUNK_COLLAPSED_HEIGHT = 15;
-   public final static int MAX_CHUNK_HEIGHT = 650;
+   public final static int MAX_CHUNK_HEIGHT = 1000;
    
    public final static int MIN_PLOT_WIDTH = 400;
    public final static int MAX_PLOT_WIDTH = 700;
