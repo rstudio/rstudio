@@ -1143,11 +1143,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   if (exists(".rs.notebookChunkCallbacks"))
   {
      results <- list()
-     handles <- ls(envir = .rs.notebookChunkCallbacks)
-     for (handle in handles) {
-        chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
-        results <- c(results, chunkCallback(chunkName, chunkCode))
-     }
+     handle <- ls(envir = .rs.notebookChunkCallbacks)
+     chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
+     results <- c(results, chunkCallback(chunkName, chunkCode))
      return(results)
   }
   NULL
