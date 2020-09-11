@@ -42,14 +42,13 @@ export interface InsertCitationDialogResult {
   selectedNode?: NavigationTreeNode;
 }
 
-export async function selectCitations(
+export async function showInsertCitationDialog(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
   intiallySelectedNode?: NavigationTreeNode,
 ): Promise<InsertCitationDialogResult | undefined> {
-
 
   let result: InsertCitationDialogResult | undefined;
 

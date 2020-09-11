@@ -29,7 +29,7 @@ import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
 import { NavigationTreeNode } from '../../api/widgets/navigation-tree';
-import { selectCitations } from '../../behaviors/insert_citation/insert_citation-panel';
+import { showInsertCitationDialog } from '../../behaviors/insert_citation/insert_citation-panel';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
 
@@ -48,7 +48,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          selectCitations(ui, state.doc, bibliographyManager, server, this.selectedNode).then(async result => {
+          showInsertCitationDialog(ui, state.doc, bibliographyManager, server, this.selectedNode).then(async result => {
             if (result) {
 
               // Remember the last tree node that was selected
