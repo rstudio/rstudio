@@ -81,9 +81,13 @@ void crossrefRequest(const std::string& resource,
                      const session::JsonRpcResponseHandler& handler,
                      const json::JsonRpcFunctionContinuation& cont)
 {
+   // email address
+   std::string email = r::options::getOption<std::string>("rstudio.crossref_email",
+                                                          "crossref@rstudio.com", false);
+
    // build user agent
    std::string userAgent = r::options::getOption<std::string>("HTTPUserAgent", "RStudio") +
-                           "; RStudio Crossref Cite (mailto:crossref@rstudio.com)";
+                           "; RStudio Crossref Cite (mailto:" + email + ")";
 
    // build query string
    std::string queryString;
