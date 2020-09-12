@@ -37,7 +37,13 @@ export function scrollIntoView(
     const schema = view.state.schema;
     const containerEl = view.nodeDOM(container.pos) as HTMLElement;
     const parentList = findParentNodeOfTypeClosestToPos($pos, [schema.nodes.ordered_list, schema.nodes.bullet_list]);
-    const resultPos = parentList ? parentList.pos : $pos.before();
+    const parentDiv = schema.nodes.div ? findParentNodeOfTypeClosestToPos($pos, schema.nodes.div) : undefined;
+    let resultPos = $pos.before();
+    if (parentList) {
+      resultPos = parentList.pos;
+    } else if (parentDiv) {
+      resultPos = $pos.before(2);
+    }
     const resultNode = view.nodeDOM(resultPos) as HTMLElement;
     if (container && resultNode) {
       const scroller = zenscroll.createScroller(containerEl, duration, offset);
