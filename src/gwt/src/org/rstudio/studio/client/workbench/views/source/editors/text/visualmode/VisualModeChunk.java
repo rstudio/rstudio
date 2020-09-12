@@ -110,9 +110,18 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-      // Track activation state
-      editor_.addFocusHandler((evt) -> { active_ = true; });
-      editor_.addBlurHandler((evt) -> { active_ = false; });
+      // Track activation state and notify visual mode
+      editor_.addFocusHandler((evt) -> 
+      { 
+         active_ = true; 
+         target_.getVisualMode().setActiveEditor(editor_);
+      });
+      editor_.addBlurHandler((evt) ->
+      {
+         active_ = false;
+         target_.getVisualMode().setActiveEditor(null);
+      });
+       
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
@@ -407,6 +416,14 @@ public class VisualModeChunk
    }
    
    /**
+    * Sets focus to the editor instance inside the chunk.
+    */
+   public void focus()
+   {
+      editor_.focus();
+   }
+   
+   /**
     * Returns the position/index of the chunk in the original Markdown document,
     * if known. Note that this value may not be correct if the Markdown document
     * has been mutated since the chunk was created.
@@ -492,9 +509,31 @@ public class VisualModeChunk
    }
    
    /**
-    * Executes the current selection inside the chunk
+    * Executes the active selection via the parent editor
     */
-   private void executeSelection()
+   public void executeSelection()
+   {
+      performWithSelection(() ->
+      {
+         codeExecution_.executeSelection(false);
+      });
+   }
+
+   /**
+    * Performs an arbitrary command after synchronizing the selection state of
+    * the child editor to the parent.
+    * 
+    * @param command The command to perform.
+    */
+   public void performWithSelection(Command command)
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         performWithSyncedSelection(command);
+      });
+   }
+   
+   private void performWithSyncedSelection(Command command)
    {
       // Ensure we have a scope. This should always exist since we sync the
       // scope outline prior to executing code.
@@ -522,7 +561,8 @@ public class VisualModeChunk
       
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
-      codeExecution_.executeSelection(false);
+
+      command.execute();
       
       // After the event loop, forward the parent selection back to the child if
       // it's changed (this allows us to advance the cursor after running a line)

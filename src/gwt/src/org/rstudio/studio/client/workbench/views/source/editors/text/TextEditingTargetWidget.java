@@ -827,8 +827,8 @@ public class TextEditingTargetWidget
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       if (canSourceOnSave && fileType.isSql())
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
-      boolean canExecuteCode = fileType.canExecuteCode() && !visualRmdMode;
-      boolean canExecuteChunks = fileType.canExecuteChunks() && !visualRmdMode;
+      boolean canExecuteCode = fileType.canExecuteCode();
+      boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
@@ -855,8 +855,8 @@ public class TextEditingTargetWidget
       // otherwise just show the regular insert chunk button
       insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
 
-      goToPrevButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
-      goToNextButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
+      goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
+      goToNextButton_.setVisible(fileType.canGoNextPrevSection());
 
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
@@ -1196,6 +1196,12 @@ public class TextEditingTargetWidget
    public void findFromSelection()
    {
       findReplace_.findFromSelection();
+   }
+
+   @Override
+   public void findFromSelection(String selectionValue)
+   {
+      findReplace_.findFromSelection(selectionValue);
    }
 
    @Override
@@ -1719,36 +1725,34 @@ public class TextEditingTargetWidget
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
             DocUpdateSentinel.PROPERTY_TRUE));
          menu.addSeparator();
+      }
 
-         if (!isShinyFile)
-         {
-            boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
-            menu.addItem(new DocPropMenuItem(
-               "Chunk Output Inline", docUpdateSentinel_,
-               inline,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-            menu.addItem(new DocPropMenuItem(
-               "Chunk Output in Console", docUpdateSentinel_,
-               !inline,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+      if (!isShinyFile)
+      {
+         boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
+         menu.addItem(new DocPropMenuItem(
+            "Chunk Output Inline", docUpdateSentinel_,
+            inline,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+         menu.addItem(new DocPropMenuItem(
+            "Chunk Output in Console", docUpdateSentinel_,
+            !inline,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+            TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
 
-            menu.addSeparator();
+         menu.addSeparator();
 
-            SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookExpandAllOutput(), column_).createMenuItem());
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookCollapseAllOutput(), column_).createMenuItem());
-            menu.addSeparator();
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookClearOutput(), column_).createMenuItem());
-            menu.addItem(
-               mgr.getSourceCommand(commands_.notebookClearAllOutput(), column_).createMenuItem());
-            menu.addSeparator();
-         }
-
+         SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookExpandAllOutput(), column_).createMenuItem());
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookCollapseAllOutput(), column_).createMenuItem());
+         menu.addSeparator();
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookClearOutput(), column_).createMenuItem());
+         menu.addItem(
+            mgr.getSourceCommand(commands_.notebookClearAllOutput(), column_).createMenuItem());
          menu.addSeparator();
       }
 

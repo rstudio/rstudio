@@ -650,56 +650,26 @@ public class VisualMode implements VisualModeEditorSync,
       
       // disable commands
       disableForVisualMode(
+        // Disabled since it just opens the scope tree widget (which doens't
+        // exist in visual mode)
         commands_.jumpTo(),
-        commands_.jumpToMatching(),
+
+        // Disabled since diagnostics aren't active in visual mode
         commands_.showDiagnosticsActiveDocument(),
-        commands_.goToHelp(),
-        commands_.goToDefinition(),
-        commands_.extractFunction(),
-        commands_.extractLocalVariable(),
-        commands_.renameInScope(),
-        commands_.reflowComment(),
-        commands_.commentUncomment(),
-        commands_.insertRoxygenSkeleton(),
-        commands_.reindent(),
-        commands_.reformatCode(),
+
+        // Disabled since we can't meaningfully select instances in several
+        // embedded editors simultaneously
         commands_.findSelectAll(),
-        commands_.findFromSelection(),
-        commands_.executeSetupChunk(),
-        commands_.executeAllCode(),
-        commands_.executeCode(),
-        commands_.executeCodeWithoutFocus(),
-        commands_.executeCodeWithoutMovingCursor(),
-        commands_.executeCurrentFunction(),
-        commands_.executeCurrentLine(),
-        commands_.executeCurrentParagraph(),
-        commands_.executeCurrentSection(),
-        commands_.executeCurrentStatement(),
-        commands_.executeFromCurrentLine(),
-        commands_.executeLastCode(),
-        commands_.executeNextChunk(),
-        commands_.executeSubsequentChunks(),
-        commands_.executeToCurrentLine(),
-        commands_.sendToTerminal(),
-        commands_.runSelectionAsJob(),
-        commands_.runSelectionAsLauncherJob(),
-        commands_.sourceActiveDocument(),
-        commands_.sourceActiveDocumentWithEcho(),
-        commands_.pasteWithIndentDummy(),
+
+        // Disabled since code folding doesn't work in embedded editors (there's
+        // no gutter in which to toggle folds)
         commands_.fold(),
         commands_.foldAll(),
         commands_.unfold(),
         commands_.unfoldAll(),
-        commands_.yankAfterCursor(),
-        commands_.notebookExpandAllOutput(),
-        commands_.notebookCollapseAllOutput(),
-        commands_.notebookClearAllOutput(),
-        commands_.notebookClearOutput(),
-        commands_.goToLine(),
-        commands_.wordCount(),
-        commands_.restartRClearOutput(),
-        commands_.restartRRunAllChunks(),
-        commands_.profileCode()
+
+        // Disabled since we don't have line numbers in the visual editor
+        commands_.goToLine()
       );
    }
    
@@ -713,15 +683,32 @@ public class VisualMode implements VisualModeEditorSync,
    {
       panmirror_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
    }
-   
-   public void executeChunk()
+
+   /**
+    * Perform a command after synchronizing the selection state of the visual
+    * editor. Note that the command will not be performed unless focus is in a
+    * code editor (as otherwise we can't map selection 1-1).
+    * 
+    * @param command
+    */
+   public void performWithSelection(Command command)
    {
-      visualModeChunks_.executeCurrentChunk();
+      // Drive focus to the editing surface. This is necessary so we correctly
+      // identify the active (focused) editor on which to perform the command.
+      panmirror_.focus();
+      
+      // Perform the command in the active code editor, if any.
+      visualModeChunks_.performWithSelection(command);
    }
    
-   public void executePreviousChunks()
+   public DocDisplay getActiveEditor()
    {
-      visualModeChunks_.executePreviousChunks();
+      return activeEditor_;
+   }
+   
+   public void setActiveEditor(DocDisplay editor)
+   {
+      activeEditor_ = editor;
    }
 
    public void goToNextSection()
@@ -1450,10 +1437,11 @@ public class VisualMode implements VisualModeEditorSync,
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
+   private DocDisplay activeEditor_;  // the current embedded editor
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;
-   private final DocDisplay docDisplay_;
+   private final DocDisplay docDisplay_;   // the parent editor
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
    

@@ -147,9 +147,8 @@ public class TextEditingTargetFindReplace
          findReplace_.findPrevious();
    }
    
-   public void findFromSelection()
+   public void findFromSelection(String selection)
    {
-      String selection = container_.getEditor().getSelectionValue();
       boolean multiLineSelection = selection.indexOf('\n') != -1;
       if ((selection.length()) > 0 && !multiLineSelection)
       {
@@ -165,6 +164,11 @@ public class TextEditingTargetFindReplace
             findReplace_.activate(selection, true, false);
          }
       }
+   }
+   
+   public void findFromSelection()
+   {
+      findFromSelection(container_.getEditor().getSelectionValue());
    }
    
    public void replaceAndFind()
