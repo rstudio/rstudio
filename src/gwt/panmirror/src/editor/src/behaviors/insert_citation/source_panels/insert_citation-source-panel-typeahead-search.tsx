@@ -19,8 +19,8 @@ import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import './insert_citation-source-panel-typeahead-search.css';
-import { CitationSourceList, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel-list";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   height: number;

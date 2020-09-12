@@ -20,24 +20,11 @@ import { EditorUI } from "../../../api/ui";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationListEntry, CitationSourceListStatusText, CitationSourceListStatus } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-list.css';
 
 
-export enum CitationSourceListStatus {
-  default,
-  inProgress,
-  noResults,
-  error
-}
-
-export interface CitationSourceListStatusText {
-  placeholder: string;
-  error: string;
-  progress: string;
-  noResults: string;
-}
 
 export interface CitationSourceListProps extends WidgetProps {
   height: number;

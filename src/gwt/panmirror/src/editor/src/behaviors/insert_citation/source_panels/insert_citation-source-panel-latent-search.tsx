@@ -18,9 +18,9 @@ import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
-import { CitationSourceList, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel-list";
+import { CitationSourceList } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-latent-search.css';
 

@@ -15,26 +15,27 @@
 
 
 import React from "react";
+import ReactDOM from "react-dom";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
+import { EditorServer } from "../../api/server";
 import { EditorUI } from "../../api/ui";
 import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { BibliographyFile, BibliographySource, BibliographyManager } from "../../api/bibliography/bibliography";
+import { BibliographyFile, BibliographyManager } from "../../api/bibliography/bibliography";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 
+
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./source_panels/insert_citation-source-panel";
+import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
+import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
-import './insert_citation-panel.css';
-import { EditorServer } from "../../api/server";
-import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
-import ReactDOM from "react-dom";
+import './insert_citation.css';
 import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
-import { CitationSourceListStatus, CitationSourceListStatusText } from "./source_panels/insert_citation-source-panel-list";
-import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 
 
 // When the dialog has completed, it will return this result
@@ -42,15 +43,16 @@ import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi
 export interface InsertCitationDialogResult {
   citations: CitationListEntry[];
   bibliography: BibliographyFile;
-  selectedNode?: NavigationTreeNode;
+  selectionKey?: string;
 }
+
 
 export async function showInsertCitationDialog(
   ui: EditorUI,
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
-  intiallySelectedNode?: NavigationTreeNode,
+  initiallySelectedNodeKey?: string
 ): Promise<InsertCitationDialogResult | undefined> {
 
   let result: InsertCitationDialogResult | undefined;
@@ -75,15 +77,13 @@ export async function showInsertCitationDialog(
       const container = window.document.createElement('div');
       container.className = 'pm-default-theme';
 
-
-
       const providersForBibliography = () => {
         // TODO: Should I optimize this a little bit (e.g. no need to pass doc/ui)?
         const isWritable = bibliographyManager.writableBibliographyFiles(doc, ui).length > 0;
         return isWritable ? [
           bibliographySourcePanel(doc, ui, bibliographyManager),
           doiSourcePanel(ui, bibliographyManager, server.doi),
-          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi),] :
+          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi)] :
           [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
 
@@ -111,7 +111,7 @@ export async function showInsertCitationDialog(
         result = {
           citations,
           bibliography,
-          selectedNode
+          selectionKey: selectedNode.key
         };
         confirm();
       };
@@ -122,12 +122,16 @@ export async function showInsertCitationDialog(
       };
 
       container.style.width = width + 'px';
+
+      // TODO: THIS CREATES CIRCULAR DEPENDENCY WHYS?!
+
+
       ReactDOM.render(
         <InsertCitationPanel
           height={height}
           width={width}
           configuration={configurationStream}
-          initiallySelectedNode={intiallySelectedNode}
+          initiallySelectedNodeKey={initiallySelectedNodeKey}
           onOk={onOk}
           onCancel={onCancel}
           doc={doc}
@@ -157,61 +161,21 @@ export async function showInsertCitationDialog(
 }
 
 
-export interface InsertCitationPanelConfiguration {
+
+
+
+
+
+
+
+interface InsertCitationPanelConfiguration {
   providers: CitationSourcePanelProvider[];
   bibliographyFiles: BibliographyFile[];
 }
 
-export interface InsertCitationPanelConfigurationStream {
+interface InsertCitationPanelConfigurationStream {
   current: InsertCitationPanelConfiguration;
   stream: () => (InsertCitationPanelConfiguration | null);
-}
-
-// Citation Panels Providers are the core element of ths dialog. Each provider provides
-// the main panel UI as well as the tree to display when the panel is displayed.
-export interface CitationSourcePanelProvider { // CitationSourcePanelProvider
-  key: string;
-  panel: React.FC<CitationSourcePanelProps>;
-  treeNode(): NavigationTreeNode;
-  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode) => CitationListEntry[] | null;
-  search: (term: string, selectedNode: NavigationTreeNode) => Promise<CitationListEntry[] | null>;
-}
-
-export interface CitationListEntry {
-  id: string;
-  authors: (width: number) => string;
-  date: string;
-  journal: string | undefined;
-  title: string;
-  providerKey: string;
-  image?: string;
-  imageAdornment?: string;
-  toBibliographySource: () => Promise<BibliographySource>;
-}
-
-// Panels get a variety of information as properties to permit them to search
-// citations and add them
-export interface CitationSourcePanelProps extends WidgetProps {
-  ui: EditorUI;
-  height: number;
-
-  searchTerm: string;
-  onSearchTermChanged: (term: string) => void;
-  onExecuteSearch: (term: string) => void;
-
-  citations: CitationListEntry[];
-  citationsToAdd: CitationListEntry[];
-
-  // TODO: could be indexes
-  onAddCitation: (citation: CitationListEntry) => void;
-  onRemoveCitation: (citation: CitationListEntry) => void;
-  onConfirm: VoidFunction;
-
-  selectedIndex: number;
-  onSelectedIndexChanged: (index: number) => void;
-  status: CitationSourceListStatus;
-
-  ref: React.Ref<any>;
 }
 
 // The picker is a full featured UI for finding and selecting citation data
@@ -222,7 +186,7 @@ interface InsertCitationPanelProps extends WidgetProps {
   height: number;
   width: number;
   configuration: InsertCitationPanelConfigurationStream;
-  initiallySelectedNode?: NavigationTreeNode;
+  initiallySelectedNodeKey?: string;
   onOk: (citations: CitationListEntry[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => void;
   onCancel: () => void;
 }
@@ -263,12 +227,27 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   };
 
-  // TODO: Consider a single configuration state that can be passed or streamed in
-  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>();
-  const [selectedPanelProvider, setSelectedPanelProvider] = React.useState<CitationSourcePanelProvider>(panelForNode(insertCitationConfiguration.providers, props.initiallySelectedNode) || insertCitationConfiguration.providers[0]);
-
   // The source data for the tree
   const treeSourceData = insertCitationConfiguration.providers.map(panel => panel.treeNode());
+
+  const nodeForKey = (nodes: NavigationTreeNode[], key?: string): NavigationTreeNode | undefined => {
+    if (!key) {
+      return undefined;
+    }
+
+    for (const node of nodes) {
+      if (node.key === key) {
+        return node;
+      }
+      return nodeForKey(nodes, key);
+    }
+    return undefined;
+  };
+  const defaultNode = nodeForKey(treeSourceData, props.initiallySelectedNodeKey);
+
+  // TODO: Consider a single configuration state that can be passed or streamed in
+  const [bibliographyFile, setBibliographyFile] = React.useState<BibliographyFile>();
+  const [selectedPanelProvider, setSelectedPanelProvider] = React.useState<CitationSourcePanelProvider>(panelForNode(insertCitationConfiguration.providers, defaultNode) || insertCitationConfiguration.providers[0]);
 
   // Holder of the dialog state
   const [insertCitationPanelState, setInsertCitationPanelState] = React.useState<InsertCitationPanelState>(
@@ -277,7 +256,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       citationsToAdd: [],
       selectedIndex: -1,
       searchTerm: '',
-      selectedNode: props.initiallySelectedNode || selectedPanelProvider.treeNode(),
+      selectedNode: defaultNode || selectedPanelProvider.treeNode(),
       status: CitationSourceListStatus.default
     }
   );

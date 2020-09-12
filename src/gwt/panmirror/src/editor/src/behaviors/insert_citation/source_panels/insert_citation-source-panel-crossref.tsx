@@ -19,13 +19,13 @@ import React from "react";
 import { EditorUI } from "../../../api/ui";
 import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
-
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
-import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
-import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
-import { DOIServer } from "../../../api/doi";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
+import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
+import { DOIServer } from "../../../api/doi";
+
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 export function crossrefSourcePanel(ui: EditorUI,
   bibliographyManager: BibliographyManager,

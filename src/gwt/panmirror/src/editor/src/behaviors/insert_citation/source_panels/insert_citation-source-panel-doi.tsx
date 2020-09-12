@@ -22,11 +22,10 @@ import { DOIServer } from "../../../api/doi";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
-
 
 const kDOIType = 'DOI Search';
 

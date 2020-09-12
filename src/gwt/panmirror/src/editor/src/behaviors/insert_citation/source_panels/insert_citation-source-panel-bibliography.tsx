@@ -14,6 +14,7 @@
  */
 
 import React from "react";
+import uniqby from "lodash.uniqby";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
@@ -23,10 +24,8 @@ import { BibliographyManager, BibliographyCollection, BibliographySource } from 
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
-
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
-import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
