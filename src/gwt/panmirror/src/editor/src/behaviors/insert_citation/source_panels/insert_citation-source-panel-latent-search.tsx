@@ -23,6 +23,8 @@ import { TextButton } from "../../../api/widgets/button";
 import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-latent-search.css';
+import { execFile } from "child_process";
+import { readFile } from "fs/promises";
 
 export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   height: number;
@@ -42,8 +44,6 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   statusText: CitationSourceListStatusText;
 }
 
-// TODO: Height issue
-// TODO: Focus tab order issue
 // TODO: Status / progress issue
 
 const kSearchBoxHeightWithMargin = 38;
@@ -90,8 +90,19 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
   // Used to focus the search box
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
+
   const focusSearch = () => {
     searchBoxRef.current?.focus();
+  };
+
+  // Allow the search box to gain focus the first time the enclosing
+  // container div receives focus.
+  const initialFocusSet = React.useRef<boolean>(false);
+  const parentFocused = () => {
+    if (!initialFocusSet.current) {
+      focusSearch();
+      initialFocusSet.current = true;
+    }
   };
 
   const onAddCitation = (citation: CitationListEntry) => {
@@ -100,7 +111,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
+    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={parentFocused}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
         <TextInput
           value={props.searchTerm}
