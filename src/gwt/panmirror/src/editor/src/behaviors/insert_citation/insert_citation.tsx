@@ -490,7 +490,10 @@ const nodeForKey = (nodes: NavigationTreeNode[], key?: string): NavigationTreeNo
     if (node.key === key) {
       return node;
     }
-    return nodeForKey(nodes, key);
+    const childNode = nodeForKey(node.children, key);
+    if (childNode) {
+      return childNode;
+    }
   }
   return undefined;
 };
