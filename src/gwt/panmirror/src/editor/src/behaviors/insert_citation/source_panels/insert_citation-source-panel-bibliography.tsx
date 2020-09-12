@@ -190,6 +190,7 @@ function toCitationEntries(sources: BibliographySource[], ui: EditorUI): Citatio
   return sources.map(source => {
     return {
       id: source.id,
+      type: source.type,
       title: source.title || '',
       providerKey: source.providerKey,
       authors: (length: number) => {

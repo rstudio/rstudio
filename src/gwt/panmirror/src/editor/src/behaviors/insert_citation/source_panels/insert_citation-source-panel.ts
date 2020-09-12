@@ -43,6 +43,7 @@ export interface CitationSourcePanelProvider {
 
 export interface CitationListEntry {
   id: string;
+  type: string;
   authors: (width: number) => string;
   date: string;
   journal: string | undefined;

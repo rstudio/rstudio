@@ -14,7 +14,7 @@
  */
 import React from "react";
 
-import { FixedSizeList } from "react-window";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 
 import { EditorUI } from "../../../api/ui";
 import { WidgetProps } from "../../../api/widgets/react";
@@ -25,6 +25,19 @@ import { CitationListEntry, CitationSourceListStatusText, CitationSourceListStat
 import './insert_citation-source-panel-list.css';
 
 
+export interface CitationSourcePanelListItemData {
+  citations: CitationListEntry[];
+  citationsToAdd: CitationListEntry[];
+  selectedIndex: number;
+  onSelectedIndexChanged: (index: number) => void;
+  onAddCitation: (source: CitationListEntry) => void;
+  onRemoveCitation: (source: CitationListEntry) => void;
+  onConfirm: () => void;
+  ui: EditorUI;
+  showSeparator?: boolean;
+  showSelection?: boolean;
+  preventFocus?: boolean;
+}
 
 export interface CitationSourceListProps extends WidgetProps {
   height: number;
@@ -36,6 +49,10 @@ export interface CitationSourceListProps extends WidgetProps {
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
   focusPrevious?: () => void;
+
+  itemProvider: (props: ListChildComponentProps) => JSX.Element;
+  itemHeight: number;
+
   status: CitationSourceListStatus;
   statusText: CitationSourceListStatusText;
   ui: EditorUI;
@@ -45,8 +62,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   const fixedList = React.useRef<FixedSizeList>(null);
 
   // Item height and consequently page height
-  const itemHeight = 64;
-  const itemsPerPage = Math.floor(props.height / itemHeight);
+  const itemsPerPage = Math.floor(props.height / props.itemHeight);
 
   // Update selected item index (this will manage bounds)
   const handleIncrementIndex = (event: React.KeyboardEvent, increment: number, index: number) => {
@@ -134,7 +150,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               height={props.height}
               width='100%'
               itemCount={props.citations.length}
-              itemSize={itemHeight}
+              itemSize={props.itemHeight}
               itemData={{
                 selectedIndex: props.selectedIndex,
                 onSelectedIndexChanged: props.onSelectedIndexChanged,
@@ -150,7 +166,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               }}
               ref={fixedList}
             >
-              {CitationSourcePanelListItem}
+              {props.itemProvider}
             </FixedSizeList>
           </div >
         );

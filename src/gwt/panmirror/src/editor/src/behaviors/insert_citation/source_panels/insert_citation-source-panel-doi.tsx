@@ -108,6 +108,7 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
     const providerKey = 'doi';
     return {
       id,
+      type: csl.type,
       title: csl.title || '',
       providerKey,
       authors: (length: number) => {

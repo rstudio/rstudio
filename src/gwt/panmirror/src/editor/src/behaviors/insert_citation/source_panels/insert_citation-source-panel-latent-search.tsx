@@ -23,8 +23,7 @@ import { TextButton } from "../../../api/widgets/button";
 import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-latent-search.css';
-import { execFile } from "child_process";
-import { readFile } from "fs/promises";
+import { CitationSourcePanelListItemDetailed } from "./insert_citation-source-panel-list-item-detailed";
 
 export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   height: number;
@@ -147,6 +146,8 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           focusPrevious={focusSearch}
           onConfirm={props.onConfirm}
           ui={props.ui}
+          itemHeight={100}
+          itemProvider={CitationSourcePanelListItemDetailed}
           status={props.status}
           statusText={props.statusText}
           classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}

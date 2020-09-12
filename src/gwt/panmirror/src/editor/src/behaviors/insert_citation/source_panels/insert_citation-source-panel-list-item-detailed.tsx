@@ -18,20 +18,16 @@ import { ListChildComponentProps } from "react-window";
 
 import { OutlineButton } from "../../../api/widgets/button";
 
-import { CitationSourcePanelListData } from "./insert_citation-source-panel-list";
+import { CitationSourcePanelListItemData } from "./insert_citation-source-panel-list";
 
-import './insert_citation-source-panel-list-item.css';
+import './insert_citation-source-panel-list-item-detailed.css';
 
-export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
-  const citationListData: CitationSourcePanelListData = props.data;
+export const CitationSourcePanelListItemDetailed = (props: ListChildComponentProps) => {
+
+  const citationListData: CitationSourcePanelListItemData = props.data;
 
   const citationEntry = citationListData.citations[props.index];
-
-  // NOTE: Could consider making this length dynamic to account for item width
-  const maxIdLength = 30;
-  const id = citationEntry.id.length > maxIdLength ? `@${citationEntry.id.substr(0, maxIdLength - 1)}…` : `@${citationEntry.id}`;
-  const authorWidth = Math.max(10, 50 - id.length);
 
   // Wheher this item is selected
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
@@ -63,21 +59,19 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   // TODO: Localize +/- button
 
   return (
-    <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
-      <div className={`pm-insert-citation-source-panel-item-border ${selected ? 'pm-list-item-selected' : ''}`}>
-        <div className='pm-insert-citation-source-panel-item-container'>
-          <div className='pm-insert-citation-source-panel-item-type'>
-            {citationEntry.imageAdornment ? <img className='pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color' src={citationEntry.imageAdornment} /> : undefined}
-            <img className='pm-insert-citation-source-panel-item-icon pm-block-border-color' src={citationEntry.image} />
+    <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item-detailed' style={props.style}>
+      <div className={`pm-insert-citation-source-panel-item-detailed-border ${selected ? 'pm-list-item-selected' : ''}`} >
+        <div className='pm-insert-citation-source-panel-item-detailed-container'>
+          <div className='pm-insert-citation-source-panel-item-detailed-type'>
+            {citationEntry.imageAdornment ? <img className='pm-insert-citation-source-panel-item-detailed-adorn pm-block-border-color pm-background-color' src={citationEntry.imageAdornment} /> : undefined}
+            <img className='pm-insert-citation-source-panel-item-detailed-icon pm-block-border-color' src={citationEntry.image} />
           </div>
-          <div className='pm-insert-citation-source-panel-item-summary'>
-            <div className='pm-insert-citation-source-panel-item-id'>
-              <div className='pm-insert-citation-source-panel-item-title pm-fixedwidth-font pm-text-color'>{id}</div>
-              <div className='pm-insert-citation-source-panel-item-detail pm-text-color'>{citationEntry.authors(authorWidth)} {citationEntry.date}</div>
-            </div>
-            <div className='pm-insert-citation-source-panel-item-subtitle-text pm-text-color'>{citationEntry.title}</div>
+          <div className='pm-insert-citation-source-panel-item-detailed-summary'>
+            <div className='pm-insert-citation-source-panel-item-detailed-title pm-fixedwidth-font pm-text-color'>{citationEntry.title}</div>
+            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>{citationEntry.journal}</div>
+            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>{citationEntry.type} - {citationEntry.date} - {citationEntry.authors(50)}</div>
           </div>
-          <div className='pm-insert-citation-source-panel-item-button'>
+          <div className='pm-insert-citation-source-panel-item-detailed-button'>
             <OutlineButton
               tabIndex={citationListData.preventFocus ? -1 : 0}
               style={{ width: '24px', height: '24px' }}

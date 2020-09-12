@@ -21,7 +21,7 @@ import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cit
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { CrossrefWork, imageForCrossrefType, CrossrefServer } from "../../../api/crossref";
+import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from "../../../api/crossref";
 import { DOIServer } from "../../../api/doi";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
@@ -118,8 +118,9 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
     authors: (length: number) => {
       return formatAuthors(coercedCSL.author, length);
     },
+    type: prettyType(ui, crossrefWork.type),
     date: formatIssuedDate(crossrefWork.issued),
-    journal: '',
+    journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
     toBibliographySource: async () => {
 
@@ -136,10 +137,6 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
 function crossrefWorkTitle(work: CrossrefWork, ui: EditorUI) {
   if (work.title) {
     return work.title[0];
-  } else if (work["container-title"]) {
-    return work["container-title"][0];
-  } else if (work["short-container-title"]) {
-    return work["short-container-title"];
   } else {
     return ui.context.translateText('(Untitled)');
   }
