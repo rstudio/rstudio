@@ -24,6 +24,7 @@
 #include "SessionPanmirrorPandoc.hpp"
 #include "SessionPanmirrorBibliography.hpp"
 #include "SessionPanmirrorCrossref.hpp"
+#include "SessionPanmirrorDataCite.hpp"
 #include "SessionPanmirrorPubMed.hpp"
 #include "SessionPanmirrorDOI.hpp"
 
@@ -41,6 +42,7 @@ Error initialize()
       (pandoc::initialize)
       (bibliography::initialize)
       (crossref::initialize)
+      (datacite::initialize)
       (pubmed::initialize)
       (doi::initialize)
     ;

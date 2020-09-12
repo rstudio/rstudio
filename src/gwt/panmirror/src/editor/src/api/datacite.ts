@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * datacite.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,21 +13,23 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { ZoteroServer } from './zotero';
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
-import { PubMedServer } from "./pubmed";
-import { DataCiteServer } from "./datacite";
 
-
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly datacite: DataCiteServer;
-  readonly pubmed: PubMedServer;
-  readonly zotero: ZoteroServer;
-  readonly xref: XRefServer;
+export interface DataCiteResult {
+  status: "ok" | "notfound" | "nohost" | "error";
+  message: DataCiteRecord[] | null;
+  error: string;
 }
+
+export interface DataCiteRecord {
+  doi: string;
+  title?: string;
+  publisher?: string;
+  publicationYear?: number;
+  creators?: string[];
+  type?: string; // citeproc type
+}
+
+export interface DataCiteServer {
+  search: (query: string) => Promise<DataCiteResult>;
+}
+

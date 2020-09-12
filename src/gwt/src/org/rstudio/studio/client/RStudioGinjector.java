@@ -75,6 +75,7 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDataCiteServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorPubMedServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServer;
@@ -313,6 +314,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    void injectMembers(PanmirrorPandocServer panmirrorPandocServer);
    void injectMembers(PanmirrorCrossrefServer panmirrorCrossrefServer);
+   void injectMembers(PanmirrorDataCiteServer panmirrorDataCiteServer);
    void injectMembers(PanmirrorPubMedServer panmirrorPubMedServer);
    void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
    void injectMembers(PanmirrorXRefServer panmirrorXRefServer);

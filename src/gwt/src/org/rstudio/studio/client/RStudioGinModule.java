@@ -87,6 +87,7 @@ import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorDataCiteServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorPubMedServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
@@ -463,6 +464,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorPandocServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorCrossrefServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorDataCiteServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorPubMedServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorXRefServerOperations.class).to(RemoteServer.class);
       bind(PanmirrorDOIServerOperations.class).to(RemoteServer.class);

@@ -6261,6 +6261,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void dataciteSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, DATACITE_SEARCH, query, callback);  
+   }
+   
+   @Override
    public void pubmedSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
    {
       sendRequest(RPC_SCOPE, PUBMED_SEARCH, query, callback);  
@@ -6853,6 +6859,8 @@ public class RemoteServer implements Server
    private static final String CROSSREF_WORKS = "crossref_works";
    
    private static final String PUBMED_SEARCH = "pubmed_search";
+   
+   private static final String DATACITE_SEARCH = "datacite_search";
   
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
    private static final String ZOTERO_GET_LIBRARY_NAMES = "zotero_get_library_names";
@@ -6865,4 +6873,5 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
+  
 }
