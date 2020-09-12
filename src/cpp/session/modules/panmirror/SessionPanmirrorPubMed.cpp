@@ -222,7 +222,7 @@ void pubMedSearch(const json::JsonRpcRequest& request,
    params.push_back(std::make_pair("db", "pubmed"));
    params.push_back(std::make_pair("term", query));
    params.push_back(std::make_pair("sort", "relevance"));
-   params.push_back(std::make_pair("retmax", "30"));
+   params.push_back(std::make_pair("retmax", "25"));
 
    pubMedRequest("entrez/eutils/esearch.fcgi", params, cont,
                  [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
