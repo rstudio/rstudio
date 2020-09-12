@@ -238,7 +238,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       ...insertCitationPanelState,
       ...updatedState
     };
-    console.log(newState);
     setInsertCitationPanelState(newState);
   };
 
