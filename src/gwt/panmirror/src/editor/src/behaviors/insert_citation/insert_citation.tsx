@@ -25,7 +25,7 @@ import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { BibliographyFile, BibliographyManager, bibliographyTypes } from "../../api/bibliography/bibliography";
+import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath } from "../../api/bibliography/bibliography";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./source_panels/insert_citation-source-panel";
@@ -161,16 +161,6 @@ export async function showInsertCitationDialog(
   }
 }
 
-
-function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
-  return {
-    displayPath: path,
-    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
-    isProject: false,
-    writable: true
-  };
-}
-
 interface InsertCitationPanelConfiguration {
   providers: CitationSourcePanelProvider[];
   bibliographyFiles: BibliographyFile[];
@@ -266,7 +256,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       selectedNode: defaultNode || selectedPanelProvider.treeNode(),
       status: CitationSourceListStatus.default,
       existingBibliographyFile: props.configuration.current.bibliographyFiles[0],
-      createBibliographyFile: newBibliographyFile(changeExtension('references.bib', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
+      createBibliographyFile: bibliographyFileForPath(changeExtension('references.bib', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
     }
   );
 
@@ -407,7 +397,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const onCreateBibliographyFileNameChanged = (fileName: string) => {
-    updateState({ createBibliographyFile: newBibliographyFile(fileName, props.ui) });
+    updateState({ createBibliographyFile: bibliographyFileForPath(fileName, props.ui) });
   };
 
   // Support keyboard shortcuts for dismissing dialog

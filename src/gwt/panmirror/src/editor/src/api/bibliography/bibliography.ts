@@ -25,6 +25,7 @@ import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
+import { joinPaths } from '../path';
 
 
 export interface BibliographyFile {
@@ -32,6 +33,15 @@ export interface BibliographyFile {
   fullPath: string;
   isProject: boolean;
   writable: boolean;
+}
+
+export function bibliographyFileForPath(path: string, ui: EditorUI): BibliographyFile {
+  return {
+    displayPath: path,
+    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+    isProject: false,
+    writable: true
+  };
 }
 
 export interface BibliographyType {
