@@ -59,6 +59,8 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
     if (pasted.current) {
       props.executeSearch(search);
       pasted.current = false;
+    } else {
+      props.onSearchTermChanged(search);
     }
   };
 
