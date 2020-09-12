@@ -38,6 +38,9 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   ui: EditorUI;
 }
 
+// Height of textbox including border
+const kTextBoxHeight = 30;
+
 export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceTypeaheadSearchPanelProps>((props: CitationSourceTypeaheadSearchPanelProps, ref) => {
 
   const listContainer = React.useRef<HTMLDivElement>(null);
@@ -93,7 +96,7 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
         />
       </div>
       <CitationSourceList
-        height={props.height - 28}
+        height={props.height - kTextBoxHeight}
         citations={props.citations}
         citationsToAdd={props.citationsToAdd}
         onConfirm={props.onConfirm}
