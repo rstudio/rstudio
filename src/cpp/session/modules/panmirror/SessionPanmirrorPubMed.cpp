@@ -22,6 +22,8 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Util.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
@@ -185,10 +187,15 @@ void pubMedRequest(const std::string& resource,
                    const JsonHandler& handler)
 {
 
-   // add json retmode
+   // add standard params
    params.push_back(std::make_pair("tool", "rstudio"));
    params.push_back(std::make_pair("email", "pubmed@rstudio.com"));
    params.push_back(std::make_pair("retmode", "json"));
+
+   // add apikey if specified
+   std::string apiKey = r::options::getOption<std::string>("rstudio.pubmed_api_key", "", false);
+   if (!apiKey.empty())
+      params.push_back(std::make_pair("api_key", apiKey));
 
    // build query string
    std::string queryString;
