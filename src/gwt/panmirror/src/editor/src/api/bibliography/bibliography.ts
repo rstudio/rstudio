@@ -26,11 +26,40 @@ import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './b
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
 
+
 export interface BibliographyFile {
   displayPath: string;
   fullPath: string;
   isProject: boolean;
   writable: boolean;
+}
+
+export interface BibliographyType {
+  extension: string;
+  displayName: string;
+  default: boolean;
+}
+
+// The types of bibliography files and the default value
+export function bibliographyTypes(ui: EditorUI): BibliographyType[] {
+  const defaultBiblioType = ui.prefs.bibliographyDefaultType();
+  return [
+    {
+      displayName: ui.context.translateText('BibTeX'),
+      extension: 'bib',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-YAML'),
+      extension: 'yaml',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-JSON'),
+      extension: 'json',
+      default: defaultBiblioType === 'json'
+    },
+  ];
 }
 
 export interface BibliographyDataProvider {

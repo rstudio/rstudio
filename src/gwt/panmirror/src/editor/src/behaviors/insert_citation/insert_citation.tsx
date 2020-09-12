@@ -25,7 +25,7 @@ import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { BibliographyFile, BibliographyManager } from "../../api/bibliography/bibliography";
+import { BibliographyFile, BibliographyManager, bibliographyTypes } from "../../api/bibliography/bibliography";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./source_panels/insert_citation-source-panel";
@@ -161,11 +161,6 @@ export async function showInsertCitationDialog(
   }
 }
 
-export interface BibliographyType {
-  extension: string;
-  displayName: string;
-  default: boolean;
-}
 
 function newBibliographyFile(path: string, ui: EditorUI): BibliographyFile {
   return {
@@ -260,25 +255,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // TODO: Consider a single configuration state that can be passed or streamed in
   const [selectedPanelProvider, setSelectedPanelProvider] = React.useState<CitationSourcePanelProvider>(panelForNode(insertCitationConfiguration.providers, defaultNode) || insertCitationConfiguration.providers[0]);
 
-  // The types of bibliography files and the default value
-  const defaultBiblioType = props.ui.prefs.bibliographyDefaultType();
-  const bibliographyTypes: BibliographyType[] = [
-    {
-      displayName: props.ui.context.translateText('BibTeX'),
-      extension: 'bib',
-      default: defaultBiblioType === 'bib'
-    },
-    {
-      displayName: props.ui.context.translateText('CSL-YAML'),
-      extension: 'yaml',
-      default: defaultBiblioType === 'bib'
-    },
-    {
-      displayName: props.ui.context.translateText('CSL-JSON'),
-      extension: 'json',
-      default: defaultBiblioType === 'json'
-    },
-  ];
 
   // Holder of the dialog state
   const [insertCitationPanelState, setInsertCitationPanelState] = React.useState<InsertCitationPanelState>(
@@ -290,7 +266,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       selectedNode: defaultNode || selectedPanelProvider.treeNode(),
       status: CitationSourceListStatus.default,
       existingBibliographyFile: props.configuration.current.bibliographyFiles[0],
-      createBibliographyFile: newBibliographyFile(changeExtension('references.bib', defaultBiblioType || bibliographyTypes[0].extension), props.ui)
+      createBibliographyFile: newBibliographyFile(changeExtension('references.bib', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
     }
   );
 
@@ -487,7 +463,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           // Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
           insertCitationConfiguration.bibliographyFiles.length === 0 || insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ?
             <CitationBibliographyPicker
-              bibliographyTypes={bibliographyTypes}
+              bibliographyTypes={bibliographyTypes(props.ui)}
               createBibliographyFileName={insertCitationPanelState.createBibliographyFile.displayPath}
               onCreateBibliographyFileNameChanged={onCreateBibliographyFileNameChanged}
               bibliographyFiles={insertCitationConfiguration.bibliographyFiles}

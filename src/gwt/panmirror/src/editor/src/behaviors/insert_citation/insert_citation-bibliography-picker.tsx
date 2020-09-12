@@ -20,10 +20,9 @@ import { changeExtension } from "../../api/path";
 import { WidgetProps } from "../../api/widgets/react";
 import { TextInput } from "../../api/widgets/text";
 import { SelectInput } from "../../api/widgets/select";
-import { BibliographyFile } from "../../api/bibliography/bibliography";
+import { BibliographyFile, BibliographyType } from "../../api/bibliography/bibliography";
 
 import './insert_citation-bibliography-picker.css';
-import { BibliographyType } from "./insert_citation";
 
 export interface CitationBiblographyPickerProps extends WidgetProps {
   bibliographyTypes: BibliographyType[];
