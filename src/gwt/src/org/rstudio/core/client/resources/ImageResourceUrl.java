@@ -27,7 +27,7 @@ public class ImageResourceUrl implements ImageResource
       width_ = width;
       height_ = height;
    }
-   
+
    @Override
    public String getName()
    {

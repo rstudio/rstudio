@@ -25,12 +25,12 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
       sortColumn_ = ObjectGridColumn.COLUMN_NAME;
       ascending_ = true;
    }
-   
+
    public void setSortType(int sortType)
    {
       sortType_ = sortType;
    }
-   
+
    public void setSortColumn(int sortColumn)
    {
       sortColumn_ = sortColumn;
@@ -41,17 +41,17 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
       else
          ascending_ = true;
    }
-   
+
    public int getSortColumn()
    {
       return sortColumn_;
    }
-   
+
    public boolean getAscending()
    {
       return ascending_;
    }
-   
+
    public void setAscending(boolean ascending)
    {
       ascending_ = ascending;
@@ -61,7 +61,7 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
    {
       if (ascending_ || sortType_ == SORT_AUTO)
          return compareAscending(first, second);
-      else 
+      else
          return compareAscending(second, first);
    }
 
@@ -73,7 +73,7 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
          result = first.getCategory() - second.getCategory();
          if (result == 0)
          {
-            result = localeCompare(first.rObject.getName(), 
+            result = localeCompare(first.rObject.getName(),
                                    second.rObject.getName());
          }
       }
@@ -106,17 +106,17 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
       return result;
    }
 
-   // Gets sort order of two strings. Coerces from undefined/null values to 
+   // Gets sort order of two strings. Coerces from undefined/null values to
    // empty strings.
    private native int localeCompare(String first, String second) /*-{
       firstVal = first ? first : "";
       secondVal = second ? second : "";
       return firstVal.localeCompare(secondVal);
    }-*/;
-   
+
    public static final int SORT_AUTO = 0;
    public static final int SORT_COLUMN = 1;
-   
+
    private int sortType_;
    private int sortColumn_;
    private boolean ascending_;

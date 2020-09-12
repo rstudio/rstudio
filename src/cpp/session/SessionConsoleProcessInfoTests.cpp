@@ -37,10 +37,8 @@ const std::string title("/Users/roger/R");
 const std::string handle1("unit-test01");
 const std::string bogusHandle1("unit-test03");
 const int sequence = 1;
-const bool allowRestart = true;
 const InteractionMode mode = InteractionAlways;
 const TerminalShell::ShellType shellType = TerminalShell::ShellType::Default;
-const ChannelMode channelMode = Rpc;
 const std::string channelId("some channel Id");
 const bool altActive = false;
 
@@ -54,7 +52,6 @@ const core::FilePath altCwd("/usr/stuff");
 
 const int cols = core::system::kDefaultCols;
 const int rows = core::system::kDefaultRows;
-const bool restarted = false;
 const bool zombie = false;
 const bool trackEnv = false;
 
