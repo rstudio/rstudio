@@ -112,7 +112,7 @@ FilePath userConfigDir(
    const boost::optional<std::string>& user,
    const boost::optional<FilePath>& homeDir)
 {
-   FilePath confDir = resolveXdgDir("XDG_CONFIG_HOME", 
+   return resolveXdgDir("XDG_CONFIG_HOME", 
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
 #endif
@@ -120,16 +120,6 @@ FilePath userConfigDir(
          user,
          homeDir
    );
-
-   Error permError;
-   Error error = confDir.ensureDirectory();
-   if (!error)
-   {
-      // Test permissions here.
-      
-   }
-
-   return confDir;
 }
 
 FilePath userDataDir(
