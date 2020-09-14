@@ -288,7 +288,6 @@ void pubMedSearch(const json::JsonRpcRequest& request,
             if (resultsJson.hasMember(id))
             {
                json::Object resultJson = resultsJson[id].getObject();
-               resultJson.writeFormatted(std::cerr);
                PubMedDocument doc = resultToPubMedDocument(resultJson);
                if (!doc.empty())
                   docsJson.push_back(pubMedDocumentJson(doc));

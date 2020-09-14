@@ -61,7 +61,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
-        const useCache = false; // this.warning === undefined || this.warning.length === 0;
+        const useCache = this.warning === undefined || this.warning.length === 0;
 
         // The collection specified in the document header
         const collections = Array.isArray(this.zoteroConfig) ? this.zoteroConfig : [];
