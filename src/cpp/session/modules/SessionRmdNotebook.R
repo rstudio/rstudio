@@ -1140,7 +1140,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("executeChunkCallback", function(chunkName, chunkCode)
 {
-  if (exists(".rs.notebookChunkCallbacks") &&
+  if (exists(".rs.notebookChunkCallbacks", envir = .rs.notebookChunkCallbacks) &&
       length(.rs.notebookChunkCallbacks) != 0)
   {
      handle <- ls(envir = .rs.notebookChunkCallbacks)

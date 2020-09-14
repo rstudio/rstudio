@@ -868,7 +868,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       warning("Handle not found.")
    else
    {
-      id = ls(.rs.notebookChunkCallbacks)
+      id <- ls(envir = .rs.notebookChunkCallbacks)
       rm (list = id, envir = .rs.notebookChunkCallbacks)
    }
 })
