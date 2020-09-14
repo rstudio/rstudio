@@ -48,9 +48,7 @@ typedef boost::function<void(const core::json::JsonRpcFunctionContinuation&, cor
 
 inline void jsonPassthrough(const core::json::JsonRpcFunctionContinuation& cont,
                             const core::json::Value& value) {
-   core::json::JsonRpcResponse response;
-   response.setResult(value);
-   cont(core::Success(), &response);
+   resolveJsonRpcContinuation(cont, kStatusOK, value);
 }
 
 void jsonRpcDownloadHandler(const core::json::JsonRpcFunctionContinuation& cont,
