@@ -795,12 +795,8 @@ public class TextEditingTargetNotebook
       }
 
       if (outputs_.containsKey(data.getChunkId()) &&
-          !data.getHtmlCallback().isEmpty())
-      {
-         ArrayList<String> callbacks = data.getHtmlCallback();
-         for (String callback : callbacks)
-            outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(callback);
-      }
+          !StringUtil.isNullOrEmpty(data.getHtmlCallback()))
+         outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlCallback());
    }
 
    @Override

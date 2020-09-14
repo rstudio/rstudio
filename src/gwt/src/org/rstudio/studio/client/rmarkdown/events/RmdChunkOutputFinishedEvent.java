@@ -56,16 +56,8 @@ public class RmdChunkOutputFinishedEvent
          return this.scope;
       }-*/;
       
-      public final ArrayList<String> getHtmlCallback() {
-         JsArray arr = getNativeHtmlCallbacks();
-         ArrayList<String> results = new ArrayList<>();
-         for (int i = 0; i < arr.length(); i++)
-            results.add(arr.get(i).toString());
-         return results;
-      }
-
-      private native final JsArray getNativeHtmlCallbacks() /*-{
-         return this["html_callback"][0] || this["html_callback"]["html"] || [];
+      public final native String getHtmlCallback() /*-{
+         return this.html_callback;
       }-*/;
    }
 

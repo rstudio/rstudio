@@ -129,7 +129,7 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
 }
 
 void emitOutputFinished(const std::string& docId, const std::string& chunkId,
-      const json::Array& htmlCallback, int scope)
+      const std::string& htmlCallback, int scope)
 {
    json::Object result;
    result["doc_id"]        = docId;
@@ -179,7 +179,7 @@ void onChunkExecCompleted(const std::string& docId,
 {
    r::sexp::Protect rProtect;
    SEXP resultSEXP = R_NilValue;
-   json::Array results;
+   std::string callback;
 
    r::exec::RFunction func(".rs.executeChunkCallback");
    func.addParam(label);
@@ -190,15 +190,25 @@ void onChunkExecCompleted(const std::string& docId,
       LOG_ERROR(error);
    else if (!r::sexp::isNull(resultSEXP))
    {
+      json::Object results;
       Error error = r::json::jsonValueFromList(resultSEXP, &results);
       if (error)
-      {
          LOG_ERROR(error);
-         results.clear();
+      else
+      {
+         if (results.hasMember("html"))
+         {
+            // assumes only one callback is returned
+            if (results["html"].isString())
+               callback = results["html"].getString();
+            else if (results["html"].isArray() &&
+                     results["html"].getArray().getValueAt(0).isString())
+               callback = results["html"].getArray().getValueAt(0).getString();
+         }
       }
    }
 
-   emitOutputFinished(docId, chunkId, results, ExecScopeChunk);
+   emitOutputFinished(docId, chunkId, callback, ExecScopeChunk);
 }
 
 void onDeferredInit(bool)
