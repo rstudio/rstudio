@@ -18,15 +18,14 @@ import { EditorUI } from "./ui";
 import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
 import { urlForDOI } from "./doi";
 
-const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
+const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
 
 export function createUniqueCiteId(existingIds: string[], baseId: string): string {
-  let proposedId = baseId;
   let count = 0;
 
   // Ensure that this is a valid citation, stripping any invalid characters
-
+  let proposedId = baseId.replace(kInvalidCiteKeyChars, '');
 
   // If there is a conflict with an existing id, we will append
   // the following character and try again. If the conflict continues with
@@ -93,11 +92,9 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   // Create a deduplicated string against the existing entries
   let baseId = `${citeIdLeading.toLowerCase()}${datePart}`;
   if (baseId.length === 0) {
-    // Could try title
+    baseId = 'untitled';
   }
 
-  // Strip any characters that shouldn't appear in a bibtex citekey
-  baseId = baseId.replace(kInvalidCiteKeyChars, '');
   return createUniqueCiteId(existingIds, baseId);
 }
 
