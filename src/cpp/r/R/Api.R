@@ -872,7 +872,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    else
    {
       id <- ls(envir = .rs.notebookChunkCallbacks)
-      rm (list = id, envir = .rs.notebookChunkCallbacks)
+      rm(list = id, envir = .rs.notebookChunkCallbacks)
    }
 })
 
