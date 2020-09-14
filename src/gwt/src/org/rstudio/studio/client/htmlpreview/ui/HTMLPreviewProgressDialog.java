@@ -43,7 +43,7 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
 
    public HTMLPreviewProgressDialog(String caption, int maxHeight)
    {
-      super(caption, Roles.getDialogRole(), new Integer(maxHeight));
+      super(caption, Roles.getDialogRole(), maxHeight);
    }
 
    @Override

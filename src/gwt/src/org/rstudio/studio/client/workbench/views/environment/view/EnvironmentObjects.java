@@ -326,7 +326,7 @@ public class EnvironmentObjects extends ResizeComposite
    // of an apparent timing bug triggered by superdevmode (see case 3745).
    public void setObjectDisplay(int type)
    {
-      deferredObjectDisplayType_ = new Integer(type);
+      deferredObjectDisplayType_ = type;
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -777,7 +777,7 @@ public class EnvironmentObjects extends ResizeComposite
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
-   private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
+   private Integer deferredObjectDisplayType_ = OBJECT_LIST_VIEW;
    private int gridRenderRetryCount_ = 0;
 
    public final static int MAX_ENVIRONMENT_OBJECTS = 1024;

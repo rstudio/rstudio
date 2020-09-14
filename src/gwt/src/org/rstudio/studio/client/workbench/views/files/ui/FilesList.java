@@ -249,8 +249,8 @@ public class FilesList extends Composite
          @Override
          public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
-            return new Long(arg0.getLength()).compareTo(
-                                             new Long(arg1.getLength()));
+            return Long.valueOf(arg0.getLength()).compareTo(
+                                             Long.valueOf(arg1.getLength()));
          }
       });
 

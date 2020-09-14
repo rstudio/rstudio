@@ -34,12 +34,12 @@ public class HistoryEntry extends JavaScriptObject
 
    public final long getIndex()
    {
-      return new Double(getIndexNative()).longValue();
+      return Double.valueOf(getIndexNative()).longValue();
    }
 
    public final Date getTimestamp()
    {
-      Double lastModified = new Double(getTimestampNative());
+      Double lastModified = getTimestampNative();
       return new Date(lastModified.longValue());
    }
 

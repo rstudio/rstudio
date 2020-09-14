@@ -245,7 +245,7 @@ public class SelectWidget extends Composite
 
    public void setIntValue(int value)
    {
-      setValue(new Integer(value).toString());
+      setValue(Integer.valueOf(value).toString());
    }
 
    public void addWidget(Widget widget)

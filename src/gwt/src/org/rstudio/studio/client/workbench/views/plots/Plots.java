@@ -157,8 +157,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             @Override
             public void onClick(ClickEvent event)
             {
-               int x = new Double(event.getX()).intValue();
-               int y = new Double(event.getY()).intValue();
+               int x = Double.valueOf(event.getX()).intValue();
+               int y = Double.valueOf(event.getY()).intValue();
 
                // Re-scale for OSX Quartz
                if (BrowseCap.isMacintoshDesktop())

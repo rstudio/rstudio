@@ -311,7 +311,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          setColumnWidth(
                start + i,
-               new Integer(columns_.get(i).getWidth()).toString() + "%");
+               Integer.valueOf(columns_.get(i).getWidth()).toString() + "%");
       }
    }
 
