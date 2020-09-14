@@ -115,7 +115,8 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
         return formatAuthors(csl.author, length);
       },
       date: formatIssuedDate(csl.issued),
-      journal: '',
+      journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
+      doi: csl.DOI,
       image: imageForType(ui, csl.type)[0],
       toBibliographySource: () => {
         return Promise.resolve({ ...csl, id, providerKey });
