@@ -147,7 +147,8 @@ const extension = (context: ExtensionContext): Extension | null => {
 
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
-                  if (mathText.trim().length === 0) {
+                  mathText = mathText.trim();
+                  if (mathText.length === 0) {
                     output.writeText(delimiter + mathText + delimiter);
                   } else {
                     output.writeToken(PandocTokenType.Math, () => {
