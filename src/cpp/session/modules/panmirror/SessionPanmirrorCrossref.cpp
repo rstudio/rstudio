@@ -22,6 +22,8 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Util.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
@@ -79,6 +81,14 @@ void crossrefRequest(const std::string& resource,
                      const session::JsonRpcResponseHandler& handler,
                      const json::JsonRpcFunctionContinuation& cont)
 {
+   // email address
+   std::string email = r::options::getOption<std::string>("rstudio.crossref_email",
+                                                          "crossref@rstudio.com", false);
+
+   // build user agent
+   std::string userAgent = r::options::getOption<std::string>("HTTPUserAgent", "RStudio") +
+                           "; RStudio Crossref Cite (mailto:" + email + ")";
+
    // build query string
    std::string queryString;
    core::http::util::buildQueryString(params, &queryString);
@@ -89,7 +99,8 @@ void crossrefRequest(const std::string& resource,
    boost::format fmt("%s/%s%s");
    const std::string url = boost::str(fmt % kCrossrefApiHost % resource % queryString);
 
-   asyncJsonRpcRequest(url, handler, cont);
+   http::Fields headers;
+   asyncJsonRpcRequest(url, userAgent, headers, handler, cont);
 }
 
 

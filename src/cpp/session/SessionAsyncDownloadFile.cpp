@@ -18,6 +18,7 @@
 #include <boost/format.hpp>
 
 #include <shared_core/Error.hpp>
+#include <core/StringUtils.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Process.hpp>
@@ -108,10 +109,18 @@ void asyncDownloadFile(const std::string& url,
                        const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
    http::Fields headers;
-   asyncDownloadFile(url, headers, onCompleted);
+   asyncDownloadFile(url, "", headers, onCompleted);
+}
+
+void asyncDownloadFile(const  std::string& url,
+                       const http::Fields& headers,
+                       const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   asyncDownloadFile(url, "", headers, onCompleted);
 }
 
 void asyncDownloadFile(const std::string& url,
+                       const std::string& userAgent,
                        const http::Fields& headers,
                        const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
@@ -126,6 +135,8 @@ void asyncDownloadFile(const std::string& url,
 
    // build the command
    std::string cmd("{ ");
+   if (!userAgent.empty())
+      cmd += "options(HTTPUserAgent = '" + string_utils::singleQuotedStrEscape(userAgent) + "'); ";
    cmd += "tmp <- tempfile(); ";
    cmd += "download.file('" + url +"'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
    cmd += "cat(readLines(tmp, warn = FALSE)); ";
@@ -141,15 +152,16 @@ void asyncJsonRpcRequest(const std::string& url,
                          const core::json::JsonRpcFunctionContinuation& cont)
 {
    http::Fields headers;
-   asyncJsonRpcRequest(url, headers, handler, cont);
+   asyncJsonRpcRequest(url, "", headers, handler, cont);
 }
 
 void asyncJsonRpcRequest(const std::string& url,
+                         const std::string& userAgent,
                          const http::Fields& headers,
                          const JsonRpcResponseHandler& handler,
                          const core::json::JsonRpcFunctionContinuation& cont)
 {
-   asyncDownloadFile(url, headers, boost::bind(endJsonRpcRequest, cont, handler, _1));
+   asyncDownloadFile(url, userAgent, headers, boost::bind(endJsonRpcRequest, cont, handler, _1));
 }
 
 bool is404Error(const std::string& stdErr)

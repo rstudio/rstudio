@@ -14,10 +14,9 @@
  */
 
 import React from "react";
+import uniqby from "lodash.uniqby";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-
-import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
@@ -25,18 +24,15 @@ import { BibliographyManager, BibliographyCollection, BibliographySource } from 
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
-
-import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
-import uniqby from "lodash.uniqby";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
-export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager, treeDataChanged: () => void): CitationSourcePanel {
-  const allowsWrites = bibliographyManager.refreshWritable(doc, ui);
+export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanelProvider {
+
   const providers = bibliographyManager.localProviders();
   const providerNodes: { [key: string]: NavigationTreeNode } = {};
-
 
   // For each of the providers, discover their collections
   providers.filter(provider => provider.isEnabled()).forEach(provider => {
@@ -46,51 +42,16 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
     };
 
     // Get the response which could be items or could be a stream
-    const response = provider.collections();
-
-    // If this is a stream, poll the stream for tree data
-    if (!Array.isArray(response)) {
-
-      // Note the temporary collections
-      providerNodes[provider.key] = {
-        key: provider.key,
-        name: ui.context.translateText(provider.name),
-        type: provider.key,
-        image: rootImageForProvider(provider.key, ui),
-        children: toTree(provider.key, response.collections, getFolder),
-        expanded: true
-      };
-
-      const pollingInterval = setInterval(() => {
-        // if the document has been updated then invalidate
-        // otherwise check the stream
-        const result = response.stream();
-        if (result) {
-          // Got results. Update the tree data and notify the 
-          // caller that the data has changed
-          clearInterval(pollingInterval);
-          providerNodes[provider.key] = {
-            key: provider.key,
-            name: ui.context.translateText(provider.name),
-            type: provider.key,
-            image: rootImageForProvider(provider.key, ui),
-            children: toTree(provider.key, result, getFolder),
-            expanded: true
-          };
-          treeDataChanged();
-        }
-      }, 350);
-    } else {
-      // This is just an array of results, just pass them and move on
-      providerNodes[provider.key] = {
-        key: provider.key,
-        name: ui.context.translateText(provider.name),
-        type: provider.key,
-        image: rootImageForProvider(provider.key, ui),
-        children: toTree(provider.key, response, getFolder),
-        expanded: true
-      };
-    }
+    const collectionSpecs = provider.collections();
+    // Note the temporary collections
+    providerNodes[provider.key] = {
+      key: provider.key,
+      name: ui.context.translateText(provider.name),
+      type: provider.key,
+      image: rootImageForProvider(provider.key, ui),
+      children: toTree(provider.key, collectionSpecs, getFolder),
+      expanded: true
+    };
   });
 
   return {
@@ -105,68 +66,53 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
         children: Object.values(providerNodes),
         expanded: true
       };
+    },
+    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+
+      const providerForNode = (node: NavigationTreeNode): string | undefined => {
+        // The node could be the root node, no provider
+        return node.type === kAllLocalSourcesRootNodeType ? undefined : node.type;
+      };
+
+      const collectionKeyForNode = (node: NavigationTreeNode): string | undefined => {
+        // The node could be a provider root or a collection
+        return (node.type !== kAllLocalSourcesRootNodeType &&
+          node.key !== kZoteroProviderKey &&
+          node.key !== kLocalBiliographyProviderKey) ? node.key : undefined;
+      };
+      const sources = bibliographyManager.search(searchTerm, providerForNode(selectedNode), collectionKeyForNode(selectedNode));
+      const uniqueSources = uniqby(sources, source => source.id);
+      return toCitationEntries(uniqueSources, ui);
+
+    },
+    search: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+      return Promise.resolve(null);
     }
   };
 }
 
 export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
-
-  const bibMgr = props.bibliographyManager;
-  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>('');
-
-  React.useEffect(debounce(() => {
-    async function loadData() {
-      if (props.selectedNode) {
-
-        // Ignore other nodes
-        if (props.selectedNode.type !== kLocalBiliographyProviderKey &&
-          props.selectedNode.type !== kZoteroProviderKey &&
-          props.selectedNode.type !== kAllLocalSourcesRootNodeType) {
-          return;
-        }
-
-        const selectedNode = props.selectedNode;
-
-        // The node could be the root node, no provider
-        const providerKey = selectedNode.type === kAllLocalSourcesRootNodeType ? undefined : selectedNode.type;
-
-        // The node could be a provider root or a collection
-        const collectionKey = (
-          selectedNode.type !== kAllLocalSourcesRootNodeType &&
-          selectedNode.key !== kZoteroProviderKey &&
-          selectedNode.key !== kLocalBiliographyProviderKey) ? selectedNode.key : undefined;
-
-        const sources = bibMgr.search(searchTerm, providerKey, collectionKey);
-        const uniqueSources = uniqby(sources, source => source.id);
-        setCitations(toCitationEntries(uniqueSources, props.ui));
-      }
-    }
-    loadData();
-    // load the right panel
-  }, 50), [props.selectedNode, searchTerm]);
-
-  // If the nodes change, clear the search box value
-  React.useLayoutEffect(() => {
-    setSearchTerm('');
-  }, [props.selectedNode]);
-
-  // Search the user search terms
-  const searchChanged = (term: string) => {
-    setSearchTerm(term);
-  };
-
   return (
     <CitationSourceTypeheadSearchPanel
       height={props.height}
-      citations={citations}
+      citations={props.citations}
       citationsToAdd={props.citationsToAdd}
-      addCitation={props.addCitation}
-      removeCitation={props.removeCitation}
-      selectedCitation={props.selectedCitation}
-      confirm={props.confirm}
-      searchTerm={searchTerm}
-      searchTermChanged={searchChanged}
+      searchTerm={props.searchTerm}
+      onSearchTermChanged={props.onSearchTermChanged}
+      selectedIndex={props.selectedIndex}
+      onSelectedIndexChanged={props.onSelectedIndexChanged}
+      onAddCitation={props.onAddCitation}
+      onRemoveCitation={props.onRemoveCitation}
+      onConfirm={props.onConfirm}
+      status={props.status}
+      statusText={
+        {
+          placeholder: props.ui.context.translateText(''),
+          progress: props.ui.context.translateText(''),
+          noResults: props.ui.context.translateText('No matching items'),
+          error: props.ui.context.translateText('An error occurred'),
+        }
+      }
       ui={props.ui}
       ref={ref}
     />
@@ -244,6 +190,7 @@ function toCitationEntries(sources: BibliographySource[], ui: EditorUI): Citatio
   return sources.map(source => {
     return {
       id: source.id,
+      type: source.type,
       title: source.title || '',
       providerKey: source.providerKey,
       authors: (length: number) => {

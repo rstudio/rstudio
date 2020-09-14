@@ -41,7 +41,7 @@ export interface CrossrefWork {
   publisher: string;
 
   // Work titles, including translated titles
-  title: string[];
+  title?: string[];
 
   // DOI of the work 
   DOI: string;
@@ -123,6 +123,59 @@ export function imageForCrossrefType(ui: EditorUI, type: string): [string?, stri
     case 'proceedings':
     default:
       return [ui.images.citations?.other, ui.images.citations?.other_dark];
+  }
+}
+
+export function prettyType(ui: EditorUI, type: string): string {
+  switch (type) {
+    case 'monograph':
+      return ui.context.translateText('Monograph');
+    case 'report':
+      return ui.context.translateText('Report');
+    case 'journal-article':
+      return ui.context.translateText('Journal');
+    case 'journal-volume':
+      return ui.context.translateText('Journal Volume');
+    case 'journal':
+      return ui.context.translateText('Journal');
+    case 'journal-issue':
+      return ui.context.translateText('Journal Issue');
+    case 'proceedings-article':
+    case 'proceedings-series':
+    case 'proceedings':
+      return ui.context.translateText('Proceedings');
+    case 'dissertation':
+      return ui.context.translateText('Dissertation');
+    case 'report-series':
+      return ui.context.translateText('Series');
+    case 'book-section':
+      return ui.context.translateText('Book Section');
+    case 'book-part':
+      return ui.context.translateText('Book Part');
+    case 'book-series':
+      return ui.context.translateText('Book Series');
+    case 'book-chapter':
+      return ui.context.translateText('Book Chapter');
+    case 'book-set':
+    case 'edited-book':
+    case 'book':
+    case 'book-track':
+    case 'reference-book':
+      return ui.context.translateText('Book');
+    case 'dataset':
+      return ui.context.translateText('Dataset');
+    case 'reference-entry':
+      return ui.context.translateText('Entry');
+    case 'posted-content':
+      return ui.context.translateText('Content');
+    case 'other':
+    case 'standard':
+    case 'standard-series':
+    case 'peer-review':
+    case 'component':
+      return ui.context.translateText('Other');
+    default:
+      return type;
   }
 }
 

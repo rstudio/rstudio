@@ -13,23 +13,23 @@
  *
  */
 import React from "react";
-import debounce from "lodash.debounce";
 
 import { EditorUI } from "../../../api/ui";
 
 import { CSL } from "../../../api/csl";
-import { TextInput } from "../../../api/widgets/text";
-import { formatForPreview, CiteField, suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
+import { DOIServer } from "../../../api/doi";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 
-import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
-import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
 
 const kDOIType = 'DOI Search';
 
-export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
+export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyManager, server: DOIServer): CitationSourcePanelProvider {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
     panel: DOISourcePanel,
@@ -42,129 +42,65 @@ export function doiSourcePanel(ui: EditorUI): CitationSourcePanel {
         children: [],
         expanded: true
       };
+    },
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+      return null;
+    },
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+      // TODO: Error handling (try / catch)
+      try {
+        const result = await server.fetchCSL(searchTerm, 1000);
+        if (result.status === 'ok') {
+          // Form the entry
+          const csl = result.message;
+          const citation = toCitationEntry(csl, bibliographyManager, ui);
+          return Promise.resolve(citation ? [citation] : null);
+        } else {
+          return Promise.resolve(null);
+        }
+      } catch {
+        // TODO: return citationentries or string (error)
+        return Promise.resolve(null);
+      }
     }
+
   };
 }
 
-export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props, ref) => {
+export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
 
-  const defaultMessage = props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.');
-  const noMatchingResultsMessage = props.ui.context.translateText('No item matching this identifier could be located.');
-
-  const [citation, setCitation] = React.useState<CitationListEntry>();
-  const [noResultsText, setNoResultsText] = React.useState<string>(defaultMessage);
-  const [searchText, setSearchText] = React.useState<string>('');
-  const [previewFields, setPreviewFields] = React.useState<CiteField[]>([]);
-
-  const clearResults = (message: string) => {
-    setCitation(undefined);
-    setPreviewFields([]);
-    setNoResultsText(message);
-  };
-
-  // Perform first load tasks
-  const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    const padding = 8;
-    if (searchBoxHeight) {
-      setListHeight(props.height - padding - searchBoxHeight);
-    }
-  }, []);
-
-  const debouncedCSL = React.useCallback(debounce(async (doi: string) => {
-    const result = await props.server.doi.fetchCSL(doi, 350);
-    if (result.status === 'ok') {
-      // Form the entry
-      const csl = result.message;
-      const entry = toCitationEntry(csl, props.bibliographyManager, props.ui);
-      setCitation(entry);
-
-      // Display the preview
-      const preview = formatForPreview(csl);
-      setPreviewFields(preview);
-
-      // Select the item
-      props.selectedCitation(entry);
-    } else {
-      clearResults(noMatchingResultsMessage);
-    }
-  }, 100), []);
-
-  React.useEffect(() => {
-    if (searchText) {
-      debouncedCSL(searchText);
-    } else {
-      clearResults(defaultMessage);
-    }
-  }, [searchText]);
-
-  const doiChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
-  };
-
-  const focusSearch = () => {
-    searchBoxRef.current?.focus();
-  };
-
-  const selectedIndexChanged = () => {
-    // No op - there is always only a single result
-  };
-
+  // Track whether we are mounted to allow a latent search that returns after the 
+  // component unmounts to nmot mutate state further
   return (
-    <div style={props.style} className='pm-insert-doi-source-panel' ref={ref} tabIndex={-1} onFocus={focusSearch}>
-      <div className='pm-insert-doi-source-panel-textbox-container'>
-        <TextInput
-          width='100%'
-          iconAdornment={props.ui.images.search}
-          tabIndex={0}
-          className='pm-insert-doi-source-panel-textbox pm-block-border-color'
-          placeholder={props.ui.context.translateText('Paste a DOI to search')}
-          onChange={doiChanged}
-          ref={searchBoxRef}
-        />
-      </div>
-      <div className='pm-insert-doi-source-panel-results pm-block-border-color pm-background-color' style={{ height: listHeight }}>
-        <div className='pm-insert-doi-source-panel-heading'>
-          {citation ?
-            <CitationSourcePanelListItem
-              index={0}
-              data={{
-                citations: [citation],
-                citationsToAdd: props.citationsToAdd,
-                addCitation: props.addCitation,
-                removeCitation: props.removeCitation,
-                setSelectedIndex: selectedIndexChanged,
-                ui: props.ui
-              }}
-              style={{}}
-              isScrolling={false}
-            /> :
-            <div className='pm-insert-doi-source-panel-no-result'>
-              <div className='pm-insert-doi-source-panel-no-result-text pm-text-color'>
-                {props.ui.context.translateText(noResultsText)}
-              </div>
-            </div>}
-        </div>
-        <div className='pm-insert-doi-source-panel-fields'>
-          <table>
-            <tbody>
-              {previewFields.map(previewField =>
-                (<tr key={previewField.name}>
-                  <td className='pm-insert-doi-source-panel-fields-name pm-text-color'>{previewField.name}:</td>
-                  <td className='pm-insert-doi-source-panel-fields-value pm-text-color'>{previewField.value}</td>
-                </tr>)
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <CitationSourceLatentSearchPanel
+      height={props.height}
+      citations={props.citations}
+      citationsToAdd={props.citationsToAdd}
+      searchTerm={props.searchTerm}
+      onSearchTermChanged={props.onSearchTermChanged}
+      executeSearch={props.onExecuteSearch}
+      onAddCitation={props.onAddCitation}
+      onRemoveCitation={props.onRemoveCitation}
+      selectedIndex={props.selectedIndex}
+      onSelectedIndexChanged={props.onSelectedIndexChanged}
+      onConfirm={props.onConfirm}
+      searchPlaceholderText={props.ui.context.translateText('Paste a DOI to search')}
+      status={props.status}
+      statusText={
+        {
+          placeholder: props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.'),
+          progress: props.ui.context.translateText('Fetching data for DOI...'),
+          noResults: props.ui.context.translateText('Sorry, data for that DOI couldn\'t be found'),
+          error: props.ui.context.translateText('An error occurred while searching for this DOI'),
+        }
+      }
+      ui={props.ui}
+      ref={ref}
+    />
   );
 });
+
+
 
 function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
@@ -172,13 +108,15 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
     const providerKey = 'doi';
     return {
       id,
+      type: csl.type,
       title: csl.title || '',
       providerKey,
       authors: (length: number) => {
         return formatAuthors(csl.author, length);
       },
       date: formatIssuedDate(csl.issued),
-      journal: '',
+      journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
+      doi: csl.DOI,
       image: imageForType(ui, csl.type)[0],
       toBibliographySource: () => {
         return Promise.resolve({ ...csl, id, providerKey });

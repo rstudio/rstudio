@@ -19,15 +19,18 @@ import React from "react";
 import { EditorUI } from "../../../api/ui";
 import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { sanitizeForCiteproc, CSL } from "../../../api/csl";
-
-import { CitationSourcePanelProps, CitationSourcePanel, CitationListEntry } from "../insert_citation-panel";
-import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
-import { CrossrefWork, imageForCrossrefType } from "../../../api/crossref";
-import { CitationSourceListStatus } from "./insert_citation-source-panel-list";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
+import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from "../../../api/crossref";
 import { DOIServer } from "../../../api/doi";
-import { resolve } from "url";
 
-export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
+
+export function crossrefSourcePanel(ui: EditorUI,
+  bibliographyManager: BibliographyManager,
+  server: CrossrefServer,
+  doiServer: DOIServer): CitationSourcePanelProvider {
 
   const kCrossrefType = 'Crossref';
   return {
@@ -42,69 +45,61 @@ export function crossrefSourcePanel(ui: EditorUI): CitationSourcePanel {
         children: [],
         expanded: true
       };
+    },
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+      return null;
+    },
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+
+      // TODO: Error handling (try / catch)
+      try {
+        const works = await server.works(searchTerm);
+        const existingIds = bibliographyManager.localSources().map(src => src.id);
+        const citationEntries = works.items.map(work => {
+          const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
+          if (citationEntry) {
+            // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+            existingIds.push(citationEntry.id);
+          }
+          return citationEntry;
+        });
+
+        return Promise.resolve(citationEntries);
+      } catch {
+        // TODO: return citationentries or string (error)
+        return Promise.resolve([]);
+      }
     }
   };
 }
 
 export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
-  const [citations, setCitations] = React.useState<CitationListEntry[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState<string>('');
-  const [status, setStatus] = React.useState<CitationSourceListStatus>(CitationSourceListStatus.default);
 
-  React.useEffect(() => {
-    let mounted = true;
-    const performSearch = async () => {
-      if (mounted) {
-        setStatus(CitationSourceListStatus.loading);
-      }
-      const works = await props.server.crossref.works(searchTerm);
-
-      // Get the list of ids already in the bibliography
-      const existingIds = props.bibliographyManager.localSources().map(src => src.id);
-
-      const citationEntries = works.items.map(work => {
-        const citationEntry = toCitationEntry(work, existingIds, props.ui, props.server.doi);
-        if (citationEntry) {
-          // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-          existingIds.push(citationEntry.id);
-        }
-        return citationEntry;
-      });
-
-      if (mounted) {
-        setCitations(citationEntries);
-        setStatus(citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults);
-      }
-    };
-
-    // Either do the search, or if the search is empty, clear the results
-    if (searchTerm.length > 0) {
-      performSearch();
-    } else {
-      setCitations([]);
-    }
-
-    return () => { mounted = false; };
-
-  }, [searchTerm]);
-
-  const doSearch = (search: string) => {
-    setSearchTerm(search);
-  };
-
+  // Track whether we are mounted to allow a latent search that returns after the 
+  // component unmounts to nmot mutate state further
   return (
     <CitationSourceLatentSearchPanel
       height={props.height}
-      citations={citations}
+      citations={props.citations}
       citationsToAdd={props.citationsToAdd}
-      addCitation={props.addCitation}
-      removeCitation={props.removeCitation}
-      selectedCitation={props.selectedCitation}
-      doSearch={doSearch}
-      confirm={props.confirm}
-      status={status}
-      defaultText={props.ui.context.translateText('Enter terms to search Crossref')}
-      placeholderText={props.ui.context.translateText('Search Crossref for Citations')}
+      searchTerm={props.searchTerm}
+      onSearchTermChanged={props.onSearchTermChanged}
+      executeSearch={props.onExecuteSearch}
+      onAddCitation={props.onAddCitation}
+      onRemoveCitation={props.onRemoveCitation}
+      selectedIndex={props.selectedIndex}
+      onSelectedIndexChanged={props.onSelectedIndexChanged}
+      onConfirm={props.onConfirm}
+      searchPlaceholderText={props.ui.context.translateText('Search Crossref for Citations')}
+      status={props.status}
+      statusText={
+        {
+          placeholder: props.ui.context.translateText('Enter terms to search Crossref'),
+          progress: props.ui.context.translateText('Searching Crossref...'),
+          noResults: props.ui.context.translateText('No matching items'),
+          error: props.ui.context.translateText('An error occurred while searching Crossref'),
+        }
+      }
       ui={props.ui}
       ref={ref}
     />
@@ -118,14 +113,16 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
   const providerKey = 'crossref';
   return {
     id,
-    title: crossrefWork.title[0] || '',
+    title: crossrefWorkTitle(crossrefWork, ui),
     providerKey,
     authors: (length: number) => {
       return formatAuthors(coercedCSL.author, length);
     },
+    type: prettyType(ui, crossrefWork.type),
     date: formatIssuedDate(crossrefWork.issued),
-    journal: '',
+    journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
+    doi: crossrefWork.DOI,
     toBibliographySource: async () => {
 
       // Generate CSL using the DOI
@@ -137,3 +134,11 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
   };
 }
 
+
+function crossrefWorkTitle(work: CrossrefWork, ui: EditorUI) {
+  if (work.title) {
+    return work.title[0];
+  } else {
+    return ui.context.translateText('(Untitled)');
+  }
+}

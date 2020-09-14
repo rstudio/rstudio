@@ -231,6 +231,7 @@ public class TextEditingTarget implements
 
       void findSelectAll();
       void findFromSelection();
+      void findFromSelection(String selectionValue);
 
       StatusBar getStatusBar();
 
@@ -486,8 +487,6 @@ public class TextEditingTarget implements
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
-      reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
-      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -564,14 +563,14 @@ public class TextEditingTarget implements
                   prefs_.continueCommentsOnNewline().getValue() &&
                   !docDisplay_.isPopupVisible() &&
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
+                    (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode(docDisplay_)))
             {
                String line = docDisplay_.getCurrentLineUpToCursor();
                Pattern pattern = null;
 
-               if (isCursorInRMode())
+               if (isCursorInRMode(docDisplay_))
                   pattern = Pattern.create("^(\\s*#+'?\\s*)");
-               else if (isCursorInTexMode())
+               else if (isCursorInTexMode(docDisplay_))
                   pattern = Pattern.create("^(\\s*%+'?\\s*)");
                else if (fileType_.isC())
                {
@@ -1559,7 +1558,6 @@ public class TextEditingTarget implements
                                           session_,
                                           column);
 
-      roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
 
       // create notebook and forward resize events
@@ -3326,36 +3324,47 @@ public class TextEditingTarget implements
    @Handler
    void onReformatCode()
    {
-      // Only allow if entire selection in R mode for now
-      if (!DocumentMode.isSelectionInRMode(docDisplay_))
+      withActiveEditor((disp) ->
       {
-         showRModeWarning("Reformat Code");
-         return;
-      }
+         // Only allow if entire selection in R mode for now
+         if (!DocumentMode.isSelectionInRMode(disp))
+         {
+            showRModeWarning("Reformat Code");
+            return;
+         }
 
-      reformatHelper_.insertPrettyNewlines();
+         new TextEditingTargetReformatHelper(disp).insertPrettyNewlines();
+      });
    }
 
    @Handler
    void onRenameInScope()
    {
-      docDisplay_.focus();
+      withActiveEditor((disp) ->
+      {
+         renameInScope(disp);
+      });
+   }
+   
+   void renameInScope(DocDisplay display)
+   {
+      display.focus();
 
       // Save folds (we need to remove them temporarily for the rename helper)
-      final JsArray<AceFold> folds = docDisplay_.getFolds();
-      docDisplay_.unfoldAll();
+      final JsArray<AceFold> folds = display.getFolds();
+      display.unfoldAll();
 
-      int matches = renameHelper_.renameInScope();
+      int matches = (new TextEditingTargetRenameHelper(display)).renameInScope();
       if (matches <= 0)
       {
-         if (!docDisplay_.getSelectionValue().isEmpty())
+         if (!display.getSelectionValue().isEmpty())
          {
-            String message = "No matches for '" + docDisplay_.getSelectionValue() + "'";
+            String message = "No matches for '" + display.getSelectionValue() + "'";
             view_.getStatusBar().showMessage(message, 1000);
          }
 
          for (AceFold fold : JsUtil.asIterable(folds))
-            docDisplay_.addFold(fold.getRange());
+            display.addFold(fold.getRange());
          return;
       }
 
@@ -3365,16 +3374,16 @@ public class TextEditingTarget implements
       else
          message += " matches";
 
-      String selectedItem = docDisplay_.getSelectionValue();
+      String selectedItem = display.getSelectionValue();
       message += " for " + selectedItem + ".";
 
-      docDisplay_.disableSearchHighlight();
+      display.disableSearchHighlight();
       view_.getStatusBar().showMessage(message, new HideMessageHandler()
       {
          private boolean onRenameFinished(boolean value)
          {
             for (AceFold fold : JsUtil.asIterable(folds))
-               docDisplay_.addFold(fold.getRange());
+               display.addFold(fold.getRange());
             return value;
          }
 
@@ -3382,15 +3391,15 @@ public class TextEditingTarget implements
          public boolean onNativePreviewEvent(NativePreviewEvent preview)
          {
             int type = preview.getTypeInt();
-            if (docDisplay_.isPopupVisible())
+            if (display.isPopupVisible())
                return false;
 
             // End if the user clicks somewhere
             if (type == Event.ONCLICK)
             {
-               docDisplay_.exitMultiSelectMode();
-               docDisplay_.clearSelection();
-               docDisplay_.enableSearchHighlight();
+               display.exitMultiSelectMode();
+               display.clearSelection();
+               display.enableSearchHighlight();
                return onRenameFinished(true);
             }
 
@@ -3404,9 +3413,9 @@ public class TextEditingTarget implements
                case KeyCodes.KEY_UP:
                case KeyCodes.KEY_DOWN:
                case KeyCodes.KEY_ESCAPE:
-                  docDisplay_.exitMultiSelectMode();
-                  docDisplay_.clearSelection();
-                  docDisplay_.enableSearchHighlight();
+                  display.exitMultiSelectMode();
+                  display.clearSelection();
+                  display.enableSearchHighlight();
                   return onRenameFinished(true);
                }
             }
@@ -3419,25 +3428,37 @@ public class TextEditingTarget implements
    @Handler
    void onInsertRoxygenSkeleton()
    {
-      roxygenHelper_.insertRoxygenSkeleton();
+      withActiveEditor((disp) ->
+      {
+         new RoxygenHelper(disp, view_).insertRoxygenSkeleton();
+      });
    }
 
    @Handler
    void onExpandSelection()
    {
-      docDisplay_.expandSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.expandSelection();
+      });
    }
 
    @Handler
    void onShrinkSelection()
    {
-      docDisplay_.shrinkSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.shrinkSelection();
+      });
    }
 
    @Handler
    void onExpandRaggedSelection()
    {
-      docDisplay_.expandRaggedSelection();
+      withActiveEditor((disp) ->
+      {
+         disp.expandRaggedSelection();
+      });
    }
 
    @Handler
@@ -3454,29 +3475,40 @@ public class TextEditingTarget implements
    @Handler
    void onWordCount()
    {
-      int totalWords = 0;
-      int selectionWords = 0;
-
-      Range selectionRange = docDisplay_.getSelectionRange();
-      TextFileType fileType = docDisplay_.getFileType();
-      Iterator<Range> wordIter = docDisplay_.getWords(
-         fileType.getTokenPredicate(),
-         docDisplay_.getFileType().getCharPredicate(),
-         Position.create(0, 0),
-         null).iterator();
-
-      while (wordIter.hasNext())
+      prepareForVisualExecution(() ->
       {
-         Range r = wordIter.next();
-         totalWords++;
-         if (selectionRange.intersects(r))
-            selectionWords++;
-      }
+         int totalWords = 0;
+         int selectionWords = 0;
 
-      String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
-      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
-         "Word Count",
-         "Total words: " + totalWords + " " + selectedWordsText);
+         Range selectionRange = null;
+         
+         // A selection in visual mode may span multiple editors and blocks of
+         // prose, which we can't count here.
+         if (!isVisualEditorActive())
+         {
+            selectionRange = docDisplay_.getSelectionRange();
+         }
+
+         TextFileType fileType = docDisplay_.getFileType();
+         Iterator<Range> wordIter = docDisplay_.getWords(
+            fileType.getTokenPredicate(),
+            docDisplay_.getFileType().getCharPredicate(),
+            Position.create(0, 0),
+            null).iterator();
+
+         while (wordIter.hasNext())
+         {
+            Range r = wordIter.next();
+            totalWords++;
+            if (selectionRange != null && selectionRange.intersects(r))
+               selectionWords++;
+         }
+
+         String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
+         globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+            "Word Count",
+            "Total words: " + totalWords + " " + selectedWordsText);
+      });
    }
 
    @Handler
@@ -3678,15 +3710,23 @@ public class TextEditingTarget implements
    @Handler
    void onExtractLocalVariable()
    {
-      if (!isCursorInRMode())
+      withActiveEditor((disp) ->
+      {
+         extractLocalVariable(disp);
+      });
+   }
+   
+   void extractLocalVariable(DocDisplay display)
+   {
+      if (!isCursorInRMode(display))
       {
          showRModeWarning("Extract Variable");
          return;
       }
 
-      docDisplay_.focus();
+      display.focus();
 
-      String initialSelection = docDisplay_.getSelectionValue();
+      String initialSelection = display.getSelectionValue();
       final String refactoringName = "Extract local variable";
       final String pleaseSelectCodeMessage = "Please select the code to " +
                                              "extract into a variable.";
@@ -3694,17 +3734,17 @@ public class TextEditingTarget implements
                                  pleaseSelectCodeMessage,
                                  initialSelection)) return;
 
-      docDisplay_.fitSelectionToLines(false);
+      display.fitSelectionToLines(false);
 
-      final String code = docDisplay_.getSelectionValue();
+      final String code = display.getSelectionValue();
       if (checkSelectionAndAlert(refactoringName,
                                  pleaseSelectCodeMessage,
                                  code))
          return;
 
       // get the first line of the selection and calculate it's indentation
-      String firstLine = docDisplay_.getLine(
-                        docDisplay_.getSelectionStart().getRow());
+      String firstLine = display.getLine(
+                        display.getSelectionStart().getRow());
       final String indentation = extractIndentation(firstLine);
 
       // used to parse the code
@@ -3727,13 +3767,13 @@ public class TextEditingTarget implements
                                                             + " <- "
                                                             + code
                                                             + "\n";
-                               InputEditorPosition insertPosition = docDisplay_
+                               InputEditorPosition insertPosition = display
                                        .getSelection()
                                        .extendToLineStart()
                                        .getStart();
-                               docDisplay_.replaceSelection(
+                               display.replaceSelection(
                                        input.trim());
-                               docDisplay_.insertCode(
+                               display.insertCode(
                                        insertPosition,
                                        extractedCode);
                             }
@@ -3757,15 +3797,23 @@ public class TextEditingTarget implements
    @Handler
    void onExtractFunction()
    {
-      if (!isCursorInRMode())
+      withActiveEditor((disp) ->
+      {
+         extractActiveFunction(disp);
+      });
+   }
+   
+   void extractActiveFunction(DocDisplay display)
+   {
+      if (!isCursorInRMode(display))
       {
          showRModeWarning("Extract Function");
          return;
       }
 
-      docDisplay_.focus();
+      display.focus();
 
-      String initialSelection = docDisplay_.getSelectionValue();
+      String initialSelection = display.getSelectionValue();
       final String refactoringName = "Extract Function";
       final String pleaseSelectCodeMessage = "Please select the code to " +
                                              "extract into a function.";
@@ -3773,9 +3821,9 @@ public class TextEditingTarget implements
                                  pleaseSelectCodeMessage,
                                  initialSelection)) return;
 
-      docDisplay_.fitSelectionToLines(false);
+      display.fitSelectionToLines(false);
 
-      final String code = docDisplay_.getSelectionValue();
+      final String code = display.getSelectionValue();
       if (checkSelectionAndAlert(refactoringName,
                                  pleaseSelectCodeMessage,
                                  code)) return;
@@ -3796,12 +3844,12 @@ public class TextEditingTarget implements
                       public void execute(String input)
                       {
                          String prefix;
-                         if (docDisplay_.getSelectionOffset(true) == 0)
+                         if (display.getSelectionOffset(true) == 0)
                             prefix = "";
                          else prefix = "\n";
                          String args = response != null ? response.join(", ")
                                                         : "";
-                         docDisplay_.replaceSelection(
+                         display.replaceSelection(
                                  prefix
                                  + indentation
                                  + input.trim()
@@ -3847,18 +3895,26 @@ public class TextEditingTarget implements
    @Handler
    void onCommentUncomment()
    {
-      if (isCursorInTexMode())
-         doCommentUncomment("%", null);
-      else if (isCursorInRMode() || isCursorInYamlMode())
-         doCommentUncomment("#", null);
+      withActiveEditor((disp) ->
+      {
+         commentUncomment(disp);
+      });
+   }
+   
+   void commentUncomment(DocDisplay display)
+   {
+      if (isCursorInTexMode(display))
+         doCommentUncomment(display, "%", null);
+      else if (isCursorInRMode(display) || isCursorInYamlMode(display))
+         doCommentUncomment(display, "#", null);
       else if (fileType_.isCpp() || fileType_.isStan() || fileType_.isC())
-         doCommentUncomment("//", null);
+         doCommentUncomment(display, "//", null);
       else if (fileType_.isPlainMarkdown())
-         doCommentUncomment("<!--", "-->");
-      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
-         doCommentUncomment("<!--", "-->");
-      else if (DocumentMode.isSelectionInPythonMode(docDisplay_))
-         doCommentUncomment("#", null);
+         doCommentUncomment(display, "<!--", "-->");
+      else if (DocumentMode.isSelectionInMarkdownMode(display))
+         doCommentUncomment(display, "<!--", "-->");
+      else if (DocumentMode.isSelectionInPythonMode(display))
+         doCommentUncomment(display, "#", null);
    }
 
    /**
@@ -3979,10 +4035,11 @@ public class TextEditingTarget implements
    }
 
    @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
-   private void doCommentUncomment(String commentStart,
+   private void doCommentUncomment(DocDisplay display,
+                                   String commentStart,
                                    String commentEnd)
    {
-      Range initialRange = docDisplay_.getSelectionRange();
+      Range initialRange = display.getSelectionRange();
 
       int rowStart = initialRange.getStart().getRow();
       int rowEnd = initialRange.getEnd().getRow();
@@ -4003,11 +4060,11 @@ public class TextEditingTarget implements
             rowStart,
             0,
             rowEnd,
-            dontCommentLastLine ? 0 : docDisplay_.getLine(rowEnd).length());
-      docDisplay_.setSelectionRange(expanded);
+            dontCommentLastLine ? 0 : display.getLine(rowEnd).length());
+      display.setSelectionRange(expanded);
 
       String[] lines = JsUtil.toStringArray(
-            docDisplay_.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
+            display.getLines(rowStart, rowEnd - (dontCommentLastLine ? 1 : 0)));
 
       String commonPrefix = StringUtil.getCommonPrefix(
             lines,
@@ -4059,7 +4116,7 @@ public class TextEditingTarget implements
                isCommentAction = true;
          }
 
-         if (docDisplay_.getFileType().isR())
+         if (display.getFileType().isR())
          {
             if (!looksLikeRoxygen)
             {
@@ -4150,7 +4207,7 @@ public class TextEditingTarget implements
             builder.toString() :
             builder.substring(0, builder.length() - 1);
 
-      docDisplay_.replaceSelection(newSelection);
+      display.replaceSelection(newSelection);
 
       // Nudge the selection to match the commented action.
       if (isSingleLineAction)
@@ -4168,34 +4225,41 @@ public class TextEditingTarget implements
                colStart + diff,
                rowStart,
                colEnd + diff);
-         docDisplay_.setSelectionRange(newRange);
+         display.setSelectionRange(newRange);
       }
    }
 
    @Handler
    void onReflowComment()
    {
-      if (DocumentMode.isSelectionInRMode(docDisplay_) ||
-          DocumentMode.isSelectionInPythonMode(docDisplay_))
+      withActiveEditor((disp) ->
       {
-         doReflowComment("(#)");
+         reflowComment(disp);
+      });
+   }
+   
+   void reflowComment(DocDisplay display)
+   {
+      if (DocumentMode.isSelectionInRMode(display) ||
+          DocumentMode.isSelectionInPythonMode(display))
+      {
+         doReflowComment(display, "(#)");
       }
-      else if (DocumentMode.isSelectionInCppMode(docDisplay_))
+      else if (DocumentMode.isSelectionInCppMode(display))
       {
-         String currentLine = docDisplay_.getLine(
-                                    docDisplay_.getCursorPosition().getRow());
+         String currentLine = display.getLine(
+                                    display.getCursorPosition().getRow());
          if (currentLine.startsWith(" *"))
-            doReflowComment("( \\*[^/])", false);
+            doReflowComment(display, "( \\*[^/])", false);
          else
-            doReflowComment("(//)");
+            doReflowComment(display, "(//)");
       }
-      else if (DocumentMode.isSelectionInTexMode(docDisplay_))
-         doReflowComment("(%)");
-      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
-         doReflowComment("()");
-      else if (docDisplay_.getFileType().isText())
-         doReflowComment("()");
-
+      else if (DocumentMode.isSelectionInTexMode(display))
+         doReflowComment(display, "(%)");
+      else if (DocumentMode.isSelectionInMarkdownMode(display))
+         doReflowComment(display, "()");
+      else if (display.getFileType().isText())
+         doReflowComment(display, "()");
    }
 
    public void reflowText()
@@ -4564,16 +4628,16 @@ public class TextEditingTarget implements
       });
    }
 
-   void doReflowComment(String commentPrefix)
+   void doReflowComment(DocDisplay display, String commentPrefix)
    {
-      doReflowComment(commentPrefix, true);
+      doReflowComment(display, commentPrefix, true);
    }
 
-   void doReflowComment(String commentPrefix, boolean multiParagraphIndent)
+   void doReflowComment(DocDisplay display, String commentPrefix, boolean multiParagraphIndent)
    {
-      docDisplay_.focus();
+      display.focus();
 
-      InputEditorSelection originalSelection = docDisplay_.getSelection();
+      InputEditorSelection originalSelection = display.getSelection();
       InputEditorSelection selection = originalSelection;
 
       if (selection.isEmpty())
@@ -4589,7 +4653,8 @@ public class TextEditingTarget implements
       if (selection.isEmpty())
          return;
 
-      reflowComments(commentPrefix,
+      reflowComments(display,
+                     commentPrefix,
                      multiParagraphIndent,
                      selection,
                      originalSelection.isEmpty() ?
@@ -4597,17 +4662,13 @@ public class TextEditingTarget implements
                      null);
    }
 
-   private Position selectionToPosition(InputEditorPosition pos)
-   {
-      return docDisplay_.selectionToPosition(pos);
-   }
-
-   private void reflowComments(String commentPrefix,
+   private void reflowComments(DocDisplay display,
+                               String commentPrefix,
                                final boolean multiParagraphIndent,
                                InputEditorSelection selection,
                                final InputEditorPosition cursorPos)
    {
-      String code = docDisplay_.getCode(selection);
+      String code = display.getCode(selection);
       String[] lines = code.split("\n");
       String prefix = StringUtil.getCommonPrefix(lines, true, false);
       Pattern pattern = Pattern.create("^\\s*" + commentPrefix + "+('?)\\s*");
@@ -4622,8 +4683,8 @@ public class TextEditingTarget implements
       int cursorColIndex = 0;
       if (cursorPos != null)
       {
-         cursorRowIndex = selectionToPosition(cursorPos).getRow() -
-                          selectionToPosition(selection.getStart()).getRow();
+         cursorRowIndex = display.selectionToPosition(cursorPos).getRow() -
+                          display.selectionToPosition(selection.getStart()).getRow();
          cursorColIndex =
                Math.max(0, cursorPos.getPosition() - prefix.length());
       }
@@ -4711,10 +4772,10 @@ public class TextEditingTarget implements
       // Remove trailing whitespace that might have leaked in earlier
       reflowed = reflowed.replaceAll("\\s+\\n", "\n");
 
-      docDisplay_.setSelection(selection);
+      display.setSelection(selection);
       if (!reflowed.equals(code))
       {
-         docDisplay_.replaceSelection(reflowed);
+         display.replaceSelection(reflowed);
       }
 
       if (cursorPos != null)
@@ -4723,14 +4784,14 @@ public class TextEditingTarget implements
          {
             int row = wwct.getResult().getY();
             int col = wwct.getResult().getX();
-            row += selectionToPosition(selection.getStart()).getRow();
+            row += display.selectionToPosition(selection.getStart()).getRow();
             col += prefix.length();
             Position pos = Position.create(row, col);
-            docDisplay_.setSelection(docDisplay_.createSelection(pos, pos));
+            display.setSelection(docDisplay_.createSelection(pos, pos));
          }
          else
          {
-            docDisplay_.collapseSelection(false);
+            display.collapseSelection(false);
          }
       }
    }
@@ -4738,7 +4799,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeSelection(false);
+      });
    }
 
    @Handler
@@ -4749,7 +4813,10 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+            withVisualModeSelection(() ->
+            {
+               codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+            });
          }
       });
    }
@@ -4757,55 +4824,105 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      if (docDisplay_.isFocused())
-         codeExecution_.executeSelection(true, false);
+      if (docDisplay_.isFocused() || visualMode_.isVisualEditorActive())
+      {
+         withVisualModeSelection(() ->
+         {
+            codeExecution_.executeSelection(true, false);
+         });
+      }
       else if (view_.isAttached())
+      {
          view_.findSelectAll();
+      }
    }
 
    @Handler
    void onExecuteCode()
    {
       if (fileType_.isScript())
+      {
          codeExecution_.sendSelectionToTerminal(true);
+      }
+      else 
+      {
+         withVisualModeSelection(() -> 
+         {
+            codeExecution_.executeSelection(true);
+         });
+      }
+   }
+   
+   /**
+    * Performs a command after synchronizing the document and selection state
+    * from visual mode (useful for executing code)
+    * 
+    * @param command The command to perform
+    */
+   void withVisualModeSelection(Command command)
+   {
+      if (isVisualEditorActive())
+      {
+         visualMode_.performWithSelection(command);
+      }
       else
-         codeExecution_.executeSelection(true);
+      {
+         command.execute();
+      }
    }
 
    @Handler
    void onRunSelectionAsJob()
    {
-      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      });
    }
 
    @Handler
    void onRunSelectionAsLauncherJob()
    {
-      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      });
    }
 
    @Handler
    void onExecuteCurrentLine()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
+      });
    }
 
    @Handler
    void onExecuteCurrentStatement()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+      });
    }
 
    @Handler
    void onExecuteCurrentParagraph()
    {
-      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
+      });
    }
 
    @Handler
    void onSendToTerminal()
    {
-      codeExecution_.sendSelectionToTerminal(false);
+      withVisualModeSelection(() ->
+      {
+         codeExecution_.sendSelectionToTerminal(false);
+      });
    }
 
    @Handler
@@ -4846,10 +4963,13 @@ public class TextEditingTarget implements
 
       if (executeChunks)
       {
-         executeChunks(Position.create(
-               docDisplay_.getDocumentEnd().getRow() + 1,
-               0),
-               TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+         prepareForVisualExecution(() ->
+         {
+            executeChunks(Position.create(
+                  docDisplay_.getDocumentEnd().getRow() + 1,
+                  0),
+                  TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+         });
       }
       else
       {
@@ -4860,70 +4980,97 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteToCurrentLine()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
+         int row = docDisplay_.getSelectionEnd().getRow();
+         int col = docDisplay_.getLength(row);
 
-      int row = docDisplay_.getSelectionEnd().getRow();
-      int col = docDisplay_.getLength(row);
-
-      codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
-                                  Position.create(row, col)));
+         codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
+                                     Position.create(row, col)));
+      });
    }
 
    @Handler
    void onExecuteFromCurrentLine()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
-      int startRow = docDisplay_.getSelectionStart().getRow();
-      int startColumn = 0;
-      Position start = Position.create(startRow, startColumn);
+         int startRow = docDisplay_.getSelectionStart().getRow();
+         int startColumn = 0;
+         Position start = Position.create(startRow, startColumn);
 
-      codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
+         codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
+      });
    }
 
    @Handler
    void onExecuteCurrentFunction()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
 
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
-      Scope currentFunction = docDisplay_.getCurrentFunction(false);
+            // HACK: This is just to force the entire function tree to be built.
+            // It's the easiest way to make sure getCurrentScope() returns
+            // a Scope with an end.
+            //
+            // We don't need to do this in visual mode since we force a scope
+            // tree rebuild in the process of synchronizing the selection.
+            docDisplay_.getScopeTree();
+         }
 
-      // Check if we're at the top level (i.e. not in a function), or in
-      // an unclosed function
-      if (currentFunction == null || currentFunction.getEnd() == null)
-         return;
+         Scope currentFunction = docDisplay_.getCurrentFunction(false);
 
-      Position start = currentFunction.getPreamble();
-      Position end = currentFunction.getEnd();
+         // Check if we're at the top level (i.e. not in a function), or in
+         // an unclosed function
+         if (currentFunction == null || currentFunction.getEnd() == null)
+            return;
 
-      codeExecution_.executeRange(Range.fromPoints(start, end));
+         Position start = currentFunction.getPreamble();
+         Position end = currentFunction.getEnd();
+
+         codeExecution_.executeRange(Range.fromPoints(start, end));
+      });
    }
 
    @Handler
    void onExecuteCurrentSection()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+            docDisplay_.getScopeTree();
+         }
 
-      // Determine the current section.
-      docDisplay_.getScopeTree();
-      Scope currentSection = docDisplay_.getCurrentSection();
-      if (currentSection == null)
-         return;
+         // Determine the current section.
+         Scope currentSection = docDisplay_.getCurrentSection();
+         if (currentSection == null)
+            return;
 
-      // Determine the start and end of the section
-      Position start = currentSection.getBodyStart();
-      if (start == null)
-         start = Position.create(0, 0);
-      Position end = currentSection.getEnd();
-      if (end == null)
-         end = endPosition();
+         // Determine the start and end of the section
+         Position start = currentSection.getBodyStart();
+         if (start == null)
+            start = Position.create(0, 0);
+         Position end = currentSection.getEnd();
+         if (end == null)
+            end = endPosition();
 
-      codeExecution_.executeRange(Range.fromPoints(start, end));
+         codeExecution_.executeRange(Range.fromPoints(start, end));
+      });
    }
 
    private Position endPosition()
@@ -5315,11 +5462,7 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
-      if (visualMode_.isActivated())
-      {
-         visualMode_.executeChunk();
-      }
-      else
+      withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
          // It's the easiest way to make sure getCurrentScope() returns
@@ -5328,41 +5471,43 @@ public class TextEditingTarget implements
 
          executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(),
               NotebookQueueUnit.EXEC_MODE_SINGLE, false);
-      }
+      });
    }
 
    @Handler
    void onExecuteNextChunk()
    {
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
+      withVisualModeSelection(() ->
+      {
+         // HACK: This is just to force the entire function tree to be built.
+         // It's the easiest way to make sure getCurrentScope() returns
+         // a Scope with an end.
+         docDisplay_.getScopeTree();
 
-      Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
-            true);
-      docDisplay_.setCursorPosition(nextChunk.getBodyStart());
-      docDisplay_.ensureCursorVisible();
+         Scope nextChunk = scopeHelper_.getNextSweaveChunk();
+         executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
+               true);
+         docDisplay_.setCursorPosition(nextChunk.getBodyStart());
+         docDisplay_.ensureCursorVisible();
+      });
    }
 
    @Handler
    void onExecutePreviousChunks()
    {
-      if (visualMode_.isActivated())
-      {
-         visualMode_.executePreviousChunks();
-      }
-      else
+      withVisualModeSelection(() ->
       {
          executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-      }
+      });
    }
 
    @Handler
    void onExecuteSubsequentChunks()
    {
-      executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+      withVisualModeSelection(() ->
+      {
+         executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+      });
    }
 
    public void executeChunks(Position position, int which)
@@ -5468,6 +5613,11 @@ public class TextEditingTarget implements
 
    @Handler
    public void onExecuteSetupChunk()
+   {
+      prepareForVisualExecution(() -> executeSetupChunk());
+   }
+   
+   private void executeSetupChunk()
    {
       // attempt to find the setup scope by name
       Scope setupScope = null;
@@ -5667,19 +5817,28 @@ public class TextEditingTarget implements
    @Handler
    void onCodeCompletion()
    {
-      docDisplay_.codeCompletion();
+      withActiveEditor((disp) ->
+      {
+         disp.codeCompletion();
+      });
    }
 
    @Handler
    void onGoToHelp()
    {
-      docDisplay_.goToHelp();
+      withActiveEditor((disp) -> 
+      {
+         disp.goToHelp();
+      });
    }
 
    @Handler
    void onGoToDefinition()
    {
-      docDisplay_.goToDefinition();
+      withActiveEditor((disp) ->
+      {
+         disp.goToDefinition();
+      });
    }
 
    @Handler
@@ -5782,14 +5941,20 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+            withVisualModeSelection(() ->
+            {
+               codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+            });
          }
       });
    }
 
    private void sourceActiveDocument(final boolean echo)
    {
-      docDisplay_.focus();
+      if (!isVisualEditorActive())
+      {
+         docDisplay_.focus();
+      }
 
       // If this is a Python file, use reticulate.
       if (fileType_.isPython())
@@ -5991,9 +6156,15 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteLastCode()
    {
-      docDisplay_.focus();
+      withVisualModeSelection(() ->
+      {
+         if (!isVisualEditorActive())
+         {
+            docDisplay_.focus();
+         }
 
-      codeExecution_.executeLastCode();
+         codeExecution_.executeLastCode();
+      });
    }
 
    @Handler
@@ -6653,8 +6824,11 @@ public class TextEditingTarget implements
    @Handler
    void onFindFromSelection()
    {
-      view_.findFromSelection();
-      docDisplay_.focus();
+      withActiveEditor((disp) ->
+      {
+         view_.findFromSelection(disp.getSelectionValue());
+         disp.focus();
+      });
    }
 
    @Handler
@@ -7139,14 +7313,14 @@ public class TextEditingTarget implements
       return SourcePosition.create(pos.getRow(), pos.getColumn());
    }
 
-   private boolean isCursorInTexMode()
+   private boolean isCursorInTexMode(DocDisplay display)
    {
       if (fileType_.canCompilePDF())
       {
          if (fileType_.isRnw())
          {
             return SweaveFileType.TEX_LANG_MODE.equals(
-               docDisplay_.getLanguageMode(docDisplay_.getCursorPosition()));
+               display.getLanguageMode(display.getCursorPosition()));
          }
          else
          {
@@ -7159,9 +7333,9 @@ public class TextEditingTarget implements
       }
    }
 
-   private boolean isCursorInRMode()
+   private boolean isCursorInRMode(DocDisplay display)
    {
-      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      String mode = display.getLanguageMode(display.getCursorPosition());
       if (mode == null)
          return true;
       if (mode.equals(TextFileType.R_LANG_MODE))
@@ -7169,9 +7343,9 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private boolean isCursorInYamlMode()
+   private boolean isCursorInYamlMode(DocDisplay display)
    {
-      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      String mode = display.getLanguageMode(display.getCursorPosition());
       if (mode == null)
          return false;
 
@@ -7806,6 +7980,47 @@ public class TextEditingTarget implements
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
+   
+   /**
+    * Prepares to execute code when visual mode is active; ensures that the
+    * underlying editor has a complete copy of the code and scope tree.
+    * 
+    * @param onComplete Command to run when sync is complete.
+    */
+   public void prepareForVisualExecution(Command onComplete)
+   {
+      if (isVisualEditorActive())
+      {
+         visualMode_.syncToEditor(SyncType.SyncTypeExecution, onComplete);
+      }
+      else
+      {
+         onComplete.execute();
+      }
+   }
+   
+   /**
+    * Executes a command with the active Ace instance. If there is no active
+    * instance (e.g. in visual mode when focus is not in an editor), then the
+    * command is not executed.
+    * 
+    * @param cmd The command to execute.
+    */
+   private void withActiveEditor(CommandWithArg<DocDisplay> cmd)
+   {
+      if (isVisualEditorActive())
+      {
+         DocDisplay activeEditor = visualMode_.getActiveEditor();
+         if (activeEditor != null)
+         {
+            cmd.execute(activeEditor);
+         }
+      }
+      else
+      {
+         cmd.execute(docDisplay_);
+      }
+   }
 
    // user is switching to visual mode
    void onUserSwitchingToVisualMode()
@@ -7886,12 +8101,10 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
-   private final TextEditingTargetReformatHelper reformatHelper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
-   private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
@@ -7901,7 +8114,6 @@ public class TextEditingTarget implements
    private TextEditingTargetChunks chunks_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
-   private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;

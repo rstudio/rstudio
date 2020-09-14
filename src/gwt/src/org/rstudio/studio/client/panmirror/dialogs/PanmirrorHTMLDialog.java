@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 
+import org.rstudio.core.client.jsinterop.JsStringConsumer;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -37,8 +38,11 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
    @JsFunction
    public interface CreateFn
    {
-      Element create(int conatinerWidth, int containerHeight, JsVoidFunction confirm,
-                     JsVoidFunction cancel);
+      Element create(int conatinerWidth, int containerHeight, 
+                     JsVoidFunction confirm,
+                     JsVoidFunction cancel,
+                     JsStringConsumer showProgress,
+                     JsVoidFunction hideProgress);
    }
 
    @JsFunction
@@ -67,7 +71,12 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
             }, () -> {
                operation.execute(false);
                closeDialog();
-            });
+            }, (message) -> {
+               getProgressIndicator().onProgress(message);
+            }, () -> {
+               getProgressIndicator().onCompleted();
+            }
+         );
       mainWidget_ = new DialogWidget(mainWidgetEl);
       
       // prevent default action handling

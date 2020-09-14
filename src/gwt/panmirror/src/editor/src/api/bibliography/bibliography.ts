@@ -25,6 +25,8 @@ import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
+import { joinPaths } from '../path';
+
 
 export interface BibliographyFile {
   displayPath: string;
@@ -33,14 +35,51 @@ export interface BibliographyFile {
   writable: boolean;
 }
 
+export function bibliographyFileForPath(path: string, ui: EditorUI): BibliographyFile {
+  return {
+    displayPath: path,
+    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+    isProject: false,
+    writable: true
+  };
+}
+
+export interface BibliographyType {
+  extension: string;
+  displayName: string;
+  default: boolean;
+}
+
+// The types of bibliography files and the default value
+export function bibliographyTypes(ui: EditorUI): BibliographyType[] {
+  const defaultBiblioType = ui.prefs.bibliographyDefaultType();
+  return [
+    {
+      displayName: ui.context.translateText('BibTeX'),
+      extension: 'bib',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-YAML'),
+      extension: 'yaml',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-JSON'),
+      extension: 'json',
+      default: defaultBiblioType === 'json'
+    },
+  ];
+}
+
 export interface BibliographyDataProvider {
   key: string;
   name: string;
   requiresWritable: boolean;
 
   isEnabled(): boolean;
-  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
-  collections(): BibliographyCollection[] | BibliographyCollectionStream;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], refreshCollectionData?: boolean): Promise<boolean>;
+  collections(): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
   bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[];
@@ -53,11 +92,6 @@ export interface BibliographyCollection {
   key: string;
   provider: string;
   parentKey?: string;
-}
-
-export interface BibliographyCollectionStream {
-  collections: BibliographyCollection[];
-  stream: () => BibliographyCollection[] | null;
 }
 
 export interface Bibliography {
@@ -79,17 +113,25 @@ export interface BibliographySourceWithCollections extends BibliographySource {
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: .30 },
-  { name: 'author.family', weight: .275 },
-  { name: 'author.literal', weight: .275 },
-  { name: 'title', weight: .1 },
+  { name: 'author.family', weight: .30 },
+  { name: 'author.literal', weight: .30 },
+  { name: 'title', weight: .05 },
   { name: 'author.given', weight: .025 },
   { name: 'issued', weight: .025 },
   { name: 'provider', weight: 0 }
 ];
 
+const kSearchOptions = {
+  isCaseSensitive: false,
+  shouldSort: true,
+  includeMatches: false,
+  includeScore: false,
+  keys: kFields,
+};
+
+
 export class BibliographyManager {
 
-  private fuse: Fuse<BibliographySourceWithCollections, Fuse.IFuseOptions<any>> | undefined;
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySourceWithCollections[];
   private writable?: boolean;
@@ -100,20 +142,10 @@ export class BibliographyManager {
 
   public async prime(ui: EditorUI, doc: ProsemirrorNode) {
     // Load the bibliography
-    await this.load(ui, doc);
-
-    // Prime any of the providers by downloading collection specs
-    await Promise.all(this.providers.map(async provider => {
-      provider.collections();
-    }));
+    await this.load(ui, doc, true);
   }
 
-  public refreshWritable(doc: ProsemirrorNode, ui: EditorUI) {
-    // Note whether there is anything writable
-    this.writable = this.isWritable(doc, ui);
-  }
-
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode, refreshCollectionData?: boolean): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -122,10 +154,7 @@ export class BibliographyManager {
     const docPath = ui.context.getDocumentPath();
 
     // Load each provider
-    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
-
-    // Note whether there is anything writable
-    this.refreshWritable(doc, ui);
+    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, refreshCollectionData)));
 
     // Once loaded, see if any of the providers required an index update
     const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
@@ -135,9 +164,10 @@ export class BibliographyManager {
       // Get the entries
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
-
-      this.updateIndex(this.sources);
     }
+
+    // Is this a writable bibliography
+    this.writable = this.isWritable(doc, ui);
   }
 
   public hasSources() {
@@ -182,9 +212,9 @@ export class BibliographyManager {
     return this.bibliographyFiles(doc, ui).filter(bibFile => bibFile.writable);
   }
 
-  private bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
-    const writablePaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
-    return ([] as BibliographyFile[]).concat(...writablePaths);
+  public bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+    const bibliographyPaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
+    return ([] as BibliographyFile[]).concat(...bibliographyPaths);
   }
 
   public localProviders(): BibliographyDataProvider[] {
@@ -279,33 +309,25 @@ export class BibliographyManager {
   }
 
   public searchAllSources(query: string, limit: number): BibliographySourceWithCollections[] {
+    return this.searchSources(query, limit, this.allSources());
+  }
 
+  public searchSources(query: string, limit: number, sources: BibliographySourceWithCollections[]): BibliographySourceWithCollections[] {
     // NOTE: This will only search sources that have already been loaded.
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a source if the
     // bibliography hasn't already been loaded.
-    if (this.fuse) {
-      const options = {
-        isCaseSensitive: false,
-        shouldSort: true,
-        includeMatches: false,
-        includeScore: false,
-        limit,
-        keys: kFields,
-      };
+    if (sources) {
 
       // NOTE: Search performance can really drop off for long strings
       // Test cases start at 20ms to search for a single character
       // grow to 270ms to search for 20 character string
       // grow to 1060ms to search for 40 character string 
-      const results: Array<Fuse.FuseResult<BibliographySource>> = this.fuse.search(query, options);
-
-
+      const results = this.getFuse(sources).search(query, { ...kSearchOptions, limit });
       const items = results.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.allowsWrites() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
-
       return filteredItems;
 
     } else {
@@ -313,24 +335,25 @@ export class BibliographyManager {
     }
   }
 
+
   // Search only a specific provider
   public searchProvider(query: string, limit: number, providerKey: string): BibliographySourceWithCollections[] {
-    return this.searchAllSources(query, limit).filter(item => item.providerKey === providerKey);
+    return this.searchSources(query, limit, this.allSources().filter(item => item.providerKey === providerKey));
   }
 
   // Search a specific provider and collection
   public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySourceWithCollections[] {
-    return this.searchProvider(query, limit, providerKey).filter(item => item.collectionKeys.includes(collectionKey));
+    return this.searchSources(query, limit, this.allSources().filter(item => (item.providerKey === providerKey && item.collectionKeys.includes(collectionKey))));
   }
 
-  private updateIndex(bibSources: BibliographySourceWithCollections[]) {
+  private getFuse(bibSources: BibliographySourceWithCollections[]) {
     // build search index
     const options = {
       keys: kFields.map(field => field.name),
     };
-    const index = Fuse.createIndex(options.keys, bibSources);
-    this.fuse = new Fuse(bibSources, options, index);
-  }
+    const index = Fuse.createIndex<BibliographySourceWithCollections>(options.keys, bibSources);
+    return new Fuse(bibSources, options, index);
 
+  }
 }
 

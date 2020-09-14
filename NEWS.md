@@ -66,6 +66,8 @@
 * Remote session connections over HTTPS can now load certificates from the Apple Keychain. (Pro #1828)
 * Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
 * Update embedded nginx to v1.19.2 (Pro #1719)
+* Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
+* Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
 
 ### Bugfixes
 
@@ -101,3 +103,4 @@
 * Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
 * Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
+* Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)

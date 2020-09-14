@@ -25,15 +25,14 @@ import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { EditorEvents } from '../../api/events';
 import { EditorServer } from '../../api/server';
-import { selectCitations } from '../../behaviors/insert_citation/insert_citation-dialog';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
-import { NavigationTreeNode } from '../../api/widgets/navigation-tree';
+import { showInsertCitationDialog } from '../../behaviors/insert_citation/insert_citation';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
 
-  private selectedNode: NavigationTreeNode | undefined;
+  private initialSelectionKey: string | undefined;
 
   constructor(ui: EditorUI, events: EditorEvents, bibliographyManager: BibliographyManager, server: EditorServer) {
     super(
@@ -48,11 +47,11 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          selectCitations(ui, state.doc, bibliographyManager, server, this.selectedNode).then(async result => {
+          showInsertCitationDialog(ui, state.doc, bibliographyManager, server, this.initialSelectionKey).then(async result => {
             if (result) {
 
               // Remember the last tree node that was selected
-              this.selectedNode = result.selectedNode;
+              this.initialSelectionKey = result.selectionKey;
 
               // The citations that we should insert
               const citationEntries = result.citations;

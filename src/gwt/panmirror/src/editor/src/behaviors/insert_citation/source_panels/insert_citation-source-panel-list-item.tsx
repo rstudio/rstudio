@@ -16,26 +16,11 @@
 import React from "react";
 import { ListChildComponentProps } from "react-window";
 
-import { EditorUI } from "../../../api/ui";
 import { OutlineButton } from "../../../api/widgets/button";
 
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelListData } from "./insert_citation-source-panel-list";
 
 import './insert_citation-source-panel-list-item.css';
-
-interface CitationSourcePanelListData {
-  citations: CitationListEntry[];
-  citationsToAdd: CitationListEntry[];
-  selectedIndex: number;
-  setSelectedIndex: (index: number) => void;
-  addCitation: (source: CitationListEntry) => void;
-  removeCitation: (source: CitationListEntry) => void;
-  confirm: () => void;
-  ui: EditorUI;
-  showSeparator?: boolean;
-  showSelection?: boolean;
-  preventFocus?: boolean;
-}
 
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
@@ -48,28 +33,32 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   const id = citationEntry.id.length > maxIdLength ? `@${citationEntry.id.substr(0, maxIdLength - 1)}…` : `@${citationEntry.id}`;
   const authorWidth = Math.max(10, 50 - id.length);
 
-  // Whether this item is already in the list of items to add
-  const alreadyAdded = citationListData.citationsToAdd.map(src => src.id).includes(citationEntry.id);
+  // Wheher this item is selected
+  const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
 
-  const onButtonClick = () => {
+  // Whether this item is already in the list of items to add
+  // If the item is selected, it is always a candidate to be added explicitly to the list
+  const alreadyAdded = citationListData.citationsToAdd.map(src => src.id).includes(citationEntry.id) && !selected;
+
+  const onButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+
     if (alreadyAdded) {
-      citationListData.removeCitation(citationEntry);
+      citationListData.onRemoveCitation(citationEntry);
     } else {
-      citationListData.addCitation(citationEntry);
+      citationListData.onAddCitation(citationEntry);
     }
   };
 
   const onItemClick = () => {
-    citationListData.setSelectedIndex(props.index);
+    citationListData.onSelectedIndexChanged(props.index);
   };
 
   const onDoubleClick = () => {
-    citationListData.addCitation(citationEntry);
-    citationListData.confirm();
+    citationListData.onAddCitation(citationEntry);
+    citationListData.onConfirm();
   };
-
-  // Wheher this item is selected
-  const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
 
   // TODO: Localize +/- button
 

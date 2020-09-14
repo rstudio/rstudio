@@ -179,12 +179,8 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
 
 }
 
-
-
-
 function verticalArrowHandler(dir: 'up' | 'down') {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-
 
     if (!view) {
       return false;
@@ -201,13 +197,14 @@ function verticalArrowHandler(dir: 'up' | 'down') {
       const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
       if (attrs.type === MathType.Inline) {
         if (dispatch) {
-          const selPos = dir === 'up' ? range.from - 1 : range.to + 1;
+          const side = dir === 'up' ? -1 : 1;
+          const $head = state.selection.$head;
+          const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
           const tr = state.tr;
-          setTextSelection(selPos)(tr);
+          tr.setSelection(nextPos);
           dispatch(tr);
         }
         return true;
-
       }
     }
 

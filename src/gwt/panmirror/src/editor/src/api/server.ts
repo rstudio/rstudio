@@ -18,12 +18,16 @@ import { CrossrefServer } from "./crossref";
 import { ZoteroServer } from './zotero';
 import { XRefServer } from "./xref";
 import { DOIServer } from "./doi";
+import { PubMedServer } from "./pubmed";
+import { DataCiteServer } from "./datacite";
 
 
 export interface EditorServer {
   readonly pandoc: PandocServer;
   readonly doi: DOIServer;
   readonly crossref: CrossrefServer;
+  readonly datacite: DataCiteServer;
+  readonly pubmed: PubMedServer;
   readonly zotero: ZoteroServer;
   readonly xref: XRefServer;
 }

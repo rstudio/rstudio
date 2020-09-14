@@ -19,21 +19,28 @@ import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import './insert_citation-source-panel-typeahead-search.css';
-import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
+import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  addCitation: (citation: CitationListEntry) => void;
-  removeCitation: (citation: CitationListEntry) => void;
-  selectedCitation: (citation?: CitationListEntry) => void;
   searchTerm: string;
-  searchTermChanged: (searchTerm: string) => void;
-  confirm: VoidFunction;
+  onSearchTermChanged: (searchTerm: string) => void;
+  selectedIndex: number;
+  onSelectedIndexChanged: (index: number) => void;
+  onAddCitation: (citation: CitationListEntry) => void;
+  onRemoveCitation: (citation: CitationListEntry) => void;
+  onConfirm: VoidFunction;
+  status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
   ui: EditorUI;
 }
+
+// Height of textbox including border
+const kTextBoxHeight = 30;
 
 export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceTypeaheadSearchPanelProps>((props: CitationSourceTypeaheadSearchPanelProps, ref) => {
 
@@ -42,20 +49,11 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
-    props.searchTermChanged(search);
+    props.onSearchTermChanged(search);
   };
 
   // Perform first load tasks
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(props.height);
-  React.useLayoutEffect(() => {
-
-    // Size the list Box
-    const searchBoxHeight = searchBoxRef.current?.clientHeight;
-    if (searchBoxHeight) {
-      setListHeight(props.height - searchBoxHeight);
-    }
-  }, []);
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -72,12 +70,9 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
   };
 
   const addCitation = (citation: CitationListEntry) => {
-    props.addCitation(citation);
+    // Add the citation and reset selection
+    props.onAddCitation(citation);
     focusSearch();
-    if (searchBoxRef.current) {
-      searchBoxRef.current.value = '';
-      props.searchTermChanged('');
-    }
   };
 
   // On focus, select the search term for overtype
@@ -102,15 +97,19 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
         />
       </div>
       <CitationSourceList
-        height={listHeight}
+        height={props.height - kTextBoxHeight}
         citations={props.citations}
         citationsToAdd={props.citationsToAdd}
-        confirm={props.confirm}
-        addCitation={addCitation}
-        removeCitation={props.removeCitation}
-        selectedCitation={props.selectedCitation}
+        onConfirm={props.onConfirm}
+        onAddCitation={addCitation}
+        onRemoveCitation={props.onRemoveCitation}
+        selectedIndex={props.selectedIndex}
+        onSelectedIndexChanged={props.onSelectedIndexChanged}
         focusPrevious={focusSearch}
-        status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
+        status={props.status}
+        statusText={props.statusText}
+        itemHeight={64}
+        itemProvider={CitationSourcePanelListItem}
         ui={props.ui}
         ref={listContainer}
       />
