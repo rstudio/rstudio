@@ -51,7 +51,8 @@ struct ExecRange
 enum ExpressionMode
 {
    ExprModeNew          = 0,
-   ExprModeContinuation = 1
+   ExprModeContinuation = 1,
+   ExprModeAll          = 2
 };
 
 class NotebookQueueUnit : boost::noncopyable

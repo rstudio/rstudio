@@ -430,13 +430,40 @@ private:
       else
       {
          // execute with alternate engine
+         // when using Python, we can execute a subset of the associated code
          std::string innerCode;
-         error = unit->innerCode(&innerCode);
-         if (error)
+         if (engine == "python")
          {
-            LOG_ERROR(error);
+            // check to see if we're going to use the system interpreter,
+            // or if we can use the reticulate engine to run this chunk.
+            // if we're using the reticulate engine, we can submit just
+            // the selected code; otherwise, we need to submit the whole
+            // chunk at once
+            bool isSystemInterpreter = false;
+            Error error = r::exec::RFunction(".rs.isSystemInterpreter")
+                              .addParam(engine)
+                              .call(&isSystemInterpreter);
+
+            if (isSystemInterpreter)
+            {
+               error = unit->innerCode(&innerCode);
+               if (error)
+                  LOG_ERROR(error);
+            }
+            else
+            {
+               ExecRange range;
+               innerCode = unit->popExecRange(&range, ExprModeAll);
+            }
          }
          else
+         {
+            error = unit->innerCode(&innerCode);
+            if (error)
+               LOG_ERROR(error);
+         }
+
+         if (!error)
          {
             execUnit_ = unit;
 

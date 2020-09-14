@@ -615,7 +615,7 @@ Error runUserDefinedEngine(const std::string& docId,
    if (error)
    {
       FilePath targetPath = module_context::tempFile(
-               "reticulate-engine-",
+               engine + "-engine-",
                ".txt");
       
       chunkConsoleOutputHandler(

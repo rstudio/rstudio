@@ -238,8 +238,8 @@ json::Object NotebookQueueUnit::toJson() const
    return unit;
 }
 
-std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
-      ExpressionMode mode)
+std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
+                                            ExpressionMode mode)
 {
    // do we have any unevaluated code in this execution unit?
    if (pending_.empty())
@@ -259,7 +259,9 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
+   if (mode != ExprModeAll &&
+       idx != std::string::npos &&
+       gsl::narrow_cast<int>(idx) < (stop - 1))
    {
       stop = gsl::narrow_cast<int>(idx);
 
