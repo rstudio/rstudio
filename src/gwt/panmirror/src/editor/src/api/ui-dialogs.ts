@@ -50,7 +50,9 @@ export type EditorHTMLDialogCreateFn = (
   containerWidth: number,
   containerHeight: number,
   confirm: VoidFunction,
-  cancel: VoidFunction
+  cancel: VoidFunction,
+  showProgress: (message: string) => void,
+  hideProgress: VoidFunction
 ) => HTMLElement;
 
 export type EditorHTMLDialogValidateFn = () => string | null;

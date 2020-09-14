@@ -54,11 +54,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
               this.initialSelectionKey = result.selectionKey;
 
               // The citations that we should insert
-              const citationEntries = result.citations;
-
-              // Convert these to sources to be inserted
-              // TODO: Need to potentially deal with progress here as this might be very expensive
-              const sources = await Promise.all(citationEntries.map(entry => entry.toBibliographySource()));
+              const bibliographySources = result.bibliographySources;
 
               // The bibliography that we should insert sources into (if needed)
               const bibliography = result.bibliography;
@@ -70,7 +66,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
               // and that the bibliography is properly configured
               await ensureSourcesInBibliography(
                 tr,
-                sources,
+                bibliographySources,
                 bibliography,
                 bibliographyManager,
                 view,
@@ -89,11 +85,11 @@ export class InsertCitationCommand extends ProsemirrorCommand {
               setTextSelection(tr.selection.from - 1)(tr);
 
               // insert the CiteId marks and text
-              citationEntries.forEach((citation, i) => {
+              bibliographySources.forEach((citation, i) => {
                 const citeIdMark = schema.marks.cite_id.create();
                 const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
                 tr.insert(tr.selection.from, citeIdText);
-                if (citationEntries.length > 1 && i !== citationEntries.length - 1) {
+                if (bibliographySources.length > 1 && i !== bibliographySources.length - 1) {
                   tr.insert(tr.selection.from, schema.text('; ', []));
                 }
               });

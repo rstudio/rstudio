@@ -41,18 +41,23 @@ export interface CitationSourcePanelProvider {
   search: (term: string, selectedNode: NavigationTreeNode) => Promise<CitationListEntry[] | null>;
 }
 
-export interface CitationListEntry {
+export interface CitationListEntry extends BibliographySourceProvider {
   id: string;
+  image?: string;
+  imageAdornment?: string;
   type: string;
+  title: string;
   authors: (width: number) => string;
   date: string;
   journal: string | undefined;
-  title: string;
-  providerKey: string;
-  image?: string;
-  imageAdornment?: string;
   doi?: string;
-  toBibliographySource: () => Promise<BibliographySource>;
+  providerKey: string;
+}
+
+export interface BibliographySourceProvider {
+  id: string;
+  showProgress: boolean;
+  toBibliographySource: (id: string) => Promise<BibliographySource>;
 }
 
 export interface CitationSourceListStatusText {

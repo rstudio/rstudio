@@ -123,14 +123,14 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
     journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
     doi: crossrefWork.DOI,
-    toBibliographySource: async () => {
-
+    toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
-      return doiServer.fetchCSL(crossrefWork.DOI, 1000).then(doiResult => {
-        const csl = doiResult.message as CSL;
-        return { id, providerKey, ...csl };
-      });
-    }
+      const doiResult = await doiServer.fetchCSL(crossrefWork.DOI, -1);
+
+      const csl = doiResult.message as CSL;
+      return { ...csl, id: finalId, providerKey };
+    },
+    showProgress: true
   };
 }
 

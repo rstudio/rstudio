@@ -200,9 +200,10 @@ function toCitationEntries(sources: BibliographySource[], ui: EditorUI): Citatio
       journal: '',
       image: imageForType(ui, source.type)[0],
       imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
-      toBibliographySource: () => {
-        return Promise.resolve(source);
-      }
+      toBibliographySource: (finalId: string) => {
+        return Promise.resolve({ ...source, id: finalId, providerKey: source.providerKey });
+      },
+      showProgress: false
     };
   });
 }

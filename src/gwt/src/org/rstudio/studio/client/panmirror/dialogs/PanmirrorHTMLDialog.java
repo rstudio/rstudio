@@ -26,6 +26,7 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.Window;
@@ -65,6 +66,7 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
       validate_ = validate;
 
       // create main widget
+      ProgressIndicator indicator = addProgressIndicator(false);
       Element mainWidgetEl = create.create(Window.getClientWidth(), Window.getClientHeight(),
             () -> {
                clickOkButton();
@@ -72,9 +74,9 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
                operation.execute(false);
                closeDialog();
             }, (message) -> {
-               getProgressIndicator().onProgress(message);
+               indicator.onProgress(message);
             }, () -> {
-               getProgressIndicator().onCompleted();
+               indicator.onCompleted();
             }
          );
       mainWidget_ = new DialogWidget(mainWidgetEl);

@@ -104,10 +104,10 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
 
 function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
-    const id = suggestCiteId(bibliographyManager.localSources().map(source => source.id), csl);
+    const suggestedId = suggestCiteId(bibliographyManager.localSources().map(source => source.id), csl);
     const providerKey = 'doi';
     return {
-      id,
+      id: suggestedId,
       type: csl.type,
       title: csl.title || '',
       providerKey,
@@ -118,9 +118,10 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
       journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
       doi: csl.DOI,
       image: imageForType(ui, csl.type)[0],
-      toBibliographySource: () => {
-        return Promise.resolve({ ...csl, id, providerKey });
-      }
+      toBibliographySource: (finalId: string) => {
+        return Promise.resolve({ ...csl, id: finalId, providerKey });
+      },
+      showProgress: false
     };
   }
   return undefined;

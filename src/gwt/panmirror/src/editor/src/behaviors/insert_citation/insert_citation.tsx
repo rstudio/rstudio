@@ -25,22 +25,23 @@ import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath } from "../../api/bibliography/bibliography";
+import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath, BibliographySource } from "../../api/bibliography/bibliography";
 import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
+import { changeExtension } from "../../api/path";
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./source_panels/insert_citation-source-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, BibliographySourceProvider } from "./source_panels/insert_citation-source-panel";
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
 import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
-import { changeExtension, joinPaths } from "../../api/path";
+
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
 export interface InsertCitationDialogResult {
-  citations: CitationListEntry[];
+  bibliographySources: BibliographySource[];
   bibliography: BibliographyFile;
   selectionKey?: string;
 }
@@ -63,7 +64,7 @@ export async function showInsertCitationDialog(
   const performInsert = await ui.dialogs.htmlDialog(
     "Insert Citation",
     "Insert",
-    (containerWidth: number, containerHeight: number, confirm: VoidFunction, cancel: VoidFunction) => {
+    (containerWidth: number, containerHeight: number, confirm: VoidFunction, cancel: VoidFunction, showProgress: (message: string) => void, hideProgress: VoidFunction) => {
 
       const kMaxHeight = 650;
       const kMaxWidth = 900;
@@ -110,13 +111,23 @@ export async function showInsertCitationDialog(
         };
       });
 
-      const onOk = (citations: CitationListEntry[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => {
-        result = {
-          citations,
-          bibliography,
-          selectionKey: selectedNode.key
-        };
-        confirm();
+      const onOk = (bibliographySourceProviders: BibliographySourceProvider[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => {
+
+        const requiresProgress = bibliographySourceProviders.some(sourceProvider => sourceProvider.showProgress);
+        if (requiresProgress) {
+          showProgress(ui.context.translateText('Creating bibliography entries...'));
+        }
+        const sources = Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id))).then((bibliographySources: BibliographySource[]) => {
+          result = {
+            bibliographySources,
+            bibliography,
+            selectionKey: selectedNode.key
+          };
+          if (requiresProgress) {
+            hideProgress();
+          }
+          confirm();
+        });
       };
 
       const onCancel = () => {
@@ -147,7 +158,7 @@ export async function showInsertCitationDialog(
     () => {
       // Validation
       // User has to select a citation, everything else we can use defaults
-      if (result && result.citations.length === 0) {
+      if (result && result.bibliographySources.length === 0) {
         return ui.context.translateText('Please select at least one citation to insert.');
       }
       return null;
@@ -180,7 +191,7 @@ interface InsertCitationPanelProps extends WidgetProps {
   width: number;
   configuration: InsertCitationPanelConfigurationStream;
   initiallySelectedNodeKey?: string;
-  onOk: (citations: CitationListEntry[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => void;
+  onOk: (bibliographySourceProviders: BibliographySourceProvider[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => void;
   onCancel: () => void;
 }
 
