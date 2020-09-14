@@ -27,9 +27,6 @@ assign(".rs.toolsEnv", function()
    .rs.Env
 }, envir = .rs.Env)
 
-# Add enviornment with 'tools:rstudio' to store data for Api.R
-assign(".rs.notebookChunkCallbacks", value = new.env(parent = emptyenv()), envir = .rs.toolsEnv())
-
 #' Add a function to the 'tools:rstudio' environment.
 #' 
 #' This environment is placed on the search path, and so is accessible and

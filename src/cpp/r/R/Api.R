@@ -1,3 +1,6 @@
+# Create environment to store data for registerChunkCallback and unregisterChunkCallback
+.rs.setVar("notebookChunkCallbacks", new.env(parent = emptyenv()))
+
 .rs.addApiFunction("restartSession", function(command = NULL) {
    command <- as.character(command)
    invisible(.rs.restartR(command))
