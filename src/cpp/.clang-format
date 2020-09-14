@@ -7,4 +7,10 @@ AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 SpaceAfterCStyleCast: true
 PointerAlignment: Left
+BinPackArguments: false
+BinPackParameters: false
+ExperimentalAutoDetectBinPacking: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ---
