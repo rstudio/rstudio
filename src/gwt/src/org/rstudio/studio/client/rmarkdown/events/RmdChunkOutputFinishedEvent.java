@@ -65,7 +65,7 @@ public class RmdChunkOutputFinishedEvent
       }
 
       private native final JsArray getNativeHtmlCallbacks() /*-{
-         return this["html_callback"]["html"] || [];
+         return this["html_callback"][0] || this["html_callback"]["html"] || [];
       }-*/;
    }
 
