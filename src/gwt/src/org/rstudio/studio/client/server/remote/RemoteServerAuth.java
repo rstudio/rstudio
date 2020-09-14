@@ -188,8 +188,7 @@ class RemoteServerAuth
                {
                   if (rpcError.getCode() == RpcError.METHOD_NOT_FOUND)
                   {
-                     requestCallback.onResponseReceived(
-                                 new Integer(CREDENTIALS_UPDATE_UNSUPPORTED));
+                     requestCallback.onResponseReceived(CREDENTIALS_UPDATE_UNSUPPORTED);
                   }
                   else
                   {
@@ -201,13 +200,11 @@ class RemoteServerAuth
                   Bool authenticated = response.getResult();
                   if (authenticated.getValue())
                   {
-                     requestCallback.onResponseReceived(
-                                 new Integer(CREDENTIALS_UPDATE_SUCCESS));
+                     requestCallback.onResponseReceived(CREDENTIALS_UPDATE_SUCCESS);
                   }
                   else
                   {
-                     requestCallback.onResponseReceived(
-                                 new Integer(CREDENTIALS_UPDATE_FAILURE));
+                     requestCallback.onResponseReceived(CREDENTIALS_UPDATE_FAILURE);
                   }
                }
             }

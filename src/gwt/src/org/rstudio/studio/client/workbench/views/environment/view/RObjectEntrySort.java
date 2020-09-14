@@ -90,12 +90,12 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
                                    second.rObject.getType());
             break;
          case ObjectGridColumn.COLUMN_LENGTH:
-            result = new Long(first.rObject.getLength())
-                              .compareTo(new Long(second.rObject.getLength()));
+            result = Long.valueOf(first.rObject.getLength())
+                              .compareTo(Long.valueOf(second.rObject.getLength()));
             break;
          case ObjectGridColumn.COLUMN_SIZE:
-            result = new Long(first.rObject.getSize())
-                              .compareTo(new Long(second.rObject.getSize()));
+            result = Long.valueOf(first.rObject.getSize())
+                              .compareTo(Long.valueOf(second.rObject.getSize()));
             break;
          case ObjectGridColumn.COLUMN_VALUE:
             result = localeCompare(first.getDisplayValue(),

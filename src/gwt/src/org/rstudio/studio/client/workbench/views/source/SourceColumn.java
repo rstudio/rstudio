@@ -1138,7 +1138,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // remove the tab from its old position
       int idx = tabOrder_.get(event.getOldPos());
-      tabOrder_.remove(new Integer(idx));  // force type box
+      tabOrder_.remove(Integer.valueOf(idx));  // force type box
 
       // add it to its new position
       tabOrder_.add(event.getNewPos(), idx);
@@ -1191,7 +1191,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       EditingTarget target = editors_.remove(idx);
 
-      tabOrder_.remove(new Integer(idx));
+      tabOrder_.remove(Integer.valueOf(idx));
       for (int i = 0; i < tabOrder_.size(); i++)
       {
          if (tabOrder_.get(i) > idx)

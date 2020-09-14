@@ -61,7 +61,7 @@ public class HttpLogEntry extends JavaScriptObject
 
    public final Date getTimestamp()
    {
-      Double timestamp = new Double(getTimestampNative());
+      Double timestamp = getTimestampNative();
       return new Date(timestamp.longValue());
    }
 

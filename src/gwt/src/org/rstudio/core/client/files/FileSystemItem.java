@@ -93,7 +93,7 @@ public class FileSystemItem extends JavaScriptObject
       String filename = getNameFromPath(path);
       if (filename.endsWith(".nb.html"))
          return ".nb.html";
-      
+
       int lastDotIndex = filename.lastIndexOf('.');
       if (lastDotIndex != -1)
          return filename.substring(lastDotIndex);
@@ -112,7 +112,7 @@ public class FileSystemItem extends JavaScriptObject
 
    public final Date getLastModified()
    {
-      Double lastModified = new Double(getLastModifiedNative());
+      Double lastModified = getLastModifiedNative();
       return new Date(lastModified.longValue());
    }
 
@@ -238,7 +238,7 @@ public class FileSystemItem extends JavaScriptObject
       String reportedMimeType = getMimeTypeInternal();
       if (reportedMimeType != null)
          return reportedMimeType;
-      
+
       String ext = getExtension().toLowerCase();
       if (ext.length() > 0)
       {
@@ -326,18 +326,18 @@ public class FileSystemItem extends JavaScriptObject
    public final native boolean exists() /*-{
       return this.exists;
    }-*/;
-   
+
    private final native String getMimeTypeInternal() /*-{
       return this.mime_type;
    }-*/;
-   
+
    // NOTE: This isn't really the proper place to tag this metadata
    // but it was the least intrusive way to propagate this state through
    // all plumbing used when attempting to open a file.
    public final native void setFocusOnNavigate(boolean focusOnNavigate) /*-{
       this.focus_on_navigate = focusOnNavigate;
    }-*/;
-   
+
    public final native boolean focusOnNavigate() /*-{
       return this.focus_on_navigate || false;
    }-*/;

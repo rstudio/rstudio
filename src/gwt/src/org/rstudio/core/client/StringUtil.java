@@ -125,7 +125,7 @@ public class StringUtil
 
    public static String formatFileSize(long size)
    {
-      return formatFileSize(new Long(size).intValue());
+      return formatFileSize(Long.valueOf(size).intValue());
    }
 
    // return a friendly (not precise) elapsed time

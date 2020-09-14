@@ -68,7 +68,7 @@ public class QuotaStatus extends JavaScriptObject
 
    private final long getLongValue(String value)
    {
-      return new Double(getValueNative(value)).longValue();
+      return Double.valueOf(getValueNative(value)).longValue();
    }
 
    private final native double getValueNative(String value) /*-{
