@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * PanmirrorUIChunkCallbacks.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,22 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.panmirror.ui;
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { ZoteroServer } from './zotero';
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
-import { PubMedServer } from "./pubmed";
-import { DataCiteServer } from "./datacite";
+import com.google.gwt.dom.client.Element;
 
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly datacite: DataCiteServer;
-  readonly pubmed: PubMedServer;
-  readonly zotero: ZoteroServer;
-  readonly xref: XRefServer;
+@JsType
+public class PanmirrorUIChunkCallbacks
+{
+   public ScrollIntoView scrollIntoView;
+   public GetVisualPosition getPos;
+
+   @JsFunction
+   public interface GetVisualPosition
+   {
+      int getVisualPosition();
+   }
+
+   @JsFunction
+   public interface ScrollIntoView
+   {
+      int scrollIntoView(Element ele);
+   }
 }

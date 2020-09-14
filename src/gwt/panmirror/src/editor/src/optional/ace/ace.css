@@ -50,10 +50,11 @@
 }
 
 /*
- * Similarly, hide brackets highlighting due to a match with the invisible
- * cursor position.
+ * Similarly, hide selection and brackets highlighting due to a match with the
+ * invisible cursor position.
  */
-.pm-ace-editor-inactive .ace_marker-layer .ace_bracket {
+.pm-ace-editor-inactive .ace_marker-layer .ace_bracket,
+.pm-ace-editor-inactive .ace_marker-layer .ace_selection {
   display: none;
 }
 

@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIRmdChunkEditor.java
+ * PanmirrorUIChunkEditor.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *

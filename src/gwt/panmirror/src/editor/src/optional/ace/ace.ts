@@ -51,6 +51,8 @@ import { AceRenderQueue } from './ace-render-queue';
 import { AcePlaceholder } from './ace-placeholder';
 import { AceNodeViews } from './ace-node-views';
 
+import zenscroll from 'zenscroll';
+
 import './ace.css';
 
 const plugin = new PluginKey('ace');
@@ -132,6 +134,8 @@ export class AceNodeView implements NodeView {
   private queuedSelection: QueuedSelection | null;
   private resizeTimer: number;
   private renderedWidth: number;
+  private scrollRow: number;
+  private cursorDirty: boolean;
 
   private readonly subscriptions: VoidFunction[];
 
@@ -166,6 +170,8 @@ export class AceNodeView implements NodeView {
     this.subscriptions = [];
     this.resizeTimer = 0;
     this.renderedWidth = 0;
+    this.scrollRow = 0;
+    this.cursorDirty = false;
 
     // options
     this.editorOptions = editorOptions;
@@ -396,6 +402,43 @@ export class AceNodeView implements NodeView {
   }
 
   /**
+   * Scrolls a child of the editor chunk into view.
+   * 
+   * @param ele The child to scroll.
+   */
+  private scrollIntoView(ele: HTMLElement) {
+    const editingRoot = editingRootNode(this.view.state.selection);
+    if (editingRoot) {
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const scroller = zenscroll.createScroller(container);
+
+      // Since the element we want to scroll into view is not a direct child of
+      // the scrollable container, do a little math to figure out the
+      // destination scroll position.
+      const top = ele.offsetTop + this.dom.offsetTop;
+      const bottom = top + ele.offsetHeight;
+      const viewTop = container.scrollTop;
+      const viewBottom = container.scrollTop + container.offsetHeight;
+
+      // Scroll based on element's current position and size
+      if (top > viewTop && bottom < viewBottom) {
+        // Element is already fully contained in the viewport
+        return;
+      } else if (ele.offsetHeight > container.offsetHeight) {
+        // Element is taller than the viewport, so show the first part of it
+        scroller.toY(top);
+      } else if (top < viewTop) {
+        // Element is above viewport, so scroll it into view
+        scroller.toY(top);
+      } else if (bottom > viewBottom) {
+        // Part of the element is beneath the viewport, so scroll just enough to
+        // bring it into view
+        scroller.toY(container.scrollTop - (viewBottom - bottom));
+      }
+    }
+  }
+
+  /**
    * Initializes the editing surface by creating and injecting an Ace editor
    * instance from the host.
    */
@@ -407,7 +450,10 @@ export class AceNodeView implements NodeView {
 
     // call host factory to instantiate editor
     this.chunk = this.ui.chunks.createChunkEditor('ace',
-      this.node.attrs.md_index, this.getPos);
+      this.node.attrs.md_index, {
+      getPos: () => this.getPos(),
+      scrollIntoView: (ele) => this.scrollIntoView(ele)
+    });
 
     // populate initial contents
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
@@ -444,14 +490,25 @@ export class AceNodeView implements NodeView {
 
     this.aceEditor.on('blur', () => {
       // Add a class to editor; this class contains CSS rules that hide editor
-      // components that Ace cannot hide natively (such as the cursor and
-      // matching bracket indicator)
+      // components that Ace cannot hide natively (such as the cursor,
+      // matching bracket indicator, and active selection)
       this.dom.classList.add("pm-ace-editor-inactive");
+    });
 
-      // Clear the selection (otherwise could conflict with Prosemirror's
-      // selection)
-      if (this.editSession) {
-        this.editSession.selection.clearSelection();
+    // If the cursor moves and we're in focus, ensure that the cursor is
+    // visible. Ace's own cursor visiblity mechanisms don't work in embedded
+    // editors.
+    if (this.editSession) {
+      this.editSession.getSelection().on('changeCursor', () => {
+        if (this.dom.contains(document.activeElement)) {
+          this.cursorDirty = true;
+        }
+      });
+    }
+    this.aceEditor.on('beforeEndOperation', () => {
+      if (this.cursorDirty) {
+        this.scrollCursorIntoView();
+        this.cursorDirty = false;
       }
     });
 
@@ -726,6 +783,52 @@ export class AceNodeView implements NodeView {
       return this.editSession.getValue();
     } else {
       return this.dom.innerText;
+    }
+  }
+
+  /**
+   * Ensures that the Ace cursor is visible in the scrollable region of the document.
+   */
+  private scrollCursorIntoView(): void {
+
+    // No need to try to enforce cursor position if we're already scrolled to
+    // this row
+    if (this.editSession &&
+      this.editSession.getSelection().getCursor().row === this.scrollRow) {
+      return;
+    }
+
+    // Ensure we still have focus before proceeding
+    if (this.dom.contains(document.activeElement)) {
+      const cursor = document.activeElement as HTMLElement;
+
+      // Ace doesn't actually move the cursor but uses CSS translations to
+      // make it appear in the right place, so we need to use the somewhat
+      // expensive getBoundingClientRect call to get a resolved position.
+      // (The alternative would be parse the translate: transform(10px 20px))
+      // call from the style property.)
+      const editingRoot = editingRootNode(this.view.state.selection)!;
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const containerRect = container.getBoundingClientRect();
+      const cursorRect = cursor.getBoundingClientRect();
+
+      // Scrolling down?
+      const down = (cursorRect.bottom + cursorRect.height + 20) - containerRect.bottom;
+      if (down > 0) {
+        container.scrollTop += down;
+      } else {
+        // Scrolling up?
+        const up = (containerRect.top + cursorRect.height + 35) - cursorRect.top;
+        if (up > 0) {
+          container.scrollTop -= up;
+        }
+      }
+
+      // Update cached scroll row so we don't unnecessarily redo these
+      // computations
+      if (this.editSession) {
+        this.scrollRow = this.editSession.getSelection().getCursor().row;
+      }
     }
   }
 }

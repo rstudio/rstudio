@@ -23,7 +23,7 @@ public class HistoryEntry extends JavaScriptObject
    protected HistoryEntry()
    {
    }
-   
+
    public static final native HistoryEntry create(int index, String command) /*-{
       var entry = new Object();
       entry.index = index;
@@ -31,34 +31,34 @@ public class HistoryEntry extends JavaScriptObject
       entry.command = command;
       return entry;
    }-*/;
-   
+
    public final long getIndex()
-   { 
+   {
       return new Double(getIndexNative()).longValue();
    }
-   
-   public final Date getTimestamp() 
-   { 
+
+   public final Date getTimestamp()
+   {
       Double lastModified = new Double(getTimestampNative());
       return new Date(lastModified.longValue());
    }
-   
+
    public final native String getCommand() /*-{
       return this.command;
    }-*/;
-   
+
    public final String asString()
    {
-      return getIndex() + " - " + 
+      return getIndex() + " - " +
              getTimestamp().toString() + " - " +
              getCommand();
    }
-   
+
    private final native double getIndexNative() /*-{
       return this.index;
    }-*/;
-   
+
    private final native double getTimestampNative() /*-{
       return this.timestamp;
-   }-*/;   
+   }-*/;
 }

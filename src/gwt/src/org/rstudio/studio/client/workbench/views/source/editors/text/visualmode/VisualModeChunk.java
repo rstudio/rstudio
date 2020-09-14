@@ -23,8 +23,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -57,12 +57,12 @@ import jsinterop.base.Js;
 public class VisualModeChunk
 {
    public VisualModeChunk(int index,
-                          PanmirrorUIChunks.GetVisualPosition getPos,
+                          PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
                           VisualModeEditorSync sync)
    {
-      getPos_ = getPos;
+      chunkCallbacks_ = chunkCallbacks;
       sync_ = sync;
       codeExecution_ = target.getCodeExecutor();
       parent_ = target.getDocDisplay();
@@ -72,6 +72,7 @@ public class VisualModeChunk
 
       // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
+      outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       ChunkOutputUi output = null; 
       if (index > 0)
@@ -109,13 +110,23 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-      // Track activation state
-      editor_.addFocusHandler((evt) -> { active_ = true; });
-      editor_.addBlurHandler((evt) -> { active_ = false; });
+      // Track activation state and notify visual mode
+      editor_.addFocusHandler((evt) -> 
+      { 
+         active_ = true; 
+         target_.getVisualMode().setActiveEditor(editor_);
+      });
+      editor_.addBlurHandler((evt) ->
+      {
+         active_ = false;
+         target_.getVisualMode().setActiveEditor(null);
+      });
+       
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
       host_.appendChild(chunkEditor.getContainer());
+      host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
@@ -218,16 +229,6 @@ public class VisualModeChunk
    }
    
    /**
-    * Sets the function used to get the visual position.
-    * 
-    * @param getPos The new function used for retrieving the visual position.
-    */
-   public void setGetPos(PanmirrorUIChunks.GetVisualPosition getPos)
-   {
-      getPos_ = getPos;
-   }
-   
-   /**
     * Add a callback to be invoked when the chunk editor is destroyed.
     * 
     * @param handler A callback to invoke on destruction
@@ -322,7 +323,22 @@ public class VisualModeChunk
     */
    public int getVisualPosition()
    {
-      return getPos_.getVisualPosition();
+      return chunkCallbacks_.getPos.getVisualPosition();
+   }
+   
+   /**
+    * Scroll the chunk's notebook output into view. 
+    */
+   public void scrollOutputIntoView()
+   {
+      // Defer this so the layout pass completes and the element has height.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (widget_ != null && widget_.isVisible())
+         {
+            chunkCallbacks_.scrollIntoView.scrollIntoView(outputHost_);
+         }
+      });
    }
    
    public void reloadWidget()
@@ -397,6 +413,14 @@ public class VisualModeChunk
    public boolean isActive()
    {
       return active_;
+   }
+   
+   /**
+    * Sets focus to the editor instance inside the chunk.
+    */
+   public void focus()
+   {
+      editor_.focus();
    }
    
    /**
@@ -485,9 +509,31 @@ public class VisualModeChunk
    }
    
    /**
-    * Executes the current selection inside the chunk
+    * Executes the active selection via the parent editor
     */
-   private void executeSelection()
+   public void executeSelection()
+   {
+      performWithSelection(() ->
+      {
+         codeExecution_.executeSelection(false);
+      });
+   }
+
+   /**
+    * Performs an arbitrary command after synchronizing the selection state of
+    * the child editor to the parent.
+    * 
+    * @param command The command to perform.
+    */
+   public void performWithSelection(Command command)
+   {
+      sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
+      {
+         performWithSyncedSelection(command);
+      });
+   }
+   
+   private void performWithSyncedSelection(Command command)
    {
       // Ensure we have a scope. This should always exist since we sync the
       // scope outline prior to executing code.
@@ -515,7 +561,8 @@ public class VisualModeChunk
       
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
-      codeExecution_.executeSelection(false);
+
+      command.execute();
       
       // After the event loop, forward the parent selection back to the child if
       // it's changed (this allows us to advance the cursor after running a line)
@@ -549,7 +596,7 @@ public class VisualModeChunk
    private Scope scope_;
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
-   private PanmirrorUIChunks.GetVisualPosition getPos_;
+   private PanmirrorUIChunkCallbacks chunkCallbacks_;
 
    private final DivElement outputHost_;
    private final DivElement host_;

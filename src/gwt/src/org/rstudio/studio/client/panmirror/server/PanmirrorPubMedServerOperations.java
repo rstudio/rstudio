@@ -1,5 +1,5 @@
 /*
- * server.ts
+ * PanmirrorPubMedServerOperations.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,21 +13,13 @@
  *
  */
 
-import { PandocServer } from "./pandoc";
-import { CrossrefServer } from "./crossref";
-import { ZoteroServer } from './zotero';
-import { XRefServer } from "./xref";
-import { DOIServer } from "./doi";
-import { PubMedServer } from "./pubmed";
-import { DataCiteServer } from "./datacite";
+package org.rstudio.studio.client.panmirror.server;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
-export interface EditorServer {
-  readonly pandoc: PandocServer;
-  readonly doi: DOIServer;
-  readonly crossref: CrossrefServer;
-  readonly datacite: DataCiteServer;
-  readonly pubmed: PubMedServer;
-  readonly zotero: ZoteroServer;
-  readonly xref: XRefServer;
+import com.google.gwt.core.client.JavaScriptObject;
+
+public interface PanmirrorPubMedServerOperations 
+{
+   void pubmedSearch(String query, ServerRequestCallback<JavaScriptObject> callback);
 }

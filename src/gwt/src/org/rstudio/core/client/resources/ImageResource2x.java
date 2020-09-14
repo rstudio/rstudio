@@ -42,7 +42,7 @@ public class ImageResource2x implements ImageResource
    {
       return getUse2xResolution() ? ref2x_ : ref_;
    }
-   
+
    @Override
    public String getName()
    {
