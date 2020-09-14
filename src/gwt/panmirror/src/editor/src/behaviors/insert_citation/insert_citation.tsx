@@ -103,7 +103,7 @@ export async function showInsertCitationDialog(
       };
 
       // Load the bibliography and then update the configuration
-      bibliographyManager.load(ui, doc).then(() => {
+      bibliographyManager.load(ui, doc, true).then(() => {
         updatedConfiguration = {
           providers: providersForBibliography(),
           bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)

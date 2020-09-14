@@ -78,7 +78,7 @@ export interface BibliographyDataProvider {
   requiresWritable: boolean;
 
   isEnabled(): boolean;
-  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], refreshCollectionData?: boolean): Promise<boolean>;
   collections(): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
@@ -142,20 +142,10 @@ export class BibliographyManager {
 
   public async prime(ui: EditorUI, doc: ProsemirrorNode) {
     // Load the bibliography
-    await this.load(ui, doc);
-
-    // Prime any of the providers by downloading collection specs
-    await Promise.all(this.providers.map(async provider => {
-      provider.collections();
-    }));
+    await this.load(ui, doc, true);
   }
 
-  public refreshWritable(doc: ProsemirrorNode, ui: EditorUI) {
-    // Note whether there is anything writable
-    this.writable = this.isWritable(doc, ui);
-  }
-
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode, refreshCollectionData?: boolean): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -164,10 +154,7 @@ export class BibliographyManager {
     const docPath = ui.context.getDocumentPath();
 
     // Load each provider
-    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
-
-    // Note whether there is anything writable
-    this.refreshWritable(doc, ui);
+    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, refreshCollectionData)));
 
     // Once loaded, see if any of the providers required an index update
     const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
@@ -178,6 +165,9 @@ export class BibliographyManager {
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
     }
+
+    // Is this a writable bibliography
+    this.writable = this.isWritable(doc, ui);
   }
 
   public hasSources() {
