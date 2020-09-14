@@ -337,9 +337,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       updateState({ searchTerm, status: CitationSourceListStatus.inProgress });
       selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode).then((value) => {
         if (value) {
-          updateState({ searchTerm, citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default });
+          updateState({ searchTerm, citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default, selectedIndex: -1 });
         } else {
-          updateState({ searchTerm, citations: [], status: CitationSourceListStatus.noResults });
+          updateState({ searchTerm, citations: [], status: CitationSourceListStatus.noResults, selectedIndex: -1 });
         }
       });
     },

@@ -122,6 +122,7 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
     date: formatIssuedDate(crossrefWork.issued),
     journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
+    doi: crossrefWork.DOI,
     toBibliographySource: async () => {
 
       // Generate CSL using the DOI

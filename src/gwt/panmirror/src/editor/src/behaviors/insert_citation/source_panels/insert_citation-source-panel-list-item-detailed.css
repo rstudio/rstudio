@@ -109,6 +109,9 @@
   font-weight: 500;
   font-size: 11pt;
   opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pm-insert-citation-source-panel-item-detailed-detail {

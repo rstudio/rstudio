@@ -51,6 +51,7 @@ export interface CitationListEntry {
   providerKey: string;
   image?: string;
   imageAdornment?: string;
+  doi?: string;
   toBibliographySource: () => Promise<BibliographySource>;
 }
 

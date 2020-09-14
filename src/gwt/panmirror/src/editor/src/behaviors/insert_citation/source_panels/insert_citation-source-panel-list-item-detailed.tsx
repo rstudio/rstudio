@@ -58,6 +58,9 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
 
   // TODO: Localize +/- button
 
+  const secondLine = [citationEntry.date, citationEntry.journal].filter(text => text).join(', ');
+  const thirdLine = citationEntry.authors(80);
+
   return (
     <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item-detailed' style={props.style}>
       <div className={`pm-insert-citation-source-panel-item-detailed-border ${selected ? 'pm-list-item-selected' : ''}`} >
@@ -67,9 +70,17 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
             <img className='pm-insert-citation-source-panel-item-detailed-icon pm-block-border-color' src={citationEntry.image} />
           </div>
           <div className='pm-insert-citation-source-panel-item-detailed-summary'>
-            <div className='pm-insert-citation-source-panel-item-detailed-title pm-fixedwidth-font pm-text-color'>{citationEntry.title}</div>
-            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>{citationEntry.journal}</div>
-            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>{citationEntry.type} - {citationEntry.date} - {citationEntry.authors(50)}</div>
+            <div className='pm-insert-citation-source-panel-item-detailed-title pm-fixedwidth-font pm-text-color'>
+              {citationEntry.title}
+            </div>
+            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
+              {secondLine}
+            </div>
+            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
+              {thirdLine}
+            </div>
+            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
+              <a href={`https://doi.org/${citationEntry.doi}`} target='_new'>{citationEntry.doi}</a></div>
           </div>
           <div className='pm-insert-citation-source-panel-item-detailed-button'>
             <OutlineButton
@@ -81,6 +92,6 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
