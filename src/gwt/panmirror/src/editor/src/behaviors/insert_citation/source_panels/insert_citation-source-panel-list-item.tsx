@@ -18,13 +18,13 @@ import { ListChildComponentProps } from "react-window";
 
 import { OutlineButton } from "../../../api/widgets/button";
 
-import { CitationSourcePanelListData } from "./insert_citation-source-panel-list";
+import { CitationSourcePanelListItemData } from "./insert_citation-source-panel-list";
 
 import './insert_citation-source-panel-list-item.css';
 
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
-  const citationListData: CitationSourcePanelListData = props.data;
+  const citationListData: CitationSourcePanelListItemData = props.data;
 
   const citationEntry = citationListData.citations[props.index];
 
@@ -51,13 +51,17 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
-  const onItemClick = () => {
+  const onItemClick = (e: React.MouseEvent) => {
     citationListData.onSelectedIndexChanged(props.index);
+    e.preventDefault();
+    e.stopPropagation();
   };
 
-  const onDoubleClick = () => {
+  const onDoubleClick = (e: React.MouseEvent) => {
     citationListData.onAddCitation(citationEntry);
     citationListData.onConfirm();
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // TODO: Localize +/- button

@@ -43,6 +43,7 @@ export interface CitationSourcePanelProvider {
 
 export interface CitationListEntry extends BibliographySourceProvider {
   id: string;
+  isIdEditable: boolean;
   image?: string;
   imageAdornment?: string;
   type: string;
@@ -51,7 +52,6 @@ export interface CitationListEntry extends BibliographySourceProvider {
   date: string;
   journal: string | undefined;
   doi?: string;
-  providerKey: string;
 }
 
 export interface BibliographySourceProvider {

@@ -108,9 +108,9 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
     const providerKey = 'doi';
     return {
       id: suggestedId,
+      isIdEditable: true,
       type: csl.type,
       title: csl.title || '',
-      providerKey,
       authors: (length: number) => {
         return formatAuthors(csl.author, length);
       },

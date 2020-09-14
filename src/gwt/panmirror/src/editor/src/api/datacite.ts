@@ -25,11 +25,32 @@ export interface DataCiteRecord {
   title?: string;
   publisher?: string;
   publicationYear?: number;
-  creators?: string[];
+  creators?: DataCiteCreator[];
   type?: string; // citeproc type
+}
+
+export interface DataCiteCreator {
+  fullName: string;
+  familyName?: string;
+  givenName?: string;
 }
 
 export interface DataCiteServer {
   search: (query: string) => Promise<DataCiteResult>;
+}
+
+export function suggestCiteId(record: DataCiteRecord): string {
+
+  // Try to use the last name (or the first name)
+  let suggestedId = '';
+  if (record.creators && record.creators.length > 0) {
+    suggestedId = record.creators[0].familyName || record.creators[0].fullName;
+  }
+
+  // Try to read the year
+  if (record.publicationYear) {
+    suggestedId = suggestedId + record.publicationYear;
+  }
+  return suggestedId;
 }
 

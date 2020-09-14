@@ -33,6 +33,8 @@ import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntr
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
 import { doiSourcePanel } from "./source_panels/insert_citation-source-panel-doi";
 import { crossrefSourcePanel } from "./source_panels/insert_citation-source-panel-crossref";
+import { pubmedSourcePanel } from "./source_panels/insert_citation-source-panel-pubmed";
+import { dataciteSourcePanel } from "./source_panels/insert_citation-source-panel-datacite";
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
@@ -82,12 +84,13 @@ export async function showInsertCitationDialog(
 
       // Provide the providers top the dialog and then refresh the bibliography and reload
       // the items
-      const providersForBibliography = () => {
-        const isWritable = bibliographyManager.writableBibliographyFiles(doc, ui).length > 0;
-        return isWritable ? [
+      const providersForBibliography = (writable: boolean) => {
+        return writable ? [
           bibliographySourcePanel(doc, ui, bibliographyManager),
           doiSourcePanel(ui, bibliographyManager, server.doi),
-          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi)] :
+          crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi),
+          dataciteSourcePanel(ui, bibliographyManager, server.datacite, server.doi),
+          pubmedSourcePanel(ui, bibliographyManager, server.pubmed, server.doi),] :
           [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
 
@@ -95,7 +98,7 @@ export async function showInsertCitationDialog(
       let updatedConfiguration: InsertCitationPanelConfiguration | undefined;
       const configurationStream: InsertCitationPanelConfigurationStream = {
         current: {
-          providers: providersForBibliography(),
+          providers: providersForBibliography(bibliographyManager.allowsWrites()),
           bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
         },
         stream: () => {
@@ -106,7 +109,7 @@ export async function showInsertCitationDialog(
       // Load the bibliography and then update the configuration
       bibliographyManager.load(ui, doc, true).then(() => {
         updatedConfiguration = {
-          providers: providersForBibliography(),
+          providers: providersForBibliography(bibliographyManager.allowsWrites()),
           bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
         };
       });
@@ -115,7 +118,7 @@ export async function showInsertCitationDialog(
 
         const requiresProgress = bibliographySourceProviders.some(sourceProvider => sourceProvider.showProgress);
         if (requiresProgress) {
-          showProgress(ui.context.translateText('Creating bibliography entries...'));
+          showProgress(ui.context.translateText(bibliographySourceProviders.length === 1 ? 'Creating bibliography entry...' : 'Creating bibliography entries...'));
         }
         const sources = Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id))).then((bibliographySources: BibliographySource[]) => {
           result = {
@@ -239,7 +242,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       selectedNode: defaultNode || selectedPanelProvider.treeNode(),
       status: CitationSourceListStatus.default,
       existingBibliographyFile: props.configuration.current.bibliographyFiles[0],
-      createBibliographyFile: bibliographyFileForPath(changeExtension('references.bib', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
+      createBibliographyFile: bibliographyFileForPath(changeExtension('references.json', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
     }
   );
 
@@ -307,12 +310,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     updateState({ searchTerm: '', citations: value || [] });
   }, []);
 
-
-  const refreshSearch = () => {
-    // Once the configurations, refresh the search
-    const defaultResults = selectedPanelProvider.typeAheadSearch(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode);
-    updateState({ citations: defaultResults || [] });
-  };
 
   // When the user presses the insert button
   const onOk = () => {
@@ -449,7 +446,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             key: source.id,
             displayText: source.id,
             displayPrefix: '@',
-            isEditable: source.providerKey !== kLocalBiliographyProviderKey,
+            isEditable: source.isIdEditable
           }))}
           tagDeleted={deleteTag}
           tagChanged={tagEdited}

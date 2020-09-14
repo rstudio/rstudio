@@ -49,7 +49,7 @@ struct PubMedDocument
    std::vector<std::string> pubTypes;
    std::string title;
    std::vector<std::string> authors;
-   std::string lastAuthor;
+   std::string sortFirstAuthor;
    std::string source;
    std::string volume;
    std::string issue;
@@ -84,8 +84,8 @@ json::Object pubMedDocumentJson(const PubMedDocument& doc)
    }
 
    // lastAuthor
-   if (!doc.lastAuthor.empty())
-      docJson["lastAuthor"] = doc.lastAuthor;
+   if (!doc.sortFirstAuthor.empty())
+      docJson["sortFirstAuthor"] = doc.sortFirstAuthor;
 
    // title
    if (!doc.title.empty())
@@ -169,8 +169,8 @@ PubMedDocument resultToPubMedDocument(json::Object resultJson)
       }
    }
 
-   // read lastAuthor, title, source, volume, issue, pubDate
-   json::readObject(resultJson, "lastauthor", doc.lastAuthor);
+   // read sortfirstauthor, title, source, volume, issue, pubDate
+   json::readObject(resultJson, "sortfirstauthor", doc.sortFirstAuthor);
    json::readObject(resultJson, "title", doc.title);
    json::readObject(resultJson, "source", doc.source);
    json::readObject(resultJson, "volume", doc.volume);
@@ -234,6 +234,8 @@ void pubMedSearch(const json::JsonRpcRequest& request,
    pubMedRequest("entrez/eutils/esearch.fcgi", params, cont,
                  [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
 
+      // std::cerr << "query: " << json.getObject()["esearchresult"].getObject()["querytranslation"].getString() << std::endl;
+
       // validate json
       Error error =json.validate(module_context::resourceFileAsString("schema/pubmed-esearch.json"));
       if (error)
@@ -248,6 +250,13 @@ void pubMedSearch(const json::JsonRpcRequest& request,
           .getObject()["idlist"]
           .getArray()
           .toVectorString(ids);
+
+      // if there were no results return an empty array
+      if (ids.size() == 0)
+      {
+         resolveJsonRpcContinuation(cont, kStatusOK, json::Array());
+         return;
+      }
       
       // fetch documents
       http::Fields summaryParams;
@@ -279,6 +288,7 @@ void pubMedSearch(const json::JsonRpcRequest& request,
             if (resultsJson.hasMember(id))
             {
                json::Object resultJson = resultsJson[id].getObject();
+               resultJson.writeFormatted(std::cerr);
                PubMedDocument doc = resultToPubMedDocument(resultJson);
                if (!doc.empty())
                   docsJson.push_back(pubMedDocumentJson(doc));

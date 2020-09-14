@@ -21,6 +21,35 @@ import { urlForDOI } from "./doi";
 const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
 
+export function createUniqueCiteId(existingIds: string[], baseId: string): string {
+  let proposedId = baseId;
+  let count = 0;
+
+  // Ensure that this is a valid citation, stripping any invalid characters
+
+
+  // If there is a conflict with an existing id, we will append
+  // the following character and try again. If the conflict continues with
+  // the postfix character added, we'll increment and keep going through the 
+  // alphabet
+  const disambiguationStartCharacter = 97; // a
+
+  while (existingIds.includes(proposedId)) {
+    // If we've wrapped around to a and we haven't found a unique entry
+    // Add an 'a' to the end and try again. Will ultimately create an entry like
+    // Teague2012aaaf
+    if (count !== 0 && count % 26 === 0) {
+      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
+    }
+
+    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
+    proposedId = baseId + postfix;
+    count++;
+  }
+  return proposedId;
+
+}
+
 // Suggests a bibliographic identifier based upon the source
 export function suggestCiteId(existingIds: string[], csl: CSL) {
 
@@ -63,36 +92,13 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
 
   // Create a deduplicated string against the existing entries
   let baseId = `${citeIdLeading.toLowerCase()}${datePart}`;
-
   if (baseId.length === 0) {
     // Could try title
   }
 
   // Strip any characters that shouldn't appear in a bibtex citekey
   baseId = baseId.replace(kInvalidCiteKeyChars, '');
-
-  let proposedId = baseId;
-  let count = 0;
-
-  // If there is a conflict with an existing id, we will append
-  // the following character and try again. If the conflict continues with
-  // the postfix character added, we'll increment and keep going through the 
-  // alphabet
-  const disambiguationStartCharacter = 97; // a
-
-  while (existingIds.includes(proposedId)) {
-    // If we've wrapped around to a and we haven't found a unique entry
-    // Add an 'a' to the end and try again. Will ultimately create an entry like
-    // Teague2012aaaf
-    if (count !== 0 && count % 26 === 0) {
-      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
-    }
-
-    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
-    proposedId = baseId + postfix;
-    count++;
-  }
-  return proposedId;
+  return createUniqueCiteId(existingIds, baseId);
 }
 
 export function imageForType(ui: EditorUI, type: string): [string?, string?] {

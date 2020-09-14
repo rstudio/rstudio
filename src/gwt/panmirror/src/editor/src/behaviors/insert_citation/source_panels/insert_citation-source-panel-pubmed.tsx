@@ -1,5 +1,5 @@
 /*
- * insert_citation-source-panel-crossref.tsx
+ * insert_citation-source-panel-pubmed.tsx
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -17,31 +17,33 @@
 import React from "react";
 
 import { EditorUI } from "../../../api/ui";
-import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
-import { sanitizeForCiteproc, CSL } from "../../../api/csl";
+import { createUniqueCiteId } from "../../../api/cite";
+import { CSL } from "../../../api/csl";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from "../../../api/crossref";
 import { DOIServer } from "../../../api/doi";
+
+import { PubMedServer, PubMedDocument, suggestCiteId, imageForType } from "../../../api/pubmed";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
-export function crossrefSourcePanel(ui: EditorUI,
+
+export function pubmedSourcePanel(ui: EditorUI,
   bibliographyManager: BibliographyManager,
-  server: CrossrefServer,
+  server: PubMedServer,
   doiServer: DOIServer): CitationSourcePanelProvider {
 
-  const kCrossrefType = 'Crossref';
+  const kPubmedType = 'Pubmed';
   return {
-    key: 'E38370AA-78AE-450B-BBE8-878E1C817C04',
-    panel: CrossRefSourcePanel,
+    key: 'EF556233-05B0-4678-8216-38061908463F',
+    panel: PubmedSourcePanel,
     treeNode: () => {
       return {
-        key: 'CrossRef',
-        name: ui.context.translateText('Crossref'),
-        image: ui.images.citations?.crossref,
-        type: kCrossrefType,
+        key: 'PubMed',
+        name: ui.context.translateText('PubMed'),
+        image: ui.images.citations?.pubmed,
+        type: kPubmedType,
         children: [],
         expanded: true
       };
@@ -53,18 +55,28 @@ export function crossrefSourcePanel(ui: EditorUI,
 
       // TODO: Error handling (try / catch)
       try {
-        const works = await server.works(searchTerm);
-        const existingIds = bibliographyManager.localSources().map(src => src.id);
-        const citationEntries = works.items.map(work => {
-          const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
-          if (citationEntry) {
-            // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-            existingIds.push(citationEntry.id);
+        const pubMedResult = await server.search(searchTerm);
+        if (pubMedResult.status === 'ok') {
+          if (pubMedResult.message === null) {
+            // No results
+            return Promise.resolve([]);
+          } else {
+            const docs: PubMedDocument[] = pubMedResult.message;
+            const existingIds = bibliographyManager.localSources().map(src => src.id);
+            const citationEntries = docs.map(doc => {
+              const citationEntry = toCitationEntry(doc, existingIds, ui, doiServer);
+              if (citationEntry) {
+                // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+                existingIds.push(citationEntry.id);
+              }
+              return citationEntry;
+            });
+            return Promise.resolve(citationEntries);
           }
-          return citationEntry;
-        });
-
-        return Promise.resolve(citationEntries);
+        } else {
+          // TODO: Error
+          return Promise.resolve([]);
+        }
       } catch {
         // TODO: return citationentries or string (error)
         return Promise.resolve([]);
@@ -73,7 +85,7 @@ export function crossrefSourcePanel(ui: EditorUI,
   };
 }
 
-export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
+export const PubmedSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   return (
     <CitationSourceLatentSearchPanel
       height={props.height}
@@ -87,14 +99,14 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       selectedIndex={props.selectedIndex}
       onSelectedIndexChanged={props.onSelectedIndexChanged}
       onConfirm={props.onConfirm}
-      searchPlaceholderText={props.ui.context.translateText('Search Crossref for Citations')}
+      searchPlaceholderText={props.ui.context.translateText('Search PubMed for Citations')}
       status={props.status}
       statusText={
         {
-          placeholder: props.ui.context.translateText('Enter terms to search Crossref'),
-          progress: props.ui.context.translateText('Searching Crossref...'),
+          placeholder: props.ui.context.translateText('Enter terms to search PubMed'),
+          progress: props.ui.context.translateText('Searching PubMed...'),
           noResults: props.ui.context.translateText('No matching items'),
-          error: props.ui.context.translateText('An error occurred while searching Crossref'),
+          error: props.ui.context.translateText('An error occurred while searching PubMed'),
         }
       }
       ui={props.ui}
@@ -103,26 +115,25 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
   );
 });
 
-function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
+function toCitationEntry(doc: PubMedDocument, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
 
-  const coercedCSL = sanitizeForCiteproc(crossrefWork as unknown as CSL);
-  const id = suggestCiteId(existingIds, coercedCSL);
+  const id = createUniqueCiteId(existingIds, suggestCiteId(doc));
   const providerKey = 'crossref';
   return {
     id,
     isIdEditable: true,
-    title: crossrefWorkTitle(crossrefWork, ui),
+    title: doc.title || '',
     authors: (length: number) => {
-      return formatAuthors(coercedCSL.author, length);
+      return formatAuthors(doc.authors || [], length);
     },
-    type: prettyType(ui, crossrefWork.type),
-    date: formatIssuedDate(crossrefWork.issued),
-    journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
-    image: imageForCrossrefType(ui, crossrefWork.type)[0],
-    doi: crossrefWork.DOI,
+    type: '',
+    date: doc.pubDate || '',
+    journal: doc.source,
+    image: imageForType(ui, doc.pubTypes)[0],
+    doi: doc.doi,
     toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
-      const doiResult = await doiServer.fetchCSL(crossrefWork.DOI, -1);
+      const doiResult = await doiServer.fetchCSL(doc.doi, -1);
 
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
@@ -131,11 +142,7 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
   };
 }
 
-
-function crossrefWorkTitle(work: CrossrefWork, ui: EditorUI) {
-  if (work.title) {
-    return work.title[0];
-  } else {
-    return ui.context.translateText('(Untitled)');
-  }
+function formatAuthors(authors: string[], length: number) {
+  return authors.join(',');
 }
+

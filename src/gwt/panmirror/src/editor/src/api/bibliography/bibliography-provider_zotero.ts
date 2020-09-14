@@ -61,7 +61,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         // If there is a warning, stop using the cache and force a fresh trip
         // through the whole pipeline to be sure we're trying to clear that warning
-        const useCache = this.warning === undefined || this.warning.length === 0;
+        const useCache = false; // this.warning === undefined || this.warning.length === 0;
 
         // The collection specified in the document header
         const collections = Array.isArray(this.zoteroConfig) ? this.zoteroConfig : [];
@@ -153,7 +153,6 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
   public async generateBibTeX(ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
     if (csl.key && ui.prefs.zoteroUseBetterBibtex()) {
-      // TODO: Why is the libraryID no longer available here?
       const bibTeX = await this.server.betterBibtexExport([csl.key], kZoteroBibTeXTranslator, parseInt((csl as ZoteroCSL).libraryID, 10));
       if (bibTeX) {
         return Promise.resolve(bibTeX.message);

@@ -187,9 +187,11 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
 }
 
 function toCitationEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+  const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
       id: source.id,
+      isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,
       type: source.type,
       title: source.title || '',
       providerKey: source.providerKey,

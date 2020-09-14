@@ -42,6 +42,9 @@ const char * const kDataCiteApiHost = "https://api.datacite.org";
 // convert json returned by API to json record expected by the client
 json::Object asDataCiteRecord(const json::Object resultJson)
 {
+   resultJson.writeFormatted(std::cerr);
+
+
    // get attributes object
    json::Object attributesJson;
    json::readObject(resultJson, "attributes", attributesJson);
@@ -76,13 +79,28 @@ json::Object asDataCiteRecord(const json::Object resultJson)
    json::readObject(attributesJson, "creators", creatorsJson);
    if (!creatorsJson.isEmpty())
    {
-      json::Array creatorNamesJson;
+      json::Array targetCreatorsJson;
       for (auto creatorJson : creatorsJson)
       {
          if (creatorJson.isObject() && creatorJson.getObject().hasMember("name"))
-            creatorNamesJson.push_back(creatorJson.getObject()["name"]);
+         {
+             std::string familyName, givenName, fullName;
+             json::readObject(creatorJson.getObject(), "name", fullName);
+             json::readObject(creatorJson.getObject(), "givenName", givenName);
+             json::readObject(creatorJson.getObject(), "familyName", familyName);
+
+             json::Object targetJson;
+             if (!fullName.empty())
+                 targetJson["fullName"] = fullName;
+             if (!givenName.empty())
+                 targetJson["givenName"] = givenName;
+             if (!familyName.empty())
+                 targetJson["familyName"] = familyName;
+             targetCreatorsJson.push_back(targetJson);
+
+         }
       }
-      recordJson["creators"] = creatorNamesJson;
+      recordJson["creators"] = targetCreatorsJson;
    }
 
    // read type

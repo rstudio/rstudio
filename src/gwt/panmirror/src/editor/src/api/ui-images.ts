@@ -128,6 +128,8 @@ export interface EditorUIImages {
     zotero_root?: string;
     doi?: string;
     crossref?: string;
+    pubmed?: string;
+    datacite?: string;
   };
   widgets?: {
     tag_delete?: string;

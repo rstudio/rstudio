@@ -128,6 +128,8 @@ import zoteroLibraryImage from './images/citations/insert/zotero-library.png';
 import zoteroCollectionImage from './images/citations/insert/zotero-collection.png';
 import doiImage from './images/citations/insert/doi.png';
 import crossRefImage from './images/citations/insert/crossref.png';
+import pubmedImage from './images/citations/insert/pubmed.png';
+import dataciteImage from './images/citations/insert/datacite.png';
 
 import tagDelete from './images/widgets/tag-delete.png';
 import tagEdit from './images/widgets/tag-edit.png';
@@ -247,7 +249,9 @@ export function defaultEditorUIImages(): EditorUIImages {
       zotero_collection: zoteroCollectionImage,
       zotero_root: zoteroRootImage,
       doi: doiImage,
-      crossref: crossRefImage
+      crossref: crossRefImage,
+      pubmed: pubmedImage,
+      datacite: dataciteImage
     },
     widgets: {
       tag_delete: tagDelete,
