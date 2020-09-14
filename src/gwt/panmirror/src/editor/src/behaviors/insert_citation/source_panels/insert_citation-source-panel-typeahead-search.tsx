@@ -19,8 +19,9 @@ import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import './insert_citation-source-panel-typeahead-search.css';
-import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationSourceList } from "./insert_citation-source-panel-list";
+import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
+import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
 
 export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   height: number;
@@ -33,8 +34,13 @@ export interface CitationSourceTypeaheadSearchPanelProps extends WidgetProps {
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
+  status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
   ui: EditorUI;
 }
+
+// Height of textbox including border
+const kTextBoxHeight = 30;
 
 export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceTypeaheadSearchPanelProps>((props: CitationSourceTypeaheadSearchPanelProps, ref) => {
 
@@ -91,7 +97,7 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
         />
       </div>
       <CitationSourceList
-        height={props.height - 28}
+        height={props.height - kTextBoxHeight}
         citations={props.citations}
         citationsToAdd={props.citationsToAdd}
         onConfirm={props.onConfirm}
@@ -100,7 +106,10 @@ export const CitationSourceTypeheadSearchPanel = React.forwardRef<HTMLDivElement
         selectedIndex={props.selectedIndex}
         onSelectedIndexChanged={props.onSelectedIndexChanged}
         focusPrevious={focusSearch}
-        status={props.citations.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default}
+        status={props.status}
+        statusText={props.statusText}
+        itemHeight={64}
+        itemProvider={CitationSourcePanelListItem}
         ui={props.ui}
         ref={listContainer}
       />

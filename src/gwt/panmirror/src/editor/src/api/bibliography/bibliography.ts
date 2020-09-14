@@ -25,6 +25,8 @@ import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibLaTeX } from './bibDB';
+import { joinPaths } from '../path';
+
 
 export interface BibliographyFile {
   displayPath: string;
@@ -33,13 +35,50 @@ export interface BibliographyFile {
   writable: boolean;
 }
 
+export function bibliographyFileForPath(path: string, ui: EditorUI): BibliographyFile {
+  return {
+    displayPath: path,
+    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+    isProject: false,
+    writable: true
+  };
+}
+
+export interface BibliographyType {
+  extension: string;
+  displayName: string;
+  default: boolean;
+}
+
+// The types of bibliography files and the default value
+export function bibliographyTypes(ui: EditorUI): BibliographyType[] {
+  const defaultBiblioType = ui.prefs.bibliographyDefaultType();
+  return [
+    {
+      displayName: ui.context.translateText('BibTeX'),
+      extension: 'bib',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-YAML'),
+      extension: 'yaml',
+      default: defaultBiblioType === 'bib'
+    },
+    {
+      displayName: ui.context.translateText('CSL-JSON'),
+      extension: 'json',
+      default: defaultBiblioType === 'json'
+    },
+  ];
+}
+
 export interface BibliographyDataProvider {
   key: string;
   name: string;
   requiresWritable: boolean;
 
   isEnabled(): boolean;
-  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean>;
+  load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[], refreshCollectionData?: boolean): Promise<boolean>;
   collections(): BibliographyCollection[];
   items(): BibliographySourceWithCollections[];
   itemsForCollection(collectionKey: string): BibliographySourceWithCollections[];
@@ -103,20 +142,10 @@ export class BibliographyManager {
 
   public async prime(ui: EditorUI, doc: ProsemirrorNode) {
     // Load the bibliography
-    await this.load(ui, doc);
-
-    // Prime any of the providers by downloading collection specs
-    await Promise.all(this.providers.map(async provider => {
-      provider.collections();
-    }));
+    await this.load(ui, doc, true);
   }
 
-  public refreshWritable(doc: ProsemirrorNode, ui: EditorUI) {
-    // Note whether there is anything writable
-    this.writable = this.isWritable(doc, ui);
-  }
-
-  public async load(ui: EditorUI, doc: ProsemirrorNode): Promise<void> {
+  public async load(ui: EditorUI, doc: ProsemirrorNode, refreshCollectionData?: boolean): Promise<void> {
 
     // read the Yaml blocks from the document
     const parsedYamlNodes = parseYamlNodes(doc);
@@ -125,10 +154,7 @@ export class BibliographyManager {
     const docPath = ui.context.getDocumentPath();
 
     // Load each provider
-    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes)));
-
-    // Note whether there is anything writable
-    this.refreshWritable(doc, ui);
+    const providersNeedUpdate = await Promise.all(this.providers.map(provider => provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, refreshCollectionData)));
 
     // Once loaded, see if any of the providers required an index update
     const needsIndexUpdate = providersNeedUpdate.reduce((prev, curr) => prev || curr);
@@ -139,6 +165,9 @@ export class BibliographyManager {
       const providersEntries = this.providers.map(provider => provider.items());
       this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
     }
+
+    // Is this a writable bibliography
+    this.writable = this.isWritable(doc, ui);
   }
 
   public hasSources() {
@@ -183,7 +212,7 @@ export class BibliographyManager {
     return this.bibliographyFiles(doc, ui).filter(bibFile => bibFile.writable);
   }
 
-  private bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
+  public bibliographyFiles(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
     const bibliographyPaths = this.providers.map(provider => provider.bibliographyPaths(doc, ui));
     return ([] as BibliographyFile[]).concat(...bibliographyPaths);
   }

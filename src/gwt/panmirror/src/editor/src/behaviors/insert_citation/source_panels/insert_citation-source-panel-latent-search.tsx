@@ -18,11 +18,12 @@ import { EditorUI } from "../../../api/ui";
 import { TextInput } from "../../../api/widgets/text";
 import { WidgetProps } from "../../../api/widgets/react";
 
-import { CitationSourceList, CitationSourceListStatus } from "./insert_citation-source-panel-list";
+import { CitationSourceList } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-latent-search.css';
+import { CitationSourcePanelListItemDetailed } from "./insert_citation-source-panel-list-item-detailed";
 
 export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   height: number;
@@ -30,20 +31,18 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   citationsToAdd: CitationListEntry[];
   searchTerm: string;
   onSearchTermChanged: (searchTerm: string) => void;
-  executeSearch: () => void;
+  executeSearch: (searchTerm: string) => void;
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
   ui: EditorUI;
-  defaultText?: string;
-  placeholderText?: string;
+  searchPlaceholderText?: string;
   status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
 }
 
-// TODO: Height issue
-// TODO: Focus tab order issue
 // TODO: Status / progress issue
 
 const kSearchBoxHeightWithMargin = 38;
@@ -53,20 +52,16 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const pasted = React.useRef<boolean>(false);
 
-  const performSearch = (search: string) => {
-    props.executeSearch();
-    pasted.current = false;
-  };
-
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
-    props.onSearchTermChanged(search);
     if (pasted.current) {
-      performSearch(search);
+      props.executeSearch(search);
+      pasted.current = false;
+    } else {
+      props.onSearchTermChanged(search);
     }
   };
-
 
   // If the user arrows down in the search text box, advance to the list of items
   const handleTextKeyDown = (event: React.KeyboardEvent) => {
@@ -79,13 +74,13 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
       case 'Enter':
         event.preventDefault();
         event.stopPropagation();
-        props.executeSearch();
+        props.executeSearch(props.searchTerm);
         break;
     }
   };
 
   const handleButtonClick = () => {
-    props.executeSearch();
+    props.executeSearch(props.searchTerm);
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -94,8 +89,19 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
   // Used to focus the search box
   const searchBoxRef = React.useRef<HTMLInputElement>(null);
+
   const focusSearch = () => {
     searchBoxRef.current?.focus();
+  };
+
+  // Allow the search box to gain focus the first time the enclosing
+  // container div receives focus.
+  const initialFocusSet = React.useRef<boolean>(false);
+  const parentFocused = () => {
+    if (!initialFocusSet.current) {
+      focusSearch();
+      initialFocusSet.current = true;
+    }
   };
 
   const onAddCitation = (citation: CitationListEntry) => {
@@ -104,7 +110,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
   };
 
   return (
-    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={focusSearch}>
+    <div style={props.style} className='pm-insert-citation-panel-latent-search' ref={ref} tabIndex={-1} onFocus={parentFocused}>
       <div className='pm-insert-citation-panel-latent-search-textbox-container'>
         <TextInput
           value={props.searchTerm}
@@ -112,7 +118,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           iconAdornment={props.ui.images.search}
           tabIndex={0}
           className='pm-insert-citation-panel-latent-search-textbox pm-block-border-color'
-          placeholder={props.placeholderText}
+          placeholder={props.searchPlaceholderText}
           onKeyDown={handleTextKeyDown}
           onChange={searchChanged}
           onPaste={onPaste}
@@ -140,8 +146,10 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           focusPrevious={focusSearch}
           onConfirm={props.onConfirm}
           ui={props.ui}
-          placeholderText={props.defaultText}
+          itemHeight={100}
+          itemProvider={CitationSourcePanelListItemDetailed}
           status={props.status}
+          statusText={props.statusText}
           classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}
           ref={listContainer}
         />

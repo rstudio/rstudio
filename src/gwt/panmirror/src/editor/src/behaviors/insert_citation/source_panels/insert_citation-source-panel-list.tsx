@@ -14,35 +14,47 @@
  */
 import React from "react";
 
-import { FixedSizeList } from "react-window";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 
 import { EditorUI } from "../../../api/ui";
 import { WidgetProps } from "../../../api/widgets/react";
 
 import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationListEntry, CitationSourceListStatusText, CitationSourceListStatus } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-list.css';
 
 
-export enum CitationSourceListStatus {
-  default,
-  loading,
-  noResults
+export interface CitationSourcePanelListItemData {
+  citations: CitationListEntry[];
+  citationsToAdd: CitationListEntry[];
+  selectedIndex: number;
+  onSelectedIndexChanged: (index: number) => void;
+  onAddCitation: (source: CitationListEntry) => void;
+  onRemoveCitation: (source: CitationListEntry) => void;
+  onConfirm: () => void;
+  ui: EditorUI;
+  showSeparator?: boolean;
+  showSelection?: boolean;
+  preventFocus?: boolean;
 }
 
 export interface CitationSourceListProps extends WidgetProps {
   height: number;
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
-  placeholderText?: string;
-  status: CitationSourceListStatus;
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
   focusPrevious?: () => void;
+
+  itemProvider: (props: ListChildComponentProps) => JSX.Element;
+  itemHeight: number;
+
+  status: CitationSourceListStatus;
+  statusText: CitationSourceListStatusText;
   ui: EditorUI;
 }
 
@@ -50,8 +62,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
   const fixedList = React.useRef<FixedSizeList>(null);
 
   // Item height and consequently page height
-  const itemHeight = 64;
-  const itemsPerPage = Math.floor(props.height / itemHeight);
+  const itemsPerPage = Math.floor(props.height / props.itemHeight);
 
   // Update selected item index (this will manage bounds)
   const handleIncrementIndex = (event: React.KeyboardEvent, increment: number, index: number) => {
@@ -139,7 +150,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               height={props.height}
               width='100%'
               itemCount={props.citations.length}
-              itemSize={itemHeight}
+              itemSize={props.itemHeight}
               itemData={{
                 selectedIndex: props.selectedIndex,
                 onSelectedIndexChanged: props.onSelectedIndexChanged,
@@ -147,7 +158,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
                 citationsToAdd: props.citationsToAdd,
                 onAddCitation: props.onAddCitation,
                 onRemoveCitation: props.onRemoveCitation,
-                confirm: props.onConfirm,
+                onConfirm: props.onConfirm,
                 showSeparator: true,
                 showSelection: true,
                 preventFocus: true,
@@ -155,24 +166,24 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
               }}
               ref={fixedList}
             >
-              {CitationSourcePanelListItem}
+              {props.itemProvider}
             </FixedSizeList>
           </div >
         );
       } else {
         return (
           <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.placeholderText}</div>
+            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.placeholder}</div>
           </div>
         );
       }
 
-    case CitationSourceListStatus.loading:
+    case CitationSourceListStatus.inProgress:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
           <div className='pm-insert-citation-source-panel-list-noresults-text'>
             <img src={props.ui.images.search_progress} className='pm-insert-citation-source-panel-list-progress' />
-            {props.ui.context.translateText('Searching…')}
+            {props.statusText.progress}
           </div>
         </div>
       );
@@ -180,7 +191,14 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     case CitationSourceListStatus.noResults:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.ui.context.translateText('No matching items')}</div>
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.noResults}</div>
+        </div >
+      );
+
+    case CitationSourceListStatus.error:
+      return (
+        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.error || props.ui.context.translateText('An error occurred.')}</div>
         </div >
       );
   }

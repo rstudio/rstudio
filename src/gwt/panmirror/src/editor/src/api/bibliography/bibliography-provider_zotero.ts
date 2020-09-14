@@ -45,7 +45,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public key: string = kZoteroProviderKey;
   public requiresWritable: boolean = true;
 
-  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(docPath: string, _resourcePath: string, yamlBlocks: ParsedYaml[], refreshCollectionData: boolean): Promise<boolean> {
 
     let hasUpdates = false;
     this.docPath = docPath;
@@ -92,12 +92,14 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         // console.log(err);
       }
 
-      // Lookup the collection specs
-      const specResult = await this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []);
-      if (specResult && specResult.status === 'ok') {
-        this.allCollectionSpecs = specResult.message.map((spec: ZoteroCollectionSpec) => this.toBibliographyCollection(spec));
-      } else {
-        this.allCollectionSpecs = [];
+      if (refreshCollectionData) {
+        // Lookup the collection specs
+        const specResult = await this.server.getActiveCollectionSpecs(this.docPath || null, Array.isArray(this.zoteroConfig) ? this.zoteroConfig : []);
+        if (specResult && specResult.status === 'ok') {
+          this.allCollectionSpecs = specResult.message.map((spec: ZoteroCollectionSpec) => this.toBibliographyCollection(spec));
+        } else {
+          this.allCollectionSpecs = [];
+        }
       }
 
     } else {

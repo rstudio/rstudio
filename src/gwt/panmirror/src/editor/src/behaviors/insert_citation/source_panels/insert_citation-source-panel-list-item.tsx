@@ -16,26 +16,11 @@
 import React from "react";
 import { ListChildComponentProps } from "react-window";
 
-import { EditorUI } from "../../../api/ui";
 import { OutlineButton } from "../../../api/widgets/button";
 
-import { CitationListEntry } from "../insert_citation-panel";
+import { CitationSourcePanelListData } from "./insert_citation-source-panel-list";
 
 import './insert_citation-source-panel-list-item.css';
-
-interface CitationSourcePanelListData {
-  citations: CitationListEntry[];
-  citationsToAdd: CitationListEntry[];
-  selectedIndex: number;
-  onSelectedIndexChanged: (index: number) => void;
-  onAddCitation: (source: CitationListEntry) => void;
-  onRemoveCitation: (source: CitationListEntry) => void;
-  onConfirm: () => void;
-  ui: EditorUI;
-  showSeparator?: boolean;
-  showSelection?: boolean;
-  preventFocus?: boolean;
-}
 
 export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
 
@@ -47,7 +32,6 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
   const maxIdLength = 30;
   const id = citationEntry.id.length > maxIdLength ? `@${citationEntry.id.substr(0, maxIdLength - 1)}…` : `@${citationEntry.id}`;
   const authorWidth = Math.max(10, 50 - id.length);
-
 
   // Wheher this item is selected
   const selected = citationListData.showSelection && props.index === citationListData.selectedIndex;
