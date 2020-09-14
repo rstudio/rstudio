@@ -142,12 +142,17 @@ const extension = (context: ExtensionContext): Extension | null => {
                 // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
                 if (mathText.startsWith(delimiter) && mathText.endsWith(delimiter)) {
+
                   // remove delimiter
                   mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
+                  // trim inline math
+                  if (mark.attrs.type === MathType.Inline) {
+                    mathText = mathText.trim();
+                  }
+
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
-                  mathText = mathText.trim();
                   if (mathText.length === 0) {
                     output.writeText(delimiter + mathText + delimiter);
                   } else {
