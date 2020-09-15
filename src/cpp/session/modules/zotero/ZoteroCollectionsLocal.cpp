@@ -118,9 +118,11 @@ std::string creatorsSQL(const ZoteroCollectionSpec& spec)
         join itemCreators on items.itemID = itemCreators.itemID
         join creators on creators.creatorID = itemCreators.creatorID
         join creatorTypes on itemCreators.creatorTypeID = creatorTypes.creatorTypeID
+        left join deletedItems on items.itemId = deletedItems.itemID
       WHERE
         itemTypes.typeName <> 'attachment'
         AND itemTypes.typeName <> 'note'
+        AND deletedItems.dateDeleted IS NULL
         %2%
       ORDER BY
         items.key ASC,
@@ -151,9 +153,11 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          join fields on itemData.fieldID = fields.fieldID
          join itemTypeFields on (itemTypes.itemTypeID = itemTypeFields.itemTypeID
             AND fields.fieldID = itemTypeFields.fieldID)
+         left join deletedItems on items.itemId = deletedItems.itemID
       WHERE
          itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
+         AND deletedItems.dateDeleted IS NULL
          %2%
    UNION
       SELECT
@@ -166,10 +170,12 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
          join libraries on items.libraryID = libraries.libraryID
+         left join deletedItems on items.itemId = deletedItems.itemID
          %1%
       WHERE
          itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
+         AND deletedItems.dateDeleted IS NULL
          %2%
    UNION
       SELECT
@@ -182,10 +188,12 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          items
          join itemTypes on items.itemTypeID = itemTypes.itemTypeID
          join libraries on items.libraryID = libraries.libraryID
+         left join deletedItems on items.itemId = deletedItems.itemID
          %1%
       WHERE
          itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
+         AND deletedItems.dateDeleted IS NULL
          %2%
    UNION
       SELECT
@@ -200,9 +208,11 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          left join collectionItems on items.itemID = collectionItems.itemID
          left join collections on collectionItems.collectionID = collections.collectionID
          join libraries on items.libraryID = libraries.libraryID
+         left join deletedItems on items.itemId = deletedItems.itemID
       WHERE
          itemTypes.typeName <> 'attachment'
          AND itemTypes.typeName <> 'note'
+         AND deletedItems.dateDeleted IS NULL
          %2%
       GROUP BY items.key
    ORDER BY
@@ -400,6 +410,8 @@ FilePath zoteroSqliteDir()
    FilePath sqliteDir = module_context::userScratchPath()
         .completeChildPath("zotero")
         .completeChildPath("sqlite");
+
+   std::cerr << sqliteDir << std::endl;
    Error error = sqliteDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
