@@ -24,7 +24,7 @@ import { BibliographyManager, BibliographyCollection, BibliographySource } from 
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
 import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
-import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
@@ -82,11 +82,20 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       };
       const sources = bibliographyManager.search(searchTerm, providerForNode(selectedNode), collectionKeyForNode(selectedNode));
       const uniqueSources = uniqby(sources, source => source.id);
-      return toCitationEntries(uniqueSources, ui);
 
+      const citations = toCitationEntries(uniqueSources, ui);
+      return {
+        citations,
+        status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
+        statusMessage: ''
+      };
     },
     search: (searchTerm: string, selectedNode: NavigationTreeNode) => {
-      return Promise.resolve(null);
+      return Promise.resolve({
+        citations: [],
+        status: CitationSourceListStatus.default,
+        statusMessage: ''
+      });
     }
   };
 }
@@ -105,14 +114,7 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
       onRemoveCitation={props.onRemoveCitation}
       onConfirm={props.onConfirm}
       status={props.status}
-      statusText={
-        {
-          placeholder: props.ui.context.translateText(''),
-          progress: props.ui.context.translateText(''),
-          noResults: props.ui.context.translateText('No matching items'),
-          error: props.ui.context.translateText('An error occurred'),
-        }
-      }
+      statusMessage={props.statusMessage}
       ui={props.ui}
       ref={ref}
     />
@@ -205,7 +207,7 @@ function toCitationEntries(sources: BibliographySource[], ui: EditorUI): Citatio
       toBibliographySource: (finalId: string) => {
         return Promise.resolve({ ...source, id: finalId, providerKey: source.providerKey });
       },
-      showProgress: false
+      isSlowGeneratingBibliographySource: false
     };
   });
 }

@@ -24,7 +24,7 @@ import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from "../../../api/crossref";
 import { DOIServer } from "../../../api/doi";
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 export function crossrefSourcePanel(ui: EditorUI,
@@ -49,9 +49,11 @@ export function crossrefSourcePanel(ui: EditorUI,
     typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
       return null;
     },
-    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    progressMessage: ui.context.translateText('Searching Crossref....'),
+    placeHolderMessage: ui.context.translateText('Enter search terms to search Crossref'),
+    search: async (searchTerm
+      : string, _selectedNode: NavigationTreeNode) => {
 
-      // TODO: Error handling (try / catch)
       try {
         const works = await server.works(searchTerm);
         const existingIds = bibliographyManager.localSources().map(src => src.id);
@@ -64,10 +66,20 @@ export function crossrefSourcePanel(ui: EditorUI,
           return citationEntry;
         });
 
-        return Promise.resolve(citationEntries);
+        return Promise.resolve({
+          citations: citationEntries,
+          status: CitationSourceListStatus.default,
+          statusMessage: ''
+        });
+
       } catch {
-        // TODO: return citationentries or string (error)
-        return Promise.resolve([]);
+        // TODO: Log Error
+        return Promise.resolve({
+          citations: [],
+          status: CitationSourceListStatus.error,
+          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.')
+        });
+
       }
     }
   };
@@ -89,14 +101,7 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       onConfirm={props.onConfirm}
       searchPlaceholderText={props.ui.context.translateText('Search Crossref for Citations')}
       status={props.status}
-      statusText={
-        {
-          placeholder: props.ui.context.translateText('Enter terms to search Crossref'),
-          progress: props.ui.context.translateText('Searching Crossref...'),
-          noResults: props.ui.context.translateText('No matching items'),
-          error: props.ui.context.translateText('An error occurred while searching Crossref'),
-        }
-      }
+      statusMessage={props.statusMessage}
       ui={props.ui}
       ref={ref}
     />
@@ -127,7 +132,7 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
     },
-    showProgress: true
+    isSlowGeneratingBibliographySource: true
   };
 }
 

@@ -12,8 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-
 import React from "react";
 
 import { EditorUI } from "../../../api/ui";
@@ -22,12 +20,10 @@ import { CSL } from "../../../api/csl";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { DOIServer } from "../../../api/doi";
-
 import { PubMedServer, PubMedDocument, suggestCiteId, imageForType } from "../../../api/pubmed";
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
-
 
 export function pubmedSourcePanel(ui: EditorUI,
   bibliographyManager: BibliographyManager,
@@ -51,35 +47,64 @@ export function pubmedSourcePanel(ui: EditorUI,
     typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
       return null;
     },
+    progressMessage: ui.context.translateText('Searching PubMed....'),
+    placeHolderMessage: ui.context.translateText('Enter a PubMed query to search for citations.'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
-
-      // TODO: Error handling (try / catch)
       try {
+        const noResultsMessage = ui.context.translateText('No results matching these search terms.');
+
+        // Do the PubMed Search
         const pubMedResult = await server.search(searchTerm);
-        if (pubMedResult.status === 'ok') {
-          if (pubMedResult.message === null) {
-            // No results
-            return Promise.resolve([]);
-          } else {
-            const docs: PubMedDocument[] = pubMedResult.message;
-            const existingIds = bibliographyManager.localSources().map(src => src.id);
-            const citationEntries = docs.map(doc => {
-              const citationEntry = toCitationEntry(doc, existingIds, ui, doiServer);
-              if (citationEntry) {
-                // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-                existingIds.push(citationEntry.id);
-              }
-              return citationEntry;
+        switch (pubMedResult.status) {
+          case 'ok':
+
+            if (pubMedResult.message !== null) {
+              // There is a message
+              // PubMed Results and Existing Ids
+              const docs: PubMedDocument[] = pubMedResult.message;
+              const existingIds = bibliographyManager.localSources().map(src => src.id);
+
+              // Create Citation List Entries for these PubMed docs
+              const citationEntries = docs.map(doc => {
+                const citationEntry = toCitationEntry(doc, existingIds, ui, doiServer);
+                if (citationEntry) {
+                  // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+                  existingIds.push(citationEntry.id);
+                }
+                return citationEntry;
+              });
+
+              // Return the search result
+              return Promise.resolve({
+                citations: citationEntries,
+                status: citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
+                statusMessage: citationEntries.length > 0 ? '' : noResultsMessage
+              });
+            } else {
+              // No message, no results
+              return Promise.resolve({
+                citations: [],
+                status: CitationSourceListStatus.noResults,
+                statusMessage: noResultsMessage
+              });
+            }
+
+          default:
+            // Resolve with Error
+            return Promise.resolve({
+              citations: [],
+              status: CitationSourceListStatus.error,
+              statusMessage: ui.context.translateText(errorForStatus(ui, pubMedResult.status, 'PubMed'))
             });
-            return Promise.resolve(citationEntries);
-          }
-        } else {
-          // TODO: Error
-          return Promise.resolve([]);
         }
-      } catch {
-        // TODO: return citationentries or string (error)
-        return Promise.resolve([]);
+
+      } catch (e) {
+        // TODO: Log exception
+        return Promise.resolve({
+          citations: [],
+          status: CitationSourceListStatus.error,
+          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.')
+        });
       }
     }
   };
@@ -101,14 +126,7 @@ export const PubmedSourcePanel = React.forwardRef<HTMLDivElement, CitationSource
       onConfirm={props.onConfirm}
       searchPlaceholderText={props.ui.context.translateText('Search PubMed for Citations')}
       status={props.status}
-      statusText={
-        {
-          placeholder: props.ui.context.translateText('Enter terms to search PubMed'),
-          progress: props.ui.context.translateText('Searching PubMed...'),
-          noResults: props.ui.context.translateText('No matching items'),
-          error: props.ui.context.translateText('An error occurred while searching PubMed'),
-        }
-      }
+      statusMessage={props.statusMessage}
       ui={props.ui}
       ref={ref}
     />
@@ -123,14 +141,14 @@ function toCitationEntry(doc: PubMedDocument, existingIds: string[], ui: EditorU
     id,
     isIdEditable: true,
     title: doc.title || '',
-    authors: (length: number) => {
-      return formatAuthors(doc.authors || [], length);
-    },
+    doi: doc.doi,
     type: '',
     date: doc.pubDate || '',
     journal: doc.source,
+    authors: (length: number) => {
+      return formatAuthors(doc.authors || [], length);
+    },
     image: imageForType(ui, doc.pubTypes)[0],
-    doi: doc.doi,
     toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(doc.doi, -1);

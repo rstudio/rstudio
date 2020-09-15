@@ -22,7 +22,7 @@ import { DOIServer } from "../../../api/doi";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
@@ -46,21 +46,38 @@ export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyMa
     typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
       return null;
     },
+    progressMessage: ui.context.translateText('Looking up DOI....'),
+    placeHolderMessage: ui.context.translateText('Paste or enter a DOI to find citation data.'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
-      // TODO: Error handling (try / catch)
       try {
         const result = await server.fetchCSL(searchTerm, 1000);
         if (result.status === 'ok') {
           // Form the entry
           const csl = result.message;
           const citation = toCitationEntry(csl, bibliographyManager, ui);
-          return Promise.resolve(citation ? [citation] : null);
+
+          return Promise.resolve({
+            citations: citation ? [citation] : [],
+            status: CitationSourceListStatus.default,
+            statusMessage: ''
+          });
+
         } else {
-          return Promise.resolve(null);
+          return Promise.resolve({
+            citations: [],
+            status: CitationSourceListStatus.error,
+            statusMessage: errorForStatus(ui, result.status, 'for this DOI')
+          });
+
         }
-      } catch {
-        // TODO: return citationentries or string (error)
-        return Promise.resolve(null);
+      } catch (e) {
+        // TODO: Log Error
+        // Resolve with Error
+        return Promise.resolve({
+          citations: [],
+          status: CitationSourceListStatus.error,
+          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.')
+        });
       }
     }
 
@@ -93,20 +110,12 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
       onConfirm={props.onConfirm}
       searchPlaceholderText={props.ui.context.translateText('Paste a DOI to search')}
       status={props.status}
-      statusText={
-        {
-          placeholder: props.ui.context.translateText('Paste a DOI to load data from Crossref, DataCite, or mEDRA.'),
-          progress: props.ui.context.translateText('Fetching data for DOI...'),
-          noResults: props.ui.context.translateText('Sorry, data for that DOI couldn\'t be found'),
-          error: props.ui.context.translateText('An error occurred while searching for this DOI'),
-        }
-      }
+      statusMessage={props.statusMessage}
       ui={props.ui}
       ref={ref}
     />
   );
 });
-
 
 
 function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
@@ -118,17 +127,17 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
       isIdEditable: true,
       type: csl.type,
       title: csl.title || '',
-      authors: (length: number) => {
-        return formatAuthors(csl.author, length);
-      },
       date: formatIssuedDate(csl.issued),
       journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
       doi: csl.DOI,
       image: imageForType(ui, csl.type)[0],
+      authors: (length: number) => {
+        return formatAuthors(csl.author, length);
+      },
       toBibliographySource: (finalId: string) => {
         return Promise.resolve({ ...csl, id: finalId, providerKey });
       },
-      showProgress: false
+      isSlowGeneratingBibliographySource: false
     };
   }
   return undefined;

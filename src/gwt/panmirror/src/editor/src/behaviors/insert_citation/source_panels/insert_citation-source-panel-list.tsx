@@ -19,8 +19,7 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { EditorUI } from "../../../api/ui";
 import { WidgetProps } from "../../../api/widgets/react";
 
-import { CitationSourcePanelListItem } from "./insert_citation-source-panel-list-item";
-import { CitationListEntry, CitationSourceListStatusText, CitationSourceListStatus } from "./insert_citation-source-panel";
+import { CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-list.css';
 
@@ -54,7 +53,7 @@ export interface CitationSourceListProps extends WidgetProps {
   itemHeight: number;
 
   status: CitationSourceListStatus;
-  statusText: CitationSourceListStatusText;
+  statusMessage: string;
   ui: EditorUI;
 }
 
@@ -173,7 +172,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
       } else {
         return (
           <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.placeholder}</div>
+            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
           </div>
         );
       }
@@ -183,7 +182,7 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
           <div className='pm-insert-citation-source-panel-list-noresults-text'>
             <img src={props.ui.images.search_progress} className='pm-insert-citation-source-panel-list-progress' />
-            {props.statusText.progress}
+            {props.statusMessage}
           </div>
         </div>
       );
@@ -191,16 +190,55 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
     case CitationSourceListStatus.noResults:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.noResults}</div>
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
         </div >
       );
 
     case CitationSourceListStatus.error:
       return (
         <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusText.error || props.ui.context.translateText('An error occurred.')}</div>
+          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage || props.ui.context.translateText('An error occurred.')}</div>
         </div >
       );
+
+    case CitationSourceListStatus.default:
+    default:
+      if (props.citations.length > 0) {
+        return (
+          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
+            <FixedSizeList
+              className='pm-insert-citation-source-panel-list'
+              height={props.height}
+              width='100%'
+              itemCount={props.citations.length}
+              itemSize={props.itemHeight}
+              itemData={{
+                selectedIndex: props.selectedIndex,
+                onSelectedIndexChanged: props.onSelectedIndexChanged,
+                citations: props.citations,
+                citationsToAdd: props.citationsToAdd,
+                onAddCitation: props.onAddCitation,
+                onRemoveCitation: props.onRemoveCitation,
+                onConfirm: props.onConfirm,
+                showSeparator: true,
+                showSelection: true,
+                preventFocus: true,
+                ui: props.ui,
+              }}
+              ref={fixedList}
+            >
+              {props.itemProvider}
+            </FixedSizeList>
+          </div >
+        );
+      } else {
+        return (
+          <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
+            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
+          </div>
+        );
+      }
+
   }
 });
 

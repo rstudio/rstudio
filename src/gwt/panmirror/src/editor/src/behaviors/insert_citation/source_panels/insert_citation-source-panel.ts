@@ -19,14 +19,15 @@ export interface CitationSourcePanelProps extends WidgetProps {
   citations: CitationListEntry[];
   citationsToAdd: CitationListEntry[];
 
-  // TODO: could be indexes
   onAddCitation: (citation: CitationListEntry) => void;
   onRemoveCitation: (citation: CitationListEntry) => void;
   onConfirm: VoidFunction;
 
   selectedIndex: number;
   onSelectedIndexChanged: (index: number) => void;
+
   status: CitationSourceListStatus;
+  statusMessage: string;
 
   ref: React.Ref<any>;
 }
@@ -37,8 +38,16 @@ export interface CitationSourcePanelProvider {
   key: string;
   panel: React.FC<CitationSourcePanelProps>;
   treeNode(): NavigationTreeNode;
-  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode) => CitationListEntry[] | null;
-  search: (term: string, selectedNode: NavigationTreeNode) => Promise<CitationListEntry[] | null>;
+  placeHolderMessage?: string;
+  progressMessage?: string;
+  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode) => CitationSourcePanelSearchResult | null;
+  search: (term: string, selectedNode: NavigationTreeNode) => Promise<CitationSourcePanelSearchResult>;
+}
+
+export interface CitationSourcePanelSearchResult {
+  citations: CitationListEntry[];
+  status: CitationSourceListStatus;
+  statusMessage: string;
 }
 
 export interface CitationListEntry extends BibliographySourceProvider {
@@ -56,15 +65,8 @@ export interface CitationListEntry extends BibliographySourceProvider {
 
 export interface BibliographySourceProvider {
   id: string;
-  showProgress: boolean;
+  isSlowGeneratingBibliographySource: boolean;
   toBibliographySource: (id: string) => Promise<BibliographySource>;
-}
-
-export interface CitationSourceListStatusText {
-  placeholder: string;
-  error: string;
-  progress: string;
-  noResults: string;
 }
 
 export enum CitationSourceListStatus {
@@ -74,3 +76,8 @@ export enum CitationSourceListStatus {
   error
 }
 
+export function errorForStatus(ui: EditorUI, status: string, providerName: string) {
+  return status === 'nohost' ?
+    ui.context.translateText(`Unable to search ${providerName}. Please check your network connection and try again.`) :
+    ui.context.translateText(`An error occurred while searching ${providerName}.`);
+}

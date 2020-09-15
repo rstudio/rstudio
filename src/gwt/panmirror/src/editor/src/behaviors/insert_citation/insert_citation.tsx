@@ -26,7 +26,6 @@ import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
 import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath, BibliographySource } from "../../api/bibliography/bibliography";
-import { kLocalBiliographyProviderKey } from "../../api/bibliography/bibliography-provider_local";
 import { changeExtension } from "../../api/path";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, BibliographySourceProvider } from "./source_panels/insert_citation-source-panel";
@@ -117,11 +116,11 @@ export async function showInsertCitationDialog(
 
       const onOk = (bibliographySourceProviders: BibliographySourceProvider[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => {
 
-        const requiresProgress = bibliographySourceProviders.some(sourceProvider => sourceProvider.showProgress);
+        const requiresProgress = bibliographySourceProviders.some(sourceProvider => sourceProvider.isSlowGeneratingBibliographySource);
         if (requiresProgress) {
           showProgress(ui.context.translateText(bibliographySourceProviders.length === 1 ? 'Creating bibliography entry...' : 'Creating bibliography entries...'));
         }
-        const sources = Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id))).then((bibliographySources: BibliographySource[]) => {
+        Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id))).then((bibliographySources: BibliographySource[]) => {
           result = {
             bibliographySources,
             bibliography,
@@ -206,6 +205,7 @@ interface InsertCitationPanelState {
   searchTerm: string;
   selectedNode: NavigationTreeNode;
   status: CitationSourceListStatus;
+  statusMessage: string;
   existingBibliographyFile: BibliographyFile;
   createBibliographyFile: BibliographyFile;
 }
@@ -217,6 +217,7 @@ interface InsertCitationPanelUpdateState {
   searchTerm?: string;
   selectedNode?: NavigationTreeNode;
   status?: CitationSourceListStatus;
+  statusMessage?: string;
   existingBibliographyFile?: BibliographyFile;
   createBibliographyFile?: BibliographyFile;
 }
@@ -242,6 +243,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       searchTerm: '',
       selectedNode: defaultNode || selectedPanelProvider.treeNode(),
       status: CitationSourceListStatus.default,
+      statusMessage: selectedPanelProvider.placeHolderMessage || '',
       existingBibliographyFile: props.configuration.current.bibliographyFiles[0],
       createBibliographyFile: bibliographyFileForPath(changeExtension('references.json', props.ui.prefs.bibliographyDefaultType() || bibliographyTypes(props.ui)[0].extension), props.ui)
     }
@@ -277,7 +279,14 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     refreshSearchCallback.current = () => {
       // Once the configurations, refresh the search
       const defaultResults = selectedPanelProvider.typeAheadSearch(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode);
-      updateState({ citations: defaultResults || [] });
+      if (defaultResults) {
+        updateState({
+          searchTerm: '',
+          citations: defaultResults?.citations || [],
+          status: defaultResults?.status || CitationSourceListStatus.default,
+          statusMessage: defaultResults?.statusMessage || selectedPanelProvider.placeHolderMessage,
+        });
+      }
     };
   });
 
@@ -307,8 +316,13 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }, 200);
 
     // Set the default state to initialize the first search
-    const value = selectedPanelProvider.typeAheadSearch('', insertCitationPanelState.selectedNode);
-    updateState({ searchTerm: '', citations: value || [] });
+    const searchResult = selectedPanelProvider.typeAheadSearch('', insertCitationPanelState.selectedNode);
+    updateState({
+      searchTerm: '',
+      citations: searchResult?.citations || [],
+      status: searchResult?.status || CitationSourceListStatus.default,
+      statusMessage: searchResult?.statusMessage || selectedPanelProvider.placeHolderMessage
+    });
   }, []);
 
 
@@ -337,19 +351,20 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     searchTerm: insertCitationPanelState.searchTerm,
     onSearchTermChanged: (term: string) => {
       updateState({ searchTerm: term });
-      const value = selectedPanelProvider.typeAheadSearch(term, insertCitationPanelState.selectedNode);
-      if (value) {
-        updateState({ citations: value, searchTerm: term });
+      const searchResult = selectedPanelProvider.typeAheadSearch(term, insertCitationPanelState.selectedNode);
+      if (searchResult) {
+        updateState({
+          searchTerm: term,
+          citations: searchResult?.citations,
+          status: searchResult?.status,
+          statusMessage: searchResult?.statusMessage
+        });
       }
     },
     onExecuteSearch: (searchTerm: string) => {
-      updateState({ searchTerm, status: CitationSourceListStatus.inProgress });
-      selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode).then((value) => {
-        if (value) {
-          updateState({ searchTerm, citations: value, status: value.length === 0 ? CitationSourceListStatus.noResults : CitationSourceListStatus.default, selectedIndex: -1 });
-        } else {
-          updateState({ searchTerm, citations: [], status: CitationSourceListStatus.noResults, selectedIndex: -1 });
-        }
+      updateState({ searchTerm, status: CitationSourceListStatus.inProgress, statusMessage: selectedPanelProvider.progressMessage });
+      selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode).then((searchResult) => {
+        updateState({ searchTerm, citations: searchResult?.citations, status: searchResult?.status, statusMessage: searchResult?.statusMessage, selectedIndex: -1 });
       });
     },
     onAddCitation: (citation: CitationListEntry) => {
@@ -365,6 +380,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     },
     onConfirm: onOk,
     status: insertCitationPanelState.status,
+    statusMessage: insertCitationPanelState.statusMessage,
     ref: panelRef
   };
 
@@ -372,12 +388,21 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // This implements the connection of the dialog (non-provider panel) events and data and the
   // core dialog state
   const onNodeSelected = (node: NavigationTreeNode) => {
-    const value = selectedPanelProvider.typeAheadSearch('', node);
     const suggestedPanel = panelForNode(insertCitationConfiguration.providers, node);
-    if (suggestedPanel && suggestedPanel?.key !== selectedPanelProvider?.key) {
-      setSelectedPanelProvider(suggestedPanel);
+    if (suggestedPanel) {
+      const searchResult = suggestedPanel.typeAheadSearch('', node);
+      updateState({
+        searchTerm: '',
+        citations: searchResult?.citations || [],
+        status: searchResult?.status || CitationSourceListStatus.default,
+        statusMessage: searchResult?.statusMessage || suggestedPanel.placeHolderMessage,
+        selectedNode: node
+      });
+
+      if (suggestedPanel?.key !== selectedPanelProvider?.key) {
+        setSelectedPanelProvider(suggestedPanel);
+      }
     }
-    updateState({ searchTerm: '', citations: value || [], selectedIndex: -1, selectedNode: node });
   };
 
   const deleteCitation = (id: string) => {

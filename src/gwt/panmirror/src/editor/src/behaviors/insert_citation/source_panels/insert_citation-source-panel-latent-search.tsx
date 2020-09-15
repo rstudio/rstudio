@@ -20,7 +20,7 @@ import { WidgetProps } from "../../../api/widgets/react";
 
 import { CitationSourceList } from "./insert_citation-source-panel-list";
 import { TextButton } from "../../../api/widgets/button";
-import { CitationListEntry, CitationSourceListStatus, CitationSourceListStatusText } from "./insert_citation-source-panel";
+import { CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 
 import './insert_citation-source-panel-latent-search.css';
 import { CitationSourcePanelListItemDetailed } from "./insert_citation-source-panel-list-item-detailed";
@@ -40,7 +40,7 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   ui: EditorUI;
   searchPlaceholderText?: string;
   status: CitationSourceListStatus;
-  statusText: CitationSourceListStatusText;
+  statusMessage: string;
 }
 
 const kSearchBoxHeightWithMargin = 38;
@@ -147,7 +147,7 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
           itemHeight={100}
           itemProvider={CitationSourcePanelListItemDetailed}
           status={props.status}
-          statusText={props.statusText}
+          statusMessage={props.statusMessage}
           classes={['pm-insert-citation-panel-latent-search-list', 'pm-block-border-color', 'pm-background-color']}
           ref={listContainer}
         />

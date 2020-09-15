@@ -22,11 +22,10 @@ import { CSL } from "../../../api/csl";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { DOIServer } from "../../../api/doi";
-
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry } from "./insert_citation-source-panel";
-import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from "../../../api/datacite";
 
+import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
+import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 export function dataciteSourcePanel(ui: EditorUI,
   bibliographyManager: BibliographyManager,
@@ -50,35 +49,53 @@ export function dataciteSourcePanel(ui: EditorUI,
     typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
       return null;
     },
+    progressMessage: ui.context.translateText('Searching DataCite....'),
+    placeHolderMessage: ui.context.translateText('Enter search terms to search DataCite'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
 
-      // TODO: Error handling (try / catch)
       try {
         const dataciteResult = await server.search(searchTerm);
-        if (dataciteResult.status === 'ok') {
-          if (dataciteResult.message === null) {
-            // No results
-            return Promise.resolve([]);
-          } else {
-            const records: DataCiteRecord[] = dataciteResult.message;
-            const existingIds = bibliographyManager.localSources().map(src => src.id);
-            const citationEntries = records.map(record => {
-              const citationEntry = toCitationEntry(record, existingIds, ui, doiServer);
-              if (citationEntry) {
-                // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-                existingIds.push(citationEntry.id);
-              }
-              return citationEntry;
+        switch (dataciteResult.status) {
+          case 'ok':
+            if (dataciteResult.message !== null) {
+              const records: DataCiteRecord[] = dataciteResult.message;
+              const existingIds = bibliographyManager.localSources().map(src => src.id);
+              const citationEntries = records.map(record => {
+                const citationEntry = toCitationEntry(record, existingIds, ui, doiServer);
+                if (citationEntry) {
+                  // Add this id to the list of existing Ids so future ids will de-duplicate against this one
+                  existingIds.push(citationEntry.id);
+                }
+                return citationEntry;
+              });
+              return Promise.resolve({
+                citations: citationEntries,
+                status: CitationSourceListStatus.default,
+                statusMessage: ''
+              });
+            } else {
+              // No results
+              return Promise.resolve({
+                citations: [],
+                status: CitationSourceListStatus.default,
+                statusMessage: ''
+              });
+            }
+          default:
+            // Resolve with Error
+            return Promise.resolve({
+              citations: [],
+              status: CitationSourceListStatus.error,
+              statusMessage: ui.context.translateText(errorForStatus(ui, dataciteResult.status, 'DataCite'))
             });
-            return Promise.resolve(citationEntries);
-          }
-        } else {
-          // TODO: Error
-          return Promise.resolve([]);
         }
-      } catch {
-        // TODO: return citationentries or string (error)
-        return Promise.resolve([]);
+      } catch (e) {
+        // TODO: Log Error
+        return Promise.resolve({
+          citations: [],
+          status: CitationSourceListStatus.error,
+          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.')
+        });
       }
     }
   };
@@ -100,14 +117,7 @@ export const DataCiteSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
       onConfirm={props.onConfirm}
       searchPlaceholderText={props.ui.context.translateText('Search DataCite for Citations')}
       status={props.status}
-      statusText={
-        {
-          placeholder: props.ui.context.translateText('Enter terms to search DataCite'),
-          progress: props.ui.context.translateText('Searching DataCite...'),
-          noResults: props.ui.context.translateText('No matching items'),
-          error: props.ui.context.translateText('An error occurred while searching DataCite'),
-        }
-      }
+      statusMessage={props.statusMessage}
       ui={props.ui}
       ref={ref}
     />
@@ -137,7 +147,7 @@ function toCitationEntry(record: DataCiteRecord, existingIds: string[], ui: Edit
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
     },
-    showProgress: true
+    isSlowGeneratingBibliographySource: true
   };
 }
 
