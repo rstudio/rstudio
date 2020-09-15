@@ -14,13 +14,14 @@
  */
 import React from "react";
 
-import { EditorUI } from "../../../api/ui";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { createUniqueCiteId } from "../../../api/cite";
 import { CSL } from "../../../api/csl";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { DOIServer } from "../../../api/doi";
+import { logException } from "../../../api/log";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { PubMedServer, PubMedDocument, suggestCiteId, imageForType } from "../../../api/pubmed";
+import { EditorUI } from "../../../api/ui";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
@@ -99,7 +100,7 @@ export function pubmedSourcePanel(ui: EditorUI,
         }
 
       } catch (e) {
-        // TODO: Log exception
+        logException(e);
         return Promise.resolve({
           citations: [],
           status: CitationSourceListStatus.error,
@@ -156,7 +157,7 @@ function toCitationEntry(doc: PubMedDocument, existingIds: string[], ui: EditorU
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
     },
-    showProgress: true
+    isSlowGeneratingBibliographySource: true
   };
 }
 

@@ -60,8 +60,6 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     citationListData.onConfirm();
   };
 
-  // TODO: Localize +/- button
-
   return (
     <div onMouseDown={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
       <div className={`pm-insert-citation-source-panel-item-border ${selected ? 'pm-list-item-selected' : ''}`}>

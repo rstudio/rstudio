@@ -16,16 +16,19 @@
 
 import React from "react";
 
-import { EditorUI } from "../../../api/ui";
-import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
-import { sanitizeForCiteproc, CSL } from "../../../api/csl";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
+import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from "../../../api/crossref";
+import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 import { DOIServer } from "../../../api/doi";
+import { logException } from "../../../api/log";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+import { EditorUI } from "../../../api/ui";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
+
 
 export function crossrefSourcePanel(ui: EditorUI,
   bibliographyManager: BibliographyManager,
@@ -72,8 +75,8 @@ export function crossrefSourcePanel(ui: EditorUI,
           statusMessage: ''
         });
 
-      } catch {
-        // TODO: Log Error
+      } catch (e) {
+        logException(e);
         return Promise.resolve({
           citations: [],
           status: CitationSourceListStatus.error,

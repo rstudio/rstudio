@@ -16,13 +16,14 @@
 
 import React from "react";
 
-import { EditorUI } from "../../../api/ui";
+import { BibliographyManager } from "../../../api/bibliography/bibliography";
 import { createUniqueCiteId, imageForType } from "../../../api/cite";
 import { CSL } from "../../../api/csl";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { DOIServer } from "../../../api/doi";
 import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from "../../../api/datacite";
+import { DOIServer } from "../../../api/doi";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+import { logException } from "../../../api/log";
+import { EditorUI } from "../../../api/ui";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
@@ -90,7 +91,7 @@ export function dataciteSourcePanel(ui: EditorUI,
             });
         }
       } catch (e) {
-        // TODO: Log Error
+        logException(e);
         return Promise.resolve({
           citations: [],
           status: CitationSourceListStatus.error,

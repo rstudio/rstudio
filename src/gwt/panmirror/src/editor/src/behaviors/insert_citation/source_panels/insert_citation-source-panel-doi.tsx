@@ -16,16 +16,18 @@ import React from "react";
 
 import { EditorUI } from "../../../api/ui";
 
-import { CSL } from "../../../api/csl";
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { DOIServer } from "../../../api/doi";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
+import { CSL } from "../../../api/csl";
+import { DOIServer } from "../../../api/doi";
+import { logException } from "../../../api/log";
+import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
+
 
 const kDOIType = 'DOI Search';
 
@@ -71,8 +73,7 @@ export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyMa
 
         }
       } catch (e) {
-        // TODO: Log Error
-        // Resolve with Error
+        logException(e);
         return Promise.resolve({
           citations: [],
           status: CitationSourceListStatus.error,

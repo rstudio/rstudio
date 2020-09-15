@@ -56,8 +56,6 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
     citationListData.onConfirm();
   };
 
-  // TODO: Localize +/- button
-
   const secondLine = [citationEntry.date, citationEntry.journal].filter(text => text).join(', ');
   const thirdLine = citationEntry.authors(80);
 

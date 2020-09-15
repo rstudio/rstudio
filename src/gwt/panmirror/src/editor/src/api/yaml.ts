@@ -20,6 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import yaml from 'js-yaml';
 
 import { findTopLevelBodyNodes } from './node';
+import { logException } from './log';
 
 export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
 
@@ -130,11 +131,6 @@ export function stripYamlDelimeters(yamlCode: string) {
   return yamlCode
     .replace(/^[\s-]+/, '')
     .replace(/[\s-\.]+$/, '');
-}
-
-function logException(e: Error) {
-  // TODO: log exceptions (we don't want to use console.log in production code, so this would
-  // utilize some sort of external logging facility)
 }
 
 export interface ParsedYaml {
