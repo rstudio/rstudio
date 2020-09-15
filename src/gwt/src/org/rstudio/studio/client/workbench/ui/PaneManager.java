@@ -1117,12 +1117,7 @@ public class PaneManager
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
             leftEnd = getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, false);
          else
-         {
-            // Copy leftWidgetSizePriorToZoom_ rather than passing it directly because it may be
-            // cleared before animation completes
-            for (Double size : leftWidgetSizePriorToZoom_)
-               leftEnd.add(size);
-         }
+            leftEnd.addAll(leftWidgetSizePriorToZoom_);
       }
 
       resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_, leftStart, leftEnd);
