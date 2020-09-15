@@ -104,3 +104,5 @@
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
 * Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
+* Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
+
