@@ -21,6 +21,7 @@ import { EditorUI } from "../ui";
 
 import './tag-input.css';
 import { TextInput } from "./text";
+import { kAlertTypeError } from "../ui-dialogs";
 
 // Item representing a tag entry
 // The key remains stable even if the tag is edited
@@ -34,8 +35,9 @@ export interface TagItem {
 
 interface TagInputProps extends WidgetProps {
   tags: TagItem[];
-  tagDeleted: (tag: TagItem) => void;
-  tagChanged: (key: string, text: string) => void;
+  onTagDeleted: (tag: TagItem) => void;
+  onTagChanged: (key: string, text: string) => void;
+  onTagValidate?: (key: string, text: string) => string | null;
   ui: EditorUI;
   placeholder?: string;
 }
@@ -43,14 +45,15 @@ interface TagInputProps extends WidgetProps {
 export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>((props, ref) => {
   return (<div style={props.style} className='pm-tag-input-container' ref={ref}>
     {props.tags.length === 0 ? <div className='pm-tag-input-placeholder'><div className='pm-placeholder-text-color'>{props.placeholder}</div></div> : undefined}
-    {props.tags.map(tag => (<Tag key={tag.key} tag={tag} tagDeleted={props.tagDeleted} tagChanged={props.tagChanged} ui={props.ui} />))}
+    {props.tags.map(tag => (<Tag key={tag.key} tag={tag} onTagDeleted={props.onTagDeleted} onTagChanged={props.onTagChanged} onTagValidate={props.onTagValidate} ui={props.ui} />))}
   </div >);
 });
 
 interface TagProps extends WidgetProps {
   tag: TagItem;
-  tagDeleted: (tag: TagItem) => void;
-  tagChanged: (key: string, text: string) => void;
+  onTagDeleted: (tag: TagItem) => void;
+  onTagChanged: (key: string, text: string) => void;
+  onTagValidate?: (key: string, text: string) => string | null;
   ui: EditorUI;
 }
 
@@ -61,18 +64,22 @@ const Tag: React.FC<TagProps> = props => {
   const [displayText, setDisplayText] = React.useState<string>(props.tag.displayText);
 
   const editImage = React.useRef<HTMLImageElement>(null);
+  const showingValidationError = React.useRef<boolean>(false);
 
   // Anytime we begin editing, focus the text input
   const editTextInput = React.useRef<HTMLInputElement>(null);
   React.useLayoutEffect(() => {
     if (editing) {
       editTextInput.current?.focus();
+    } else {
+      // Focus the edit image
+      editImage.current?.focus();
     }
   }, [editing]);
 
   // Click the delete icon
   const onDeleteClick = (e: React.MouseEvent) => {
-    props.tagDeleted(props.tag);
+    props.onTagDeleted(props.tag);
   };
 
   // Enter or space while delete icon focused
@@ -82,7 +89,7 @@ const Tag: React.FC<TagProps> = props => {
       case ' ':
         e.preventDefault();
         e.stopPropagation();
-        props.tagDeleted(props.tag);
+        props.onTagDeleted(props.tag);
         break;
     }
   };
@@ -108,6 +115,22 @@ const Tag: React.FC<TagProps> = props => {
 
   // Commit edits to the tag
   const commitTagEdit = () => {
+    // Validate the input
+    if (props.onTagValidate) {
+      const validationMessage = props.onTagValidate(props.tag.key, editingText);
+      if (validationMessage !== null) {
+        showingValidationError.current = true;
+        props.ui.dialogs.alert(
+          props.ui.context.translateText(validationMessage),
+          props.ui.context.translateText("Validation Error"),
+          kAlertTypeError).then(() => {
+            editTextInput.current?.focus();
+            showingValidationError.current = false;
+          });
+        return;
+      }
+    }
+
     // Update the text
     setDisplayText(editingText);
 
@@ -115,27 +138,29 @@ const Tag: React.FC<TagProps> = props => {
     setEditing(false);
 
     // Notify of change
-    props.tagChanged(props.tag.key, editingText);
+    props.onTagChanged(props.tag.key, editingText);
 
     // Focus the edit image
     editImage.current?.focus();
   };
 
   const cancelTagEdit = () => {
+
     // Halt editing
     setEditing(false);
 
     // Revert editing text
     setEditingText(displayText);
-
-    // Focus the edit image
-    editImage.current?.focus();
   };
 
   // When editing the tag, allow enter to accept the changes
   const handleEditKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'Enter':
+        // If we're validiating, don't commit.
+        if (showingValidationError.current) {
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         commitTagEdit();
@@ -150,6 +175,10 @@ const Tag: React.FC<TagProps> = props => {
 
   // When editing, clicking away from the tag will accept changes
   const handleEditBlur = () => {
+    // If we're validiating, don't commit.
+    if (showingValidationError.current) {
+      return;
+    }
     commitTagEdit();
   };
 

@@ -18,7 +18,7 @@ import { EditorUI } from "./ui";
 import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
 import { urlForDOI } from "./doi";
 
-const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
+export const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
 
 export function createUniqueCiteId(existingIds: string[], baseId: string): string {

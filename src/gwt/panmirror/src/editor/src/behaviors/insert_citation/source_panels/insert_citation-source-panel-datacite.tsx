@@ -120,8 +120,8 @@ function toCitationEntry(record: DataCiteRecord, existingIds: string[], ui: Edit
   const providerKey = 'datacite';
   return {
     id,
+    isIdEditable: true,
     title: record.title || '',
-    providerKey,
     authors: (length: number) => {
       return formatAuthors(record.creators || [], length);
     },

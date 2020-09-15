@@ -38,6 +38,7 @@ import { dataciteSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
+import { kInvalidCiteKeyChars } from "../../api/cite";
 
 
 // When the dialog has completed, it will return this result
@@ -384,15 +385,23 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     updateState({ citationsToAdd: filteredCitations });
   };
 
-  const deleteTag = (tag: TagItem) => {
+  const onTagDeleted = (tag: TagItem) => {
     deleteCitation(tag.key);
   };
 
-  const tagEdited = (key: string, text: string) => {
+  const onTagChanged = (key: string, text: string) => {
     const targetSource = insertCitationPanelState.citationsToAdd.find(source => source.id === key);
     if (targetSource) {
       targetSource.id = text;
     }
+  };
+
+  const onTagValidate = (key: string, text: string) => {
+    const invalidChars = text.match(kInvalidCiteKeyChars);
+    if (invalidChars) {
+      return props.ui.context.translateText("The citekey includes invalid characters such as a space or a special character.");
+    }
+    return null;
   };
 
   const onBibliographyFileChanged = (biblographyFile: BibliographyFile) => {
@@ -448,8 +457,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             displayPrefix: '@',
             isEditable: source.isIdEditable
           }))}
-          tagDeleted={deleteTag}
-          tagChanged={tagEdited}
+          onTagDeleted={onTagDeleted}
+          onTagChanged={onTagChanged}
+          onTagValidate={onTagValidate}
           ui={props.ui}
           placeholder={props.ui.context.translateText('Selected Citation Keys')} />
       </div>

@@ -43,8 +43,6 @@ export interface CitationSourceLatentSearchPanelProps extends WidgetProps {
   statusText: CitationSourceListStatusText;
 }
 
-// TODO: Status / progress issue
-
 const kSearchBoxHeightWithMargin = 38;
 
 export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, CitationSourceLatentSearchPanelProps>((props, ref) => {
