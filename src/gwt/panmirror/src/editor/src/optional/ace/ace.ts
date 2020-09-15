@@ -63,7 +63,7 @@ export function acePlugins(
 ): Plugin[] {
 
   // shared services
-  const aceRenderQueue = new AceRenderQueue();
+  const aceRenderQueue = new AceRenderQueue(context.events);
   const aceNodeViews = new AceNodeViews();
 
   // build nodeViews
