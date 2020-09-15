@@ -197,7 +197,7 @@ export const cslTypes = {
   legalCase: 'legal_case',
   manuscript: 'manuscript',
   map: 'map',
-  motionaPicture: 'motion_picture',
+  motionPicture: 'motion_picture',
   musicalScore: 'musical_score',
   pamphlet: 'pamphlet',
   paperConference: 'paper-conference',
