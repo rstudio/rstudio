@@ -15,3 +15,4 @@
 - Fix an issue where invalid logging statements were not properly skipped in the Admin log page, causing a crash of the rserver-admin process (Pro #1766)
 - Fix an issue where sessions running on Slurm compute nodes with names longer than 20 characters could not be entered (Pro #1906)
 - Fix an issue where users could not launch sessions via Kubernetes or Slurm if they belonged to a group that was innumerable (Pro #1895)
+- Fix an issue where users could not be added to shared projects when `auth-required-user-group` was set in some configurations (Pro #1944)
