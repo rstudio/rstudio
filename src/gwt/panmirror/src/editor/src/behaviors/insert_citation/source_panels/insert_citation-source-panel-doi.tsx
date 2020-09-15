@@ -57,7 +57,7 @@ export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyMa
         if (result.status === 'ok') {
           // Form the entry
           const csl = result.message;
-          const citation = toCitationEntry(csl, bibliographyManager, ui);
+          const citation = toCitationListEntry(csl, bibliographyManager, ui);
 
           return Promise.resolve({
             citations: citation ? [citation] : [],
@@ -126,7 +126,7 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
 });
 
 
-function toCitationEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
+function toCitationListEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
     const suggestedId = suggestCiteId(bibliographyManager.localSources().map(source => source.id), csl);
     const providerKey = 'doi';
@@ -134,7 +134,7 @@ function toCitationEntry(csl: CSL | undefined, bibliographyManager: Bibliography
       id: suggestedId,
       isIdEditable: true,
       type: csl.type,
-      title: csl.title || '',
+      title: csl.title || csl["short-title"] || csl["original-title"] || '',
       date: formatIssuedDate(csl.issued),
       journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
       doi: csl.DOI,

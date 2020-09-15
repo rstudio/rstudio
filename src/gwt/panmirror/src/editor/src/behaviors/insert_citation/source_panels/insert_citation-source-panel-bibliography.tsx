@@ -83,7 +83,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       const sources = bibliographyManager.search(searchTerm, providerForNode(selectedNode), collectionKeyForNode(selectedNode));
       const uniqueSources = uniqby(sources, source => source.id);
 
-      const citations = toCitationEntries(uniqueSources, ui);
+      const citations = toCitationListEntries(uniqueSources, ui);
       return {
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
@@ -188,7 +188,7 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
-function toCitationEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+function toCitationListEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
   const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
@@ -197,13 +197,13 @@ function toCitationEntries(sources: BibliographySource[], ui: EditorUI): Citatio
       type: source.type,
       title: source.title || '',
       providerKey: source.providerKey,
-      authors: (length: number) => {
-        return formatAuthors(source.author, length);
-      },
       date: formatIssuedDate(source.issued),
       journal: '',
       image: imageForType(ui, source.type)[0],
       imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
+      authors: (length: number) => {
+        return formatAuthors(source.author, length);
+      },
       toBibliographySource: (finalId: string) => {
         return Promise.resolve({ ...source, id: finalId, providerKey: source.providerKey });
       },

@@ -62,7 +62,7 @@ export function dataciteSourcePanel(ui: EditorUI,
               const records: DataCiteRecord[] = dataciteResult.message;
               const existingIds = bibliographyManager.localSources().map(src => src.id);
               const citationEntries = records.map(record => {
-                const citationEntry = toCitationEntry(record, existingIds, ui, doiServer);
+                const citationEntry = toCitationListEntry(record, existingIds, ui, doiServer);
                 if (citationEntry) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
                   existingIds.push(citationEntry.id);
@@ -125,7 +125,7 @@ export const DataCiteSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
   );
 });
 
-function toCitationEntry(record: DataCiteRecord, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
+function toCitationListEntry(record: DataCiteRecord, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
 
   const id = createUniqueCiteId(existingIds, suggestCiteId(record));
   const providerKey = 'datacite';
@@ -133,14 +133,14 @@ function toCitationEntry(record: DataCiteRecord, existingIds: string[], ui: Edit
     id,
     isIdEditable: true,
     title: record.title || '',
-    authors: (length: number) => {
-      return formatAuthors(record.creators || [], length);
-    },
-    type: '',
+    type: record.type || '',
     date: record.publicationYear?.toString() || '',
     journal: record.publisher,
     image: imageForType(ui, record.type || '')[0],
     doi: record.doi,
+    authors: (length: number) => {
+      return formatAuthors(record.creators || [], length);
+    },
     toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(record.doi, -1);

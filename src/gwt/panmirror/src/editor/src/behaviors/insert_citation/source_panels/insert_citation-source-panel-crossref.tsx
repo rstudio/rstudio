@@ -24,6 +24,7 @@ import { sanitizeForCiteproc, CSL } from "../../../api/csl";
 import { DOIServer } from "../../../api/doi";
 import { logException } from "../../../api/log";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
+
 import { EditorUI } from "../../../api/ui";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
@@ -61,7 +62,7 @@ export function crossrefSourcePanel(ui: EditorUI,
         const works = await server.works(searchTerm);
         const existingIds = bibliographyManager.localSources().map(src => src.id);
         const citationEntries = works.items.map(work => {
-          const citationEntry = toCitationEntry(work, existingIds, ui, doiServer);
+          const citationEntry = toCitationListEntry(work, existingIds, ui, doiServer);
           if (citationEntry) {
             // Add this id to the list of existing Ids so future ids will de-duplicate against this one
             existingIds.push(citationEntry.id);
@@ -111,7 +112,7 @@ export const CrossRefSourcePanel = React.forwardRef<HTMLDivElement, CitationSour
   );
 });
 
-function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
+function toCitationListEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
 
   const coercedCSL = sanitizeForCiteproc(crossrefWork as unknown as CSL);
   const id = suggestCiteId(existingIds, coercedCSL);
@@ -120,14 +121,14 @@ function toCitationEntry(crossrefWork: CrossrefWork, existingIds: string[], ui: 
     id,
     isIdEditable: true,
     title: crossrefWorkTitle(crossrefWork, ui),
-    authors: (length: number) => {
-      return formatAuthors(coercedCSL.author, length);
-    },
     type: prettyType(ui, crossrefWork.type),
     date: formatIssuedDate(crossrefWork.issued),
     journal: crossrefWork["container-title"] || crossrefWork["short-container-title"] || crossrefWork.publisher,
     image: imageForCrossrefType(ui, crossrefWork.type)[0],
     doi: crossrefWork.DOI,
+    authors: (length: number) => {
+      return formatAuthors(coercedCSL.author, length);
+    },
     toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(crossrefWork.DOI, -1);

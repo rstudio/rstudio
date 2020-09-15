@@ -67,7 +67,7 @@ export function pubmedSourcePanel(ui: EditorUI,
 
               // Create Citation List Entries for these PubMed docs
               const citationEntries = docs.map(doc => {
-                const citationEntry = toCitationEntry(doc, existingIds, ui, doiServer);
+                const citationEntry = toCitationListEntry(doc, existingIds, ui, doiServer);
                 if (citationEntry) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
                   existingIds.push(citationEntry.id);
@@ -134,7 +134,7 @@ export const PubmedSourcePanel = React.forwardRef<HTMLDivElement, CitationSource
   );
 });
 
-function toCitationEntry(doc: PubMedDocument, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
+function toCitationListEntry(doc: PubMedDocument, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
 
   const id = createUniqueCiteId(existingIds, suggestCiteId(doc));
   const providerKey = 'crossref';
@@ -153,7 +153,6 @@ function toCitationEntry(doc: PubMedDocument, existingIds: string[], ui: EditorU
     toBibliographySource: async (finalId: string) => {
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(doc.doi, -1);
-
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
     },
