@@ -27,6 +27,7 @@ import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntr
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
+import { kCrossrefTotalResults } from "../../../api/crossref";
 
 
 const kDOIType = 'DOI Search';
@@ -62,6 +63,12 @@ export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyMa
             citations: citation ? [citation] : [],
             status: CitationSourceListStatus.default,
             statusMessage: ''
+          });
+        } else if (result.status === 'notfound') {
+          return Promise.resolve({
+            citations: [],
+            status: CitationSourceListStatus.noResults,
+            statusMessage: ui.context.translateText('No data for this DOI could be found.')
           });
 
         } else {
