@@ -24,8 +24,11 @@ const kCiteIdLeadingLength = 8;
 export function createUniqueCiteId(existingIds: string[], baseId: string): string {
   let count = 0;
 
+  // The base ID but with invalid characters replaced
+  let safeBaseId = baseId.replace(kInvalidCiteKeyChars, '');
+
   // Ensure that this is a valid citation, stripping any invalid characters
-  let proposedId = baseId.replace(kInvalidCiteKeyChars, '');
+  let proposedId = safeBaseId;
 
   // If there is a conflict with an existing id, we will append
   // the following character and try again. If the conflict continues with
@@ -38,11 +41,11 @@ export function createUniqueCiteId(existingIds: string[], baseId: string): strin
     // Add an 'a' to the end and try again. Will ultimately create an entry like
     // Teague2012aaaf
     if (count !== 0 && count % 26 === 0) {
-      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
+      safeBaseId = safeBaseId + String.fromCharCode(disambiguationStartCharacter);
     }
 
     const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
-    proposedId = baseId + postfix;
+    proposedId = safeBaseId + postfix;
     count++;
   }
   return proposedId;
