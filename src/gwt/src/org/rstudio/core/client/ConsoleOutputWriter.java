@@ -27,8 +27,6 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
-import static elemental2.dom.DomGlobal.document;
-
 /**
  * Displays R Console output to user, with special behaviors for regular output
  * vs. error output.
@@ -191,22 +189,16 @@ public class ConsoleOutputWriter
 
    public void focusEnd()
    {
-      elemental2.dom.Element ele = document.querySelector("#rstudio_console_input > textarea");
-      if (ele != null)
-         ele.focus();
-      else
-      {
-         Node lastChild = output_.getElement().getLastChild();
-         if (lastChild == null)
-            return;
-         Element last = lastChild.cast();
-         last.focus();
-      }
+      Node lastChild = output_.getElement().getLastChild();
+      if (lastChild == null)
+         return;
+      Element last = lastChild.cast();
+      last.focus();
    }
 
    private int maxLines_ = -1;
    private int lines_ = 0;
    private final PreWidget output_;
    private VirtualConsole virtualConsole_;
-   private VirtualConsoleFactory vcFactory_;
+   private final VirtualConsoleFactory vcFactory_;
 }
