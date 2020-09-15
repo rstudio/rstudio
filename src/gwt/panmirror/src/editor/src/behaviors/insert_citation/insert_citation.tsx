@@ -19,14 +19,15 @@ import ReactDOM from "react-dom";
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
+import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath, BibliographySource } from "../../api/bibliography/bibliography";
+import { kInvalidCiteKeyChars } from "../../api/cite";
+import { changeExtension } from "../../api/path";
 import { EditorServer } from "../../api/server";
 import { EditorUI } from "../../api/ui";
 import { WidgetProps } from "../../api/widgets/react";
 import { TagInput, TagItem } from "../../api/widgets/tag-input";
 import { NavigationTreeNode, containsChild, NavigationTree } from "../../api/widgets/navigation-tree";
 import { DialogButtons } from "../../api/widgets/dialog-buttons";
-import { BibliographyFile, BibliographyManager, bibliographyTypes, bibliographyFileForPath, BibliographySource } from "../../api/bibliography/bibliography";
-import { changeExtension } from "../../api/path";
 
 import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, BibliographySourceProvider } from "./source_panels/insert_citation-source-panel";
 import { bibliographySourcePanel } from "./source_panels/insert_citation-source-panel-bibliography";
@@ -37,7 +38,7 @@ import { dataciteSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
-import { kInvalidCiteKeyChars } from "../../api/cite";
+
 
 
 // When the dialog has completed, it will return this result
@@ -56,8 +57,9 @@ export async function showInsertCitationDialog(
   doc: ProsemirrorNode,
   bibliographyManager: BibliographyManager,
   server: EditorServer,
+  performInsertCitations: (result: InsertCitationDialogResult) => Promise<void>,
   initiallySelectedNodeKey?: string
-): Promise<InsertCitationDialogResult | undefined> {
+): Promise<boolean> {
 
   // The result that will be returned to the called
   let result: InsertCitationDialogResult | undefined;
@@ -114,28 +116,34 @@ export async function showInsertCitationDialog(
         };
       });
 
-      const onOk = (bibliographySourceProviders: BibliographySourceProvider[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => {
+      // Handles the confirmation by the user
+      const onOk = async (bibliographySourceProviders: BibliographySourceProvider[], bibliography: BibliographyFile, selectedNode: NavigationTreeNode) => {
 
+        // Look through the items and see whether any will be slow
+        // If some are slow, show progress
         const requiresProgress = bibliographySourceProviders.some(sourceProvider => sourceProvider.isSlowGeneratingBibliographySource);
         if (requiresProgress) {
           showProgress(ui.context.translateText(bibliographySourceProviders.length === 1 ? 'Creating bibliography entry...' : 'Creating bibliography entries...'));
         }
-        Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id))).then((bibliographySources: BibliographySource[]) => {
-          result = {
-            bibliographySources,
-            bibliography,
-            selectionKey: selectedNode.key
-          };
-          if (requiresProgress) {
-            hideProgress();
-          }
-          confirm();
-        });
-      };
 
-      const onCancel = () => {
-        result = undefined;
-        cancel();
+        // Generate bibliography sources for each of the entries
+        const bibliographySources = await Promise.all(bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id)));
+        result = {
+          bibliographySources,
+          bibliography,
+          selectionKey: selectedNode.key
+        };
+
+        // Notify the caller to perform the inseration
+        await performInsertCitations(result);
+
+        // Clear progress
+        if (requiresProgress) {
+          hideProgress();
+        }
+
+        // Dismiss the dialog
+        confirm();
       };
 
       container.style.width = width + 'px';
@@ -146,7 +154,7 @@ export async function showInsertCitationDialog(
           configuration={configurationStream}
           initiallySelectedNodeKey={initiallySelectedNodeKey}
           onOk={onOk}
-          onCancel={onCancel}
+          onCancel={cancel}
           doc={doc}
           ui={ui}
         />
@@ -169,9 +177,9 @@ export async function showInsertCitationDialog(
 
   // return the result to the caller
   if (performInsert && result) {
-    return Promise.resolve(result);
+    return Promise.resolve(true);
   } else {
-    return Promise.resolve(undefined);
+    return Promise.resolve(false);
   }
 }
 

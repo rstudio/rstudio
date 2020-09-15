@@ -28,7 +28,7 @@ import { EditorServer } from '../../api/server';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
-import { showInsertCitationDialog } from '../../behaviors/insert_citation/insert_citation';
+import { showInsertCitationDialog, InsertCitationDialogResult } from '../../behaviors/insert_citation/insert_citation';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
 
@@ -47,7 +47,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         }
 
         if (dispatch && view) {
-          showInsertCitationDialog(ui, state.doc, bibliographyManager, server, this.initialSelectionKey).then(async result => {
+          showInsertCitationDialog(ui, state.doc, bibliographyManager, server, async (result: InsertCitationDialogResult) => {
             if (result) {
 
               // Remember the last tree node that was selected
@@ -104,8 +104,10 @@ export class InsertCitationCommand extends ProsemirrorCommand {
 
               // commit the transaction
               dispatch(tr);
+
+              return Promise.resolve();
             }
-          });
+          }, this.initialSelectionKey);
         }
         return true;
       },
