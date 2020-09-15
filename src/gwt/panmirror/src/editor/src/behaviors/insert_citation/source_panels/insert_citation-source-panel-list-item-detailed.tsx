@@ -62,7 +62,7 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
   const thirdLine = citationEntry.authors(80);
 
   return (
-    <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item-detailed' style={props.style}>
+    <div onMouseDown={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item-detailed' style={props.style}>
       <div className={`pm-insert-citation-source-panel-item-detailed-border ${selected ? 'pm-list-item-selected' : ''}`} >
         <div className='pm-insert-citation-source-panel-item-detailed-container'>
           <div className='pm-insert-citation-source-panel-item-detailed-type'>

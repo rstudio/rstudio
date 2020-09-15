@@ -51,23 +51,19 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
-  const onItemClick = (e: React.MouseEvent) => {
+  const onItemClick = () => {
     citationListData.onSelectedIndexChanged(props.index);
-    e.preventDefault();
-    e.stopPropagation();
   };
 
-  const onDoubleClick = (e: React.MouseEvent) => {
+  const onDoubleClick = () => {
     citationListData.onAddCitation(citationEntry);
     citationListData.onConfirm();
-    e.preventDefault();
-    e.stopPropagation();
   };
 
   // TODO: Localize +/- button
 
   return (
-    <div onClick={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
+    <div onMouseDown={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item' style={props.style}>
       <div className={`pm-insert-citation-source-panel-item-border ${selected ? 'pm-list-item-selected' : ''}`}>
         <div className='pm-insert-citation-source-panel-item-container'>
           <div className='pm-insert-citation-source-panel-item-type'>

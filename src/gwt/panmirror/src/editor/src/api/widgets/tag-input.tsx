@@ -65,15 +65,17 @@ const Tag: React.FC<TagProps> = props => {
 
   const editImage = React.useRef<HTMLImageElement>(null);
   const showingValidationError = React.useRef<boolean>(false);
+  const restoreFocusAfterCancel = React.useRef<boolean>(false);
 
   // Anytime we begin editing, focus the text input
   const editTextInput = React.useRef<HTMLInputElement>(null);
   React.useLayoutEffect(() => {
     if (editing) {
       editTextInput.current?.focus();
-    } else {
+    } else if (restoreFocusAfterCancel.current) {
       // Focus the edit image
       editImage.current?.focus();
+      restoreFocusAfterCancel.current = false;
     }
   }, [editing]);
 
@@ -151,6 +153,9 @@ const Tag: React.FC<TagProps> = props => {
 
     // Revert editing text
     setEditingText(displayText);
+
+    // The editing control will lose focus, so we need to focus something else
+    restoreFocusAfterCancel.current = true;
   };
 
   // When editing the tag, allow enter to accept the changes
