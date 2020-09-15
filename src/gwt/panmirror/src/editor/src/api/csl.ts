@@ -15,6 +15,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
+import { crossRefTypeToCSLType } from './crossref';
 
 export interface CSL {
 
@@ -114,12 +115,28 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
   if (csl.issued?.raw) {
     delete csl.issued.raw;
   }
-
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   delete cslAny.abstract;
   delete cslAny.id;
 
+  // Ensure only valid CSL types make it through  
+  csl.type = ensureValidCSLType(csl.type);
+
   return cslAny as CSL;
+}
+
+// Crossref and other sources may allow invalid types to leak through
+// (for example, this DOI 10.5962/bhl.title.5326 is of a monograph)
+// and the type will leak through as monograph. This function will verify
+// that the type is a CSL type and if it not, do its best to map the type
+// to a valid CSL type
+export function ensureValidCSLType(type: string): string {
+  if (Object.values(cslTypes).includes(type)) {
+    // This is a valid type
+    return type;
+  } else {
+    return crossRefTypeToCSLType(type);
+  }
 }
 
 export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
@@ -159,6 +176,45 @@ export function cslDateToEDTFDate(date: CSLDate) {
     return paddedParts.join('-');
   }
 }
+
+export const cslTypes = {
+  article: 'article',
+  articleMagazine: 'article-magazine',
+  articleNewspaper: 'article-newspaper',
+  articleJournal: 'article-journal',
+  bill: 'bill',
+  book: 'book',
+  broadcast: 'broadcast',
+  chapter: 'chapter',
+  dataset: 'dataset',
+  entry: 'entry',
+  entryDictionary: 'entry-dictionary',
+  entryEncylopedia: 'entry-encyclopedia',
+  figure: 'figure',
+  graphic: 'graphic',
+  interview: 'interview',
+  legislation: 'legislation',
+  legalCase: 'legal_case',
+  manuscript: 'manuscript',
+  map: 'map',
+  motionaPicture: 'motion_picture',
+  musicalScore: 'musical_score',
+  pamphlet: 'pamphlet',
+  paperConference: 'paper-conference',
+  patent: 'patent',
+  post: 'post',
+  postWeblog: 'post-weblog',
+  personalCommunication: 'personal_communication',
+  report: 'report',
+  review: 'review',
+  reviewBook: 'review-book',
+  song: 'song',
+  speech: 'speech',
+  thesis: 'thesis',
+  treaty: 'treaty',
+  webpage: 'webpage'
+};
+
 
 
 

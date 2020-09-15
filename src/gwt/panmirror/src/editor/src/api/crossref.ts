@@ -14,6 +14,7 @@
  */
 
 import { EditorUI } from "./ui";
+import { cslTypes } from "./csl";
 
 // https://github.com/CrossRef/rest-api-doc
 export interface CrossrefServer {
@@ -88,39 +89,39 @@ export interface CrossrefDate {
 
 export function imageForCrossrefType(ui: EditorUI, type: string): [string?, string?] {
   switch (type) {
-    case 'monograph':
-    case 'report':
-    case 'journal-article':
-    case 'journal-volume':
-    case 'journal':
-    case 'journal-issue':
-    case 'proceedings-article':
-    case 'dissertation':
-    case 'report-series':
+    case crossRefTypes.monograph:
+    case crossRefTypes.report:
+    case crossRefTypes.journalArticle:
+    case crossRefTypes.journalVolume:
+    case crossRefTypes.journal:
+    case crossRefTypes.journalIssue:
+    case crossRefTypes.proceedingsArticle:
+    case crossRefTypes.dissertation:
+    case crossRefTypes.reportSeries:
       return [ui.images.citations?.article, ui.images.citations?.article_dark];
-    case 'book-section':
-    case 'book-part':
-    case 'book-series':
-    case 'edited-book':
-    case 'book-chapter':
-    case 'book':
-    case 'book-set':
-    case 'book-track':
-    case 'reference-book':
+    case crossRefTypes.bookSection:
+    case crossRefTypes.bookPart:
+    case crossRefTypes.bookSeries:
+    case crossRefTypes.editedBook:
+    case crossRefTypes.bookChapter:
+    case crossRefTypes.book:
+    case crossRefTypes.bookSet:
+    case crossRefTypes.bookTrack:
+    case crossRefTypes.referenceBook:
       return [ui.images.citations?.book, ui.images.citations?.book_dark];
-    case 'dataset':
+    case crossRefTypes.dataset:
       return [ui.images.citations?.data, ui.images.citations?.data_dark];
-    case 'reference-entry':
+    case crossRefTypes.referenceEntry:
       return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
-    case 'posted-content':
+    case crossRefTypes.postedContent:
       return [ui.images.citations?.web, ui.images.citations?.web_dark];
-    case 'other':
-    case 'standard':
-    case 'standard-series':
-    case 'peer-review':
-    case 'component':
-    case 'proceedings-series':
-    case 'proceedings':
+    case crossRefTypes.other:
+    case crossRefTypes.standard:
+    case crossRefTypes.standardSeries:
+    case crossRefTypes.peerReview:
+    case crossRefTypes.component:
+    case crossRefTypes.proceedingsSeries:
+    case crossRefTypes.proceedings:
     default:
       return [ui.images.citations?.other, ui.images.citations?.other_dark];
   }
@@ -128,54 +129,133 @@ export function imageForCrossrefType(ui: EditorUI, type: string): [string?, stri
 
 export function prettyType(ui: EditorUI, type: string): string {
   switch (type) {
-    case 'monograph':
+    case crossRefTypes.monograph:
       return ui.context.translateText('Monograph');
-    case 'report':
+    case crossRefTypes.report:
       return ui.context.translateText('Report');
-    case 'journal-article':
+    case crossRefTypes.journalArticle:
       return ui.context.translateText('Journal');
-    case 'journal-volume':
+    case crossRefTypes.journalVolume:
       return ui.context.translateText('Journal Volume');
-    case 'journal':
+    case crossRefTypes.journal:
       return ui.context.translateText('Journal');
-    case 'journal-issue':
+    case crossRefTypes.journalIssue:
       return ui.context.translateText('Journal Issue');
-    case 'proceedings-article':
-    case 'proceedings-series':
-    case 'proceedings':
+    case crossRefTypes.proceedingsArticle:
+    case crossRefTypes.proceedingsSeries:
+    case crossRefTypes.proceedings:
       return ui.context.translateText('Proceedings');
-    case 'dissertation':
+    case crossRefTypes.dissertation:
       return ui.context.translateText('Dissertation');
-    case 'report-series':
+    case crossRefTypes.reportSeries:
       return ui.context.translateText('Series');
-    case 'book-section':
+    case crossRefTypes.bookSection:
       return ui.context.translateText('Book Section');
-    case 'book-part':
+    case crossRefTypes.bookPart:
       return ui.context.translateText('Book Part');
-    case 'book-series':
+    case crossRefTypes.bookSeries:
       return ui.context.translateText('Book Series');
-    case 'book-chapter':
+    case crossRefTypes.bookChapter:
       return ui.context.translateText('Book Chapter');
-    case 'book-set':
-    case 'edited-book':
-    case 'book':
-    case 'book-track':
-    case 'reference-book':
+    case crossRefTypes.editedBook:
+    case crossRefTypes.bookSet:
+    case crossRefTypes.bookTrack:
+    case crossRefTypes.referenceBook:
       return ui.context.translateText('Book');
-    case 'dataset':
+    case crossRefTypes.dataset:
       return ui.context.translateText('Dataset');
-    case 'reference-entry':
+    case crossRefTypes.referenceEntry:
       return ui.context.translateText('Entry');
-    case 'posted-content':
+    case crossRefTypes.postedContent:
       return ui.context.translateText('Content');
-    case 'other':
-    case 'standard':
-    case 'standard-series':
-    case 'peer-review':
-    case 'component':
+    case crossRefTypes.other:
+    case crossRefTypes.standard:
+    case crossRefTypes.standardSeries:
+    case crossRefTypes.peerReview:
+    case crossRefTypes.component:
       return ui.context.translateText('Other');
     default:
       return type;
   }
 }
 
+export function crossRefTypeToCSLType(type: string): string {
+  // This isn't a valid type, try to map it to a valid type
+  switch (type) {
+    case crossRefTypes.bookSection:
+    case crossRefTypes.bookChapter:
+    case crossRefTypes.bookPart:
+      return cslTypes.chapter;
+    case crossRefTypes.book:
+    case crossRefTypes.bookSet:
+    case crossRefTypes.bookTrack:
+    case crossRefTypes.referenceBook:
+    case crossRefTypes.bookSeries:
+    case crossRefTypes.editedBook:
+      return cslTypes.book;
+    case crossRefTypes.report:
+      return cslTypes.report;
+    case crossRefTypes.peerReview:
+      return cslTypes.review;
+    case crossRefTypes.journalArticle:
+    case crossRefTypes.journalVolume:
+    case crossRefTypes.journal:
+    case crossRefTypes.journalIssue:
+      return cslTypes.articleJournal;
+    case crossRefTypes.referenceEntry:
+      return cslTypes.entry;
+    case crossRefTypes.monograph:
+    case crossRefTypes.proceedingsArticle:
+    case crossRefTypes.component:
+    case crossRefTypes.other:
+      return cslTypes.article;
+    case crossRefTypes.proceedings:
+    case crossRefTypes.proceedingsSeries:
+      return cslTypes.paperConference;
+    case crossRefTypes.reportSeries:
+      return cslTypes.report;
+    case crossRefTypes.standard:
+    case crossRefTypes.standardSeries:
+      return cslTypes.patent;
+    case crossRefTypes.postedContent:
+      return cslTypes.webpage;
+    case crossRefTypes.dissertation:
+      return cslTypes.thesis;
+    case crossRefTypes.dataset:
+      return cslTypes.dataset;
+    default:
+      return cslTypes.article;
+  }
+}
+
+
+export const crossRefTypes = {
+  bookSection: 'book-section',
+  monograph: 'monograph',
+  report: 'report',
+  peerReview: 'peer-review',
+  bookTrack: 'book-track',
+  journalArticle: 'journal-article',
+  bookPart: 'book-part',
+  other: 'other',
+  book: 'book',
+  journalVolume: 'journal-volume',
+  bookSet: 'book-set',
+  referenceEntry: 'reference-entry',
+  proceedingsArticle: 'proceedings-article',
+  journal: 'journal',
+  component: 'component',
+  bookChapter: 'book-chapter',
+  proceedingsSeries: 'proceedings-series',
+  reportSeries: 'report-series',
+  proceedings: 'proceedings',
+  standard: 'standard',
+  referenceBook: 'reference-book',
+  postedContent: 'posted-content',
+  journalIssue: 'journal-issue',
+  dissertation: 'dissertation',
+  dataset: 'dataset',
+  bookSeries: 'book-series',
+  editedBook: 'edited-book',
+  standardSeries: 'standard-series',
+};
