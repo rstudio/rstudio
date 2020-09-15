@@ -14,7 +14,6 @@
  */
 
 import { CSLName, CSLDate, CSL } from "./csl";
-import { EditorUI } from "./ui";
 import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
 import { urlForDOI } from "./doi";
 
@@ -101,71 +100,6 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   return createUniqueCiteId(existingIds, baseId);
 }
 
-export function imageForType(ui: EditorUI, type: string): [string?, string?] {
-  switch (type) {
-    case 'article':
-    case 'article-journal':
-    case 'article-magazine':
-    case 'article-newspaper':
-    case 'paper-conference':
-    case 'review':
-    case 'review-book':
-    case 'techreport':
-      return [ui.images.citations?.article, ui.images.citations?.article_dark];
-    case 'bill':
-    case 'legislation':
-    case 'legal_case':
-    case 'patent':
-    case 'treaty':
-      return [ui.images.citations?.legal, ui.images.citations?.legal_dark];
-    case 'book':
-    case 'booklet':
-    case 'chapter':
-    case 'inbook':
-    case 'incollection':
-    case 'manuscript':
-    case 'manual':
-    case 'thesis':
-    case 'masterthesis':
-    case 'phdthesis':
-      return [ui.images.citations?.book, ui.images.citations?.book_dark];
-    case 'broadcast':
-      return [ui.images.citations?.broadcast, ui.images.citations?.broadcast_dark];
-    case 'data':
-    case 'data-set':
-      return [ui.images.citations?.data, ui.images.citations?.data_dark];
-    case 'entry':
-    case 'entry-dictionary':
-    case 'entry-encyclopedia':
-      return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
-    case 'figure':
-    case 'graphic':
-      return [ui.images.citations?.image, ui.images.citations?.image_dark];
-    case 'map':
-      return [ui.images.citations?.map, ui.images.citations?.map_dark];
-    case 'motion_picture':
-      return [ui.images.citations?.movie, ui.images.citations?.movie_dark];
-    case 'musical_score':
-    case 'song':
-      return [ui.images.citations?.song, ui.images.citations?.song_dark];
-    case 'post':
-    case 'post-weblog':
-    case 'webpage':
-      return [ui.images.citations?.web, ui.images.citations?.web_dark];
-    case 'conference':
-    case 'inproceedings':
-    case 'proceedings':
-    case 'interview':
-    case 'pamphlet':
-    case 'personal_communication':
-    case 'report':
-    case 'speech':
-    case 'misc':
-    case 'unpublished':
-    default:
-      return [ui.images.citations?.other, ui.images.citations?.other_dark];
-  }
-}
 
 export interface CiteField {
   name: string;

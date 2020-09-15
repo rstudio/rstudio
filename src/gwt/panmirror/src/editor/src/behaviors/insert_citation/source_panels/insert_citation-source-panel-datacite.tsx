@@ -17,8 +17,8 @@
 import React from "react";
 
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { createUniqueCiteId, imageForType } from "../../../api/cite";
-import { CSL } from "../../../api/csl";
+import { createUniqueCiteId } from "../../../api/cite";
+import { CSL, imageForType } from "../../../api/csl";
 import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from "../../../api/datacite";
 import { DOIServer } from "../../../api/doi";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
@@ -136,7 +136,7 @@ function toCitationListEntry(record: DataCiteRecord, existingIds: string[], ui: 
     type: record.type || '',
     date: record.publicationYear?.toString() || '',
     journal: record.publisher,
-    image: imageForType(ui, record.type || '')[0],
+    image: imageForType(ui.images, record.type || '')[0],
     doi: record.doi,
     authors: (length: number) => {
       return formatAuthors(record.creators || [], length);

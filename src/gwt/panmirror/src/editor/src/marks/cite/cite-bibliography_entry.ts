@@ -15,8 +15,8 @@
 
 import { BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
-import { CSLDate, CSLName } from '../../api/csl';
-import { formatAuthors, formatIssuedDate, imageForType } from '../../api/cite';
+import { CSLDate, CSLName, imageForType } from '../../api/csl';
+import { formatAuthors, formatIssuedDate } from '../../api/cite';
 import { kZoteroProviderKey } from '../../api/bibliography/bibliography-provider_zotero';
 
 // An entry which includes the source as well
@@ -48,7 +48,7 @@ export function entryForSource(source: BibliographySource, ui: EditorUI, forceLi
     source,
     authorsFormatter,
     issuedDateFormatter,
-    image: imageForType(ui, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
+    image: imageForType(ui.images, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
     imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
   };
 }

@@ -21,8 +21,8 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionContext } from '../../api/completion';
-import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
-import { CSL } from '../../api/csl';
+import { formatAuthors, formatIssuedDate } from '../../api/cite';
+import { CSL, imageForType } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
@@ -120,7 +120,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                     id: csl.DOI,
                     csl,
                     inBibliography: false,
-                    image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                    image: imageForType(ui.images, csl.type)[ui.prefs.darkMode() ? 1 : 0],
                     formattedAuthor: formatAuthors(csl.author, 40),
                     formattedIssueDate: formatIssuedDate(csl.issued),
                   },

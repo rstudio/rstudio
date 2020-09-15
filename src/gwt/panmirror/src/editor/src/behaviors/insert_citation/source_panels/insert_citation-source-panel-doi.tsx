@@ -17,8 +17,8 @@ import React from "react";
 import { EditorUI } from "../../../api/ui";
 
 import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { suggestCiteId, formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
-import { CSL } from "../../../api/csl";
+import { suggestCiteId, formatAuthors, formatIssuedDate } from "../../../api/cite";
+import { CSL, imageForType } from "../../../api/csl";
 import { DOIServer } from "../../../api/doi";
 import { logException } from "../../../api/log";
 import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
@@ -27,7 +27,6 @@ import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntr
 import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
 
 import './insert_citation-source-panel-doi.css';
-import { kCrossrefTotalResults } from "../../../api/crossref";
 
 
 const kDOIType = 'DOI Search';
@@ -138,7 +137,7 @@ function toCitationListEntry(csl: CSL | undefined, bibliographyManager: Bibliogr
       date: formatIssuedDate(csl.issued),
       journal: csl["container-title"] || csl["short-container-title"] || csl.publisher,
       doi: csl.DOI,
-      image: imageForType(ui, csl.type)[0],
+      image: imageForType(ui.images, csl.type)[0],
       authors: (length: number) => {
         return formatAuthors(csl.author, length);
       },

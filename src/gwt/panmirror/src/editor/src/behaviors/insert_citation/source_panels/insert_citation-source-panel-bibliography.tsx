@@ -23,9 +23,10 @@ import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager, BibliographyCollection, BibliographySource } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
-import { formatAuthors, formatIssuedDate, imageForType } from "../../../api/cite";
+import { formatAuthors, formatIssuedDate } from "../../../api/cite";
 import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
+import { imageForType } from "../../../api/csl";
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -199,7 +200,7 @@ function toCitationListEntries(sources: BibliographySource[], ui: EditorUI): Cit
       providerKey: source.providerKey,
       date: formatIssuedDate(source.issued),
       journal: '',
-      image: imageForType(ui, source.type)[0],
+      image: imageForType(ui.images, source.type)[0],
       imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
       authors: (length: number) => {
         return formatAuthors(source.author, length);

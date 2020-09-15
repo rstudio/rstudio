@@ -16,6 +16,8 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
 import { crossRefTypeToCSLType } from './crossref';
+import { EditorUI } from './ui';
+import { EditorUIImages } from './ui-images';
 
 export interface CSL {
 
@@ -174,6 +176,59 @@ export function cslDateToEDTFDate(date: CSLDate) {
       return partStr;
     });
     return paddedParts.join('-');
+  }
+}
+
+export function imageForType(images: EditorUIImages, type: string): [string?, string?] {
+  switch (type) {
+    case cslTypes.article:
+    case cslTypes.articleJournal:
+    case cslTypes.articleMagazine:
+    case cslTypes.articleNewspaper:
+    case cslTypes.paperConference:
+    case cslTypes.review:
+    case cslTypes.reviewBook:
+      return [images.citations?.article, images.citations?.article_dark];
+    case cslTypes.bill:
+    case cslTypes.legislation:
+    case cslTypes.legalCase:
+    case cslTypes.treaty:
+      return [images.citations?.legal, images.citations?.legal_dark];
+    case cslTypes.book:
+    case cslTypes.chapter:
+    case cslTypes.manuscript:
+    case cslTypes.thesis:
+      return [images.citations?.book, images.citations?.book_dark];
+    case cslTypes.broadcast:
+      return [images.citations?.broadcast, images.citations?.broadcast_dark];
+    case cslTypes.dataset:
+      return [images.citations?.data, images.citations?.data_dark];
+    case cslTypes.entry:
+    case cslTypes.entryDictionary:
+    case cslTypes.entryEncylopedia:
+      return [images.citations?.entry, images.citations?.entry_dark];
+    case cslTypes.figure:
+    case cslTypes.graphic:
+      return [images.citations?.image, images.citations?.image_dark];
+    case cslTypes.map:
+      return [images.citations?.map, images.citations?.map_dark];
+    case cslTypes.motionPicture:
+      return [images.citations?.movie, images.citations?.movie_dark];
+    case cslTypes.musicalScore:
+    case cslTypes.song:
+      return [images.citations?.song, images.citations?.song_dark];
+    case cslTypes.post:
+    case cslTypes.postWeblog:
+    case cslTypes.webpage:
+      return [images.citations?.web, images.citations?.web_dark];
+    case cslTypes.paperConference:
+    case cslTypes.interview:
+    case cslTypes.pamphlet:
+    case cslTypes.personalCommunication:
+    case cslTypes.report:
+    case cslTypes.speech:
+    default:
+      return [images.citations?.other, images.citations?.other_dark];
   }
 }
 
