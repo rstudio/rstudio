@@ -49,13 +49,19 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
 
   const listContainer = React.useRef<HTMLDivElement>(null);
   const pasted = React.useRef<boolean>(false);
+  const lastSearch = React.useRef<string>('');
+
+  const performSearch = (searchTerm: string) => {
+    props.executeSearch(searchTerm);
+    lastSearch.current = searchTerm;
+    pasted.current = false;
+  };
 
   // Search the user search terms
   const searchChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value;
     if (pasted.current) {
-      props.executeSearch(search);
-      pasted.current = false;
+      performSearch(search);
     } else {
       props.onSearchTermChanged(search);
     }
@@ -70,15 +76,17 @@ export const CitationSourceLatentSearchPanel = React.forwardRef<HTMLDivElement, 
         listContainer.current?.focus();
         break;
       case 'Enter':
-        event.preventDefault();
-        event.stopPropagation();
-        props.executeSearch(props.searchTerm);
+        if (lastSearch.current !== props.searchTerm || props.selectedIndex < 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          performSearch(props.searchTerm);
+        }
         break;
     }
   };
 
   const handleButtonClick = () => {
-    props.executeSearch(props.searchTerm);
+    performSearch(props.searchTerm);
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
