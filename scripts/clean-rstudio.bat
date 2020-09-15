@@ -12,6 +12,12 @@ if EXIST "%localappdata%\RStudio\" (
 if EXIST "%appdata%\RStudio\" (
     rd /q /s "%appdata%\RStudio"
 )
+if EXIST "%localappdata%\R\crash-handler-permission" (
+    del "%localappdata%\R\crash-handler-permission"
+)
+if EXIST "%localappdata%\R\crash-handler.conf" (
+    del "%localappdata%\R\crash-handler.conf"
+)
 
 for /f "tokens=*" %%i in ('powershell /command "[System.Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)"') do set MyDocsDir=%%i
 if EXIST "%MyDocsDir%\.RData" (
@@ -19,6 +25,9 @@ if EXIST "%MyDocsDir%\.RData" (
 )
 if EXIST "%MyDocsDir%\.Rhistory" (
     del "%MyDocsDir%\.Rhistory"
+)
+if EXIST "%MyDocsDir%\.R\rstudio\" (
+    rd /q /s "%MyDocsDir%\.R\rstudio"
 )
 if EXIST "%MyDocsDir%\.Renviron" (
     echo Note: "%MyDocsDir%\.Renviron" found, not deleting
