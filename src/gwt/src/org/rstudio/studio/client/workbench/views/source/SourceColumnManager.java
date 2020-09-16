@@ -1352,34 +1352,40 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-
-   public void closeAllTabs(boolean excludeActive, boolean excludeMain)
+   
+   public void closeAllTabs(boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
-      columnList_.forEach((column) -> closeAllTabs(column, excludeActive, excludeMain));
+      columnList_.forEach((column) ->
+      {
+         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
+      });
+         
    }
 
-   public void closeAllTabs(SourceColumn column, boolean excludeActive, boolean excludeMain)
+   public void closeAllTabs(SourceColumn column,
+                            boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
       if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
       {
-         cpsExecuteForEachEditor(column.getEditors(),
-            new CPSEditingTargetCommand()
+         final CPSEditingTargetCommand command = (EditingTarget target, Command continuation) ->
+         {
+            if (excludeActive &&
+                  (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
             {
-               @Override
-               public void execute(EditingTarget target, Command continuation)
-               {
-                  if (excludeActive &&
-                     (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
-                  {
-                     continuation.execute();
-                     return;
-                  }
-                  else
-                  {
-                     column.closeTab(target.asWidget(), false, continuation);
-                  }
-               }
-            });
+               continuation.execute();
+               return;
+            }
+            else
+            {
+               column.closeTab(target.asWidget(), false, continuation);
+            }
+         };
+         
+         cpsExecuteForEachEditor(column.getEditors(), command, onCompleted);
       }
    }
 
@@ -1457,14 +1463,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
 
       // create a command used to close all tabs
-      final Command closeAllTabsCommand = sourceColumn == null ?
-                                          () -> closeAllTabs(excludeActive, false) :
-                                          () -> closeAllTabs(sourceColumn, excludeActive, false);
+      final Command closeAllTabsCommand = sourceColumn == null
+            ? () -> closeAllTabs(excludeActive, false, null)
+            : () -> closeAllTabs(sourceColumn, excludeActive, false, null);
 
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
-         CommandUtil.join(closeAllTabsCommand,
-                          onCompleted),
+         CommandUtil.join(closeAllTabsCommand, onCompleted),
          null);
    }
 
@@ -2129,7 +2134,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       vimCommands_.selectNextTab(this);
       vimCommands_.selectPreviousTab(this);
       vimCommands_.closeActiveTab(this);
-      vimCommands_.closeAllTabs(this);
+      vimCommands_.closeAllTabs(this, () -> commands_.activateConsole().execute());
       vimCommands_.createNewDocument(this);
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
