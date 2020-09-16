@@ -107,7 +107,7 @@ public:
 
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
-      if (r::context::globalContext().nextcontext())
+      if (!module_context::isPythonReplActive() && r::context::globalContext().nextcontext())
          return Success();
 
       // if we have a currently executing unit, execute it; otherwise, pop the
@@ -287,6 +287,17 @@ private:
       }
       else 
       {
+         // if we're switching languages, then adapt as appropriate
+         bool isPythonActive = module_context::isPythonReplActive();
+         if (isPythonActive && execContext_->engine() == "r")
+         {
+            code = "quit\n" + code;
+         }
+         else if (!isPythonActive && execContext_->engine() == "python")
+         {
+            code = "reticulate::repl_python()\n" + code;
+         }
+
          // send code to console 
          sendConsoleInput(execUnit_->chunkId(), json::Value(code));
 
@@ -397,7 +408,7 @@ private:
       if (engine == "R")
          engine = "r";
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
@@ -411,9 +422,9 @@ private:
                workingDir = docQueue->workingDir();
 
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
-               workingDir, options, docQueue->pixelWidth(), 
-               docQueue->charWidth());
+               unit->docId(), unit->chunkId(), ctx, engine,
+               unit->execScope(), workingDir, options,
+               docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();
 
             // if there was an error parsing the options for the chunk, display
@@ -459,7 +470,7 @@ private:
       if (error)
          return skipUnit();
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          error = executeCurrentUnit(ExprModeNew);
          if (error)

@@ -797,7 +797,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
       {
          // connect to capture html file output
          ChunkExecContext htmlCaptureContext(
-            docId, chunkId, nbCtxId, execScope,
+            docId, chunkId, nbCtxId, engine, execScope,
             workingDir, chunkOptions, pixelWidth, charWidth);
          htmlCaptureContext.connect();
 

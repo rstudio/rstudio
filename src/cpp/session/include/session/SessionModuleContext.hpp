@@ -872,6 +872,8 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+std::string getActiveLanguage();
+core::Error adaptToLanguage(const std::string& language);
 
 // paths to pandoc and pandoc-citeproc suitable for passing to the shell
 // (string_utils::utf8ToSystem has been called on them)
