@@ -119,7 +119,8 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
             prefsFile_.getAbsolutePath() +
             " exists and is owned by the user '" +
             system::username() + "'.",
-         error.getLocation());
+         error,
+         ERROR_LOCATION);
    }
 
    return error;
