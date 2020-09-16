@@ -266,6 +266,14 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onFocusConsoleOutputEnd()
    {
+      if (prefs_.limitVisibleConsole().getValue())
+      {
+         ariaLive_.announce(AriaLiveService.INACCESSIBLE_FEATURE,
+            "Warning: Focus console output command unavailable when " +
+               prefs_.limitVisibleConsole().getTitle() + " option is enabled.",
+            Timing.IMMEDIATE, Severity.STATUS);
+         return;
+      }
       view_.getConsoleOutputWriter().focusEnd();
    }
 

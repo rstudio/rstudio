@@ -38,6 +38,7 @@ export interface EditorUI {
 export interface EditorUIChunkCallbacks {
   getPos: () => number;
   scrollIntoView: (ele: HTMLElement) => void;
+  scrollCursorIntoView: () => void;
 }
 
 export interface EditorUIChunks {

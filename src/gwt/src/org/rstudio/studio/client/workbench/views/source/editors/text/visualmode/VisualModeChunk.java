@@ -228,6 +228,11 @@ public class VisualModeChunk
       return chunk_;
    }
    
+   public AceEditor getAceInstance()
+   {
+      return editor_;
+   }
+   
    /**
     * Add a callback to be invoked when the chunk editor is destroyed.
     * 
@@ -324,6 +329,15 @@ public class VisualModeChunk
    public int getVisualPosition()
    {
       return chunkCallbacks_.getPos.getVisualPosition();
+   }
+   
+
+   /**
+    * Scrolls the cursor into view.
+    */
+   public void scrollCursorIntoView()
+   {
+      chunkCallbacks_.scrollCursorIntoView.scroll();
    }
    
    /**

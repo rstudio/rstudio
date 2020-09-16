@@ -187,10 +187,10 @@ protected:
       value<bool>(&authEncryptPassword_)->default_value(true),
       "Indicates whether or not to encrypt the password sent from the login form. For security purposes, we strongly recommend you leave this enabled.")
       ("auth-login-page-html",
-      value<std::string>(pAuthLoginPageHtml)->default_value(""),
+      value<std::string>(pAuthLoginPageHtml)->default_value("/etc/rstudio/login.html"),
       "The path to a file containing additional HTML customization for the login page.")
       ("auth-rdp-login-page-html",
-      value<std::string>(pAuthRdpLoginPageHtml)->default_value(""),
+      value<std::string>(pAuthRdpLoginPageHtml)->default_value("/etc/rstudio/rdplogin.html"),
       "The path to a file containing additional HTML customization for the login page, as seen by RDP users.")
       ("auth-required-user-group",
       value<std::string>(&authRequiredUserGroup_)->default_value(""),
