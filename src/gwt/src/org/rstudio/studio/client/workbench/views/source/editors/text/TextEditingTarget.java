@@ -170,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEn
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
@@ -1185,8 +1186,9 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent);
+      navigateToVisualPosition(position, (disp, pos) -> 
+      {
+         disp.navigateToPosition(pos, recordCurrent);
       });
    }
 
@@ -1195,8 +1197,9 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
-      ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, false);
+      navigateToVisualPosition(position, (disp, pos) ->
+      {
+         disp.navigateToPosition(pos, recordCurrent, highlightLine, false);
       });
    }
    
@@ -1207,11 +1210,58 @@ public class TextEditingTarget implements
                                   boolean moveCursor,
                                   Command onNavigationCompleted)
    {
-      ensureTextEditorActive(() -> {
-         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, !moveCursor);
+      navigateToVisualPosition(position, (disp, pos) ->
+      {
+         disp.navigateToPosition(pos, recordCurrent, highlightLine, !moveCursor);
          if (onNavigationCompleted != null)
             onNavigationCompleted.execute();
       });
+   }
+   
+   /**
+    * Navigate to a source position, possibly in the visual editor.
+    * 
+    * @param pos The position to navigate to
+    * @param navCommand The command that actually performs the navigation
+    */
+   private void navigateToVisualPosition(SourcePosition pos, 
+                                         CommandWith2Args<DocDisplay, SourcePosition> navCommand)
+   {
+      if (isVisualEditorActive())
+      {
+         VisualModeChunk chunk = visualMode_.getChunkAtRow(pos.getRow());
+         if (chunk == null) 
+         {
+            // No editor chunk at this position, so we need to switch to text
+            // editor mode.
+            ensureTextEditorActive(() ->
+            {
+               navCommand.execute(docDisplay_, pos);
+            });
+         }
+         else
+         {
+            // Adjust the position based on the chunk's offset and navigate
+            // there.
+            SourcePosition newPos = SourcePosition.create(
+                  pos.getRow() - chunk.getScope().getPreamble().getRow(), 
+                  pos.getColumn());
+            navCommand.execute(chunk.getAceInstance(), newPos);
+            chunk.focus();
+            
+            // Scroll the cursor into view; we have to do this after a layout
+            // pass so that Ace has time to render the cursor.
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               chunk.scrollCursorIntoView();
+            });
+         }
+      }
+      else
+      {
+         // No visual editor active, so navigate directly
+         navCommand.execute(docDisplay_, pos);
+      }
    }
 
    // These methods are called by SourceNavigationHistory and source pane management

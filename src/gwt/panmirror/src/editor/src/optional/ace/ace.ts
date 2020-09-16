@@ -40,7 +40,7 @@ import { EditorEvents } from '../../api/events';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 import { ExtensionContext } from '../../api/extension';
-import { DispatchEvent, ResizeEvent } from '../../api/event-types';
+import { DispatchEvent, ResizeEvent, ScrollEvent } from '../../api/event-types';
 import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
 import { handleArrowToAdjacentNode } from '../../api/cursor';
 
@@ -452,7 +452,8 @@ export class AceNodeView implements NodeView {
     this.chunk = this.ui.chunks.createChunkEditor('ace',
       this.node.attrs.md_index, {
       getPos: () => this.getPos(),
-      scrollIntoView: (ele) => this.scrollIntoView(ele)
+      scrollIntoView: (ele) => this.scrollIntoView(ele),
+      scrollCursorIntoView: () => this.scrollCursorIntoView()
     });
 
     // populate initial contents
@@ -685,6 +686,13 @@ export class AceNodeView implements NodeView {
     // new width
     this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
       this.debounceResize();
+    }));
+
+    // Subscribe to scroll event; invalidates the row we're scrolled to so
+    // scrollback will be triggered if necessary (after e.g., typing after
+    // scrolling offscreen)
+    this.subscriptions.push(this.events.subscribe(ScrollEvent, () => {
+      this.scrollRow = -1;
     }));
   }
 
