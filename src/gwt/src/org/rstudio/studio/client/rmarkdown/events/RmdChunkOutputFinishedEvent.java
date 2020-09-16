@@ -16,8 +16,11 @@
 package org.rstudio.studio.client.rmarkdown.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+
+import java.util.ArrayList;
 
 public class RmdChunkOutputFinishedEvent
              extends GwtEvent<RmdChunkOutputFinishedEvent.Handler>
@@ -51,6 +54,10 @@ public class RmdChunkOutputFinishedEvent
 
       public final native int getScope() /*-{
          return this.scope;
+      }-*/;
+      
+      public final native String getHtmlCallback() /*-{
+         return this.html_callback;
       }-*/;
    }
 

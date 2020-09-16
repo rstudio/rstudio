@@ -129,14 +129,15 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
 }
 
 void emitOutputFinished(const std::string& docId, const std::string& chunkId,
-      int scope)
+      const std::string& htmlCallback, int scope)
 {
    json::Object result;
-   result["doc_id"]     = docId;
-   result["request_id"] = "";
-   result["chunk_id"]   = chunkId;
-   result["type"]       = kFinishedInteractive;
-   result["scope"]      = scope;
+   result["doc_id"]        = docId;
+   result["request_id"]    = "";
+   result["chunk_id"]      = chunkId;
+   result["html_callback"] = htmlCallback;
+   result["type"]          = kFinishedInteractive;
+   result["scope"]         = scope;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
@@ -172,9 +173,42 @@ bool fixChunkFilename(int, const core::FilePath& path)
 
 void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
+                          const std::string& code,
+                          const std::string& label,
                           const std::string& nbCtxId)
 {
-   emitOutputFinished(docId, chunkId, ExecScopeChunk);
+   r::sexp::Protect rProtect;
+   SEXP resultSEXP = R_NilValue;
+   std::string callback;
+
+   r::exec::RFunction func(".rs.executeChunkCallback");
+   func.addParam(label);
+   func.addParam(code);
+
+   core::Error error = func.call(&resultSEXP, &rProtect);
+   if (error)
+      LOG_ERROR(error);
+   else if (!r::sexp::isNull(resultSEXP))
+   {
+      json::Object results;
+      Error error = r::json::jsonValueFromList(resultSEXP, &results);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         if (results.hasMember("html"))
+         {
+            // assumes only one callback is returned
+            if (results["html"].isString())
+               callback = results["html"].getString();
+            else if (results["html"].isArray() &&
+                     results["html"].getArray().getValueAt(0).isString())
+               callback = results["html"].getArray().getValueAt(0).getString();
+         }
+      }
+   }
+
+   emitOutputFinished(docId, chunkId, callback, ExecScopeChunk);
 }
 
 void onDeferredInit(bool)

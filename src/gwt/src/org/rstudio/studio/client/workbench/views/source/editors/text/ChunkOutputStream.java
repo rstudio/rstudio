@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.MutationObserver;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -416,7 +418,52 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
    }
-   
+
+   @Override
+   public void showCallbackHtml(String htmlOutput)
+   {
+      // flush any queued errors
+      initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
+      flushQueuedErrors();
+
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      add(frame);
+
+      Element body = frame.getDocument().getBody();
+      Style bodyStyle = body.getStyle();
+      bodyStyle.setPadding(0, Unit.PX);
+      bodyStyle.setMargin(0, Unit.PX);
+
+      frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            onHeightChanged();
+
+            Command handler = () -> {
+               int newHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+               onHeightChanged();
+            };
+            
+            MutationObserver.Builder builder = new MutationObserver.Builder(handler);
+            builder.attributes(true);
+            builder.characterData(true);
+            builder.childList(true);
+            builder.subtree(true);
+            MutationObserver observer = builder.get();
+            observer.observe(frame.getIFrame().getContentDocument().getBody());
+         }
+      });
+   }
+
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {

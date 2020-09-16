@@ -46,7 +46,7 @@ public class RmdChunkOutputUnit extends JavaScriptObject
       return this.output_ordinal;
    }-*/;
 
-   public final native JavaScriptObject getOuputObject() /*-{
+   public final native JavaScriptObject getOutputObject() /*-{
       return this.output_val;
    }-*/;
    

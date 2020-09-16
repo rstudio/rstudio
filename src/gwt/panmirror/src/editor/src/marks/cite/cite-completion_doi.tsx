@@ -95,7 +95,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                 id: source.id,
                 csl: source,
                 inBibliography: true,
-                image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
+                image: imageForType(ui.images, source.type)[ui.prefs.darkMode() ? 1 : 0],
                 formattedAuthor: formatAuthors(source.author, 50),
                 formattedIssueDate: formatIssuedDate(source.issued),
               }];

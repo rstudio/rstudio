@@ -806,6 +806,10 @@ public class TextEditingTargetNotebook
             setDirtyState();
          }
       }
+
+      if (outputs_.containsKey(data.getChunkId()) &&
+          !StringUtil.isNullOrEmpty(data.getHtmlCallback()))
+         outputs_.get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlCallback());
    }
 
    @Override
