@@ -297,8 +297,9 @@ public class PaneManager
             for (int i = 0; i < sourceColumnManager_.getSize(); i++)
             {
                String name = sourceColumnManager_.get(i).getName();
+               String accessibleName = sourceColumnManager_.get(i).getAccessibleName();
                if (!StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
-                  leftList_.add(0, createSourceColumnWindow(name));
+                  leftList_.add(0, createSourceColumnWindow(name, accessibleName));
             }
          }
          else
@@ -413,7 +414,7 @@ public class PaneManager
          // (other logic handles vertical visibility)
          if (width > 0)
             return;
-         
+
          // Attempt to change the widths of as few columns as possible
          ArrayList<Widget> columns = new ArrayList<>();
          columns.add(right_);
@@ -429,7 +430,7 @@ public class PaneManager
          ArrayList<Double> leftEnd = new ArrayList<>();
          if (sizes.size() > 2)
             leftEnd.addAll(sizes.subList(2, sizes.size()));
-         
+
          resizeHorizontally(rightStart,
                             rightEnd,
                             leftStart,
@@ -588,7 +589,7 @@ public class PaneManager
       }
    }
 
-   // The following commands need to be updated to fit the new layout with additional source 
+   // The following commands need to be updated to fit the new layout with additional source
    // columns. The mismatched names/actions are temporarily intentional until this is handled.
    @Handler
    public void onFocusLeftSeparator()
@@ -903,14 +904,14 @@ public class PaneManager
             double size = (1 - progress) * rightStart +
                progress * rightEnd;
             panel_.setWidgetSize(right_, size);
-            
+
             // If the user isn't using additional columns, we're done.
             if (leftStartSum == 0 &&
                 leftEndSum == 0)
                return;
 
-            // The logic here is more complex than for the right panel because there may be 
-            // multiple widgets and the animation needs to occur across all the widgets rather 
+            // The logic here is more complex than for the right panel because there may be
+            // multiple widgets and the animation needs to occur across all the widgets rather
             // than in each specified widget.
             size = (1 - progress) * leftStartSum +
                progress * leftEndSum;
@@ -967,7 +968,7 @@ public class PaneManager
                   }
                }
             }
-         }  
+         }
 
          @Override
          protected void onStart()
@@ -1032,10 +1033,10 @@ public class PaneManager
          currentWidths.add(panel_.getWidgetSize(widgets.get(i)));
       return getValidColumnWidths(widgets, currentWidths, set);
    }
-   
+
    /**
-    * Calculate a visible width for each widget provided while attempting to keep each 
-    * widget as close to its requested size. The non-allocated portion of the total panel should 
+    * Calculate a visible width for each widget provided while attempting to keep each
+    * widget as close to its requested size. The non-allocated portion of the total panel should
     * be enough to display columns not provided.
     * @param widgets List of widgets to set sizes of. These widgets must be part of panel_.
     * @param widths List of ideal widths for each widget. This can be empty.
@@ -1048,18 +1049,18 @@ public class PaneManager
       boolean set)
    {
       final double columnWidth = panel_.getOffsetWidth() / getColumnCount();
-      
-      // The pixels allocated for the widgets provided leave enough pixels so that each column 
+
+      // The pixels allocated for the widgets provided leave enough pixels so that each column
       // will have a width of at least half of columnWidth
       double minColumnWidth = columnWidth / 2;
       double maxColumnWidth = columnWidth * 2;
-      
+
       // Calculate the min and max amount of pixels we must leave for columns not specified.
       int remainingColumns = getColumnCount() - widgets.size();
       double minAllocated = panel_.getOffsetWidth() - (remainingColumns * minColumnWidth);
-      double maxAllocated = panel_.getOffsetWidth() - (remainingColumns * maxColumnWidth); 
-      
-      // Because each panel cannot take up the max threshold, leave enough space so every 
+      double maxAllocated = panel_.getOffsetWidth() - (remainingColumns * maxColumnWidth);
+
+      // Because each panel cannot take up the max threshold, leave enough space so every
       // remaining column can at least contain the minimum threshold.
       if (maxAllocated < (widgets.size() * minColumnWidth))
         maxAllocated = (maxAllocated - (widgets.size() * minColumnWidth)) > minAllocated ?
@@ -1068,7 +1069,7 @@ public class PaneManager
 
       // Determine if each provided width is within our threshold.
       // If not, set it size to the min or max threshold.
-      // If no width is provided, the width is set to the columnWidth calculated above. 
+      // If no width is provided, the width is set to the columnWidth calculated above.
       double minThreshold = minAllocated / widgets.size();
       double maxThreshold = maxAllocated / widgets.size();
       ArrayList<Double> result = new ArrayList<>();
@@ -1105,7 +1106,7 @@ public class PaneManager
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      
+
       ArrayList<Double> leftStart = new ArrayList<>();
       ArrayList<Double> leftEnd = new ArrayList<>();
       if (leftList_.size() > 0)
@@ -1157,7 +1158,8 @@ public class PaneManager
       ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
       for (SourceColumn column : columns)
       {
-         panesByName_.put(column.getName(), createSource(column.getName(), column.asWidget()));
+         panesByName_.put(column.getName(), createSource(column.getName(), column.getAccessibleName(),
+            column.asWidget()));
       }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
@@ -1403,7 +1405,7 @@ public class PaneManager
 
       double rightTargetSize;
       ArrayList<Double> leftTargetSize = new ArrayList<>();
-      
+
       String currentZoomedColumn = getZoomedColumn();
       boolean unZooming = false;
 
@@ -1529,20 +1531,20 @@ public class PaneManager
    private void createSourceColumn()
    {
       PaneConfig.addSourcePane();
-      String name = sourceColumnManager_.add();
+      SourceColumnManager.ColumnName name = sourceColumnManager_.add();
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-      
-      Widget panel = createSourceColumnWindow(name);
+
+      Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
       leftList_.add(panel);
-      sourceColumnManager_.beforeShow(name);
+      sourceColumnManager_.beforeShow(name.getName());
    }
 
-   private Widget createSourceColumnWindow(String name)
+   private Widget createSourceColumnWindow(String name, String accessibleName)
    {
       if (panesByName_.get(name) != null)
          return panesByName_.get(name).getNormal();
-      panesByName_.put(name, createSource(name, sourceColumnManager_.getWidget(name)));
+      panesByName_.put(name, createSource(name, accessibleName, sourceColumnManager_.getWidget(name)));
 
       PaneConfig paneConfig = getCurrentConfig();
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -1657,13 +1659,13 @@ public class PaneManager
       return logicalWindow;
    }
 
-   private LogicalWindow createSource(String frameName, Widget display)
+   private LogicalWindow createSource(String frameName, String accessibleName, Widget display)
    {
-      WindowFrame sourceFrame = new WindowFrame(frameName);
+      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName);
       sourceFrame.setFillWidget(display);
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
-            new MinimizedWindowFrame(frameName, frameName));
+            new MinimizedWindowFrame(frameName, accessibleName));
       sourceWindow.transitionToState(WindowState.NORMAL);
       sourceLogicalWindows_.add(sourceWindow);
       return sourceWindow;
@@ -1673,7 +1675,7 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame(persisterName);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
@@ -1889,7 +1891,7 @@ public class PaneManager
    {
       return additionalSourceCount_ + 2;
    }
-   
+
    private PaneConfig getCurrentConfig()
    {
       PaneConfig config = userPrefs_.panes().getValue().cast();
@@ -1933,7 +1935,7 @@ public class PaneManager
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
-   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<>();
+   private final ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
@@ -1956,7 +1958,7 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
-   private ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
+   private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
 
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;

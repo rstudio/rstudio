@@ -131,6 +131,34 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
    }
 
+   public static class ColumnName
+   {
+      public ColumnName()
+      {
+         name_ = "";
+         accessibleName_ = "";
+      }
+
+      public ColumnName(String name, String accessibleName)
+      {
+         name_ = name;
+         accessibleName_ = accessibleName;
+      }
+
+      public String getName()
+      {
+         return name_;
+      }
+
+      public String getAccessibleName()
+      {
+         return accessibleName_;
+      }
+
+      private final String name_;
+      private final String accessibleName_;
+   }
+
    SourceColumnManager() { RStudioGinjector.INSTANCE.injectMembers(this);}
 
    @Inject
@@ -216,7 +244,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      column.loadDisplay(MAIN_SOURCE_NAME, MAIN_SOURCE_NAME, display, this);
       columnList_.add(column);
 
       new JSObjectStateValue("source-column-manager",
@@ -293,48 +321,50 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
    }
 
-   public String add()
+   public ColumnName add()
    {
       Source.Display display = GWT.create(SourcePane.class);
       return add(display, false);
    }
 
-   public String add(Source.Display display)
+   public ColumnName add(Source.Display display)
    {
       return add(display, false);
    }
 
-   public String add(String name, boolean updateState)
+   public ColumnName add(String name, boolean updateState)
    {
       return add(name, false, updateState);
    }
 
-   public String add (String name, boolean activate, boolean updateState)
+   public ColumnName add (String name, boolean activate, boolean updateState)
    {
       Source.Display display = GWT.create(SourcePane.class);
-      return add(name, display, activate, updateState);
+      return add(name, computeAccessibleName(), display, activate, updateState);
    }
 
-   public String add(Source.Display display, boolean activate)
+   public ColumnName add(Source.Display display, boolean activate)
    {
       return add(display, activate, true);
    }
 
-   public String add(Source.Display display, boolean activate, boolean updateState)
+   public ColumnName add(Source.Display display, boolean activate, boolean updateState)
    {
       return add(COLUMN_PREFIX + StringUtil.makeRandomId(12),
+                  computeAccessibleName(),
                   display,
                   activate,
                   updateState);
    }
 
-   public String add(String name, Source.Display display, boolean activate, boolean updateState)
+   public ColumnName add(String name, String accessibleName, Source.Display display,
+                     boolean activate, boolean updateState)
    {
       if (contains(name))
-         return "";
+         return new ColumnName();
 
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(name, display, this);
+      column.loadDisplay(name, accessibleName, display, this);
       columnList_.add(column);
 
       if (activate || activeColumn_ == null)
@@ -343,7 +373,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (updateState)
          columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
                                           getActive().getName());
-      return column.getName();
+      return new ColumnName(column.getName(), column.getAccessibleName());
    }
 
    public void initialSelect(int index)
@@ -2591,6 +2621,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
+   private String computeAccessibleName()
+   {
+      return "Source Column " + sourceColumnCounter_++;
+   }
+
    private State columnState_;
    private SourceColumn activeColumn_;
 
@@ -2624,4 +2659,5 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public final static String COLUMN_PREFIX = "Source";
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
+   static int sourceColumnCounter_ = 1;
 }

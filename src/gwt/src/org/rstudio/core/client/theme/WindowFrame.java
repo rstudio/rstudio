@@ -44,13 +44,14 @@ public class WindowFrame extends Composite
 {
    public WindowFrame(Widget mainWidget, String name)
    {
-      this(name);
+      this(name, name);
       setMainWidget(mainWidget);
    }
 
-   public WindowFrame(String name)
+   public WindowFrame(String name, String accessibleName)
    {
       name_ = name;
+
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
@@ -61,19 +62,19 @@ public class WindowFrame extends Composite
       borderPositioner_ = new SimplePanel();
       borderPositioner_.add(border_);
 
-      maximizeButton_ = new WindowFrameButton(name, WindowState.MAXIMIZE);
+      maximizeButton_ = new WindowFrameButton(accessibleName, WindowState.MAXIMIZE);
       maximizeButton_.setClassId(ClassIds.PANEL_MAX_BTN, name);
       maximizeButton_.setStylePrimaryName(styles.maximize());
       maximizeButton_.setClickHandler(() -> maximize());
 
-      minimizeButton_ = new WindowFrameButton(name, WindowState.MINIMIZE);
+      minimizeButton_ = new WindowFrameButton(accessibleName, WindowState.MINIMIZE);
       minimizeButton_.setClassId(ClassIds.PANEL_MIN_BTN, name);
       minimizeButton_.setStylePrimaryName(styles.minimize());
       minimizeButton_.setClickHandler(() -> minimize());
 
       frame_ = new LayoutPanel();
       Roles.getRegionRole().set(frame_.getElement());
-      Roles.getRegionRole().setAriaLabelProperty(frame_.getElement(), name);
+      Roles.getRegionRole().setAriaLabelProperty(frame_.getElement(), accessibleName);
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 

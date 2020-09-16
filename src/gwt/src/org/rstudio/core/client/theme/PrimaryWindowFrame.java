@@ -45,7 +45,7 @@ public class PrimaryWindowFrame extends WindowFrame
    public PrimaryWindowFrame(String title,
                              Widget mainWidget)
    {
-      super(title);
+      super(title, title);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
       panel_ = new ClickFlowPanel();
@@ -88,12 +88,12 @@ public class PrimaryWindowFrame extends WindowFrame
    {
       subtitle_.setText(subtitle);
    }
-   
+
    public void addLeftWidget(Widget widget)
    {
       panel_.add(widget);
    }
-   
+
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
    private final Label subtitle_;
    private final ClickFlowPanel panel_;
