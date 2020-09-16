@@ -772,8 +772,7 @@ private:
       size_t eMatchOn = 0;
       size_t eMatchOff = 0;
 
-      if (!encoding_.empty())
-         cleanLineAndGetMatches(&pLineInfo->encodedContents, &eMatchOnArray, &eMatchOffArray);
+      cleanLineAndGetMatches(&pLineInfo->encodedContents, &eMatchOnArray, &eMatchOffArray);
 
       while (findResults().isRunning() &&
              inputLineNum_ < lineNum && std::getline(*inputStream_, line))
@@ -803,17 +802,15 @@ private:
                Error error;
                Replacer replacer(findResults().ignoreCase(), encoding_);
 
-               if (!encoding_.empty())
-               {
-                  eMatchOn =
-                     static_cast<size_t>(eMatchOnArray.getValueAt(static_cast<size_t>(pos)).getInt());
-                  eMatchOff =
-                     static_cast<size_t>(eMatchOffArray.getValueAt(static_cast<size_t>(pos)).getInt());
-               }
+               eMatchOn =
+                   static_cast<size_t>(eMatchOnArray.getValueAt(static_cast<size_t>(pos)).getInt());
+               eMatchOff =
+                   static_cast<size_t>(eMatchOffArray.getValueAt(static_cast<size_t>(pos)).getInt());
+
 
                // If we found a different number of matches searching the encoded string,
                // we shouldn't perform the replace as the expected vs actual results may differ.
-               if (!encoding_.empty() && eMatchOnArray.getSize() != matchOnArray.getSize())
+               if (eMatchOnArray.getSize() != matchOnArray.getSize())
                {
                   core::Error error(
                      errc::findCategory(),
@@ -837,12 +834,6 @@ private:
                }
                else // perform replace
                {
-                  if (encoding_.empty())
-                  {
-                     eMatchOn = matchOn;
-                     eMatchOff = matchOff;
-                  }
-
                   pProgress->addUnits(1);
 
                   if (findResults().regex())
@@ -852,22 +843,19 @@ private:
                      replacer.replaceLiteral(eMatchOn, eMatchOff, replacePattern,
                            &pLineInfo->encodedContents, &replaceMatchOff);
 
-                  if (!encoding_.empty())
-                  {
-                     // calculate utf8 matchOff
-                     size_t utf8Length;
-                     error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
-                                                        pLineInfo->decodedContents.end(),
-                                                        &utf8Length);
-                     pLineInfo->decodedContents =
-                        replacer.decode(pLineInfo->encodedContents);
-   
-                     size_t newUtf8Length;
-                     error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
-                                                        pLineInfo->decodedContents.end(),
-                                                        &newUtf8Length);
-                     replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
-                  }
+                  // calculate utf8 matchOff
+                  size_t utf8Length;
+                  error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
+                                                     pLineInfo->decodedContents.end(),
+                                                     &utf8Length);
+                  pLineInfo->decodedContents =
+                     replacer.decode(pLineInfo->encodedContents);
+
+                  size_t newUtf8Length;
+                  error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
+                                                     pLineInfo->decodedContents.end(),
+                                                     &newUtf8Length);
+                  replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
                }
 
                // Handle side-effects when replace is successful
@@ -1366,6 +1354,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    std::string encoding = projects::projectContext().hasProject() ?
                           projects::projectContext().defaultEncoding() :
                           prefs::userPrefs().defaultEncoding();
+   if (encoding.empty())
+      encoding = "UTF-8";
    std::string encodedString;
    error = r::util::iconvstr(grepOptions.searchPattern(),
                              "UTF-8",
@@ -1677,15 +1667,8 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                                std::string* pEncodedLine, std::string* pDecodedLine,
                                size_t* pReplaceMatchOff) const
 {
-   // if we're not encoded, we can avoid some logic
-   if (encoding_.empty())
-   {
-      eMatchOn = dMatchOn;
-      eMatchOff = dMatchOff;
-   }
-
    // attempt to perform the replace based on the encoded data
-   std::string previewLine(encoding_.empty() ? *pDecodedLine : *pEncodedLine);
+   std::string previewLine(*pEncodedLine);
    std::string originalValue = previewLine.substr(eMatchOn, eMatchOff  - eMatchOn);
    Error error = replaceRegex(eMatchOn, eMatchOff,
                               findResults().searchPattern(),
@@ -1702,27 +1685,23 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
       replaceString.insert(0, originalValue);
       replaceLiteral(eMatchOn, eMatchOff, replaceString, pEncodedLine, pReplaceMatchOff);
 
-      if (encoding_.empty())
-         pDecodedLine = pEncodedLine;
-      else
-      {
-         // adjust pReplaceMatchOff for display
+      // adjust pReplaceMatchOff for display
 
-         size_t originalDecodedSize;
-         error = string_utils::utf8Distance(pDecodedLine->begin(),
-                                            pDecodedLine->end(),
-                                            &originalDecodedSize);
-   
-         *pDecodedLine = decode(*pEncodedLine);
-   
-         size_t newDecodedSize;
-         error = string_utils::utf8Distance(pDecodedLine->begin(),
-                                            pDecodedLine->end(),
-                                            &newDecodedSize);
-   
-         *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
-      }
+      size_t originalDecodedSize;
+      error = string_utils::utf8Distance(pDecodedLine->begin(),
+                                         pDecodedLine->end(),
+                                         &originalDecodedSize);
+
+      *pDecodedLine = decode(*pEncodedLine);
+
+      size_t newDecodedSize;
+      error = string_utils::utf8Distance(pDecodedLine->begin(),
+                                         pDecodedLine->end(),
+                                         &newDecodedSize);
+
+      *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
    }
+
    return error;
 }
 
