@@ -169,7 +169,7 @@ void verifyUserDirs(
          std::string message;
          message.append("Unable to access \"")
             .append(dir.getAbsolutePath())
-            .append(":\n  ")
+            .append("\":\n  ")
             .append(error.asString());
          if (permError)
             message.append("\n  ").append(permError.asString());
@@ -273,4 +273,3 @@ void forwardXdgEnvVars(Options *pEnvironment)
 } // namespace system
 } // namespace core
 } // namespace rstudio
-
