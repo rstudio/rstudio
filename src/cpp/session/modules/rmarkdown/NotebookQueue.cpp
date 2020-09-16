@@ -287,19 +287,24 @@ private:
       }
       else 
       {
-         // if we're switching languages, then adapt as appropriate
+         // if we're switching the console between languages, call the
+         // appropriate R code to make that happen
+         std::string prefix;
+
          bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && execContext_->engine() == "r")
+         if (isPythonActive && execContext_->engine() != "python")
          {
-            code = "quit\n" + code;
+            // switching from Python -> R: deactivate the Python REPL
+            prefix = "quit\n";
          }
          else if (!isPythonActive && execContext_->engine() == "python")
          {
-            code = "reticulate::repl_python()\n" + code;
+            // switching from R -> Python: activate the Python REPL
+            prefix = "reticulate::repl_python()\n";
          }
 
          // send code to console 
-         sendConsoleInput(execUnit_->chunkId(), json::Value(code));
+         sendConsoleInput(execUnit_->chunkId(), json::Value(prefix + code));
 
          // let client know the range has been sent to R
          json::Object exec;
