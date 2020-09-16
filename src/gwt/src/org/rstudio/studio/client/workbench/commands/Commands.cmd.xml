@@ -27,7 +27,7 @@ well as menu structures (for main menu and popup menus).
       exclusive behavior is not automatic and must be managed in code
    @preventShortcutWhenDisabled: Whether the command's shortcut should be
       suppressed when the command is disabled
-   @visible: Whether the command should initially be visible. You should always 
+   @visible: Whether the command should initially be visible. You should always
       set windowMode to "main" for commands not initially visible, unless all
       satellite windows manage the command state correctly at startup.
    @windowMode: Which window the command wants to operate on; possible values:
@@ -39,7 +39,7 @@ well as menu structures (for main menu and popup menus).
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
-      <!-- 
+      <!--
          Keep ShowMainMenuEvent.Menu enum in sync with top-level main-menu entries (File, Edit...)
       -->
       <menu label="_File">
@@ -268,9 +268,9 @@ well as menu structures (for main menu and popup menus).
       <menu label="_View">
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
-         
+
          <separator/>
-         
+
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
@@ -303,9 +303,9 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="paneLayout"/>
          </menu>
-         
+
          <separator/>
-         
+
          <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
@@ -318,7 +318,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="firstTab"/>
          <cmd refid="lastTab"/>
          <separator/>
-         
+
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
          <cmd refid="activateTerminal"/>
@@ -336,7 +336,16 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateTutorial"/>
          <cmd refid="activateJobs"/>
          <cmd refid="activateLauncherJobs"/>
-         <cmd refid="activateFindInFiles"/>
+         <menu label="Show Other _Panes">
+            <cmd refid="activatePresentation"/>
+            <cmd refid="activateCompilePDF"/>
+            <cmd refid="activateFindInFiles"/>
+            <cmd refid="activateSourceCpp"/>
+            <cmd refid="activateRMarkdown"/>
+            <cmd refid="activateDeployContent"/>
+            <cmd refid="activateMarkers"/>
+            <cmd refid="activateSQLResults"/>
+         </menu>
 
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -488,7 +497,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="activateJobs"/>
           </menu>
-         <menu label="Launcher">
+         <menu label="_Launcher">
             <cmd refid="startLauncherJob"/>
             <separator/>
             <cmd refid="activateLauncherJobs"/>
@@ -697,10 +706,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="editLinesFromStart" value="Ctrl+Alt+Shift+A"/>
          <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim,sublime"/>
          <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim,sublime"/>
-         <shortcut refid="toggleRmdVisualMode" value="Ctrl+Shift+F8" />
+         <shortcut refid="toggleRmdVisualMode" value="Meta+Shift+F12" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleRmdVisualMode" value="Ctrl+Shift+F12" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
-        
+
       </shortcutgroup>
       <shortcutgroup name="View">
          <shortcut refid="zoomIn" value="Meta+=" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
@@ -751,26 +761,26 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="lastTab" value="Ctrl+Shift+F12"/>
       </shortcutgroup>
       <shortcutgroup name="Files">
-      
+
          <shortcut refid="saveSourceDoc" value="Ctrl+X Ctrl+S" disableModes="default,vim,sublime"/>
          <shortcut refid="saveSourceDoc" value="Ctrl+S" disableModes="emacs"/>
          <shortcut refid="saveSourceDoc" value="Meta+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <shortcut refid="saveAllSourceDocs" value="Ctrl+Alt+S" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="saveAllSourceDocs" value="Meta+Alt+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim,sublime"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
-         
+
          <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim,sublime"/>
          <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
          <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim,sublime"/>
          <shortcut refid="closeSourceDoc" value="Ctrl+W" disableModes="emacs"/>
          <shortcut refid="closeSourceDoc" value="Meta+W" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
@@ -846,7 +856,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
          <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; !org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
          <shortcut refid="showOptions" value="Meta+Alt+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
-         <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+         <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
          <shortcut refid="helpSearch" value="Ctrl+Alt+F1"/>
          <shortcut refid="helpBack" value="Shift+Alt+F2"/>
@@ -902,7 +912,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="focusMainToolbar" value="Ctrl+Alt+Y" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusMainToolbar" value="Alt+Shift+Y" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
-      <!-- 
+      <!--
       Shortcuts in this group won't be shown in the quick reference card.
        -->
       <shortcutgroup name="Not Displayed">
@@ -922,7 +932,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomLeftColumn" value="Ctrl+Alt+Shift+F12"/>
          <shortcut refid="layoutZoomRightColumn" value="Ctrl+Alt+Shift+F11"/>
       </shortcutgroup>
-         
+
    </shortcuts>
 
    <!--
@@ -954,7 +964,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="setWorkingDirToProjectDir"
         label="Set Working Directory to Project Directory"
         buttonLabel=""
-        menuLabel="To Project Directory"
+        menuLabel="To _Project Directory"
         desc="Change working directory to project root directory"/>
 
    <cmd id="setWorkingDirToActiveDoc"
@@ -962,13 +972,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="To _Source File Location"
         desc="Change working directory to path of active document"/>
-        
+
    <cmd id="setWorkingDirToFilesPane"
         label="Set Working Directory to Directory in Files Pane"
         buttonLabel=""
         menuLabel="To _Files Pane Location"
         desc="Change working directory to location of Files pane"/>
-        
+
    <cmd id="setWorkingDir"
         label="Set Working Directory..."
         buttonLabel=""
@@ -989,62 +999,62 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Text File"
         desc="Create a new text file"
         rebindable="false"/>
-        
+
    <cmd id="newCDoc"
         menuLabel="_C File"
         desc="Create a new C file"
         rebindable="false"/>
-        
+
    <cmd id="newCppDoc"
         menuLabel="_C++ File"
         desc="Create a new C++ file"
         rebindable="false"/>
-        
+
    <cmd id="newHeaderDoc"
         menuLabel="_Header File"
         desc="Create a new header file"
         rebindable="false"/>
-        
+
    <cmd id="newMarkdownDoc"
         menuLabel="_Markdown File"
         desc="Create a new Markdown document"
         rebindable="false"/>
-        
+
    <cmd id="newPythonDoc"
         menuLabel="_Python Script"
         desc="Create a new Python script"
         rebindable="false"/>
-        
+
    <cmd id="newShellDoc"
         menuLabel="_Shell Script"
         desc="Create a new shell script"
         rebindable="false"/>
-        
+
    <cmd id="newStanDoc"
         menuLabel="_Stan File"
         desc="Create a new Stan program"
         rebindable="false"/>
-        
+
    <cmd id="newHtmlDoc"
         menuLabel="_HTML File"
         desc="Create a new HTML file"
-        rebindable="false"/>     
-        
+        rebindable="false"/>
+
    <cmd id="newJavaScriptDoc"
         menuLabel="_JavaScript File"
         desc="Create a new JavaScript file"
         rebindable="false"/>
-        
+
    <cmd id="newCssDoc"
         menuLabel="_CSS File"
         desc="Create a new CSS file"
         rebindable="false"/>
-        
+
    <cmd id="newD3Doc"
         menuLabel="_D3 Script"
         desc="Create a new D3 Script"
-        rebindable="false"/>     
-        
+        rebindable="false"/>
+
    <cmd id="newRPlumberDoc"
         menuLabel="Plumber _API..."
         desc="Create a new Plumber API"
@@ -1053,36 +1063,36 @@ well as menu structures (for main menu and popup menus).
     <cmd id="rcppHelp"
         desc="Help on using Rcpp"
         rebindable="false"/>
-        
+
    <cmd id="printCppCompletions"
         desc="Print C++ Completions"
         rebindable="false"/>
-        
+
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
         desc="Create a new R Sweave document"
         rebindable="false"/>
-        
+
    <cmd id="newRMarkdownDoc"
         menuLabel="R _Markdown..."
         desc="Create a new R Markdown document"
         rebindable="false"/>
-        
+
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
         desc="Create a new Shiny web application"
-        rebindable="false"/>  
-        
+        rebindable="false"/>
+
    <cmd id="newRHTMLDoc"
         menuLabel="R _HTML"
         desc="Create a new R HTML document"
         rebindable="false"/>
-        
+
    <cmd id="newRPresentationDoc"
         menuLabel="R _Presentation"
         desc="Create a new R presentation"
         rebindable="false"/>
-        
+
    <cmd id="newRDocumentationDoc"
         menuLabel="R Doc_umentation..."
         desc="Create a new Rd documentation file"
@@ -1091,20 +1101,20 @@ well as menu structures (for main menu and popup menus).
    <cmd id="newSqlDoc"
         menuLabel="S_QL Script"
         desc="Create a new SQL script"
-        rebindable="false"/>   
-        
+        rebindable="false"/>
+
    <cmd id="openSourceDoc"
         label="Open File..."
         menuLabel="_Open File..."
         buttonLabel=""
         desc="Open an existing file"/>
-        
+
    <cmd id="reopenSourceDocWithEncoding"
         label="Reopen Current Document with Encoding..."
         menuLabel="Reopen with _Encoding..."
         buttonLabel=""
         desc="Reopen the current file with a different encoding"/>
-        
+
    <cmd id="saveSourceDoc"
         label="Save Current Document"
         menuLabel="_Save"
@@ -1116,79 +1126,79 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Rename"
         buttonLabel=""
         desc="Rename current document"/>
-        
+
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."
         menuLabel="Save _As..."
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
-        
+
    <cmd id="saveAllSourceDocs"
         label="Save All Source Documents"
         menuLabel="Sa_ve All"
         buttonLabel=""
         desc="Save all open documents"
         windowMode="main"/>
-        
+
    <cmd id="saveSourceDocWithEncoding"
         label="Save Current Document with Encoding..."
         menuLabel="Save wit_h Encoding..."
         desc="Save the current file with a different encoding"/>
-        
+
    <cmd id="closeSourceDoc"
         label="Close Current Document"
         menuLabel="_Close"
         enabled="false"/>
-        
+
    <cmd id="closeAllSourceDocs"
         label="Close All Documents"
         menuLabel="C_lose All"/>
-        
+
    <cmd id="closeOtherSourceDocs"
         label="Close Other Documents"
         menuLabel="Close All E_xcept Current"/>
-        
+
    <cmd id="vcsFileDiff"
         label="Show Differences for File"
         menuLabel="_Diff of"
         desc="Show differences for the file"
         context="vcs"
         rebindable="false"/>
-        
+
    <cmd id="vcsFileLog"
         label="Show Changelog for File"
         menuLabel="_Log of"
         desc="Show log of changes to the file"
         context="vcs"
         rebindable="false"/>
-        
+
    <cmd id="vcsFileRevert"
         label="Revert Changes to File"
         menuLabel="_Revert"
         desc="Revert changes to the file"
         context="vcs"
         rebindable="false"/>
-        
+
    <cmd id="vcsViewOnGitHub"
         label="View file on GitHub"
         menuLabel="_View FILE on GitHub"
         desc="View this file on Github"
         context="vcs"
         rebindable="false"/>
-         
+
    <cmd id="vcsBlameOnGitHub"
         label="View 'git blame' on GitHub"
         menuLabel="_Blame FILE on GitHub"
         desc="Blame view for this file on Github"
         context="vcs"
         rebindable="false"/>
-         
+
    <cmd id="printSourceDoc"
         menuLabel="Pr_int..."
         buttonLabel=""
         desc="Print the current file"
         rebindable="false"/>
-        
+
    <cmd id="popoutDoc"
         label="Show Document in New Window"
         buttonLabel=""
@@ -1214,7 +1224,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="mru12" visible="false" windowMode="main" rebindable="false"/>
    <cmd id="mru13" visible="false" windowMode="main" rebindable="false"/>
    <cmd id="mru14" visible="false" windowMode="main" rebindable="false"/>
-   
+
    <cmd id="clearRecentFiles"
         menuLabel="_Clear List"
         rebindable="false"/>
@@ -1225,24 +1235,24 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Create a project"
         windowMode="main"/>
-        
+
    <cmd id="openProject"
         label="Open Project..."
         menuLabel="Ope_n Project..."
         buttonLabel=""
         desc="Open a project"
         windowMode="main"/>
-   
+
    <cmd id="openProjectInNewWindow"
         label="Open Project with New R Session"
         menuLabel="Open Project in Ne_w Session..."
         buttonLabel=""
         desc="Open project in a new R session"
         windowMode="main"/>
-   
+
    <cmd id="shareProject"
         label="Share Project..."
-        menuLabel="Share Project..."
+        menuLabel="S_hare Project..."
         buttonLabel=""
         desc="Share this project with others"
         windowMode="main"/>
@@ -1252,7 +1262,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="More..."
         desc="Open a project shared with you"
         windowMode="main"/>
-        
+
    <cmd id="projectMru0" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru1" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru2" visible="false" rebindable="false" windowMode="main"/>
@@ -1268,12 +1278,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="projectMru12" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru13" visible="false" rebindable="false" windowMode="main"/>
    <cmd id="projectMru14" visible="false" rebindable="false" windowMode="main"/>
-   
+
    <cmd id="clearRecentProjects"
         menuLabel="_Clear Project List"
         rebindable="false"
         windowMode="main"/>
-        
+
    <cmd id="closeProject"
         label="Close Current Project"
         menuLabel="Close Projec_t"
@@ -1296,100 +1306,100 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
         rebindable="false"/>
-        
+
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"
         rebindable="false"/>
-        
+
    <cmd id="toggleToolbar"
         label="Toggle Visibility of Toolbar"
         menuLabel="Toggle Toolbar"/>
-        
+
    <cmd id="zoomActualSize"
         menuLabel="Actual _Size"/>
-        
+
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
-        
+
    <cmd id="zoomOut"
         menuLabel="Zoom O_ut"/>
-        
+
    <cmd id="goToFileFunction"
         label="Go To File/Function..."
         menuLabel="Go To File/F_unction..."/>
-        
+
    <cmd id="switchFocusSourceConsole"
         label="Switch Focus between Source/Console"/>
-        
+
    <cmd id="activateSource"
         label="Move Focus to Source"
         menuLabel="Move Focus to Sou_rce"/>
-        
+
    <cmd id="activateConsolePane"
-        label="Move Focus to Console"
-        menuLabel="Move Focus to _Console"
+        label="Move Focus to Console Panel"
+        menuLabel="Move Focus to _Console Panel"
         windowMode="main"/>
-        
+
    <cmd id="activateConsole"
         label="Move Focus to Console"
         menuLabel="Move Focus to _Console"
         windowMode="main"/>
-        
+
    <cmd id="activateEnvironment"
         label="Show Environment Pane"
         menuLabel="Show _Environment"
         windowMode="main"/>
-        
+
    <cmd id="activateData"
         label="Show Data Pane"
         menuLabel="Show _Data"
         windowMode="main"/>
-        
+
    <cmd id="activateHistory"
         label="Show History Pane"
         menuLabel="Show Histor_y"
         windowMode="main"/>
-        
+
    <cmd id="activateFiles"
         label="Show Files Pane"
         menuLabel="Show F_iles"
         windowMode="main"/>
-        
+
    <cmd id="activatePlots"
         label="Show Plots Pane"
         menuLabel="Show Pl_ots"
         windowMode="main"/>
-        
+
    <cmd id="activatePackages"
         label="Show Packages Pane"
         menuLabel="Show Pac_kages"
         windowMode="main"/>
-        
+
    <cmd id="activateHelp"
         label="Show Help Pane"
         menuLabel="Move Focus to _Help"
         windowMode="main"/>
-        
+
    <cmd id="activateVcs"
         label="Show VCS Pane"
         menuLabel="Show _Vcs"
         windowMode="main"/>
-        
+
    <cmd id="activateBuild"
         label="Show Build Pane"
         menuLabel="Show _Build"
         windowMode="main"/>
-        
+
    <cmd id="activateViewer"
         label="Show Viewer Pane"
         menuLabel="Show Vie_wer"
         windowMode="main"/>
-        
+
    <cmd id="activatePresentation"
         label="Show Presentation Pane"
-        menuLabel="Show Presentation"
+        menuLabel="Show Prese_ntation"
         windowMode="main"/>
-        
+
    <cmd id="activateConnections"
         label="Show Connections Pane"
         menuLabel = "Show Co_nnections"
@@ -1399,105 +1409,135 @@ well as menu structures (for main menu and popup menus).
         label="Show Tutorial Pane"
         menuLabel="Show _Tutorial"
         windowMode="main"/>
-    
+
    <cmd id="activateJobs"
         label="Show Jobs Pane"
         menuLabel = "Show _Jobs"
         windowMode="main"/>
 
-   <cmd id="activateFindInFiles"
-        label="Show Find in Files"
-        menuLabel="Show Fin_d in Files"
-        windowMode="main"/>
-
    <cmd id="activateLauncherJobs"
         label="Show Launcher Pane"
-        menuLabel = "Show Launcher"
+        menuLabel = "Show _Launcher"
+        windowMode="main"/>
+
+   <cmd id="activateCompilePDF"
+        label="Show Compile PDF Pane"
+        menuLabel = "Show Compile _PDF"
+        windowMode="main"/>
+
+   <cmd id="activateFindInFiles"
+        label="Show Find in Files"
+        menuLabel="Show _Find in Files"
+        windowMode="main"/>
+
+   <cmd id="activateSourceCpp"
+        label="Show Source Cpp Pane"
+        menuLabel="Show Sou_rce Cpp"
+        windowMode="main"/>
+
+   <cmd id="activateRMarkdown"
+        label="Show R Markdown Pane"
+        menuLabel = "Show _R Markdown"
+        windowMode="main"/>
+
+   <cmd id="activateDeployContent"
+        label="Show Deploy Content Pane"
+        menuLabel = "Show Deploy _Content"
+        windowMode="main"/>
+
+   <cmd id="activateMarkers"
+        label="Show Markers Pane"
+        menuLabel = "Show _Markers"
+        windowMode="main"/>
+
+   <cmd id="activateSQLResults"
+        label="Show SQL Results Pane"
+        menuLabel = "Show S_QL Results"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
         checkable="true"
         label="Zoom Source"
         menuLabel="Zoom Sou_rce"/>
-        
+
    <cmd id="layoutZoomConsolePane"
         checkable="true"
         label="Zoom Console Pane"
         menuLabel="Zoom Console Pane"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomConsole"
         checkable="true"
         label="Zoom Console"
         menuLabel="Zoom _Console"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomEnvironment"
         checkable="true"
         label="Zoom Environment"
         menuLabel="Zoom _Environment"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomHistory"
         checkable="true"
         label="Zoom History"
         menuLabel="Zoom Histor_y"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomFiles"
         checkable="true"
         label="Zoom Files"
         menuLabel="Zoom F_iles"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomPlots"
         checkable="true"
         label="Zoom Plots"
         menuLabel="Zoom Pl_ots"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomPackages"
         checkable="true"
         label="Zoom Packages"
         menuLabel="Zoom P_ackages"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomHelp"
         checkable="true"
         label="Zoom Help"
         menuLabel="Zoom _Help"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomVcs"
         checkable="true"
         label="Zoom VCS"
-        menuLabel="Zoom VCS"
+        menuLabel="Zoom _VCS"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomTutorial"
         checkable="true"
         label="Zoom Tutorial"
         menuLabel="Zoom _Tutorial"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomBuild"
         checkable="true"
         label="Zoom Build"
         menuLabel="Zoom _Build"
         windowMode="main"/>
-               
+
    <cmd id="layoutZoomViewer"
         checkable="true"
         label="Zoom Viewer"
         menuLabel="Zoom Vie_wer"
         windowMode="main"/>
-    
+
     <cmd id="layoutZoomConnections"
         checkable="true"
         label="Zoom Connections"
         menuLabel="Zoom Co_nnections"
         windowMode="main"/>
-        
+
    <cmd id="layoutZoomCurrentPane"
         checkable="true"
         label="Toggle Zoom for Current Pane"/>
@@ -1518,7 +1558,7 @@ well as menu structures (for main menu and popup menus).
         label="Console on Left"
         menuLabel="Console on _Left"
         windowMode="main"/>
-        
+
    <cmd id="layoutConsoleOnRight"
         radio="true"
         label="Console on Right"
@@ -1527,43 +1567,39 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="layoutZoomLeftColumn"
         checkable="true"
-        label="Zoom Left Column"
-        menuLabel="_Zoom Left Column"/>
+        label="Zoom Left / Center Column"
+        menuLabel="_Zoom Left / Center Column"/>
 
    <cmd id="layoutZoomRightColumn"
         checkable="true"
         label="Zoom Right Column"
         menuLabel="Zoo_m Right Column"/>
 
-   <cmd id="paneLayout"
-        menuLabel="Pane Layo_ut..."
-        windowMode="main"/>
-        
    <cmd id="jumpTo"
         label="Jump To..."
         menuLabel="_Jump To..."
         context="editor"/>
-        
+
    <cmd id="switchToTab"
         label="Switch to Tab..."
         menuLabel="Switch to Ta_b..."/>
-        
+
    <cmd id="previousTab"
         label="Open Previous Tab"
         menuLabel="_Previous Tab"/>
-        
+
    <cmd id="nextTab"
         label="Open Next Tab"
         menuLabel="_Next Tab"/>
-        
+
    <cmd id="firstTab"
         label="Open First Tab"
         menuLabel="_First Tab"/>
-        
+
    <cmd id="lastTab"
         label="Open Last Tab"
         menuLabel="_Last Tab"/>
-        
+
    <cmd id="moveTabLeft"
         label="Move Tab Left"
         menuLabel="Move Tab Lef_t"/>
@@ -1571,42 +1607,42 @@ well as menu structures (for main menu and popup menus).
    <cmd id="moveTabRight"
         label="Move Tab Right"
         menuLabel="Move Tab _Right"/>
-        
+
    <cmd id="moveTabToFirst"
         label="Move Tab to First"
         menuLabel="Move Tab to _First"/>
-        
+
    <cmd id="moveTabToLast"
         label="Move Tab to Last"
         menuLabel="Move Tab to La_st"/>
-        
+
    <cmd id="goToLine"
         label="Go to Line..."
         menuLabel="_Go to Line..."/>
-        
+
    <cmd id="toggleFullScreen"
-        menuLabel="Toggle Full Screen"/>
+        menuLabel="Toggle _Full Screen"/>
 
    <cmd id="findFromSelection"
         context="editor"
         menuLabel="_Use Selection for Find"/>
-        
+
    <cmd id="quickAddNext"
         label="Find and Add Next"
         buttonLabel="Add"
         menuLabel="Find and Add Next"
         context="editor"
         desc="Find and add next occurence"/>
-        
+
    <cmd id="findAll"
         label="Find All"
         context="editor"/>
-   
+
    <cmd id="findReplace"
         label="Find / Replace Text..."
         context="editor"
         menuLabel="_Find..."/>
-        
+
    <cmd id="findNext"
         label="Find Next Occurence"
         buttonLabel="Next"
@@ -1614,7 +1650,7 @@ well as menu structures (for main menu and popup menus).
         desc="Find next occurrence"
         context="editor"
         rebindable="false"/>
-        
+
    <cmd id="findPrevious"
         label="Find Previous Occurence"
         buttonLabel="Prev"
@@ -1622,7 +1658,7 @@ well as menu structures (for main menu and popup menus).
         desc="Find previous occurrence"
         context="editor"
         rebindable="false"/>
-        
+
    <cmd id="findSelectAll"
         label="Find and Select All"
         buttonLabel="All"
@@ -1630,7 +1666,7 @@ well as menu structures (for main menu and popup menus).
         context="editor"
         desc="Find and select all matches"
         rebindable="false"/>
-        
+
    <cmd id="replaceAndFind"
         label="Replace and Find Next"
         buttonLabel="Replace"
@@ -1638,55 +1674,55 @@ well as menu structures (for main menu and popup menus).
         desc="Replace and find next occurrence"
         context="editor"
         rebindable="false"/>
-        
+
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."
         windowMode="main"/>
-        
+
    <cmd id="fold"
         label="Collapse Fold"
         context="editor"
         menuLabel="_Collapse"/>
-        
+
    <cmd id="unfold"
         label="Expand Fold"
         context="editor"
         menuLabel="E_xpand"/>
-        
+
    <cmd id="foldAll"
         label="Collapse All Folds"
         context="editor"
         menuLabel="Collapse _All"/>
-        
+
    <cmd id="unfoldAll"
         label="Expand All Folds"
         context="editor"
         menuLabel="Ex_pand All"/>
-        
+
    <cmd id="jumpToMatching"
         label="Jump to Matching Bracket"
         menuLabel="Jump To _Matching"
         desc="Jump to matching bracket"
         context="editor"/>
-        
+
    <cmd id="expandToMatching"
         label="Expand to Matching Bracket"
         menuLabel="Expand To _Matching"
         desc="Expand selection to matching bracket"
         context="editor"/>
-        
+
    <cmd id="addCursorAbove"
         menuLabel="Add Cursor Above Current Cursor"
         context="editor"/>
-        
+
    <cmd id="addCursorBelow"
         menuLabel="Add Cursor Below Current Cursor"
         context="editor"/>
-        
+
    <cmd id="moveLinesUp"
         menuLabel="Move Lines Up"
         context="editor"/>
-      
+
    <cmd id="moveLinesDown"
         menuLabel="Move Lines Down"
         context="editor"/>
@@ -1711,61 +1747,61 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Split Into Lines"
         desc="Create a new cursor on each line in current selection"
         context="editor"/>
-        
+
    <cmd id="editLinesFromStart"
         menuLabel="Edit Lines from Start"
         desc="Create a new cursor at start of each line in selection"
         context="editor"/>
-        
+
    <cmd id="executeAllCode"
         label="Run All Code in Current Source File"
         buttonLabel=""
         menuLabel="Run _All"
         desc="Run all of the code in the source file"
         context="r"/>
-        
+
    <cmd id="executeCode"
         label="Run Current Line or Selection"
         buttonLabel="Run"
         menuLabel="Run Selected _Line(s)"
         desc="Run the current line or selection"
         context="r"/>
-        
+
    <cmd id="executeCodeWithoutMovingCursor"
         label="Run Current Line or Selection (Without Moving Cursor)"
         buttonLabel="Run"
         menuLabel="Run _Line(s) without moving cursor"
         desc="Run the current line or selection without moving the cursor"
         context="r"/>
-        
+
    <cmd id="executeCodeWithoutFocus"
         rebindable="false"/>
-        
+
    <cmd id="executeToCurrentLine"
         label="Execute Code up to Current Line"
         menuLabel="Run From _Beginning To Line"
         desc="Run from the beginning of the source file up through the current line"
         context="r"/>
-        
+
     <cmd id="executeFromCurrentLine"
         label="Execute Code From Current Line to End of Document"
         menuLabel="Run From Line to _End"
         desc="Run from the current line through the end of the source file"
         context="r"/>
-        
+
    <cmd id="executeCurrentFunction"
         label="Run Current Function Definition"
         menuLabel="Run _Function Definition"
         desc="Run the top-level function definition, if any, that contains the cursor"
         context="r"/>
-        
+
    <cmd id="executeCurrentSection"
         label="Execute Current Code Section"
         buttonLabel="Run Section"
         menuLabel="Run Code _Section"
         desc="Run the code section that contains the cursor"
         context="r"/>
-        
+
    <cmd id="executeLastCode"
         label="Re-Run Previous Code Execution"
         buttonLabel=""
@@ -1820,12 +1856,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Rcpp"
         desc="Insert a new Rcpp chunk"
         context="editor"/>
-        
+
    <cmd id="insertChunkStan"
         menuLabel="Stan"
         desc="Insert a new Stan chunk"
         context="editor"/>
-        
+
    <cmd id="insertChunkSQL"
         menuLabel="SQL"
         desc="Insert a new SQL chunk"
@@ -1850,195 +1886,195 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Rcpp"
         desc="Switch chunk to Rcpp"
         context="editor"/>
-        
+
    <cmd id="switchToChunkStan"
         menuLabel="Stan"
         desc="Switch chunk to Stan"
         context="editor"/>
-        
+
    <cmd id="switchToChunkSQL"
         menuLabel="SQL"
         desc="Switch chunk to SQL"
         context="editor"/>
-        
+
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
         desc="Insert a new code section"
         context="editor"/>
-        
+
    <cmd id="executePreviousChunks"
-        menuLabel="Run All Chunks Above"
+        menuLabel="_Run All Chunks Above"
         desc="Run all above the current one"
         context="r"/>
-        
+
    <cmd id="executeSubsequentChunks"
-        menuLabel="Run All Chunks Below"
+        menuLabel="Run All C_hunks Below"
         desc="Run all chunks after the current one"
         context="r"/>
-        
+
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"
         context="rmarkdown"/>
-        
+
    <cmd id="executeNextChunk"
         menuLabel="Run _Next Chunk"
         desc="Run the next code chunk"
         context="r"/>
-        
+
    <cmd id="executeSetupChunk"
         menuLabel="Run _Setup Chunk"
         desc="Run the initial setup chunk"
         context="r"/>
-        
+
    <cmd id ="goToHelp"
         label="Show Help for Current Function"
         menuLabel="Go To _Help"
         desc="Go to help for the currently selected function"
         context="help"/>
-        
+
    <cmd id ="goToDefinition"
         menuLabel="_Go To Function Definition"
         desc="Go to to the definition of the currently selected function"
         context="help"/>
-        
+
    <cmd id="codeCompletion"
         label="Retrieve Completions"
         menuLabel="Code Completion"
         desc="Show code completions at the current cursor location"
         context="editor"/>
-        
+
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>
-        
+
    <cmd id="sourceNavigateForward"
         menuLabel="For_ward"
         desc="Go forward to the next source location"/>
-        
+
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"
         context="r"/>
-        
+
    <cmd id="extractLocalVariable"
          menuLabel="Extract _Variable"
          desc="Extract a variable out of the current selection"
          context="r"/>
-         
+
    <cmd id="findUsages"
         menuLabel="Find _Usages"
         desc="Find source locations where this symbol is used"
         context="cpp"/>
-        
+
    <cmd id="sourceFile"
         buttonLabel=""
         menuLabel="Source _File..."
         desc="Source the contents of an R file"
         windowMode="main"/>
-      
+
    <cmd id="previewJS"
         buttonLabel="Preview"
-        menuLabel="Preview JS"
-        desc="Preview the active JavaScript document"/>   
-    
+        menuLabel="Preview J_S"
+        desc="Preview the active JavaScript document"/>
+
    <cmd id="previewSql"
         buttonLabel="Preview"
-        menuLabel="Preview SQL"
-        desc="Preview the active SQL document"/>   
+        menuLabel="Preview S_QL"
+        desc="Preview the active SQL document"/>
 
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
         menuLabel="_Source"
         desc="Source the contents of the active document"/>
-        
+
    <cmd id="sourceActiveDocumentWithEcho"
         buttonLabel=""
         menuLabel="Source with _Echo"
         desc="Source the contents of the active document (with echo)"/>
-        
+
    <cmd id="commentUncomment"
         label="Comment / Uncomment Selection"
         menuLabel="_Comment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"
         context="editor"/>
-        
+
    <cmd id="reformatCode"
         label="Reformat Current Selection"
         menuLabel="Re_format Code"
         desc="Reformat the current line/selection"
         context="editor"/>
-        
+
    <cmd id="showDiagnosticsActiveDocument"
         label="Show Diagnostics for Current Document"
         menuLabel="Show _Diagnostics"
         desc="Show diagnostics for the active document"/>
-        
+
    <cmd id="showDiagnosticsProject"
         label="Show Diagnostics for Current Project"
         menuLabel="Show Diagnostics (Projec_t)"
         desc="Show diagnostics for all source files in the current project"/>
-        
+
    <cmd id="reindent"
         label="Reindent Selection"
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"
         context="editor"/>
-        
+
    <cmd id="reflowComment"
         menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"
         context="editor"/>
-        
+
    <cmd id="renameInScope"
         label="Rename Symbol in Scope"
         menuLabel="Ren_ame in Scope"
         desc="Rename symbol in current scope"
         context="editor"/>
-        
+
    <cmd id="insertSnippet"
         menuLabel="Insert Snippet"
         desc="Expand snippet at cursor"
         context="editor"/>
-        
+
    <cmd id="insertRoxygenSkeleton"
         menuLabel="Insert Ro_xygen Skeleton"
         desc="Insert a roxygen comment for the current function"
         context="r"/>
-        
+
    <cmd id="expandSelection"
         menuLabel="Expand Selection"
         desc="Expand selection"
         context="editor"/>
-        
+
    <cmd id="shrinkSelection"
         menuLabel="Shrink Selection"
         desc="Shrink selection"
         context="editor"/>
-        
+
    <cmd id="goToNextSection"
         label="Go to Next Section"
         buttonLabel=""
         desc="Go to next section/chunk"
         context="editor"/>
-   
+
    <cmd id="goToPrevSection"
         label="Go to Previous Section"
         buttonLabel=""
         desc="Go to previous section/chunk"
         context="editor"/>
-        
+
    <cmd id="goToStartOfCurrentScope"
         context="editor"/>
-   
+
    <cmd id="goToEndOfCurrentScope"
         context="editor"/>
-   
+
    <cmd id="goToNextChunk"
         label="Go to Next Chunk"
         desc="Go to next chunk"
         context="editor"/>
-   
+
    <cmd id="goToPrevChunk"
         label="Go to Previous Chunk"
         desc="Go to previous chunk"
@@ -2047,13 +2083,13 @@ well as menu structures (for main menu and popup menus).
    <cmd id="expandRaggedSelection"
         label="Expand Ragged Selection"
         context="editor"/>
-        
+
    <cmd id="markdownHelp"
         label="Open Markdown Quick Reference"
         menuLabel="_Markdown Quick Reference"
         desc="Markdown quick reference"
         context="help"/>
-        
+
    <cmd id="openRoxygenQuickReference"
         menuLabel="_Roxygen Quick Reference"
         desc="Roxygen quick reference"
@@ -2063,12 +2099,12 @@ well as menu structures (for main menu and popup menus).
         label="Toggle Document Outline"
         menuLabel="_Show Document Outline"
         desc="Show document outline"/>
-        
+
    <cmd id="toggleRmdVisualMode"
         label="Toggle Visual Markdown Editor"
         menuLabel="_Use Visual Editor"
         desc="Toggle visual markdown editor"/>
-        
+
    <cmd id="enableProsemirrorDevTools"
         label="Enable Prosemirror DevTools"
         menuLabel="_Prosemirror DevTools"
@@ -2078,7 +2114,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Using R Markdown"
         desc="Guide to using R Markdown"
         context="help"/>
-        
+
     <cmd id="authoringRPresentationsHelp"
         menuLabel="_Authoring R Presentations"
         desc="Guide to using R Markdown"
@@ -2093,7 +2129,7 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Data Visualization with _ggplot2"
          desc="Data visualization with ggplot2"
          context="help"/>
-         
+
     <cmd id="openPurrrCheatSheet"
          menuLabel="List manipulation with _purrr"
          desc="List manipulation with purrr"
@@ -2103,7 +2139,7 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Package De_velopment with devtools"
          desc="Package development with devtools"
          context="help"/>
-         
+
     <cmd id="openDataImportCheatSheet"
          menuLabel="_Import Data with readr"
          desc="Import data with readr"
@@ -2113,12 +2149,12 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Data Manipulation with dplyr, tid_yr"
          desc="Data manipulation with dplyr and tidyr"
          context="help"/>
-         
+
     <cmd id="openDataTransformationCheatSheet"
           menuLabel="Data Transformation with _dplyr"
           desc="Data transformation with dplyr"
           context="help"/>
-          
+
     <cmd id="openSparklyrCheatSheet"
          menuLabel="Interfacing Spar_k with sparklyr"
          desc="Interfacing Apache Spark with sparklyr"
@@ -2138,7 +2174,7 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Web Applications with _shiny"
          desc="Build web applications with Shiny"
          context="help"/>
-         
+
     <cmd id="browseCheatSheets"
          menuLabel="_Browse Cheatsheets..."
          desc="Browse available cheatsheets in your web browser"
@@ -2154,7 +2190,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="previewHTML"
         label="Preview Document as HTML"
         buttonLabel="Preview"
-        menuLabel="Preview"
+        menuLabel="Previe_w"
         desc="Show a preview of the current document as HTML"
         context="markdown"/>
 
@@ -2163,7 +2199,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Publish"
         menuLabel="P_ublish to RPubs..."
         desc="Publish the current document"/>
-        
+
    <cmd id="compilePDF"
         label="Compile to PDF..."
         buttonLabel="Compile PDF"
@@ -2184,20 +2220,20 @@ well as menu structures (for main menu and popup menus).
         label="Knit with Parameters..."
         menuLabel="Knit _with Parameters..."
         desc="Knit the document with a set of custom parameters"/>
-        
+
     <cmd id="clearKnitrCache"
         menuLabel="Clear Knitr Cache..."
         desc="Clear the knitr cache for the current document"/>
-        
+
    <cmd id="clearPrerenderedOutput"
         menuLabel="Clear Prerendered Output..."
         desc="Clear the prerendered output for the current document"/>
-        
+
    <cmd id="notebookExpandAllOutput"
         buttonLabel=""
-        menuLabel="Expand All Output"
+        menuLabel="E_xpand All Output"
         desc="Expand all code chunk output in the current file"/>
-        
+
    <cmd id="notebookToggleExpansion"
         buttonLabel=""
         menuLabel="Toggle Chunk Output Expansion"
@@ -2205,17 +2241,17 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="notebookCollapseAllOutput"
         buttonLabel=""
-        menuLabel="Collapse All Output"
+        menuLabel="Collapse All _Output"
         desc="Collapse all code chunk output in the current file"/>
 
    <cmd id="notebookClearOutput"
         buttonLabel=""
-        menuLabel="Clear Output"
+        menuLabel="Cl_ear Output"
         desc="Clear the output of the current notebook chunk" />
 
    <cmd id="notebookClearAllOutput"
         buttonLabel=""
-        menuLabel="Clear All Output"
+        menuLabel="Clear A_ll Output"
         desc="Remove all code chunk output in the current file"/>
 
    <cmd id="synctexSearch"
@@ -2239,14 +2275,14 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="New Folder"
         context="files"
         desc="Create a new folder"/>
-        
+
    <cmd id="uploadFile"
         label="Upload Files..."
         menuLabel="Upload Files..."
         buttonLabel="Upload"
         context="files"
         desc="Upload files to server"/>
-        
+
    <cmd id="copyFile"
         label="Copy Files..."
         menuLabel="Copy..."
@@ -2254,7 +2290,7 @@ well as menu structures (for main menu and popup menus).
         desc="Copy selected file or folder"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="copyFileTo"
         label="Copy Files To..."
         menuLabel="Copy To..."
@@ -2262,7 +2298,7 @@ well as menu structures (for main menu and popup menus).
         context="files"
         desc="Copy selected file or folder to another folder"
         rebindable="false"/>
-        
+
    <cmd id="moveFiles"
         label="Move Files..."
         menuLabel="Move..."
@@ -2270,7 +2306,7 @@ well as menu structures (for main menu and popup menus).
         desc="Move selected files or folders"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="exportFiles"
         label="Export Files..."
         menuLabel="Export..."
@@ -2278,34 +2314,34 @@ well as menu structures (for main menu and popup menus).
         desc="Export selected files or folders"
         context="files"
         rebindable="false"/>
-       
+
    <cmd id="renameFile"
         label="Rename Current File..."
         buttonLabel="Rename"
         desc="Rename selected file or folder"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="deleteFiles"
         label="Delete Files..."
         buttonLabel="Delete"
         desc="Delete selected files or folders"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="refreshFiles"
         menuLabel="Refresh"
         desc="Refresh file listing"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="goToWorkingDir"
         buttonLabel=""
         menuLabel="Go To Working Directory"
         context="files"
         desc="View the current working directory"
         rebindable="false"/>
-        
+
    <cmd id="setAsWorkingDir"
         label="Set As Working Directory"
         rebindable="false"/>
@@ -2321,7 +2357,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"
         context="files"
         rebindable="false"/>
-        
+
    <cmd id="vcsAddFiles"
         label="Add Files or Folders"
         menuLabel="Add"
@@ -2329,7 +2365,7 @@ well as menu structures (for main menu and popup menus).
         desc="Add the selected files or folders"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="vcsRemoveFiles"
         label="Remove Files or Folders"
         menuLabel="Delete"
@@ -2345,7 +2381,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Diff"
         desc="Diff selected file(s)"
         context="vcs"/>
-        
+
    <cmd id="vcsCommit"
         label="Commit Pending Changes"
         buttonLabel="Commit"
@@ -2361,7 +2397,7 @@ well as menu structures (for main menu and popup menus).
         desc="Revert selected changes"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="vcsShowHistory"
         label="View History of Previous Commits"
         menuLabel="_History"
@@ -2370,23 +2406,23 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="vcs"
         windowMode="main"/>
-        
+
    <cmd id="vcsRefresh"
         label="Refresh File List from Source Control"
         desc="Refresh listing"
         context="vcs"/>
-        
+
    <cmd id="vcsRefreshNoError"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="vcsOpen"
         label="Open Selected Files(s)"
         menuLabel="Open File"
         desc="Open selected file(s)"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="vcsIgnore"
         label="Ignore Files or Folders"
         menuLabel="Ignore..."
@@ -2394,25 +2430,25 @@ well as menu structures (for main menu and popup menus).
         desc="Ignore the selected files or folders"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="vcsPull"
         menuLabel="_Pull Branches"
         buttonLabel="Pull"
         context="vcs"
         windowMode="review_changes"/>
-        
+
    <cmd id="vcsPullRebase"
         menuLabel="_Pull with Rebase"
         buttonLabel="Pull with Rebase"
         context="vcs"
         windowMode="review_changes"/>
-        
+
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
         buttonLabel="Push"
         context="vcs"
         windowMode="review_changes"/>
-        
+
    <cmd id="vcsCleanup"
         menuLabel="Cleanu_p"
         buttonLabel="Cleanup"
@@ -2420,44 +2456,44 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="vcs"
         windowMode="main"/>
-        
+
    <cmd id="vcsResolve"
         menuLabel="Resolve..."
         buttonLabel="Resolve"
         desc="Resolve conflicts in the selected files or folders"
         rebindable="false"
         context="vcs"/>
-        
+
    <cmd id="consoleClear"
         buttonLabel=""
         label="Clear Console"
         menuLabel="Cle_ar Console"
         windowMode="main"
         desc="Clear console"/>
-        
+
    <cmd id="interruptR"
         label="Interrupt R Session"
         buttonLabel=""
         menuLabel="_Interrupt R"
         windowMode="main"
         desc="Interrupt R"/>
-        
+
    <cmd id="restartR"
         label="Restart R Session"
         menuLabel="_Restart R"
         desc="Restart R"
         windowMode="main"/>
-        
+
   <cmd id="restartRClearOutput"
         label="Restart R Session and Clear Chunk Output"
-        menuLabel="Restart R and Clear Output"
+        menuLabel="Restart R and Clear _Output"
         desc="Restart R session and clear chunk output" />
-        
+
    <cmd id="restartRRunAllChunks"
         label="Restart R Session and Run All Chunks"
-        menuLabel="Restart R and Run All Chunks"
+        menuLabel="Restart R and Run _All Chunks"
         desc="Restart R session and run all chunks" />
-        
+
    <cmd id="terminateR"
         label="Terminate R Session"
         menuLabel="_Terminate R..."
@@ -2502,27 +2538,27 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh the presentation"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationFullscreen"
         desc="Show presentation in full screen mode"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationHome"
         desc="Go to the first slide"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationNext"
         desc="Go to the next slide"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationPrev"
         desc="Go to the previous slide"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationEdit"
         desc="Edit this slide of the presentation"
         rebindable="false"
@@ -2533,7 +2569,7 @@ well as menu structures (for main menu and popup menus).
         desc="View the presentation in an external web browser"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="presentationSaveAsStandalone"
         menuLabel="_Save As Web Page..."
         desc="Save the presentation as a standalone web page"
@@ -2545,7 +2581,7 @@ well as menu structures (for main menu and popup menus).
         desc="Clear knitr cache for this presentation"
         rebindable="false"
         context="presentation"/>
-        
+
    <cmd id="historySendToSource"
         label="Insert Command into Document"
         menuLabel="Insert into _Source"
@@ -2553,7 +2589,7 @@ well as menu structures (for main menu and popup menus).
         desc="Insert the selected commands into the current document (Shift+Enter)"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="historySendToConsole"
         label="Send Command to Console"
         menuLabel="Send to _Console"
@@ -2561,46 +2597,46 @@ well as menu structures (for main menu and popup menus).
         desc="Send the selected commands to the R console (Enter)"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="loadHistory"
         menuLabel="_Load History..."
         buttonLabel=""
         desc="Load history from an existing file"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="saveHistory"
         menuLabel="Sa_ve History As..."
         buttonLabel=""
         desc="Save history into a file"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="historyRemoveEntries"
         menuLabel="_Remove Entries..."
         buttonLabel=""
         context="history"
         desc="Remove the selected history entries"
         rebindable="false"/>
-        
+
    <cmd id="clearHistory"
         menuLabel="Clear _All..."
         buttonLabel=""
         desc="Clear all history entries"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="historyDismissResults"
         label="Dismiss History Results"
         buttonLabel="Done"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="historyShowContext"
         label="Show In Context"
         context="history"
         rebindable="false"/>
-        
+
    <cmd id="historyDismissContext"
         label="Dismiss History Context"
         buttonLabel="&#x00AB; Back"
@@ -2612,52 +2648,52 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="_Next Plot"
         desc="Next plot"/>
-        
+
    <cmd id="previousPlot"
         label="Show Previous Plot"
         buttonLabel=""
         menuLabel="_Previous Plot"
         desc="Previous plot"/>
-        
+
    <cmd id="savePlotAsImage"
         label="Save Plot As Image..."
         menuLabel="Save as _Image..."
         desc="Save the current plot as an image file"/>
-        
+
     <cmd id="savePlotAsPdf"
          label="Save Plot as PDF..."
          menuLabel="Save as P_DF..."
          desc="Save the current plot as a PDF file"/>
-         
+
    <cmd id="copyPlotToClipboard"
         label="Copy Current Plot to Clipboard..."
         menuLabel="Cop_y to Clipboard..."
         desc="Copy the current plot to the clipboard"/>
-        
+
    <cmd id="zoomPlot"
         menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"
         desc="View a larger version of the plot in a new window"
         rebindable="false"/>
-        
+
    <cmd id="removePlot"
         label="Remove Current Plot..."
         buttonLabel=""
         menuLabel="_Remove Plot..."
         desc="Remove the current plot"/>
-        
+
    <cmd id="clearPlots"
         label="Clear All Plots..."
         buttonLabel=""
         menuLabel="_Clear All..."
         desc="Clear all Plots"/>
-        
+
    <cmd id="refreshPlot"
         label="Refresh Current Plot"
         buttonLabel=""
         menuLabel="Refresh"
         desc="Refresh current plot"/>
-        
+
    <cmd id="showManipulator"
         label="Show Manipulator for Current Plot"
         buttonLabel=""
@@ -2668,18 +2704,18 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Clear Workspace..."
         desc="Clear objects from the workspace"
         windowMode="main"/>
-        
+
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."
         windowMode="main"
         context="import"
         desc="Load workspace"/>
-        
+
    <cmd id="saveWorkspace"
         menuLabel="_Save Workspace As..."
         windowMode="main"
         desc="Save workspace as"/>
-        
+
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
         menuLabel="From _Local File..."
@@ -2758,7 +2794,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Update"
         desc="Check for package updates"
         windowMode="main"/>
-        
+
    <cmd id="refreshPackages"
         label="Refresh Packages Pane"
         buttonLabel=""
@@ -2782,14 +2818,14 @@ well as menu structures (for main menu and popup menus).
         desc="Help on using packrat with R projects"
         rebindable="false"
         context="packrat"/>
-         
+
    <cmd id="packratOptions"
         buttonLabel="Options"
         menuLabel="Packrat _Options..."
         desc="Configure packrat options for this project"
         rebindable="false"
         context="packrat"/>
-         
+
    <cmd id="packratBundle"
         buttonLabel="Bundle"
         menuLabel="Export Project _Bundle..."
@@ -2802,25 +2838,25 @@ well as menu structures (for main menu and popup menus).
         desc="Check the status of the Packrat library"
         rebindable="false"
         context="packrat"/>
-         
+
    <cmd id="renvHelp"
         menuLabel="Introduction to renv"
         desc="Learn how to use renv"
         rebindable="false"
         context="renv"/>
-         
+
    <cmd id="renvSnapshot"
         menuLabel="Snapshot Library..."
         desc="Snapshot the state of your project library"
         rebindable="false"
         context="renv"/>
-        
+
    <cmd id="renvRestore"
         menuLabel="Restore Library..."
         desc="Restore your project library from renv.lock"
         rebindable="false"
         context="renv"/>
-         
+
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
         desc="Configure version control options"
@@ -2837,7 +2873,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show Public Key..."
         desc="Show RSA public key"
         context="vcs"/>
-        
+
    <cmd id="versionControlProjectSetup"
         menuLabel="Project _Setup..."
         desc="Setup version control for the current project"
@@ -2849,7 +2885,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Shell..."
         desc="Execute shell commands"
         windowMode="main"/>
-        
+
    <cmd id="newTerminal"
         label="New Terminal"
         menuLabel="_New Terminal"
@@ -2860,7 +2896,7 @@ well as menu structures (for main menu and popup menus).
         label="Move Focus to Terminal"
         menuLabel="_Move Focus to Terminal"
         windowMode="main"/>
-        
+
    <cmd id="renameTerminal"
         label="Rename Terminal"
         menuLabel="_Rename Terminal"
@@ -2920,10 +2956,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Send to _Terminal"
         desc="Send the current line or selection to terminal"/>
 
-   <cmd id="showTerminalOptions"
-        menuLabel="_Terminal Options..."
-        windowMode="main"/>
-
    <cmd id="sendFilenameToTerminal"
         menuLabel="Send _Filename to Terminal"
         windowMode="main"/>
@@ -2948,9 +2980,62 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="macPreferences"
         menuLabel="_Preferences..."/>
-        
+
    <cmd id="showOptions"
         menuLabel="_Global Options..."
+        windowMode="main"/>
+
+   <cmd id="showCodeOptions"
+        label="Code Options..."
+        windowMode="main"/>
+
+   <cmd id="showConsoleOptions"
+        label="Console Options..."
+        windowMode="main"/>
+
+   <cmd id="showAppearanceOptions"
+        label="Appearance Options..."
+        windowMode="main"/>
+
+   <cmd id="paneLayout"
+        menuLabel="Pane Layo_ut..."
+        label="Pane Layout Options..."
+        windowMode="main"/>
+
+   <cmd id="showPackagesOptions"
+        label="Packages Options..."
+        windowMode="main"/>
+
+   <cmd id="showRMarkdownOptions"
+        label="R Markdown Options..."
+        windowMode="main"/>
+
+   <cmd id="showSweaveOptions"
+        label="Sweave Options..."
+        windowMode="main"/>
+
+   <cmd id="showSpellingOptions"
+        label="Spelling Options..."
+        windowMode="main"/>
+
+   <cmd id="showVcsOptions"
+        label="Git/SVN Version Control Options..."
+        windowMode="main"/>
+
+   <cmd id="showPublishingOptions"
+        label="Publishing Options..."
+        windowMode="main"/>
+
+   <cmd id="showTerminalOptions"
+        menuLabel="_Terminal Options..."
+        windowMode="main"/>
+
+   <cmd id="showAccessibilityOptions"
+        menuLabel="Accessibility _Options..."
+        windowMode="main"/>
+
+   <cmd id="showPythonOptions"
+        label="Python Options..."
         windowMode="main"/>
 
    <cmd id="modifyKeyboardShortcuts"
@@ -3000,163 +3085,163 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Print topic"
         rebindable="false"/>
-        
+
    <cmd id="clearHelpHistory"
         label="Clear Help History"
         menuLabel="Clear history"
         desc="Clear history"
         rebindable="false"/>
-        
+
    <cmd id="helpPopout"
         label="Show Help in New Window"
         buttonLabel=""
         desc="Show in new window"
         context="help"/>
-        
+
    <cmd id="refreshHelp"
         label="Refresh Help Topic"
         menuLabel="Refresh"
         desc="Refresh topic"
         context="help"/>
-        
+
    <cmd id="tutorialPopout"
         buttonLabel=""
         desc="Show in new window"
         context="tutorial"/>
-        
+
    <cmd id="tutorialBack"
         buttonLabel=""
         desc="Go back"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="tutorialForward"
         buttonLabel=""
         desc="Go forward"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="tutorialZoom"
         buttonLabel="Zoom"
         desc="View a larger version in a new window"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="tutorialRefresh"
         desc="Refresh tutorial"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="tutorialStop"
         buttonLabel=""
         desc="Stop tutorial"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="tutorialHome"
         buttonLabel=""
         desc="Return to home"
         rebindable="false"
         context="tutorial"/>
-        
+
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"
         context="viewer"/>
-        
+
    <cmd id="viewerBack"
         buttonLabel=""
         desc="Go back"
         rebindable="false"
         context="viewer"/>
-        
+
    <cmd id="viewerForward"
         buttonLabel=""
         desc="Go forward"
         rebindable="false"
         context="viewer"/>
-        
+
    <cmd id="viewerZoom"
         buttonLabel="Zoom"
         desc="View a larger version in a new window"
         rebindable="false"
         context="viewer"/>
-        
+
    <cmd id="viewerRefresh"
         desc="Refresh viewer"
         rebindable="false"
         context="viewer"/>
-        
+
    <cmd id="viewerSaveAllAndRefresh"
         desc="Save source files and refresh viewer"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerStop"
         buttonLabel=""
         desc="Stop application"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerClear"
         buttonLabel=""
         desc="Remove current viewer item"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerClearAll"
         buttonLabel=""
         desc="Clear all viewer items"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerSaveAsImage"
         menuLabel = "Save as Image..."
         desc="Save as an image file"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerSaveAsWebPage"
         menuLabel="Save as Web Page..."
         desc="Save as a standalone web page"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="viewerCopyToClipboard"
         menuLabel="Copy to Clipboard..."
         desc="Copy to the system clipboard"
         context="viewer"
         rebindable="false"/>
-        
+
    <cmd id="raiseException"
         menuLabel="Raise E_xception"
         rebindable="false"/>
-        
+
    <cmd id="raiseException2"
         menuLabel="Raise Exception _JS"
         rebindable="false"/>
-        
+
    <cmd id="showWarningBar"
         menuLabel="Show warning bar"
         rebindable="false"/>
-        
+
    <cmd id="showRequestLog"
         menuLabel="_Request Log"
         context="diagnostics"
         desc="Show internal request log"/>
-        
+
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
         context="diagnostics"
         windowMode="main"
         visible="false"/>
-        
+
    <cmd id="openDeveloperConsole"
-        menuLabel="Open Developer Console"
+        menuLabel="_Open Developer Console"
         rebindable="false"
         context="diagnostics"
         windowMode="main"/>
-        
+
    <cmd id="reloadUi"
         menuLabel="Reload _UI"
         context="diagnostics"
@@ -3166,17 +3251,17 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Log focused element"
         context="diagnostics"
         rebindable="false"/>
-        
+
    <cmd id="debugDumpContents"
         menuLabel="_Dump Editor Contents..."
         context="diagnostics"
         rebindable="false"/>
-        
+
    <cmd id="debugImportDump"
         menuLabel="_Import Editor Contents..."
         context="diagnostics"
         rebindable="false"/>
-        
+
    <cmd id="refreshSuperDevMode"
         context="diagnostics"
         rebindable="false"/>
@@ -3193,7 +3278,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Suspend R Session"
         rebindable="false"
         windowMode="main"/>
-        
+
    <cmd id="quitSession"
         label="Quit the Current R Session"
         menuLabel="_Quit Session..."
@@ -3232,7 +3317,7 @@ well as menu structures (for main menu and popup menus).
         visible="false"
         windowMode="main"
         rebindable="false"/>
-        
+
    <cmd id="updateCredentials"
         menuLabel="_Update Credentials"
         rebindable="false"/>
@@ -3284,7 +3369,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Build Binar_y Package"
         context="packageDevelopment"
         desc="Build a binary package"/>
-        
+
    <cmd id="devtoolsLoadAll"
         label="Execute devtools::load_all()"
         menuLabel="_Load All"
@@ -3345,53 +3430,53 @@ well as menu structures (for main menu and popup menus).
    <cmd id="undoDummy"
         menuLabel="_Undo"
         rebindable="false"/>
-        
+
    <cmd id="redoDummy"
         menuLabel="Re_do"
         rebindable="false"/>
-        
+
    <cmd id="cutDummy"
         menuLabel="Cu_t"
         rebindable="false"/>
-        
+
    <cmd id="copyDummy"
         menuLabel="_Copy"
         rebindable="false"/>
-        
+
    <cmd id="pasteDummy"
         menuLabel="_Paste"
         rebindable="false"/>
-        
+
    <cmd id="pasteWithIndentDummy"
         menuLabel="Pa_ste with Indent"
         rebindable="false"/>
-        
+
    <cmd id="yankBeforeCursor"
         label="Yank Before Cursor"
         context="editor"/>
-   
+
    <cmd id="yankAfterCursor"
         label="Yank After Cursor"
         context="editor"/>
-        
+
    <cmd id="pasteLastYank"
         label="Paste Last Yank"
         context="editor"/>
-        
+
    <cmd id="insertAssignmentOperator"
         label="Insert Assignment Operator"
         context="editor"/>
-        
+
    <cmd id="insertPipeOperator"
         label="Insert Pipe Operator"
         context="editor"/>
-        
+
    <cmd id="openNextFileOnFilesystem"
         label="Open Next File on Filesystem"/>
-        
+
    <cmd id="openPreviousFileOnFilesystem"
         label="Open Previous File on Filesystem"/>
-        
+
    <cmd id="toggleSoftWrapMode"
         label="Toggle Soft Wrap Mode"
         menuLabel="Soft _Wrap Long Lines"
@@ -3411,12 +3496,12 @@ well as menu structures (for main menu and popup menus).
         label="Toggle Breakpoint on Current Line"
         menuLabel="Toggle _Breakpoint"
         desc="Set or remove a breakpoint on the current line of code"/>
-        
+
    <cmd id="debugClearBreakpoints"
         label="Clear All Breakpoints..."
         menuLabel="Clear _All Breakpoints..."
         desc="Remove all the breakpoints in the current project"/>
-        
+
    <cmd id="debugContinue"
         label="Continue Execution"
         menuLabel="_Continue"
@@ -3459,24 +3544,24 @@ well as menu structures (for main menu and popup menus).
         desc="Print the error message when an unhandled error occurs"
         radio="true"
         rebindable="false"/>
-        
+
    <cmd id="errorsTraceback"
         menuLabel="_Error Inspector"
         desc="Show the error inspector when an unhandled error occurs"
         radio="true"
         rebindable="false"/>
-        
+
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
         radio="true"
         rebindable="false"/>
-        
+
    <cmd id="startProfiler"
         menuLabel="_Start Profiling"
         desc="Start profiling R code"
         rebindable="false"/>
-        
+
    <cmd id="stopProfiler"
         menuLabel="Stop Profilin_g"
         buttonLabel="Stop Profiling"
@@ -3528,21 +3613,21 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Reload"
         buttonLabel=""
         desc="Reload the Shiny application"/>
-        
+
    <cmd id="shinyRunInPane"
         label="Run Shiny Application in New Pane"
         menuLabel="Run in Viewer Pane"
         desc="Run the Shiny application in an RStudio pane"
         checkable="true"
         windowMode="background"/>
-        
+
    <cmd id="shinyRunInViewer"
         label="Run Shiny Application in RStudio Viewer"
         menuLabel="Run in Window"
         desc="Run the Shiny application in an RStudio viewer window"
         checkable="true"
         windowMode="background"/>
-        
+
    <cmd id="shinyRunInBrowser"
         label="Run Shiny Application in Web Browser"
         menuLabel="Run External"
@@ -3573,100 +3658,100 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Reload"
         buttonLabel=""
         desc="Reload the Plumber API"/>
-        
+
    <cmd id="plumberRunInPane"
         label="Run Plumber API in New Pane"
         menuLabel="Run in Viewer Pane"
         desc="Run the Plumber API in an RStudio pane"
         checkable="true"
         windowMode="background"/>
-        
+
    <cmd id="plumberRunInViewer"
         label="Run Plumber API in RStudio Viewer"
         menuLabel="Run in Window"
         desc="Run the Plumber API in an RStudio viewer window"
         checkable="true"
         windowMode="background"/>
-        
+
    <cmd id="plumberRunInBrowser"
         label="Run Plumber API in Web Browser"
         menuLabel="Run External"
         desc="Run the Plumber API in the system's default Web browser"
         checkable="true"
         windowMode="background"/>
-    
+
    <cmd id="rsconnectDeploy"
         menuLabel="P_ublish..."
         desc="Publish the application or document"
         visible="false"
         windowMode="main"
         rebindable="false"/>
-        
+
    <cmd id="rsconnectConfigure"
         menuLabel="_Configure Application..."
         desc="Configure the application"
         visible="false"
         windowMode="main"
         rebindable="false"/>
-        
+
    <cmd id="rsconnectManageAccounts"
         menuLabel="_Manage Accounts..."
         desc="Connect or disconnect accounts"
         visible="false"
         windowMode="main"
         rebindable="false"/>
-        
+
    <cmd id="showGpuDiagnostics"
         menuLabel="Show _GPU Diagnostics"
         rebindable="false"
         context="diagnostics"/>
-        
+
    <cmd id="toggleEditorTokenInfo"
         menuLabel="_Toggle Editor Token Information"
         rebindable="false"
         context="diagnostics"/>
-        
+
    <cmd id="showDomElements"
         menuLabel="_Show DOM Elements"
         rebindable="false"
         context="diagnostics"/>
-        
+
    <cmd id="newConnection"
         menuLabel="New Connection..."
         buttonLabel="New Connection"
         desc="Create a new connection"
         windowMode="main"/>
-   
+
     <cmd id="removeConnection"
         menuLabel="Remove Connection..."
         buttonLabel=""
         desc="Remove connection from the connection history"
-        windowMode="main"/>        
-            
+        windowMode="main"/>
+
     <cmd id="disconnectConnection"
          menuLabel="Disconnect"
          desc="Disconnect from a connection"
          windowMode="main"/>
-       
+
     <cmd id="refreshConnection"
          label="Refresh Connection Data"
          menuLabel="Refresh"
          desc="Refresh data"
          windowMode="main"/>
-         
+
     <cmd id="sparkLog"
          label="View Spark Log"
          menuLabel="Spark Log"
          buttonLabel="Log"
          desc="View the log for the Spark connection"
-         windowMode="main"/> 
-         
+         windowMode="main"/>
+
     <cmd id="sparkUI"
          menuLabel="SparkUI"
          buttonLabel = "SparkUI"
          desc="View the browser UI for the Spark connection"
-         windowMode="main"/> 
-     
+         windowMode="main"/>
+
     <cmd id="sparkHelp"
          menuLabel="Using Spark with RStudio"
          buttonLabel=""
@@ -3688,14 +3773,14 @@ well as menu structures (for main menu and popup menus).
          menuLabel="_Clear Local Jobs"
          desc="Clean up all completed local jobs"
          windowMode="main"/>
-        
+
     <cmd id="runSelectionAsJob"
          menuLabel="Ru_n Selection as Local Job"
          desc="Run the selected code as a local job"
          windowMode="any"/>
 
     <cmd id="startLauncherJob"
-         menuLabel="Start Launcher Job..."
+         menuLabel="Start Launcher _Job..."
          buttonLabel="Start Launcher Job"
          desc="Run a background job on a cluster"
          windowMode="main"/>
@@ -3706,7 +3791,7 @@ well as menu structures (for main menu and popup menus).
          windowMode="any"/>
 
     <cmd id="runSelectionAsLauncherJob"
-         menuLabel="Run Selection as Launcher Job"
+         menuLabel="Run Selection as _Launcher Job"
          desc="Run the selected code as a launcher job"
          windowMode="any"/>
 
@@ -3791,10 +3876,6 @@ well as menu structures (for main menu and popup menus).
         checkable="true"
         windowMode="main"/>
 
-   <cmd id="showAccessibilityOptions"
-        menuLabel="Accessibility _Options..."
-        windowMode="main"/>
-
    <cmd id="showAccessibilityHelp"
         menuLabel="Accessibility _Help..."
         windowMode="main"/>
@@ -3849,9 +3930,9 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="focusSourceColumnSeparator"
-        menuLabel="Adjust Source Column Splitter"
+        menuLabel="Adjust Source Column Spli_tter"
         windowMode="main"/>
-   
+
    <cmd id="showShortcutCommand"
         menuLabel="Show _Keyboard Shortcut Commands"
         rebindable="false"/>

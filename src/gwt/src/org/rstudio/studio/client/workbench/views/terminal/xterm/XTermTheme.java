@@ -18,9 +18,11 @@ import com.google.gwt.core.client.JsArrayString;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FontSizer;
 
 /**
  * Contains colors to theme the terminal with (ITheme).
@@ -114,6 +116,8 @@ public class XTermTheme
 
    @JsOverlay public static double adjustFontSize(double size)
    {
+      size += BrowseCap.getFontSkew();
+
       // standard values for sizes we expose in preferences
       if (doubleEqualish(size, 7.0))
          return 9.0;
@@ -141,6 +145,15 @@ public class XTermTheme
          return 48.0;
       else
          return Math.round(size * 1.3333333);
+   }
+
+   @JsOverlay public static double computeLineHeight()
+   {
+      double lineHeight = FontSizer.getNormalLineHeight();
+
+      // due to units oddity, have to scale down before passing to xterm.js
+      // (pixels vs. pts)
+      return lineHeight > 1.0 ? lineHeight * 0.75 : 1.0;
    }
 
    @JsOverlay public static XTermTheme create(

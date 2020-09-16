@@ -26,7 +26,7 @@ used by these components are included below):
 - JSCustomBadge
 - DataTables
 - jQuery
-- Catch
+- Catch2
 - QUnit
 - xterm.js
 - winpty
@@ -3096,7 +3096,7 @@ pyyaml tests        llvm/test/YAMLParser/{*.data, LICENSE.TXT}
 ARM contributions   llvm/lib/Target/ARM/LICENSE.TXT
 md5 contributions   llvm/lib/Support/MD5.cpp llvm/include/llvm/Support/MD5.h
 
-Catch
+Catch2
 -----------------------------------------------------------------------
 
 Boost Software License - Version 1.0 - August 17th, 2003

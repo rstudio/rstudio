@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.panmirror.command;
 
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
+
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -23,11 +25,12 @@ public class PanmirrorMenuItem
    @JsType
    public class SubMenu
    {
-      public String text;
       public PanmirrorMenuItem[] items;
    }
    
+   public String text;
    public String command;
+   public JsVoidFunction exec;
    public boolean separator;
    public SubMenu subMenu;
 }

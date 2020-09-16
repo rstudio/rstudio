@@ -92,7 +92,7 @@ import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
-import org.rstudio.studio.client.workbench.prefs.views.ZoteroApiKeyWidget;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroResources;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
@@ -113,6 +113,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeDialogsResources;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
@@ -467,10 +468,11 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetDialog.ensureStylesInjected();
       PanmirrorResources.INSTANCE.styles().ensureInjected();
       PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
-      ZoteroApiKeyWidget.ensureStylesInjected();
+      ZoteroResources.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();
+      VisualModeDialogsResources.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

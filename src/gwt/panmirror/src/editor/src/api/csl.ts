@@ -15,6 +15,9 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { parseYamlNodes } from "./yaml";
+import { crossRefTypeToCSLType } from './crossref';
+import { EditorUI } from './ui';
+import { EditorUIImages } from './ui-images';
 
 export interface CSL {
 
@@ -24,6 +27,9 @@ export interface CSL {
 
   // Enumeration, one of the type ids from https://api.crossref.org/v1/types
   type: string;
+
+  // An item key that may be used to identify this item
+  key?: string;
 
   // Name of work's publisher
   publisher?: string;
@@ -88,8 +94,10 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
 
   // This field list was create speculatively, so may contain fields that do not require
   // sanitization (or may omit fields that require it). 
-  const sanitizeProperties = ['ISSN', 'ISBN', 'subject', 'archive', 'original-title', 'short-title', 'subtitle', 'container-title', 'short-container-title'];
-  const cslAny = csl as { [key: string]: any };
+  const sanitizeProperties = ['ISSN', 'ISBN', 'title', 'subject', 'archive', 'original-title', 'short-title', 'subtitle', 'container-title', 'short-container-title'];
+  const cslAny: { [key: string]: any } = {
+    ...csl
+  };
   const keys = Object.keys(cslAny);
   keys
     .filter(key => sanitizeProperties.includes(key))
@@ -107,13 +115,30 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
 
   // Strip any raw date representations
   if (csl.issued?.raw) {
-    csl.issued.raw = undefined;
+    delete csl.issued.raw;
   }
-
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
-  cslAny.abstract = undefined;
+  delete cslAny.abstract;
+  delete cslAny.id;
+
+  // Ensure only valid CSL types make it through  
+  csl.type = ensureValidCSLType(csl.type);
 
   return cslAny as CSL;
+}
+
+// Crossref and other sources may allow invalid types to leak through
+// (for example, this DOI 10.5962/bhl.title.5326 is of a monograph)
+// and the type will leak through as monograph. This function will verify
+// that the type is a CSL type and if it not, do its best to map the type
+// to a valid CSL type
+export function ensureValidCSLType(type: string): string {
+  if (Object.values(cslTypes).includes(type)) {
+    // This is a valid type
+    return type;
+  } else {
+    return crossRefTypeToCSLType(type);
+  }
 }
 
 export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
@@ -137,5 +162,115 @@ export function cslFromDoc(doc: ProsemirrorNode): string | undefined {
   }
   return undefined;
 }
+
+// Converts a csl date to an EDTF date.
+// See https://www.loc.gov/standards/datetime/
+// Currently omits time component so this isn't truly level 0
+export function cslDateToEDTFDate(date: CSLDate) {
+  if (date["date-parts"]) {
+    const paddedParts = date["date-parts"][0].map(part => {
+      const partStr = part?.toString();
+      if (partStr?.length === 1) {
+        return `0${partStr}`;
+      }
+      return partStr;
+    });
+    return paddedParts.join('-');
+  }
+}
+
+export function imageForType(images: EditorUIImages, type: string): [string?, string?] {
+  switch (type) {
+    case cslTypes.article:
+    case cslTypes.articleJournal:
+    case cslTypes.articleMagazine:
+    case cslTypes.articleNewspaper:
+    case cslTypes.paperConference:
+    case cslTypes.review:
+    case cslTypes.reviewBook:
+      return [images.citations?.article, images.citations?.article_dark];
+    case cslTypes.bill:
+    case cslTypes.legislation:
+    case cslTypes.legalCase:
+    case cslTypes.treaty:
+      return [images.citations?.legal, images.citations?.legal_dark];
+    case cslTypes.book:
+    case cslTypes.chapter:
+    case cslTypes.manuscript:
+    case cslTypes.thesis:
+      return [images.citations?.book, images.citations?.book_dark];
+    case cslTypes.broadcast:
+      return [images.citations?.broadcast, images.citations?.broadcast_dark];
+    case cslTypes.dataset:
+      return [images.citations?.data, images.citations?.data_dark];
+    case cslTypes.entry:
+    case cslTypes.entryDictionary:
+    case cslTypes.entryEncylopedia:
+      return [images.citations?.entry, images.citations?.entry_dark];
+    case cslTypes.figure:
+    case cslTypes.graphic:
+      return [images.citations?.image, images.citations?.image_dark];
+    case cslTypes.map:
+      return [images.citations?.map, images.citations?.map_dark];
+    case cslTypes.motionPicture:
+      return [images.citations?.movie, images.citations?.movie_dark];
+    case cslTypes.musicalScore:
+    case cslTypes.song:
+      return [images.citations?.song, images.citations?.song_dark];
+    case cslTypes.post:
+    case cslTypes.postWeblog:
+    case cslTypes.webpage:
+      return [images.citations?.web, images.citations?.web_dark];
+    case cslTypes.paperConference:
+    case cslTypes.interview:
+    case cslTypes.pamphlet:
+    case cslTypes.personalCommunication:
+    case cslTypes.report:
+    case cslTypes.speech:
+    default:
+      return [images.citations?.other, images.citations?.other_dark];
+  }
+}
+
+export const cslTypes = {
+  article: 'article',
+  articleMagazine: 'article-magazine',
+  articleNewspaper: 'article-newspaper',
+  articleJournal: 'article-journal',
+  bill: 'bill',
+  book: 'book',
+  broadcast: 'broadcast',
+  chapter: 'chapter',
+  dataset: 'dataset',
+  entry: 'entry',
+  entryDictionary: 'entry-dictionary',
+  entryEncylopedia: 'entry-encyclopedia',
+  figure: 'figure',
+  graphic: 'graphic',
+  interview: 'interview',
+  legislation: 'legislation',
+  legalCase: 'legal_case',
+  manuscript: 'manuscript',
+  map: 'map',
+  motionPicture: 'motion_picture',
+  musicalScore: 'musical_score',
+  pamphlet: 'pamphlet',
+  paperConference: 'paper-conference',
+  patent: 'patent',
+  post: 'post',
+  postWeblog: 'post-weblog',
+  personalCommunication: 'personal_communication',
+  report: 'report',
+  review: 'review',
+  reviewBook: 'review-book',
+  song: 'song',
+  speech: 'speech',
+  thesis: 'thesis',
+  treaty: 'treaty',
+  webpage: 'webpage'
+};
+
+
+
 
 

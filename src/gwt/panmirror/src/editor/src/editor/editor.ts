@@ -16,7 +16,7 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Selection, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -95,9 +95,10 @@ import {
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
-import { getSpellingDoc } from '../behaviors/spelling';
+import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
+import { realtimeSpellingPlugin, invalidateAllWords, invalidateWord } from '../behaviors/spelling/spelling-realtime';
 
-import { PandocConverter } from '../pandoc/pandoc_converter';
+import { PandocConverter, PandocLineWrapping } from '../pandoc/pandoc_converter';
 
 import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
@@ -111,12 +112,16 @@ import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  location?: EditingOutlineLocation;
+  selection_only: boolean;
+  location: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
   // editor view of markdown (as it will be persisted)
   canonical: string;
+
+  // line wrapping
+  line_wrapping: PandocLineWrapping;
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
@@ -257,7 +262,6 @@ export class Editor {
   private minContentPadding = 0;
 
   // keep track of whether the last transaction was selection-only
-  // (indicates that we should forward an editing outline location when going to source mode)
   private lastTrSelectionOnly = false;
 
   // create the editor -- note that the markdown argument does not substitute for calling
@@ -362,6 +366,11 @@ export class Editor {
     // carry omni insert info)
     this.registerCompletionExtension();
 
+    // register realtime spellchecking (done in a separate step b/c it 
+    // requires access to PandocMark definitions to determine which 
+    // marks to exclude from spellchecking)
+    this.registerRealtimeSpelling();
+
     // create state
     this.state = EditorState.create({
       schema: this.schema,
@@ -465,10 +474,10 @@ export class Editor {
   ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
-    const { doc, unrecognized, unparsed_meta } = result;
+    const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
-    // (resets the undo stack so that the intial setting of the document can't be undone)
+    // (resets the undo stack so that the initial setting of the document can't be undone)
     if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
@@ -512,6 +521,7 @@ export class Editor {
     // return
     return {
       canonical,
+      line_wrapping,
       unrecognized,
       unparsed_meta
     };
@@ -526,9 +536,6 @@ export class Editor {
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
 
-    // do we need to provide an outline location
-    const useOutlineLocation = this.lastTrSelectionOnly;
-
     // get the code
     const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
@@ -536,7 +543,8 @@ export class Editor {
     // return code + perhaps outline location
     return {
       code,
-      location: useOutlineLocation ? getEditingOutlineLocation(this.state) : undefined
+      selection_only: this.lastTrSelectionOnly,
+      location: getEditingOutlineLocation(this.state)
     };
   }
 
@@ -566,7 +574,7 @@ export class Editor {
   }
 
   public getOutline(): EditorOutline {
-    return getOutline(this.state);
+    return getOutline(this.state) || [];
   }
 
   public getFindReplace(): EditorFindReplace {
@@ -584,7 +592,15 @@ export class Editor {
   }
 
   public getSpellingDoc(): EditorSpellingDoc {
-    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling.breakWords);
+    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling);
+  }
+
+  public spellingInvalidateAllWords() {
+    invalidateAllWords(this.view);
+  }
+
+  public spellingInvalidateWord(word: string) {
+    invalidateWord(this.view, word);
   }
 
   // get a canonical version of the passed markdown. this method doesn't mutate the
@@ -607,6 +623,36 @@ export class Editor {
 
     // return markdown (will apply save fixups)
     return this.getMarkdownCode(tr, options);
+  }
+
+  public getSelectedText(): string {
+
+    return this.state.doc.textBetween(
+      this.state.selection.from,
+      this.state.selection.to
+    );
+
+  }
+
+  public replaceSelection(value: string): void {
+
+    // retrieve properties we need from selection
+    const { from, empty } = this.view.state.selection;
+
+    // retrieve selection marks
+    const marks = this.view.state.selection.$from.marks();
+
+    // insert text
+    const tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
+    this.view.dispatch(tr);
+
+    // update selection if necessary
+    if (!empty) {
+      const sel = TextSelection.create(this.view.state.doc, from, from + value.length);
+      const trSetSel = this.view.state.tr.setSelection(sel);
+      this.view.dispatch(trSetSel);
+    }
+
   }
 
   public getYamlFrontMatter() {
@@ -688,8 +734,9 @@ export class Editor {
   }
 
   public applyTheme(theme: EditorTheme) {
-    // set global dark mode class
+    // set global mode classes
     this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
+    this.parent.classList.toggle('pm-solarized-mode', !!theme.solarizedMode);
     // apply the rest of the theme
     applyTheme(theme);
   }
@@ -795,6 +842,17 @@ export class Editor {
     ]);
   }
 
+  private registerRealtimeSpelling() {
+    this.extensions.registerPlugins([
+      realtimeSpellingPlugin(
+        this.schema,
+        this.extensions.pandocMarks(),
+        this.context.ui,
+        this.events
+      )
+    ], true);
+  }
+
   private createPlugins(): Plugin[] {
     return [
       baseKeysPlugin(this.extensions.baseKeys(this.schema)),
@@ -875,11 +933,41 @@ export class Editor {
       }
     });
 
+    // for windows desktop, build a list of control key handlers b/c qtwebengine
+    // ends up corrupting ctrl+ keys so they don't hit the ace keybinding 
+    // (see: https://github.com/rstudio/rstudio/issues/7142)
+    const ctrlKeyCodes: { [key: string]: CommandFn } = {};
+    Object.keys(pluginKeys).forEach(keyCombo => {
+      const match = keyCombo.match(/^Mod-([a-z\\])$/);
+      if (match) {
+        const key = match[1];
+        const keyCode = key === '\\' ? 'Backslash' : `Key${key.toUpperCase()}`;
+        ctrlKeyCodes[keyCode] = pluginKeys[keyCombo];
+      }
+    });
+
+    // create default prosemirror handler
+    const prosemirrorKeydownHandler = keydownHandler(pluginKeys);
+
     // return plugin
     return new Plugin({
       key: keybindingsPlugin,
       props: {
-        handleKeyDown: keydownHandler(pluginKeys),
+        handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
+          // workaround for Ctrl+ keys on windows desktop
+          if (this.context.ui.context.isWindowsDesktop()) {
+            const keyEvent = event as KeyboardEvent;
+            if (keyEvent.ctrlKey) {
+              const keyCommand = ctrlKeyCodes[keyEvent.code];
+              if (keyCommand && keyCommand(this.view.state)) {
+                keyCommand(this.view.state, this.view.dispatch, this.view);
+                return true;
+              }
+            }
+          }
+          // default handling
+          return prosemirrorKeydownHandler(view, event);
+        }
       },
     });
   }

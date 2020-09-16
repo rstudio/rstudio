@@ -15,9 +15,11 @@
 
 #include "ZoteroCSL.hpp"
 
-#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
-#include <shared_core/Error.hpp>
+#include <core/Algorithm.hpp>
+#include <core/RegexUtils.hpp>
+
 #include <shared_core/json/Json.hpp>
 #include <shared_core/SafeConvert.hpp>
 
@@ -904,6 +906,18 @@ bool isDateValue(std::string cslFieldName)
                     cslFieldName) != dateFields.end();
 }
 
+json::Array collectionKeysToArray(const std::string collectionKeys)
+{
+   json::Array collectionKeysJson;
+   std::istringstream ss(collectionKeys);
+   std::string collectionKey;
+   while (std::getline(ss, collectionKey, ','))
+   {
+      collectionKeysJson.push_back(collectionKey);
+   }
+   return collectionKeysJson;
+}
+
 // Transforms the value, if needed. Currently the only transform
 // that occurs will be to write a date value as a complex CSL Date.
 // All other values just pass through as is.
@@ -977,6 +991,12 @@ json::Value transformValue(std::string cslFieldName, std::string value)
       }
 
       return std::move(dateJson);
+   }
+   else if (cslFieldName == "collectionKeys")
+   {
+      // Collection Keys are a field containing a comma delimited list of
+      // parent collection keys.
+      return collectionKeysToArray(value);
    }
    else
    {
@@ -1065,8 +1085,9 @@ std::string cslType(const std::string& zoteroType) {
    }
 }
 
-
 } // end anonymous namespace
+
+
 
 // Convert the items and creators read from SQLite into a CSL Object
 json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const ZoteroCreatorsByKey& creators)
@@ -1083,6 +1104,7 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
       std::map<std::string, std::string> cslFieldsNames = cslFieldNames(zoteroType);
       cslJson["type"] = cslType(zoteroType);
 
+
       // Process the fields. This will either just apply the field
       // as if to the json or will transform the name and/or value
       // before applying the field to the json.
@@ -1091,16 +1113,19 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
          const std::string zoteroFieldName = field.first;
          const std::string fieldValue = field.second;
 
+         // convert the name to the proper CSL name
+         std:: string fieldName = zoteroFieldName;
+         const std::string cslName = cslFieldsNames[zoteroFieldName];
+         if (cslName.length() > 0) {
+            fieldName = cslName;
+         }
+
          // Type is a special global property that is used to deduce the
          // right name mapping for properties, so it is written above.
          // Just skip it when writing the fields.
-         if (zoteroFieldName != "type") {
-            // write the value
-            std:: string fieldName = zoteroFieldName;
-            const std::string cslName = cslFieldsNames[zoteroFieldName];
-            if (cslName.length() > 0) {
-               fieldName = cslName;
-            }
+         if (zoteroFieldName != "type")
+         {
+            // Write any value that isn't one of our special cases
             cslJson[fieldName] = transformValue(fieldName, fieldValue);
          }
       }
@@ -1148,8 +1173,69 @@ json::Object sqliteItemToCSL(std::map<std::string,std::string> item, const Zoter
          }
       }
    }
+   convertCheaterKeysToCSL(cslJson);
+
    return cslJson;
 }
+
+std::string cheaterKeyToCSLKey(std::string cheaterKey)
+{
+   if (cheaterKey == "Citation Key")
+   {
+      return "id";
+   }
+   else
+   {
+      return cheaterKey;
+   }
+}
+
+void convertCheaterKeysToCSLForValue(json::Object &csl, const std::string &fieldValue)
+{
+   boost::smatch matches;
+   boost::sregex_iterator it{ begin(fieldValue), end(fieldValue), boost::regex(R"((.*?)\s*:\s*([^\s]+))") }, itEnd;
+   std::for_each( it, itEnd, [&csl]( const boost::smatch& match ){
+     if (match.size() > 2)
+     {
+        std::string key = match[1];
+        boost::algorithm::trim(key);
+
+        std::string value = match[2];
+        boost::algorithm::trim(value);
+
+        if (key.length() > 0 && value.length() > 0)
+        {
+           std::string cslKey = cheaterKeyToCSLKey(key);
+           if (!cslKey.empty())
+           {
+              csl.insert(cslKey, value);
+           }
+        }
+     }
+   });
+}
+
+void convertCheaterKeysToCSLForField(json::Object &csl, const std::string &fieldName)
+{
+   if (csl.hasMember(fieldName))
+   {
+      const json::Value valueJson = csl[fieldName];
+      if (valueJson.isString())
+      {
+         convertCheaterKeysToCSLForValue(csl, valueJson.getString());
+      }
+   }
+}
+
+// CSL Supports 'Cheater' syntax for field values.
+// The suggested form and additional information can be found here
+// https://citeproc-js.readthedocs.io/en/latest/csl-json/markup.html#cheater-syntax-for-odd-fields
+void convertCheaterKeysToCSL(json::Object &csl)
+{
+   convertCheaterKeysToCSLForField(csl, "extra");
+   convertCheaterKeysToCSLForField(csl, "note");
+}
+
 
 
 } // end namespace zotero

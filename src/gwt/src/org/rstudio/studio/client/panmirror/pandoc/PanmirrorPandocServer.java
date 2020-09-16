@@ -91,7 +91,7 @@ public class PanmirrorPandocServer {
       });
    }
    
-   public Promise<Boolean> addToBibliography(String bibliography, boolean project, String id, String sourceAsJson)
+   public Promise<Boolean> addToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibTeX)
    {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {       
          server_.pandocAddToBibliography(
@@ -99,7 +99,8 @@ public class PanmirrorPandocServer {
            project,
            id,
            sourceAsJson,
-           new PromiseServerRequestCallback<Boolean>(resolve, reject)
+           sourceAsBibTeX,
+           new PromiseServerRequestCallback<Boolean>(resolve, reject, "Saving biliography...", 1500)
         );
      }); 
    }

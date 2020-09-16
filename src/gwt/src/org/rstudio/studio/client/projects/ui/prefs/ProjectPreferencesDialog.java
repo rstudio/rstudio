@@ -14,11 +14,14 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -32,6 +35,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
@@ -39,25 +43,32 @@ import com.google.inject.Provider;
 
 public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOptions>
 {
-   public static final int GENERAL = 0;
-   public static final int EDITING = 1;
-   public static final int SWEAVE = 2;
-   public static final int BUILD = 3;
-   public static final int VCS = 4;
-   public static final int RENV = 5;
-   public static final int SHARING = 6;
+   public static final int GENERAL    = 0;
+   public static final int EDITING    = 1;
+   public static final int R_MARKDOWN = 2;
+   public static final int SWEAVE     = 3;
+   public static final int SPELLING   = 4;
+   public static final int BUILD      = 5;
+   public static final int VCS        = 6;
+   public static final int RENV       = 7;
+   public static final int PYTHON     = 8;
+   public static final int SHARING    = 9;
 
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UserPrefs> pUIPrefs,
+                                   Provider<UserState> pUserState,
                                    Provider<EventBus> pEventBus,
                                    Provider<Session> session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
+                                   ProjectRMarkdownPreferencesPane rMarkdown,
                                    ProjectCompilePdfPreferencesPane compilePdf,
+                                   ProjectSpellingPreferencesPane spelling,
                                    ProjectSourceControlPreferencesPane source,
                                    ProjectBuildToolsPreferencesPane build,
                                    ProjectRenvPreferencesPane renv,
+                                   ProjectPythonPreferencesPane python,
                                    ProjectSharingPreferencesPane sharing,
                                    Provider<ApplicationQuit> pQuit,
                                    Provider<GlobalDisplay> pGlobalDisplay)
@@ -66,8 +77,17 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             RES.styles().panelContainer(),
             RES.styles().panelContainerNoChooser(),
             false,
-            new ProjectPreferencesPane[] {general, editing, compilePdf, build,
-                                          source, renv, sharing});
+            panes(
+                  general,
+                  editing,
+                  rMarkdown, 
+                  compilePdf,
+                  spelling,
+                  build,
+                  source,
+                  renv,
+                  python,
+                  sharing));
 
       pSession_ = session;
       server_ = server;
@@ -116,6 +136,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
                 UserPrefs uiPrefs = pUIPrefs_.get();
+                
                 uiPrefs.useSpacesForTab().setProjectValue(
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
@@ -134,6 +155,38 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
+                
+                // markdown prefs (if they are set to defaults then remove the project prefs, otherwise forward them on)
+                if (!config.getMarkdownWrap().equals(RProjectConfig.MARKDOWN_WRAP_DEFAULT))
+                {
+                   uiPrefs.visualMarkdownEditingWrap().setProjectValue(config.getMarkdownWrap());
+                   uiPrefs.visualMarkdownEditingWrapAtColumn().setProjectValue(config.getMarkdownWrapAtColumn());
+                }
+                else
+                {
+                   uiPrefs.visualMarkdownEditingWrap().removeProjectValue(true);
+                   uiPrefs.visualMarkdownEditingWrapAtColumn().removeProjectValue(true);
+                }
+                if (!config.getMarkdownReferences().equals(RProjectConfig.MARKDOWN_REFERENCES_DEFAULT))
+                   uiPrefs.visualMarkdownEditingReferencesLocation().setProjectValue(config.getMarkdownReferences());
+                else
+                   uiPrefs.visualMarkdownEditingReferencesLocation().removeProjectValue(true);
+                if (config.getMarkdownCanonical() != RProjectConfig.DEFAULT_VALUE)
+                   uiPrefs.visualMarkdownEditingCanonical().setProjectValue(config.getMarkdownCanonical() == RProjectConfig.YES_VALUE);
+                else
+                   uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
+                
+                // zotero prefs (remove if set to defaults)
+                if (config.getZoteroLibraries() != null)
+                   uiPrefs.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
+                else
+                   uiPrefs.zoteroLibraries().removeProjectValue(true);
+                
+                // propagate spelling prefs
+                if (!config.getSpellingDictionary().isEmpty())
+                   uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());
+                else
+                   uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
 
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
@@ -167,6 +220,16 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             : "renv::deactivate()";
 
       pEventBus_.get().fireEvent(new SendToConsoleEvent(renvAction, true, true));
+   }
+   
+   @SafeVarargs
+   private static final List<PreferencesDialogPaneBase<RProjectOptions>> panes(
+      PreferencesDialogPaneBase<RProjectOptions>... paneList)
+   {
+      List<PreferencesDialogPaneBase<RProjectOptions>> allPanes = new ArrayList<>();
+      for (PreferencesDialogPaneBase<RProjectOptions> pane : paneList)
+         allPanes.add(pane);
+      return allPanes;
    }
 
    private final Provider<Session> pSession_;

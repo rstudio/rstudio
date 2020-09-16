@@ -277,6 +277,7 @@ test_context("ProcessTests")
 
       // wait for processes to exit
       bool success = supervisor.wait();
+      CHECK(success);
 
       // verify correct exit statuses and outputs
       for (int i = 0; i < 10; ++i)

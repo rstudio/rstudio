@@ -20,6 +20,8 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -27,6 +29,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
@@ -47,15 +50,21 @@ public class SourceCppOutputPresenter extends BasePresenter
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
    }
 
+   public interface Binder extends CommandBinder<Commands, SourceCppOutputPresenter> {}
+
    @Inject
    public SourceCppOutputPresenter(Display view,
                                    FileTypeRegistry fileTypeRegistry,
+                                   Commands commands,
+                                   Binder binder,
                                    UserPrefs uiPrefs)
    {
       super(view);
       view_ = view;
       fileTypeRegistry_ = fileTypeRegistry;
       uiPrefs_ = uiPrefs;
+      commands_ = commands;
+      binder.bind(commands, this);
 
       view_.errorList().addSelectionCommitHandler(
          (SelectionCommitEvent<CodeNavigationTarget> event) ->
@@ -92,6 +101,14 @@ public class SourceCppOutputPresenter extends BasePresenter
       });
    }
 
+   @Handler
+   public void onActivateSourceCpp()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private void updateView(SourceCppState state, boolean activate)
    {
       if (state.getErrors().length() > 0)
@@ -118,4 +135,5 @@ public class SourceCppOutputPresenter extends BasePresenter
    private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final UserPrefs uiPrefs_;
+   private final Commands commands_;
 }

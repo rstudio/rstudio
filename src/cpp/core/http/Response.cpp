@@ -600,8 +600,8 @@ std::string safeLocation(const std::string& location)
 void Response::setMovedPermanently(const http::Request& request,
                                    const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(),
-                                   safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedPermanently, uri);
    setHeader("Location", uri);
 }
@@ -609,8 +609,8 @@ void Response::setMovedPermanently(const http::Request& request,
 void Response::setMovedTemporarily(const http::Request& request,
                                    const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(),
-                                   safeLocation(location));
+   std::string uri = URL::complete(request.baseUri(),
+                                   request.rootPath() + '/' + safeLocation(location));
    setError(http::status::MovedTemporarily, uri);
    setHeader("Location", uri);
 }

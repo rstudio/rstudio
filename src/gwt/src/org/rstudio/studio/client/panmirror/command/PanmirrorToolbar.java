@@ -76,6 +76,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.Link),
+         addLeftButton(PanmirrorCommands.Citation),
+         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
       );
@@ -96,12 +98,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
       }
              
-      if (haveAnyOf(PanmirrorCommands.HTMLComment))
-      {
-         addLeftSeparator();
-         addLeftButton(PanmirrorCommands.HTMLComment);
-      }
-     
       if (findReplace != null)
       {
          addLeftSeparator();

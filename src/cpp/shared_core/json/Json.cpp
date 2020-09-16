@@ -587,12 +587,6 @@ Object Value::getValue<Object>() const
 }
 
 template<>
-const char* Value::getValue<const char*>() const
-{
-   return getString().c_str();
-}
-
-template<>
 std::string Value::getValue<std::string>() const
 {
    return getString();

@@ -80,7 +80,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    public PanmirrorToolbarMenu addSubmenu(String text)
    { 
       PanmirrorToolbarMenu submenu = new PanmirrorToolbarMenu(this, commands_);
-      submenu.addMenuBarStyle(RES.styles().toolbarPopupMenu());
+      submenu.addMenuBarStyle(RES.styles().toolbarPopupSubmenu());
       addItem(new MenuItem(menuText(text)), submenu);
       uiObjects_.add(submenu);
       return submenu;
@@ -95,15 +95,22 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    {
       for (PanmirrorMenuItem item : items)
       {
-         if (item.command != null)
+         if (item.exec != null && item.text != null)
+         {
+            MenuItem menuItem = new MenuItem(SafeHtmlUtils.fromTrustedString(item.text), () -> {
+               item.exec.call();
+            });
+            menu.addItem(menuItem);
+         }
+         else if (item.command != null)
          {
             menu.addCommand(item.command);
          }
-         else if (item.subMenu != null)
+         else if (item.subMenu != null && item.text != null)
          {
             if (haveCommandsFrom(item.subMenu.items))
             {
-               PanmirrorToolbarMenu subMenu = menu.addSubmenu(item.subMenu.text);
+               PanmirrorToolbarMenu subMenu = menu.addSubmenu(item.text);
                addItems(subMenu, item.subMenu.items);
             }
          }
@@ -118,12 +125,16 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    {
       for (PanmirrorMenuItem item : items)
       {  
-         if (item.command != null)
+         if (item.exec != null && item.text != null)
+         {
+            return true;
+         }
+         else if (item.command != null)
          {
             if (commands_.get(item.command) != null)
                return true;
          }
-         else if (item.subMenu != null)
+         else if (item.subMenu != null && item.text != null)
          {
             if (haveCommandsFrom(item.subMenu.items))
                return true;

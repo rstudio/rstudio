@@ -264,7 +264,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             {
                satelliteManager_.dispatchCommand(commands_.reloadShinyApp(), 
                      ShinyApplicationSatellite.getNameFromId(params.getId()));
-               activateWindow();
+               activateWindow(params);
             } 
             else if (params.getViewerType() == UserPrefs.SHINY_VIEWER_TYPE_PANE &&
                      commands_.viewerRefresh().isEnabled())
@@ -500,15 +500,14 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
    
-   private void activateWindow()
-   {
-      activateWindow(null);
-   }
-   
    private void activateWindow(ShinyApplicationParams params)
    {
-      WindowEx win = satelliteManager_.getSatelliteWindowObject(
+      WindowEx win = null;
+      if (params != null)
+      {
+         win = satelliteManager_.getSatelliteWindowObject(
             ShinyApplicationSatellite.getNameFromId(params.getId()));
+      }
 
       boolean isChrome = !Desktop.isDesktop() && BrowseCap.isChrome();
       

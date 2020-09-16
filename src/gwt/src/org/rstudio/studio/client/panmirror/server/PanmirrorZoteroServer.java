@@ -13,7 +13,6 @@
  *
  */
 
-
 package org.rstudio.studio.client.panmirror.server;
 
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
@@ -32,41 +31,55 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorZoteroServer
 {
-   public PanmirrorZoteroServer() {
+   public PanmirrorZoteroServer()
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
    @Inject
    void initialize(PanmirrorZoteroServerOperations server)
    {
       server_ = server;
    }
-   
+
    public Promise<Boolean> validateWebAPIKey(String key)
    {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
-         server_.zoteroValidateWebAPIKey(
-            key,
-            new PromiseServerRequestCallback<Boolean>(resolve, reject)
-         );
+         server_.zoteroValidateWebAPIKey(key,
+               new PromiseServerRequestCallback<Boolean>(resolve, reject));
       });
    }
-   
-   public Promise<JavaScriptObject> getCollections(String file, 
-                                                   JsArrayString collections,
+
+   public Promise<JavaScriptObject> getCollections(String file, JsArrayString collections,
                                                    JsArray<PanmirrorZoteroCollectionSpec> cached,
                                                    boolean useCache)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
-         server_.zoteroGetCollections(
-            file,
-            collections,
-            cached,
-            useCache,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
-         );
-      });
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetCollections(file, collections, cached, useCache,
+                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Loading Collections...", 2000));
+            });
    }
+
+   public Promise<JavaScriptObject> getLibraryNames()
+   {
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetLibraryNames(
+                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
+            });
+   }
+   
+   public Promise<JavaScriptObject> getActiveCollectionSpecs(String file, JsArrayString collections)
+   {
+      return new Promise<JavaScriptObject>(
+            (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+               server_.zoteroGetActiveCollectionSpecs(file, collections,
+                  new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading Collections...", 2000));
+            });
+   }
+   
+   
    
    public Promise<JavaScriptObject> betterBibtexExport(JsArrayString itemKeys, 
                                                        String translatorId, 

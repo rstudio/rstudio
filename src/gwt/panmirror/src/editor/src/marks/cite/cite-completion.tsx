@@ -21,7 +21,7 @@ import React from 'react';
 import uniqby from 'lodash.uniqby';
 
 import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, CompletionHeaderProps } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
@@ -32,10 +32,14 @@ import { EditorEvents } from '../../api/events';
 import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation, insertCitation, performCiteCompletionReplacement } from './cite';
+import { parseCitation, insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
+
+import './cite-completion.css';
+
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
+const kHeaderHeight = 20;
 
 export const kCiteCompletionWidth = 400;
 const kCiteCompletionItemPadding = 10;
@@ -48,12 +52,6 @@ export function citationCompletionHandler(
   bibManager: BibliographyManager,
   server: PandocServer
 ): CompletionHandler<BibliographyEntry> {
-
-  // prime bibliography on initial focus
-  const focusUnsubscribe = events.subscribe(FocusEvent, (doc) => {
-    bibManager.load(ui, doc!);
-    focusUnsubscribe();
-  });
 
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
@@ -76,8 +74,9 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, entry.source.provider);
+        return insertSingleCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, bibManager.providerName(entry.source.providerKey));
       }
+      return Promise.resolve();
     },
 
     replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
@@ -89,6 +88,15 @@ export function citationCompletionHandler(
     },
 
     view: {
+      header: () => {
+        if (bibManager.warning()) {
+          return {
+            component: CompletionWarningHeaderView,
+            height: kHeaderHeight,
+            message: bibManager.warning()
+          };
+        }
+      },
       component: BibliographySourceView,
       key: entry => entry.source.id,
       width: kCiteCompletionWidth,
@@ -111,7 +119,7 @@ function filterCitations(
   }
 
   const search = (str: string) => {
-    const results = manager.searchAllSources(str, kMaxCitationCompletions).map(entry => entryForSource(entry, ui));
+    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry => entryForSource(entry, ui));
     return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
   };
 
@@ -128,8 +136,8 @@ function filterCitations(
   // Now do the regular search
   const searchResults = search(token);
 
-  // If we hav an exact match, no need for completions
-  if (searchResults.length === 1 && searchResults[0].source.id === token) {
+  // If we have an exact match, no need for completions
+  if (searchResults.find(entry => entry.source.id === token)) {
     return [];
   } else {
     return searchResults || [];
@@ -206,7 +214,7 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
-      adornmentImage={entry.adornmentImage}
+      imageAdornment={entry.imageAdornment}
       title={`@${entry.source.id}`}
       subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
       detail={detail}
@@ -214,3 +222,15 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
     />
   );
 };
+
+
+const CompletionWarningHeaderView: React.FC<CompletionHeaderProps> = props => {
+  return (
+    <div className={'pm-completion-cite-warning pm-pane-border-color'}>
+      {props.ui.context.translateText(props.message || 'An unexpected warning occurred.')}
+    </div>
+  );
+};
+
+
+

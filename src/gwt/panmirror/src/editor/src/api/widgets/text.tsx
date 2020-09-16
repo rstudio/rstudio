@@ -13,42 +13,69 @@
  *
  */
 
-import React, { ChangeEventHandler, KeyboardEventHandler } from 'react';
+import React, { ChangeEventHandler, KeyboardEventHandler, FocusEventHandler, ClipboardEventHandler } from 'react';
 
 import { WidgetProps } from './react';
 
 import './text.css';
 
 export interface TextInputProps extends WidgetProps {
-  widthChars: number;
+  width: string;
   tabIndex?: number;
   className?: string;
   placeholder?: string;
   iconAdornment?: string;
+  value?: string;
   onChange?: ChangeEventHandler;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
+  onKeyPress?: KeyboardEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
+  onPaste?: ClipboardEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
+
+  // Allow specifying an actual width (e.g. a percentage) or a character width
+  // If a character width is specified, we should prefer to use the size attribute of the input
+  // as the focus widget that is added to focus elements is confused by the 'ch' size in styles
+  const characterWidth = (props.width.endsWith('ch') ? parseInt(props.width.substr(0, props.width.length - 2), 10) : undefined);
   const style: React.CSSProperties = {
     ...props.style,
-    width: props.widthChars + 'ch',
+    width: characterWidth ? undefined : props.width,
   };
 
+
   return (
-    <div className="pm-textinput-container">
-      <img src={props.iconAdornment} className="pm-textinput-icon" alt="" />
+    <div className="pm-textinput-container" style={style}>
+      {
+        props.iconAdornment ?
+          <img src={props.iconAdornment} className="pm-textinput-icon" alt="" /> :
+          undefined
+      }
       <input
         type="text"
         placeholder={props.placeholder}
-        className={`pm-input-text pm-textinput-input pm-text-color pm-background-color ${props.className}`}
-        style={style}
+        size={characterWidth}
+        className={`
+          pm-input-text 
+          pm-textinput-input 
+          pm-text-color 
+          pm-background-color 
+          ${props.className}
+          ${props.iconAdornment ? 'pm-textinput-input-with-icon' : ''}`}
+        value={props.value !== undefined ? props.value : undefined}
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}
         onKeyUp={props.onKeyUp}
+        onKeyPress={props.onKeyPress}
+        onBlur={props.onBlur}
+        onFocus={props.onFocus}
         tabIndex={props.tabIndex}
+        onPaste={props.onPaste}
         ref={ref}
+        spellCheck={false}
       />
     </div>
   );

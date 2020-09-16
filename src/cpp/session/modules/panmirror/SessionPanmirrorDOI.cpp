@@ -27,6 +27,7 @@
 #include <session/SessionAsyncDownloadFile.hpp>
 
 #include "SessionPanmirrorCrossref.hpp"
+#include "SessionPanmirrorUtils.hpp"
 
 using namespace rstudio::core;
 
@@ -44,87 +45,23 @@ const char * const kDOIHost = "https://doi.org";
 const char * const kDataCiteHost = "https://data.datacite.org";
 const char * const kCSLJsonFormat = "application/vnd.citationstyles.csl+json";
 
-const char * const kStatusOK = "ok";
-const char * const kStatusNotFound = "notfound";
-const char * const kStatusNoHost = "nohost";
-const char * const kStatusError = "error";
-
-void resolveContinuation(const json::JsonRpcFunctionContinuation& cont,
-                         const std::string& status,
-                         const json::Value& messageJson = json::Value(),
-                         const std::string& error = "")
-{
-   json::Object resultJson;
-   resultJson["status"] = status;
-   resultJson["message"] = messageJson;
-   resultJson["error"] = error;
-   json::JsonRpcResponse response;
-   response.setResult(resultJson);
-   cont(Success(), &response);
-}
-
-Error handleProcessResult(const core::system::ProcessResult& result, json::Value* pValue)
-{
-   if (result.exitStatus == EXIT_SUCCESS)
-   {
-      return pValue->parse(result.stdOut);
-   }
-   else
-   {
-      // log if it's not a 404 or host not found error
-      if (!is404Error(result.stdErr) && !isHostError(result.stdErr))
-         LOG_ERROR_MESSAGE("Error fetching CSL for DOI: " + result.stdErr);
-
-      // return error
-      return systemError(boost::system::errc::state_not_recoverable,
-                         result.stdErr,
-                         ERROR_LOCATION);
-   }
-}
-
-void doiDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
-                        const core::system::ProcessResult& result)
-{
-   json::Value cslJson;
-   Error error = handleProcessResult(result, &cslJson);
-   // return citation for no error
-   if (!error)
-   {
-      resolveContinuation(cont, kStatusOK, cslJson);
-   }
-   // not found (404)
-   else if (is404Error(result.stdErr))
-   {
-      resolveContinuation(cont, kStatusNotFound);
-   }
-   // no host (offline?)
-   else if (isHostError(result.stdErr))
-   {
-      resolveContinuation(cont, kStatusNoHost);
-   }
-   // return error
-   else
-   {
-      resolveContinuation(cont, kStatusError, json::Value(), core::errorDescription(error));
-   }
-}
 
 void crossrefDownloadHandler(const std::string& doi,
                              const json::JsonRpcFunctionContinuation& cont,
                              const core::system::ProcessResult& result)
 {
    json::Value cslJson;
-   Error error = handleProcessResult(result, &cslJson);
+   Error error = handleJsonRpcProcessResult(result, &cslJson, ERROR_LOCATION);
    if (!error)
    {
-      resolveContinuation(cont, kStatusOK, cslJson);
+      resolveJsonRpcContinuation(cont, kStatusOK, cslJson);
    }
    else
    {
       // do a datacite lookup (see: https://citation.crosscite.org/docs.html#sec-5)
       boost::format fmt("%s/%s/%s");
       std::string url = boost::str(fmt % kDataCiteHost % kCSLJsonFormat % doi);
-      asyncDownloadFile(url, boost::bind(doiDownloadHandler, cont, _1));
+      asyncDownloadFile(url, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, jsonPassthrough));
    }
 }
 
@@ -148,7 +85,7 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
        boost::format fmt("%s/%s");
        url = boost::str(fmt % kDOIHost % doi);
        headers.push_back(std::make_pair("Accept", kCSLJsonFormat));
-       asyncDownloadFile(url, headers, boost::bind(doiDownloadHandler, cont, _1));
+       asyncDownloadFile(url, headers, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, jsonPassthrough));
     }
     else
     {

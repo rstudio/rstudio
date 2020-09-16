@@ -93,6 +93,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.ProjectUserRole;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
@@ -550,6 +551,13 @@ public class RemoteServer implements Server
                                            ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, SET_USER_CRASH_HANDLER_PROMPTED, enableCrashHandling, requestCallback);
+   }
+   
+   @Override
+   public void rstudioApiResponse(JavaScriptObject response,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
    }
 
    @Override
@@ -1055,14 +1063,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PYTHON_FIND_INTERPRETERS, requestCallback);
    }
 
-   public void pythonDescribeInterpreter(String interpreterPath,
-                                         ServerRequestCallback<PythonInterpreter> requestCallback)
+   public void pythonInterpreterInfo(String interpreterPath,
+                                     ServerRequestCallback<PythonInterpreter> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(interpreterPath)
             .get();
 
-      sendRequest(RPC_SCOPE, PYTHON_DESCRIBE_INTERPRETER, params, requestCallback);
+      sendRequest(RPC_SCOPE, PYTHON_INTERPRETER_INFO, params, requestCallback);
    }
 
    public void pythonGetCompletions(String line,
@@ -2057,6 +2065,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
+   
+   public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
+   }
+
 
    public void writeProjectVcsOptions(RProjectVcsOptions options,
                                       ServerRequestCallback<Void> callback)
@@ -4612,6 +4626,19 @@ public class RemoteServer implements Server
                   REQUERY_CONTEXT,
                   requestCallback);
    }
+   
+   @Override
+   public void isFunctionMasked(String functionName,
+                                String packageName,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(functionName)
+            .add(packageName)
+            .get();
+      
+      sendRequest(RPC_SCOPE, IS_FUNCTION_MASKED, params, requestCallback);
+   }
 
    @Override
    public void environmentSetLanguage(String language,
@@ -5435,6 +5462,16 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(input));
       sendRequest(RPC_SCOPE, GET_RMD_OUTPUT_INFO, params, requestCallback);
    }
+   
+   @Override
+   public void rmdImportImages(JsArrayString images, String imagesDir,
+                               ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(images));
+      params.set(1,  new JSONString(imagesDir));
+      sendRequest(RPC_SCOPE, RMD_IMPORT_IMAGES, params, requestCallback);
+   }
 
    @Override
    public void unsatisfiedDependencies(
@@ -6194,7 +6231,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson,
+   public void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibTeX,
                                        ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
@@ -6202,6 +6239,7 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(project));
       params.set(2, new JSONString(id));
       params.set(3, new JSONString(sourceAsJson));
+      params.set(4, new JSONString(sourceAsBibTeX));
       sendRequest(RPC_SCOPE, PANDOC_ADD_TO_BIBLIOGRAPHY, params, callback);
    }
 
@@ -6221,6 +6259,18 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
    }
+   
+   @Override
+   public void dataciteSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, DATACITE_SEARCH, query, callback);  
+   }
+   
+   @Override
+   public void pubmedSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, PUBMED_SEARCH, query, callback);  
+   }
 
    @Override
    public void zoteroGetCollections(String file,
@@ -6237,6 +6287,24 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ZOTERO_GET_COLLECTIONS, params, callback);
    }
 
+   @Override
+   public void zoteroGetLibraryNames(ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, ZOTERO_GET_LIBRARY_NAMES, callback);
+   }
+   
+   @Override
+   public void zoteroGetActiveCollectionSpecs(String file, 
+                                              JsArrayString collections,
+                                              ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(file)));
+      params.set(1, new JSONArray(collections));
+      sendRequest(RPC_SCOPE, ZOTERO_GET_ACTIVE_COLLECTIONSPECS, params, callback);
+      
+   }
+   
    @Override
    public void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback)
    {
@@ -6324,6 +6392,7 @@ public class RemoteServer implements Server
    private static final String QUIT_SESSION = "quit_session";
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
    private static final String PING = "ping";
+   private static final String RSTUDIOAPI_RESPONSE = "rstudioapi_response";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
@@ -6450,6 +6519,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
+   private static final String WRITE_PROJECT_CONFIG = "write_project_config";
    private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
 
    private static final String NEW_DOCUMENT = "new_document";
@@ -6614,7 +6684,7 @@ public class RemoteServer implements Server
 
    private static final String PYTHON_ACTIVE_INTERPRETER = "python_active_interpreter";
    private static final String PYTHON_FIND_INTERPRETERS = "python_find_interpreters";
-   private static final String PYTHON_DESCRIBE_INTERPRETER = "python_describe_interpreter";
+   private static final String PYTHON_INTERPRETER_INFO = "python_interpreter_info";
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    private static final String PYTHON_GO_TO_HELP = "python_go_to_help";
@@ -6641,6 +6711,7 @@ public class RemoteServer implements Server
    private static final String REQUERY_CONTEXT = "requery_context";
    private static final String ENVIRONMENT_SET_LANGUAGE = "environment_set_language";
    private static final String SET_ENVIRONMENT_MONITORING = "set_environment_monitoring";
+   private static final String IS_FUNCTION_MASKED = "is_function_masked";
 
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
@@ -6700,6 +6771,7 @@ public class RemoteServer implements Server
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
    private static final String GET_RMD_TEMPLATES = "get_rmd_templates";
    private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
+   private static final String RMD_IMPORT_IMAGES = "rmd_import_images";
 
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
    private static final String INSTALL_PACKRAT = "install_packrat";
@@ -6785,8 +6857,14 @@ public class RemoteServer implements Server
    private static final String PANDOC_CITATION_HTML = "pandoc_citation_html";
 
    private static final String CROSSREF_WORKS = "crossref_works";
-
+   
+   private static final String PUBMED_SEARCH = "pubmed_search";
+   
+   private static final String DATACITE_SEARCH = "datacite_search";
+  
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
+   private static final String ZOTERO_GET_LIBRARY_NAMES = "zotero_get_library_names";
+   private static final String ZOTERO_GET_ACTIVE_COLLECTIONSPECS = "zotero_get_active_collection_specs";
    private static final String ZOTERO_VALIDATE_WEB_API_KEY = "zotero_validate_web_api_key";
    private static final String ZOTERO_DETECT_LOCAL_CONFIG = "zotero_detect_local_config";
    private static final String ZOTERO_BETTER_BIBTEX_EXPORT = "zotero_better_bibtex_export";
@@ -6795,6 +6873,5 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-
-
+  
 }

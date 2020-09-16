@@ -73,15 +73,13 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RCodeChunk, "R Code Chunk");
-      add(PanmirrorCommands.BashCodeChunk, "Bash Code Chunk");
-      add(PanmirrorCommands.D3CodeChunk, "D3 Code Chunk");
-      add(PanmirrorCommands.PythonCodeChunk, "Python Code Chunk");
-      add(PanmirrorCommands.RcppCodeChunk, "Rcpp Code Chunk");
-      add(PanmirrorCommands.SQLCodeChunk, "SQL Code Chunk");
-      add(PanmirrorCommands.StanCodeChunk, "Stan Code Chunk");
-      add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
-      add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
+      add(PanmirrorCommands.RCodeChunk, "R");
+      add(PanmirrorCommands.BashCodeChunk, "Bash");
+      add(PanmirrorCommands.D3CodeChunk, "D3");
+      add(PanmirrorCommands.PythonCodeChunk, "Python");
+      add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
+      add(PanmirrorCommands.SQLCodeChunk, "SQL");
+      add(PanmirrorCommands.StanCodeChunk, "Stan");
 
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
@@ -106,10 +104,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
       add(PanmirrorCommands.TableNextCell, "Table:::Next Cell");
       add(PanmirrorCommands.TablePreviousCell, "Table:::Previous Cell");
-      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left");
-      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right");
-      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center");
-      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
+      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default", Roles.getMenuitemcheckboxRole());
      
       // insert
       add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
@@ -128,13 +126,14 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");   
+      add(PanmirrorCommands.Citation, "Citation...", icons.CITATION);   
       add(PanmirrorCommands.CrossReference, "Cross Reference");
       add(PanmirrorCommands.InsertEmoji, "Insert Emoji...");
       add(PanmirrorCommands.InsertSymbol, "Insert Unicode...");
       add(PanmirrorCommands.EmDash, "Insert:::Em Dash (—)");
       add(PanmirrorCommands.EnDash, "Insert:::En Dash (–)");
       add(PanmirrorCommands.NonBreakingSpace, "Insert:::Non-Breaking Space");
+      add(PanmirrorCommands.HardLineBreak, "Insert:::Hard Line Break");
       
       // outline
       add(PanmirrorCommands.GoToNextSection, "Go to Next Section");

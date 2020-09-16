@@ -19,12 +19,11 @@ import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';
 import { EditorDialogs } from './ui-dialogs';
-import { EditorWordBreaker } from './spelling';
+import { EditorUISpelling } from './spelling';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
-  execute: EditorUIExecute;
   math: EditorUIMath;
   context: EditorUIContext;
   prefs: EditorUIPrefs;
@@ -33,9 +32,18 @@ export interface EditorUI {
   spelling: EditorUISpelling;
 }
 
+/**
+ * Callbacks supplied to the host to interact with a code chunk and its output.
+ */
+export interface EditorUIChunkCallbacks {
+  getPos: () => number;
+  scrollIntoView: (ele: HTMLElement) => void;
+  scrollCursorIntoView: () => void;
+}
+
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string) => ChunkEditor;
+  createChunkEditor: (type: string, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
 }
 
 export interface ChunkEditor {
@@ -73,27 +81,35 @@ export interface EditorUIContext {
 
   // translate a string
   translateText: (text: string) => string;
+
+  // are there dropped uris available?
+  droppedUris: () => string[] | null;
+
+  // uris from the clipboard
+  clipboardUris: () => Promise<string[] | null>;
+
+  // image from the clipboard (returned as file path)
+  clipboardImage: () => Promise<string | null>;
+
+  // resolve image uris (make relative, copy to doc local 'images' dir, etc)
+  resolveImageUris: (uris: string[]) => Promise<string[]>;
+
+  // are we running in windows desktop mode?
+  isWindowsDesktop: () => boolean;
 }
 
 export interface EditorMenuItem {
+  text?: string;
+  exec?: VoidFunction;
   command?: string;
   separator?: boolean;
   subMenu?: {
-    text: string;
     items: EditorMenuItem[];
   };
 }
 
-export interface EditorUIExecute {
-  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
-}
-
 export interface EditorUIMath {
   typeset?: (el: HTMLElement, text: string, priority: boolean) => Promise<boolean>;
-}
-
-export interface EditorUISpelling {
-  breakWords: EditorWordBreaker;
 }
 
 export interface EditorDisplay {
@@ -109,5 +125,7 @@ export interface EditorUIPrefs {
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;
   zoteroUseBetterBibtex: () => boolean;
+  setBibliographyDefaultType: (type: string) => void;
+  bibliographyDefaultType: () => string;
 }
 

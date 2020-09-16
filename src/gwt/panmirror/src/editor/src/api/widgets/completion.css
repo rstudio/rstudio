@@ -48,7 +48,7 @@
   bottom: -3px;
   right: 1px;
   filter: opacity(1.0) !important;
-  z-index: 1000;
+  z-index: 900;
 }
 
 .pm-completion-item-summary {
@@ -88,7 +88,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
   line-height: 18px;
 
   font-size: 9pt;

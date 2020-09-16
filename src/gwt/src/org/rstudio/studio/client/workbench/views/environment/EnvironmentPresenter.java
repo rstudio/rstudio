@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.RegexUtil;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -87,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -169,19 +172,13 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
-      
+
       requeryContextTimer_ = new Timer()
       {
          @Override
          public void run()
          {
-            server_.requeryContext(new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-               }
-            });
+            server_.requeryContext(new QuietServerRequestCallback<Void>());
          }
       };
 
@@ -305,16 +302,23 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onJumpToFunction(JumpToFunctionEvent event)
          {
-            FilePosition pos = FilePosition.create(event.getLineNumber(), 
+            if (StringUtil.isNullOrEmpty(event.getFileName()))
+               eventBus_.fireEvent(new ScrollToPositionEvent(event.getLineNumber(),
+                  event.getColumnNumber(), event.getMoveCursor()));
+            else
+            {
+               FilePosition pos = FilePosition.create(event.getLineNumber(),
                   event.getColumnNumber());
-            FileSystemItem destFile = FileSystemItem.createFile(
+               FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
-            eventBus_.fireEvent(new OpenSourceFileEvent(
+               eventBus_.fireEvent(new OpenSourceFileEvent(
                   destFile,
                   pos,
                   fileTypeRegistry_.getTextTypeForFile(destFile),
+                  event.getMoveCursor(),
                   NavigationMethods.DEFAULT));
             }
+         }
       });
       
       new JSObjectStateValue(
@@ -435,10 +439,37 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.bringToFront();
 
-      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
-                                                      ".RData",
-                                                      true,
-                                                      "save.image");
+      server_.isFunctionMasked(
+            "save.image",
+            "base",
+            new ServerRequestCallback<Boolean>()
+            {
+               public void onResponseReceived(Boolean isMasked)
+               {
+                  String code = isMasked
+                        ? "base::save.image"
+                        : "save.image";
+                  
+                  consoleDispatcher_.saveFileAsThenExecuteCommand(
+                        "Save Workspace As",
+                        ".RData",
+                        true,
+                        code);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  
+                  consoleDispatcher_.saveFileAsThenExecuteCommand(
+                        "Save Workspace As",
+                        ".RData",
+                        true,
+                        "save.image");
+                  
+               };
+            });
    }
 
    void onLoadWorkspace()
@@ -1010,7 +1041,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
-   
+
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;

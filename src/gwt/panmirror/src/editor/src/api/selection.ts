@@ -22,9 +22,13 @@ import { NodeWithPos, setTextSelection } from 'prosemirror-utils';
 import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 
 export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos) {
-  const begin = nodeWithPos.pos + 1;
-  const end = begin + nodeWithPos.node.nodeSize;
-  return selection.anchor >= begin && selection.anchor <= end;
+  const from = nodeWithPos.pos + 1;
+  const to = from + nodeWithPos.node.nodeSize;
+  return selectionIsWithinRange(selection, { from, to });
+}
+
+export function selectionIsWithinRange(selection: Selection, range: { from: number, to: number }) {
+  return selection.anchor >= range.from && selection.anchor <= range.to;
 }
 
 export function selectionIsBodyTopLevel(selection: Selection) {

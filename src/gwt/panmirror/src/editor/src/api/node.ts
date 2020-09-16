@@ -61,7 +61,6 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   attrEditFn?: CommandFn;
-  executeRmdChunkFn?: ExecuteRmdChunkFn;
   createFromPastePattern?: RegExp;
   classes?: string[];
   borderColorClass?: string;

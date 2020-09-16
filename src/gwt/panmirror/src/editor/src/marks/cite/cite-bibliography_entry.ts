@@ -15,9 +15,9 @@
 
 import { BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
-import { CSLDate, CSLName } from '../../api/csl';
-import { formatAuthors, formatIssuedDate, imageForType } from '../../api/cite';
-import { kZoteroItemProvider } from '../../api/bibliography/bibliography-provider_zotero';
+import { CSLDate, CSLName, imageForType } from '../../api/csl';
+import { formatAuthors, formatIssuedDate } from '../../api/cite';
+import { kZoteroProviderKey } from '../../api/bibliography/bibliography-provider_zotero';
 
 // An entry which includes the source as well
 // additional metadata for displaying a bibliograph item
@@ -26,10 +26,10 @@ export interface BibliographyEntry {
   authorsFormatter: (authors?: CSLName[], maxLength?: number) => string;
   issuedDateFormatter: (issueDate?: CSLDate) => string;
   image?: string;
-  adornmentImage?: string;
+  imageAdornment?: string;
 }
 
-export function entryForSource(source: BibliographySource, ui: EditorUI): BibliographyEntry {
+export function entryForSource(source: BibliographySource, ui: EditorUI, forceLightMode?: boolean): BibliographyEntry {
   const authorsFormatter = (authors?: CSLName[], maxLength?: number): string => {
     return formatAuthors(authors, maxLength);
   };
@@ -48,8 +48,8 @@ export function entryForSource(source: BibliographySource, ui: EditorUI): Biblio
     source,
     authorsFormatter,
     issuedDateFormatter,
-    image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
-    adornmentImage: source.provider === kZoteroItemProvider ? ui.images.citations?.zoteroOverlay : undefined
+    image: imageForType(ui.images, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
+    imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
   };
 }
 

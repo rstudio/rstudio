@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -140,7 +141,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
@@ -154,6 +157,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiat
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
@@ -212,10 +216,13 @@ public class Source implements InsertSourceHandler,
                                GetEditorContextEvent.Handler,
                                RequestDocumentSaveEvent.Handler,
                                RequestDocumentCloseEvent.Handler,
+                               ScrollToPositionEvent.Handler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateSourceHistoryEvent.Handler
+                               MouseNavigateSourceHistoryEvent.Handler,
+                               GetEditorSelectionEvent.Handler,
+                               SetEditorSelectionEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -326,6 +333,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(CodeBrowserFinishedEvent.TYPE, this);
       events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
+      events_.addHandler(ScrollToPositionEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
       if (Desktop.hasDesktopFrame())
@@ -334,18 +342,18 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
       {
-         
+
          @Override
          public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
-            
+
             columnManager_.inEditorForPath(event.getFrom(),
                             new OperationWithInput<EditingTarget>()
             {
                @Override
                public void execute(EditingTarget input)
                {
-                  FileSystemItem toPath = 
+                  FileSystemItem toPath =
                         FileSystemItem.createFile(event.getTo());
                   if (input instanceof TextEditingTarget)
                   {
@@ -378,10 +386,10 @@ public class Source implements InsertSourceHandler,
       });
 
       events_.addHandler(CollabEditStartedEvent.TYPE,
-            new CollabEditStartedEvent.Handler() 
+            new CollabEditStartedEvent.Handler()
       {
          @Override
-         public void onCollabEditStarted(final CollabEditStartedEvent collab) 
+         public void onCollabEditStarted(final CollabEditStartedEvent collab)
          {
             columnManager_.inEditorForPath(collab.getStartParams().getPath(),
                new OperationWithInput<EditingTarget>()
@@ -394,12 +402,12 @@ public class Source implements InsertSourceHandler,
                });
          }
       });
-         
-      events_.addHandler(CollabEditEndedEvent.TYPE, 
+
+      events_.addHandler(CollabEditEndedEvent.TYPE,
             new CollabEditEndedEvent.Handler()
       {
          @Override
-         public void onCollabEditEnded(final CollabEditEndedEvent collab) 
+         public void onCollabEditEnded(final CollabEditEndedEvent collab)
          {
             columnManager_.inEditorForPath(collab.getPath(),
                new OperationWithInput<EditingTarget>()
@@ -412,8 +420,8 @@ public class Source implements InsertSourceHandler,
                });
          }
       });
-         
-      events_.addHandler(NewWorkingCopyEvent.TYPE, 
+
+      events_.addHandler(NewWorkingCopyEvent.TYPE,
             new NewWorkingCopyEvent.Handler()
       {
          @Override
@@ -452,6 +460,8 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
+      events_.addHandler(GetEditorSelectionEvent.TYPE, this);
+      events_.addHandler(SetEditorSelectionEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
@@ -547,7 +557,7 @@ public class Source implements InsertSourceHandler,
          sequence.add(new KeyCombination("Ctrl+Space", KeyCodes.KEY_SPACE, KeyCodes.KEY_CTRL));
          commands_.codeCompletion().setShortcut(new KeyboardShortcut(sequence));
       }
-      
+
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -567,11 +577,11 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
-      
+
       //  handle mouse button navigations
       if (!Desktop.hasDesktopFrame())
          handleMouseButtonNavigations();
-      
+
       // on macOS, we need to aggressively re-sync commands when a new
       // window is selected (since the main menu applies to both main
       // window and satellites)
@@ -663,17 +673,17 @@ public class Source implements InsertSourceHandler,
       {
          // restore the docs assigned to this source window
          SourceDocument doc = docs.get(i);
-         String docWindowId = 
+         String docWindowId =
                doc.getProperties().getString(
                      SourceWindowManager.SOURCE_WINDOW_ID);
          if (docWindowId == null)
             docWindowId = "";
          String currentSourceWindowId = SourceWindowManager.getSourceWindowId();
-         
+
          // it belongs in this window if (a) it's assigned to it, or (b) this
          // is the main window, and the window it's assigned to isn't open.
          if (currentSourceWindowId == docWindowId ||
-             (SourceWindowManager.isMainSourceWindow() && 
+             (SourceWindowManager.isMainSourceWindow() &&
               !pWindowManager_.get().isSourceWindowOpen(docWindowId)))
          {
 
@@ -699,7 +709,7 @@ public class Source implements InsertSourceHandler,
             {
                Debug.logException(e);
             }
-            
+
             // if we couldn't add the tab for this doc, just continue to the
             // next one
             if (sourceEditor == null)
@@ -707,30 +717,30 @@ public class Source implements InsertSourceHandler,
          }
       }
       columnManager_.setDocsRestored();
-      columnManager_.beforeShow();
+      columnManager_.beforeShow(true);
    }
-   
+
    private void openEditPublishedDocs()
    {
       // don't do this if we are switching projects (it
       // will be done after the switch)
       if (ApplicationAction.isSwitchProject())
          return;
-      
+
       // check for edit_published url parameter
       final String kEditPublished = "edit_published";
       String editPublished = StringUtil.notNull(
           Window.Location.getParameter(kEditPublished));
-      
+
       // this is an appPath which we can call the server
-      // to determine source files to edit 
+      // to determine source files to edit
       if (editPublished.length() > 0)
       {
          // remove it from the url
          ApplicationUtils.removeQueryParam(kEditPublished);
-         
+
          server_.getEditPublishedDocs(
-            editPublished, 
+            editPublished,
             new SimpleRequestCallback<JsArrayString>() {
                @Override
                public void onResponseReceived(JsArrayString docs)
@@ -741,15 +751,15 @@ public class Source implements InsertSourceHandler,
          );
       }
    }
-   
 
-   
+
+
    public void onShowContent(ShowContentEvent event)
    {
       // ignore if we're a satellite
       if (!SourceWindowManager.isMainSourceWindow())
          return;
-      
+
       columnManager_.ensureVisible(true);
       ContentItem content = event.getContent();
       server_.newDocument(
@@ -767,14 +777,14 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
+
    @Override
    public void onOpenObjectExplorerEvent(OpenObjectExplorerEvent event)
    {
       // ignore if we're a satellite
       if (!SourceWindowManager.isMainSourceWindow())
          return;
-    
+
       columnManager_.activateObjectExplorer(event.getHandle());
    }
 
@@ -784,10 +794,10 @@ public class Source implements InsertSourceHandler,
       // ignore if we're a satellite
       if (!SourceWindowManager.isMainSourceWindow())
          return;
-      
+
       columnManager_.showDataItem(event.getData());
    }
-   
+
    public void onShowProfiler(OpenProfileEvent event)
    {
       String profilePath = event.getFilePath();
@@ -802,7 +812,7 @@ public class Source implements InsertSourceHandler,
          return;
       }
 
-      // create new profiler 
+      // create new profiler
       columnManager_.ensureVisible(true);
 
       if (event.getDocId() != null)
@@ -814,7 +824,7 @@ public class Source implements InsertSourceHandler,
             {
                columnManager_.addTab(response, OPEN_INTERACTIVE, null);
             }
-            
+
             @Override
             public void onError(ServerError error)
             {
@@ -830,7 +840,7 @@ public class Source implements InsertSourceHandler,
             null,
             (JsObject) ProfilerContents.create(
                   profilePath,
-                  htmlPath, 
+                  htmlPath,
                   htmlLocalPath,
                   event.getCreateProfile()).cast(),
             new SimpleRequestCallback<SourceDocument>("Show Profiler")
@@ -840,7 +850,7 @@ public class Source implements InsertSourceHandler,
                {
                   columnManager_.addTab(response, OPEN_INTERACTIVE, null);
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
@@ -850,7 +860,7 @@ public class Source implements InsertSourceHandler,
             });
       }
    }
-   
+
    @Handler
    public void onNewSourceDoc()
    {
@@ -862,7 +872,7 @@ public class Source implements InsertSourceHandler,
    {
       columnManager_.newDoc(FileTypeRegistry.TEXT, null);
    }
-   
+
    @Handler
    public void onNewRNotebook()
    {
@@ -874,7 +884,7 @@ public class Source implements InsertSourceHandler,
             {
                if (!succeeded)
                {
-                  globalDisplay_.showErrorMessage("Notebook Creation Failed", 
+                  globalDisplay_.showErrorMessage("Notebook Creation Failed",
                         "One or more packages required for R Notebook " +
                         "creation were not installed.");
                   return;
@@ -888,7 +898,7 @@ public class Source implements InsertSourceHandler,
             }
          });
    }
-   
+
    @Handler
    public void onNewCDoc()
    {
@@ -901,26 +911,26 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
-   
+
+
    @Handler
    public void onNewCppDoc()
    {
       columnManager_.newSourceDocWithTemplate(
-          FileTypeRegistry.CPP, 
-          "", 
+          FileTypeRegistry.CPP,
+          "",
           userPrefs_.useRcppTemplate().getValue() ? "rcpp.cpp" : "default.cpp",
           Position.create(0, 0),
           new CommandWithArg<EditingTarget> () {
             @Override
             public void execute(EditingTarget target)
             {
-               target.verifyCppPrerequisites(); 
+               target.verifyCppPrerequisites();
             }
           }
       );
    }
-   
+
    @Handler
    public void onNewHeaderDoc()
    {
@@ -933,14 +943,14 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Handler
    public void onNewMarkdownDoc()
    {
       columnManager_.newDoc(FileTypeRegistry.MARKDOWN, null);
    }
-   
-   
+
+
    @Handler
    public void onNewPythonDoc()
    {
@@ -953,31 +963,31 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Handler
    public void onNewShellDoc()
    {
       columnManager_.newDoc(FileTypeRegistry.SH, null);
    }
-   
+
    @Handler
    public void onNewHtmlDoc()
    {
       columnManager_.newDoc(FileTypeRegistry.HTML, null);
    }
-   
+
    @Handler
    public void onNewJavaScriptDoc()
    {
       columnManager_.newDoc(FileTypeRegistry.JS, null);
    }
-   
+
    @Handler
    public void onNewCssDoc()
    {
       columnManager_.newDoc(FileTypeRegistry.CSS, null);
    }
-   
+
    @Handler
    public void onNewStanDoc()
    {
@@ -992,34 +1002,34 @@ public class Source implements InsertSourceHandler,
 
                });
       };
-            
-            
+
+
       dependencyManager_.withStan(
             "Creating Stan script",
             "Creating Stan scripts",
             onStanInstalled);
    }
-   
+
    @Handler
    public void onNewD3Doc()
    {
       columnManager_.newSourceDocWithTemplate(
-         FileTypeRegistry.JS, 
-         "", 
+         FileTypeRegistry.JS,
+         "",
          "d3.js",
          Position.create(5, 0),
          new CommandWithArg<EditingTarget> () {
            @Override
            public void execute(EditingTarget target)
            {
-              target.verifyD3Prerequisites(); 
+              target.verifyD3Prerequisites();
               target.setSourceOnSave(true);
            }
          }
       );
    }
-   
-   
+
+
    @Handler
    public void onNewSweaveDoc()
    {
@@ -1033,20 +1043,20 @@ public class Source implements InsertSourceHandler,
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
       final String concordanceValue = concordance;
-     
+
       // show progress
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
 
       // get the template
-      server_.getSourceTemplate("", 
-                                "sweave.Rnw", 
+      server_.getSourceTemplate("",
+                                "sweave.Rnw",
                                 new ServerRequestCallback<String>() {
          @Override
          public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
-            
+
             // add in concordance if necessary
             final boolean hasConcordance = concordanceValue.length() > 0;
             if (hasConcordance)
@@ -1056,9 +1066,9 @@ public class Source implements InsertSourceHandler,
                      beginDoc,
                      beginDoc + concordanceValue);
             }
-            
+
             columnManager_.newDoc(FileTypeRegistry.SWEAVE,
-                  templateContents, 
+                  templateContents,
                   new ResultCallback<EditingTarget, ServerError> () {
                @Override
                public void onSuccess(EditingTarget target)
@@ -1076,19 +1086,19 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Handler
    public void onNewRMarkdownDoc()
    {
       SessionInfo sessionInfo = session_.getSessionInfo();
       boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
-      
+
       if (useRMarkdownV2)
          columnManager_.newRMarkdownV2Doc();
       else
          columnManager_.newRMarkdownV1Doc();
    }
-   
+
    private void doNewRShinyApp(NewShinyWebApplication.Result result)
    {
       server_.createShinyApp(
@@ -1110,21 +1120,21 @@ public class Source implements InsertSourceHandler,
    public void onNewSqlDoc()
    {
       columnManager_.newSourceDocWithTemplate(
-         FileTypeRegistry.SQL, 
-         "", 
+         FileTypeRegistry.SQL,
+         "",
          "query.sql",
          Position.create(2, 0),
          new CommandWithArg<EditingTarget> () {
            @Override
            public void execute(EditingTarget target)
            {
-              target.verifyNewSqlPrerequisites(); 
+              target.verifyNewSqlPrerequisites();
               target.setSourceOnSave(true);
            }
          }
       );
    }
-   
+
    private void doNewRPlumberAPI(NewPlumberAPI.Result result)
    {
       server_.createPlumberAPI(
@@ -1140,7 +1150,7 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-    
+
    // open a list of source files then focus the first one within the list
    private class SourceFilesOpener extends SerializedCommandQueue
    {
@@ -1164,14 +1174,14 @@ public class Source implements InsertSourceHandler,
                         // record first target if necessary
                         if (firstTarget_ == null)
                            firstTarget_ = target;
-                        
+
                         continuation.execute();
                      }
-                  });  
+                  });
                }
             });
          }
-         
+
          addCommand(new SerializedCommand() {
 
             @Override
@@ -1182,16 +1192,16 @@ public class Source implements InsertSourceHandler,
                   columnManager_.selectTab(firstTarget_);
                   firstTarget_.setCursorPosition(Position.create(0, 0));
                }
-               
+
                continuation.execute();
             }
-            
+
          });
       }
-      
+
       private EditingTarget firstTarget_ = null;
    }
-   
+
    @Handler
    public void onNewRShinyApp()
    {
@@ -1215,7 +1225,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Handler
    public void onNewRHTMLDoc()
    {
@@ -1223,13 +1233,13 @@ public class Source implements InsertSourceHandler,
                                               "",
                                               "default.Rhtml");
    }
-   
+
    @Handler
    public void onNewRDocumentationDoc()
    {
       new NewRdDialog(
          new OperationWithInput<NewRdDialog.Result>() {
-           
+
             @Override
             public void execute(final NewRdDialog.Result result)
             {
@@ -1239,16 +1249,16 @@ public class Source implements InsertSourceHandler,
                   {
                      columnManager_.newSourceDocWithTemplate(
                            (TextFileType)FileTypeRegistry.RD,
-                           result.name, 
+                           result.name,
                            "default.Rd",
                            Position.create(3, 7));
-                  }  
+                  }
                };
-               
+
                if (result.type != NewRdDialog.Result.TYPE_NONE)
                {
                   server_.createRdShell(
-                     result.name, 
+                     result.name,
                      result.type,
                      new SimpleRequestCallback<RdShellResult>() {
                         @Override
@@ -1269,19 +1279,19 @@ public class Source implements InsertSourceHandler,
                            {
                               createEmptyDoc.execute();
                            }
-                        }  
+                        }
                    });
-                 
+
                }
                else
                {
                   createEmptyDoc.execute();
                }
-               
+
             }
           }).showModal();
    }
-   
+
    @Handler
    public void onNewRPresentationDoc()
    {
@@ -1291,11 +1301,11 @@ public class Source implements InsertSourceHandler,
             public void execute()
             {
                fileDialogs_.saveFile(
-                  "New R Presentation", 
+                  "New R Presentation",
                   fileContext_,
-                  workbenchContext_.getDefaultFileDialogDir(), 
-                  ".Rpres", 
-                  true, 
+                  workbenchContext_.getDefaultFileDialogDir(),
+                  ".Rpres",
+                  true,
                   new ProgressOperationWithInput<FileSystemItem>() {
 
                      @Override
@@ -1307,15 +1317,15 @@ public class Source implements InsertSourceHandler,
                            indicator.onCompleted();
                            return;
                         }
-                        
+
                         indicator.onProgress("Creating Presentation...");
-                        
+
                         server_.createNewPresentation(
                           input.getPath(),
                           new VoidServerRequestCallback(indicator) {
                              @Override
                              public void onSuccess()
-                             { 
+                             {
                                 columnManager_.openFile(input,
                                    FileTypeRegistry.RPRESENTATION,
                                    new CommandWithArg<EditingTarget>() {
@@ -1326,15 +1336,15 @@ public class Source implements InsertSourceHandler,
                                        server_.showPresentationPane(
                                            input.getPath(),
                                            new VoidServerRequestCallback());
-                                       
+
                                     }
-                                   
+
                                 });
                              }
-                          });  
+                          });
                      }
                });
-               
+
             }
       });
    }
@@ -1344,7 +1354,7 @@ public class Source implements InsertSourceHandler,
    {
       onActivateSource(null);
    }
-   
+
    public void onActivateSource(final Command afterActivation)
    {
       // give the window manager a chance to activate the last source pane
@@ -1352,7 +1362,7 @@ public class Source implements InsertSourceHandler,
          return;
       columnManager_.activateColumn("", afterActivation);
    }
-   
+
    @Handler
    public void onLayoutZoomSource()
    {
@@ -1380,7 +1390,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
@@ -1478,7 +1488,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget editor)
          {
-            // if this is a text editor, ensure that its content is 
+            // if this is a text editor, ensure that its content is
             // synchronized with the server before we pop it out
             if (editor instanceof TextEditingTarget)
             {
@@ -1489,7 +1499,7 @@ public class Source implements InsertSourceHandler,
                   public void execute()
                   {
                      textEditor.syncLocalSourceDb();
-                     events_.fireEvent(new PopoutDocEvent(event, 
+                     events_.fireEvent(new PopoutDocEvent(event,
                         textEditor.currentPosition(),
                         columnManager_.findByDocument(textEditor.getId())));
                   }
@@ -1497,7 +1507,7 @@ public class Source implements InsertSourceHandler,
             }
             else
             {
-               events_.fireEvent(new PopoutDocEvent(event, 
+               events_.fireEvent(new PopoutDocEvent(event,
                      editor.currentPosition(),
                      columnManager_.findByDocument(editor.getId())));
             }
@@ -1520,19 +1530,19 @@ public class Source implements InsertSourceHandler,
    {
       closeAllSourceDocs("Close All",  null, false);
    }
-   
+
    @Handler
    public void onCloseOtherSourceDocs()
    {
       closeAllSourceDocs("Close Other",  null, true);
    }
-   
-   public void closeAllSourceDocs(final String caption, 
+
+   public void closeAllSourceDocs(final String caption,
          final Command onCompleted, final boolean excludeActive)
-   { 
+   {
       if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
       {
-         // if this is the main window, close docs in the satellites first 
+         // if this is the main window, close docs in the satellites first
          pWindowManager_.get().closeAllSatelliteDocs(caption, new Command()
          {
             @Override
@@ -1575,7 +1585,7 @@ public class Source implements InsertSourceHandler,
    {
       saveUnsavedDocuments(null, onCompleted);
    }
-   
+
    public void saveUnsavedDocuments(final Set<String> ids,
                                     final Command onCompleted)
    {
@@ -1587,7 +1597,7 @@ public class Source implements InsertSourceHandler,
             columnManager_.saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, ids), onCompleted);
          }
       };
-      
+
       // if this is the main source window, save all files in satellites first
       if (SourceWindowManager.isMainSourceWindow())
          pWindowManager_.get().saveUnsavedDocuments(ids, saveAllLocal);
@@ -1595,7 +1605,7 @@ public class Source implements InsertSourceHandler,
          saveAllLocal.execute();
    }
 
-   public void saveWithPrompt(UnsavedChangesTarget target, 
+   public void saveWithPrompt(UnsavedChangesTarget target,
                               Command onCompleted,
                               Command onCancelled)
    {
@@ -1604,7 +1614,7 @@ public class Source implements InsertSourceHandler,
       {
          // we are the main window, and we're being asked to save a document
          // that's in a different window; perform the save over there
-         pWindowManager_.get().saveWithPrompt(UnsavedChangesItem.create(target), 
+         pWindowManager_.get().saveWithPrompt(UnsavedChangesItem.create(target),
                onCompleted);
          return;
       }
@@ -1612,7 +1622,7 @@ public class Source implements InsertSourceHandler,
       if (editingTarget != null)
          editingTarget.saveWithPrompt(onCompleted, onCancelled);
    }
-   
+
    public Command revertUnsavedChangesBeforeExitCommand(
                                                final Command onCompleted)
    {
@@ -1632,7 +1642,7 @@ public class Source implements InsertSourceHandler,
             // revert unsaved
             columnManager_.revertUnsavedTargets(onCompleted);
          }
-      };   
+      };
 
       // if this is the main source window, let satellite windows save any
       // changes first
@@ -1653,7 +1663,7 @@ public class Source implements InsertSourceHandler,
          columnManager_.saveChanges(saveTargets, completed);
       }
    }
-   
+
    @Handler
    public void onOpenSourceDoc()
    {
@@ -1684,16 +1694,22 @@ public class Source implements InsertSourceHandler,
             });
    }
 
+   public void onScrollToPosition(final ScrollToPositionEvent event)
+   {
+      if (!isLastFocusedSourceWindow())
+         return;
+      FilePosition pos = FilePosition.create(event.getLine(),
+         event.getColumn());
+      columnManager_.scrollToPosition(pos, event.getMoveCursor());
+   }
+
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
       // The document should only be opened in the last focused window, unless this window is a
       // satellite that has already been closed. When this is the case, open the new doc in the
       // main source window.
-      String lastFocusedWindow = pWindowManager_.get().getLastFocusedSourceWindowId();
-      if (!SourceWindowManager.getSourceWindowId().equals(lastFocusedWindow) &&
-          (!SourceWindowManager.isMainSourceWindow() ||
-           pWindowManager_.get().isSourceWindowOpen(lastFocusedWindow)))
-            return;
+      if (!isLastFocusedSourceWindow())
+         return;
 
       // determine the type
       final EditableFileType docType;
@@ -1703,7 +1719,7 @@ public class Source implements InsertSourceHandler,
          docType = FileTypeRegistry.SQL;
       else
          docType = FileTypeRegistry.RMARKDOWN;
-      
+
       // command to create and run the new doc
       Command newDocCommand = new Command() {
          @Override
@@ -1715,13 +1731,13 @@ public class Source implements InsertSourceHandler,
                public void onSuccess(EditingTarget arg)
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
-                  
+
                   if (event.getCursorPosition() != null)
                   {
                      editingTarget.navigateToPosition(event.getCursorPosition(),
                                                       false);
                   }
-                  
+
                   if (event.getExecute())
                   {
                      if (docType.equals(FileTypeRegistry.R))
@@ -1742,7 +1758,7 @@ public class Source implements InsertSourceHandler,
             });
          }
       };
-     
+
       // do it
       if (docType.equals(FileTypeRegistry.R))
       {
@@ -1751,7 +1767,7 @@ public class Source implements InsertSourceHandler,
       else
       {
          dependencyManager_.withRMarkdown("R Notebook",
-                                          "Create R Notebook", 
+                                          "Create R Notebook",
                                           newDocCommand);
       }
    }
@@ -1786,49 +1802,51 @@ public class Source implements InsertSourceHandler,
                         doNewRPlumberAPI(input);
                      }
                   });
-         
+
             widget.showModal();
 
          }
       });
    }
-    
+
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
       doOpenSourceFile(
             event.getFile(),
             event.getFileType(),
             event.getPosition(),
-            null, 
+            null,
             event.getNavigationMethod(),
-            false);
+            false,
+            event.getMoveCursor());
    }
-   
+
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
    {
       // don't do the navigation if the active document is a source
       // file from this presentation module
-      
+
       doOpenSourceFile(event.getFile(),
                        event.getFileType(),
                        event.getPosition(),
                        event.getPattern(),
                        NavigationMethods.HIGHLIGHT_LINE,
+                       true,
                        true);
-      
+
    }
-   
+
    public void onEditPresentationSource(final EditPresentationSourceEvent event)
-   { 
+   {
       columnManager_.openFile(
-            event.getSourceFile(), 
+            event.getSourceFile(),
             FileTypeRegistry.RPRESENTATION,
             new CommandWithArg<EditingTarget>() {
                @Override
                public void execute(final EditingTarget editor)
                {
                   TextEditingTargetPresentationHelper.navigateToSlide(
-                                                         editor, 
+                                                         editor,
                                                          event.getSlideIndex());
                }
          });
@@ -1869,32 +1887,33 @@ public class Source implements InsertSourceHandler,
    {
       return columnManager_.getActiveDocPath();
    }
-   
+
    private void doOpenSourceFile(final FileSystemItem file,
                                  final TextFileType fileType,
                                  final FilePosition position,
                                  final String pattern,
-                                 final int navMethod, 
-                                 final boolean forceHighlightMode)
+                                 final int navMethod,
+                                 final boolean forceHighlightMode,
+                                 final boolean moveCursor)
    {
       // if the navigation should happen in another window, do that instead
-      NavigationResult navResult = 
+      NavigationResult navResult =
             pWindowManager_.get().navigateToFile(file, position, navMethod);
-      
+
       // we navigated externally, just skip this
       if (navResult.getType() == NavigationResult.RESULT_NAVIGATED)
          return;
-      
+
       // we're about to open in this window--if it's the main window, focus it
       if (SourceWindowManager.isMainSourceWindow() && Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
-      
-      final boolean isDebugNavigation = 
+
+      final boolean isDebugNavigation =
             navMethod == NavigationMethods.DEBUG_STEP ||
             navMethod == NavigationMethods.DEBUG_END;
-      
-      final CommandWithArg<EditingTarget> editingTargetAction = 
-            new CommandWithArg<EditingTarget>() 
+
+      final CommandWithArg<EditingTarget> editingTargetAction =
+            new CommandWithArg<EditingTarget>()
       {
          @Override
          public void execute(EditingTarget target)
@@ -1910,38 +1929,38 @@ public class Source implements InsertSourceHandler,
                   });
                }
             };
-      
-            
+
+
             // the rstudioapi package can use the proxy (-1, -1) position to
             // indicate that source navigation should not occur; ie, we should
             // preserve whatever position was used in the document earlier
             boolean navigateToPosition =
                   position != null &&
                   (position.getLine() != -1 || position.getColumn() != -1);
-            
+
             if (navigateToPosition)
             {
                SourcePosition endPosition = null;
                if (isDebugNavigation)
                {
-                  DebugFilePosition filePos = 
+                  DebugFilePosition filePos =
                         (DebugFilePosition) position.cast();
                   endPosition = SourcePosition.create(
                         filePos.getEndLine() - 1,
                         filePos.getEndColumn() + 1);
-                  
+
                   if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
                   {
                       Desktop.getFrame().bringMainFrameToFront();
                   }
                }
-               
+
                SourcePosition startPosition = SourcePosition.create(
                      position.getLine() - 1,
                      position.getColumn() - 1);
-               
-               navigate(target, 
+
+               navigate(target,
                         startPosition,
                         endPosition,
                         onNavigationCompleted);
@@ -1951,7 +1970,7 @@ public class Source implements InsertSourceHandler,
                Position pos = target.search(pattern);
                if (pos != null)
                {
-                  navigate(target, 
+                  navigate(target,
                            SourcePosition.create(pos.getRow(), 0),
                            null,
                            onNavigationCompleted);
@@ -1962,7 +1981,7 @@ public class Source implements InsertSourceHandler,
                onNavigationCompleted.execute();
             }
          }
-         
+
          private void navigate(final EditingTarget target,
                                final SourcePosition srcPosition,
                                final SourcePosition srcEndPosition,
@@ -1976,8 +1995,8 @@ public class Source implements InsertSourceHandler,
                   if (navMethod == NavigationMethods.DEBUG_STEP)
                   {
                      target.highlightDebugLocation(
-                           srcPosition, 
-                           srcEndPosition, 
+                           srcPosition,
+                           srcEndPosition,
                            true);
                   }
                   else if (navMethod == NavigationMethods.DEBUG_END)
@@ -1989,16 +2008,17 @@ public class Source implements InsertSourceHandler,
                      // force highlight mode if requested
                      if (forceHighlightMode)
                         target.forceLineHighlighting();
-                     
+
                      // now navigate to the new position
-                     boolean highlight = 
+                     boolean highlight =
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !userPrefs_.highlightSelectedLine().getValue();
-                     
+
                      target.navigateToPosition(
                            srcPosition,
                            false,
                            highlight,
+                           moveCursor,
                            onNavigationCompleted);
                   }
                }
@@ -2020,8 +2040,8 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
-                     "Couldn't move the tab to this window: \n" + 
+               globalDisplay_.showErrorMessage("Document Tab Move Failed",
+                     "Couldn't move the tab to this window: \n" +
                       error.getMessage());
             }
          });
@@ -2035,13 +2055,13 @@ public class Source implements InsertSourceHandler,
          {
             // set flag indicating we are opening for a source navigation
             columnManager_.setOpeningForSourceNavigation(position != null || pattern != null);
-            
+
             columnManager_.openFile(file,
                      fileType,
                      (target) -> {
                         columnManager_.setOpeningForSourceNavigation(false);
                         editingTargetAction.execute(target);
-                     });      
+                     });
          }
       };
 
@@ -2051,7 +2071,7 @@ public class Source implements InsertSourceHandler,
       if (isDebugNavigation)
       {
          columnManager_.startDebug();
-         
+
          EditingTarget target = columnManager_.findEditorByPath(file.getPath());
          if (target != null)
          {
@@ -2067,7 +2087,7 @@ public class Source implements InsertSourceHandler,
             }
             return;
          }
-         
+
          // If we're here, the target file wasn't open in an editor. Don't
          // open a file just to turn off debug highlighting in the file!
          if (navMethod == NavigationMethods.DEBUG_END)
@@ -2086,7 +2106,7 @@ public class Source implements InsertSourceHandler,
          action.execute(file);
       }
    }
-   
+
    private void processStatQueue()
    {
       if (statQueue_.isEmpty())
@@ -2102,7 +2122,7 @@ public class Source implements InsertSourceHandler,
                      processStatQueue();
                }
             };
-       
+
        server_.stat(entry.file.getPath(), new ServerRequestCallback<FileSystemItem>()
        {
           @Override
@@ -2172,7 +2192,7 @@ public class Source implements InsertSourceHandler,
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
-   
+
    // handle mouse forward and back buttons if the mouse is within a source pane
    private native final void handleMouseButtonNavigations() /*-{
    try {
@@ -2181,17 +2201,17 @@ public class Source implements InsertSourceHandler,
          function handler(nav) {
             return $entry(function(evt) {
                if ((evt.button === 3 || evt.button === 4) &&
-                   self.@org.rstudio.studio.client.workbench.views.source.Source::isMouseEventInSourcePane(Lcom/google/gwt/dom/client/NativeEvent;)(evt)) {  
-                                  
+                   self.@org.rstudio.studio.client.workbench.views.source.Source::isMouseEventInSourcePane(Lcom/google/gwt/dom/client/NativeEvent;)(evt)) {
+
                   // perform navigation
                   if (nav) {
                      if (evt.button === 3) {
                         self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateBack()();
                      } else if (evt.button === 4) {
-                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateForward()(); 
+                        self.@org.rstudio.studio.client.workbench.views.source.Source::onSourceNavigateForward()();
                      }
                   }
-                 
+
                   // prevent other handling
                   evt.preventDefault();
                   evt.stopPropagation();
@@ -2200,8 +2220,8 @@ public class Source implements InsertSourceHandler,
                }
             });
          }
-         
-         // mask mousedown from ace to prevent selection, mask mouseup from chrome 
+
+         // mask mousedown from ace to prevent selection, mask mouseup from chrome
          // to prevent navigation of the entire browser
          $wnd.addEventListener('mousedown', handler(false), false);
          $wnd.addEventListener('mouseup', handler(true), false);
@@ -2227,25 +2247,35 @@ public class Source implements InsertSourceHandler,
       return false;
    }
 
+   private boolean isLastFocusedSourceWindow()
+   {
+      String lastFocusedWindow = pWindowManager_.get().getLastFocusedSourceWindowId();
+      if (!SourceWindowManager.getSourceWindowId().equals(lastFocusedWindow) &&
+         (!SourceWindowManager.isMainSourceWindow() ||
+            pWindowManager_.get().isSourceWindowOpen(lastFocusedWindow)))
+         return false;
+      return true;
+   }
+
    private boolean isMouseEventInSourcePane(NativeEvent event)
    {
       return isPointInSourcePane(event.getClientX(), event.getClientY());
    }
 
-   
-  
+
+
    @Handler
    public void onOpenNextFileOnFilesystem()
    {
       openAdjacentFile(true);
    }
-   
+
    @Handler
    public void onOpenPreviousFileOnFilesystem()
    {
       openAdjacentFile(false);
    }
-   
+
    @Handler
    public void onSpeakEditorLocation()
    {
@@ -2254,7 +2284,7 @@ public class Source implements InsertSourceHandler,
           Timing.IMMEDIATE,
           Severity.STATUS);
    }
-   
+
    @Handler
    public void onZoomIn()
    {
@@ -2263,7 +2293,7 @@ public class Source implements InsertSourceHandler,
          Desktop.getFrame().zoomIn();
       }
    }
-   
+
    @Handler
    public void onZoomOut()
    {
@@ -2272,7 +2302,7 @@ public class Source implements InsertSourceHandler,
          Desktop.getFrame().zoomOut();
       }
    }
-   
+
    @Handler
    public void onZoomActualSize()
    {
@@ -2281,18 +2311,18 @@ public class Source implements InsertSourceHandler,
          Desktop.getFrame().zoomActualSize();
       }
    }
-   
+
    private void openAdjacentFile(final boolean forward)
    {
       // ensure we have an editor and a titled document is open
       if (!columnManager_.hasActiveEditor() ||
           StringUtil.isNullOrEmpty(columnManager_.getActiveDocPath()))
          return;
-      
+
       final FileSystemItem activePath =
             FileSystemItem.createFile(columnManager_.getActiveDocPath());
       final FileSystemItem activeDir = activePath.getParentPath();
-      
+
       server_.listFiles(
             activeDir,
             false,  // monitor result
@@ -2307,7 +2337,7 @@ public class Source implements InsertSourceHandler,
                   int n = files.length();
                   if (n < 2)
                      return;
-                  
+
                   // find the index of the currently open file
                   int index = -1;
                   for (int i = 0; i < n; i++)
@@ -2319,18 +2349,18 @@ public class Source implements InsertSourceHandler,
                         break;
                      }
                   }
-                  
+
                   // if this failed for some reason, bail
                   if (index == -1)
                      return;
-                  
+
                   // compute index of file to be opened (with wrap-around)
                   int target = (forward ? index + 1 : index - 1);
                   if (target < 0)
                      target = n - 1;
                   else if (target >= n)
                      target = 0;
-                  
+
                   // extract the file and attempt to open
                   FileSystemItem targetItem = files.get(target);
                   columnManager_.openFile(targetItem);
@@ -2430,7 +2460,7 @@ public class Source implements InsertSourceHandler,
             {
                columnManager_.startDebug();
             }
-            
+
             columnManager_.activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                !event.serverDispatched(),
@@ -2441,8 +2471,8 @@ public class Source implements InsertSourceHandler,
                   target.showFunction(event.getFunction());
                   if (event.getDebugPosition() != null)
                   {
-                     highlightDebugBrowserPosition(target, 
-                           event.getDebugPosition(), 
+                     highlightDebugBrowserPosition(target,
+                           event.getDebugPosition(),
                            event.getExecuting());
                   }
                }
@@ -2450,7 +2480,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
@@ -2465,7 +2495,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Override
    public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
    {
@@ -2486,16 +2516,16 @@ public class Source implements InsertSourceHandler,
                   // we may need to repopulate it
                   if (StringUtil.isNullOrEmpty(target.getContext()))
                      target.showFunction(event.getFunction());
-                  highlightDebugBrowserPosition(target, event.getDebugPosition(), 
+                  highlightDebugBrowserPosition(target, event.getDebugPosition(),
                         true);
                }
             });
          }
       });
    }
-   
-   private void tryExternalCodeBrowser(SearchPathFunctionDefinition func, 
-         CrossWindowEvent<?> event, 
+
+   private void tryExternalCodeBrowser(SearchPathFunctionDefinition func,
+         CrossWindowEvent<?> event,
          Command withLocalCodeBrowser)
    {
       final String path = CodeBrowserEditingTarget.getCodeBrowserPath(func);
@@ -2512,7 +2542,7 @@ public class Source implements InsertSourceHandler,
                                               boolean executing)
    {
       target.highlightDebugLocation(SourcePosition.create(
-               pos.getLine(), 
+               pos.getLine(),
                pos.getColumn() - 1),
             SourcePosition.create(
                pos.getEndLine(),
@@ -2594,7 +2624,7 @@ public class Source implements InsertSourceHandler,
    {
       onShowProfiler(event);
    }
-   
+
    private void saveDocumentIds(JsArrayString ids, final CommandWithArg<Boolean> onSaveCompleted)
    {
       // we use a timer that fires the document save completed event,
@@ -2613,7 +2643,7 @@ public class Source implements InsertSourceHandler,
          }
       };
       completedTimer.schedule(5000);
-      
+
       final Command onCompleted = new Command()
       {
          @Override
@@ -2623,7 +2653,7 @@ public class Source implements InsertSourceHandler,
             completedTimer.schedule(0);
          }
       };
-      
+
       if (ids == null)
       {
          saveUnsavedDocuments(onCompleted);
@@ -2633,15 +2663,15 @@ public class Source implements InsertSourceHandler,
          final Set<String> idSet = new HashSet<String>();
          for (String id : JsUtil.asIterable(ids))
             idSet.add(id);
-         
+
          saveUnsavedDocuments(idSet, onCompleted);
       }
    }
-   
+
    @Override
    public void onRequestDocumentSave(RequestDocumentSaveEvent event)
    {
-      saveDocumentIds(event.getDocumentIds(), success -> 
+      saveDocumentIds(event.getDocumentIds(), success ->
       {
          if (SourceWindowManager.isMainSourceWindow())
          {
@@ -2650,7 +2680,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Override
    public void onRequestDocumentClose(RequestDocumentCloseEvent event)
    {
@@ -2659,7 +2689,7 @@ public class Source implements InsertSourceHandler,
       {
          // Close each of the requested tabs
          columnManager_.closeTabs(ids);
-         
+
          // Let the server know we've completed the task
          if (SourceWindowManager.isMainSourceWindow())
          {
@@ -2723,9 +2753,9 @@ public class Source implements InsertSourceHandler,
             }
          });
       }
-      
+
    }
-   
+
    @Override
    public void onSetSelectionRanges(final SetSelectionRangesEvent event)
    {
@@ -2737,13 +2767,13 @@ public class Source implements InsertSourceHandler,
             JsArray<Range> ranges = event.getData().getRanges();
             if (ranges.length() == 0)
                return;
-            
+
             AceEditor editor = (AceEditor) docDisplay;
             editor.setSelectionRanges(ranges);
          }
       });
    }
-   
+
    @Override
    public void onGetEditorContext(GetEditorContextEvent event)
    {
@@ -2769,7 +2799,7 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         if (columnManager_.attemptTextEditorActivate())
+         if (columnManager_.requestActiveEditorContext())
             return;
       }
 
@@ -2779,7 +2809,7 @@ public class Source implements InsertSourceHandler,
             GetEditorContextEvent.SelectionData.create(),
             new VoidServerRequestCallback());
    }
-   
+
    @Override
    public void onReplaceRanges(final ReplaceRangesEvent event)
    {
@@ -2796,26 +2826,77 @@ public class Source implements InsertSourceHandler,
    private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)
    {
       JsArray<ReplacementData> data = event.getData().getReplacementData();
-      
+
       int n = data.length();
       for (int i = 0; i < n; i++)
       {
          ReplacementData el = data.get(n - i - 1);
          Range range = el.getRange();
          String text = el.getText();
-         
+
          // A null range at this point is a proxy to use the current selection
          if (range == null)
             range = docDisplay.getSelectionRange();
-         
+
          docDisplay.replaceRange(range, text);
       }
       docDisplay.focus();
    }
+   
+   private void invokeEditorApiAction(String docId,
+                                      CommandWithArg<TextEditingTarget> callback)
+   {
+      try
+      {
+         columnManager_.withTarget(docId, callback, () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
+      }
+      catch (Exception e)
+      {
+         // ensure server receives a response in case
+         // an exception interrupts regular execution
+         server_.rstudioApiResponse(
+               JavaScriptObject.createObject(),
+               new VoidServerRequestCallback());
+      }
+   }
+   
+   @Override
+   public void onGetEditorSelection(GetEditorSelectionEvent event)
+   {
+      invokeEditorApiAction(event.getData().getDocId(), (TextEditingTarget target) ->
+      {
+         target.withEditorSelection((String selection) ->
+         {
+            JsObject response = JsObject.createJsObject();
+            response.setString("value", selection);
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
+      });
+   }
+   
+   @Override
+   public void onSetEditorSelection(SetEditorSelectionEvent event)
+   {
+      String docId = event.getData().getDocId();
+      invokeEditorApiAction(docId, (TextEditingTarget target) ->
+      {
+         target.replaceSelection(event.getData().getValue(), () ->
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         });
+      });
+   }
 
    private class StatFileEntry
    {
-      public StatFileEntry(FileSystemItem fileIn, 
+      public StatFileEntry(FileSystemItem fileIn,
             CommandWithArg<FileSystemItem> actionIn)
       {
          file = fileIn;
@@ -2842,13 +2923,13 @@ public class Source implements InsertSourceHandler,
    private final RnwWeaveRegistry rnwWeaveRegistry_;
 
    private boolean suspendSourceNavigationAdding_;
-  
+
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
-   
+
    private final Provider<SourceWindowManager> pWindowManager_;
-   
+
    private final DependencyManager dependencyManager_;
 
    public final static int TYPE_FILE_BACKED = 0;

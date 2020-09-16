@@ -106,6 +106,8 @@ core::system::ProcessConfig sessionProcessConfig(
    // ensure cookies are marked secure if applicable
    bool useSecureCookies = options.authCookiesForceSecure() ||
                            options.getOverlayOption("ssl-enabled") == "1";
+   args.push_back(std::make_pair("--" kRootPathSessionOption,
+                                 options.wwwRootPath()));
    args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
                                  useSecureCookies ? "1" : "0"));
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
@@ -370,7 +372,7 @@ r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionCon
    profile.config = sessionProcessConfig(context, extraArgs);
 
    // pass the profile to any filters we have
-   for (const SessionManager::SessionLaunchProfileFilter f : sessionManager().getSessionLaunchProfileFilters())
+   for (const SessionManager::SessionLaunchProfileFilter& f : sessionManager().getSessionLaunchProfileFilters())
    {
       f(&profile);
    }

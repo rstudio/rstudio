@@ -1012,6 +1012,19 @@ core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
 }
 
 /**
+ * Whether to only show a limited window of the total console output
+ */
+bool UserPrefValues::limitVisibleConsole()
+{
+   return readPref<bool>("limit_visible_console");
+}
+
+core::Error UserPrefValues::setLimitVisibleConsole(bool val)
+{
+   return writePref("limit_visible_console", val);
+}
+
+/**
  * Whether to show a toolbar on code chunks in R Markdown documents.
  */
 bool UserPrefValues::showInlineToolbarForRCodeChunks()
@@ -2494,6 +2507,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingReferencesLocation(std::stri
 }
 
 /**
+ * Whether to write canonical visual mode markdown when saving from source mode.
+ */
+bool UserPrefValues::visualMarkdownEditingCanonical()
+{
+   return readPref<bool>("visual_markdown_editing_canonical");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingCanonical(bool val)
+{
+   return writePref("visual_markdown_editing_canonical", val);
+}
+
+/**
  * Maximum content width for visual editing mode, in pixels
  */
 int UserPrefValues::visualMarkdownEditingMaxContentWidth()
@@ -2559,29 +2585,16 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
 }
 
 /**
- * Zotero connection type (local or web)
+ * Zotero libraries to insert citations from.
  */
-std::string UserPrefValues::zoteroConnectionType()
+core::json::Array UserPrefValues::zoteroLibraries()
 {
-   return readPref<std::string>("zotero_connection_type");
+   return readPref<core::json::Array>("zotero_libraries");
 }
 
-core::Error UserPrefValues::setZoteroConnectionType(std::string val)
+core::Error UserPrefValues::setZoteroLibraries(core::json::Array val)
 {
-   return writePref("zotero_connection_type", val);
-}
-
-/**
- * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
- */
-bool UserPrefValues::zoteroUseBetterBibtex()
-{
-   return readPref<bool>("zotero_use_better_bibtex");
-}
-
-core::Error UserPrefValues::setZoteroUseBetterBibtex(bool val)
-{
-   return writePref("zotero_use_better_bibtex", val);
+   return writePref("zotero_libraries", val);
 }
 
 /**
@@ -2689,16 +2702,42 @@ core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
 }
 
 /**
- * The path to the default Python interpreter
+ * The Python type.
  */
-std::string UserPrefValues::pythonDefaultInterpreter()
+std::string UserPrefValues::pythonType()
 {
-   return readPref<std::string>("python_default_interpreter");
+   return readPref<std::string>("python_type");
 }
 
-core::Error UserPrefValues::setPythonDefaultInterpreter(std::string val)
+core::Error UserPrefValues::setPythonType(std::string val)
 {
-   return writePref("python_default_interpreter", val);
+   return writePref("python_type", val);
+}
+
+/**
+ * The Python version.
+ */
+std::string UserPrefValues::pythonVersion()
+{
+   return readPref<std::string>("python_version");
+}
+
+core::Error UserPrefValues::setPythonVersion(std::string val)
+{
+   return writePref("python_version", val);
+}
+
+/**
+ * The path to the default Python interpreter.
+ */
+std::string UserPrefValues::pythonPath()
+{
+   return readPref<std::string>("python_path");
+}
+
+core::Error UserPrefValues::setPythonPath(std::string val)
+{
+   return writePref("python_path", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -2780,6 +2819,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
+      kLimitVisibleConsole,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
@@ -2894,13 +2934,13 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingWrap,
       kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
+      kVisualMarkdownEditingCanonical,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
-      kZoteroConnectionType,
-      kZoteroUseBetterBibtex,
+      kZoteroLibraries,
       kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
@@ -2909,7 +2949,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGraphicsBackend,
       kGraphicsAntialiasing,
       kBrowserFixedWidthFonts,
-      kPythonDefaultInterpreter,
+      kPythonType,
+      kPythonVersion,
+      kPythonPath,
    });
 }
    

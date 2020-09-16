@@ -61,7 +61,18 @@ public class PanmirrorUIPrefs {
    
    public Boolean zoteroUseBetterBibtex()
    {
-      return pUIPrefs_.get().zoteroUseBetterBibtex().getValue();
+      return pUserState_.get().zoteroUseBetterBibtex().getValue();
+   }
+   
+   public String bibliographyDefaultType()
+   {
+      return pUserState_.get().bibliographyDefaultType().getValue();
+   }
+   
+   public void setBibliographyDefaultType(String value)
+   {
+      pUserState_.get().bibliographyDefaultType().setGlobalValue(value);
+      pUserState_.get().writeState();
    }
    
    public double emojiSkinTone() 

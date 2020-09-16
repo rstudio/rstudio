@@ -16,10 +16,13 @@
 export interface EditorUIImages {
   copy?: string;
   properties?: string;
+  properties_deco?: string;
+  properties_deco_dark?: string;
   removelink?: string;
   runchunk?: string;
   runprevchunks?: string;
   search?: string;
+  search_progress?: string;
   omni_insert?: {
     generic?: string;
     heading1?: string;
@@ -117,5 +120,19 @@ export interface EditorUIImages {
     web?: string;
     web_dark?: string;
     zoteroOverlay?: string;
+    local_sources?: string;
+    bibligraphy?: string;
+    bibligraphy_folder?: string;
+    zotero_library?: string;
+    zotero_collection?: string;
+    zotero_root?: string;
+    doi?: string;
+    crossref?: string;
+    pubmed?: string;
+    datacite?: string;
+  };
+  widgets?: {
+    tag_delete?: string;
+    tag_edit?: string;
   };
 }

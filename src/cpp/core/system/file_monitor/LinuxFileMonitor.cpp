@@ -570,8 +570,14 @@ void run(const boost::function<void()>& checkForInput)
             if (len < 0)
             {
                // don't terminate for errors indicating no events available
+               // (silly ifdef here is to silence compiler warnings)
+#if EAGAIN == EWOULDBLOCK
+               if (errno == EAGAIN)
+                  break;
+#else
                if (errno == EAGAIN || errno == EWOULDBLOCK)
                   break;
+#endif
 
                // otherwise terminate this watch (notify user and break
                // out of the read loop for this context)

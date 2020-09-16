@@ -19,6 +19,7 @@ import { findChildrenByMark } from 'prosemirror-utils';
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { AppendMarkTransactionHandler, MarkTransaction } from '../../api/transaction';
 import { delimiterForType, MathType } from '../../api/math';
+import { selectionIsWithinRange } from '../../api/selection';
 
 export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
   return {
@@ -40,11 +41,15 @@ export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
             const mathText = tr.doc.textBetween(mathRange.from, mathRange.to);
             const charAfter = tr.doc.textBetween(mathRange.to, mathRange.to + 1);
             const noDelims = !mathText.startsWith(mathDelim) || !mathText.endsWith(mathDelim);
-            const spaceAtEdge =
+            const selectionIsWithin = selectionIsWithinRange(tr.selection, mathRange);
+            const spaceAtLeft = !selectionIsWithin &&
               mathAttr.type === MathType.Inline &&
-              (mathText.startsWith(mathDelim + ' ') || mathText.endsWith(' ' + mathDelim));
+              mathText.startsWith(mathDelim + ' ');
+            const spaceAtRight = !selectionIsWithin &&
+              mathAttr.type === MathType.Inline &&
+              mathText.endsWith(' ' + mathDelim);
             const numberAfter = mathAttr.type === MathType.Inline && /\d/.test(charAfter);
-            if (noDelims || spaceAtEdge || numberAfter) {
+            if (noDelims || spaceAtLeft || spaceAtRight || numberAfter) {
               tr.removeMark(mathRange.from, mathRange.to, schema.marks.math);
               tr.removeStoredMark(schema.marks.math);
             }

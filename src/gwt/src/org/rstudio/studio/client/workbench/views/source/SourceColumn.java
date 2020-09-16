@@ -241,7 +241,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       {
          display_.selectTab(index);
       }
-      if (display_.getTabCount() > 0 && 
+      if (display_.getTabCount() > 0 &&
           display_.getActiveTabIndex() >= 0 &&
           index <= (editors_.size() - 1))
       {
@@ -404,6 +404,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public boolean hasDoc()
    {
       return editors_.size() > 0;
+   }
+
+   public boolean hasDirtyDoc()
+   {
+      for (EditingTarget editor : editors_)
+      {
+         if (editor.dirtyState().getValue())
+            return true;
+      }
+      return false;
    }
 
    public boolean isSaveCommandActive()
@@ -971,7 +981,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                {
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
-                  
+
                   EditingTarget target =
                      addTab(newDoc, Source.OPEN_INTERACTIVE);
 
@@ -1003,6 +1013,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onBeforeShow()
    {
+      // All columns aside from the main column should open with a document
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          // Avoid scenarios where the Source tab comes up but no tabs are
@@ -1127,7 +1138,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // remove the tab from its old position
       int idx = tabOrder_.get(event.getOldPos());
-      tabOrder_.remove(new Integer(idx));  // force type box
+      tabOrder_.remove(Integer.valueOf(idx));  // force type box
 
       // add it to its new position
       tabOrder_.add(event.getNewPos(), idx);
@@ -1146,7 +1157,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       syncTabOrder();
       fireDocTabsChanged();
    }
-   
+
    public static void applyDocPropertyDefaults(SourceDocument document, boolean newDoc, UserPrefs userPrefs)
    {
       // ensure this is a text file
@@ -1155,16 +1166,23 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       if (type instanceof TextFileType)
       {
          TextFileType textFile = (TextFileType)type;
-         
+
          // respect visual editing default for new markdown docs
-         if (textFile.isMarkdown() && 
-             newDoc && 
+         if (textFile.isMarkdown() &&
+             newDoc &&
              userPrefs.visualMarkdownEditingIsDefault().getValue())
          {
             document.getProperties().setString(
                   TextEditingTarget.RMD_VISUAL_MODE,
                   DocUpdateSentinel.PROPERTY_TRUE
                );
+            // don't ever prompt for line wrapping config b/c this
+            // document started out in visual mode
+            document.getProperties().setString(
+                  TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
+                  DocUpdateSentinel.PROPERTY_TRUE
+               );
+
          }
       }
    }
@@ -1173,7 +1191,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       EditingTarget target = editors_.remove(idx);
 
-      tabOrder_.remove(new Integer(idx));
+      tabOrder_.remove(Integer.valueOf(idx));
       for (int i = 0; i < tabOrder_.size(); i++)
       {
          if (tabOrder_.get(i) > idx)

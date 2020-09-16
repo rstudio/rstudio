@@ -650,7 +650,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error;
-   for (const json::JsonRpcMethod& method : rMethods)
+   
+   for (json::JsonRpcMethod method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
    }
@@ -1594,9 +1595,8 @@ namespace {
 int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
-   if (!error.isExpected())
+   if (error)
       core::log::logError(error, location);
-
    return EXIT_FAILURE;
 }
 

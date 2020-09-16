@@ -876,6 +876,15 @@ public class Application implements ApplicationEventHandlers
          removeTerminalCommands();
       }
 
+      if (!sessionInfo.getPresentationState().isActive())
+         commands_.activatePresentation().remove();
+
+      if (!sessionInfo.getAllowVcs())
+         commands_.showVcsOptions().remove();
+
+      if (!sessionInfo.getAllowPublish())
+         commands_.showPublishingOptions().remove();
+
       if (!sessionInfo.getAllowFullUI())
       {
          removeProjectCommands();
@@ -1163,6 +1172,7 @@ public class Application implements ApplicationEventHandlers
       commands_.sendFilenameToTerminal().remove();
       commands_.openNewTerminalAtFilePaneLocation().remove();
       commands_.setTerminalToCurrentDirectory().remove();
+      commands_.closeAllTerminals().remove();
    }
 
    private void removeProjectCommands()

@@ -15,7 +15,6 @@
 package org.rstudio.core.client.prefs;
 
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 
 public class RestartRequirement
 {

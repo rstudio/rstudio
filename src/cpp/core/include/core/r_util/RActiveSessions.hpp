@@ -311,8 +311,48 @@ public:
       // validated!
       return true;
    }
+   
+   bool operator>(const ActiveSession& rhs) const
+   {
+      if (sortConditions_.executing_ == rhs.sortConditions_.executing_)
+      {
+         if (sortConditions_.running_ == rhs.sortConditions_.running_)
+         {
+            if (sortConditions_.lastUsed_ == rhs.sortConditions_.lastUsed_)
+               return id() > rhs.id();
 
-private:
+            return sortConditions_.lastUsed_ > rhs.sortConditions_.lastUsed_;
+         }
+
+         return sortConditions_.running_;
+      }
+      
+      return sortConditions_.executing_;
+   }
+
+ private:
+   struct SortConditions
+   {
+      SortConditions() :
+         executing_(false),
+         running_(false),
+         lastUsed_(0)
+      {
+         
+      }
+
+      bool executing_;
+      bool running_;
+      double lastUsed_;
+   };
+
+   void cacheSortConditions()
+   {
+      sortConditions_.executing_ = executing();
+      sortConditions_.running_ = running();
+      sortConditions_.lastUsed_ = lastUsed();
+   }
+ 
 
    void setTimestampProperty(const std::string& property)
    {
@@ -357,6 +397,7 @@ private:
    std::string id_;
    FilePath scratchPath_;
    FilePath propertiesPath_;
+   SortConditions sortConditions_;
 };
 
 

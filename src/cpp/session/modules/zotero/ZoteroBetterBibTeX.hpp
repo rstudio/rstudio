@@ -48,6 +48,7 @@ void betterBibtexProvideIds(const collections::ZoteroCollections& collections,
 core::Error betterBibtexExport(const core::json::JsonRpcRequest&,
                                core::json::JsonRpcResponse* pResponse);
 
+core::Error betterBibtexInit();
 
 } // end namespace zotero
 } // end namespace modules

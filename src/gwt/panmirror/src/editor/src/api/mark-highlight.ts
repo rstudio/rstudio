@@ -120,7 +120,7 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
       },
     },
     props: {
-      decorations(state) {
+      decorations(state: EditorState) {
         return key.getState(state);
       },
     },

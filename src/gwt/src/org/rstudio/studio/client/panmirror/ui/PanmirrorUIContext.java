@@ -18,6 +18,8 @@ package org.rstudio.studio.client.panmirror.ui;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 
+import com.google.gwt.core.client.JsArrayString;
+
 import elemental2.promise.Promise;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
@@ -26,17 +28,21 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIContext
 {
    public BooleanGetter isActiveTab;
-   public Getter getDocumentPath;
+   public StringGetter getDocumentPath;
    public WithSavedDocument withSavedDocument;
-   public Getter getDefaultResourceDir;
+   public StringGetter getDefaultResourceDir;
    public Mapper mapPathToResource;
    public Mapper mapResourceToURL;
    public WatchResource watchResource;
    public Mapper translateText;
+   public StringArrayGetter droppedUris;
+   public ClipboardUris clipboardUris;
+   public ClipboardImage clipboardImage;
+   public ResolveImageUris resolveImageUris;
+   public BooleanGetter isWindowsDesktop;
 
-   
    @JsFunction 
-   public interface Getter
+   public interface StringGetter
    {
       String get();
    }
@@ -45,6 +51,12 @@ public class PanmirrorUIContext
    public interface BooleanGetter
    {
       Boolean get();
+   }
+   
+   @JsFunction
+   public interface StringArrayGetter
+   {
+      JsArrayString get();
    }
    
    @JsFunction
@@ -63,6 +75,24 @@ public class PanmirrorUIContext
    public interface WithSavedDocument
    {
       Promise<Boolean> withSavedDocument();
+   }
+   
+   @JsFunction
+   public interface ClipboardUris
+   {
+      Promise<JsArrayString> clipboardUris();
+   }
+   
+   @JsFunction
+   public interface ClipboardImage
+   {
+      Promise<String> clipboardImage();
+   }
+   
+   @JsFunction
+   public interface ResolveImageUris
+   {
+      Promise<JsArrayString> resolveImageUris(JsArrayString imageUris);
    }
 }
 

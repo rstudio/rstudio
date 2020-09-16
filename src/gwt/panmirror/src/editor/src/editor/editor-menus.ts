@@ -16,6 +16,7 @@
 import { EditorMenuItem, EditorUI } from '../api/ui';
 import { tableMenu } from '../api/table';
 import { EditorCommandId, EditorCommand } from '../api/command';
+import { Editor } from './editor';
 
 export interface EditorMenus {
   format: EditorMenuItem[];
@@ -37,8 +38,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Em },
     { command: EditorCommandId.Code },
     {
+      text: ui.context.translateText('Text'),
       subMenu: {
-        text: ui.context.translateText('Text'),
         items: [
           { command: EditorCommandId.Strikeout },
           { command: EditorCommandId.Superscript },
@@ -49,8 +50,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     },
     { separator: true },
     {
+      text: ui.context.translateText('Bullets & Numbering'),
       subMenu: {
-        text: ui.context.translateText('Bullets & Numbering'),
         items: [
           { command: EditorCommandId.BulletList },
           { command: EditorCommandId.OrderedList },
@@ -76,8 +77,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Span },
     { separator: true },
     {
+      text: ui.context.translateText('Raw'),
       subMenu: {
-        text: ui.context.translateText('Raw'),
         items: [
           { command: EditorCommandId.HTMLInline },
           { command: EditorCommandId.HTMLBlock },
@@ -104,8 +105,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
       ? [
         { separator: true },
         {
+          text: ui.context.translateText('Code Chunk'),
           subMenu: {
-            text: ui.context.translateText('Code Chunk'),
             items: [
               { command: EditorCommandId.RCodeChunk },
               { separator: true },
@@ -121,6 +122,10 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
       ]
       : []),
     { separator: true },
+    { command: EditorCommandId.Citation },
+    { command: EditorCommandId.CrossReference },
+    { command: EditorCommandId.Footnote },
+    { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.HorizontalRule },
@@ -128,8 +133,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
       ? [
         { separator: true },
         {
+          text: ui.context.translateText('Definition'),
           subMenu: {
-            text: ui.context.translateText('Definition'),
             items: [
               { command: EditorCommandId.DefinitionList },
               { separator: true },
@@ -145,8 +150,8 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.DisplayMath },
     { separator: true },
     {
+      text: ui.context.translateText('Special Characters'),
       subMenu: {
-        text: ui.context.translateText('Special Characters'),
         items: [
           { command: EditorCommandId.Emoji },
           { command: EditorCommandId.Symbol },
@@ -155,13 +160,11 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           { command: EditorCommandId.EmDash },
           { separator: true },
           { command: EditorCommandId.NonBreakingSpace },
+          { separator: true },
+          { command: EditorCommandId.HardLineBreak }
         ],
       },
     },
-    { separator: true },
-    { command: EditorCommandId.Footnote },
-    { command: EditorCommandId.Citation },
-    { command: EditorCommandId.CrossReference },
     { separator: true },
     { command: EditorCommandId.ParagraphInsert },
     { command: EditorCommandId.CodeBlockFormat },

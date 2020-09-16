@@ -122,11 +122,10 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI): Completi
     },
 
     view: {
-      header: {
+      header: () => ({
         component: EmojiSkintonePreferenceHeaderView,
         height: kHeaderHeight,
-      },
-
+      }),
       component: EmojiSkintonePreferenceView,
       key: pref => pref.skinTone,
       width: kCellWidth,

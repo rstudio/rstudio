@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler
@@ -91,7 +92,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
          if (a.hasSplitterPos() ^ b.hasSplitterPos())
             return false;
-         if (a.hasSplitterPos() && a.getSplitterPos() != b.getSplitterPos())
+         if (a.hasSplitterPos() &&
+             Arrays.equals(a.getSplitterPos(), b.getSplitterPos()))
             return false;
 
          if (a.hasPanelWidth() ^ b.hasPanelWidth())
@@ -104,6 +106,20 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          if (a.hasWindowWidth() && a.getWindowWidth() != b.getWindowWidth())
             return false;
 
+         return true;
+      }
+
+      public final boolean validate()
+      {
+         if (hasSplitterPos() && hasWindowWidth())
+         {
+            for (int i = 0; i < getSplitterPos().length; i++)
+            {
+               if (getSplitterPos()[i] < 0 ||
+                   getSplitterPos()[i] > getPanelWidth())
+                  return false;
+            }
+         }
          return true;
       }
    }
@@ -138,7 +154,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          {
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
-            if (state != null && state.hasSplitterPos() &&
+            if (state != null &&
+                state.validate() &&
+                state.hasSplitterPos() &&
                 state.getSplitterCount() == leftList_.size() + 1)
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
@@ -193,10 +211,16 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             state.setPanelWidth(getOffsetWidth());
             state.setWindowWidth(Window.getClientWidth());
 
+            // The widget's code determines the splitter positions from the width of each widget
+            // so these value represent that width rather than the actual coordinates of the
+            // splitter.
             int[] splitterArray = new int[leftList_.size() + 1];
             splitterArray[0] = right_.getOffsetWidth();
-            for (int i = 0; i < leftList_.size(); i++)
-               splitterArray[i + 1] = splitterArray[i] + leftList_.get(i).getOffsetWidth();
+            if (!leftList_.isEmpty())
+            {
+               for (int i = 0; i < leftList_.size(); i++)
+                  splitterArray[i + 1] = leftList_.get(i).getOffsetWidth();
+            }
             state.setSplitterPos(splitterArray);
             return state.cast();
          }
@@ -227,13 +251,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       deferredSaveWidthPercent();
    }
 
-   public void resetLeftWidgets(ArrayList<Widget> list)
-   {
-      clearForRefresh();
-      leftList_ = new ArrayList<>(list);
-      initialize(leftList_, center_, right_);
-   }
-
    public void addLeftWidget(Widget widget)
    {
       clearForRefresh();
@@ -241,6 +258,22 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
+   public double getLeftSize()
+   {
+      double sum = 0.0;
+      for (Widget w : leftList_)
+         sum += getWidgetSize(w);
+      return sum;
+   }
+   
+   public ArrayList<Double> getLeftWidgetSizes()
+   {
+      ArrayList<Double> result = new ArrayList<>();
+      for (Widget w : leftList_)
+         result.add(getWidgetSize(w));
+      return result;
+   }
+   
    public void removeLeftWidget(Widget widget)
    {
       clearForRefresh();

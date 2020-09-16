@@ -27,6 +27,11 @@ public class ChunkDefinition extends JavaScriptObject
    {
    }
    
+   public interface Provider
+   {
+      public JsArray<ChunkDefinition> getChunkDefs();
+   }
+   
    public static native final ChunkDefinition create(int row,
                                                  int rowCount,
                                                  boolean visible,

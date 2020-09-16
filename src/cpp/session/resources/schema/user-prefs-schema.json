@@ -552,6 +552,12 @@
             "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
         },
+        "limit_visible_console": {
+            "type": "boolean",
+            "default": false,
+            "title": "Limit visible console output",
+            "description": "Whether to only show a limited window of the total console output"
+        },
         "show_inline_toolbar_for_r_code_chunks": {
             "type": "boolean",
             "default": true,
@@ -1260,6 +1266,12 @@
             "title": "Place visual markdown footnotes in",
             "description": "Placement of footnotes within markdown output."
         },
+        "visual_markdown_editing_canonical": {
+            "type": "boolean",
+            "default": false,
+            "title": "Write canonical visual mode markdown in source mode",
+            "description": "Whether to write canonical visual mode markdown when saving from source mode."
+        },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",
             "default": 700,
@@ -1291,18 +1303,11 @@
             "title": "Editor for code chunks in visual editing mode",
             "description": "The name of the editor to use to provide code editing in visual mode"
         },
-        "zotero_connection_type": {
-            "type": "string",
-            "enum": ["local", "web"],
-            "default": "local",
-            "title": "Zotero connection type",
-            "description": "Zotero connection type (local or web)"
-        },
-        "zotero_use_better_bibtex": {
-            "type": "boolean",
-            "default": false,
-            "title": "Use Better BibTeX for citation keys and BibLaTeX export",
-            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies"
+        "zotero_libraries": {
+            "type": "array",
+            "default": ["My Library"],
+            "title": "Zotero libraries",
+            "description": "Zotero libraries to insert citations from."
         },
         "emoji_skintone" : {
           "type": "string",
@@ -1389,11 +1394,20 @@
                 "Ubuntu Mono"
             ]
         },
-        "python_default_interpreter": {
+        "python_type": {
+            "description": "The Python type.",
             "type": "string",
-            "title": "Default Python interpreter",
-            "default": "",
-            "description": "The path to the default Python interpreter"
+            "default": ""
+        },
+        "python_version": {
+            "description": "The Python version.",
+            "type": "string",
+            "default": ""
+        },
+        "python_path": {
+            "description": "The path to the default Python interpreter.",
+            "type": "string",
+            "default": ""
         }
     }
 }

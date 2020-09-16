@@ -26,6 +26,8 @@ namespace session {
 namespace modules {
 namespace zotero {
 
+const char * const kMyLibrary = "My Library";
+
 #ifndef NDEBUG
 void TRACE(const std::string& message, boost::optional<std::size_t> items)
 {

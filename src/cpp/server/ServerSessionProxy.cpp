@@ -249,12 +249,12 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    else if (boost::algorithm::starts_with(address, proxiedAddress))
    {
       // find the base url from the original request
-      std::string absoluteUri = originalRequest.absoluteUri();
-      std::string::size_type pos = absoluteUri.find(portPath);
+      std::string baseUri = originalRequest.baseUri();
+      std::string::size_type pos = baseUri.find(portPath);
       if (pos != std::string::npos) // precaution, should always be true
       {
           // substitute the base url for the proxied address
-         std::string baseUrl = absoluteUri.substr(0, pos + portPath.length());
+         std::string baseUrl = baseUri.substr(0, pos + portPath.length());
          address = baseUrl + address.substr(proxiedAddress.length());
       }
    }
@@ -985,9 +985,10 @@ void proxyLocalhostRequest(
    // call request filter if we have one
    invokeRequestFilter(&request);
 
-   // extract the (scrambled) port, which consists of 8 hex digits
+   // extract the (scrambled) port, which consists of 8 or 9 hex digits 
+   // (an additional prefix digit may exist for server routing)
    std::string pMap = ipv6 ? "/p6/" : "/p/";
-   boost::regex re(pMap + "([a-fA-F0-9]{8})(/|$)");
+   boost::regex re(pMap + "([a-fA-F0-9]{8,9})(/|$)");
    boost::smatch match;
    if (!regex_utils::search(request.uri(), match, re))
    {
@@ -1004,7 +1005,8 @@ void proxyLocalhostRequest(
    }
 
    // unscramble the port using the token
-   int portNum = server_core::detransformPort(portToken, match[1]);
+   bool server = false;
+   int portNum = server_core::detransformPort(portToken, match[1], server);
    if (portNum < 0)
    {
       // act as though there's no content here if we can't determine the correct port
@@ -1046,8 +1048,8 @@ void proxyLocalhostRequest(
          boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, ipv6, _1);
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
-   // see if the request should be handled by the overlay
-   if (overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
+   // see if the request should be handled by the overlay (unless it should be handled by the server)
+   if (!server && overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
    {
       // request handled by the overlay
       return;

@@ -53,6 +53,16 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.CompilePdfPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.EditingPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.RMarkdownPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.SourceControlPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.SpellingPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -387,6 +397,66 @@ public class WorkbenchScreen extends Composite
    }
 
    @Handler
+   void onShowCodeOptions()
+   {
+      optionsLoader_.showOptions(EditingPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowConsoleOptions()
+   {
+      optionsLoader_.showOptions(ConsolePreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowAppearanceOptions()
+   {
+      optionsLoader_.showOptions(AppearancePreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowPackagesOptions()
+   {
+      optionsLoader_.showOptions(PackagesPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowRMarkdownOptions()
+   {
+      optionsLoader_.showOptions(RMarkdownPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowSweaveOptions()
+   {
+      optionsLoader_.showOptions(CompilePdfPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowSpellingOptions()
+   {
+      optionsLoader_.showOptions(SpellingPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowVcsOptions()
+   {
+      optionsLoader_.showOptions(SourceControlPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowPublishingOptions()
+   {
+      optionsLoader_.showOptions(PublishingPreferencesPane.class, true);
+   }
+
+   @Handler
+   void onShowPythonOptions()
+   {
+      optionsLoader_.showOptions(PythonPreferencesPane.class, true);
+   }
+
+   @Handler
    void onShowAccessibilityOptions()
    {
       optionsLoader_.showOptions(AccessibilityPreferencesPane.class, false);
@@ -409,7 +479,7 @@ public class WorkbenchScreen extends Composite
       return this;
    }
 
-   private TimeBufferedCommand paneSizesChangedCommand_;
+   private final TimeBufferedCommand paneSizesChangedCommand_;
 
    private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,0,1.0);
 
@@ -420,5 +490,5 @@ public class WorkbenchScreen extends Composite
    private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
    private final MainSplitPanel tabsPanel_;
-   private PaneManager paneManager_;
+   private final PaneManager paneManager_;
 }

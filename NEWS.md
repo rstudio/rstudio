@@ -7,6 +7,9 @@
 * Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
 * Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
 * Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
+* The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
+* Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
+* The autocompletion system can now auto-complete virtual environment names in `reticulate::virtualenv()`.
 
 ### Plots
 
@@ -29,9 +32,11 @@
 * The font used in the editor and console can now be customized on RStudio Server. (#2534)
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
 * The new option `www-same-site` provides support for the `SameSite` attribute on cookies issued by RStudio. (#6608)
+* New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
+* New `X-RStudio-Root-Path` header or the new `www-root-path` for specifying the exact path prefixes added by a path-rewriting proxy (Pro #1410).
+* The option `www-url-path-prefix` was deprecated and removed. Use `www-root-path` instead.
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
-* Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
 * Colorize parentheses, braces, and brackets in assorted colors (#7027)
 * Option to display Console error and message output in same color as regular output (#7029)
@@ -39,6 +44,11 @@
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 * Add support for navigating source history with mouse forward/back buttons (#7272)
 * Improved error logging of mistyped usernames when using PAM authentication (#7501)
+* Add ability to go directly to various Global Option panes via Command Palette (#7678)
+* R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
+* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
+* Some panes didn't have commands for making them visible, now they do (#5775)
+* Show correct symbol for Return key in Mac menus (#6524)
 
 ### RStudio Server Pro
 
@@ -46,7 +56,6 @@
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
 * Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
 * New `auth-proxy-sign-out-url` option specified an endpoint to take the user to when "Sign Out" is clicked in the IDE user interface (Pro #1745)
-* New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
 * New `load-balancer` option `timeout` limits how long to wait for a response from a node, defaults to 10 seconds. (Pro #1642)
@@ -56,6 +65,9 @@
 * Project Sharing now works on Launcher sessions.
 * Remote session connections over HTTPS can now load certificates from the Apple Keychain. (Pro #1828)
 * Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
+* Update embedded nginx to v1.19.2 (Pro #1719)
+* Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
+* Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
 
 ### Bugfixes
 
@@ -87,4 +99,10 @@
 * Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
 * Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
 * Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
+* Reduced difference in font size and spacing between Terminal and Console (#6382)
+* Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
+* Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
+* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
+* Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
+* Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
 

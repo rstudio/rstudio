@@ -20,6 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import yaml from 'js-yaml';
 
 import { findTopLevelBodyNodes } from './node';
+import { logException } from './log';
 
 export const kYamlMetadataTitleRegex = /\ntitle:(.*)\n/;
 
@@ -69,6 +70,24 @@ export function titleFromYamlMetadataNode(node: ProsemirrorNode) {
   }
 }
 
+export function valueFromYamlText(name: string, yamlText: string) {
+  // Must start and end with either a new line or the start/end of line
+  const yamlMetadataNameValueRegex = new RegExp(`(?:\\n|^)${name}:(.*)(?:\\n|$)`);
+
+  // Find the name and value
+  const valueMatch = yamlText.match(yamlMetadataNameValueRegex);
+  if (valueMatch) {
+    // Read the matched value
+    const valueStr = valueMatch[1].trim();
+
+    // Parse the value (could be string, array, etc...)
+    const value = parseYaml(valueStr);
+    return value;
+  } else {
+    return null;
+  }
+}
+
 const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
 
 export function firstYamlBlock(code: string): { [key: string]: any } | null {
@@ -112,11 +131,6 @@ export function stripYamlDelimeters(yamlCode: string) {
   return yamlCode
     .replace(/^[\s-]+/, '')
     .replace(/[\s-\.]+$/, '');
-}
-
-function logException(e: Error) {
-  // TODO: log exceptions (we don't want to use console.log in production code, so this would
-  // utilize some sort of external logging facility)
 }
 
 export interface ParsedYaml {

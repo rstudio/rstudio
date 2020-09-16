@@ -32,7 +32,6 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
@@ -90,16 +89,6 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       config.setDefaultLatexProgram(defaultLatexProgram_.getValue());
       config.setRootDocument(rootDoc_.getText().trim());
       return new RestartRequirement();
-   }
-
-   private void addHeader(String caption)
-   {
-      PreferencesDialogBaseResources baseRes =
-                              PreferencesDialogBaseResources.INSTANCE;
-      Label pdfCompilationLabel = new Label(caption);
-      pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(pdfCompilationLabel);
-      add(pdfCompilationLabel);
    }
 
    private class RootDocumentChooser extends TextBoxWithButton

@@ -1487,7 +1487,7 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    if (rSourceItem.signature().size() > 0)
    {
       extraInfo.append("{");
-      for (std::size_t i = 0; i<rSourceItem.signature().size(); i++)
+      for (std::size_t i = 0; i < rSourceItem.signature().size(); i++)
       {
          if (i > 0)
             extraInfo.append(", ");
@@ -1652,6 +1652,10 @@ void fillFromBookdownRefs(const std::string& term,
       // user-provided search term
       if (!string_utils::isSubsequence(displayText, term, true))
          continue;
+
+      // add the suffix (if any)
+      if (bookdownRef.getObject().hasMember("suffix"))
+         displayText += bookdownRef.getObject()["suffix"].getString();
       
       // bundle xref into source item
       json::Object meta;

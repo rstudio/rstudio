@@ -432,7 +432,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // determine whether the file the bibliography is requested for is part of the current project
    bool isProjectFile = false;
-   if (!file.empty() && projects::projectContext().hasProject())
+   if (!file.empty() && module_context::isBookdownProject())
    {
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (filePath.isWithin(projects::projectContext().buildTargetPath()))
@@ -711,9 +711,14 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
 Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    // extract params
-   std::string bibliography, id, sourceAsJson;
+   std::string bibliography, id, sourceAsJson, sourceAsBibTeX;
    bool project;
-   Error error = json::readParams(request.params, &bibliography, &project, &id, &sourceAsJson);
+   Error error = json::readParams(request.params,
+                                  &bibliography,
+                                  &project,
+                                  &id,
+                                  &sourceAsJson,
+                                  &sourceAsBibTeX);
    if (error)
       return error;
 
@@ -724,7 +729,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
 
 
    // yaml or json target
-   bool isYAML = bibliographyPath.getExtensionLowerCase() == ".yaml";
+   bool isYAML = bibliographyPath.getExtensionLowerCase() == ".yaml" || bibliographyPath.getExtensionLowerCase() == ".yml";
    bool isJSON = bibliographyPath.getExtensionLowerCase() == ".json";
    if (isYAML || isJSON)
    {
@@ -742,46 +747,60 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    }
    else
    {
-      // get the path to the bibtex csl
-      // Summary of bibtex types, fields, and so on
-      // http://texdoc.net/texmf-dist/doc/bibtex/tamethebeast/ttb_en.pdf
-      FilePath cslPath = session::options().rResourcesPath().completePath("bibtex.csl");
-
-      std::vector<std::string> args;
-      args.push_back("--to");
-      args.push_back("plain");
-      args.push_back("--wrap");
-      args.push_back("none");
-      std::string biblio;
-      error = pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
-      if (error)
-         return error;
-
-      // substitute the id
-      const char * const kIdToken = "F3CCCD24-5C50-412A-AE47-549C9D147498";
-      std::string entry = biblio;
-      boost::algorithm::trim(entry);
-      boost::replace_all(entry, kIdToken, id);
-
-      // apply indentation
-      std::vector<std::string> lines;
-      boost::algorithm::split(lines, entry, boost::algorithm::is_any_of("\n"));
-      std::vector<std::string> indentedLines;
-      for (std::size_t i = 0; i<lines.size(); i++)
+      if (sourceAsBibTeX.length() > 0)
       {
-         bool firstLine = i == 0;
-         bool lastLine = i == lines.size() - 1;
-         if (firstLine || lastLine)
-            indentedLines.push_back(lines[i]);
-         else
-            indentedLines.push_back("  " + lines[i]);
+         error = core::writeStringToFile(bibliographyPath, "\n" + sourceAsBibTeX + "\n",
+                                         string_utils::LineEndingPosix, false);
+         if (error)
+            return error;
       }
-      entry = boost::algorithm::join(indentedLines, "\n");
+      else
+      {
+         // get the path to the bibtex csl
+         // Summary of bibtex types, fields, and so on
+         // http://texdoc.net/texmf-dist/doc/bibtex/tamethebeast/ttb_en.pdf
+         FilePath cslPath =
+             session::options().rResourcesPath().completePath("bibtex.csl");
 
-      // append the bibliography to the file
-      error = core::writeStringToFile(bibliographyPath, "\n" + entry + "\n", string_utils::LineEndingPosix, false);
-      if (error)
-         return error;
+         std::vector<std::string> args;
+         args.push_back("--to");
+         args.push_back("plain");
+         args.push_back("--wrap");
+         args.push_back("none");
+         std::string biblio;
+         error =
+             pandocGenerateBibliography(sourceAsJson, cslPath, args, &biblio);
+         if (error)
+            return error;
+
+         // substitute the id
+         const char* const kIdToken = "F3CCCD24-5C50-412A-AE47-549C9D147498";
+         std::string entry = biblio;
+         boost::algorithm::trim(entry);
+         boost::replace_all(entry, kIdToken, id);
+
+         // apply indentation
+         std::vector<std::string> lines;
+         boost::algorithm::split(lines, entry,
+                                 boost::algorithm::is_any_of("\n"));
+         std::vector<std::string> indentedLines;
+         for (std::size_t i = 0; i < lines.size(); i++)
+         {
+            bool firstLine = i == 0;
+            bool lastLine = i == lines.size() - 1;
+            if (firstLine || lastLine)
+               indentedLines.push_back(lines[i]);
+            else
+               indentedLines.push_back("  " + lines[i]);
+         }
+         entry = boost::algorithm::join(indentedLines, "\n");
+
+         // append the bibliography to the file
+         error = core::writeStringToFile(bibliographyPath, "\n" + entry + "\n",
+                                         string_utils::LineEndingPosix, false);
+         if (error)
+            return error;
+      }
    }
 
    pResponse->setResult(true);

@@ -19,7 +19,7 @@ import { PandocAttr, pandocAttrReadAST, kSpanChildren, kSpanAttr } from './pando
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
 import { BibliographyResult } from './bibliography/bibliography-provider_local';
-import { kEmojiAttr } from './emoji';
+
 import { stringifyMath } from './math';
 import { kCodeText } from './code';
 
@@ -38,7 +38,8 @@ export interface PandocServer {
     bibliography: string,
     project: boolean,
     id: string,
-    sourceAsJson: string
+    sourceAsJson: string,
+    sourceAsBibTeX: string,
   ): Promise<boolean>;
   citationHTML(
     file: string | null,

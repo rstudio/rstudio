@@ -43,6 +43,7 @@ export interface EditingOutlineLocationItem {
   level: number;
   title: string;
   active: boolean;
+  position: number;
 }
 
 export interface EditingOutlineLocation {
@@ -60,6 +61,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
       level: 0,
       title: '',
       active: false,
+      position: nodeWithPos.pos
     };
     if (node.type === schema.nodes.yaml_metadata) {
       item.type = kYamlMetadataOutlineItemType;

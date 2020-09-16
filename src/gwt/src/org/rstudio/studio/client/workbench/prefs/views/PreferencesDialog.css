@@ -83,3 +83,9 @@
 .visualModeWrapSelectWidget .gwt-Label {
    margin-bottom: 1px;
 }
+
+
+.userDictEditButton {
+   margin-left: 8px !important;
+   margin-top: 2px !important;
+}

@@ -30,7 +30,7 @@ public class FileIconRenderer extends AbstractSafeHtmlRenderer<FileIcon>
 {
    interface Template extends SafeHtmlTemplates
    {
-      @SafeHtmlTemplates.Template("<img src='{0}' border='0' width='{1}' height='{2}' alt='{3}'>")
+      @SafeHtmlTemplates.Template("<img src='{0}' draggable='false' border='0' width='{1}' height='{2}' alt='{3}'>")
       SafeHtml image(SafeUri imageUri, int width, int height, String altText);
    }
 

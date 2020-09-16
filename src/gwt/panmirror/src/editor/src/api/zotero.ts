@@ -28,16 +28,21 @@ export interface ZoteroResult {
 export interface ZoteroCollectionSpec {
   name: string;
   version: number;
+  key: string;
+  parentKey: string;
 }
 
 export interface ZoteroCollection extends ZoteroCollectionSpec {
-  items: CSL[];
+  items: ZoteroCSL[];
 }
 
-export const kZoteroMyLibrary = 1;
+export interface ZoteroCSL extends CSL {
+  libraryID: string;
+  collectionKeys: string[];
+}
 
-// https://github.com/retorquere/zotero-better-bibtex/blob/master/translators/Better%20BibLaTeX.json
-export const kZoteroBibLaTeXTranslator = 'f895aa0d-f28e-47fe-b247-2ea77c6ed583';
+// https://github.com/retorquere/zotero-better-bibtex/blob/master/translators/Better%20BibTeX.json
+export const kZoteroBibTeXTranslator = 'ca65189f-8815-4afe-8c8b-8c7c15f0edca';
 
 export interface ZoteroServer {
 
@@ -45,9 +50,17 @@ export interface ZoteroServer {
 
   getCollections: (
     file: string | null,
-    collections: string[] | null,
+    collections: string[],
     cached: ZoteroCollectionSpec[],
     useCache: boolean
+  ) => Promise<ZoteroResult>;
+
+  getLibraryNames: ()
+    => Promise<ZoteroResult>;
+
+  getActiveCollectionSpecs: (
+    file: string | null,
+    collections: string[]
   ) => Promise<ZoteroResult>;
 
   // Return status: nohost w/ warning text if it fails to 

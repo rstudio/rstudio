@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.command.ShortcutViewer;
 
+import com.google.gwt.user.client.Command;
+
 public class SourceVimCommands
 {
    public final native void save(SourceColumnManager source) /*-{
@@ -94,14 +96,14 @@ public class SourceVimCommands
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
    }-*/;
    
-   public native final void closeAllTabs(SourceColumnManager source) /*-{
+   public native final void closeAllTabs(SourceColumnManager source, Command onCompleted) /*-{
       var callback = $entry(function(cm, params) {
       
          var interactive = true;
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZ)(interactive, false);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZLcom/google/gwt/user/client/Command;)(interactive, false, onCompleted);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);

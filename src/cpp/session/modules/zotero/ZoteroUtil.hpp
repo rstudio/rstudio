@@ -25,6 +25,8 @@ namespace session {
 namespace modules {
 namespace zotero {
 
+extern const char * const kMyLibrary;
+
 void TRACE(const std::string& message, boost::optional<std::size_t> items = boost::optional<std::size_t>());
 
 } // end namespace zotero

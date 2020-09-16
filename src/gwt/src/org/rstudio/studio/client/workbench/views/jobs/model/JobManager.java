@@ -27,8 +27,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -387,15 +386,10 @@ public class JobManager implements JobRefreshEvent.Handler,
             code,
             spec ->
             {
-               server_.startJob(spec, new ServerRequestCallback<String>() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
             }
       );
+      
       dialog.showModal();
    }
 
@@ -415,14 +409,9 @@ public class JobManager implements JobRefreshEvent.Handler,
                }
 
                // tell the server to start running this script
-               server_.startJob(spec, new ServerRequestCallback<String>() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
             });
+      
       dialog.showModal();
    }
 

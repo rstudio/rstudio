@@ -27,7 +27,7 @@ public interface PanmirrorPandocServerOperations
    void pandocAstToMarkdown(JavaScriptObject ast, String format, JsArrayString options, ServerRequestCallback<String> callback);
    void pandocListExtensions(String format, ServerRequestCallback<String> callback);
    void pandocGetBibliography(String file, JsArrayString bibliographies, String refBlock, String etag, ServerRequestCallback<JavaScriptObject> callback);
-   void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, ServerRequestCallback<Boolean> callback);
+   void pandocAddToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibTeX, ServerRequestCallback<Boolean> callback);
    void pandocCitationHTML(String file, String sourceAsJson, String csl, ServerRequestCallback<String> callback);
 }
       

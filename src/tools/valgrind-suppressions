@@ -1,0 +1,40 @@
+{
+   Compare to Boost End Iterator
+   Memcheck:Cond
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_incrementERNS0_18directory_iteratorEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_constructERNS0_18directory_iteratorERKNS0_4pathEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem18directory_iteratorC1ERKNS0_4pathE
+   fun:_ZNK7rstudio4core8FilePath11getChildrenERSt6vectorIS1_SaIS1_EE
+   ...
+}
+{
+   Compare to Boost End Iterator 2
+   Memcheck:Cond
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_incrementERNS0_18directory_iteratorEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem18directory_iterator9incrementEv
+   fun:_ZN13rstudio_boost9iterators20iterator_core_access9incrementINS_10filesystem18directory_iteratorEEEvRT_
+   fun:_ZN13rstudio_boost9iterators6detail20iterator_facade_baseINS_10filesystem18directory_iteratorENS3_15directory_entryENS0_25single_pass_traversal_tagERS5_lLb0ELb0EEppEv
+   fun:_ZNK7rstudio4core8FilePath11getChildrenERSt6vectorIS1_SaIS1_EE
+   ...
+}
+{
+   Compare Boost End Iterator 3
+   Memcheck:Cond
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_incrementERNS0_18directory_iteratorEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_constructERNS0_18directory_iteratorERKNS0_4pathEPNS_6system10error_codeE
+   fun:_ZN12_GLOBAL__N_114remove_all_auxERKN13rstudio_boost10filesystem4pathENS1_9file_typeEPNS0_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem6detail10remove_allERKNS0_4pathEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem10remove_allERKNS0_4pathE
+   fun:_ZNK7rstudio4core8FilePath6removeEv
+
+}
+{
+   Boost Remove 
+   Memcheck:Cond
+   fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_incrementERNS0_18directory_iteratorEPNS_6system10error_codeE
+   fun:_ZN12_GLOBAL__N_114remove_all_auxERKN13rstudio_boost10filesystem4pathENS1_9file_typeEPNS0_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem6detail10remove_allERKNS0_4pathEPNS_6system10error_codeE
+   fun:_ZN13rstudio_boost10filesystem10remove_allERKNS0_4pathE
+   fun:_ZNK7rstudio4core8FilePath6removeEv
+   ...
+}

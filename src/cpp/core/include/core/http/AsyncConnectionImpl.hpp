@@ -203,7 +203,7 @@ public:
 
       // call the response filter if we have one
       if (responseFilter_)
-         responseFilter_(absoluteUri_, &response_);
+         responseFilter_(originalRequest_, &response_);
 
       if (response_.isStreamResponse())
       {
@@ -396,8 +396,8 @@ private:
             // headers parsed - body parsing has not yet begun
             else if (status == RequestParser::headers_parsed)
             {
-               // record the original uri
-               absoluteUri_ = request_.absoluteUri();
+               // record the original request
+               originalRequest_.assign(request_);
 
                // call the request filter if we have one
                if (requestFilter_)
@@ -595,7 +595,7 @@ private:
    ResponseFilter responseFilter_;
    boost::array<char, 8192> buffer_;
    RequestParser requestParser_;
-   std::string absoluteUri_;
+   Request originalRequest_;
    http::Request request_;
    http::Response response_;
 

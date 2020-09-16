@@ -34,6 +34,7 @@ public class PanmirrorThemeCreator
       
       // set mode info
       theme.darkMode = aceTheme.isDark();
+      theme.solarizedMode = aceTheme.isSolarizedLight();
       
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       
@@ -71,6 +72,7 @@ public class PanmirrorThemeCreator
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
       
       theme.placeholderTextColor = theme.darkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+      theme.invisibleTextColor = DomUtils.extractCssValue("ace_invisible", "color");
       
       theme.commentColor = DomUtils.extractCssValue("ace_comment-highlight", "color");
       theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");

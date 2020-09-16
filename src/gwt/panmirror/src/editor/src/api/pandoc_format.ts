@@ -136,7 +136,9 @@ function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatC
 
     // if it's a text node with a raw-html then scan it for the format comment
     const schema = doc.type.schema;
-    if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {
+    if (node.isText &&
+      schema.marks.raw_html_comment && schema.marks.raw_html_comment.isInSet(node.marks) &&
+      node.attrs.format) {
       foundFirstRawInline = true;
       config = pandocFormatConfigFromCommentInCode(node.textContent);
       return false;
@@ -341,26 +343,28 @@ export function hasShortcutHeadingLinks(pandocExtensions: PandocExtensions) {
   return pandocExtensions.implicit_header_references && pandocExtensions.shortcut_reference_links;
 }
 
-function commonmarkExtensions() {
-  const extensions = ['+raw_html'];
+function commonmarkExtensions(rawHTML = true) {
+  const extensions = [
+    rawHTML ? '+raw_html' : '-raw_html',
+    '+all_symbols_escapable',
+    '+backtick_code_blocks',
+    '+fenced_code_blocks',
+    '+space_in_atx_header',
+    '+intraword_underscores',
+    '+lists_without_preceding_blankline',
+    '+shortcut_reference_links',
+  ];
   return extensions;
 }
 
 function gfmExtensions() {
   const extensions = [
-    '+all_symbols_escapable',
+    ...commonmarkExtensions(),
     '+auto_identifiers',
     '+autolink_bare_uris',
-    '+backtick_code_blocks',
     '+emoji',
-    '+fenced_code_blocks',
     '+gfm_auto_identifiers',
-    '+intraword_underscores',
-    '+lists_without_preceding_blankline',
     '+pipe_tables',
-    '+raw_html',
-    '+shortcut_reference_links',
-    '+space_in_atx_header',
     '+strikeout',
     '+task_lists',
   ];
@@ -371,8 +375,8 @@ function gfmExtensions() {
 // https://github.com/yuin/goldmark/#html-renderer-options
 function goldmarkExtensions(format: EditorFormat) {
   const extensions = [
-    // disables raw_html by default
-    '-raw_html',
+    // start with commonmark
+    ...commonmarkExtensions(false),
 
     // adds most of gfm
     '+pipe_tables',

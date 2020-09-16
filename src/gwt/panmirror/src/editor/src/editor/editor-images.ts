@@ -17,10 +17,13 @@ import { EditorUIImages } from '../api/ui-images';
 
 import copyImage from './images/copy.png';
 import propertiesImage from './images/properties.png';
+import propertiesDecoImage from './images/properties_deco.png';
+import propertiesDecoDarkImage from './images/properties_deco_dark.png';
 import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
 import runprevchunksImage from './images/runprevchunks.png';
 import searchImage from './images/search.png';
+import searchProgressImage from './images/search_progress.gif';
 
 import omniInsertGenericImage from './images/omni_insert/generic.png';
 import heading1Image from './images/omni_insert/heading1.png';
@@ -117,15 +120,31 @@ import songDarkImage from './images/citations/song_dark.png';
 import webImage from './images/citations/web.png';
 import webDarkImage from './images/citations/web_dark.png';
 import zoteroOverlayImage from './images/citations/zotero-overlay.png';
+import localSourcesImage from './images/citations/insert/local-sources.png';
+import bibliographyImage from './images/citations/insert/bibliography.png';
+import bibliographyFolderImage from './images/citations/insert/bibliography-folder.png';
+import zoteroRootImage from './images/citations/insert/zotero-root.png';
+import zoteroLibraryImage from './images/citations/insert/zotero-library.png';
+import zoteroCollectionImage from './images/citations/insert/zotero-collection.png';
+import doiImage from './images/citations/insert/doi.png';
+import crossRefImage from './images/citations/insert/crossref.png';
+import pubmedImage from './images/citations/insert/pubmed.png';
+import dataciteImage from './images/citations/insert/datacite.png';
+
+import tagDelete from './images/widgets/tag-delete.png';
+import tagEdit from './images/widgets/tag-edit.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
     properties: propertiesImage,
+    properties_deco: propertiesDecoImage,
+    properties_deco_dark: propertiesDecoDarkImage,
     removelink: removelinkImage,
     runchunk: runchunkImage,
     runprevchunks: runprevchunksImage,
     search: searchImage,
+    search_progress: searchProgressImage,
     omni_insert: {
       generic: omniInsertGenericImage,
       heading1: heading1Image,
@@ -222,7 +241,21 @@ export function defaultEditorUIImages(): EditorUIImages {
       song_dark: songDarkImage,
       web: webImage,
       web_dark: webDarkImage,
-      zoteroOverlay: zoteroOverlayImage
+      zoteroOverlay: zoteroOverlayImage,
+      local_sources: localSourcesImage,
+      bibligraphy: bibliographyImage,
+      bibligraphy_folder: bibliographyFolderImage,
+      zotero_library: zoteroLibraryImage,
+      zotero_collection: zoteroCollectionImage,
+      zotero_root: zoteroRootImage,
+      doi: doiImage,
+      crossref: crossRefImage,
+      pubmed: pubmedImage,
+      datacite: dataciteImage
     },
+    widgets: {
+      tag_delete: tagDelete,
+      tag_edit: tagEdit
+    }
   };
 }

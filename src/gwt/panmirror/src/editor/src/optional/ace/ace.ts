@@ -40,7 +40,7 @@ import { EditorEvents } from '../../api/events';
 import { kPlatformMac } from '../../api/platform';
 import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 import { ExtensionContext } from '../../api/extension';
-import { DispatchEvent, ResizeEvent } from '../../api/event-types';
+import { DispatchEvent, ResizeEvent, ScrollEvent } from '../../api/event-types';
 import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
 import { handleArrowToAdjacentNode } from '../../api/cursor';
 
@@ -50,6 +50,8 @@ import { findPluginState } from '../../behaviors/find';
 import { AceRenderQueue } from './ace-render-queue';
 import { AcePlaceholder } from './ace-placeholder';
 import { AceNodeViews } from './ace-node-views';
+
+import zenscroll from 'zenscroll';
 
 import './ace.css';
 
@@ -124,8 +126,6 @@ export class AceNodeView implements NodeView {
   private readonly options: CodeViewOptions;
   private readonly events: EditorEvents;
 
-  private readonly runChunkToolbar: HTMLDivElement;
-
   private updating: boolean;
   private escaping: boolean;
   private mode: string;
@@ -134,6 +134,8 @@ export class AceNodeView implements NodeView {
   private queuedSelection: QueuedSelection | null;
   private resizeTimer: number;
   private renderedWidth: number;
+  private scrollRow: number;
+  private cursorDirty: boolean;
 
   private readonly subscriptions: VoidFunction[];
 
@@ -168,6 +170,8 @@ export class AceNodeView implements NodeView {
     this.subscriptions = [];
     this.resizeTimer = 0;
     this.renderedWidth = 0;
+    this.scrollRow = 0;
+    this.cursorDirty = false;
 
     // options
     this.editorOptions = editorOptions;
@@ -191,10 +195,6 @@ export class AceNodeView implements NodeView {
     if (options.firstLineMeta) {
       this.dom.classList.add('pm-ace-first-line-meta');
     }
-
-    // add a chunk execution button if execution is supported
-    this.runChunkToolbar = this.initRunChunkToolbar(ui);
-    this.dom.append(this.runChunkToolbar);
 
     // update mode
     this.updateMode();
@@ -330,7 +330,7 @@ export class AceNodeView implements NodeView {
   }
 
   private onEditorDispatch(tr: Transaction) {
-    if (tr.selectionSet) {
+    if (!tr.docChanged && tr.selectionSet) {
       this.highlightSelectionAcross(tr.selection);
     }
   }
@@ -389,14 +389,53 @@ export class AceNodeView implements NodeView {
     if (change) {
       // update content
       const start = this.getPos() + 1;
-      const tr = this.view.state.tr.replaceWith(
-        start + change.from,
-        start + change.to,
-        change.text ? this.node.type.schema.text(change.text) : null,
-      );
-      this.view.dispatch(tr);
+      if (!isNaN(start)) {
+        const tr = this.view.state.tr.replaceWith(
+          start + change.from,
+          start + change.to,
+          change.text ? this.node.type.schema.text(change.text) : null,
+        );
+        this.view.dispatch(tr);
+      }
     }
     this.updateMode();
+  }
+
+  /**
+   * Scrolls a child of the editor chunk into view.
+   * 
+   * @param ele The child to scroll.
+   */
+  private scrollIntoView(ele: HTMLElement) {
+    const editingRoot = editingRootNode(this.view.state.selection);
+    if (editingRoot) {
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const scroller = zenscroll.createScroller(container);
+
+      // Since the element we want to scroll into view is not a direct child of
+      // the scrollable container, do a little math to figure out the
+      // destination scroll position.
+      const top = ele.offsetTop + this.dom.offsetTop;
+      const bottom = top + ele.offsetHeight;
+      const viewTop = container.scrollTop;
+      const viewBottom = container.scrollTop + container.offsetHeight;
+
+      // Scroll based on element's current position and size
+      if (top > viewTop && bottom < viewBottom) {
+        // Element is already fully contained in the viewport
+        return;
+      } else if (ele.offsetHeight > container.offsetHeight) {
+        // Element is taller than the viewport, so show the first part of it
+        scroller.toY(top);
+      } else if (top < viewTop) {
+        // Element is above viewport, so scroll it into view
+        scroller.toY(top);
+      } else if (bottom > viewBottom) {
+        // Part of the element is beneath the viewport, so scroll just enough to
+        // bring it into view
+        scroller.toY(container.scrollTop - (viewBottom - bottom));
+      }
+    }
   }
 
   /**
@@ -409,10 +448,20 @@ export class AceNodeView implements NodeView {
       return;
     }
 
-    // call host factory to instantiate editor and populate with initial content
-    this.chunk = this.ui.chunks.createChunkEditor('ace');
+    // call host factory to instantiate editor
+    this.chunk = this.ui.chunks.createChunkEditor('ace',
+      this.node.attrs.md_index, {
+      getPos: () => this.getPos(),
+      scrollIntoView: (ele) => this.scrollIntoView(ele),
+      scrollCursorIntoView: () => this.scrollCursorIntoView()
+    });
+
+    // populate initial contents
     this.aceEditor = this.chunk.editor as AceAjax.Editor;
+    this.updating = true;
     this.aceEditor.setValue(this.node.textContent);
+    this.updating = false;
+
     this.aceEditor.clearSelection();
 
     // cache edit session for convenience; most operations happen on the session
@@ -421,7 +470,6 @@ export class AceNodeView implements NodeView {
     // remove the preview and recreate chunk toolbar
     this.dom.innerHTML = "";
     this.dom.appendChild(this.chunk.element);
-    this.dom.append(this.runChunkToolbar);
 
     // Propagate updates from the code editor to ProseMirror
     this.aceEditor.on("changeSelection", () => {
@@ -443,14 +491,25 @@ export class AceNodeView implements NodeView {
 
     this.aceEditor.on('blur', () => {
       // Add a class to editor; this class contains CSS rules that hide editor
-      // components that Ace cannot hide natively (such as the cursor and
-      // matching bracket indicator)
+      // components that Ace cannot hide natively (such as the cursor,
+      // matching bracket indicator, and active selection)
       this.dom.classList.add("pm-ace-editor-inactive");
+    });
 
-      // Clear the selection (otherwise could conflict with Prosemirror's
-      // selection)
-      if (this.editSession) {
-        this.editSession.selection.clearSelection();
+    // If the cursor moves and we're in focus, ensure that the cursor is
+    // visible. Ace's own cursor visiblity mechanisms don't work in embedded
+    // editors.
+    if (this.editSession) {
+      this.editSession.getSelection().on('changeCursor', () => {
+        if (this.dom.contains(document.activeElement)) {
+          this.cursorDirty = true;
+        }
+      });
+    }
+    this.aceEditor.on('beforeEndOperation', () => {
+      if (this.cursorDirty) {
+        this.scrollCursorIntoView();
+        this.cursorDirty = false;
       }
     });
 
@@ -628,6 +687,13 @@ export class AceNodeView implements NodeView {
     this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
       this.debounceResize();
     }));
+
+    // Subscribe to scroll event; invalidates the row we're scrolled to so
+    // scrollback will be triggered if necessary (after e.g., typing after
+    // scrolling offscreen)
+    this.subscriptions.push(this.events.subscribe(ScrollEvent, () => {
+      this.scrollRow = -1;
+    }));
   }
 
   /**
@@ -662,16 +728,6 @@ export class AceNodeView implements NodeView {
         this.chunk.setMode(lang);
       }
       this.mode = lang;
-    }
-
-    // if we have a language check whether execution should be enabled for this language
-    if (lang && this.canExecuteChunks()) {
-      const enabled = !!this.editorOptions.rmdChunkExecution!.find(rmdChunkLang => {
-        return lang.localeCompare(rmdChunkLang, undefined, { sensitivity: 'accent' }) === 0;
-      });
-      this.enableChunkExecution(enabled);
-    } else {
-      this.enableChunkExecution(false);
     }
   }
 
@@ -730,76 +786,57 @@ export class AceNodeView implements NodeView {
     this.escaping = false;
   }
 
-  private initRunChunkToolbar(ui: EditorUI) {
-    const toolbar = window.document.createElement('div');
-    toolbar.classList.add('pm-ace-toolbar');
-    if (this.options.executeRmdChunkFn) {
-      // run previous chunks button
-      const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
-      const runPreviousChunksButton = createImageButton(
-        ui.images.runprevchunks!,
-        ['pm-run-previous-chunks-button'],
-        `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
-      );
-      runPreviousChunksButton.tabIndex = -1;
-      runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
-      toolbar.append(runPreviousChunksButton);
-
-      // run chunk button
-      const runChunkShortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
-      const runChunkButton = createImageButton(
-        ui.images.runchunk!,
-        ['pm-run-chunk-button'],
-        `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
-      );
-      runChunkButton.tabIndex = -1;
-      runChunkButton.onclick = this.executeChunk.bind(this);
-      toolbar.append(runChunkButton);
-    }
-
-    return toolbar;
-  }
-
-  private executeChunk() {
-    // ensure editor is rendered
-    if (!this.aceEditor) {
-      this.initEditor();
-    }
-    if (this.isChunkExecutionEnabled()) {
-      const chunk = rmdChunk(this.node.textContent);
-      if (chunk != null) {
-        this.options.executeRmdChunkFn!(chunk);
-      }
-    }
-  }
-
-  private executePreviousChunks() {
-    if (this.isChunkExecutionEnabled()) {
-      const prevChunks = previousExecutableRmdChunks(this.view.state, this.getPos());
-      const mergedChunk = mergeRmdChunks(prevChunks);
-      if (mergedChunk) {
-        this.options.executeRmdChunkFn!(mergedChunk);
-      }
-    }
-  }
-
-  private canExecuteChunks() {
-    return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
-  }
-
-  private enableChunkExecution(enable: boolean) {
-    this.runChunkToolbar.style.display = enable ? 'initial' : 'none';
-  }
-
-  private isChunkExecutionEnabled() {
-    return this.runChunkToolbar.style.display !== 'none';
-  }
-
   private getContents(): string {
     if (this.editSession) {
       return this.editSession.getValue();
     } else {
       return this.dom.innerText;
+    }
+  }
+
+  /**
+   * Ensures that the Ace cursor is visible in the scrollable region of the document.
+   */
+  private scrollCursorIntoView(): void {
+
+    // No need to try to enforce cursor position if we're already scrolled to
+    // this row
+    if (this.editSession &&
+      this.editSession.getSelection().getCursor().row === this.scrollRow) {
+      return;
+    }
+
+    // Ensure we still have focus before proceeding
+    if (this.dom.contains(document.activeElement)) {
+      const cursor = document.activeElement as HTMLElement;
+
+      // Ace doesn't actually move the cursor but uses CSS translations to
+      // make it appear in the right place, so we need to use the somewhat
+      // expensive getBoundingClientRect call to get a resolved position.
+      // (The alternative would be parse the translate: transform(10px 20px))
+      // call from the style property.)
+      const editingRoot = editingRootNode(this.view.state.selection)!;
+      const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const containerRect = container.getBoundingClientRect();
+      const cursorRect = cursor.getBoundingClientRect();
+
+      // Scrolling down?
+      const down = (cursorRect.bottom + cursorRect.height + 20) - containerRect.bottom;
+      if (down > 0) {
+        container.scrollTop += down;
+      } else {
+        // Scrolling up?
+        const up = (containerRect.top + cursorRect.height + 35) - cursorRect.top;
+        if (up > 0) {
+          container.scrollTop -= up;
+        }
+      }
+
+      // Update cached scroll row so we don't unnecessarily redo these
+      // computations
+      if (this.editSession) {
+        this.scrollRow = this.editSession.getSelection().getCursor().row;
+      }
     }
   }
 }

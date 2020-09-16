@@ -5,3 +5,4 @@ CMakeLists.txt.user*
 CMakeSettings.json
 compile_commands.json
 out/
+build/

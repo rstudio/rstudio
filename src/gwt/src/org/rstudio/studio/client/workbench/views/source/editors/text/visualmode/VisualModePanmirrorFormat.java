@@ -135,8 +135,10 @@ public class VisualModePanmirrorFormat
             // create extensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             
-            // chunk execution enabled if the target can execute
-            format.rmdExtensions.codeChunks = target_.canExecuteChunks();
+            // chunk execution is always enabled b/c sometimes users will have 
+            // code chunks in a .md file and w/o these handler the code chunks
+            // get butchered (b/c source capsules aren't run)
+            format.rmdExtensions.codeChunks = true;
             
             // support for bookdown part headers is always enabled b/c typing 
             // (PART\*) in the visual editor would result in an escaped \, which
@@ -172,7 +174,18 @@ public class VisualModePanmirrorFormat
    }
    
    
-  
+   public boolean isRMarkdownDocument()
+   {
+      if (target_.canExecuteChunks()) 
+      {
+         return true;
+      }
+      else
+      {
+         String path = docUpdateSentinel_.getPath();
+         return (path != null && path.toLowerCase().endsWith(".rmd"));
+      }
+   }
    
    public boolean isHugoProjectDocument()
    {
@@ -261,7 +274,22 @@ public class VisualModePanmirrorFormat
    
    private boolean hasBookdownCrossReferences()
    {
-      return isBookdownProjectDocument() || isBlogdownProjectDocument() || isDistillDocument();
+      return isBookdownProjectDocument() || 
+             isBookdownStandaloneDocument() || 
+             isBlogdownProjectDocument() || 
+             isDistillDocument();
+   }
+   
+   private boolean isBookdownStandaloneDocument()
+   {
+      List<String> formats = getOutputFormats();
+      for (String format : formats) 
+      {
+         boolean isBookdown = format.startsWith("bookdown::") && format.endsWith("2");
+         if (isBookdown)
+            return true;
+      }
+      return false;
    }
    
    private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config)
@@ -343,28 +371,7 @@ public class VisualModePanmirrorFormat
 
    private boolean isDocInProject()
    {  
-      // if we are in a project
-      if (workbenchContext_.isProjectActive())
-      {
-         // if the doc path is  null let's assume it's going to be saved
-         // within the current project
-         String docPath = docUpdateSentinel_.getPath();
-         if (docPath != null)
-         {
-            // if the doc is in the project directory
-            FileSystemItem docFile = FileSystemItem.createFile(docPath);
-            FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
-            return docFile.getPathRelativeTo(projectDir) != null;
-         }
-         else
-         {
-            return true;
-         }
-      }
-      else
-      {
-         return false;
-      }
+      return VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
    }
    
    

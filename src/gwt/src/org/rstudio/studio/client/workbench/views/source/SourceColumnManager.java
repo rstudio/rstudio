@@ -272,7 +272,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       };
 
       setActive(column.getName());
-      
+
       // register custom focus handler for case where ProseMirror
       // instance (or element within) had focus
       ModalDialogBase.registerReturnFocusHandler((Element el) ->
@@ -282,13 +282,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          {
             return parent.hasClassName(sourceClass);
          });
-         
+
          if (sourceEl != null)
          {
             commands_.activateSource().execute();
             return true;
          }
-         
+
          return false;
       });
    }
@@ -386,7 +386,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.setActiveEditor(target);
    }
 
-   private void setActive(SourceColumn column)
+   public void setActive(SourceColumn column)
    {
       SourceColumn prevColumn = activeColumn_;
       activeColumn_ = column;
@@ -702,7 +702,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public EditingTarget addTab(SourceDocument doc, boolean atEnd,
                                int mode, SourceColumn column)
    {
-      if (column == null)
+      if (column == null || getByName(column.getName()) == null)
          column = getActive();
       return column.addTab(doc, atEnd, mode);
    }
@@ -762,20 +762,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return getByName(name) == null || getByName(name).getTabCount() == 0;
    }
 
-   public boolean attemptTextEditorActivate()
+   public boolean requestActiveEditorContext()
    {
-      if (!(hasActiveEditor() ||
-            activeColumn_.getActiveEditor() instanceof TextEditingTarget))
+      boolean hasActiveEditor =
+            hasActiveEditor() &&
+            activeColumn_.getActiveEditor() instanceof TextEditingTarget;
+
+      if (!hasActiveEditor)
          return false;
 
       TextEditingTarget editingTarget = (TextEditingTarget) activeColumn_.getActiveEditor();
-      editingTarget.ensureTextEditorActive(() -> {
-         getEditorContext(
-            editingTarget.getId(),
-            editingTarget.getPath(),
-            editingTarget.getDocDisplay()
-         );
-      });
+      editingTarget.getEditorContext();
       return true;
    }
 
@@ -876,7 +873,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void showDataItem(DataItem data)
    {
-      columnList_.forEach((column) -> {
+      for (SourceColumn column : columnList_)
+      {
          for (EditingTarget target : column.getEditors())
          {
             String path = target.getPath();
@@ -889,7 +887,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
          }
-      });
+      }
 
       ensureVisible(true);
       server_.newDocument(
@@ -1354,34 +1352,40 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-
-   public void closeAllTabs(boolean excludeActive, boolean excludeMain)
+   
+   public void closeAllTabs(boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
-      columnList_.forEach((column) -> closeAllTabs(column, excludeActive, excludeMain));
+      columnList_.forEach((column) ->
+      {
+         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
+      });
+         
    }
 
-   public void closeAllTabs(SourceColumn column, boolean excludeActive, boolean excludeMain)
+   public void closeAllTabs(SourceColumn column,
+                            boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
       if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
       {
-         cpsExecuteForEachEditor(column.getEditors(),
-            new CPSEditingTargetCommand()
+         final CPSEditingTargetCommand command = (EditingTarget target, Command continuation) ->
+         {
+            if (excludeActive &&
+                  (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
             {
-               @Override
-               public void execute(EditingTarget target, Command continuation)
-               {
-                  if (excludeActive &&
-                     (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
-                  {
-                     continuation.execute();
-                     return;
-                  }
-                  else
-                  {
-                     column.closeTab(target.asWidget(), false, continuation);
-                  }
-               }
-            });
+               continuation.execute();
+               return;
+            }
+            else
+            {
+               column.closeTab(target.asWidget(), false, continuation);
+            }
+         };
+         
+         cpsExecuteForEachEditor(column.getEditors(), command, onCompleted);
       }
    }
 
@@ -1459,14 +1463,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
 
       // create a command used to close all tabs
-      final Command closeAllTabsCommand = sourceColumn == null ?
-                                          () -> closeAllTabs(excludeActive, false) :
-                                          () -> closeAllTabs(sourceColumn, excludeActive, false);
+      final Command closeAllTabsCommand = sourceColumn == null
+            ? () -> closeAllTabs(excludeActive, false, null)
+            : () -> closeAllTabs(sourceColumn, excludeActive, false, null);
 
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
-         CommandUtil.join(closeAllTabsCommand,
-                          onCompleted),
+         CommandUtil.join(closeAllTabsCommand, onCompleted),
          null);
    }
 
@@ -1488,7 +1491,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      ArrayList<SourceDocument> moveEditors = new ArrayList<>();
       SourceColumn mainColumn = getByName(MAIN_SOURCE_NAME);
       if (num < columnList_.size())
       {
@@ -1506,6 +1508,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             ArrayList<EditingTarget> editors = column.getEditors();
             for (EditingTarget target : editors)
             {
+               if (!target.dirtyState().getValue())
+               {
+                  column.closeTab(target.asWidget(), false);
+                  continue;
+               }
                server_.getSourceDocument(target.getId(),
                   new ServerRequestCallback<SourceDocument>()
                   {
@@ -1561,7 +1568,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
 
       if (column == activeColumn_)
-         setActive("");
+         setActive(MAIN_SOURCE_NAME);
       columnList_.remove(column);
       columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
                                        getActive().getName());
@@ -1689,6 +1696,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void fireDocTabsChanged()
    {
       activeColumn_.fireDocTabsChanged();
+   }
+
+   public void scrollToPosition(FilePosition position, boolean moveCursor)
+   {
+      // ensure we have an active source column
+      getActive();
+
+      if (hasActiveEditor())
+      {
+         SourcePosition srcPosition = SourcePosition.create(
+            position.getLine() - 1,
+            position.getColumn() - 1);
+         activeColumn_.getActiveEditor().navigateToPosition(
+            srcPosition, false, false, moveCursor, null);
+      }
    }
 
    private boolean hasDoc()
@@ -1890,9 +1912,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
    }
 
-   public void beforeShow()
+   public void beforeShow(boolean excludeMain)
    {
-      columnList_.forEach((column) -> column.onBeforeShow());
+      for (SourceColumn column : columnList_)
+      {
+         if (!excludeMain ||
+             !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            column.onBeforeShow();
+      }
    }
 
    public void beforeShow(String name)
@@ -2107,7 +2134,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       vimCommands_.selectNextTab(this);
       vimCommands_.selectPreviousTab(this);
       vimCommands_.closeActiveTab(this);
-      vimCommands_.closeAllTabs(this);
+      vimCommands_.closeAllTabs(this, () -> commands_.activateConsole().execute());
       vimCommands_.createNewDocument(this);
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
@@ -2578,7 +2605,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
-   private HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
+   private final HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
 
    private Commands commands_;

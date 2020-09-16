@@ -78,7 +78,7 @@ public class VisualModeEditingLocation
       
    }
    
-   public PanmirrorEditingOutlineLocation getSourceOutlneLocation()
+   public PanmirrorEditingOutlineLocation getSourceOutlineLocation()
    {
       // if we are at the very top of the file then this is a not a good 'hint'
       // for where to navigate to, in that case return null
@@ -120,7 +120,7 @@ public class VisualModeEditingLocation
    
    public void setSourceOutlineLocation(PanmirrorEditingOutlineLocation location)
    {
-   // if we don't have an outline then bail
+      // if we don't have an outline then bail
       if (docDisplay_.getScopeTree().length() == 0)
          return;
       
@@ -130,7 +130,7 @@ public class VisualModeEditingLocation
       buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
       
       // if the lengths differ then bail
-      if (outlineItems.size() != outlineItems.size())
+      if (outlineItems.size() != location.items.length)
          return;
       
       // iterate over the items until we find the active one (bail if our own

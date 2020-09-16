@@ -32,6 +32,9 @@
           "key": {
             "type": "string"
           },
+          "parentCollection": {
+            "type": ["string", "boolean"]
+          },
           "version": {
             "type": "number"
           },

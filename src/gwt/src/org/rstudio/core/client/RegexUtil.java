@@ -67,6 +67,9 @@ public class RegexUtil
    public static final Pattern RE_SWEAVE_CHUNK_END =
          Pattern.create("^\\s*@\\s*$", "");
    
+   public static final Pattern RE_EMBEDDED_R_CHUNK_BEGIN =
+         Pattern.create("^\\s*\\{(.*?)\\}\\s*$", "");
+   
    static { initialize(); }
    
 }

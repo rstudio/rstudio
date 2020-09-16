@@ -14,12 +14,42 @@
  */
 
 import { CSLName, CSLDate, CSL } from "./csl";
-import { EditorUI } from "./ui";
 import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
 import { urlForDOI } from "./doi";
 
-const kInvalidCiteKeyChars = /[\s@',\\\#}{~%&\$\^_]/g;
+export const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
+
+export function createUniqueCiteId(existingIds: string[], baseId: string): string {
+  let count = 0;
+
+  // The base ID but with invalid characters replaced
+  let safeBaseId = baseId.replace(kInvalidCiteKeyChars, '');
+
+  // Ensure that this is a valid citation, stripping any invalid characters
+  let proposedId = safeBaseId;
+
+  // If there is a conflict with an existing id, we will append
+  // the following character and try again. If the conflict continues with
+  // the postfix character added, we'll increment and keep going through the 
+  // alphabet
+  const disambiguationStartCharacter = 97; // a
+
+  while (existingIds.includes(proposedId)) {
+    // If we've wrapped around to a and we haven't found a unique entry
+    // Add an 'a' to the end and try again. Will ultimately create an entry like
+    // Teague2012aaaf
+    if (count !== 0 && count % 26 === 0) {
+      safeBaseId = safeBaseId + String.fromCharCode(disambiguationStartCharacter);
+    }
+
+    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
+    proposedId = safeBaseId + postfix;
+    count++;
+  }
+  return proposedId;
+
+}
 
 // Suggests a bibliographic identifier based upon the source
 export function suggestCiteId(existingIds: string[], csl: CSL) {
@@ -63,103 +93,13 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
 
   // Create a deduplicated string against the existing entries
   let baseId = `${citeIdLeading.toLowerCase()}${datePart}`;
-
   if (baseId.length === 0) {
-    // Could try title
+    baseId = 'untitled';
   }
 
-  // Strip any characters that shouldn't appear in a bibtex citekey
-  baseId = baseId.replace(kInvalidCiteKeyChars, '');
-
-  let proposedId = baseId;
-  let count = 0;
-
-  // If there is a conflict with an existing id, we will append
-  // the following character and try again. If the conflict continues with
-  // the postfix character added, we'll increment and keep going through the 
-  // alphabet
-  const disambiguationStartCharacter = 97; // a
-
-  while (existingIds.includes(proposedId)) {
-    // If we've wrapped around to a and we haven't found a unique entry
-    // Add an 'a' to the end and try again. Will ultimately create an entry like
-    // Teague2012aaaf
-    if (count !== 0 && count % 26 === 0) {
-      baseId = baseId + String.fromCharCode(disambiguationStartCharacter);
-    }
-
-    const postfix = String.fromCharCode(disambiguationStartCharacter + (count % 26));
-    proposedId = baseId + postfix;
-    count++;
-  }
-  return proposedId;
+  return createUniqueCiteId(existingIds, baseId);
 }
 
-export function imageForType(ui: EditorUI, type: string): [string?, string?] {
-  switch (type) {
-    case 'article':
-    case 'article-journal':
-    case 'article-magazine':
-    case 'article-newspaper':
-    case 'paper-conference':
-    case 'review':
-    case 'review-book':
-    case 'techreport':
-      return [ui.images.citations?.article, ui.images.citations?.article_dark];
-    case 'bill':
-    case 'legislation':
-    case 'legal_case':
-    case 'patent':
-    case 'treaty':
-      return [ui.images.citations?.legal, ui.images.citations?.legal_dark];
-    case 'book':
-    case 'booklet':
-    case 'chapter':
-    case 'inbook':
-    case 'incollection':
-    case 'manuscript':
-    case 'manual':
-    case 'thesis':
-    case 'masterthesis':
-    case 'phdthesis':
-      return [ui.images.citations?.book, ui.images.citations?.book_dark];
-    case 'broadcast':
-      return [ui.images.citations?.broadcast, ui.images.citations?.broadcast_dark];
-    case 'data':
-    case 'data-set':
-      return [ui.images.citations?.data, ui.images.citations?.data_dark];
-    case 'entry':
-    case 'entry-dictionary':
-    case 'entry-encyclopedia':
-      return [ui.images.citations?.entry, ui.images.citations?.entry_dark];
-    case 'figure':
-    case 'graphic':
-      return [ui.images.citations?.image, ui.images.citations?.image_dark];
-    case 'map':
-      return [ui.images.citations?.map, ui.images.citations?.map_dark];
-    case 'motion_picture':
-      return [ui.images.citations?.movie, ui.images.citations?.movie_dark];
-    case 'musical_score':
-    case 'song':
-      return [ui.images.citations?.song, ui.images.citations?.song_dark];
-    case 'post':
-    case 'post-weblog':
-    case 'webpage':
-      return [ui.images.citations?.web, ui.images.citations?.web_dark];
-    case 'conference':
-    case 'inproceedings':
-    case 'proceedings':
-    case 'interview':
-    case 'pamphlet':
-    case 'personal_communication':
-    case 'report':
-    case 'speech':
-    case 'misc':
-    case 'unpublished':
-    default:
-      return [ui.images.citations?.other, ui.images.citations?.other_dark];
-  }
-}
 
 export interface CiteField {
   name: string;
@@ -204,17 +144,29 @@ export function formatForPreview(csl: CSL): CiteField[] {
   Object.keys(csl).forEach(key => {
     if (!kFilteredFields.includes(key)) {
       const value = cslAny[key];
-
-      // Capitalize preview names
-      const name = key.charAt(0).toUpperCase() + key.slice(1);
-      pairs.push({ name, value });
+      // Don't display complex fields or fields that aren't strings
+      if (typeof value === 'string') {
+        // Capitalize preview names
+        const name = key.charAt(0).toUpperCase() + key.slice(1);
+        pairs.push({ name, value });
+      }
     }
   });
 
   return pairs;
 }
 
-const kFilteredFields = ["id", "title", "author", "issued", "container-title", "volume", "page", "abstract", "provider"];
+const kFilteredFields = [
+  "id",
+  "title",
+  "author",
+  "issued",
+  "container-title",
+  "volume",
+  "page",
+  "abstract",
+  "provider"
+];
 
 // Sometimes, data arrives with a null value
 // This function will validate that the year (required) doesn't
@@ -317,7 +269,11 @@ export function formatIssuedDate(date: CSLDate | undefined): string {
         return `${dateParts[0][0]}-${dateParts[1][0]}`;
       // Only a single date
       case 1:
-        return `${dateParts[0][0]}`;
+        // Note that it is possible to receive an entry with a single null entry
+        // For examples:
+        // 10.1163/1874-6772_seg_a44_588
+        const singleDatePart = dateParts[0][0];
+        return `${singleDatePart ? singleDatePart : ''}`;
 
       // Seems like a malformed date :(
       case 0:

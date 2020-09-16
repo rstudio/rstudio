@@ -13,6 +13,27 @@
  *
  */
 
+export const kCharClassWord = 0;
+export const kCharClassBoundary = 1;
+export const kCharClassNonWord = 2;
+
+export interface EditorUISpelling {
+  // realtime interface
+  realtimeEnabled: () => boolean;
+  checkWord: (word: string) => boolean;
+  suggestionList: (word: string) => string[];
+
+  // dictionary
+  isWordIgnored: (word: string) => boolean;
+  ignoreWord: (word: string) => void;
+  unignoreWord: (word: string) => void;
+  addToDictionary: (word: string) => void;
+
+  // word breaking
+  breakWords: (text: string) => EditorWordRange[];
+  classifyCharacter: (ch: number) => number;
+}
+
 export interface EditorAnchor {
   getPosition: () => number;
 }
@@ -36,7 +57,7 @@ export interface EditorWordSource {
 
 export interface EditorSpellingDoc {
 
-  getWords: (start: number, end: number | null) => EditorWordSource;
+  getWords: (start: number, end: number) => EditorWordSource;
 
   createAnchor: (pos: number) => EditorAnchor;
 
@@ -56,4 +77,3 @@ export interface EditorSpellingDoc {
 
 }
 
-export type EditorWordBreaker = (text: string) => EditorWordRange[];

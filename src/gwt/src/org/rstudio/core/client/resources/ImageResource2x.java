@@ -42,7 +42,7 @@ public class ImageResource2x implements ImageResource
    {
       return getUse2xResolution() ? ref2x_ : ref_;
    }
-   
+
    @Override
    public String getName()
    {
@@ -101,9 +101,9 @@ public class ImageResource2x implements ImageResource
          sb.appendHtmlConstant("<img src=\"");
          sb.appendHtmlConstant(getSafeUri().asString());
          sb.appendHtmlConstant("\" width=\"");
-         sb.appendHtmlConstant(new Integer(getWidth()).toString());
+         sb.appendHtmlConstant(Integer.valueOf(getWidth()).toString());
          sb.appendHtmlConstant("\" height=\"");
-         sb.appendHtmlConstant(new Integer(getHeight()).toString());
+         sb.appendHtmlConstant(Integer.valueOf(getHeight()).toString());
          if (StringUtil.isNullOrEmpty(altText))
          {
             sb.appendHtmlConstant("\" alt");

@@ -45,6 +45,15 @@
   padding: 4px;
 }
 
+.pm-outline-button {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  opacity: .6;
+}
+
 .pm-input-text,
 .pm-input-select {
   border-width: 1px;

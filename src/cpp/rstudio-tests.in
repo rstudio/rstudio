@@ -67,8 +67,14 @@ runWatchdogProcess()
    if [ $RETCODE == 124 ]; then
       # process is hanging - use gdb to collect a stack trace to find out why
       echo "Hang detected. Dumping backtrace..."
-      sudo gdb -q -batch -ex 'thread apply all backtrace' -p $(pidof $command)
-      sudo kill -9 $(pidof $command)
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+         # pidof on Mac doesn't support fully qualified process names
+         commandbase="$(basename $command)"
+      else
+         commandbase=$command
+      fi
+      sudo gdb -q -batch -ex 'thread apply all backtrace' -p "$(pidof $commandbase)"
+      sudo kill -9 "$(pidof $commandbase)"
       UNIT_TEST_FAILURE=true
    elif [ $RETCODE != 0 ]; then
       UNIT_TEST_FAILURE=true
@@ -80,8 +86,8 @@ runWatchdogProcess()
 findLibSegFault
 
 TEST_SCOPE=
-if [ "$1" == "--scope" ]; then 
-   if [ "$#" == 1 ]; then 
+if [ "$1" == "--scope" ]; then
+   if [ "$#" == 1 ]; then
       printf "Specify scope (core, rsession, or r).\n"
       exit 1
    fi
@@ -98,7 +104,7 @@ elif [ "$1" == "--filter" ]; then
    TEST_FILTER="$2"
    shift 2
 
-elif [ "$1" == "--help" ]; then 
+elif [ "$1" == "--help" ]; then
    printf "%s\n\n" "Runs RStudio unit tests. Available flags: "
    printf "%s\n" "--help    Show this help"
    printf "%s\n" "--scope   Run only tests with the given scope (core, rsession, or r)"
@@ -114,7 +120,7 @@ else
    VALGRIND="valgrind --dsymutil=yes $@"
 fi
 
-## On a Debug Mac IDE build via xcodebuild, the executables 
+## On a Debug Mac IDE build via xcodebuild, the executables
 ## will be in a Debug folder
 if [ ! -e "${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests" ]
 then
@@ -156,7 +162,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
     export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler"
     runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests --config-file="$SESSION_CONF_FILE"
 fi
-   
+
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     echo Running 'r' tests...
 

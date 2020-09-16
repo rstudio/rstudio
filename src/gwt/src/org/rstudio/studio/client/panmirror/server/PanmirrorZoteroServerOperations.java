@@ -38,6 +38,12 @@ public interface PanmirrorZoteroServerOperations
                              boolean useCache,
                              ServerRequestCallback<JavaScriptObject> callback);
    
+   void zoteroGetLibraryNames(ServerRequestCallback<JavaScriptObject> callback);
+   
+   void zoteroGetActiveCollectionSpecs(String file, 
+                                       JsArrayString collections,
+                                       ServerRequestCallback<JavaScriptObject> callback);
+
    void zoteroBetterBibtexExport(JsArrayString itemKeys, 
                                  String translatorId, 
                                  int libraryID,

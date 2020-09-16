@@ -155,6 +155,7 @@ namespace prefs {
 #define kAnsiConsoleModeOff "off"
 #define kAnsiConsoleModeOn "on"
 #define kAnsiConsoleModeStrip "strip"
+#define kLimitVisibleConsole "limit_visible_console"
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
@@ -335,6 +336,7 @@ namespace prefs {
 #define kVisualMarkdownEditingReferencesLocationBlock "block"
 #define kVisualMarkdownEditingReferencesLocationSection "section"
 #define kVisualMarkdownEditingReferencesLocationDocument "document"
+#define kVisualMarkdownEditingCanonical "visual_markdown_editing_canonical"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
@@ -342,10 +344,7 @@ namespace prefs {
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
 #define kVisualMarkdownCodeEditorCodemirror "codemirror"
-#define kZoteroConnectionType "zotero_connection_type"
-#define kZoteroConnectionTypeLocal "local"
-#define kZoteroConnectionTypeWeb "web"
-#define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
+#define kZoteroLibraries "zotero_libraries"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
 #define kEmojiSkintoneDefault_ "(Default)"
@@ -371,7 +370,9 @@ namespace prefs {
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
 #define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
-#define kPythonDefaultInterpreter "python_default_interpreter"
+#define kPythonType "python_type"
+#define kPythonVersion "python_version"
+#define kPythonPath "python_path"
 
 class UserPrefValues: public Preferences
 {
@@ -832,6 +833,12 @@ public:
     */
    std::string ansiConsoleMode();
    core::Error setAnsiConsoleMode(std::string val);
+
+   /**
+    * Whether to only show a limited window of the total console output
+    */
+   bool limitVisibleConsole();
+   core::Error setLimitVisibleConsole(bool val);
 
    /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
@@ -1518,6 +1525,12 @@ public:
    core::Error setVisualMarkdownEditingReferencesLocation(std::string val);
 
    /**
+    * Whether to write canonical visual mode markdown when saving from source mode.
+    */
+   bool visualMarkdownEditingCanonical();
+   core::Error setVisualMarkdownEditingCanonical(bool val);
+
+   /**
     * Maximum content width for visual editing mode, in pixels
     */
    int visualMarkdownEditingMaxContentWidth();
@@ -1548,16 +1561,10 @@ public:
    core::Error setVisualMarkdownCodeEditor(std::string val);
 
    /**
-    * Zotero connection type (local or web)
+    * Zotero libraries to insert citations from.
     */
-   std::string zoteroConnectionType();
-   core::Error setZoteroConnectionType(std::string val);
-
-   /**
-    * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibLaTeX bibliographies
-    */
-   bool zoteroUseBetterBibtex();
-   core::Error setZoteroUseBetterBibtex(bool val);
+   core::json::Array zoteroLibraries();
+   core::Error setZoteroLibraries(core::json::Array val);
 
    /**
     * Preferred emoji skintone
@@ -1608,10 +1615,22 @@ public:
    core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
    /**
-    * The path to the default Python interpreter
+    * The Python type.
     */
-   std::string pythonDefaultInterpreter();
-   core::Error setPythonDefaultInterpreter(std::string val);
+   std::string pythonType();
+   core::Error setPythonType(std::string val);
+
+   /**
+    * The Python version.
+    */
+   std::string pythonVersion();
+   core::Error setPythonVersion(std::string val);
+
+   /**
+    * The path to the default Python interpreter.
+    */
+   std::string pythonPath();
+   core::Error setPythonPath(std::string val);
 
 };
 

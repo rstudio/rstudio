@@ -1,3 +1,18 @@
+#
+# API.R
+#
+# Copyright (C) 2020 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
 # Create environment to store data for registerChunkCallback and unregisterChunkCallback
 .rs.setVar("notebookChunkCallbacks", new.env(parent = emptyenv()))
 
@@ -216,12 +231,16 @@
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect, PACKAGE = "(embedding)"))
 })
 
-.rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
+.rs.addApiFunction("navigateToFile", function(filePath = character(0),
+                                              line = 1L,
+                                              col = 1L,
+                                              moveCursor = TRUE) {
    # validate file argument
-   if (!is.character(filePath)) {
+   hasFile <- !is.null(filePath) && length(filePath) > 0
+   if (hasFile && !is.character(filePath)) {
       stop("filePath must be a character")
    }
-   if (!file.exists(filePath)) {
+   if (hasFile && !file.exists(filePath)) {
       stop(filePath, " does not exist.")
    }
    
@@ -238,18 +257,22 @@
       stop("line and column must be numeric values.")
    }
 
-   # expand and alias for client
-   filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
-   homeDir <- path.expand("~")
-   if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
-      filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+   if (hasFile)
+   {
+      # expand and alias for client
+      filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
+      homeDir <- path.expand("~")
+      if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
+         filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
+      }
    }
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
       file_name     = .rs.scalar(filePath),
       line_number   = .rs.scalar(line),
-      column_number = .rs.scalar(col)))
+      column_number = .rs.scalar(col),
+      move_cursor   = .rs.scalar(moveCursor)))
 
    invisible(NULL)
 })
@@ -322,14 +345,16 @@
    # in such cases, we replace the current selection. we pass an empty range
    # and let upstream interpret this as a request to replace the current
    # selection.
-
-   if (missing(text) && is.character(location)) {
-      text <- location
-      location <- list()
-   } else if (missing(location) && is.character(text)) {
-      text <- text
-      location <- list()
-   } else if (length(location) == 0) {
+   if (missing(text) && is.character(location))
+   {
+      return(.rs.api.selectionSet(value = location, id = id))
+   }
+   else if (missing(location) && is.character(text))
+   {
+      return(.rs.api.selectionSet(value = text, id = id))
+   }
+   else if (length(location) == 0)
+   {
       return()
    }
 
@@ -895,4 +920,70 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # stop a running tutorial
 .rs.addApiFunction("tutorialStop", function(name, package) {
    .rs.tutorial.stopTutorial(name, package)
+})
+
+# API for sending + receiving arbitrary requests from rstudioapi
+# added in RStudio v1.4; not used univerally by older APIs but useful
+# as a framework for any new functions that might be added
+
+# list of API events (keep in sync with RStudioApiRequestEvent.java)
+.rs.setVar("api.events", list(
+   TYPE_UNKNOWN              = 0L,
+   TYPE_GET_EDITOR_SELECTION = 1L,
+   TYPE_SET_EDITOR_SELECTION = 2L
+))
+
+.rs.addApiFunction("createRequest", function(type, data, sync)
+{
+   list(
+      type = .rs.scalar(type),
+      data = as.list(data),
+      sync = .rs.scalar(sync)
+   )
+})
+
+.rs.addApiFunction("sendRequest", function(request)
+{
+   response <- .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
+   invisible(response)
+})
+
+.rs.addApiFunction("selectionGet", function(id = NULL)
+{
+   # create data payload
+   data <- list(
+      doc_id = .rs.scalar(id)
+   )
+   
+   # create request
+   request <- .rs.api.createRequest(
+      type = .rs.api.events$TYPE_GET_EDITOR_SELECTION,
+      data = data,
+      sync = TRUE
+   )
+   
+   # fire away
+   .rs.api.sendRequest(request)
+})
+
+.rs.addApiFunction("selectionSet", function(value = NULL, id = NULL)
+{
+   # collapse value into single string
+   value <- paste(value, collapse = "\n")
+   
+   # create data payload
+   data <- list(
+      value  = .rs.scalar(value),
+      doc_id = .rs.scalar(id)
+   )
+   
+   # create request
+   request <- .rs.api.createRequest(
+      type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
+      data = data,
+      sync = TRUE
+   )
+   
+   # fire away
+   .rs.api.sendRequest(request)
 })

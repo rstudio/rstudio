@@ -15,6 +15,7 @@
 
 export interface EditorTheme {
   darkMode: boolean;
+  solarizedMode: boolean;
   cursorColor: string;
   selectionColor: string;
   nodeSelectionColor: string;
@@ -30,6 +31,7 @@ export interface EditorTheme {
   textColor: string;
   lightTextColor: string;
   placeholderTextColor: string;
+  invisibleTextColor: string;
   linkTextColor: string;
   surfaceWidgetTextColor: string;
   markupTextColor: string;
@@ -68,6 +70,7 @@ export interface CodeTheme {
 export function defaultTheme(): EditorTheme {
   return {
     darkMode: false,
+    solarizedMode: false,
     cursorColor: 'black',
     selectionColor: '#8cf',
     nodeSelectionColor: 'rgb(102,155,243)',
@@ -85,12 +88,13 @@ export function defaultTheme(): EditorTheme {
     lightTextColor: 'rgb(60, 76, 114)',
     linkTextColor: '#106ba3',
     placeholderTextColor: 'gray',
+    invisibleTextColor: 'rgb(191, 191, 191)',
     markupTextColor: 'rgb(185, 6, 144)',
     findTextBackgroundColor: 'rgb(250, 250, 255)',
     findTextBorderColor: 'rgb(200, 200, 250)',
     borderBackgroundColor: '#ddd',
     blockBorderColor: '#ddd',
-    focusOutlineColor: '#ddd',
+    focusOutlineColor: '#5d84cd',
     paneBorderColor: 'silver',
     fixedWidthFont: 'monospace, monospace',
     fixedWidthFontSizePt: 9,
@@ -131,6 +135,59 @@ export function applyTheme(theme: EditorTheme) {
 
   // generate theme css
   const themeCss = `
+    .pm-default-theme .pm-background-color {
+      background-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-text-color {
+      color: ${defaults.textColor} !important;
+    }
+    .pm-default-theme .pm-border-background-color {
+      background-color: ${defaults.borderBackgroundColor} !important;
+    }
+    .pm-default-theme .pm-input-text {
+      border-color: ${defaults.paneBorderColor} !important
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-input-outline-button {
+      color: ${defaults.textColor};
+      border-color: ${defaults.textColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-selected-navigation-tree-item {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      border-color: ${defaults.findTextBorderColor} !important;
+    }
+    .pm-default-theme .pm-navigation-tree-item {
+      border-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-focus-outline-color {
+      border-color: ${defaults.focusOutlineColor} !important;
+    }
+    .pm-default-theme .pm-input-button {
+      border-color: ${defaults.borderBackgroundColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-placeholder-text-color {
+      color: ${defaults.placeholderTextColor} !important;
+    }
+    .pm-default-theme .pm-background-color *::selection {
+      background-color: ${defaults.selectionColor} !important;
+    }
+    .pm-default-theme .pm-find-text,
+    .pm-default-theme .pm-list-item-selected,
+    .pm-default-theme .pm-grid-item-selected {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      box-shadow: 0 0 0 1px ${defaults.findTextBorderColor}; 
+      border-radius: 3px;
+    }
+    .pm-default-theme .pm-rstudio-button {
+      border-color: DarkGray !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }
@@ -148,6 +205,9 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-div-background-color {
       background-color: ${theme.divBackgroundColor} !important;
+    }
+    .pm-nbsp-background-color {
+      background-color: ${theme.spanBackgroundColor} !important;
     }
     .pm-comment-color {
       color: ${theme.commentColor} !important;
@@ -167,6 +227,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-placeholder-text-color {
       color: ${theme.placeholderTextColor} !important;
     }
+    .pm-invisible-text-color {
+      color: ${theme.invisibleTextColor} !important;
+    }
     .pm-link-text-color {
       color: ${theme.linkTextColor} !important;
     }
@@ -174,6 +237,7 @@ export function applyTheme(theme: EditorTheme) {
       color: ${theme.markupTextColor} !important;
     }
     .pm-find-text,
+    .pm-list-item-selected,
     .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
       box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
@@ -191,6 +255,19 @@ export function applyTheme(theme: EditorTheme) {
       background-color: ${theme.chunkBackgroundColor} !important;
       border: 1px solid transparent !important;
     }
+    .pm-navigation-tree-item {
+      border: 1px solid ${theme.backgroundColor} !important;
+      border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
+    .pm-selected-navigation-tree-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }
@@ -198,7 +275,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.blockBorderColor} !important;
     }
     .pm-focus-outline-color {
-      outline-color: ${theme.focusOutlineColor} !important;
+      border-color: ${theme.focusOutlineColor} !important;
     }
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
@@ -245,6 +322,11 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-input-button {
       border-color: ${theme.borderBackgroundColor};
+      background-color: ${theme.backgroundColor};
+    }
+    .pm-input-outline-button {
+      color: ${theme.textColor};
+      border-color: ${theme.textColor};
       background-color: ${theme.backgroundColor};
     }
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,

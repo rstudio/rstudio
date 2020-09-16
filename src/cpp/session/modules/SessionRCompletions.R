@@ -1893,6 +1893,18 @@ assign(x = ".rs.acCompletionTypes",
    }
 })
 
+.rs.addFunction("getCompletionsPythonVirtualEnvironments", function(token)
+{
+   home <- Sys.getenv("WORKON_HOME", unset = "~/.virtualenvs")
+   candidates <- list.files(home)
+   results <- .rs.selectFuzzyMatches(candidates, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results,
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+})
+
 .rs.addFunction("getCompletionsEnvironmentVariables", function(token)
 {
    candidates <- names(Sys.getenv())
@@ -2100,6 +2112,14 @@ assign(x = ".rs.acCompletionTypes",
        numCommas[[1]] == 0)
       return(.rs.getCompletionsEnvironmentVariables(token))
    
+   # Python virtual environments
+   if (length(string) &&
+       string[[1]] %in% c("use_virtualenv", "reticulate::use_virtualenv") &&
+       numCommas[[1]] == 0)
+   {
+      return(.rs.getCompletionsPythonVirtualEnvironments(token))
+   }
+   
    # No information on completions other than token
    if (!length(string))
    {
@@ -2203,9 +2223,9 @@ assign(x = ".rs.acCompletionTypes",
 
       if (is.null(path) && isRmd)
       {
-         # for R Markdown documents without an explicit working dir, use the
-         # base directory of the file
-         path <- suppressWarnings(.rs.normalizePath(dirname(filePath)))
+         # for R Markdown documents without an explicit working dir,
+         # use preferences instead
+         path <- .rs.markdown.resolveCompletionRoot(filePath)
       }
 
       if (is.null(path))

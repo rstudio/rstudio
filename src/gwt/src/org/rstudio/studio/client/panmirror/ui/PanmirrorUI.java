@@ -26,13 +26,11 @@ public class PanmirrorUI
 {    
    public PanmirrorUI(PanmirrorUIContext context, 
                       PanmirrorUIDisplay display,
-                      PanmirrorUIExecute execute,
                       PanmirrorUIChunks chunks,
                       PanmirrorUISpelling spelling)
    {
       this.context = context;
       this.display = display;
-      this.execute = execute;
       this.math = new PanmirrorUIMath();
       this.prefs = new PanmirrorUIPrefs();
       this.dialogs = new PanmirrorDialogs(this.context);
@@ -42,7 +40,6 @@ public class PanmirrorUI
    
    public PanmirrorDialogs dialogs;
    public PanmirrorUIDisplay display;
-   public PanmirrorUIExecute execute;
    public PanmirrorUIMath math;
    public PanmirrorUIPrefs prefs;
    public PanmirrorUIContext context;

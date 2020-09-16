@@ -38,7 +38,7 @@
    .rs.python.findPythonInterpreters()
 })
 
-.rs.addJsonRpcHandler("python_describe_interpreter", function(pythonPath)
+.rs.addJsonRpcHandler("python_interpreter_info", function(pythonPath)
 {
    .rs.python.describeInterpreter(pythonPath)
 })
@@ -197,14 +197,24 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    for (path in paths) {
       
-      pythonExe <- if (.rs.platform.isWindows) "python.exe" else "python"
-      pythonPath <- file.path(path, pythonExe)
-      if (!file.exists(pythonPath))
-         next
+      # create pattern matching interpreter paths
+      pattern <- if (.rs.platform.isWindows)
+         "^python[[:digit:].]*exe$"
+      else
+         "^python[[:digit:].]*$"
       
-      info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
+      # look for python installations
+      pythons <- list.files(
+         path       = path,
+         pattern    = pattern,
+         full.names = TRUE
+      )
       
-      interpreters[[length(interpreters) + 1]] <- info
+      # loop over interpreters and add
+      for (python in pythons) {
+         info <- .rs.python.getPythonInfo(python, strict = TRUE)
+         interpreters[[length(interpreters) + 1]] <- info
+      }
       
    }
    
@@ -276,6 +286,6 @@
 
 .rs.registerPackageLoadHook("reticulate", function(...)
 {
-   python <- .rs.readUiPref("python_default_interpreter")
+   python <- .rs.readUiPref("python_path")
    .rs.reticulate.usePython(python)
 })

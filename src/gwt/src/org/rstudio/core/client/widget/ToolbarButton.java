@@ -25,6 +25,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
@@ -102,6 +103,7 @@ public class ToolbarButton extends FocusWidget
       super();
 
       setElement(binder.createAndBindUi(this));
+      setClassId(null);
 
       this.setStylePrimaryName(styles_.toolbarButton());
       this.addStyleName(styles_.handCursor());
@@ -251,6 +253,18 @@ public class ToolbarButton extends FocusWidget
       leftImageWidget_.setResource(imageResource);
    }
 
+   public void setClassId(String name)
+   {
+      if (!StringUtil.isNullOrEmpty(displayClassId_))
+         ClassIds.removeClassId(getElement(), displayClassId_);
+
+      displayClassId_ = ClassIds.TOOLBAR_BTN + "_" + ClassIds.idSafeString(getTitle());
+      if (!StringUtil.isNullOrEmpty(name))
+         displayClassId_ += "_" + ClassIds.idSafeString(name);
+
+      ClassIds.assignClassId(getElement(), displayClassId_);
+   }
+
    public void setText(boolean visible, String text)
    {
       if (visible)
@@ -304,6 +318,10 @@ public class ToolbarButton extends FocusWidget
       if (!StringUtil.isNullOrEmpty(title))
          Roles.getButtonRole().setAriaLabelProperty(getElement(), title);
    }
+
+   // Class name displayed by Help / Diagnostics / Show DOM Elements command. A default value is
+   // set in the constructor, but this can be updated to be more specific.
+   private String displayClassId_;
 
    private boolean down_;
    

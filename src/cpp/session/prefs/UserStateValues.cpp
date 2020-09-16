@@ -245,6 +245,58 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
 }
 
 /**
+ * Whether or not the use of Visual Mode has been confirmed.
+ */
+bool UserStateValues::visualModeConfirmed()
+{
+   return readPref<bool>("visual_mode_confirmed");
+}
+
+core::Error UserStateValues::setVisualModeConfirmed(bool val)
+{
+   return writePref("visual_mode_confirmed", val);
+}
+
+/**
+ * The default type for new bibliographies.
+ */
+std::string UserStateValues::bibliographyDefaultType()
+{
+   return readPref<std::string>("bibliography_default_type");
+}
+
+core::Error UserStateValues::setBibliographyDefaultType(std::string val)
+{
+   return writePref("bibliography_default_type", val);
+}
+
+/**
+ * Zotero connection type (local or web)
+ */
+std::string UserStateValues::zoteroConnectionType()
+{
+   return readPref<std::string>("zotero_connection_type");
+}
+
+core::Error UserStateValues::setZoteroConnectionType(std::string val)
+{
+   return writePref("zotero_connection_type", val);
+}
+
+/**
+ * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
+ */
+bool UserStateValues::zoteroUseBetterBibtex()
+{
+   return readPref<bool>("zotero_use_better_bibtex");
+}
+
+core::Error UserStateValues::setZoteroUseBetterBibtex(bool val)
+{
+   return writePref("zotero_use_better_bibtex", val);
+}
+
+/**
  * Key for making Zotero API calls
  */
 std::string UserStateValues::zoteroApiKey()
@@ -290,6 +342,10 @@ std::vector<std::string> UserStateValues::allKeys()
       kConnectVia,
       kErrorHandlerType,
       kUsingMingwGcc49,
+      kVisualModeConfirmed,
+      kBibliographyDefaultType,
+      kZoteroConnectionType,
+      kZoteroUseBetterBibtex,
       kZoteroApiKey,
       kZoteroDataDir,
    });

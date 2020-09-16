@@ -106,7 +106,7 @@ public class FindOutputPane extends WorkbenchPane
                if (!replaceTextBox_.getValue().isEmpty())
                {
                   //setRegexPreviewMode(false);
-                  addReplaceMatches(new String());
+                  addReplaceMatches("");
                }
                setReplaceMode(false);
             }
@@ -120,7 +120,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      replaceToolbar_ = new SecondaryToolbar("Replace");
+      SecondaryToolbar replaceToolbar = new SecondaryToolbar("Replace");
       replaceMode_ = true;
 
       replaceTextBox_ = new TextBox();
@@ -131,27 +131,27 @@ public class FindOutputPane extends WorkbenchPane
             displayPreview_.nudge();
          }
       });
-      replaceLabel_ = new FormLabel("Replace with: ", replaceTextBox_);
-      replaceToolbar_.addLeftWidget(replaceLabel_);
-      replaceToolbar_.addLeftWidget(replaceTextBox_);
+      FormLabel replaceLabel = new FormLabel("Replace with: ", replaceTextBox_);
+      replaceToolbar.addLeftWidget(replaceLabel);
+      replaceToolbar.addLeftWidget(replaceTextBox_);
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
             "Stop replace",
             commands_.interruptR().getImageResource());
       stopReplace_.setVisible(false);
-      replaceToolbar_.addRightWidget(stopReplace_);
+      replaceToolbar.addRightWidget(stopReplace_);
 
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
-      replaceToolbar_.addRightWidget(replaceAllButton_);
+      replaceToolbar.addRightWidget(replaceAllButton_);
 
       replaceProgress_ = new ProgressBar();
       replaceProgress_.setHeight("10px");
       replaceProgress_.setWidth("195px");
       replaceProgress_.setVisible(false);
-      replaceToolbar_.addLeftWidget(replaceProgress_);
+      replaceToolbar.addLeftWidget(replaceProgress_);
 
-      return replaceToolbar_;
+      return replaceToolbar;
    }
 
    @Override
@@ -162,7 +162,7 @@ public class FindOutputPane extends WorkbenchPane
       FindOutputResources resources = GWT.create(FindOutputResources.class);
       resources.styles().ensureInjected();
 
-      table_ = new FastSelectTable<FindResult, CodeNavigationTarget, Object>(
+      table_ = new FastSelectTable<>(
             new FindOutputCodec(resources),
             resources.styles().selectedRow(),
             true,
@@ -225,7 +225,7 @@ public class FindOutputPane extends WorkbenchPane
       else
       {
          table_.removeStyleName(resources.styles().findOutputReplace());
-         addReplaceMatches(new String());
+         addReplaceMatches("");
       }
       // this needs to be done after addReplaceMatches is called
       replaceMode_ = value;
@@ -334,7 +334,7 @@ public class FindOutputPane extends WorkbenchPane
       if (overflow_)
          return;
       overflow_ = true;
-      ArrayList<FindResult> items = new ArrayList<FindResult>();
+      ArrayList<FindResult> items = new ArrayList<>();
       items.add(null);
       table_.addItems(items, false);
    }
@@ -384,12 +384,8 @@ public class FindOutputPane extends WorkbenchPane
             .appendEscaped(" in ")
             .appendEscaped(path);
       {
-         StringBuilder summary = new StringBuilder(": ");
-         summary.append(Integer.toString(successCount));
-         summary.append(" successful, ");
-         summary.append(Integer.toString(errorCount));
-         summary.append(" failed");
-         builder.appendEscaped(summary.toString());
+         String summary = ": " + successCount + " successful, " + errorCount + " failed";
+         builder.appendEscaped(summary);
       }
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
@@ -528,15 +524,12 @@ public class FindOutputPane extends WorkbenchPane
    private boolean overflow_ = false;
    private int matchCount_;
 
-   private SecondaryToolbar replaceToolbar_;
-
    private LeftRightToggleButton showFindButton_;
    private LeftRightToggleButton showReplaceButton_;
 
    private boolean replaceMode_;
    private boolean regexPreviewMode_;
 
-   private FormLabel replaceLabel_;
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
 

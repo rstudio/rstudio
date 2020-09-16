@@ -163,6 +163,7 @@ public class ElementIds
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
    public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
+   public final static String RMARKDOWN_CITATIONS_PREFS = "markdown_citations_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
@@ -259,7 +260,7 @@ public class ElementIds
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
       CHOOSE_IMAGE("choose_image"),
-      PYTHON_DEFAULT_INTERPRETER("python_default_interpreter");
+      PYTHON_PATH("python_path");
 
       TextBoxButtonId(String value)
       {
@@ -527,6 +528,9 @@ public class ElementIds
    public static String getVisualMdInsertCiteBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_BIB); }
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB = "visual_md_insert_cite_create_bib";
    public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
+   public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
+   public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
+   
 
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";

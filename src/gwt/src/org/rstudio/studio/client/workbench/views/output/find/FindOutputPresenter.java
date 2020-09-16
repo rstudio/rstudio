@@ -94,8 +94,8 @@ public class FindOutputPresenter extends BasePresenter
 
       boolean getRegexPreviewMode();
       boolean getReplaceMode();
-      public void setRegexPreviewMode(boolean value);
-      public void setReplaceMode(boolean value);
+      void setRegexPreviewMode(boolean value);
+      void setReplaceMode(boolean value);
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
 
@@ -163,7 +163,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onFindResult(FindResultEvent event)
          {
-            if (event.getHandle() != currentFindHandle_)
+            if (!StringUtil.equals(event.getHandle(), currentFindHandle_))
                return;
 
             view_.ensureVisible(true);
@@ -187,7 +187,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onFindOperationEnded(
                FindOperationEndedEvent event)
          {
-            if (event.getHandle() == currentFindHandle_)
+            if (StringUtil.equals(event.getHandle(), currentFindHandle_))
             {
                if (view_.getProgress().isVisible()) // check if a replace is in progress
                   events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
@@ -197,10 +197,7 @@ public class FindOutputPresenter extends BasePresenter
                view_.showSearchCompleted();
                // replace may have been previously disabled
                view_.enableReplace();
-               if (dialogState_.isRegex())
-                  view_.setRegexPreviewMode(true);
-               else
-                  view_.setRegexPreviewMode(false);
+               view_.setRegexPreviewMode(dialogState_.isRegex());
             }
          }
       });
@@ -270,6 +267,9 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            if (dialogState_ == null)
+               return;
+
             String message = "Are you sure you wish to permanently replace all? This will ";
             if (StringUtil.isNullOrEmpty(view_.getReplaceText()))
                message += "remove ";
@@ -344,7 +344,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
-            if (event.getHandle() != currentFindHandle_)
+            if (!StringUtil.equals(event.getHandle(), currentFindHandle_))
                return;
 
             // toggle replace mode so matches get added to context
@@ -378,7 +378,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onReplaceOperationEnded(
                ReplaceOperationEndedEvent event)
          {
-            if (event.getHandle() == currentFindHandle_)
+            if (StringUtil.equals(event.getHandle(), currentFindHandle_))
             {
                currentFindHandle_ = null;
                view_.hideProgress();
@@ -675,9 +675,9 @@ public class FindOutputPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations fileServer_;
    private final Commands commands_;
-   private EventBus events_;
+   private final EventBus events_;
 
    private static final String GROUP_FIND_IN_FILES = "find-replace-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
-   private GlobalDisplay globalDisplay_;
+   private final GlobalDisplay globalDisplay_;
 }

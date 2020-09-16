@@ -29,7 +29,7 @@ def compile_package(os, type, flavor, variant) {
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
-  env = "${env} MAKEFLAGS=-j3"
+  env = "${env} MAKEFLAGS=-j2"
 
   // perform the compilation
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
@@ -53,7 +53,6 @@ def run_tests(type, flavor, variant) {
   
   try {
     // attempt to run cpp unit tests
-    // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
@@ -379,14 +378,16 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
           trigger_external_build('IDE/macos-v1.4')
-          trigger_external_build('IDE/qa-opensource-automation')
         }
 
         else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
           trigger_external_build('IDE/macos-v1.3')
-          trigger_external_build('IDE/windows-v1.3')
         }
         parallel parallel_containers
+
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/qa-opensource-automation')
+        }
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants

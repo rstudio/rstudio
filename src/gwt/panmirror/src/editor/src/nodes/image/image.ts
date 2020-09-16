@@ -114,7 +114,7 @@ const extension = (context: ExtensionContext): Extension => {
     plugins: (schema: Schema) => {
       return [
         imageTextSelectionPlugin(),
-        imageEventsPlugin(),
+        imageEventsPlugin(ui),
         ...imageNodeViewPlugins('image', ui, events, pandocExtensions),
       ];
     },

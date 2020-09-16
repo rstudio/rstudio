@@ -21,8 +21,8 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionContext } from '../../api/completion';
-import { imageForType, formatAuthors, formatIssuedDate } from '../../api/cite';
-import { CSL } from '../../api/csl';
+import { formatAuthors, formatIssuedDate } from '../../api/cite';
+import { CSL, imageForType } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
 import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { EditorServer } from '../../api/server';
@@ -57,8 +57,9 @@ export function citationDoiCompletionHandler(
         view.dispatch(tr);
       } else if (cslEntry) {
         // It isn't in the bibliography, show the insert cite dialog
-        insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
+        return insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
+      return Promise.resolve();
     },
 
     view: {
@@ -94,7 +95,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                 id: source.id,
                 csl: source,
                 inBibliography: true,
-                image: imageForType(ui, source.type)[ui.prefs.darkMode() ? 1 : 0],
+                image: imageForType(ui.images, source.type)[ui.prefs.darkMode() ? 1 : 0],
                 formattedAuthor: formatAuthors(source.author, 50),
                 formattedIssueDate: formatIssuedDate(source.issued),
               }];
@@ -104,7 +105,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
           // paste handler is expected to deal with this case. If the user is typing
           // a DOI, we may need to still check for completions below, but this should be 
           // unusual
-          if (!completionContext.isPaste) {
+          if (!completionContext.isPaste && bibliographyManager.allowsWrites()) {
             // Check with the server to see if we can get citation data for this DOI
             const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
             if (result.status === "ok") {
@@ -119,7 +120,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                     id: csl.DOI,
                     csl,
                     inBibliography: false,
-                    image: imageForType(ui, csl.type)[ui.prefs.darkMode() ? 1 : 0],
+                    image: imageForType(ui.images, csl.type)[ui.prefs.darkMode() ? 1 : 0],
                     formattedAuthor: formatAuthors(csl.author, 40),
                     formattedIssueDate: formatIssuedDate(csl.issued),
                   },

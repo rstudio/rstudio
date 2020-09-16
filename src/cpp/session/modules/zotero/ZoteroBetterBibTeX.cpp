@@ -22,10 +22,12 @@
 #include <core/http/SocketUtils.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
 #include "ZoteroCollections.hpp"
+#include "ZoteroCollectionsLocal.hpp"
 
 namespace rstudio {
 
@@ -91,7 +93,7 @@ bool betterBibtexJsonRpcRequest(const std::string& method, const json::Array& pa
    else if (http::isConnectionUnavailableError(error) ||
             (error = systemError(boost::system::errc::timed_out, ErrorLocation())))
    {
-      *pWarning = "Unable to connect to Better BibTeX. Is Zotero running?";
+      *pWarning = "Unable to connect to Better BibTeX. Please ensure that Zotero is running.";
    }
    else
    {
@@ -113,7 +115,7 @@ bool betterBibtexInConfig(const std::string& config)
 
 bool betterBibtexEnabled()
 {
-   return session::prefs::userPrefs().zoteroUseBetterBibtex();
+   return session::prefs::userState().zoteroUseBetterBibtex();
 }
 
 void betterBibtexProvideIds(const collections::ZoteroCollections& collections,
@@ -162,7 +164,7 @@ void betterBibtexProvideIds(const collections::ZoteroCollections& collections,
           }
           return itemObject;
       });
-      collections::ZoteroCollection updatedCollection(collections::ZoteroCollectionSpec(collection.name, collection.version));
+      collections::ZoteroCollection updatedCollection(collections::ZoteroCollectionSpec(collection.name, collection.key, collection.parentKey, collection.version));
       updatedCollection.items = updatedItems;
       return updatedCollection;
    });
@@ -189,6 +191,11 @@ Error betterBibtexExport(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &itemKeysJson, &translatorId, &libraryId);
    if (error)
       return error;
+
+   // include library in item keys
+   boost::format fmt("%1%:%2%");
+   for (std::size_t i=0; i<itemKeysJson.getSize(); i++)
+      itemKeysJson[i] = boost::str(fmt % libraryId % itemKeysJson[i].getString());
 
    // get citation keys
    std::string warning;
@@ -236,6 +243,19 @@ Error betterBibtexExport(const json::JsonRpcRequest& request,
    else
    {
       setBetterBibtexNotFoundResult(warning, pResponse);
+   }
+
+   return Success();
+}
+
+Error betterBibtexInit()
+{
+   // force better bibtex pref off if the config isn't found
+   if (collections::localZoteroAvailable())
+   {
+      collections::DetectedLocalZoteroConfig config = collections::detectedLocalZoteroConfig();
+      if (prefs::userState().zoteroUseBetterBibtex() && !config.betterBibtex)
+         prefs::userState().setZoteroUseBetterBibtex(false);
    }
 
    return Success();
