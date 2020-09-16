@@ -251,13 +251,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       deferredSaveWidthPercent();
    }
 
-   public void resetLeftWidgets(ArrayList<Widget> list)
-   {
-      clearForRefresh();
-      leftList_ = new ArrayList<>(list);
-      initialize(leftList_, center_, right_);
-   }
-
    public void addLeftWidget(Widget widget)
    {
       clearForRefresh();
@@ -265,6 +258,22 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
+   public double getLeftSize()
+   {
+      double sum = 0.0;
+      for (Widget w : leftList_)
+         sum += getWidgetSize(w);
+      return sum;
+   }
+   
+   public ArrayList<Double> getLeftWidgetSizes()
+   {
+      ArrayList<Double> result = new ArrayList<>();
+      for (Widget w : leftList_)
+         result.add(getWidgetSize(w));
+      return result;
+   }
+   
    public void removeLeftWidget(Widget widget)
    {
       clearForRefresh();
