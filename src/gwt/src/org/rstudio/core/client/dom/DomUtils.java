@@ -895,6 +895,13 @@ public class DomUtils
       element.style[name] = value;
    }-*/;
 
+   public static final native void fillIFrame(IFrameElement iframe, String content) /*-{
+      var doc = iframe.contentWindow.document;
+      doc.open();
+      doc.writeln(content);
+      doc.close();
+   }-*/;
+
    public static native final Element getElementById(String id) /*-{
       return $doc.getElementById(id);
    }-*/;

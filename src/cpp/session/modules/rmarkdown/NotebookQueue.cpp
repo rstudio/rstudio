@@ -410,9 +410,10 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
+            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
-               workingDir, options, docQueue->pixelWidth(), 
+               unit->docId(), unit->chunkId(), codeString, label, ctx,
+               unit->execScope(), workingDir, options, docQueue->pixelWidth(),
                docQueue->charWidth());
             execContext_->connect();
 
@@ -445,7 +446,7 @@ private:
             // actually execute the chunk with the alternate engine; store the error separately
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
+               unit->docId(), unit->chunkId(), label, ctx, docQueue->workingDir(),
                engine, innerCode, options, execUnit_->execScope(),
                docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)
@@ -729,6 +730,10 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
 void onConsolePrompt(const std::string& prompt)
 {
+   // Ignore debug prompts
+   if (r::context::inBrowseContext())
+      return;
+
    if (s_queue)
    {
       s_queue->onConsolePrompt(prompt);

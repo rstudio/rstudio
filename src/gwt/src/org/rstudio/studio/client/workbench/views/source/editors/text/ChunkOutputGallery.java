@@ -16,8 +16,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.MutationObserver;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
@@ -28,6 +31,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -72,6 +76,7 @@ public class ChunkOutputGallery extends Composite
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
+      callback_ = new ArrayList<>();
       viewer_.add(content_);
 
       if (chunkOutputSize_ == ChunkOutputSize.Full)
@@ -187,9 +192,57 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
+   public void showCallbackHtml(String htmlOutput)
+   {
+      VerticalPanel callbackContent = new VerticalPanel();
+      callback_.add(callbackContent);
+
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      callbackContent.add(frame);
+      viewer_.add(callbackContent);
+
+      frame.getDocument().getBody().getStyle().setPadding(0, Unit.PX);
+      frame.getDocument().getBody().getStyle().setMargin(0, Unit.PX);
+
+      frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            callbackContent.setHeight(contentHeight + "px");
+            callbackContent.setWidth("100%");
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            host_.notifyHeightChanged();
+            
+            Command heightHandler = () -> {
+               int newHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               callbackContent.setHeight(newHeight + "px");
+               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+               host_.notifyHeightChanged();
+            };
+
+            MutationObserver.Builder builder = new MutationObserver.Builder(heightHandler);
+            builder.attributes(true);
+            builder.characterData(true);
+            builder.childList(true);
+            builder.subtree(true);
+            
+            MutationObserver observer = builder.get();
+            observer.observe(frame.getIFrame().getContentDocument().getBody());
+         }
+      });
+   }
+
+   @Override
    public void clearOutput()
    {
       content_.clear();
+      callback_.clear();
       pages_.clear();
       filmstrip_.clear();
    }
@@ -428,6 +481,7 @@ public class ChunkOutputGallery extends Composite
 
    private ChunkConsolePage console_;
    private SimplePanel content_;
+   private ArrayList<VerticalPanel> callback_;
    private int activePage_ = -1;
    
    @UiField GalleryStyle style;

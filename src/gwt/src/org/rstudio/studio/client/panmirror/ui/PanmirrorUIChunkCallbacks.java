@@ -23,6 +23,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIChunkCallbacks
 {
    public ScrollIntoView scrollIntoView;
+   public ScrollCursorIntoView scrollCursorIntoView;
    public GetVisualPosition getPos;
 
    @JsFunction
@@ -35,5 +36,11 @@ public class PanmirrorUIChunkCallbacks
    public interface ScrollIntoView
    {
       int scrollIntoView(Element ele);
+   }
+   
+   @JsFunction
+   public interface ScrollCursorIntoView
+   {
+      void scroll();
    }
 }

@@ -104,10 +104,12 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    }
 
    public void loadDisplay(String name,
+                           String accessibleName,
                            Source.Display display,
                            SourceColumnManager manager)
    {
       name_ = name;
+      accessibleName_ = accessibleName;
       display_ = display;
       manager_ = manager;
 
@@ -134,6 +136,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    public String getName()
    {
       return name_;
+   }
+
+   public String getAccessibleName()
+   {
+      return accessibleName_;
    }
 
    public EditingTarget getActiveEditor()
@@ -1235,6 +1242,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private int newTabPending_;
 
    private String name_;
+   private String accessibleName_;
    private Source.Display display_;
    private EditingTarget activeEditor_;
    private final ArrayList<EditingTarget> editors_ = new ArrayList<>();

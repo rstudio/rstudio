@@ -28,6 +28,7 @@ core::Error initAlternateEngines();
 
 core::Error executeAlternateEngineChunk(const std::string& docId,
                                   const std::string& chunkId,
+                                  const std::string& label,
                                   const std::string& nbCtxId,
                                   const core::FilePath& workingDir,
                                   const std::string& engine,

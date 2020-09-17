@@ -131,6 +131,34 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
    }
 
+   public static class ColumnName
+   {
+      public ColumnName()
+      {
+         name_ = "";
+         accessibleName_ = "";
+      }
+
+      public ColumnName(String name, String accessibleName)
+      {
+         name_ = name;
+         accessibleName_ = accessibleName;
+      }
+
+      public String getName()
+      {
+         return name_;
+      }
+
+      public String getAccessibleName()
+      {
+         return accessibleName_;
+      }
+
+      private final String name_;
+      private final String accessibleName_;
+   }
+
    SourceColumnManager() { RStudioGinjector.INSTANCE.injectMembers(this);}
 
    @Inject
@@ -216,7 +244,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
+      column.loadDisplay(MAIN_SOURCE_NAME, MAIN_SOURCE_NAME, display, this);
       columnList_.add(column);
 
       new JSObjectStateValue("source-column-manager",
@@ -272,7 +300,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       };
 
       setActive(column.getName());
-      
+
       // register custom focus handler for case where ProseMirror
       // instance (or element within) had focus
       ModalDialogBase.registerReturnFocusHandler((Element el) ->
@@ -282,59 +310,61 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          {
             return parent.hasClassName(sourceClass);
          });
-         
+
          if (sourceEl != null)
          {
             commands_.activateSource().execute();
             return true;
          }
-         
+
          return false;
       });
    }
 
-   public String add()
+   public ColumnName add()
    {
       Source.Display display = GWT.create(SourcePane.class);
       return add(display, false);
    }
 
-   public String add(Source.Display display)
+   public ColumnName add(Source.Display display)
    {
       return add(display, false);
    }
 
-   public String add(String name, boolean updateState)
+   public ColumnName add(String name, boolean updateState)
    {
       return add(name, false, updateState);
    }
 
-   public String add (String name, boolean activate, boolean updateState)
+   public ColumnName add (String name, boolean activate, boolean updateState)
    {
       Source.Display display = GWT.create(SourcePane.class);
-      return add(name, display, activate, updateState);
+      return add(name, computeAccessibleName(), display, activate, updateState);
    }
 
-   public String add(Source.Display display, boolean activate)
+   public ColumnName add(Source.Display display, boolean activate)
    {
       return add(display, activate, true);
    }
 
-   public String add(Source.Display display, boolean activate, boolean updateState)
+   public ColumnName add(Source.Display display, boolean activate, boolean updateState)
    {
       return add(COLUMN_PREFIX + StringUtil.makeRandomId(12),
+                  computeAccessibleName(),
                   display,
                   activate,
                   updateState);
    }
 
-   public String add(String name, Source.Display display, boolean activate, boolean updateState)
+   public ColumnName add(String name, String accessibleName, Source.Display display,
+                     boolean activate, boolean updateState)
    {
       if (contains(name))
-         return "";
+         return new ColumnName();
 
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(name, display, this);
+      column.loadDisplay(name, accessibleName, display, this);
       columnList_.add(column);
 
       if (activate || activeColumn_ == null)
@@ -343,7 +373,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (updateState)
          columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
                                           getActive().getName());
-      return column.getName();
+      return new ColumnName(column.getName(), column.getAccessibleName());
    }
 
    public void initialSelect(int index)
@@ -767,7 +797,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       boolean hasActiveEditor =
             hasActiveEditor() &&
             activeColumn_.getActiveEditor() instanceof TextEditingTarget;
-      
+
       if (!hasActiveEditor)
          return false;
 
@@ -1352,34 +1382,40 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-
-   public void closeAllTabs(boolean excludeActive, boolean excludeMain)
+   
+   public void closeAllTabs(boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
-      columnList_.forEach((column) -> closeAllTabs(column, excludeActive, excludeMain));
+      columnList_.forEach((column) ->
+      {
+         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
+      });
+         
    }
 
-   public void closeAllTabs(SourceColumn column, boolean excludeActive, boolean excludeMain)
+   public void closeAllTabs(SourceColumn column,
+                            boolean excludeActive,
+                            boolean excludeMain,
+                            Command onCompleted)
    {
       if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
       {
-         cpsExecuteForEachEditor(column.getEditors(),
-            new CPSEditingTargetCommand()
+         final CPSEditingTargetCommand command = (EditingTarget target, Command continuation) ->
+         {
+            if (excludeActive &&
+                  (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
             {
-               @Override
-               public void execute(EditingTarget target, Command continuation)
-               {
-                  if (excludeActive &&
-                     (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
-                  {
-                     continuation.execute();
-                     return;
-                  }
-                  else
-                  {
-                     column.closeTab(target.asWidget(), false, continuation);
-                  }
-               }
-            });
+               continuation.execute();
+               return;
+            }
+            else
+            {
+               column.closeTab(target.asWidget(), false, continuation);
+            }
+         };
+         
+         cpsExecuteForEachEditor(column.getEditors(), command, onCompleted);
       }
    }
 
@@ -1457,14 +1493,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
 
       // create a command used to close all tabs
-      final Command closeAllTabsCommand = sourceColumn == null ?
-                                          () -> closeAllTabs(excludeActive, false) :
-                                          () -> closeAllTabs(sourceColumn, excludeActive, false);
+      final Command closeAllTabsCommand = sourceColumn == null
+            ? () -> closeAllTabs(excludeActive, false, null)
+            : () -> closeAllTabs(sourceColumn, excludeActive, false, null);
 
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
-         CommandUtil.join(closeAllTabsCommand,
-                          onCompleted),
+         CommandUtil.join(closeAllTabsCommand, onCompleted),
          null);
    }
 
@@ -2129,7 +2164,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       vimCommands_.selectNextTab(this);
       vimCommands_.selectPreviousTab(this);
       vimCommands_.closeActiveTab(this);
-      vimCommands_.closeAllTabs(this);
+      vimCommands_.closeAllTabs(this, () -> commands_.activateConsole().execute());
       vimCommands_.createNewDocument(this);
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
@@ -2576,7 +2611,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       cpsExecuteForEachEditor(editors, command, null);
    }
-   
+
    private static class OpenFileEntry
    {
       public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,
@@ -2591,6 +2626,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
+   private String computeAccessibleName()
+   {
+      return "Source Column " + sourceColumnCounter_++;
+   }
+
    private State columnState_;
    private SourceColumn activeColumn_;
 
@@ -2600,7 +2640,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
    private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
-   private HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
+   private final HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
 
    private Commands commands_;
@@ -2624,4 +2664,5 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public final static String COLUMN_PREFIX = "Source";
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
+   static int sourceColumnCounter_ = 1;
 }
