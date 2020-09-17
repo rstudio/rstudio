@@ -517,7 +517,7 @@ public class TypoSpellChecker
       severe issues with. This is being tracked to be fixed in issue #6041 as
       soon as possible so this can then be removed.
     */
-   private static String[] realtimeDictBlacklist = {"cs_CZ", "de_DE_neu", "lt_LT", "lt_LT_new", "pt_BR", "it_IT"};
+   private final static String[] realtimeDictBlacklist = {"lt_LT", "lt_LT_new", "pt_BR", "it_IT"};
    public static boolean canRealtimeSpellcheckDict(String dict)
    {
       boolean exists = false;
