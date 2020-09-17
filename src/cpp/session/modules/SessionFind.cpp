@@ -1354,8 +1354,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    std::string encoding = projects::projectContext().hasProject() ?
                           projects::projectContext().defaultEncoding() :
                           prefs::userPrefs().defaultEncoding();
-   if (encoding.empty())
-      encoding = "UTF-8";
    std::string encodedString;
    error = r::util::iconvstr(grepOptions.searchPattern(),
                              "UTF-8",
