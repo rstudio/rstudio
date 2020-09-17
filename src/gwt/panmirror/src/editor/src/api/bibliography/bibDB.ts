@@ -24,13 +24,15 @@ import { bibDbToBibTeX } from "../bibtex/bibtex";
 export type BibDB = Record<string, EntryObject>;
 
 export interface EntryObject {
-  csl_type: string;
+  csl_type?: string;
+  bib_type: string;
   entry_key: string;
   fields: Record<string, any>;
   incomplete?: boolean;
   unexpected_fields?: Record<string, any>;
   unknown_fields?: Record<string, any>;
 }
+
 
 
 // This is our wrapper of a typescript BibLaTeX exporter
@@ -82,6 +84,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
   if (bibType) {
 
     const bibObject: EntryObject = {
+      bib_type: bibType[0],
       csl_type: bibType[1].csl,
       entry_key: id,
       'fields': {}

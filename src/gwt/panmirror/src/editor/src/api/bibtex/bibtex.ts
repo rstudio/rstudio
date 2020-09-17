@@ -50,7 +50,7 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
     const entryObject: EntryObject = bibDB[key];
 
     const cslType = entryObject.csl_type;
-    const bibTexType = typeMapping(cslType).bibtex;
+    const bibTexType = cslType ? typeMapping(cslType).bibtex : entryObject.bib_type;
 
     const bibtexEntry: Entry = {
       type: bibTexType,
