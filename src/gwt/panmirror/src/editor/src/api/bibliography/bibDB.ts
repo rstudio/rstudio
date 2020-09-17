@@ -12,11 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { BibDB, EntryObject, BibFieldTypes, NameDictObject, NodeArray, RangeArray, BibField, BibLatexExporter, BibTypes, BibType } from "biblatex-csl-converter";
+import { BibFieldTypes, NameDictObject, NodeArray, RangeArray, BibField, BibLatexExporter, BibTypes, BibType } from "biblatex-csl-converter";
+
+import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
 
 import { CSL, CSLDate, cslDateToEDTFDate, CSLName } from "../csl";
 import { cslTextToProsemirrorNode } from "../csl-text";
-import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
+import { bibDbToBibTeX } from "../bibtex/bibtex";
+
+
+export type BibDB = Record<string, EntryObject>;
+
+export interface EntryObject {
+  csl_type: string;
+  entry_key: string;
+  fields: Record<string, any>;
+  incomplete?: boolean;
+  unexpected_fields?: Record<string, any>;
+  unknown_fields?: Record<string, any>;
+}
+
 
 // This is our wrapper of a typescript BibLaTeX exporter
 // https://github.com/fiduswriter/biblatex-csl-converter
@@ -29,7 +44,7 @@ import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
 const kUseTraditionalNameForm = false;
 
 // Generates bibLaTeX for a given CSL object / id
-export function toBibLaTeX(id: string, csl: CSL) {
+export function toBibLaTeX(id: string, csl: CSL): string | undefined {
 
   // A BibDB is basically a map of key / EntryObject[] that is
   // used by the exporter to generate BibLaTeX
@@ -42,6 +57,21 @@ export function toBibLaTeX(id: string, csl: CSL) {
     // Indent any , new lines
     return sourceAsBibLaTeX.replace(/,\n/g, ',\n\t');
   }
+  return undefined;
+}
+
+export function toBibTeX(id: string, csl: CSL): string | undefined {
+  // A BibDB is basically a map of key / EntryObject[] that is
+  // used by the exporter to generate BibLaTeX
+  const bibDB = cslToBibDB(id, csl);
+  if (bibDB) {
+    // Use the exported to parse the bibDB and generate bibLaTeX
+    const sourceAsBibTeX = bibDbToBibTeX(bibDB);
+
+    // Indent any , new lines
+    return sourceAsBibTeX;
+  }
+  return undefined;
 }
 
 // Converts a single CSL item to a bibDB containing
@@ -52,11 +82,10 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
   if (bibType) {
 
     const bibObject: EntryObject = {
-      bib_type: bibType[0],
+      csl_type: bibType[1].csl,
       entry_key: id,
       'fields': {}
     };
-
 
     const enumerableCSL = csl as any;
     sortedKeys(csl).forEach(key => {
@@ -87,13 +116,13 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
             case ('f_title'):
               // f_integer, f_literal, f_long_literal, f_title = [nodeValue]
               // l_literal = [nodeValue]
-              if (value) {
+              if (value && value.length > 0) {
                 nodeValue = textNodes(value);
               }
               break;
             case ('l_literal'):
               // l_literal = [NodeArray]
-              if (value) {
+              if (value && value.length > 0) {
                 nodeValue = [textNodes(value)];
               }
               break;
@@ -128,7 +157,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
                   }
                 });
 
-                if (!nodeValue) {
+                if (!nodeValue && value && value.length > 0) {
                   nodeValue = textNodes(value);
                 }
               }
@@ -175,16 +204,12 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
       });
     });
 
-
-
     const bibDB: BibDB = {
       'item': bibObject
     };
     return bibDB;
-
   }
 }
-
 
 // For a given type, we filter out any fields that aren't required, 
 // eitheror, or optional. 
@@ -283,7 +308,7 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
 }
 
 function sortedKeys(csl: CSL) {
-  let pos = 0;
+  let pos = 1;
   const keySortOrder: { [id: string]: number; } = {};
   keySortOrder.title = pos++;
 

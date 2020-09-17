@@ -24,7 +24,7 @@ import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
-import { toBibLaTeX } from './bibDB';
+import { toBibLaTeX, toBibTeX } from './bibDB';
 import { joinPaths } from '../path';
 
 
@@ -62,7 +62,7 @@ export function bibliographyTypes(ui: EditorUI): BibliographyType[] {
     {
       displayName: ui.context.translateText('CSL-YAML'),
       extension: 'yaml',
-      default: defaultBiblioType === 'bib'
+      default: defaultBiblioType === 'yaml'
     },
     {
       displayName: ui.context.translateText('CSL-JSON'),
@@ -243,7 +243,7 @@ export class BibliographyManager {
         return dataProviderBibTeX;
       }
     }
-    return Promise.resolve(toBibLaTeX(id, csl));
+    return Promise.resolve(toBibTeX(id, csl));
   }
 
   public warning(): string | undefined {
