@@ -89,7 +89,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Environment, Viewer, Source, Console
+      Presentation, Environment, Viewer, Source, Console, SourceColumn
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -782,20 +782,22 @@ public class PaneManager
       {
          if (equals(window, maximizedWindow_))
          {
+            // If we're trying to maximize the same pane that is currently maximized, interpret 
+            // as a toggle off. There is only one tab per source column so always assume toggle off.
+            if (tab == Tab.SourceColumn ||
+                equals(tab, maximizedTab_))
+            {
+               restoreLayout();
+               return;
+            }
+
             // If we're zooming a different tab in the same window,
             // just activate that tab.
-            if (!equals(tab, maximizedTab_))
+            else
             {
                maximizedTab_ = tab;
                manageLayoutCommands();
                activateTab(tab);
-            }
-
-            // Otherwise, we're trying to maximize the same tab
-            // and the same window. Interpret this as a toggle off.
-            else
-            {
-               restoreLayout();
             }
          }
          else
@@ -818,6 +820,8 @@ public class PaneManager
          maximizedTab_ = Tab.Source;
       else if (window.equals(getConsoleLogicalWindow()))
          maximizedTab_ = Tab.Console;
+      else if (sourceLogicalWindows_.contains(window))
+         maximizedTab_ = Tab.SourceColumn;
       else
          maximizedTab_ = tab;
       maximizedWindow_ = window;
@@ -833,11 +837,17 @@ public class PaneManager
       // transfers don't always propagate as expected)
       for (LogicalWindow pane : panes_)
          pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      for (LogicalWindow pane : sourceLogicalWindows_)
+         pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
 
-      boolean isLeftWidget =
+      boolean isRightWidget = 
+            DomUtils.contains(right_.getElement(), window.getActiveWidget().getElement());
+      boolean isCenterWidget =
             DomUtils.contains(center_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
+      
+      final double rightInitialSize = panel_.getWidgetSize(right_);
 
       ArrayList<Double> leftStart = panel_.getLeftWidgetSizes();
       ArrayList<Double> leftEnd = new ArrayList<>();
@@ -846,17 +856,20 @@ public class PaneManager
             leftWidgetSizePriorToZoom_.clear();
          for (Widget column : leftList_)
          {
-            if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
-               leftWidgetSizePriorToZoom_.add(panel_.getWidgetSize(column));
-            leftEnd.add(0.0);
+            leftWidgetSizePriorToZoom_.add(panel_.getWidgetSize(column));
+            if (!isRightWidget &&
+                !isCenterWidget &&
+                DomUtils.contains(column.getElement(), window.getActiveWidget().getElement()))
+               leftEnd.add((double) panel_.getOffsetWidth());
+            else
+               leftEnd.add(0.0);
          }
       }
-      final double initialSize = panel_.getWidgetSize(right_);
 
-      double targetSize = isLeftWidget ? 0 : panel_.getOffsetWidth();
+      double rightTargetSize = isRightWidget ? panel_.getOffsetWidth() : 0;
 
-      if (targetSize < 0)
-         targetSize = 0;
+      if (rightTargetSize < 0)
+         rightTargetSize = 0;
 
       // Ensure focus is sent to Help iframe on activation.
       Command onActivation = null;
@@ -865,7 +878,7 @@ public class PaneManager
          onActivation = () -> commands_.activateHelp().execute();
       }
 
-      resizeHorizontally(initialSize, targetSize, leftStart, leftEnd, onActivation);
+      resizeHorizontally(rightInitialSize, rightTargetSize, leftStart, leftEnd, onActivation);
    }
 
    private void resizeHorizontally(final double rightStart,
@@ -1794,6 +1807,8 @@ public class PaneManager
          return Tab.Source;
       if (name.equalsIgnoreCase("console"))
          return Tab.Console;
+      if (name.equalsIgnoreCase("sourcecolumn"))
+         return Tab.SourceColumn;
 
       return null;
    }
@@ -1814,6 +1829,7 @@ public class PaneManager
       case Packages:     return commands_.layoutZoomPackages();
       case Plots:        return commands_.layoutZoomPlots();
       case Source:       return commands_.layoutZoomSource();
+      case SourceColumn: return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
       case Tutorial:     return commands_.layoutZoomTutorial();
       case Viewer:       return commands_.layoutZoomViewer();

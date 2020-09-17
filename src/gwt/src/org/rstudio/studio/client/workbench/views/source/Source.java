@@ -1352,28 +1352,30 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
-      onActivateSource(null);
+      onActivateSource(SourceColumnManager.MAIN_SOURCE_NAME, null);
    }
 
-   public void onActivateSource(final Command afterActivation)
+   public void onActivateSource(String columnName, final Command afterActivation)
    {
       // give the window manager a chance to activate the last source pane
       if (pWindowManager_.get().activateLastFocusedSource())
          return;
-      columnManager_.activateColumn("", afterActivation);
+      columnManager_.activateColumn(columnName, afterActivation);
    }
 
    @Handler
    public void onLayoutZoomSource()
    {
-      onActivateSource(new Command()
-      {
-         @Override
-         public void execute()
+      onActivateSource(columnManager_.getActive().getName(),
+         new Command()
          {
-            events_.fireEvent(new ZoomPaneEvent("Source"));
-         }
-      });
+            @Override
+            public void execute()
+            {
+               events_.fireEvent(new ZoomPaneEvent(columnManager_.getActive().getName(),
+                  "SourceColumn"));
+            }
+         });
    }
 
    @Override
