@@ -45,6 +45,9 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/Preferences.hpp>
+
 #include "SessionSourceDatabaseSupervisor.hpp"
 
 #define kContentsSuffix "-contents"
@@ -566,7 +569,11 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    if (writeContents)
    {
       FilePath contentsPath(filePath.getAbsolutePath() + kContentsSuffix);
-      Error error = writeStringToFile(contentsPath, contents_);
+      Error error = writeStringToFile(contentsPath,
+                                      contents_,
+                                      string_utils::LineEndingPassthrough,
+                                      true,
+                                      session::prefs::userPrefs().saveRetryTimeout());
       if (error)
          return error;
    }
@@ -576,7 +583,11 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   Error error = writeStringToFile(filePath, jsonProperties.writeFormatted());
+   Error error = writeStringToFile(filePath,
+                                   jsonProperties.writeFormatted(),
+                                   string_utils::LineEndingPassthrough,
+                                   true,
+                                   session::prefs::userPrefs().saveRetryTimeout());
    return error;
 }
 

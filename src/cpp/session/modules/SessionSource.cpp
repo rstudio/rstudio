@@ -57,6 +57,9 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/Preferences.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -466,7 +469,9 @@ Error saveDocumentCore(const std::string& contents,
 
       // write the contents to the file
       error = writeStringToFile(fullDocPath, encoded,
-                                module_context::lineEndings(fullDocPath));
+                                module_context::lineEndings(fullDocPath),
+                                true,
+                                session::prefs::userPrefs().saveRetryTimeout());
       if (error)
          return error;
 

@@ -291,10 +291,16 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
                                bool trimAndIgnoreBlankLines=true);
 
 // lineEnding is the type of line ending you want to end up on disk
+//
+// maxOpenRetrySeconds indicates whether or not we should retry attempts to open the file
+// when it is in use by another process (common when using backup software), and if so
+// how many seconds of elapsed time should we wait for the file to become available
+// note: this only has an affect on Windows
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
-                        bool truncate = true);
+                        bool truncate = true,
+                        int maxOpenRetrySeconds = 0);
 
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,

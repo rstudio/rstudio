@@ -373,6 +373,7 @@ namespace prefs {
 #define kPythonType "python_type"
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
+#define kSaveRetryTimeout "save_retry_timeout"
 
 class UserPrefValues: public Preferences
 {
@@ -1631,6 +1632,12 @@ public:
     */
    std::string pythonPath();
    core::Error setPythonPath(std::string val);
+
+   /**
+    * The maximum amount of seconds of retry for save operations.
+    */
+   int saveRetryTimeout();
+   core::Error setSaveRetryTimeout(int val);
 
 };
 
