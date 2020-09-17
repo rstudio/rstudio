@@ -13,6 +13,9 @@
 #
 #
 
+# Create environment to store data for registerChunkCallback and unregisterChunkCallback
+.rs.setVar("notebookChunkCallbacks", new.env(parent = emptyenv()))
+
 .rs.addApiFunction("restartSession", function(command = NULL) {
    command <- as.character(command)
    invisible(.rs.restartR(command))
@@ -864,6 +867,38 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # return system username 
 .rs.addApiFunction("systemUsername", function() {
    .Call("rs_systemUsername", PACKAGE = "(embedding)")
+})
+
+# store callback functions to be executed after a specified chunk
+# and return a handle to unregister the chunk
+.rs.addApiFunction("registerChunkCallback", function(chunkCallback) {
+
+   if (length(.rs.notebookChunkCallbacks) != 0)
+      stop("Callback is already registered.")
+   if (!is.function(chunkCallback))
+      stop("'chunkCallback' must be a function")
+   if (length(formals(chunkCallback)) != 2)
+      stop("'chunkCallback' must contain two parameters: chunkName and chunkCode")
+
+   data <- chunkCallback
+   handle <- .Call("rs_createUUID",
+                   PACKAGE = "(embedding)")
+   assign(handle, value = data, envir = .rs.notebookChunkCallbacks)
+
+   return(handle)
+})
+
+# unregister a chunk callback functions
+.rs.addApiFunction("unregisterChunkCallback", function(id = NULL) {
+   if (length(.rs.notebookChunkCallbacks) == 0)
+      warning("No registered callbacks found")
+   else if (!is.null(id) && !exists(id, envir = .rs.notebookChunkCallbacks))
+      warning("Handle not found.")
+   else
+   {
+      id <- ls(envir = .rs.notebookChunkCallbacks)
+      rm(list = id, envir = .rs.notebookChunkCallbacks)
+   }
 })
 
 # Tutorial ----

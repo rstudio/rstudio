@@ -151,10 +151,18 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     const meta = lines[0].replace(/^[\s`\{]*(.*?)\}?\s*$/, '$1');
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
+
+    // a completely empty chunk (no second line) should be returned
+    // as such. if it's not completely empty then append a newline
+    // to the result of split (so that the chunk ends w/ a newline)
+    const chunkCode = lines.length > 1
+      ? (lines.slice(1).join('\n') + '\n')
+      : '';
+
     return {
       lang,
       meta,
-      code: lines.slice(1).join('\n'),
+      code: chunkCode,
     };
   } else {
     return null;

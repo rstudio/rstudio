@@ -50,7 +50,8 @@ class ChunkExecContext : public NotebookCapture
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
-         const std::string& nbCtxId, ExecScope execScope, 
+         const std::string& chunkCode, const std::string& chunkLabel,
+         const std::string& nbCtxId, ExecScope execScope,
          const core::FilePath& workingDir, const ChunkOptions& options, 
          int pixelWidth, int charWidth);
 
@@ -85,6 +86,8 @@ private:
 
    std::string docId_;
    std::string chunkId_;
+   std::string chunkCode_;
+   std::string chunkLabel_;
    std::string nbCtxId_;
    std::string pendingInput_;
    core::FilePath outputPath_;

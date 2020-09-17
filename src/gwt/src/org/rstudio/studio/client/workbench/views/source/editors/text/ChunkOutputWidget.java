@@ -275,7 +275,14 @@ public class ChunkOutputWidget extends Composite
    {
       return expansionState_.addValueChangeHandler(handler);
    }
-    
+
+   public void renderHtml(String htmlOutput)
+   {
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      presenter_.showCallbackHtml(htmlOutput);
+   }
+
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
          boolean complete, boolean ensureVisible)
    {
@@ -669,7 +676,7 @@ public class ChunkOutputWidget extends Composite
          presenter_.showOrdinalOutput(unit.getOrdinal());
          break;
       case RmdChunkOutputUnit.TYPE_DATA:
-         presenter_.showDataOutput(unit.getOuputObject(), 
+         presenter_.showDataOutput(unit.getOutputObject(),
                (NotebookFrameMetadata)unit.getMetadata().cast(),
                unit.getOrdinal());
          break;
