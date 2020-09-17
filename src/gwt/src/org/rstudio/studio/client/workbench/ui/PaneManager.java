@@ -297,8 +297,9 @@ public class PaneManager
             for (int i = 0; i < sourceColumnManager_.getSize(); i++)
             {
                String name = sourceColumnManager_.get(i).getName();
+               String accessibleName = sourceColumnManager_.get(i).getAccessibleName();
                if (!StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
-                  leftList_.add(0, createSourceColumnWindow(name));
+                  leftList_.add(0, createSourceColumnWindow(name, accessibleName));
             }
          }
          else
@@ -1157,7 +1158,8 @@ public class PaneManager
       ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
       for (SourceColumn column : columns)
       {
-         panesByName_.put(column.getName(), createSource(column.getName(), column.asWidget()));
+         panesByName_.put(column.getName(), createSource(column.getName(), column.getAccessibleName(),
+            column.asWidget()));
       }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
@@ -1529,20 +1531,20 @@ public class PaneManager
    private void createSourceColumn()
    {
       PaneConfig.addSourcePane();
-      String name = sourceColumnManager_.add();
+      SourceColumnManager.ColumnName name = sourceColumnManager_.add();
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
-      Widget panel = createSourceColumnWindow(name);
+      Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
       leftList_.add(panel);
-      sourceColumnManager_.beforeShow(name);
+      sourceColumnManager_.beforeShow(name.getName());
    }
 
-   private Widget createSourceColumnWindow(String name)
+   private Widget createSourceColumnWindow(String name, String accessibleName)
    {
       if (panesByName_.get(name) != null)
          return panesByName_.get(name).getNormal();
-      panesByName_.put(name, createSource(name, sourceColumnManager_.getWidget(name)));
+      panesByName_.put(name, createSource(name, accessibleName, sourceColumnManager_.getWidget(name)));
 
       PaneConfig paneConfig = getCurrentConfig();
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -1657,13 +1659,13 @@ public class PaneManager
       return logicalWindow;
    }
 
-   private LogicalWindow createSource(String frameName, Widget display)
+   private LogicalWindow createSource(String frameName, String accessibleName, Widget display)
    {
-      WindowFrame sourceFrame = new WindowFrame(frameName);
+      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName);
       sourceFrame.setFillWidget(display);
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
-            new MinimizedWindowFrame(frameName, frameName));
+            new MinimizedWindowFrame(frameName, accessibleName));
       sourceWindow.transitionToState(WindowState.NORMAL);
       sourceLogicalWindows_.add(sourceWindow);
       return sourceWindow;
@@ -1673,7 +1675,7 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame(persisterName);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
@@ -1933,7 +1935,7 @@ public class PaneManager
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
-   private ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<>();
+   private final ArrayList<LogicalWindow> sourceLogicalWindows_ = new ArrayList<>();
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
@@ -1956,7 +1958,7 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
-   private ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
+   private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
 
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
