@@ -31,8 +31,8 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
          return {
             type    : 0,
             sync    : false,
-            target  : 0
-            payload : {},
+            target  : 0,
+            payload : {}
          };
       }-*/;
       
