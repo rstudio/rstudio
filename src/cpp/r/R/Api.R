@@ -567,7 +567,7 @@
       type    = .rs.api.eventTypes$TYPE_DOCUMENT_ID,
       sync    = TRUE,
       target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
-      payload = list(),
+      payload = list()
    )
    
    response <- .rs.api.sendRequest(request)
@@ -1051,7 +1051,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       type    = .rs.api.eventTypes$TYPE_SET_EDITOR_SELECTION,
       sync    = TRUE,
       target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
-      payload = payload,
+      payload = payload
    )
    
    # fire away
