@@ -80,7 +80,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 public class WebApplicationHeader extends Composite
                                   implements ApplicationHeader,
                                   WebApplicationHeaderOverlay.Context
-{  
+{
    public WebApplicationHeader()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -97,26 +97,26 @@ public class WebApplicationHeader extends Composite
    {
       commands_ = commands;
       eventBus_ = eventBus;
-      globalDisplay_ = globalDisplay; 
+      globalDisplay_ = globalDisplay;
       overlay_ = new WebApplicationHeaderOverlay();
-      
+
       // remove some desktop-only commands
       commands.showGpuDiagnostics().remove();
       commands.reloadUi().remove();
       commands.openDeveloperConsole().remove();
-      
+
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
       // it needs to overflow out of the top of the panel, and it was much
       // easier to do this with absolute positioning.
       outerPanel_ = new FlowPanel();
       outerPanel_.getElement().getStyle().setPosition(Position.RELATIVE);
-      
+
       // large logo
       logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("");
       logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
-      
+
       // small logo
       logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("");
@@ -217,30 +217,30 @@ public class WebApplicationHeader extends Composite
          overlay_.setGlobalToolbarVisible(WebApplicationHeader.this,
                                           toolbar_.isVisible());
       });
-      
+
       eventBus.addHandler(ShowMainMenuEvent.TYPE, event -> {
          mainMenu_.keyboardActivateItem(event.getMenu().ordinal());
       });
-      
+
       // create toolbar
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
-      
+
       // create host for project commands
       projectBarCommandsPanel_ = new HorizontalPanel();
       toolbar_.addRightWidget(projectBarCommandsPanel_);
-      
+
       // initialize widget
       initWidget(outerPanel_);
    }
-    
+
    @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbarVisible_ = showToolbar;
       outerPanel_.clear();
-      
+
       if (showToolbar)
       {
          if (!hostedMode_)
@@ -271,16 +271,16 @@ public class WebApplicationHeader extends Composite
          preferredHeight_ = 45;
          showProjectMenu(true);
       }
-      
+
       overlay_.setGlobalToolbarVisible(this, showToolbar);
    }
-   
+
    @Override
    public boolean isToolbarVisible()
    {
       return toolbarVisible_;
    }
-   
+
    @Override
    public void focusToolbar()
    {
@@ -292,7 +292,7 @@ public class WebApplicationHeader extends Composite
    {
       toolbar_.focusGoToFunction();
    }
-   
+
    private void showProjectMenu(boolean show)
    {
       if (hostedMode_)
@@ -302,7 +302,7 @@ public class WebApplicationHeader extends Composite
       projectMenuSeparator_.setVisible(show);
       projectMenuButton_.setVisible(show);
    }
-   
+
    private native final void suppressBrowserForwardBack() /*-{
       try {
       var outerWindow = $wnd.parent;
@@ -320,9 +320,9 @@ public class WebApplicationHeader extends Composite
    }-*/;
 
    private static final void setCommandShortcut(AppCommand command,
-                                                String key,
-                                                int keyCode,
-                                                int modifiers)
+                                          String key,
+                                          int keyCode,
+                                          int modifiers)
    {
       KeySequence sequence = new KeySequence();
       sequence.add(new KeyCombination(key, keyCode, modifiers));
@@ -340,7 +340,7 @@ public class WebApplicationHeader extends Composite
       setCommandShortcut(commands.copyDummy(),            "c", 'C', modifiers);
       setCommandShortcut(commands.pasteDummy(),           "v", 'V', modifiers);
       setCommandShortcut(commands.pasteWithIndentDummy(), "v", 'V', modifiers | KeyboardShortcut.SHIFT);
-      
+
       CommandHandler useKeyboardNotification = new CommandHandler()
       {
          public void onCommand(AppCommand command)
@@ -416,8 +416,8 @@ public class WebApplicationHeader extends Composite
    }
 
    private void initCommandsPanel(final SessionInfo sessionInfo)
-   {  
-      // add username 
+   {
+      // add username
       if (sessionInfo.getShowIdentity() && sessionInfo.getAllowFullUI())
       {
          ToolbarLabel usernameLabel = new ToolbarLabel();
@@ -429,10 +429,10 @@ public class WebApplicationHeader extends Composite
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
-         
+
          overlayUserCommandsPanel_ = new HorizontalPanel();
          headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
-        
+
          ToolbarButton signOutButton = new ToolbarButton(
                ToolbarButton.NoText,
                "Sign out",
@@ -442,9 +442,9 @@ public class WebApplicationHeader extends Composite
          headerBarCommandsPanel_.add(
                   signOutSeparator_ = createCommandSeparator());
       }
-      
+
       overlay_.addCommands(this);
-      
+
       if (sessionInfo.getAllowFullUI())
          headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
@@ -457,12 +457,12 @@ public class WebApplicationHeader extends Composite
       style.setMarginLeft(3, Unit.PX);
       return sep;
    }
-   
+
    private Widget createCommandLink(String caption, Command clickHandler)
    {
       return new HyperlinkLabel(caption, clickHandler);
    }
-   
+
    @Override
    public void addCommand(Widget widget)
    {
@@ -476,7 +476,7 @@ public class WebApplicationHeader extends Composite
       headerBarCommandsPanel_.add(separator);
       return separator;
    }
-   
+
    @Override
    public void addLeftCommand(Widget widget)
    {
@@ -498,7 +498,7 @@ public class WebApplicationHeader extends Composite
    {
       headerBarPanel_.add(widget);
    }
-   
+
    @Override
    public Widget addRightCommandSeparator()
    {
@@ -506,7 +506,7 @@ public class WebApplicationHeader extends Composite
       headerBarPanel_.add(separator);
       return separator;
    }
-   
+
    @Override
    public void addProjectCommand(Widget widget)
    {
@@ -520,11 +520,11 @@ public class WebApplicationHeader extends Composite
       projectBarCommandsPanel_.add(separator);
       return separator;
    }
-   
+
    @Override
    public void addProjectRightCommand(Widget widget)
    {
-      toolbar_.addRightWidget(widget);   
+      toolbar_.addRightWidget(widget);
    }
 
    @Override
@@ -532,33 +532,33 @@ public class WebApplicationHeader extends Composite
    {
       return toolbar_.addRightSeparator();
    }
-   
+
    @Override
    public void addUserCommand(Widget widget)
    {
       overlayUserCommandsPanel_.add(widget);
    }
-   
+
    @Override
    public AppMenuBar getMainMenu()
    {
       return mainMenu_;
    }
-   
+
 
    public Widget asWidget()
    {
       return this;
    }
-   
+
    interface Resources extends ClientBundle
    {
       @Source("signOut_2x.png")
       ImageResource signOut2x();
    }
-   
+
    private static final Resources RESOURCES = GWT.create(Resources.class);
-   
+
    // globally suppress F1 and F2 so no default browser behavior takes those
    // keystrokes (e.g. Help in Chrome)
    static
@@ -576,7 +576,7 @@ public class WebApplicationHeader extends Composite
          }
       });
    }
-  
+
    private int preferredHeight_;
    private FlowPanel outerPanel_;
    private Anchor logoAnchor_;
@@ -594,7 +594,7 @@ public class WebApplicationHeader extends Composite
    private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
-   private Commands commands_; 
+   private Commands commands_;
    private WebApplicationHeaderOverlay overlay_;
    private boolean hostedMode_;
    private boolean toolbarVisible_;
