@@ -288,6 +288,11 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
       }
     }
 
+    // if we are in a heading then this isn't valid
+    if (findParentNodeOfType(state.schema.nodes.heading)(state.selection)) {
+      return false;
+    }
+
     return wrapInList(listType)(state, dispatch);
   };
 }
