@@ -67,6 +67,11 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       return data_;
    }
    
+   public <T extends JavaScriptObject> T getPayload()
+   {
+      return data_.getData().<T>cast();
+   }
+   
    private final Data data_;
    
    

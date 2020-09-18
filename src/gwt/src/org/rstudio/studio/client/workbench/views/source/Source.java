@@ -2868,6 +2868,8 @@ public class Source implements InsertSourceHandler,
       }
       catch (Exception e)
       {
+         Debug.logException(e);
+         
          // ensure that a response if made if something goes wrong
          if (requestEvent.getData().isSynchronous())
          {
@@ -2895,7 +2897,7 @@ public class Source implements InsertSourceHandler,
       int type = requestData.getType();
       if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
       {
-         RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getData().cast();
+         RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getPayload();
          
          if (apiEventTargetIsConsole(data.getDocId()))
          {
@@ -2919,7 +2921,7 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
       {
-         RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getData().cast();
+         RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getPayload();
          
          if (apiEventTargetIsConsole(data.getDocId()))
          {
