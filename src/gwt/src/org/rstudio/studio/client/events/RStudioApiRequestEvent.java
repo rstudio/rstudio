@@ -107,6 +107,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    public static final int TYPE_SET_EDITOR_SELECTION = 2;
    public static final int TYPE_DOCUMENT_ID          = 3;
    public static final int TYPE_DOCUMENT_OPEN        = 4;
+   public static final int TYPE_DOCUMENT_NEW         = 5;
    
    // list of potential event targets (keep in sync with Api.R)
    public static final int TARGET_UNKNOWN       = 0;
@@ -149,6 +150,20 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       
       public final native String getPath() /*-{ return this["path"]; }-*/;
    }
+   
+   public static class DocumentNewData extends JavaScriptObject
+   {
+      protected DocumentNewData()
+      {
+      }
+      
+      public final native String  getType()       /*-{ return this["type"];    }-*/;
+      public final native String  getCode()       /*-{ return this["code"];    }-*/;
+      public final native int     getRow()        /*-{ return this["row"];     }-*/;
+      public final native int     getColumn()     /*-{ return this["column"];  }-*/;
+      public final native boolean getExecute()    /*-{ return this["execute"]; }-*/;
+   }
+   
    
    
 }
