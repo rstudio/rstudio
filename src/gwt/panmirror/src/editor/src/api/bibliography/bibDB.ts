@@ -184,8 +184,8 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
               const names = value as CSLName[];
               nodeValue = names.map(name => {
                 const nameDict: NameDictObject = {
-                  family: textNodes(name.family),
-                  given: textNodes(name.given),
+                  family: name.family ? textNodes(name.family) : undefined,
+                  given: name.given ? textNodes(name.given) : undefined,
                   literal: name.literal ? textNodes(name.literal) : undefined,
                 };
                 return nameDict;
