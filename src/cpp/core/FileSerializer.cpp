@@ -51,7 +51,6 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
 {
    using namespace boost::posix_time;
 
-   bool opened = false;
    ptime startTime = second_clock::universal_time();
    Error lastError;
 
@@ -60,7 +59,7 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
    if (maxOpenRetrySeconds < 0)
       maxOpenRetrySeconds = 0;
 
-   while (!opened)
+   while (true)
    {
       lastError = filePath.openForWrite(*pOfs, truncate);
 
