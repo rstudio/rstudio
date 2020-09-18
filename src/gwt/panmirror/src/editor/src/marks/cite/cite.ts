@@ -752,7 +752,7 @@ export async function ensureSourcesInBibliography(
           const cslToWrite = sanitizeForCiteproc(source);
 
           if (!bibManager.findIdInLocalBibliography(source.id)) {
-            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, source, source.providerKey) : undefined;
+            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, cslToWrite, source.providerKey) : undefined;
             await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibTex || '');
           }
 
