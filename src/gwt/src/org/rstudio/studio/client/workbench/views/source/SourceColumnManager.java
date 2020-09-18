@@ -55,6 +55,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -1642,30 +1643,28 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          processOpenFileQueue();
    }
 
-   private void editFile(final String path)
+   public void editFile(String path,
+                        ResultCallback<EditingTarget, ServerError> callback)
    {
-      server_.ensureFileExists(
-         path,
-         new ServerRequestCallback<Boolean>()
+      server_.ensureFileExists(path, new ErrorLoggingServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean success)
          {
-            @Override
-            public void onResponseReceived(Boolean success)
+            if (success)
             {
-               if (success)
-               {
-                  FileSystemItem file = FileSystemItem.createFile(path);
-                  openFile(file);
-               }
+               FileSystemItem file = FileSystemItem.createFile(path);
+               openFile(file, callback);
             }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
+         }
+      });
    }
 
+   private void vimEditFile(String path)
+   {
+      editFile(path, new ResultCallback<EditingTarget, ServerError>() {});
+   }
+   
    public void openProjectDocs(final Session session, boolean mainColumn)
    {
       if (mainColumn && activeColumn_ != getByName(MAIN_SOURCE_NAME))

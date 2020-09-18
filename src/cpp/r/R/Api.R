@@ -21,7 +21,8 @@
    TYPE_UNKNOWN              = 0L,
    TYPE_GET_EDITOR_SELECTION = 1L,
    TYPE_SET_EDITOR_SELECTION = 2L,
-   TYPE_DOCUMENT_ID          = 3L
+   TYPE_DOCUMENT_ID          = 3L,
+   TYPE_DOCUMENT_OPEN        = 4L
 ))
 
 # list of potential event targets
@@ -661,6 +662,24 @@
    ))
 
    invisible(NULL)
+})
+
+.rs.addApiFunction("documentOpen", function(path) {
+   
+   payload <- list(
+      path = .rs.scalar(path)
+   )
+   
+   request <- .rs.api.createRequest(
+      type   = .rs.api.eventTypes$TYPE_DOCUMENT_OPEN,
+      sync   = TRUE,
+      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+   
 })
 
 .rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {

@@ -84,6 +84,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
@@ -126,6 +127,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
@@ -2964,6 +2966,36 @@ public class Source implements InsertSourceHandler,
                server_.rstudioApiResponse(response, new VoidServerRequestCallback());
             });
          }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_OPEN)
+      {
+         RStudioApiRequestEvent.DocumentOpenData data = requestEvent.getPayload().cast();
+         final String path = data.getPath();
+         columnManager_.editFile(path, new ResultCallback<EditingTarget, ServerError>()
+         {
+            @Override
+            public void onSuccess(final EditingTarget result)
+            {
+               // focus opened document (note that we may need to suppress
+               // attempts by the shell widget to steal focus here)
+               events_.fireEvent(new SuppressNextShellFocusEvent());
+               result.focus();
+               
+               JsObject response = JsObject.createJsObject();
+               response.setString("id", result.getId());
+               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+            }
+
+            @Override
+            public void onFailure(ServerError info)
+            {
+               super.onFailure(info);
+               server_.rstudioApiResponse(
+                     JavaScriptObject.createObject(),
+                     new VoidServerRequestCallback());
+            }
+         });
+         
       }
    }
 
