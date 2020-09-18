@@ -29,21 +29,16 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       public static final native Data create()
       /*-{
          return {
-            type: 0,
-            data: {},
-            sync: false,
-            target: 0
+            type    : 0,
+            sync    : false,
+            target  : 0
+            payload : {},
          };
       }-*/;
       
       public final native int getType()
       /*-{
          return this.type || 0;
-      }-*/;
-      
-      public final native JavaScriptObject getData()
-      /*-{
-         return this.data || {};
       }-*/;
       
       public final native boolean isSynchronous()
@@ -55,6 +50,12 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       /*-{
          return this.target || 0;
       }-*/;
+      
+      public final native JavaScriptObject getPayload()
+      /*-{
+         return this.payload || {};
+      }-*/;
+      
    }
    
    public RStudioApiRequestEvent(Data data)
@@ -69,7 +70,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    
    public <T extends JavaScriptObject> T getPayload()
    {
-      return data_.getData().<T>cast();
+      return data_.getPayload().<T>cast();
    }
    
    private final Data data_;

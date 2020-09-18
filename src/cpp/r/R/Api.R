@@ -339,7 +339,7 @@
 
 .rs.addFunction("enqueEditorClientEvent", function(type, data)
 {
-   eventData = list(type = .rs.scalar(type), data = data)
+   eventData <- list(type = .rs.scalar(type), data = data)
    .rs.enqueClientEvent("editor_command", eventData)
 })
 
@@ -564,10 +564,10 @@
 .rs.addApiFunction("documentId", function() {
    
    request <- .rs.api.createRequest(
-      type   = .rs.api.eventTypes$TYPE_DOCUMENT_ID,
-      data   = list(),
-      sync   = TRUE,
-      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW
+      type    = .rs.api.eventTypes$TYPE_DOCUMENT_ID,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = list(),
    )
    
    response <- .rs.api.sendRequest(request)
@@ -994,8 +994,6 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 #' @param type The event type. See '.rs.api.events' for the set
 #'   of permissible targets.
-#'
-#' @param data The data associated with this event.
 #' 
 #' @param sync Boolean; does handling of this event need to be
 #'   synchronous? Ensure `sync = TRUE` is used if you need to wait
@@ -1004,13 +1002,15 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 #' @param target The window to be targeted by this request. See
 #'   `.rs.api.eventTargets` for possible targets.
 #'
-.rs.addApiFunction("createRequest", function(type, data, sync, target)
+#' @param data The payload associated with this event.
+#'
+.rs.addApiFunction("createRequest", function(type, sync, target, payload)
 {
    list(
-      type   = .rs.scalar(type),
-      data   = as.list(data),
-      sync   = .rs.scalar(sync),
-      target = .rs.scalar(target)
+      type    = .rs.scalar(type),
+      sync    = .rs.scalar(sync),
+      target  = .rs.scalar(target),
+      payload = as.list(payload)
    )
 })
 
@@ -1021,16 +1021,14 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("selectionGet", function(id = NULL)
 {
    # create data payload
-   data <- list(
-      doc_id = .rs.scalar(id)
-   )
+   payload <- list(doc_id = .rs.scalar(id))
    
    # create request
    request <- .rs.api.createRequest(
-      type   = .rs.api.eventTypes$TYPE_GET_EDITOR_SELECTION,
-      data   = data,
-      sync   = TRUE,
-      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW
+      type    = .rs.api.eventTypes$TYPE_GET_EDITOR_SELECTION,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
    )
    
    # fire away
@@ -1043,17 +1041,17 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    value <- paste(value, collapse = "\n")
    
    # create data payload
-   data <- list(
+   payload <- list(
       value  = .rs.scalar(value),
       doc_id = .rs.scalar(id)
    )
    
    # create request
    request <- .rs.api.createRequest(
-      type   = .rs.api.eventTypes$TYPE_SET_EDITOR_SELECTION,
-      data   = data,
-      sync   = TRUE,
-      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW
+      type    = .rs.api.eventTypes$TYPE_SET_EDITOR_SELECTION,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload,
    )
    
    # fire away
