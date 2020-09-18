@@ -122,7 +122,7 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
             outputFields[bibtexKey] = bibtexValue.map((text: NodeArray) => formatText(text)).join(' and ');
             break;
           case 'l_name':
-            outputFields[bibtexKey] = formatNames(bibtexValue, config.traditionalNames || false);
+            outputFields[bibtexKey] = formatNames(bibtexValue);
             break;
           case 'l_tag':
             outputFields[bibtexKey] = escapeNonAscii(bibtexValue.join(', '));
@@ -360,7 +360,7 @@ const formatRange = (value: RangeArray[]): string => {
 };
 
 // Formats author values
-const formatNames = (names: NameDictObject[], traditionalNames: boolean): string => {
+const formatNames = (names: NameDictObject[]): string => {
   const quoteIfNecessary = (namePart: string) => {
     if (namePart.includes(',')) {
       return `"${namePart}"`;
@@ -371,48 +371,27 @@ const formatNames = (names: NameDictObject[], traditionalNames: boolean): string
 
   const formattedNames: string[] = [];
   names.forEach((name) => {
-
-
     if (name.literal) {
-      // If there is a literal name
+      // Use the literal
       const literal = formatText(name.literal);
       if (literal.length) {
         formattedNames.push(`{${literal}}`);
       }
     } else {
-      // No literal name, compose the name from the parts
+      // Compose the name
       const family = name.family ? formatText(name.family) : '';
       const given = name.given ? formatText(name.given) : '';
       const suffix = name.suffix ? formatText(name.suffix) : false;
       const prefix = name.prefix ? formatText(name.prefix) : false;
-      const useprefix = name.useprefix ? name.useprefix : false;
 
-      if (traditionalNames) {
-        if (suffix && prefix) {
-          formattedNames.push(`{${prefix} ${family}}, {${suffix}}, {${given}}`);
-        } else if (suffix) {
-          formattedNames.push(`{${family}}, {${suffix}}, {${given}}`);
-        } else if (prefix) {
-          formattedNames.push(`{${prefix} ${family}}, {${given}}`);
-        } else {
-          formattedNames.push(`{${family}}, {${given}}`);
-        }
+      if (suffix && prefix) {
+        formattedNames.push(`{${prefix} ${family}}, {${suffix}}, {${given}}`);
+      } else if (suffix) {
+        formattedNames.push(`{${family}}, {${suffix}}, {${given}}`);
+      } else if (prefix) {
+        formattedNames.push(`{${prefix} ${family}}, {${given}}`);
       } else {
-        const nameParts: string[] = [];
-        if (given.length) {
-          nameParts.push(quoteIfNecessary(`given={${given}}`));
-        }
-        if (family.length) {
-          nameParts.push(quoteIfNecessary(`family={${family}}`));
-        }
-        if (suffix) {
-          nameParts.push(quoteIfNecessary(`suffix={${suffix}}`));
-        }
-        if (prefix) {
-          nameParts.push(quoteIfNecessary(`prefix={${prefix}}`));
-          nameParts.push(`useprefix=${String(useprefix)}`);
-        }
-        formattedNames.push(nameParts.join(', '));
+        formattedNames.push(`{${family}}, {${given}}`);
       }
     }
   });
