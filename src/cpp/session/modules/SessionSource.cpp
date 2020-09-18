@@ -223,10 +223,11 @@ int numSourceDocuments()
 // wrap source_database::put for situations where there are new contents
 // (so we can index the contents)
 Error sourceDatabasePutWithUpdatedContents(boost::shared_ptr<SourceDocument> pDoc,
-                                           bool writeContents = true)
+                                           bool writeContents = true,
+                                           bool retryWrite = false)
 {
    // write the file to the database
-   Error error = source_database::put(pDoc, writeContents);
+   Error error = source_database::put(pDoc, writeContents, retryWrite);
    if (error)
       return error;
 
@@ -515,6 +516,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string id, contents;
+   bool retryWrite = false;
    json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    Error error = json::readParams(request.params, 
                                   &id, 
@@ -523,7 +525,8 @@ Error saveDocument(const json::JsonRpcRequest& request,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
                                   &jsonChunkOutput,
-                                  &contents);
+                                  &contents,
+                                  &retryWrite);
    if (error)
       return error;
    
@@ -541,7 +544,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
       return error;
    
    // write to the source_database
-   error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
+   error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges, retryWrite);
    if (error)
       return error;
 
@@ -570,6 +573,12 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // document cannot be patched and the request should be discarded.
    std::string hash;
    
+   // indicated whether or not this is write operation should be retried
+   // if the file handle cannot be acquired - this is used for
+   // manual saves as they can take longer as they are user-initiated actions
+   // autosaves need to be quick as they occur frequently
+   bool retryWrite = false;
+
    // read params
    Error error = json::readParams(request.params,
                                   &id,
@@ -582,15 +591,16 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &offset,
                                   &length,
                                   &valid,
-                                  &hash);
+                                  &hash,
+                                  &retryWrite);
    if (error)
       return error;
    
    // if this has no path then it is an autosave, in this case
-   // suppress change detection
+   // suppress change detection and write retries
    bool hasPath = json::isType<std::string>(jsonPath);
    if (!hasPath)
-       pResponse->setSuppressDetectChanges(true);
+      pResponse->setSuppressDetectChanges(true);
 
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
@@ -631,7 +641,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
-      error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
+      error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges, retryWrite);
       if (error)
          return error;
 

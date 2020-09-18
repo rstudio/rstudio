@@ -189,7 +189,7 @@ public class DocUpdateSentinel
                   {
                      // We're quitting. Save one last time.
                      final Token token = event.acquire();
-                     boolean saving = doSave(null, null, null,
+                     boolean saving = doSave(null, null, null, true,
                            new ProgressIndicator()
                      {
                         public void onProgress(String message)
@@ -233,15 +233,21 @@ public class DocUpdateSentinel
 
    public void withSavedDoc(final Command onSaved)
    {
-      withSavedDoc(onSaved, null);
+      withSavedDocImpl(true, onSaved, null);
    }
 
-   public void withSavedDoc(final Command onSaved,
+   public void withSavedDocNoRetry(final Command onSaved)
+   {
+      withSavedDocImpl(false, onSaved, null);
+   }
+
+   private void withSavedDocImpl(final boolean retryWrite,
+                                 final Command onSaved,
          final CommandWithArg<String> onError)
    {
       if (changeTracker_.hasChanged())
       {
-         boolean saved = doSave(null, null, null, new ProgressIndicator() {
+         boolean saved = doSave(null, null, null, retryWrite, new ProgressIndicator() {
 
             @Override
             public void onCompleted()
@@ -273,7 +279,7 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, null, new ProgressIndicator()
+         return doSave(null, null, null, false, new ProgressIndicator()
          {
 
             @Override
@@ -334,7 +340,7 @@ public class DocUpdateSentinel
 
    public void changeFileType(String fileType, final ProgressIndicator progress)
    {
-      saveWithSuspendedAutoSave(null, fileType, null, progress);
+      saveWithSuspendedAutoSave(null, fileType, null, true, progress);
    }
 
    public void save(String path,
@@ -342,23 +348,25 @@ public class DocUpdateSentinel
                     String fileType,
                     // encoding==null means don't change value
                     String encoding,
+                    boolean retryWrite,
                     final ProgressIndicator progress)
    {
       assert path != null;
       if (path == null)
          throw new IllegalArgumentException("Path cannot be null");
-      saveWithSuspendedAutoSave(path, fileType, encoding, progress);
+      saveWithSuspendedAutoSave(path, fileType, encoding, retryWrite, progress);
    }
 
    private void saveWithSuspendedAutoSave(String path,
                                           String fileType,
                                           String encoding,
+                                          boolean retryWrite,
                                           final ProgressIndicator progress)
    {
       if (autosaver_ != null)
          autosaver_.suspend();
 
-      doSave(path, fileType, encoding, new ProgressIndicator()
+      doSave(path, fileType, encoding, retryWrite, new ProgressIndicator()
       {
          public void onProgress(String message)
          {
@@ -400,12 +408,13 @@ public class DocUpdateSentinel
    private boolean doSave(String path,
                           String fileType,
                           String encoding,
+                          boolean retryWrite,
                           ProgressIndicator progress)
    {
       boolean didSave = false;
       try
       {
-         didSave = doSaveImpl(path, fileType, encoding, progress);
+         didSave = doSaveImpl(path, fileType, encoding, retryWrite, progress);
       }
       catch (Exception ex)
       {
@@ -447,6 +456,7 @@ public class DocUpdateSentinel
    private boolean doSaveImpl(final String path,
                               final String fileType,
                               final String encoding,
+                              final boolean retryWrite,
                               final ProgressIndicator progress)
    {
       /* We need to fork the change tracker so that we can "mark" the moment
@@ -519,6 +529,7 @@ public class DocUpdateSentinel
             diff.getLength(),
             diff.isValid(),
             hash,
+            retryWrite,
             new ServerRequestCallback<String>()
             {
                @Override
@@ -596,7 +607,7 @@ public class DocUpdateSentinel
                   {
                      // We just hit a race condition where two updates
                      // happened at once. Try again
-                     doSave(path, fileType, encoding, progress);
+                     doSave(path, fileType, encoding, retryWrite, progress);
                   }
                   else
                   {
@@ -610,6 +621,7 @@ public class DocUpdateSentinel
                            foldSpec,
                            newChunkDefs,
                            newContents,
+                           retryWrite,
                            this);
                   }
                }

@@ -556,7 +556,7 @@ SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect, bool includeContents)
    return r::sexp::create(object, pProtect);
 }
 
-Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) const
+Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, bool retryRewrite) const
 {
    // NOTE: in a previous implementation, the document properties and
    // document contents were encoded together in the same file -- we
@@ -565,6 +565,8 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    // allows newer versions of RStudio to remain backwards-compatible
    // with older formats for the source database
    
+   int saveTimeout = retryRewrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
+
    // write contents to file
    if (writeContents)
    {
@@ -573,7 +575,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
                                       contents_,
                                       string_utils::LineEndingPassthrough,
                                       true,
-                                      session::prefs::userPrefs().saveRetryTimeout());
+                                      saveTimeout);
       if (error)
          return error;
    }
@@ -587,7 +589,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
                                    jsonProperties.writeFormatted(),
                                    string_utils::LineEndingPassthrough,
                                    true,
-                                   session::prefs::userPrefs().saveRetryTimeout());
+                                   saveTimeout);
    return error;
 }
 
@@ -833,11 +835,11 @@ Error list(std::vector<FilePath>* pPaths)
    return Success();
 }
    
-Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
+Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents, bool retryRewrite)
 {   
    // write to file
    FilePath filePath = source_database::path().completePath(pDoc->id());
-   Error error = pDoc->writeToFile(filePath, writeContents);
+   Error error = pDoc->writeToFile(filePath, writeContents, retryRewrite);
    if (error)
       return error;
 

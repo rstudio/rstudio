@@ -101,6 +101,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                      String foldSpec,
                      JsArray<ChunkDefinition> chunkOutput,
                      String contents,
+                     boolean retryWrite,
                      ServerRequestCallback<String> requestCallback);
 
    /**
@@ -126,6 +127,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                          int length,
                          boolean valid,
                          String hash,
+                         boolean retryWrite,
                          ServerRequestCallback<String> requestCallback);
 
    void checkForExternalEdit(
