@@ -45,18 +45,18 @@ export function doiSourcePanel(ui: EditorUI, bibliographyManager: BibliographyMa
         expanded: true
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return null;
     },
     progressMessage: ui.context.translateText('Looking up DOI....'),
     placeHolderMessage: ui.context.translateText('Paste or enter a DOI to find citation data.'),
-    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const result = await server.fetchCSL(searchTerm, 1000);
         if (result.status === 'ok') {
           // Form the entry
           const csl = result.message;
-          const citation = toCitationListEntry(csl, bibliographyManager, ui);
+          const citation = toCitationListEntry(csl, existingCitationIds, ui);
 
           return Promise.resolve({
             citations: citation ? [citation] : [],
@@ -125,9 +125,9 @@ export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePan
 });
 
 
-function toCitationListEntry(csl: CSL | undefined, bibliographyManager: BibliographyManager, ui: EditorUI): CitationListEntry | undefined {
+function toCitationListEntry(csl: CSL | undefined, existingCitationIds: string[], ui: EditorUI): CitationListEntry | undefined {
   if (csl) {
-    const suggestedId = suggestCiteId(bibliographyManager.localSources().map(source => source.id), csl);
+    const suggestedId = suggestCiteId(existingCitationIds, csl);
     const providerKey = 'doi';
     return {
       id: suggestedId,

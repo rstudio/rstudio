@@ -23,7 +23,7 @@ import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager, BibliographyCollection, BibliographySource } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
-import { formatAuthors, formatIssuedDate } from "../../../api/cite";
+import { formatAuthors, formatIssuedDate, createUniqueCiteId } from "../../../api/cite";
 import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
 import { imageForType } from "../../../api/csl";
@@ -68,7 +68,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
         expanded: true
       };
     },
-    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
 
       const providerForNode = (node: NavigationTreeNode): string | undefined => {
         // The node could be the root node, no provider
@@ -84,14 +84,14 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       const sources = bibliographyManager.search(searchTerm, providerForNode(selectedNode), collectionKeyForNode(selectedNode));
       const uniqueSources = uniqby(sources, source => source.id);
 
-      const citations = toCitationListEntries(uniqueSources, ui);
+      const citations = toCitationListEntries(uniqueSources, existingCitationIds, ui);
       return {
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
         statusMessage: ''
       };
     },
-    search: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+    search: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return Promise.resolve({
         citations: [],
         status: CitationSourceListStatus.default,
@@ -189,11 +189,11 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
-function toCitationListEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+function toCitationListEntries(sources: BibliographySource[], existingCitationIds: string[], ui: EditorUI): CitationListEntry[] {
   const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
-      id: source.id,
+      id: createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,
       type: source.type,
       title: source.title || '',

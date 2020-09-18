@@ -40,8 +40,8 @@ export interface CitationSourcePanelProvider {
   treeNode(): NavigationTreeNode;
   placeHolderMessage?: string;
   progressMessage?: string;
-  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode) => CitationSourcePanelSearchResult | null;
-  search: (term: string, selectedNode: NavigationTreeNode) => Promise<CitationSourcePanelSearchResult>;
+  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => CitationSourcePanelSearchResult | null;
+  search: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => Promise<CitationSourcePanelSearchResult>;
 }
 
 export interface CitationSourcePanelSearchResult {
