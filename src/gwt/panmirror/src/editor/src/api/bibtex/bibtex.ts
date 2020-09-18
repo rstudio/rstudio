@@ -219,16 +219,27 @@ const sortedKeys = (fields: { [key: string]: string }) => {
 const escapeNonAscii = (value: string): string => {
   let result = '';
   for (let i = 0; i < value.length; i++) {
-    const char = value.charCodeAt(i);
+    const char = value.codePointAt(i);
 
     // Look for a LaTeX replace in the character mapping
-    const characterMap = characters[char];
-    if (characterMap) {
-      // Found one, emit the LaTeX
-      result = result + characterMap.latex;
+    if (char) {
+      const characterMap = characters[char];
+      if (characterMap) {
+        // Found one, emit the LaTeX
+        result = result + characterMap.latex;
+      } else {
+        // No LaTeX replacement, just emit the character
+        if (char < 255) {
+          result = result + String.fromCodePoint(char);
+        } else {
+          // A unicode character for which we have no valid LaTeX replacement
+          // emit a question mark
+          result = result + '?';
+        }
+      }
     } else {
-      // No LaTeX replacement, just emit the character
-      result = result + String.fromCharCode(char);
+      // A position which has no codepoint. what on earth is this?
+      result = result + '?';
     }
   }
   return result;
@@ -356,19 +367,12 @@ const formatText = (nodes: NodeArray): string => {
 
 // Formats ranges
 const formatRange = (value: RangeArray[]): string => {
+  // The correct symbol for a range of numbers is an en-dash, which in LaTeX is usually input as --. 
   return value.map(range => range.map(text => formatText(text)).join('--')).join(',');
 };
 
 // Formats author values
 const formatNames = (names: NameDictObject[]): string => {
-  const quoteIfNecessary = (namePart: string) => {
-    if (namePart.includes(',')) {
-      return `"${namePart}"`;
-    } else {
-      return namePart;
-    }
-  };
-
   const formattedNames: string[] = [];
   names.forEach((name) => {
     if (name.literal) {
