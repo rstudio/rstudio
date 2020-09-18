@@ -2471,6 +2471,13 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"
         desc="Clear console"/>
 
+   <cmd id="buildClear"
+        buttonLabel=""
+        label="Clear Build"
+        menuLabel="Clear Build"
+        windowMode="main"
+        desc="Clear build"/>
+
    <cmd id="interruptR"
         label="Interrupt R Session"
         buttonLabel=""

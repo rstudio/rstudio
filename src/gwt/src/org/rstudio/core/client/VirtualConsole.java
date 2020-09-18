@@ -104,10 +104,14 @@ public class VirtualConsole
 
    public boolean isLimitConsoleVisible() { return prefs_.limitConsoleVisible(); }
 
+   public void setVirtualizedDisableOverride(boolean override)
+   {
+      virtualizedDisableOverride_ = override;
+   }
+
    public boolean isVirtualized()
    {
-      return prefs_.limitConsoleVisible() && parent_ != null &&
-          VirtualScrollerManager.scrollerForElement(VirtualScrollerManager.getVirtualScrollerAncestor(parent_)) != null;
+      return !virtualizedDisableOverride_ && prefs_.limitConsoleVisible() && parent_ != null;
    }
 
    public void clearVirtualScroller()
@@ -427,7 +431,7 @@ public class VirtualConsole
     */
    private void appendChild(Element element)
    {
-      if (prefs_.limitConsoleVisible())
+      if (isVirtualized())
          VirtualScrollerManager.append(parent_.getParentElement(), element);
       else
          parent_.appendChild(element);
@@ -740,6 +744,10 @@ public class VirtualConsole
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+
+   // some panels might want to never virtualize the scrolling based
+   // on how they use the VirtualConsole (e.g. Build Pane)
+   private boolean virtualizedDisableOverride_ = false;
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
