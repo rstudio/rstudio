@@ -109,6 +109,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { restoreSelection } from '../api/selection';
 
 export interface EditorCode {
   code: string;
@@ -486,6 +487,10 @@ export class Editor {
       });
       this.view.updateState(this.state);
     } else {
+
+      // note current editing location
+      const location = this.getEditingLocation();
+
       // replace the top level nodes in the doc
       const tr = this.state.tr;
       tr.setMeta(kSetMarkdownTransaction, true);
@@ -496,9 +501,10 @@ export class Editor {
         i++;
         return false;
       });
-      // set selection to the beginning of the doc
-      const bodyNode = findChildrenByType(tr.doc, this.schema.nodes.body)[0];
-      setTextSelection(bodyNode.pos)(tr);
+      // set selection to previous location if it's still valid
+      if (location.pos < this.view.state.doc.nodeSize) {
+        setTextSelection(location.pos)(tr);
+      }
       // dispatch
       this.view.dispatch(tr);
     }
