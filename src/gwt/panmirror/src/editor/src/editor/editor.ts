@@ -16,11 +16,11 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Selection, TextSelection, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
-import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
+import { setTextSelection } from 'prosemirror-utils';
 
 import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
@@ -109,7 +109,6 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { restoreSelection } from '../api/selection';
 
 export interface EditorCode {
   code: string;
