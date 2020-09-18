@@ -379,6 +379,7 @@ const formatNames = (names: NameDictObject[]): string => {
       }
     } else {
       // Compose the name
+      // http://www.texfaq.org/FAQ-manyauthor
       const family = name.family ? formatText(name.family) : '';
       const given = name.given ? formatText(name.given) : '';
       const suffix = name.suffix ? formatText(name.suffix) : false;
