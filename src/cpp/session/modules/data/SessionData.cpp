@@ -107,6 +107,7 @@ private:
       std::vector<core::FilePath> sources;
       sources.push_back(pathFromSource("Tools.R"));
       sources.push_back(pathFromModulesSource("ModuleTools.R"));
+      sources.push_back(pathFromModulesSource("SessionCodeTools.R"));
       sources.push_back(pathFromModulesSource("SessionDataViewer.R"));
       sources.push_back(pathFromModulesSource("SessionDataImportV2.R"));
 
