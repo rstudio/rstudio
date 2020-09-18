@@ -601,8 +601,13 @@
    if (is.null(id))
       return(NULL)
    
-   # request document path
-   properties <- .Call("rs_documentProperties", id, FALSE, PACKAGE = "(embedding)")
+   # read document properties
+   properties <- .Call("rs_documentProperties",
+                       id,
+                       FALSE,
+                       PACKAGE = "(embedding)")
+   
+   # return document path
    properties$path
    
 })

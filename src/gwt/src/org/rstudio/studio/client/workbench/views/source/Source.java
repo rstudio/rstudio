@@ -2880,31 +2880,61 @@ public class Source implements InsertSourceHandler,
       if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
       {
          RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getData().cast();
-         invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
+         
+         if (consoleEditorHadFocusLast())
          {
-            target.withEditorSelection((String selection) ->
+            String selection = consoleEditorProvider_.getConsoleEditor().getSelectionValue();
+            JsObject response = JsObject.createJsObject();
+            response.setString("value", selection);
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         }
+         else
+         {
+            invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
             {
-               JsObject response = JsObject.createJsObject();
-               response.setString("value", selection);
-               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               target.withEditorSelection((String selection) ->
+               {
+                  JsObject response = JsObject.createJsObject();
+                  response.setString("value", selection);
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               });
             });
-         });
+         }
       }
       else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
       {
          RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getData().cast();
-         invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
+         
+         if (consoleEditorHadFocusLast())
          {
-            target.replaceSelection(data.getValue(), () ->
+            InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
+            console.replaceSelection(data.getValue(), true);
+            
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         }
+         else
+         {
+            invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
             {
-               server_.rstudioApiResponse(
-                     JavaScriptObject.createObject(),
-                     new VoidServerRequestCallback());
+               target.replaceSelection(data.getValue(), () ->
+               {
+                  server_.rstudioApiResponse(
+                        JavaScriptObject.createObject(),
+                        new VoidServerRequestCallback());
+               });
             });
-         });
+         }
       }
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_ID)
       {
+         if (consoleEditorHadFocusLast())
+         {
+            JsObject response = JsObject.createJsObject();
+            response.setString("id", "#console");
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         }
          invokeEditorApiAction(null, (TextEditingTarget target) ->
          {
             JsObject response = JsObject.createJsObject();
