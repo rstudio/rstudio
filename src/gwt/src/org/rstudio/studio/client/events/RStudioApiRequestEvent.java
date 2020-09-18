@@ -68,9 +68,9 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       return data_;
    }
    
-   public <T extends JavaScriptObject> T getPayload()
+   public JavaScriptObject getPayload()
    {
-      return data_.getPayload().<T>cast();
+      return data_.getPayload();
    }
    
    private final Data data_;
@@ -136,6 +136,8 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       protected DocumentIdData()
       {
       }
+      
+      public final native boolean getAllowConsole() /*-{ return this["allow_console"]; }-*/;
    }
    
 }
