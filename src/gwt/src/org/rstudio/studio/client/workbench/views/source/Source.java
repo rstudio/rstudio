@@ -2840,31 +2840,47 @@ public class Source implements InsertSourceHandler,
       docDisplay.focus();
    }
    
+   private boolean apiEventTargetIsConsole(String id)
+   {
+      return
+            StringUtil.equals(id, "#console") ||
+            StringUtil.isNullOrEmpty(id) &&
+            consoleEditorHadFocusLast();
+   }
+   
    private void invokeEditorApiAction(String docId,
                                       CommandWithArg<TextEditingTarget> callback)
    {
-      try
+      columnManager_.withTarget(docId, callback, () ->
       {
-         columnManager_.withTarget(docId, callback, () ->
-         {
-            server_.rstudioApiResponse(
-                  JavaScriptObject.createObject(),
-                  new VoidServerRequestCallback());
-         });
-      }
-      catch (Exception e)
-      {
-         // ensure server receives a response in case
-         // an exception interrupts regular execution
          server_.rstudioApiResponse(
                JavaScriptObject.createObject(),
                new VoidServerRequestCallback());
-      }
+      });
    }
    
    @Override
    public void onRStudioApiRequest(RStudioApiRequestEvent requestEvent)
    {
+      try
+      {
+         onRStudioApiRequestImpl(requestEvent);
+      }
+      catch (Exception e)
+      {
+         // ensure that a response if made if something goes wrong
+         if (requestEvent.getData().isSynchronous())
+         {
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         }
+      }
+   }
+   
+   private void onRStudioApiRequestImpl(RStudioApiRequestEvent requestEvent)
+   {
+      // retrieve request data
       RStudioApiRequestEvent.Data requestData = requestEvent.getData();
       
       // if this event is only for the active source window,
@@ -2881,7 +2897,7 @@ public class Source implements InsertSourceHandler,
       {
          RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getData().cast();
          
-         if (consoleEditorHadFocusLast())
+         if (apiEventTargetIsConsole(data.getDocId()))
          {
             String selection = consoleEditorProvider_.getConsoleEditor().getSelectionValue();
             JsObject response = JsObject.createJsObject();
@@ -2905,7 +2921,7 @@ public class Source implements InsertSourceHandler,
       {
          RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getData().cast();
          
-         if (consoleEditorHadFocusLast())
+         if (apiEventTargetIsConsole(data.getDocId()))
          {
             InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
             console.replaceSelection(data.getValue(), true);
@@ -2935,12 +2951,15 @@ public class Source implements InsertSourceHandler,
             response.setString("id", "#console");
             server_.rstudioApiResponse(response, new VoidServerRequestCallback());
          }
-         invokeEditorApiAction(null, (TextEditingTarget target) ->
+         else
          {
-            JsObject response = JsObject.createJsObject();
-            response.setString("id", target.getId());
-            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
-         });
+            invokeEditorApiAction(null, (TextEditingTarget target) ->
+            {
+               JsObject response = JsObject.createJsObject();
+               response.setString("id", target.getId());
+               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+            });
+         }
       }
    }
 
