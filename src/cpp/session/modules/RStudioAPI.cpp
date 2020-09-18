@@ -247,6 +247,7 @@ SEXP rs_documentProperties(SEXP idSEXP,
    Error error = source_database::get(id, pDoc);
    if (error)
    {
+      Rf_warning("document with id '%s' does not exist", id.c_str());
       LOG_ERROR(error);
       return R_NilValue;
    }
