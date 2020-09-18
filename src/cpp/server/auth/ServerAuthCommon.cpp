@@ -90,7 +90,17 @@ void signIn(const core::http::Request& request,
    std::string username = auth::handler::getUserIdentifier(request, true);
    if (!username.empty())
    {
-      pResponse->setMovedTemporarily(request, "./");
+      // Ensure the appUri is always gets appended
+      // to the existing browser URL. That replaces
+      // (or if empty, removes) /auth-sign-in from URL.
+      // Security: This also prevents manipulation
+      // of the appUri outside of the server's domain.
+      std::string appUri = request.queryParamValue(kAppUri);
+      if (appUri.empty() || appUri[0] != '/')
+      {
+         appUri = "./" + appUri;
+      }
+      pResponse->setMovedTemporarily(request, appUri);
       return;
    }
 
