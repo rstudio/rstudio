@@ -602,7 +602,8 @@
       return(NULL)
    
    # request document path
-   .rs.api.documentPath(id = id)
+   properties <- .Call("rs_documentProperties", id, FALSE, PACKAGE = "(embedding)")
+   properties$path
    
 })
 
