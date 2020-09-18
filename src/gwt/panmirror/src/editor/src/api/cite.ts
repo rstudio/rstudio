@@ -23,8 +23,22 @@ const kCiteIdLeadingLength = 8;
 export function createUniqueCiteId(existingIds: string[], baseId: string): string {
   let count = 0;
 
+  // Remove any non-8bit ascii characters
+  let asciiOnlyBaseId = '';
+  for (let i = 0; i < baseId.length; i++) {
+    const char = baseId.charCodeAt(i);
+    if (char <= 255) {
+      asciiOnlyBaseId = asciiOnlyBaseId + String.fromCharCode(char);
+    }
+  }
+
+  // If there are no characters left, just used a placeholder
+  if (asciiOnlyBaseId.length === 0) {
+    asciiOnlyBaseId = 'cite';
+  }
+
   // The base ID but with invalid characters replaced
-  let safeBaseId = baseId.replace(kInvalidCiteKeyChars, '');
+  let safeBaseId = asciiOnlyBaseId.replace(kInvalidCiteKeyChars, '');
 
   // Ensure that this is a valid citation, stripping any invalid characters
   let proposedId = safeBaseId;
