@@ -20,11 +20,6 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Handler>
 {
-   // list of events (keep in sync with Api.R)
-   public static final int TYPE_UNKNOWN              = 0;
-   public static final int TYPE_GET_EDITOR_SELECTION = 1;
-   public static final int TYPE_SET_EDITOR_SELECTION = 2;
-   
    public static class Data extends JavaScriptObject
    {
       protected Data()
@@ -36,7 +31,8 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
          return {
             type: 0,
             data: {},
-            sync: false
+            sync: false,
+            target: 0
          };
       }-*/;
       
@@ -53,6 +49,11 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       public final native boolean isSynchronous()
       /*-{
          return this.sync || false;
+      }-*/;
+      
+      public final native int getTarget()
+      /*-{
+         return this.target || 0;
       }-*/;
    }
    
@@ -90,5 +91,46 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   
+   // Event Data ----
+   
+   // list of events (keep in sync with Api.R)
+   public static final int TYPE_UNKNOWN              = 0;
+   public static final int TYPE_GET_EDITOR_SELECTION = 1;
+   public static final int TYPE_SET_EDITOR_SELECTION = 2;
+   public static final int TYPE_DOCUMENT_ID          = 3;
+   
+   // list of potential event targets (keep in sync with Api.R)
+   public static final int TARGET_UNKNOWN       = 0;
+   public static final int TARGET_ACTIVE_WINDOW = 1;
+   public static final int TARGET_ALL_WINDOWS   = 2;
+   
+   public static class GetEditorSelectionData extends JavaScriptObject
+   {
+      protected GetEditorSelectionData()
+      {
+      }
+
+      public final native String getDocId() /*-{ return this["doc_id"]; }-*/;
+   }
+   
+   public static class SetEditorSelectionData extends JavaScriptObject
+   {
+      protected SetEditorSelectionData()
+      {
+      }
+
+      public final native String getValue() /*-{ return this["value"]; }-*/;
+      public final native String getDocId() /*-{ return this["doc_id"]; }-*/;
+   }
+   
+   public static class DocumentIdData extends JavaScriptObject
+   {
+      protected DocumentIdData()
+      {
+      }
+   }
+   
 }
 
