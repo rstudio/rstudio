@@ -26,6 +26,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
@@ -233,6 +234,31 @@ SEXP rs_systemUsername()
    return r::sexp::create(core::system::username(), &protect);
 }
 
+SEXP rs_documentProperties(SEXP idSEXP,
+                           SEXP includeContentsSEXP)
+{
+   // resolve params
+   std::string id = r::sexp::asString(idSEXP);
+   bool includeContents = r::sexp::asLogical(includeContentsSEXP);
+
+   // retrieve document
+   using session::source_database::SourceDocument;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   Error error = source_database::get(id, pDoc);
+   if (error)
+   {
+      Rf_warning("document with id '%s' does not exist", id.c_str());
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   // convert to R object
+   r::sexp::Protect protect;
+   SEXP object = pDoc->toRObject(&protect, includeContents);
+   return object;
+}
+
+
 SEXP rs_sendApiRequest(SEXP requestSEXP)
 {
    Error error;
@@ -308,6 +334,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
    RS_REGISTER_CALL_METHOD(rs_userIdentity);
    RS_REGISTER_CALL_METHOD(rs_systemUsername);
+   RS_REGISTER_CALL_METHOD(rs_documentProperties);
    RS_REGISTER_CALL_METHOD(rs_sendApiRequest);
    
    using boost::bind;
