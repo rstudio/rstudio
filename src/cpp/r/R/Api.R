@@ -249,9 +249,10 @@
 })
 
 .rs.addApiFunction("navigateToFile", function(filePath = character(0),
-                                              line = 1L,
-                                              col = 1L,
-                                              moveCursor = TRUE) {
+                                              line = -1L,
+                                              col = -1L,
+                                              moveCursor = TRUE)
+{
    # validate file argument
    hasFile <- !is.null(filePath) && length(filePath) > 0
    if (hasFile && !is.character(filePath)) {
@@ -283,6 +284,12 @@
          filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
       }
    }
+   
+   # if we're requesting navigation without a specific cursor position,
+   # then use a separate API (this allows the API to work regardless of
+   # whether we're in source or visual mode)
+   if (identical(line, -1L) && identical(col, -1L))
+      return(file.edit(filePath))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
