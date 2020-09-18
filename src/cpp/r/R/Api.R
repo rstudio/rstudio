@@ -568,13 +568,17 @@
    .Call("rs_getPersistentValue", name)
 })
 
-.rs.addApiFunction("documentId", function() {
+.rs.addApiFunction("documentId", function(allowConsole = TRUE) {
+   
+   payload <- list(
+      allow_console = .rs.scalar(allowConsole)
+   )
    
    request <- .rs.api.createRequest(
       type    = .rs.api.eventTypes$TYPE_DOCUMENT_ID,
       sync    = TRUE,
       target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
-      payload = list()
+      payload = payload
    )
    
    response <- .rs.api.sendRequest(request)
@@ -1028,7 +1032,9 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("selectionGet", function(id = NULL)
 {
    # create data payload
-   payload <- list(doc_id = .rs.scalar(id))
+   payload <- list(
+      doc_id = .rs.scalar(id)
+   )
    
    # create request
    request <- .rs.api.createRequest(

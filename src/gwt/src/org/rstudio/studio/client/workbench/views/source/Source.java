@@ -2897,7 +2897,7 @@ public class Source implements InsertSourceHandler,
       int type = requestData.getType();
       if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
       {
-         RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getPayload();
+         RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getPayload().cast();
          
          if (apiEventTargetIsConsole(data.getDocId()))
          {
@@ -2921,7 +2921,7 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
       {
-         RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getPayload();
+         RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getPayload().cast();
          
          if (apiEventTargetIsConsole(data.getDocId()))
          {
@@ -2947,7 +2947,9 @@ public class Source implements InsertSourceHandler,
       }
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_ID)
       {
-         if (consoleEditorHadFocusLast())
+         RStudioApiRequestEvent.DocumentIdData data = requestEvent.getPayload().cast();
+         
+         if (data.getAllowConsole() && consoleEditorHadFocusLast())
          {
             JsObject response = JsObject.createJsObject();
             response.setString("id", "#console");
