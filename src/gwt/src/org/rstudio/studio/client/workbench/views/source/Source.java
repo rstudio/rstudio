@@ -97,6 +97,7 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
@@ -141,9 +142,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.GetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.SetEditorSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
@@ -221,8 +220,7 @@ public class Source implements InsertSourceHandler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
                                MouseNavigateSourceHistoryEvent.Handler,
-                               GetEditorSelectionEvent.Handler,
-                               SetEditorSelectionEvent.Handler
+                               RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -460,12 +458,11 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
-      events_.addHandler(GetEditorSelectionEvent.TYPE, this);
-      events_.addHandler(SetEditorSelectionEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
+      events_.addHandler(RStudioApiRequestEvent.TYPE, this);
    }
 
    public void load()
@@ -2843,55 +2840,131 @@ public class Source implements InsertSourceHandler,
       docDisplay.focus();
    }
    
+   private boolean apiEventTargetIsConsole(String id)
+   {
+      return
+            StringUtil.equals(id, "#console") ||
+            StringUtil.isNullOrEmpty(id) &&
+            consoleEditorHadFocusLast();
+   }
+   
    private void invokeEditorApiAction(String docId,
                                       CommandWithArg<TextEditingTarget> callback)
    {
-      try
+      columnManager_.withTarget(docId, callback, () ->
       {
-         columnManager_.withTarget(docId, callback, () ->
-         {
-            server_.rstudioApiResponse(
-                  JavaScriptObject.createObject(),
-                  new VoidServerRequestCallback());
-         });
-      }
-      catch (Exception e)
-      {
-         // ensure server receives a response in case
-         // an exception interrupts regular execution
          server_.rstudioApiResponse(
                JavaScriptObject.createObject(),
                new VoidServerRequestCallback());
-      }
-   }
-   
-   @Override
-   public void onGetEditorSelection(GetEditorSelectionEvent event)
-   {
-      invokeEditorApiAction(event.getData().getDocId(), (TextEditingTarget target) ->
-      {
-         target.withEditorSelection((String selection) ->
-         {
-            JsObject response = JsObject.createJsObject();
-            response.setString("value", selection);
-            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
-         });
       });
    }
    
    @Override
-   public void onSetEditorSelection(SetEditorSelectionEvent event)
+   public void onRStudioApiRequest(RStudioApiRequestEvent requestEvent)
    {
-      String docId = event.getData().getDocId();
-      invokeEditorApiAction(docId, (TextEditingTarget target) ->
+      try
       {
-         target.replaceSelection(event.getData().getValue(), () ->
+         onRStudioApiRequestImpl(requestEvent);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         
+         // ensure that a response if made if something goes wrong
+         if (requestEvent.getData().isSynchronous())
          {
             server_.rstudioApiResponse(
                   JavaScriptObject.createObject(),
                   new VoidServerRequestCallback());
-         });
-      });
+         }
+      }
+   }
+   
+   private void onRStudioApiRequestImpl(RStudioApiRequestEvent requestEvent)
+   {
+      // retrieve request data
+      RStudioApiRequestEvent.Data requestData = requestEvent.getData();
+      
+      // if this event is only for the active source window,
+      // then ignore if if we're not the active window
+      boolean ignore =
+            requestData.getTarget() == RStudioApiRequestEvent.TARGET_ACTIVE_WINDOW &&
+            !isLastFocusedSourceWindow();
+      
+      if (ignore)
+         return;
+      
+      int type = requestData.getType();
+      if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
+      {
+         RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getPayload().cast();
+         
+         if (apiEventTargetIsConsole(data.getDocId()))
+         {
+            String selection = consoleEditorProvider_.getConsoleEditor().getSelectionValue();
+            JsObject response = JsObject.createJsObject();
+            response.setString("value", selection);
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         }
+         else
+         {
+            invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
+            {
+               target.withEditorSelection((String selection) ->
+               {
+                  JsObject response = JsObject.createJsObject();
+                  response.setString("value", selection);
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               });
+            });
+         }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
+      {
+         RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getPayload().cast();
+         
+         if (apiEventTargetIsConsole(data.getDocId()))
+         {
+            InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
+            console.replaceSelection(data.getValue(), true);
+            
+            server_.rstudioApiResponse(
+                  JavaScriptObject.createObject(),
+                  new VoidServerRequestCallback());
+         }
+         else
+         {
+            invokeEditorApiAction(data.getDocId(), (TextEditingTarget target) ->
+            {
+               target.replaceSelection(data.getValue(), () ->
+               {
+                  server_.rstudioApiResponse(
+                        JavaScriptObject.createObject(),
+                        new VoidServerRequestCallback());
+               });
+            });
+         }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_ID)
+      {
+         RStudioApiRequestEvent.DocumentIdData data = requestEvent.getPayload().cast();
+         
+         if (data.getAllowConsole() && consoleEditorHadFocusLast())
+         {
+            JsObject response = JsObject.createJsObject();
+            response.setString("id", "#console");
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         }
+         else
+         {
+            invokeEditorApiAction(null, (TextEditingTarget target) ->
+            {
+               JsObject response = JsObject.createJsObject();
+               response.setString("id", target.getId());
+               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+            });
+         }
+      }
    }
 
    private class StatFileEntry
