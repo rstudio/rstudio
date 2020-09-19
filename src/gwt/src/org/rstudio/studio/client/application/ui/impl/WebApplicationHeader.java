@@ -17,7 +17,6 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -34,8 +33,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -148,7 +145,6 @@ public class WebApplicationHeader extends Composite
       commands.mainMenu(menuCallback);
       mainMenu_ = menuCallback.getMenu();
       mainMenu_.setAutoHideRedundantSeparators(false);
-      fixup(mainMenu_);
       mainMenu_.addStyleName(themeResources.themeStyles().mainMenu());
       AppMenuBar.addSubMenuVisibleChangedHandler(event ->
       {
@@ -387,32 +383,6 @@ public class WebApplicationHeader extends Composite
    public int getPreferredHeight()
    {
       return preferredHeight_;
-   }
-
-   /**
-    * Without this fixup, the main menu doesn't properly deselect its items
-    * when the mouse takes focus away.
-    */
-   private void fixup(final AppMenuBar mainMenu)
-   {
-      mainMenu.addCloseHandler(popupPanelCloseEvent ->
-      {
-         // Only dismiss the selection if the panel that just closed belongs
-         // to the currently selected item. Otherwise, the selected item
-         // has already changed and we don't want to mess with it. (This is
-         // NOT an edge case, it is very common.)
-         MenuItem menuItem = mainMenu.getSelectedItem();
-         if (menuItem != null)
-         {
-            MenuBar subMenu = menuItem.getSubMenu();
-            if (subMenu != null &&
-                popupPanelCloseEvent.getTarget() != null &&
-                subMenu.equals(popupPanelCloseEvent.getTarget().getWidget()))
-            {
-               Scheduler.get().scheduleDeferred(() -> mainMenu.selectItem(null));
-            }
-         }
-      });
    }
 
    private void initCommandsPanel(final SessionInfo sessionInfo)
