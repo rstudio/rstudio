@@ -334,6 +334,7 @@ public class TerminalPane extends WorkbenchPane
             initialDirectory == null ? "" : initialDirectory);
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 uiPrefs_.terminalWeblinks().getValue(),
                                                  false /*createdByApi*/, session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
@@ -875,6 +876,7 @@ public class TerminalPane extends WorkbenchPane
 
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 uiPrefs_.terminalWeblinks().getValue(),
                                                  event.createdByApi(), session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()

@@ -106,4 +106,5 @@
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
+* Added option for clickable links in Terminal pane (#6621)
 

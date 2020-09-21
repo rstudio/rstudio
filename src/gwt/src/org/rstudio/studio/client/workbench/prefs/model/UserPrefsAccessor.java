@@ -1923,6 +1923,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String TERMINAL_RENDERER_DOM = "dom";
 
    /**
+    * Whether web links displayed in the Terminal tab are made clickable.
+    */
+   public PrefValue<Boolean> terminalWeblinks()
+   {
+      return bool(
+         "terminal_weblinks",
+         "Make links in Terminal clickable", 
+         "Whether web links displayed in the Terminal tab are made clickable.", 
+         true);
+   }
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    public PrefValue<Boolean> showRmdRenderCommand()
@@ -3256,6 +3268,8 @@ public class UserPrefsAccessor extends Prefs
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
          terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
+      if (source.hasKey("terminal_weblinks"))
+         terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("enable_text_drag"))
@@ -3543,6 +3557,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalTrackEnvironment());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
+      prefs.add(terminalWeblinks());
       prefs.add(showRmdRenderCommand());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());

@@ -12,6 +12,7 @@ mkdir xterm.js
 cd xterm.js
 npm install xterm@4.9.0
 npm install xterm-addon-fit@0.4.0
+npm install xterm-addon-web-links@0.4.0
 
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
 
@@ -20,5 +21,6 @@ cp ./node_modules/xterm/css/xterm.css ${XTERM_TARGET_DIR}/xterm.css
 # Strip source-map references since they don't work via ClientBundle
 sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm/lib/xterm.js > ${XTERM_TARGET_DIR}/xterm.js
 sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm-addon-fit/lib/xterm-addon-fit.js > ${XTERM_TARGET_DIR}/fit.js
+sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js > ${XTERM_TARGET_DIR}/web-links.js
 
 echo Done!
