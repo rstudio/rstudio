@@ -128,6 +128,7 @@ export class AceNodeView implements NodeView {
 
   private updating: boolean;
   private escaping: boolean;
+  private gapCursorPending: boolean;
   private mode: string;
   private findMarkers: number[];
   private selectionMarker: number | null;
@@ -162,6 +163,7 @@ export class AceNodeView implements NodeView {
     // Initialize values
     this.mode = "";
     this.escaping = false;
+    this.gapCursorPending = false;
     this.findMarkers = [];
     this.selectionMarker = null;
     this.renderQueue = renderQueue;
@@ -303,7 +305,7 @@ export class AceNodeView implements NodeView {
       this.queuedSelection = new QueuedSelection(anchor, head);
       return;
     }
-    if (!this.escaping) {
+    if (!this.escaping && !this.gapCursorPending) {
       this.aceEditor.focus();
     }
     this.updating = true;
@@ -313,6 +315,10 @@ export class AceNodeView implements NodeView {
       doc.indexToPosition(head, 0));
     this.editSession.getSelection().setSelectionRange(range);
     this.updating = false;
+  }
+
+  public setGapCursorPending(pending: boolean) {
+    this.gapCursorPending = pending;
   }
 
   public selectNode() {
