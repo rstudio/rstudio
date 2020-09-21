@@ -49,6 +49,7 @@
 * The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
 * Show correct symbol for Return key in Mac menus (#6524)
+* Added command and button for clearing Build pane output (#6636)
 
 ### RStudio Server Pro
 
