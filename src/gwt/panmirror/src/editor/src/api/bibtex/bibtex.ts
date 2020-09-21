@@ -228,7 +228,9 @@ const escapeNonAscii = (value: string): string => {
       const characterMap = characters[char];
       if (characterMap) {
         // Found one, emit the LaTeX
-        result = result + characterMap.latex;
+        // Use the braces to group the expression, unless the character replacement explicitly
+        // doesn't want to be grouped
+        result = result + (characterMap.ungrouped ? characterMap.latex : `{${characterMap.latex}}`);
       } else {
         // No LaTeX replacement, just emit the character
         if (char < 255) {
