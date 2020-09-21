@@ -1536,8 +1536,6 @@ public class PaneManager
 
       Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
-      leftList_.add(panel);
-      sourceColumnManager_.beforeShow(name.getName());
    }
 
    private Widget createSourceColumnWindow(String name, String accessibleName)
