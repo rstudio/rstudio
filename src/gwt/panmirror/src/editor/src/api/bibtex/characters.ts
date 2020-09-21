@@ -27,6 +27,7 @@ export interface CharacterMap {
   decimal: number;
   character: string;
   latex: string;
+  ungrouped?: boolean;
 }
 
 
@@ -835,72 +836,84 @@ const characters: { [key: number]: CharacterMap } = {
     decimal: 768,
     character: "̀",
     latex: "\\`",
+    ungrouped: true
   },
   769: {
     id: "U00301",
     decimal: 769,
     character: "́",
     latex: "\\'",
+    ungrouped: true
   },
   770: {
     id: "U00302",
     decimal: 770,
     character: "̂",
     latex: "\\^",
+    ungrouped: true
   },
   771: {
     id: "U00303",
     decimal: 771,
     character: "̃",
     latex: "\\~",
+    ungrouped: true
   },
   772: {
     id: "U00304",
     decimal: 772,
     character: "̄",
     latex: "\\=",
+    ungrouped: true
   },
   774: {
     id: "U00306",
     decimal: 774,
     character: "̆",
     latex: "\\u",
+    ungrouped: true
   },
   775: {
     id: "U00307",
     decimal: 775,
     character: "̇",
     latex: "\\.",
+    ungrouped: true
   },
   776: {
     id: "U00308",
     decimal: 776,
     character: "̈",
     latex: '\\"',
+    ungrouped: true
   },
   778: {
     id: "U0030A",
     decimal: 778,
     character: "̊",
     latex: "\\r",
+    ungrouped: true
   },
   780: {
     id: "U0030C",
     decimal: 780,
     character: "̌",
     latex: "\\v",
+    ungrouped: true
   },
   807: {
     id: "U00327",
     decimal: 807,
     character: "̧",
     latex: "\\c",
+    ungrouped: true
   },
   808: {
     id: "U00328",
     decimal: 808,
     character: "̨",
     latex: "\\k",
+    ungrouped: true
   },
   902: {
     id: "U00386",
