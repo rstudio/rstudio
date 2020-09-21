@@ -388,7 +388,8 @@ Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonEncoding,
                        const json::Value& jsonFoldSpec,
                        const json::Value& jsonChunkOutput,
-                       boost::shared_ptr<SourceDocument> pDoc)
+                       boost::shared_ptr<SourceDocument> pDoc,
+                       bool retryWrite)
 {
    // check whether we have a path and if we do get/resolve its value
    std::string oldPath, path;
@@ -469,10 +470,11 @@ Error saveDocumentCore(const std::string& contents,
       bool newFile = !fullDocPath.exists();
 
       // write the contents to the file
+      int writeTimeout = retryWrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
       error = writeStringToFile(fullDocPath, encoded,
                                 module_context::lineEndings(fullDocPath),
                                 true,
-                                session::prefs::userPrefs().saveRetryTimeout());
+                                writeTimeout);
       if (error)
          return error;
 
@@ -539,7 +541,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
    // check if the document contents have changed
    bool hasChanges = contents != pDoc->contents();
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                            jsonFoldSpec, jsonChunkOutput, pDoc);
+                            jsonFoldSpec, jsonChunkOutput, pDoc, retryWrite);
    if (error)
       return error;
    
@@ -635,7 +637,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       // track if we're updating the document contents
       bool hasChanges = contents != pDoc->contents();
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                               jsonFoldSpec, jsonChunkOutput, pDoc);
+                               jsonFoldSpec, jsonChunkOutput, pDoc, retryWrite);
       if (error)
          return error;
 

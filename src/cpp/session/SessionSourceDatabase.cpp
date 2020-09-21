@@ -74,12 +74,29 @@ namespace {
 // lookup)
 std::map<std::string, std::string> s_idToPath;
 
+// cached mapping of document last write times
+std::map<std::string, std::time_t> s_lastWriteTimes;
+
 struct PropertiesDatabase
 {
    FilePath path;
    FilePath indexFile;
    std::map<std::string,std::string> index;
 };
+
+void cacheLastWriteTime(const std::string& path, std::time_t lastWriteTime)
+{
+   s_lastWriteTimes[path] = lastWriteTime;
+}
+
+std::time_t getCachedLastWriteTime(const std::string& path)
+{
+   auto iter = s_lastWriteTimes.find(path);
+   if (iter != s_lastWriteTimes.end())
+      return iter->second;
+   else
+      return 0;
+}
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
@@ -348,7 +365,13 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    // update path and contents
    path_ = path;
    setContents(contents);
+
+   // cache the lastKnownWriteTime on both the document object itself and the source database
+   // if we are unable to update changes to the source database after successfully writing new contents
+   // to the actual file, we want to ensure the lastWriteTime is cached so we can fallback on it - otherwise
+   // we will likely prompt the user to reload the changed file, even though it wasn't changed
    lastKnownWriteTime_ = docPath.getLastWriteTime();
+   cacheLastWriteTime(FilePath(path).getAbsolutePath(), lastKnownWriteTime_);
 
    // rewind the last content update to the file's write time
    lastContentUpdate_ = lastKnownWriteTime_;
@@ -485,10 +508,17 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value properties = docJson["properties"];
       properties_ = !properties.isNull() ? properties.getValue<json::Object>() : json::Object();
 
+      // it's possible that we could have failed to update the source database with the correct lastKnownWriteTime
+      // but the actual file has been updated more recently - in that case, take the newer version that we have cached
       json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
-      lastKnownWriteTime_ = !lastKnownWriteTime.isNull()
-                               ? lastKnownWriteTime.getInt64()
-                               : 0;
+      if (!lastKnownWriteTime.isNull())
+      {
+         int64_t val = lastKnownWriteTime.getInt64();
+         std::time_t cachedWriteTime = getCachedLastWriteTime(FilePath(path_).getAbsolutePath());
+         lastKnownWriteTime_ = cachedWriteTime > val ? cachedWriteTime : val;
+      }
+      else
+         lastKnownWriteTime_ = 0;
 
       json::Value encoding = docJson["encoding"];
       encoding_ = !encoding.isNull() ? encoding.getString() : std::string();
