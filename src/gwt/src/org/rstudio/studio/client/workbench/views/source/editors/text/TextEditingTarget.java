@@ -288,10 +288,20 @@ public class TextEditingTarget implements
                                    boolean suppressFileLockError,
                                    Command executeOnSuccess)
       {
+         this(file, fileType, suppressFileLockError, executeOnSuccess, null);
+      }
+
+      public SaveProgressIndicator(FileSystemItem file,
+                                   TextFileType fileType,
+                                   boolean suppressFileLockError,
+                                   Command executeOnSuccess,
+                                   Command executeOnSilentFailure)
+      {
          file_ = file;
          newFileType_ = fileType;
          suppressFileLockError_ = suppressFileLockError;
          executeOnSuccess_ = executeOnSuccess;
+         executeOnSilentFailure_ = executeOnSilentFailure;
       }
 
       public void onProgress(String message)
@@ -380,7 +390,12 @@ public class TextEditingTarget implements
                // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                // when attempting to save files that are being backed up by external software
                if (message.contains("The process cannot access the file because it is being used by another process") && suppressFileLockError_)
+               {
+                  if (executeOnSilentFailure_ != null)
+                     executeOnSilentFailure_.execute();
+
                   return;
+               }
 
                globalDisplay_.showErrorMessage("Error Saving File", message);
             }
@@ -442,6 +457,7 @@ public class TextEditingTarget implements
       private final TextFileType newFileType_;
       private final boolean suppressFileLockError_;
       private final Command executeOnSuccess_;
+      private final Command executeOnSilentFailure_;
    }
 
    @Inject
@@ -2779,10 +2795,9 @@ public class TextEditingTarget implements
          }});
    }
 
-   private void autoSave(Command onCompleted)
+   private void autoSave(Command onCompleted, Command onSilentFailure)
    {
-      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(),
-            onCompleted));
+      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(), onCompleted), onSilentFailure);
    }
 
    public void save(Command onCompleted)
@@ -2824,6 +2839,11 @@ public class TextEditingTarget implements
 
    public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command)
    {
+      saveThenExecute(encodingOverride, retryWrite, command, null);
+   }
+
+   public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command, final Command onSilentFailure)
+   {
       checkCompilePdfDependencies();
 
       final String path = docUpdateSentinel_.getPath();
@@ -2848,7 +2868,8 @@ public class TextEditingTarget implements
                                  FileSystemItem.createFile(path),
                                  null,
                                  !retryWrite,
-                                 command
+                                 command,
+                                 onSilentFailure
                            ));
                   });
                }
@@ -8233,9 +8254,16 @@ public class TextEditingTarget implements
          saving_ = System.currentTimeMillis();
          try
          {
-            autoSave(() ->
+            autoSave(
+            () ->
             {
                saving_ = 0;
+            },
+            () ->
+            {
+               // if this autosave operation silently fails, we want to automatically restart it
+               saving_ = 0;
+               nudgeAutosave();
             });
          }
          catch(Exception e)
