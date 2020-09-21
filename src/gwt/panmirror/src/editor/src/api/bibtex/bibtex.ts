@@ -218,9 +218,11 @@ const sortedKeys = (fields: { [key: string]: string }) => {
 // Converts any non asciii characters to their LaTeX representations
 const escapeNonAscii = (value: string): string => {
   let result = '';
-  for (let i = 0; i < value.length; i++) {
-    const char = value.codePointAt(i);
 
+  // Split the string in a way that will maintain unicode characters
+  const chars = Array.from(value);
+  chars.forEach(c => {
+    const char = c.codePointAt(0);
     // Look for a LaTeX replace in the character mapping
     if (char) {
       const characterMap = characters[char];
@@ -241,7 +243,7 @@ const escapeNonAscii = (value: string): string => {
       // A position which has no codepoint. what on earth is this?
       result = result + '?';
     }
-  }
+  });
   return result;
 };
 
