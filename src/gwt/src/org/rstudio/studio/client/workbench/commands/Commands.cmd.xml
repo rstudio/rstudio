@@ -2471,7 +2471,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"
         desc="Clear console"/>
 
-   <cmd id="buildClear"
+   <cmd id="clearBuild"
         buttonLabel=""
         label="Clear Build"
         windowMode="main"

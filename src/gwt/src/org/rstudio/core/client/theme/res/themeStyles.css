@@ -2504,6 +2504,10 @@ body.ubuntu_mono .searchBox {
 
 }
 
+.clearBuildButton {
+
+}
+
 .terminalClearButton {
 
 }
@@ -2513,8 +2517,9 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .consoleClearButton,
+.rstudio-themes-flat .rstudio-themes-dark .clearBuildButton,
 .rstudio-themes-flat .rstudio-themes-dark .terminalClearButton {
-   opacity: 0.5;
+   opacity: 0.8;
 }
 
 .refreshToolbarButton {

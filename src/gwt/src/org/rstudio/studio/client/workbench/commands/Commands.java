@@ -535,7 +535,7 @@ public abstract class
    public abstract AppCommand loadServerHome();
 
    // Build
-   public abstract AppCommand buildClear();
+   public abstract AppCommand clearBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand devtoolsLoadAll();
    public abstract AppCommand rebuildAll();
