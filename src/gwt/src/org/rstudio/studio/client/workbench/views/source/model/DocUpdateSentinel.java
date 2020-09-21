@@ -303,12 +303,17 @@ public class DocUpdateSentinel
                // Inform the user only once if this was an autosave failure.
                if (!loggedAutosaveError_)
                {
-                  loggedAutosaveError_ = true;
+                  // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
+                  // when attempting to save files that are being backed up by external software
+                  if (!message.contains("The process cannot access the file because it is being used by another process"))
+                  {
+                     loggedAutosaveError_ = true;
 
-                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        "Error Autosaving File",
-                        "RStudio was unable to autosave this file. You may need " +
-                        "to restart RStudio.");
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                           "Error Autosaving File",
+                           "RStudio was unable to autosave this file. You may need " +
+                                 "to restart RStudio.");
+                  }
                }
 
                // Use regular completed callback for indicator.
