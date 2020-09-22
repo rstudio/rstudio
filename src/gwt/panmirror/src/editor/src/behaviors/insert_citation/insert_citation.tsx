@@ -476,7 +476,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             height={panelHeight}
             nodes={treeSourceData}
             selectedNode={insertCitationPanelState.selectedNode}
-            onNodeSelected={onNodeSelected}
+            onSelectedNodeChanged={onNodeSelected}
           />
         </div>
         <div className='pm-cite-panel-cite-selection-items'>
