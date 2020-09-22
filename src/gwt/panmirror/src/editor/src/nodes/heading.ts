@@ -13,15 +13,15 @@
  *
  */
 
-import { textblockTypeInputRule } from 'prosemirror-inputrules';
+import { textblockTypeInputRule, InputRule } from 'prosemirror-inputrules';
 import { Node as ProsemirrorNode, Schema, NodeType, Fragment } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
-import { findParentNode } from 'prosemirror-utils';
+import { findParentNode, findParentNodeOfType } from 'prosemirror-utils';
 
 import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 import { EditorCommandId, toggleBlockType, ProsemirrorCommand } from '../api/command';
 import { Extension, ExtensionContext } from '../api/extension';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrParseText } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
 import { EditorUI } from '../api/ui';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
@@ -133,7 +133,7 @@ const extension = (context: ExtensionContext): Extension => {
     },
 
     inputRules: (schema: Schema) => {
-      return [
+      const rules = [
         textblockTypeInputRule(
           new RegExp('^(#{1,' + kHeadingLevels.length + '})\\s$'),
           schema.nodes.heading,
@@ -142,7 +142,15 @@ const extension = (context: ExtensionContext): Extension => {
             navigation_id: uuidv4(),
           }),
         ),
+
       ];
+
+      if (headingAttr) {
+        rules.push(headingAttributeInputRule(schema));
+      }
+
+      return rules;
+
     },
 
     plugins: (schema: Schema) => {
@@ -150,6 +158,31 @@ const extension = (context: ExtensionContext): Extension => {
     },
   };
 };
+
+function headingAttributeInputRule(schema: Schema) {
+  return new InputRule(/ {([^}]+)}$/, (state: EditorState, match: string[], start: number, end: number) => {
+    // only fire in headings
+    const heading = findParentNodeOfType(schema.nodes.heading)(state.selection);
+    if (heading) {
+      // try to parse the attributes
+      const attrs = pandocAttrParseText(match[1]);
+      if (attrs) {
+        const tr = state.tr;
+        tr.setNodeMarkup(heading.pos, undefined, {
+          ...heading.node.attrs,
+          ...attrs
+        });
+        tr.deleteRange(start + 1, end);
+        return tr;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+
+  });
+}
 
 class HeadingCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
