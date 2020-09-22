@@ -34,7 +34,7 @@ import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
-const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
+const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
 
 const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
