@@ -1343,8 +1343,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             Debug.logWarning("Warning: No column was provided to remove the doc from.");
          column = getActive();
       }
+      boolean setNewActiveEditor = false;
+      if (column == getActive() && column.getEditors().size() > 1)
+         setNewActiveEditor = true;
+      
       column.closeDoc(docId);
       column.cancelTabDrag();
+      if (setNewActiveEditor)
+         column.setActiveEditor();
    }
 
    public void selectTab(EditingTarget target)
