@@ -52,7 +52,7 @@ const extension: Extension = {
   },
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
-    return [delimiterMarkInputRule('\\~', schema.marks.subscript, filter, '\\~-', true)];
+    return [delimiterMarkInputRule('\\~', schema.marks.subscript, filter, '`\\~-', true)];
   },
 };
 
