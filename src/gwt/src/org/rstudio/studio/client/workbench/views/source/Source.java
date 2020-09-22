@@ -1735,10 +1735,12 @@ public class Source implements InsertSourceHandler,
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
 
-                  if (event.getCursorPosition() != null)
+                  SourcePosition position = event.getCursorPosition();
+                  if (position != null &&
+                      position.getRow() > 0 &&
+                      position.getColumn() > 0)
                   {
-                     editingTarget.navigateToPosition(event.getCursorPosition(),
-                                                      false);
+                     editingTarget.navigateToPosition(position, false);
                   }
 
                   if (event.getExecute())

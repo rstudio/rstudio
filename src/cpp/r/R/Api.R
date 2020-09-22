@@ -643,8 +643,8 @@
 
 .rs.addApiFunction("documentNew", function(type,
                                            code,
-                                           row = -1L,
-                                           column = -1L,
+                                           row = 0,
+                                           column = 0,
                                            execute = FALSE)
 {
    type <- switch(
@@ -658,8 +658,8 @@
    payload <- list(
       type    = .rs.scalar(type),
       code    = .rs.scalar(paste(code, collapse = "\n")),
-      row     = .rs.scalar(row),
-      column  = .rs.scalar(column),
+      row     = .rs.scalar(as.integer(row)),
+      column  = .rs.scalar(as.integer(column)),
       execute = .rs.scalar(execute)
    )
    
