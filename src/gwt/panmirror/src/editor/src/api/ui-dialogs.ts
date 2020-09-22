@@ -19,7 +19,7 @@ import { ListCapabilities, ListType } from "./list";
 import { TableCapabilities } from "./table";
 import { CSL } from "./csl";
 import { CiteField } from "./cite";
-import { kStyleAttrib, attrPartitionKeyvalue } from "./pandoc_attr";
+import { kStyleAttrib, attrPartitionKeyvalue, pandocAttrKeyvalueFromText } from "./pandoc_attr";
 
 export interface EditorDialogs {
   alert: AlertFn;
@@ -200,7 +200,7 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
     if (attr.style) {
       text += `\nstyle=${attr.style}\n`;
     }
-    keyvalue = attrKeyvalueFromText(text);
+    keyvalue = pandocAttrKeyvalueFromText(text, '\n');
   }
   return {
     id: asPandocId(attr.id || ''),
@@ -209,13 +209,7 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   };
 }
 
-function attrKeyvalueFromText(text: string): Array<[string, string]> {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
-    const parts = line.trim().split('=');
-    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
-  });
-}
+
 
 function asPandocId(id: string) {
   return id.replace(/^#/, '');
