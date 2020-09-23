@@ -23,7 +23,6 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 
@@ -286,13 +285,7 @@ public class GitPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
 
-      menu.setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            menu.setPopupPosition(clientX, clientY);
-         }
-      });
+      menu.showRelativeTo(clientX, clientY);
    }
 
    private ToolbarButton historyButton_;
