@@ -46,6 +46,11 @@ while true; do
         echo "Giving up upload after $RETRIES attempts"
         exit 1
     fi
+
+    # Cool off a little
+    echo "Sentry upload failed; waiting 30 seconds to try again"
+    sleep 30
+
 done
 
 
