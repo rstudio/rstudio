@@ -91,6 +91,32 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       setPopupPositionAndShow((offsetWidth, offsetHeight) ->
       {
+         // Calculate left position for the popup; normally the clicked location but
+         // if it doesn't fix horizontally nudge it to the left
+         int left = clientX;
+
+         // Make sure scrolling is taken into account, since
+         // box.getAbsoluteLeft() takes scrolling into account.
+         int windowRight = Window.getClientWidth() + Window.getScrollLeft();
+         int windowLeft = Window.getScrollLeft();
+
+         // Distance from the clicked location to the right edge of the window
+         int distanceToWindowRight = windowRight - clientX;
+
+         // Distance from the clicked location to the left edge of the window
+         int distanceFromWindowLeft = clientX - windowLeft;
+
+         // If there is not enough space for the overflow of the popup's
+         // width to the right, and there IS enough space for the
+         // overflow to the left, then right-align the popup.
+         // However, if there is not enough space on either side, then stick with
+         // left-alignment.
+         if (distanceToWindowRight < offsetWidth && distanceFromWindowLeft >= offsetWidth)
+         {
+            // Align the right edge of popup with clicked location
+            left -= offsetWidth;
+         }
+
          // Calculate top position for the popup; normally we expand "down" from where user
          // right-clicked but if there isn't room them expand "up"
          int top = clientY;
@@ -117,7 +143,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
             top -= offsetHeight;
          }
          setAutoConstrain(false);
-         setPopupPosition(clientX, top);
+         setPopupPosition(left, top);
       });
    }
 
