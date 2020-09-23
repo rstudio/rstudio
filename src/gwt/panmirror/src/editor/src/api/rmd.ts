@@ -29,6 +29,7 @@ import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
 import { toggleBlockType } from './command';
 import { selectionIsBodyTopLevel } from './selection';
+import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
   lang: string;
@@ -86,7 +87,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       // perform insert
       const tr = state.tr;
       const rmdText = schema.text(chunkPlaceholder);
-      const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
+      const rmdNode = schema.nodes.rmd_chunk.create({ navigation_id: uuidv4() }, rmdText);
       const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
