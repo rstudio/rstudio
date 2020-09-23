@@ -668,6 +668,10 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.unfold(),
         commands_.unfoldAll(),
 
+        // Temporarily disabled since keybinding conflicts with Panmirrors'
+        // Italicize command
+        commands_.reindent(),
+        
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
       );
