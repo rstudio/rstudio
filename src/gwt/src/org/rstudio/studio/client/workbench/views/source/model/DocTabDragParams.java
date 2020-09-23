@@ -51,7 +51,7 @@ public class DocTabDragParams extends JavaScriptObject
         tab_width      : 0,
         cursor_offset  : 0,
         source_position: position,
-        display_name   : display_name
+        display_name   : displayName
      }
    }-*/;
    
