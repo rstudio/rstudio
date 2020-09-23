@@ -64,18 +64,18 @@ public class GitPane extends WorkbenchPane implements Display
                   CreateBranchToolbarButton createBranchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
-      
+
       server_ = server;
       commands_ = commands;
       display_ = display;
       prefs_ = prefs;
-      
+
       switchBranchToolbarButton_ = switchBranchToolbarButton;
       createBranchToolbarButton_ = createBranchToolbarButton;
-      
+
       table_ = changelistTablePresenter.getView();
       table_.addStyleName("ace_editor_theme");
-      
+
       if (Desktop.isDesktop())
       {
          WindowEx.addFocusHandler(new FocusHandler()
@@ -91,7 +91,7 @@ public class GitPane extends WorkbenchPane implements Display
          });
       }
    }
-   
+
    private class GitMonitoringMenuItem extends MonitoringMenuItem
    {
       public GitMonitoringMenuItem(boolean monitoredValue)
@@ -122,7 +122,7 @@ public class GitPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
-      
+
       ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
@@ -138,7 +138,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(historyButton_ = commands_.vcsShowHistory().createToolbarButton());
       toolbar.addLeftSeparator();
-      
+
       moreButton_ = new ToolbarMenuButton(
             "More",
             ToolbarButton.NoTitle,
@@ -148,14 +148,14 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(moreButton_);
 
       toolbar.addRightWidget(createBranchToolbarButton_);
-      
+
       toolbar.addRightSeparator();
-      
+
       toolbar.addRightWidget(switchBranchToolbarButton_);
       switchBranchToolbarButton_.setRightAlignMenu(true);
-      
+
       toolbar.addRightSeparator();
-      
+
       refreshButton_ = new ToolbarButton(
             ToolbarButton.NoText,
             commands_.vcsRefresh().getTooltip(),
@@ -170,7 +170,7 @@ public class GitPane extends WorkbenchPane implements Display
             });
       ElementIds.assignElementId(refreshButton_, ElementIds.TB_GIT_REFRESH);
       toolbar.addRightWidget(refreshButton_);
-      
+
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
       refreshMenu.addItem(new GitMonitoringMenuItem(true));
       refreshMenu.addItem(new GitMonitoringMenuItem(false));
@@ -180,36 +180,36 @@ public class GitPane extends WorkbenchPane implements Display
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.vcsRefresh().execute()));
-      
+
       toolbar.addRightWidget(new ToolbarMenuButton(
             ToolbarButton.NoText,
             "Refresh options",
             refreshMenu,
             false));
-      
+
       return toolbar;
    }
-   
+
    @Override
    public void onSelected()
-   {    
+   {
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
          @Override
          public void execute()
          {
-            manageToolbarSizes(); 
+            manageToolbarSizes();
          }
       });
    }
-   
+
    @Override
-   public void onResize() 
+   public void onResize()
    {
       super.onResize();
-      
+
       manageToolbarSizes();
-     
+
    }
 
    private void manageToolbarSizes()
@@ -273,19 +273,19 @@ public class GitPane extends WorkbenchPane implements Display
    {
       return table_;
    }
-   
+
    @Override
    public void showContextMenu(final int clientX, final int clientY)
    {
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      
+
       menu.addItem(commands_.vcsDiff().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
       menu.addItem(commands_.vcsIgnore().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
-    
+
       menu.setPopupPositionAndShow(new PositionCallback() {
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
@@ -300,15 +300,15 @@ public class GitPane extends WorkbenchPane implements Display
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    private ToolbarButton refreshButton_;
-   
+
    @SuppressWarnings("unused")
    private final GitServerOperations server_;
    private final Commands commands_;
    @SuppressWarnings("unused")
    private final GlobalDisplay display_;
    private final UserPrefs prefs_;
- 
+
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
-   private GitChangelistTable table_;
+   private final GitChangelistTable table_;
 }
