@@ -682,7 +682,7 @@ export async function insertCitation(
         const tr = view.state.tr;
 
         // Write the source to the bibliography if needed
-        await ensureSourcesInBibliography(
+        const writeCiteId = await ensureSourcesInBibliography(
           tr,
           [source],
           bibliographyFile,
@@ -692,10 +692,12 @@ export async function insertCitation(
           server,
         );
 
-        // Write the citeId
-        const schema = view.state.schema;
-        const idText = schema.text(source.id, [schema.marks.cite_id.create()]);
-        performCiteCompletionReplacement(tr, tr.mapping.map(pos), idText);
+        if (writeCiteId) {
+          // Write the citeId
+          const schema = view.state.schema;
+          const idText = schema.text(source.id, [schema.marks.cite_id.create()]);
+          performCiteCompletionReplacement(tr, tr.mapping.map(pos), idText);
+        }
 
         // Dispath the transaction
         view.dispatch(tr);
@@ -716,7 +718,7 @@ export async function ensureSourcesInBibliography(
   view: EditorView,
   ui: EditorUI,
   server: PandocServer,
-) {
+): Promise<boolean> {
   // Write entry to a bibliography file if it isn't already present
   await bibManager.load(ui, view.state.doc);
 
@@ -766,6 +768,7 @@ export async function ensureSourcesInBibliography(
         }
       }));
   }
+  return proceedWithInsert;
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
