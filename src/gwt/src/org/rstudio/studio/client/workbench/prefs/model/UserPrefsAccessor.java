@@ -2665,6 +2665,25 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Default spacing for lists created in the visual editor
+    */
+   public PrefValue<String> visualMarkdownEditingListSpacing()
+   {
+      return enumeration(
+         "visual_markdown_editing_list_spacing",
+         "Default list spacing in visual markdown editing mode", 
+         "Default spacing for lists created in the visual editor", 
+         new String[] {
+            VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
+            VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
+         },
+         "spaced");
+   }
+
+   public final static String VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT = "tight";
+   public final static String VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED = "spaced";
+
+   /**
     * Whether to automatically wrap text when writing markdown
     */
    public PrefValue<String> visualMarkdownEditingWrap()
@@ -3362,6 +3381,8 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("visual_markdown_editing_is_default"))
          visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
+      if (source.hasKey("visual_markdown_editing_list_spacing"))
+         visualMarkdownEditingListSpacing().setValue(layer, source.getString("visual_markdown_editing_list_spacing"));
       if (source.hasKey("visual_markdown_editing_wrap"))
          visualMarkdownEditingWrap().setValue(layer, source.getString("visual_markdown_editing_wrap"));
       if (source.hasKey("visual_markdown_editing_wrap_at_column"))
@@ -3596,6 +3617,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());
+      prefs.add(visualMarkdownEditingListSpacing());
       prefs.add(visualMarkdownEditingWrap());
       prefs.add(visualMarkdownEditingWrapAtColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());

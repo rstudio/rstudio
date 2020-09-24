@@ -327,6 +327,9 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
+#define kVisualMarkdownEditingListSpacing "visual_markdown_editing_list_spacing"
+#define kVisualMarkdownEditingListSpacingTight "tight"
+#define kVisualMarkdownEditingListSpacingSpaced "spaced"
 #define kVisualMarkdownEditingWrap "visual_markdown_editing_wrap"
 #define kVisualMarkdownEditingWrapNone "none"
 #define kVisualMarkdownEditingWrapColumn "column"
@@ -1505,6 +1508,12 @@ public:
     */
    bool visualMarkdownEditingIsDefault();
    core::Error setVisualMarkdownEditingIsDefault(bool val);
+
+   /**
+    * Default spacing for lists created in the visual editor
+    */
+   std::string visualMarkdownEditingListSpacing();
+   core::Error setVisualMarkdownEditingListSpacing(std::string val);
 
    /**
     * Whether to automatically wrap text when writing markdown

@@ -21,7 +21,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { Extension, ExtensionContext } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
-import { EditorUI } from '../../api/ui';
+import { EditorUI, kListSpacingTight } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType } from '../../api/pandoc';
@@ -269,6 +269,7 @@ const extension = (context: ExtensionContext): Extension => {
           schema.nodes.bullet_list,
           schema.nodes.list_item,
           bulletListOmniInsert(ui),
+          ui.prefs
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
@@ -276,6 +277,7 @@ const extension = (context: ExtensionContext): Extension => {
           schema.nodes.ordered_list,
           schema.nodes.list_item,
           orderedListOmniInsert(ui),
+          ui.prefs
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -303,12 +305,20 @@ const extension = (context: ExtensionContext): Extension => {
     },
 
     inputRules: (schema: Schema) => {
+
+      // reflect tight pref
+      const tightFn = () => {
+        return {
+          tight: ui.prefs.listSpacing() === kListSpacingTight
+        };
+      };
+
       const rules = [
-        wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list),
+        wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list, tightFn),
         wrappingInputRule(
           /^(\d+)\.\s$/,
           schema.nodes.ordered_list,
-          match => ({ order: +match[1] }),
+          match => ({ order: +match[1], tight: tightFn() }),
           (match, node) => node.childCount + node.attrs.order === +match[1],
         ),
       ];
