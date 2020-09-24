@@ -1,5 +1,5 @@
 /*
- * XTermResources.java
+ * XTermWebLinksAddon.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,20 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import org.rstudio.core.client.resources.StaticDataResource;
+import jsinterop.annotations.JsType;
 
-public interface XTermResources extends ClientBundle
+/**
+ * An xterm.js addon that enables web links.
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-web-links/typings/xterm-addon-web-links.d.ts
+ */
+@JsType(isNative = true, namespace = "WebLinksAddon", name = "WebLinksAddon")
+public class XTermWebLinksAddon extends XTermAddon
 {
-   XTermResources INSTANCE = GWT.create(XTermResources.class);
-
-   @Source("xterm.js")
-   StaticDataResource xtermjs();
-
-   @Source("fit.js")
-   StaticDataResource xtermfitjs();
-
-   @Source("web-links.js")
-   StaticDataResource xtermweblinksjs();
+   /*
+    * NOTE: only supporting the no-argument default constructor which makes URLs into clickable
+    * links that launch external browser. Additional features are available in the add-on for
+    * registering custom providers and callback.
+    */
 }

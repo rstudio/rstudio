@@ -242,6 +242,7 @@ namespace prefs {
 #define kTerminalRenderer "terminal_renderer"
 #define kTerminalRendererCanvas "canvas"
 #define kTerminalRendererDom "dom"
+#define kTerminalWeblinks "terminal_weblinks"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
@@ -1187,6 +1188,12 @@ public:
     */
    std::string terminalRenderer();
    core::Error setTerminalRenderer(std::string val);
+
+   /**
+    * Whether web links displayed in the Terminal tab are made clickable.
+    */
+   bool terminalWeblinks();
+   core::Error setTerminalWeblinks(bool val);
 
    /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
