@@ -1779,6 +1779,19 @@ core::Error UserPrefValues::setTerminalRenderer(std::string val)
 }
 
 /**
+ * Whether web links displayed in the Terminal tab are made clickable.
+ */
+bool UserPrefValues::terminalWeblinks()
+{
+   return readPref<bool>("terminal_weblinks");
+}
+
+core::Error UserPrefValues::setTerminalWeblinks(bool val)
+{
+   return writePref("terminal_weblinks", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2891,6 +2904,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalTrackEnvironment,
       kTerminalBellStyle,
       kTerminalRenderer,
+      kTerminalWeblinks,
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,

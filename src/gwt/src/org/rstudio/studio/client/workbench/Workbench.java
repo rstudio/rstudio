@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -52,7 +51,6 @@ import org.rstudio.studio.client.common.rstudioapi.AskSecretManager;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
-import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
@@ -781,7 +779,7 @@ public class Workbench implements BusyEvent.Handler,
       else
          globalDisplay_.showWarningBar(false, event.getCommand() + " : " + command.summarize());
    }
-   
+
    private final Server server_;
    private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;

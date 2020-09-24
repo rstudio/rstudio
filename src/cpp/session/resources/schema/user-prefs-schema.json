@@ -914,7 +914,13 @@
             "title": "Terminal tab rendering engine",
             "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
         },
-        "show_rmd_render_command": {
+         "terminal_weblinks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Make links in Terminal clickable",
+            "description": "Whether web links displayed in the Terminal tab are made clickable."
+        },
+       "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
             "title": "Show R Markdown render command",
