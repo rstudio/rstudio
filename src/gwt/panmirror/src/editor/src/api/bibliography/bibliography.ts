@@ -112,13 +112,14 @@ export interface BibliographySourceWithCollections extends BibliographySource {
 // The fields and weights that will indexed and searched
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
-  { name: 'id', weight: .30 },
-  { name: 'author.family', weight: .30 },
-  { name: 'author.literal', weight: .30 },
-  { name: 'title', weight: .05 },
-  { name: 'author.given', weight: .025 },
-  { name: 'issued', weight: .025 },
-  { name: 'provider', weight: 0 }
+  { name: 'id', weight: 30 },
+  { name: 'author.family', weight: 40 },
+  { name: 'author.literal', weight: 40 },
+  { name: 'author.given', weight: 10 },
+  { name: 'title', weight: 10 },
+  { name: 'issued', weight: 15 },
+  { name: 'providerKey', weight: .01 },
+  { name: 'collectionKeys', weight: .01 }
 ];
 
 const kSearchOptions = {
@@ -135,6 +136,7 @@ export class BibliographyManager {
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySourceWithCollections[];
   private writable?: boolean;
+  private searchIndex?: Fuse<BibliographySourceWithCollections, Fuse.IFuseOptions<BibliographySourceWithCollections>>;
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
@@ -163,7 +165,14 @@ export class BibliographyManager {
     if (needsIndexUpdate) {
       // Get the entries
       const providersEntries = this.providers.map(provider => provider.items());
-      this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries);
+
+      // These are in arbitrary order, so sort them alphabetically
+      const idSort = (a: BibliographySource, b: BibliographySource) => {
+        return a.id.localeCompare(b.id);
+      };
+      this.sources = ([] as BibliographySourceWithCollections[]).concat(...providersEntries).sort(idSort);
+
+      this.searchIndex = this.getFuse(this.sources);
     }
 
     // Is this a writable bibliography
@@ -292,18 +301,12 @@ export class BibliographyManager {
         return this.searchAllSources(query, limit);
       }
     } else {
-
-      // These are in arbitrary order, so sort them alphabetically
-      const idSort = (a: BibliographySource, b: BibliographySource) => {
-        return a.id.localeCompare(b.id);
-      };
-
       if (providerKey && collectionKey) {
-        return this.sourcesForProviderCollection(providerKey, collectionKey).sort(idSort);
+        return this.sourcesForProviderCollection(providerKey, collectionKey);
       } else if (providerKey) {
-        return this.sourcesForProvider(providerKey).sort(idSort);
+        return this.sourcesForProvider(providerKey);
       } else {
-        return this.allSources().sort(idSort);
+        return this.allSources();
       }
     }
   }
@@ -317,14 +320,14 @@ export class BibliographyManager {
     // Please be sure to use load() before calling this or
     // accept the risk that this will not properly search for a source if the
     // bibliography hasn't already been loaded.
-    if (sources) {
+    if (sources && this.searchIndex) {
 
       // NOTE: Search performance can really drop off for long strings
       // Test cases start at 20ms to search for a single character
       // grow to 270ms to search for 20 character string
       // grow to 1060ms to search for 40 character string 
-      const results = this.getFuse(sources).search(query, { ...kSearchOptions, limit });
-      const items = results.map((result: { item: any }) => result.item);
+      const searchResults = this.searchIndex.search(query, { ...kSearchOptions, limit });
+      const items = searchResults.map((result: { item: any }) => result.item);
 
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.allowsWrites() ? items : items.filter(item => item.provider === kLocalBiliographyProviderKey);
@@ -338,22 +341,64 @@ export class BibliographyManager {
 
   // Search only a specific provider
   public searchProvider(query: string, limit: number, providerKey: string): BibliographySourceWithCollections[] {
-    return this.searchSources(query, limit, this.allSources().filter(item => item.providerKey === providerKey));
+    const orFields = kFields.map(field => {
+      return {
+        [field.name]: query
+      };
+    });
+    const q = {
+      $and: [
+        { providerKey },
+        {
+          $or: orFields
+        }]
+    };
+
+    if (this.searchIndex) {
+      const searchResults = this.searchIndex.search(q, { limit });
+      return searchResults.map((result: { item: any }) => result.item);
+    } else {
+      return [];
+    }
   }
 
   // Search a specific provider and collection
   public searchProviderCollection(query: string, limit: number, providerKey: string, collectionKey: string): BibliographySourceWithCollections[] {
-    return this.searchSources(query, limit, this.allSources().filter(item => (item.providerKey === providerKey && item.collectionKeys.includes(collectionKey))));
+
+    const orFields = kFields.map(field => {
+      return {
+        [field.name]: query
+      };
+    });
+    const q = {
+      $and: [
+        {
+          providerKey,
+        },
+        {
+          collectionKeys: collectionKey
+        },
+        {
+          $or: orFields
+        }]
+    };
+
+    if (this.searchIndex) {
+      const searchResults = this.searchIndex.search(q, { limit });
+      return searchResults.map((result: { item: any }) => result.item);
+    } else {
+      return [];
+    }
   }
 
   private getFuse(bibSources: BibliographySourceWithCollections[]) {
     // build search index
     const options = {
+      ...kSearchOptions,
       keys: kFields.map(field => field.name),
     };
     const index = Fuse.createIndex<BibliographySourceWithCollections>(options.keys, bibSources);
     return new Fuse(bibSources, options, index);
-
   }
 }
 
