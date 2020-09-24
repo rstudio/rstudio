@@ -355,14 +355,15 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // In order to debounce typeahead search, we need to memoize the callback so the same debounce function will be
   // used even when renders happen. 
-  const memoizedTypeaheadSearch = React.useCallback(debounce((searchTerm: string) => {
-    const searchResult = selectedPanelProvider.typeAheadSearch(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds);
+  const memoizedTypeaheadSearch = React.useCallback(debounce((searchTerm: string, selectedNode: NavigationTreeNode, existingIds: string[]) => {
+    const searchResult = selectedPanelProvider.typeAheadSearch(searchTerm, selectedNode, existingIds);
     if (searchResult) {
       updateState({
         searchTerm,
         citations: searchResult?.citations,
         status: searchResult?.status,
-        statusMessage: searchResult?.statusMessage
+        statusMessage: searchResult?.statusMessage,
+        selectedNode
       });
     }
   }, 30), []);
@@ -379,7 +380,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     searchTerm: insertCitationPanelState.searchTerm,
     onSearchTermChanged: (term: string) => {
       updateState({ searchTerm: term });
-      memoizedTypeaheadSearch(term);
+      memoizedTypeaheadSearch(term, insertCitationPanelState.selectedNode, existingCitationIds);
     },
     onExecuteSearch: (searchTerm: string) => {
       updateState({ searchTerm, status: CitationSourceListStatus.inProgress, statusMessage: selectedPanelProvider.progressMessage });
