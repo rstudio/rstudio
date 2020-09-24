@@ -99,6 +99,11 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
          sizeToWindow(top, Style.Overflow.AUTO);
    }
 
+   public void setAutoConstrain(boolean autoConstrain)
+   {
+      autoConstrain_ = autoConstrain;
+   }
+
    // Size the table to the window
    private void sizeToWindow(int top, Style.Overflow overflowY)
    {

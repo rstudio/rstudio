@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -132,13 +131,7 @@ public class SVNPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
 
-      menu.setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            menu.setPopupPosition(clientX, clientY);
-         }
-      });
+      menu.showRelativeTo(clientX, clientY);
    }
 
    @Override
