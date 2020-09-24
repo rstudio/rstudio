@@ -29,6 +29,8 @@ export interface CitationSourcePanelProps extends WidgetProps {
   status: CitationSourceListStatus;
   statusMessage: string;
 
+  warningMessage: string;
+
   ref: React.Ref<any>;
 }
 
@@ -40,6 +42,7 @@ export interface CitationSourcePanelProvider {
   treeNode(): NavigationTreeNode;
   placeHolderMessage?: string;
   progressMessage?: string;
+  warningMessage?: string;
   typeAheadSearch: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => CitationSourcePanelSearchResult | null;
   search: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => Promise<CitationSourcePanelSearchResult>;
 }

@@ -241,7 +241,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // The source data for the tree
   const treeSourceData = insertCitationConfiguration.providers.map(panel => panel.treeNode());
-  const [treeData, setTreeData] = React.useState<NavigationTreeNode[]>(treeSourceData);
 
   // The selected provider / panel for the dialog
   const defaultNode = nodeForKey(treeSourceData, props.initiallySelectedNodeKey);
@@ -322,6 +321,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         }
 
         setInsertCitationConfiguration(result);
+        const panelProvider = panelForNode(result.providers, insertCitationPanelState.selectedNode);
+        if (panelProvider) {
+          setSelectedPanelProvider(panelProvider);
+        }
         if (refreshSearchCallback.current) {
           refreshSearchCallback.current();
         }
@@ -402,9 +405,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     onConfirm: onOk,
     status: insertCitationPanelState.status,
     statusMessage: insertCitationPanelState.statusMessage,
+    warningMessage: selectedPanelProvider.warningMessage || '',
     ref: panelRef
   };
-
 
   // This implements the connection of the dialog (non-provider panel) events and data and the
   // core dialog state

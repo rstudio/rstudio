@@ -28,12 +28,15 @@ import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntr
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
 import { imageForType } from "../../../api/csl";
 
+import './insert_citation-source-panel-bibliography.css';
+
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
 export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibliographyManager: BibliographyManager): CitationSourcePanelProvider {
 
   const providers = bibliographyManager.localProviders();
   const providerNodes: { [key: string]: NavigationTreeNode } = {};
+
 
   // For each of the providers, discover their collections
   providers.filter(provider => provider.isEnabled()).forEach(provider => {
@@ -68,6 +71,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
         expanded: true
       };
     },
+    warningMessage: bibliographyManager.warning(),
     typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
 
       const providerForNode = (node: NavigationTreeNode): string | undefined => {
@@ -88,7 +92,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       return {
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
-        statusMessage: ''
+        statusMessage: citations.length > 0 ? '' : ui.context.translateText('No items')
       };
     },
     search: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
@@ -103,22 +107,27 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 
 export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   return (
-    <CitationSourceTypeheadSearchPanel
-      height={props.height}
-      citations={props.citations}
-      citationsToAdd={props.citationsToAdd}
-      searchTerm={props.searchTerm}
-      onSearchTermChanged={props.onSearchTermChanged}
-      selectedIndex={props.selectedIndex}
-      onSelectedIndexChanged={props.onSelectedIndexChanged}
-      onAddCitation={props.onAddCitation}
-      onRemoveCitation={props.onRemoveCitation}
-      onConfirm={props.onConfirm}
-      status={props.status}
-      statusMessage={props.statusMessage}
-      ui={props.ui}
-      ref={ref}
-    />
+    <>
+
+      {props.warningMessage ?
+        <div className='pm-insert-bibliography-source-panel-warning pm-block-border-color'>{props.warningMessage}</div> : undefined}
+      <CitationSourceTypeheadSearchPanel
+        height={props.height}
+        citations={props.citations}
+        citationsToAdd={props.citationsToAdd}
+        searchTerm={props.searchTerm}
+        onSearchTermChanged={props.onSearchTermChanged}
+        selectedIndex={props.selectedIndex}
+        onSelectedIndexChanged={props.onSelectedIndexChanged}
+        onAddCitation={props.onAddCitation}
+        onRemoveCitation={props.onRemoveCitation}
+        onConfirm={props.onConfirm}
+        status={props.status}
+        statusMessage={props.statusMessage}
+        ui={props.ui}
+        ref={ref}
+      />
+    </>
   );
 });
 
@@ -193,7 +202,7 @@ function toCitationListEntries(sources: BibliographySource[], existingCitationId
   const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
-      id: source.providerKey === kLocalBiliographyProviderKey ? source.id : createUniqueCiteId(existingCitationIds, source.id),
+      id: (source.providerKey === kLocalBiliographyProviderKey || useBetterBibTex) ? source.id : createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,
       type: source.type,
       title: source.title || '',
