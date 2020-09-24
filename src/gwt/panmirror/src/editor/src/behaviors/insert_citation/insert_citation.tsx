@@ -38,6 +38,7 @@ import { dataciteSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
+import debounce from "lodash.debounce";
 
 
 
@@ -240,6 +241,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // The source data for the tree
   const treeSourceData = insertCitationConfiguration.providers.map(panel => panel.treeNode());
+  const [treeData, setTreeData] = React.useState<NavigationTreeNode[]>(treeSourceData);
 
   // The selected provider / panel for the dialog
   const defaultNode = nodeForKey(treeSourceData, props.initiallySelectedNodeKey);
@@ -351,6 +353,21 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // Figure out the panel height (the height of the main panel less padding and other elements)
   const panelHeight = props.height * .75;
 
+  // In order to debounce typeahead search, we need to memoize the callback so the same debounce function will be
+  // used even when renders happen. 
+  const memoizedTypeaheadSearch = React.useCallback(debounce((searchTerm: string) => {
+    const searchResult = selectedPanelProvider.typeAheadSearch(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds);
+    if (searchResult) {
+      updateState({
+        searchTerm,
+        citations: searchResult?.citations,
+        status: searchResult?.status,
+        statusMessage: searchResult?.statusMessage
+      });
+    }
+  }, 30), []);
+
+
   // The core props that will be passed to whatever the selected panel is
   // This implements the connection of the panel events and data and the
   // core dialog state
@@ -362,15 +379,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     searchTerm: insertCitationPanelState.searchTerm,
     onSearchTermChanged: (term: string) => {
       updateState({ searchTerm: term });
-      const searchResult = selectedPanelProvider.typeAheadSearch(term, insertCitationPanelState.selectedNode, existingCitationIds);
-      if (searchResult) {
-        updateState({
-          searchTerm: term,
-          citations: searchResult?.citations,
-          status: searchResult?.status,
-          statusMessage: searchResult?.statusMessage
-        });
-      }
+      memoizedTypeaheadSearch(term);
     },
     onExecuteSearch: (searchTerm: string) => {
       updateState({ searchTerm, status: CitationSourceListStatus.inProgress, statusMessage: selectedPanelProvider.progressMessage });
