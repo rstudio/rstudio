@@ -2468,6 +2468,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 }
 
 /**
+ * Default spacing for lists created in the visual editor
+ */
+std::string UserPrefValues::visualMarkdownEditingListSpacing()
+{
+   return readPref<std::string>("visual_markdown_editing_list_spacing");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingListSpacing(std::string val)
+{
+   return writePref("visual_markdown_editing_list_spacing", val);
+}
+
+/**
  * Whether to automatically wrap text when writing markdown
  */
 std::string UserPrefValues::visualMarkdownEditingWrap()
@@ -2931,6 +2944,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,
+      kVisualMarkdownEditingListSpacing,
       kVisualMarkdownEditingWrap,
       kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,

@@ -1246,6 +1246,13 @@
             "title": "Use visual editing by default for new markdown documents",
             "description": "Whether to enable visual editing by default for new markdown documents"
         },
+        "visual_markdown_editing_list_spacing": {
+            "type": "string",
+            "enum": ["tight", "spaced"],
+            "default": "spaced",
+            "title": "Default list spacing in visual markdown editing mode",
+            "description": "Default spacing for lists created in the visual editor"
+        },
         "visual_markdown_editing_wrap": {
             "type": "string",
             "enum": ["none", "column", "sentence"],
