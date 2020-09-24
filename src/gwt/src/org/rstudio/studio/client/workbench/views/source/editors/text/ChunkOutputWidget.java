@@ -87,15 +87,6 @@ public class ChunkOutputWidget extends Composite
    
    public interface Resources extends ClientBundle
    {
-      @Source("ExpandChunkIcon_2x.png")
-      ImageResource expandChunkIcon2x();
-      
-      @Source("CollapseChunkIcon_2x.png")
-      ImageResource collapseChunkIcon2x();
-
-      @Source("RemoveChunkIcon_2x.png")
-      ImageResource removeChunkIcon2x();
-
       @Source("PopoutChunkIcon_2x.png")
       ImageResource popoutIcon2x();
    }
@@ -129,11 +120,6 @@ public class ChunkOutputWidget extends Composite
 
       ChunkDataWidget.injectPagedTableResources();
 
-      clear_.addStyleName("rstudio-themes-inverts");
-      clear_.addStyleName("rstudio-classic-inverts");
-      expand_.addStyleName("rstudio-themes-inverts");
-      expand_.addStyleName("rstudio-classic-inverts");
-      
       if (chunkOutputSize_ == ChunkOutputSize.Default)
       {
          frame_.getElement().getStyle().setHeight(
@@ -956,8 +942,8 @@ public class ChunkOutputWidget extends Composite
       return true;
    }
    
-   @UiField Image clear_;
-   @UiField Image expand_;
+   @UiField HTMLPanel clear_;
+   @UiField HTMLPanel expand_;
    @UiField Image popout_;
    @UiField SimplePanel root_;
    @UiField ChunkStyle style;

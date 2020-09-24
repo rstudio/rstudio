@@ -14,7 +14,7 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
-#include <server_core/ServerDatabaseKeyObfuscation.hpp>
+#include <server_core/ServerKeyObfuscation.hpp>
 #include <server_core/http/SecureCookie.hpp>
 
 #include <boost/algorithm/string.hpp>

@@ -255,6 +255,11 @@ public class VisualModePanmirrorFormat
       return getOutputFormats().contains("hugodown::md_document");
    }
    
+   private boolean isGitHubDocument()
+   {
+      return getOutputFormats().contains("github_document");
+   }
+   
    private boolean isDistillDocument()
    {
       return (sessionInfo_.getIsDistillProject() && isDocInProject()) ||
@@ -363,7 +368,11 @@ public class VisualModePanmirrorFormat
          {
             return new Pair<String,String>("goldmark", "");
          }
-         
+         // github document
+         else if (isGitHubDocument())
+         {
+            return new Pair<String,String>("gfm", "");
+         }
       }
    
       return null;   

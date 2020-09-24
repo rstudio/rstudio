@@ -168,13 +168,13 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     };
 
     // see if we need to write raw html
-    const writeHTML =
+    const requireHTML =
       pandocAttrAvailable(node.attrs) && // attribs need to be written
       !output.extensions.link_attributes && // markdown attribs not supported
       output.extensions.raw_html; // raw html is supported
 
     // if we do, then substitute a raw html writer
-    if (writeHTML) {
+    if (node.attrs.raw || requireHTML) {
       writer = () => {
         const imgAttr = imageDOMAttributes(node, true, false);
         const html = asHTMLTag('img', imgAttr, true, true);
@@ -207,6 +207,7 @@ function imageInlineHTMLReader(schema: Schema, html: string, writer?: Prosemirro
   if (writer) {
     const attrs = imageAttrsFromHTML(html);
     if (attrs) {
+      attrs.raw = true;
       writer.addNode(schema.nodes.image, attrs, []);
     } else {
       return false;
@@ -248,6 +249,7 @@ export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
     src: {},
     title: { default: null },
     alt: { default: null },
+    raw: { default: false },
     ...(linkTo ? { linkTo: { default: null } } : {}),
     ...(imageAttributes ? pandocAttrSpec : {}),
   };

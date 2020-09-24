@@ -152,7 +152,7 @@ std::string SessionScope::workbench() const
    else if (isVSCode())
       return kWorkbenchVSCode;
    else
-      return kWorkbenchJupyterNotebook;
+      return kWorkbenchRStudio;
 }
 
 // This function is intended to tell us whether a given path corresponds to an

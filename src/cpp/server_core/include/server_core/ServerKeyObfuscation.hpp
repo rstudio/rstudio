@@ -1,5 +1,5 @@
 /*
- * ServerDatabaseKeyObfuscation.hpp
+ * ServerKeyObfuscation.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *

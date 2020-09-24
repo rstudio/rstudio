@@ -206,16 +206,18 @@ export class AceRenderQueue {
       this.needsSort = false;
     }
 
-    // Pop the next view (editor instance) to be rendered off the stack
-    const view = this.renderQueue.shift();
+    // Pop the next view (editor instance) to be rendered off the stack.
+    // Fast-forward past instances that no longer have a position; these can
+    // accumulate when NodeViews are added to the render queue but replaced
+    // (by a document rebuild) before they have a chance to render.
+    let view: AceNodeView | undefined;
+    while (view === null || view === undefined || view.getPos() === undefined) {
+      view = this.renderQueue.shift();
+    }
 
     // Render this view
     if (view) {
-      // Don't render if the view no longer has a position (this can happen if
-      // the view was moved or deleted before it got a chance to render)
-      if (view.getPos() !== undefined) {
-        view.initEditor();
-      }
+      view.initEditor();
     }
 
     if (this.renderQueue.length > 0) {
