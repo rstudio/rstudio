@@ -193,7 +193,7 @@ function toCitationListEntries(sources: BibliographySource[], existingCitationId
   const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
-      id: createUniqueCiteId(existingCitationIds, source.id),
+      id: source.providerKey === kLocalBiliographyProviderKey ? source.id : createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,
       type: source.type,
       title: source.title || '',
