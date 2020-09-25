@@ -671,6 +671,10 @@ public class VisualMode implements VisualModeEditorSync,
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
       );
+      
+      // initially disable code commands (they will be re-enabled later when an
+      // editor has focus)
+      setCodeCommandsEnabled(false);
    }
    
    
