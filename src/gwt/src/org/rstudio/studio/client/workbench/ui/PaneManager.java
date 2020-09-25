@@ -28,6 +28,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import elemental2.dom.DomGlobal;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
@@ -286,7 +288,7 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
       panel_ = pSplitPanel.get();
 
-      // get the widgets for the extra source columns to be displayed
+      // get the widgets for the extra source columns to be displayed
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
       if (additionalSourceCount_ != sourceColumnManager_.getSize() - 1)
          syncAdditionalColumnCount(additionalSourceCount_, false /* refreshDisplay */);
@@ -452,7 +454,42 @@ public class PaneManager
                syncAdditionalColumnCount(
                   userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns(), true);
             }
+            if (!userPrefs_.showPanelFocusRectangle().getValue())
+            {
+               clearFocusIndicator();
+            }
          }
+      });
+
+      // highlight pane containing keyboard focus
+      DomGlobal.document.addEventListener("focusin", (Event) ->
+      {
+         if (!userPrefs_.showPanelFocusRectangle().getValue())
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         Element activeEl = DomUtils.getActiveElement();
+         if (activeEl == null)
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
+         if (activeWindow == lastFocusedWindow_)
+            return;
+         if (activeWindow == null)
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         if (lastFocusedWindow_ != null)
+            lastFocusedWindow_.showWindowFocusIndicator(false);
+         lastFocusedWindow_ = activeWindow;
+         activeWindow.showWindowFocusIndicator(true);
       });
 
       manageLayoutCommands();
@@ -1901,6 +1938,15 @@ public class PaneManager
       return config;
    }
 
+   private void clearFocusIndicator()
+   {
+      if (lastFocusedWindow_ != null)
+      {
+         lastFocusedWindow_.showWindowFocusIndicator(false);
+         lastFocusedWindow_ = null;
+      }
+   }
+
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
@@ -1953,6 +1999,7 @@ public class PaneManager
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
    private LogicalWindow maximizedWindow_ = null;
+   private LogicalWindow lastFocusedWindow_ = null;
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;

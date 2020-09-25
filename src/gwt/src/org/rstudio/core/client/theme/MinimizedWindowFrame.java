@@ -124,6 +124,10 @@ public class MinimizedWindowFrame
       initWidget(layout_);
    }
 
+   public void showWindowFocusIndicator(boolean showFocusIndicator)
+   {
+   }
+
    protected Widget getExtraWidget()
    {
       return extraWidget_;
