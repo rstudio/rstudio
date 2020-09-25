@@ -316,6 +316,7 @@ namespace prefs {
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kShowFocusRectangles "show_focus_rectangles"
+#define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -1479,6 +1480,12 @@ public:
     */
    bool showFocusRectangles();
    core::Error setShowFocusRectangles(bool val);
+
+   /**
+    * Show which panel contains keyboard focus.
+    */
+   bool showPanelFocusRectangle();
+   core::Error setShowPanelFocusRectangle(bool val);
 
    /**
     * How to deal with changes to documents on idle.
