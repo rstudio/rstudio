@@ -2587,6 +2587,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Show which panel contains keyboard focus.
+    */
+   public PrefValue<Boolean> showPanelFocusRectangle()
+   {
+      return bool(
+         "show_panel_focus_rectangle",
+         "Show focus outline around focused panel", 
+         "Show which panel contains keyboard focus.", 
+         false);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -3383,6 +3395,8 @@ public class UserPrefsAccessor extends Prefs
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
+      if (source.hasKey("show_panel_focus_rectangle"))
+         showPanelFocusRectangle().setValue(layer, source.getBool("show_panel_focus_rectangle"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
@@ -3626,6 +3640,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
       prefs.add(showFocusRectangles());
+      prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
