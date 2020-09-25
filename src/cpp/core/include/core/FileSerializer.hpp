@@ -295,7 +295,7 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // maxOpenRetrySeconds indicates whether or not we should retry attempts to open the file
 // when it is in use by another process (common when using backup software), and if so
 // how many seconds of elapsed time should we wait for the file to become available
-// note: this only has an affect on Windows
+// note: this only has an effect on Windows
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
