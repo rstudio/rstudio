@@ -13,11 +13,12 @@
  *
  */
 
-import { wrappingInputRule } from 'prosemirror-inputrules';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-list';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+
+import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension, ExtensionContext } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
@@ -27,6 +28,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { conditionalWrappingInputRule } from '../../api/input_rule';
 
 import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
@@ -269,7 +271,7 @@ const extension = (context: ExtensionContext): Extension => {
           schema.nodes.bullet_list,
           schema.nodes.list_item,
           bulletListOmniInsert(ui),
-          ui.prefs
+          ui.prefs,
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
@@ -277,7 +279,7 @@ const extension = (context: ExtensionContext): Extension => {
           schema.nodes.ordered_list,
           schema.nodes.list_item,
           orderedListOmniInsert(ui),
-          ui.prefs
+          ui.prefs,
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -305,19 +307,23 @@ const extension = (context: ExtensionContext): Extension => {
     },
 
     inputRules: (schema: Schema) => {
-
       // reflect tight pref
       const tightFn = () => {
         return {
-          tight: ui.prefs.listSpacing() === kListSpacingTight
+          tight: ui.prefs.listSpacing() === kListSpacingTight,
         };
       };
 
+      const isNotInHeading = (state: EditorState) => {
+        return !findParentNodeOfType(schema.nodes.heading)(state.selection);
+      };
+
       const rules = [
-        wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list, tightFn),
-        wrappingInputRule(
+        conditionalWrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list, isNotInHeading, tightFn),
+        conditionalWrappingInputRule(
           /^(\d+)\.\s$/,
           schema.nodes.ordered_list,
+          isNotInHeading,
           match => ({ order: +match[1], tight: tightFn() }),
           (match, node) => node.childCount + node.attrs.order === +match[1],
         ),

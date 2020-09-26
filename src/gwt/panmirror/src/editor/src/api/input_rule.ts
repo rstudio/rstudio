@@ -14,8 +14,8 @@
  */
 
 import { EditorState, Transaction } from 'prosemirror-state';
-import { Schema, MarkType } from 'prosemirror-model';
-import { InputRule } from 'prosemirror-inputrules';
+import { Schema, MarkType, NodeType, Node as ProsemirrorNode } from 'prosemirror-model';
+import { InputRule, wrappingInputRule } from 'prosemirror-inputrules';
 
 import { PandocMark, markIsActive } from './mark';
 
@@ -134,6 +134,22 @@ export function markInputRuleFilter(schema: Schema, marks: readonly PandocMark[]
     }
     return true;
   };
+}
+
+export function conditionalWrappingInputRule(
+  regexp: RegExp,
+  nodeType: NodeType,
+  predicate: (state: EditorState) => boolean,
+  getAttrs?: { [key: string]: any } | ((p: string[]) => { [key: string]: any } | null | undefined),
+  joinPredicate?: (p1: string[], p2: ProsemirrorNode) => boolean,
+): InputRule {
+  const wrappingRule: any = wrappingInputRule(regexp, nodeType, getAttrs, joinPredicate);
+  return new InputRule(regexp, (state: EditorState, match: string[], start: number, end: number) => {
+    if (!predicate(state)) {
+      return null;
+    }
+    return wrappingRule.handler(state, match, start, end);
+  });
 }
 
 function marksWithNoInputRules(schema: Schema, marks: readonly PandocMark[]): MarkType[] {
