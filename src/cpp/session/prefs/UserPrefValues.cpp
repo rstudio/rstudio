@@ -2403,6 +2403,19 @@ core::Error UserPrefValues::setShowFocusRectangles(bool val)
 }
 
 /**
+ * Show which panel contains keyboard focus.
+ */
+bool UserPrefValues::showPanelFocusRectangle()
+{
+   return readPref<bool>("show_panel_focus_rectangle");
+}
+
+core::Error UserPrefValues::setShowPanelFocusRectangle(bool val)
+{
+   return writePref("show_panel_focus_rectangle", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2952,6 +2965,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReducedMotion,
       kTabKeyMoveFocus,
       kShowFocusRectangles,
+      kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
