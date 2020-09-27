@@ -37,7 +37,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         noSpelling: true,
         spec: {
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='raw-html']",

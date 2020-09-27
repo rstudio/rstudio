@@ -35,6 +35,7 @@ const extension = (context: ExtensionContext): Extension => {
         noInputRules: true,
         noSpelling: true,
         spec: {
+          group: 'formatting',
           attrs: codeAttrs ? pandocAttrSpec : {},
           parseDOM: [
             {

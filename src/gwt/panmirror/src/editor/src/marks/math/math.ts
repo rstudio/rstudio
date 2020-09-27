@@ -62,7 +62,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             type: {},
           },
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='math']",

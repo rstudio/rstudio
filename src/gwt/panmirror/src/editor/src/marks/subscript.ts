@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'subscript',
       spec: {
+        group: 'formatting',
         parseDOM: [{ tag: 'sub' }],
         toDOM() {
           return ['sub'];

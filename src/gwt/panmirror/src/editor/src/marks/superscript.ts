@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'superscript',
       spec: {
+        group: 'formatting',
         parseDOM: [{ tag: 'sup' }],
         toDOM() {
           return ['sup'];

@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'strikeout',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: 'del' },
           { tag: 's' },

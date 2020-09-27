@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'em',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: 'i' },
           { tag: 'em' },
