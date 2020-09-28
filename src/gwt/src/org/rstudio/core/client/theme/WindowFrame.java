@@ -42,12 +42,6 @@ public class WindowFrame extends Composite
               EnsureVisibleEvent.Handler,
               EnsureHeightEvent.Handler
 {
-   public WindowFrame(Widget mainWidget, String name)
-   {
-      this(name, name);
-      setMainWidget(mainWidget);
-   }
-
    public WindowFrame(String name, String accessibleName)
    {
       name_ = name;
@@ -338,6 +332,15 @@ public class WindowFrame extends Composite
          if (fill_ instanceof CanFocus)
             ((CanFocus)fill_).focus();
       }
+   }
+
+   public void showWindowFocusIndicator(boolean showFocusIndicator)
+   {
+      final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
+      if (showFocusIndicator)
+         frame_.addStyleName(styles.focusedWindowFrameObject());
+      else
+         frame_.removeStyleName(styles.focusedWindowFrameObject());
    }
 
    public void onEnsureVisible(EnsureVisibleEvent event)

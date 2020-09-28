@@ -152,8 +152,8 @@ public class XTermTheme
       double lineHeight = FontSizer.getNormalLineHeight();
 
       // due to units oddity, have to scale down before passing to xterm.js
-      // (pixels vs. pts)
-      return lineHeight > 1.0 ? lineHeight * 0.75 : 1.0;
+      // (pixels vs. pts); don't go below 1.0 as lines will begin to overlap
+      return Math.max(lineHeight > 1.0 ? lineHeight * 0.75 : 1.0, 1.0);
    }
 
    @JsOverlay public static XTermTheme create(

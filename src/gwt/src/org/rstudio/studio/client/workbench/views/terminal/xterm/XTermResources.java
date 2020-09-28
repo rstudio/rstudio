@@ -27,4 +27,7 @@ public interface XTermResources extends ClientBundle
 
    @Source("fit.js")
    StaticDataResource xtermfitjs();
+
+   @Source("web-links.js")
+   StaticDataResource xtermweblinksjs();
 }

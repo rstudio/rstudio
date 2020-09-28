@@ -242,6 +242,7 @@ namespace prefs {
 #define kTerminalRenderer "terminal_renderer"
 #define kTerminalRendererCanvas "canvas"
 #define kTerminalRendererDom "dom"
+#define kTerminalWeblinks "terminal_weblinks"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
@@ -315,6 +316,7 @@ namespace prefs {
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kShowFocusRectangles "show_focus_rectangles"
+#define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -327,6 +329,9 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kVisualMarkdownEditingIsDefault "visual_markdown_editing_is_default"
+#define kVisualMarkdownEditingListSpacing "visual_markdown_editing_list_spacing"
+#define kVisualMarkdownEditingListSpacingTight "tight"
+#define kVisualMarkdownEditingListSpacingSpaced "spaced"
 #define kVisualMarkdownEditingWrap "visual_markdown_editing_wrap"
 #define kVisualMarkdownEditingWrapNone "none"
 #define kVisualMarkdownEditingWrapColumn "column"
@@ -1189,6 +1194,12 @@ public:
    core::Error setTerminalRenderer(std::string val);
 
    /**
+    * Whether web links displayed in the Terminal tab are made clickable.
+    */
+   bool terminalWeblinks();
+   core::Error setTerminalWeblinks(bool val);
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    bool showRmdRenderCommand();
@@ -1471,6 +1482,12 @@ public:
    core::Error setShowFocusRectangles(bool val);
 
    /**
+    * Show which panel contains keyboard focus.
+    */
+   bool showPanelFocusRectangle();
+   core::Error setShowPanelFocusRectangle(bool val);
+
+   /**
     * How to deal with changes to documents on idle.
     */
    std::string autoSaveOnIdle();
@@ -1505,6 +1522,12 @@ public:
     */
    bool visualMarkdownEditingIsDefault();
    core::Error setVisualMarkdownEditingIsDefault(bool val);
+
+   /**
+    * Default spacing for lists created in the visual editor
+    */
+   std::string visualMarkdownEditingListSpacing();
+   core::Error setVisualMarkdownEditingListSpacing(std::string val);
 
    /**
     * Whether to automatically wrap text when writing markdown

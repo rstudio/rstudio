@@ -4,8 +4,6 @@
 declare module 'biblatex-csl-converter'
 {
 
-  export type BibDB = Record<string, EntryObject>;
-
   export class BibLatexExporter {
     constructor(bibDb: BibDB, pks?: string[] | boolean, options?: ConfigObject);
     parse(): string;

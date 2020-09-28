@@ -299,22 +299,22 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 
 @if rstudio.desktop false {
 @if user.agent safari {
-.macintosh .forceMacScrollbars ::-webkit-scrollbar { 
-   -webkit-appearance: none; 
+.macintosh .forceMacScrollbars ::-webkit-scrollbar {
+   -webkit-appearance: none;
    -moz-appearance: none;
-   width: 12px; 
-   height: 12px; 
+   width: 12px;
+   height: 12px;
 }
-   
+
 .macintosh .forceMacScrollbars ::-webkit-scrollbar-track {
-   
+
    background: rgb(251,251,251);
    -webkit-box-shadow: 0 1px 0 0 rgba(255,255,255,0.35);
    -webkit-border-radius: 5px;
-}   
+}
 
 .macintosh .forceMacScrollbars ::-webkit-scrollbar-thumb {
-  
+
    border: 2px solid rgb(251,251,251);
    background: rgba(0,0,0,.22);
    -webkit-border-radius: 6px;
@@ -892,6 +892,18 @@ pre {
 
    /* overflow-hidden with border-radius degrades under windows */
    overflow: visible !important;
+}
+
+/* region focus indicator for classic theme and modern themes */
+.windowFrameObject.focusedWindowFrameObject > div:last-child {
+   outline: #8AA9DB dotted 2px !important;
+   outline-offset: -1px !important;
+}
+
+/* region focus indicator for sky theme */
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.focusedWindowFrameObject > div:last-child {
+   outline: #2b75d8 dotted 2px !important;
+   outline-offset: -1px !important;
 }
 
 .gwt-SplitLayoutPanel-Workbench {
@@ -2504,6 +2516,10 @@ body.ubuntu_mono .searchBox {
 
 }
 
+.clearBuildButton {
+
+}
+
 .terminalClearButton {
 
 }
@@ -2513,8 +2529,9 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .consoleClearButton,
+.rstudio-themes-flat .rstudio-themes-dark .clearBuildButton,
 .rstudio-themes-flat .rstudio-themes-dark .terminalClearButton {
-   opacity: 0.5;
+   opacity: 0.8;
 }
 
 .refreshToolbarButton {

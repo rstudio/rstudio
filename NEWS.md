@@ -22,19 +22,19 @@
 * Accessibility preference to reduce focus rectangle display (#7242)
 * Multiple source panes can be opened in the main window via Global Options. (#2854)
 * Keyboard shortcut `F6` added to navigate focus to the next pane. (#7408)
+* Accessibility preference to show a highlight around focused panel (#7881)
+
+### Configurable Paths
+
+* The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
+* `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
+* It is now possible to specify the exact folder for user data and configuration files using new environment variables `RSTUDIO_DATA_HOME`, `RSTUDIO_CONFIG_DIR`, etc. (#7792)
 
 ### Miscellaneous
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
 * Added command to File pane's "More" menu to copy path to clipboard (#6344)
 * Table summaries are shown for `tibble` objects in R Notebooks. (#5970)
-* The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
-* The font used in the editor and console can now be customized on RStudio Server. (#2534)
-* `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
-* The new option `www-same-site` provides support for the `SameSite` attribute on cookies issued by RStudio. (#6608)
-* New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
-* New `X-RStudio-Root-Path` header or the new `www-root-path` for specifying the exact path prefixes added by a path-rewriting proxy (Pro #1410).
-* The option `www-url-path-prefix` was deprecated and removed. Use `www-root-path` instead.
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
@@ -43,12 +43,21 @@
 * Moved console options to a new pane in Global Options (#7047)
 * The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
 * Add support for navigating source history with mouse forward/back buttons (#7272)
-* Improved error logging of mistyped usernames when using PAM authentication (#7501)
 * Add ability to go directly to various Global Option panes via Command Palette (#7678)
-* R6Class method defintions are now indexed and accessible by the fuzzy finder (Ctrl + .)
+* R6Class method definitions are now indexed and accessible by the fuzzy finder (Ctrl + .)
 * The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
 * Show correct symbol for Return key in Mac menus (#6524)
+* Added command and button for clearing Build pane output (#6636)
+
+### RStudio Server
+
+* The font used in the editor and console can now be customized on RStudio Server. (#2534)
+* The new option `www-same-site` provides support for the `SameSite` attribute on cookies issued by RStudio. (#6608)
+* New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
+* New `X-RStudio-Root-Path` header or the new `www-root-path` for specifying the exact path prefixes added by a path-rewriting proxy (Pro #1410).
+* The option `www-url-path-prefix` was deprecated and removed. Use `www-root-path` instead.
+* Improved error logging of mistyped usernames when using PAM authentication (#7501)
 
 ### RStudio Server Pro
 
@@ -105,4 +114,6 @@
 * Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
+* Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
+* Added option for clickable links in Terminal pane (#6621)
 

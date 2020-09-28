@@ -73,14 +73,16 @@ public class TerminalSession extends XTermWidget
     * @param info terminal metadata
     * @param options terminal emulator options
     * @param tabMovesFocus does pressing tab key move focus out of terminal
+    * @param showWebLinks links detected and made clickable
     * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
                           XTermOptions options,
                           boolean tabMovesFocus,
+                          boolean showWebLinks,
                           boolean createdByApi)
    {
-      super(options, tabMovesFocus);
+      super(options, tabMovesFocus, showWebLinks);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;

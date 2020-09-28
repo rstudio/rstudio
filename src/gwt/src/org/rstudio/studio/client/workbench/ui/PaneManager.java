@@ -28,6 +28,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import elemental2.dom.DomGlobal;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
@@ -286,7 +288,7 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
       panel_ = pSplitPanel.get();
 
-      // get the widgets for the extra source columns to be displayed
+      // get the widgets for the extra source columns to be displayed
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
       if (additionalSourceCount_ != sourceColumnManager_.getSize() - 1)
          syncAdditionalColumnCount(additionalSourceCount_, false /* refreshDisplay */);
@@ -452,7 +454,42 @@ public class PaneManager
                syncAdditionalColumnCount(
                   userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns(), true);
             }
+            if (!userPrefs_.showPanelFocusRectangle().getValue())
+            {
+               clearFocusIndicator();
+            }
          }
+      });
+
+      // highlight pane containing keyboard focus
+      DomGlobal.document.addEventListener("focusin", (Event) ->
+      {
+         if (!userPrefs_.showPanelFocusRectangle().getValue())
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         Element activeEl = DomUtils.getActiveElement();
+         if (activeEl == null)
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         LogicalWindow activeWindow = getParentLogicalWindow(activeEl);
+         if (activeWindow == lastFocusedWindow_)
+            return;
+         if (activeWindow == null)
+         {
+            clearFocusIndicator();
+            return;
+         }
+
+         if (lastFocusedWindow_ != null)
+            lastFocusedWindow_.showWindowFocusIndicator(false);
+         lastFocusedWindow_ = activeWindow;
+         activeWindow.showWindowFocusIndicator(true);
       });
 
       manageLayoutCommands();
@@ -630,7 +667,7 @@ public class PaneManager
       if (currentFocus == null)
          return;
 
-      focusWindow(getAdjacentWindow(currentFocus, false /* before */));
+      focusAdjacentWindow(currentFocus, false /* before */);
    }
 
    @Handler
@@ -639,7 +676,8 @@ public class PaneManager
       LogicalWindow currentFocus = getActiveLogicalWindow();
       if (currentFocus == null)
          return;
-      focusWindow(getAdjacentWindow(currentFocus, true /* before */));
+
+      focusAdjacentWindow(currentFocus, true /* before */);
    }
 
    @Handler
@@ -720,7 +758,19 @@ public class PaneManager
       {
          WorkbenchTab selected;
          if (StringUtil.equals("Console", name))
-            selected = consoleTabPanel_.getSelectedTab();
+         {
+            selected = consoleTabPanel_.getSelectedIndex() >= 0 ?
+               consoleTabPanel_.getSelectedTab() :
+               null;
+            
+            // Special handling for Console; Console does not have a WorkbenchTab when there are 
+            // no other Console tabs open on start up and none have been added.
+            if (selected == null || StringUtil.equals(selected.getTitle(), "Console"))
+            {
+               commands_.activateConsole().execute();
+               return;
+            }
+         }
          else
          {
             if (StringUtil.equals("TabSet1", name))
@@ -729,14 +779,24 @@ public class PaneManager
                selected = tabSet2TabPanel_.getSelectedTab();
             activateTab(wbTabToTab_.get(selected));
          }
-         if (StringUtil.equals(selected.getTitle(), "Console"))
-            commands_.activateConsole().execute();
-         else if (selected instanceof DelayLoadWorkbenchTab)
+         if (selected instanceof DelayLoadWorkbenchTab)
             ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          selected.setFocus();
       }
    }
 
+   private void focusAdjacentWindow(LogicalWindow window, boolean before)
+   {
+      String adjacent = getAdjacentWindow(window, before);
+   
+      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
+      while ((StringUtil.equals("TabSet1", adjacent) && tabSet1TabPanel_.isEmpty()) ||
+             (StringUtil.equals("TabSet2", adjacent) && tabSet2TabPanel_.isEmpty()))
+         adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
+      
+      focusWindow(adjacent);
+   }
+   
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
@@ -1549,8 +1609,6 @@ public class PaneManager
 
       Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
-      leftList_.add(panel);
-      sourceColumnManager_.beforeShow(name.getName());
    }
 
    private Widget createSourceColumnWindow(String name, String accessibleName)
@@ -1919,6 +1977,15 @@ public class PaneManager
       return config;
    }
 
+   private void clearFocusIndicator()
+   {
+      if (lastFocusedWindow_ != null)
+      {
+         lastFocusedWindow_.showWindowFocusIndicator(false);
+         lastFocusedWindow_ = null;
+      }
+   }
+
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
@@ -1971,6 +2038,7 @@ public class PaneManager
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
    private LogicalWindow maximizedWindow_ = null;
+   private LogicalWindow lastFocusedWindow_ = null;
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;

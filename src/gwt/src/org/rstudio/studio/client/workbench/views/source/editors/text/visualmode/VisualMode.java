@@ -668,6 +668,10 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.unfold(),
         commands_.unfoldAll(),
 
+        // Temporarily disabled since keybinding conflicts with Panmirrors'
+        // Italicize command
+        commands_.reindent(),
+        
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
       );
@@ -1336,10 +1340,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // use embedded codemirror for code blocks
       options.codeEditor = prefs_.visualMarkdownCodeEditor().getValue();
-      
-      // enable rmdImagePreview if we are an executable rmd
-      options.rmdImagePreview = target_.canExecuteChunks();
-      
+         
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       

@@ -50,7 +50,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         noSpelling: true,
         spec: {
           inclusive: true,
-          excludes: '_',
+          excludes: 'formatting',
           attrs: {},
           parseDOM: [
             {

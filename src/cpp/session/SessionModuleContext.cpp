@@ -84,8 +84,9 @@
 #include <shared_core/system/User.hpp>
 
 #include "modules/SessionBreakpoints.hpp"
-#include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
+#include "modules/SessionReticulate.hpp"
+#include "modules/SessionVCS.hpp"
 
 #include "session-config.h"
 
@@ -2777,6 +2778,68 @@ void checkXcodeLicense()
       warnXcodeLicense();
    
 #endif
+}
+
+std::string getActiveLanguage()
+{
+   if (modules::reticulate::isReplActive())
+   {
+      return "Python";
+   }
+   else
+   {
+      return "R";
+   }
+}
+
+Error adaptToLanguage(const std::string& language)
+{
+   // check to see what language is active in main console
+   using namespace r::exec;
+   
+   // check to see what language is currently active (but default to r)
+   std::string activeLanguage = getActiveLanguage();
+
+   // now, detect if we are transitioning languages
+   if (language != activeLanguage)
+   {
+      // since it may take some time for the console input to be processed,
+      // we screen out consecutive transition attempts (otherwise we can
+      // get multiple interleaved attempts to launch the REPL with console
+      // input)
+      static RSTUDIO_BOOST_CONNECTION conn;
+      if (conn.connected())
+         return Success();
+      
+      // establish the connection, and then simply disconnect once we
+      // receive the signal
+      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
+         conn.disconnect();
+      });
+      
+      if (activeLanguage == "R")
+      {
+         if (language == "Python")
+         {
+            // r -> python: activate the reticulate REPL
+            Error error =
+                  module_context::enqueueConsoleInput("reticulate::repl_python()");
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      else if (activeLanguage == "Python")
+      {
+         if (language == "R")
+         {
+            // python -> r: deactivate the reticulate REPL
+            Error error =
+                  module_context::enqueueConsoleInput("quit");
+         }
+      }
+   }
+   
+   return Success();
 }
 
 Error initialize()

@@ -26,6 +26,7 @@ const extension: Extension = {
     {
       name: 'smallcaps',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: "span[class*='smallcaps']" },
           { style: 'font-variant', getAttrs: (value: string | Node) => (value as string) === 'small-caps' && null },

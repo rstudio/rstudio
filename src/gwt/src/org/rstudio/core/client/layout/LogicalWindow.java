@@ -61,6 +61,14 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       normal_.focus();
    }
 
+   public void showWindowFocusIndicator(boolean showFocusIndicator)
+   {
+      if (normal_ != null)
+         normal_.showWindowFocusIndicator(showFocusIndicator);
+      if (minimized_ != null)
+         minimized_.showWindowFocusIndicator(showFocusIndicator);
+   }
+
    public boolean visible()
    {
       switch (state_)

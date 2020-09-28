@@ -64,7 +64,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
 
               // First, be sure that we add any sources to the bibliography
               // and that the bibliography is properly configured
-              await ensureSourcesInBibliography(
+              const writeCiteId = await ensureSourcesInBibliography(
                 tr,
                 bibliographySources,
                 bibliography,
@@ -74,33 +74,35 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                 server.pandoc,
               );
 
-              // The starting location of this transaction
-              const start = tr.selection.from;
+              if (writeCiteId) {
+                // The starting location of this transaction
+                const start = tr.selection.from;
 
-              // Insert the cite mark and text
-              const wrapperText = schema.text(`[]`, []);
-              tr.insert(tr.selection.from, wrapperText);
+                // Insert the cite mark and text
+                const wrapperText = schema.text(`[]`, []);
+                tr.insert(tr.selection.from, wrapperText);
 
-              // move the selection into the wrapper
-              setTextSelection(tr.selection.from - 1)(tr);
+                // move the selection into the wrapper
+                setTextSelection(tr.selection.from - 1)(tr);
 
-              // insert the CiteId marks and text
-              bibliographySources.forEach((citation, i) => {
-                const citeIdMark = schema.marks.cite_id.create();
-                const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
-                tr.insert(tr.selection.from, citeIdText);
-                if (bibliographySources.length > 1 && i !== bibliographySources.length - 1) {
-                  tr.insert(tr.selection.from, schema.text('; ', []));
-                }
-              });
+                // insert the CiteId marks and text
+                bibliographySources.forEach((citation, i) => {
+                  const citeIdMark = schema.marks.cite_id.create();
+                  const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
+                  tr.insert(tr.selection.from, citeIdText);
+                  if (bibliographySources.length > 1 && i !== bibliographySources.length - 1) {
+                    tr.insert(tr.selection.from, schema.text('; ', []));
+                  }
+                });
 
-              // Enclose wrapper in the cite mark
-              const endOfWrapper = tr.selection.from + 1;
-              const citeMark = schema.marks.cite.create();
-              tr.addMark(start, endOfWrapper, citeMark);
+                // Enclose wrapper in the cite mark
+                const endOfWrapper = tr.selection.from + 1;
+                const citeMark = schema.marks.cite.create();
+                tr.addMark(start, endOfWrapper, citeMark);
 
-              // Move selection to the end of the inserted content
-              setTextSelection(endOfWrapper)(tr);
+                // Move selection to the end of the inserted content
+                setTextSelection(endOfWrapper)(tr);
+              }
 
               // commit the transaction
               dispatch(tr);

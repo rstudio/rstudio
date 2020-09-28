@@ -16,28 +16,39 @@
 import React, { CSSProperties } from "react";
 
 import { WidgetProps } from "./react";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 
 import './navigation-tree.css';
 
 // Individual nodes and children of the Select Tree
 export interface NavigationTreeNode {
   key: string;
-  name: string;
   image?: string;
+  name: string;
   type: string;
-  expanded?: boolean;
   children: NavigationTreeNode[];
+  expanded?: boolean;
 }
 
 interface NavigationTreeProps extends WidgetProps {
   height: number;
   nodes: NavigationTreeNode[];
   selectedNode: NavigationTreeNode;
-  onNodeSelected: (node: NavigationTreeNode) => void;
+  onSelectedNodeChanged: (node: NavigationTreeNode) => void;
+}
+
+interface NavigationTreeItemProps extends ListChildComponentProps {
+  data: {
+    nodes: NavigationTreeNode[],
+    selectedNode: NavigationTreeNode,
+    onSelectedNodeChanged: (node: NavigationTreeNode) => void,
+    showSelection: boolean,
+    preventFocus: boolean,
+  };
 }
 
 // Indent level for each level
-const kNavigationTreeIndent = 10;
+const kNavigationTreeIndent = 8;
 
 // Select Tree is a single selection tree that is useful in 
 // hierarchical navigation type contexts. It does not support
@@ -51,84 +62,120 @@ export const NavigationTree: React.FC<NavigationTreeProps> = props => {
     ...props.style
   };
 
+  // The currently selected node should always be expanded
+  const selectedNode = props.selectedNode;
+
+  // Ensure that all the parents of the selected node are expanded
+  const nodes = props.nodes;
+  const currentNodePath = pathToNode(selectedNode, nodes);
+  currentNodePath.forEach(node => node.expanded = true);
+  const selNode = nodes.find(n => n.key === selectedNode.key);
+  if (selNode) {
+    selNode.expanded = true;
+  }
+  const vizNodes = visibleNodes(props.nodes, props.selectedNode);
+
+
+  // Ensure the item is scrolled into view
+  const fixedList = React.useRef<FixedSizeList>(null);
+  React.useEffect(() => {
+    if (props.selectedNode) {
+      vizNodes.find((value, index) => {
+        if (value.key === selectedNode.key) {
+          fixedList.current?.scrollToItem(index);
+          return true;
+        }
+      });
+    }
+  });
+
   // Process keys to enable keyboard based navigation
   const processKey = (e: React.KeyboardEvent) => {
-    const selectedNode = props.selectedNode;
+    const selected = props.selectedNode;
     switch (e.key) {
       case 'ArrowDown':
-        if (selectedNode) {
-          const next = nextNode(selectedNode, props.nodes);
-          props.onNodeSelected(next);
+        if (selected) {
+          const next = stepNode(selectedNode, props.nodes, 1);
+          props.onSelectedNodeChanged(next);
         }
         break;
 
       case 'ArrowUp':
-        if (selectedNode) {
-          const previous = previousNode(selectedNode, props.nodes);
-          props.onNodeSelected(previous);
+        if (selected) {
+          const previous = stepNode(selectedNode, props.nodes, -1);
+          props.onSelectedNodeChanged(previous);
+        }
+        break;
+
+      case 'PageDown':
+        if (selected) {
+          const next = stepNode(selectedNode, props.nodes, 4);
+          props.onSelectedNodeChanged(next);
+        }
+        break;
+
+      case 'PageUp':
+        if (selected) {
+          const previous = stepNode(selectedNode, props.nodes, -4);
+          props.onSelectedNodeChanged(previous);
         }
         break;
     }
   };
 
-  const expandedNodes = pathToNode(props.selectedNode, props.nodes);
-  expandedNodes.forEach(node => node.expanded = true);
-
-  const onNodeSelected = (node: NavigationTreeNode) => {
-    props.onNodeSelected(node);
-  };
-
   return (
     <div style={style} tabIndex={0} onKeyDown={processKey} >
-      {props.nodes.map(treeNode =>
-        <NavigationTreeItem key={treeNode.key}
-          node={treeNode}
-          onSelected={onNodeSelected}
-          selectedNode={props.selectedNode}
-          expandedNodes={expandedNodes} />
-      )}
+      <FixedSizeList
+        className='pm-navigation-tree'
+        height={props.height}
+        width='100%'
+        itemCount={vizNodes.length}
+        itemSize={28}
+        itemData={{
+          nodes: vizNodes,
+          selectedNode: props.selectedNode,
+          onSelectedNodeChanged: props.onSelectedNodeChanged,
+          showSelection: true,
+          preventFocus: true
+        }}
+        ref={fixedList}
+      >
+        {NavigationTreeItem}
+      </FixedSizeList>
     </div>
   );
 };
 
-interface NavigationTreeItemProps extends WidgetProps {
-  node: NavigationTreeNode;
-  expandedNodes: NavigationTreeNode[];
-  onSelected: (node: NavigationTreeNode) => void;
-  indentLevel?: number;
-  selectedNode?: NavigationTreeNode;
-}
-
 // Renders each item
-const NavigationTreeItem: React.FC<NavigationTreeItemProps> = props => {
+const NavigationTreeItem = (props: NavigationTreeItemProps) => {
+
+  const data = props.data;
+  const node: NavigationTreeNode = props.data.nodes[props.index];
+  const path = pathToNode(node, data.nodes);
+  const depth = path.length - 1;
 
   // Select the tree node
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    props.onSelected(props.node);
+    data.onSelectedNodeChanged(node);
   };
 
-  // Whether this node is expanded
-  const expanded = props.node.expanded;
-
   // Whether this node is selected
-  const selected = props.selectedNode && props.selectedNode.key === props.node.key;
+  const selected = data.selectedNode.key === node.key;
 
-  // Indent this node the proper amount
-  const indentLevel = props.indentLevel || 0;
+  const indentLevel = depth;
   const indentStyle = {
     paddingLeft: indentLevel * kNavigationTreeIndent + 'px'
   };
 
   const selectedClassName = `${selected ? 'pm-selected-navigation-tree-item' : 'pm-navigation-tree-item'} pm-navigation-tree-node`;
   return (
-    <div key={props.node.key} onClick={onClick} style={props.style}>
+    <div key={node.key} onClick={onClick} style={props.style}>
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>
-        {props.node.image ? <div className='pm-navigation-tree-node-image-div'><img src={props.node.image} alt={props.node.name} className='pm-navigation-tree-node-image' /></div> : null}
-        <div className='pm-navigation-tree-node-label-div pm-text-color'>{props.node.name}</div>
+        {node.image ? <div className='pm-navigation-tree-node-image-div'><img src={node.image} alt={node.name} className='pm-navigation-tree-node-image' /></div> : null}
+        <div className='pm-navigation-tree-node-label-div pm-text-color'>{node.name}</div>
       </div>
-      {expanded ? props.node.children?.map(childNode => <NavigationTreeItem key={childNode.key} node={childNode} onSelected={props.onSelected} indentLevel={indentLevel + 1} selectedNode={props.selectedNode} expandedNodes={props.expandedNodes} />) : undefined}
     </div >
   );
 };
@@ -151,16 +198,19 @@ export function containsChild(key: string, node: NavigationTreeNode): boolean {
 
 // enumerate the nodes that lead to a selected node
 function pathToNode(node: NavigationTreeNode, nodes: NavigationTreeNode[]): NavigationTreeNode[] {
-  const path = [];
-  for (const root of nodes) {
-    if (root.key === node.key) {
-      path.push(node);
-      return path;
-    }
+  const path: NavigationTreeNode[] = [];
+  if (node) {
+    for (const root of nodes) {
+      if (root.key === node.key) {
+        path.push(node);
+        return path;
+      }
 
-    const childPath = pathToNode(node, root.children);
-    if (childPath.length > 0) {
-      path.push(root, ...childPath);
+      const childPath = pathToNode(node, root.children);
+      if (childPath.length > 0) {
+        path.push(root, ...childPath);
+        return path;
+      }
     }
   }
   return path;
@@ -168,11 +218,10 @@ function pathToNode(node: NavigationTreeNode, nodes: NavigationTreeNode[]): Navi
 
 // Creates an ordered flattened list of visible nodes in the
 // tree. Useful for incrementing through visible nodes :)
-function visibleNodes(nodes: NavigationTreeNode[]) {
-
+function visibleNodes(nodes: NavigationTreeNode[], selectedNode: NavigationTreeNode) {
   const nodeList: NavigationTreeNode[][] = nodes.map(node => {
-    if (node.expanded) {
-      return [node].concat(visibleNodes(node.children));
+    if (node.expanded || node.key === selectedNode.key) {
+      return [node].concat(visibleNodes(node.children, selectedNode));
     } else {
       return [node];
     }
@@ -180,25 +229,16 @@ function visibleNodes(nodes: NavigationTreeNode[]) {
   return ([] as NavigationTreeNode[]).concat(...nodeList);
 }
 
-// Get the next node for the current node
-function nextNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
-  const nodes = visibleNodes(allNodes);
-  const currentIndex = nodes.map(n => n.key).indexOf(node.key);
-  if (currentIndex < nodes.length - 1) {
-    return nodes[currentIndex + 1];
-  } else {
-    return nodes[0];
-  }
-}
-
 // Get the previous node for the current node
-function previousNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[]): NavigationTreeNode {
-  const nodes = visibleNodes(allNodes);
+function stepNode(node: NavigationTreeNode, allNodes: NavigationTreeNode[], increment: number): NavigationTreeNode {
+  const nodes = visibleNodes(allNodes, node);
   const currentIndex = nodes.map(n => n.key).indexOf(node.key);
-  if (currentIndex > 0) {
-    return nodes[currentIndex - 1];
+  const step = currentIndex + increment;
+  if (step >= 0 && step < nodes.length - 1) {
+    return nodes[step];
+  } else if (step < 0) {
+    return nodes[0];
   } else {
     return nodes[nodes.length - 1];
   }
-
 }

@@ -25,6 +25,7 @@ import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
 import { OmniInsert } from './omni_insert';
+import { EditorUIPrefs, kListSpacingTight } from './ui';
 
 export enum EditorCommandId {
   // text editing
@@ -261,7 +262,7 @@ export class InsertCharacterCommand extends ProsemirrorCommand {
 
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
-export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
+export function toggleList(listType: NodeType, itemType: NodeType, prefs: EditorUIPrefs): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const { selection } = state;
     const { $from, $to } = selection;
@@ -278,7 +279,11 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
         if (parentList.node.type !== listType) {
           if (dispatch) {
             const tr: Transaction = state.tr;
-            tr.setNodeMarkup(parentList.pos, listType);
+            const attrs: { [key: string]: any } = {};
+            if (parentList.node.attrs.tight) {
+              attrs.tight = true;
+            }
+            tr.setNodeMarkup(parentList.pos, listType, attrs);
             dispatch(tr);
           }
           return true;
@@ -288,7 +293,15 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
       }
     }
 
-    return wrapInList(listType)(state, dispatch);
+    // if we are in a heading then this isn't valid
+    if (findParentNodeOfType(state.schema.nodes.heading)(state.selection)) {
+      return false;
+    }
+
+    // reflect tight preference
+    const tight = prefs.listSpacing() === kListSpacingTight;
+
+    return wrapInList(listType, { tight })(state, dispatch);
   };
 }
 

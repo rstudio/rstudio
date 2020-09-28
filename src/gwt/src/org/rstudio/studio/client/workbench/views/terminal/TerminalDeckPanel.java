@@ -37,10 +37,11 @@ public class TerminalDeckPanel extends DeckLayoutPanel
          ConsoleProcessInfo procInfo,
          XTermOptions options,
          boolean tabMovesFocus,
+         boolean showWebLinks,
          boolean createdByApi,
          CommandWithArg<TerminalSession> callback)
    {
-      TerminalSession session = new TerminalSession(procInfo, options, tabMovesFocus, createdByApi);
+      TerminalSession session = new TerminalSession(procInfo, options, tabMovesFocus, showWebLinks, createdByApi);
       add(session);
       showWidget(session);
       Scheduler.get().scheduleDeferred(() ->  callback.execute(session));

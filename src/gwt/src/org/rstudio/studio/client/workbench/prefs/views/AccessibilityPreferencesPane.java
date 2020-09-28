@@ -68,7 +68,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
       generalPanel.add(lessSpaced(chkTabMovesFocus_));
       chkShowFocusRectangles_ = new CheckBox("Always show focus outlines (requires restart)");
-      generalPanel.add(chkShowFocusRectangles_);
+      generalPanel.add(lessSpaced(chkShowFocusRectangles_));
+      generalPanel.add(checkboxPref("Highlight focused panel", prefs.showPanelFocusRectangle()));
 
       HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
       nudgeRight(helpLink);

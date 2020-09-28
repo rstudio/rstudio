@@ -113,7 +113,7 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
       const linkElement = doc.createElement('a');
       linkElement.innerText = linkData.text;
       linkElement.setAttribute('href', linkData.url);
-      linkElement.setAttribute('class', kCiteLinkClassName);
+      linkElement.setAttribute('class', `${kCiteLinkClassName} pm-link-text-color`);
       setLinkTarget(linkElement);
 
       // Append the link to the formatted source
@@ -124,6 +124,7 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
     // There are links, ensure all of them have appropriate target information
     // tslint:disable-next-line: prefer-for-of
     for (let i = 0; i < linkElements.length; i++) {
+      linkElements[i].setAttribute('class', `pm-link-text-color`);
       setLinkTarget(linkElements[i]);
     }
   }

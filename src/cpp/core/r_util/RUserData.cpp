@@ -66,6 +66,12 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
    if (oldScratchPath.completeChildPath(kMigratedFile).exists())
        return Success();
 
+   // If the new and old folders are the same, no migration is necessary (this
+   // could happen if RSTUDIO_DATA_HOME is used to preserve the legacy folder
+   // location)
+   if (oldScratchPath.isEquivalentTo(newPath))
+      return Success();
+
    // Create the new folder if necessary so we can move content there.
    error = newPath.ensureDirectory();
    if (error)

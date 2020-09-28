@@ -204,7 +204,7 @@ class PandocWriter implements PandocOutput {
     this.write(arr);
   }
 
-  public writeAttr(id?: string, classes?: string[], keyvalue?: [[string, string]]) {
+  public writeAttr(id?: string, classes?: string[], keyvalue?: Array<[string, string]>) {
     this.write([id || '', classes || [], keyvalue || []]);
   }
 

@@ -86,16 +86,23 @@ public class ElementIds
 
    public static String idSafeString(String text)
    {
+      // If text contains "C++" it will generate the same label as one containing
+      // plain "C", so substitute "CPP" to avoid duplicate IDs.
+      if (text.contains("C++"))
+      {
+         text = text.replaceFirst("C\\+\\+", "CPP");
+      }
+
       // replace all non-alphanumerics with underscores
       String id = text.replaceAll("[^a-zA-Z0-9]", "_");
-      
+
       // collapse multiple underscores to a single underscore
       id = id.replaceAll("_+", "_");
 
       // clean up leading/trailing underscores
       id = id.replaceAll("^_+", "");
       id = id.replaceAll("_+$", "");
-      
+
       // convert to lowercase and return
       return id.toLowerCase();
    }
@@ -159,7 +166,7 @@ public class ElementIds
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
    public final static String GENERAL_GRAPHICS_PREFS = "general_graphics_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
-   
+
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
    public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
@@ -361,21 +368,21 @@ public class ElementIds
    // AboutDialogContents
    public final static String ABOUT_LICENSE_INFO = "about_license_info";
    public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
-   
+
    // TextEditingTargetWidget
    public final static String CB_SOURCE_ON_SAVE = "cb_source_on_save";
    public static String getCbSourceOnSave() { return getElementId(CB_SOURCE_ON_SAVE); }
    public final static String TOGGLE_DOC_OUTLINE_BUTTON = "toggle_doc_outline_button";
    public static String getToggleDocOutlineButton() { return getElementId(TOGGLE_DOC_OUTLINE_BUTTON); }
-   
+
    // AddinsToolbarButton
    public final static String ADDINS_TOOLBAR_BUTTON = "addins_toolbar_button";
    public static String getAddinsToolbarButton() { return getElementId(ADDINS_TOOLBAR_BUTTON); }
-   
+
    // CodeSearchWidget
    public final static String CODE_SEARCH_WIDGET = "code_search_widget";
    public static String getCodeSearchWidget() { return getElementId(CODE_SEARCH_WIDGET); }
-   
+
    // EnvironmentPane
    public final static String MB_IMPORT_DATASET = "mb_import_dataset";
    public static String getMbImportDataset() { return getElementId(MB_IMPORT_DATASET); }
@@ -385,25 +392,25 @@ public class ElementIds
    public static String getMbObjectListView() { return getElementId(MB_OBJECT_LIST_VIEW); }
    public final static String SW_ENVIRONMENT = "sw_environment";
    public static String getSwEnvironment() { return getElementId(SW_ENVIRONMENT); }
-   
+
    // HistoryPane
    public final static String SW_HISTORY = "sw_history";
    public static String getSwHistory() { return getElementId(SW_HISTORY); }
-   
+
    // GitPane
    public final static String MB_GIT_MORE = "mb_git_more";
    public static String getMbGitMore() { return getElementId(MB_GIT_MORE); }
    public final static String TB_GIT_REFRESH = "tb_git_refresh";
    public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
-   
+
    // FileCommandToolbar
    public final static String MB_FILES_MORE = "mb_files_more";
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
-   
+
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
    public static String getMbPlotsExport() { return getElementId(MB_PLOTS_EXPORT); }
-   
+
    // PackagesPane
    public final static String SW_PACKAGES = "sw_packages";
    public static String getSwPackages() { return getElementId(SW_PACKAGES); }
@@ -417,7 +424,7 @@ public class ElementIds
    // HelpPane
    public final static String SW_HELP_FIND_IN_TOPIC = "sw_help_find_in_topic";
    public static String getSwHelpFindInTopic() { return getElementId(SW_HELP_FIND_IN_TOPIC); }
-   
+
    // HelpSearchWidget
    public final static String SW_HELP = "sw_help";
    public static String getSwHelp() { return getElementId(SW_HELP); }
@@ -440,10 +447,10 @@ public class ElementIds
    public final static String SVN_RESOLVE_MINE_ALL_DESC = "svn_resolve_mine_all_desc";
    public final static String SVN_RESOLVE_THEIRS_ALL = "svn_resolve_theirs_all";
    public final static String SVN_RESOLVE_THEIRS_ALL_DESC = "svn_resolve_theirs_all_desc";
-   
+
    // TutorialPane
    public final static String TUTORIAL_FRAME = "tutorial_frame";
-   
+
    // ShowPublicKeyDialog
    public final static String PUBLIC_KEY_TEXT = "public_key_text";
    public final static String PUBLIC_KEY_LABEL = "public_key_label";
@@ -451,7 +458,7 @@ public class ElementIds
    // JobQuitControls
    public final static String JOB_QUIT_LISTBOX = "job_quit_listbox";
    public static String getJobQuitListbox() { return getElementId(JOB_QUIT_LISTBOX); }
-   
+
    // RSConnect
    public final static String RSC_SERVER_URL = "rsc_server_url";
    public static String getRscServerUrl() { return getElementId(RSC_SERVER_URL); }
@@ -460,13 +467,13 @@ public class ElementIds
    public final static String RSC_ACCOUNT_LIST = "rsc_account_list";
    public static String getRscAccountList() { return getElementId(RSC_ACCOUNT_LIST); }
    public final static String RSC_FILES_LIST_LABEL = "rsc_files_list_label";
-   
+
    // WindowFrameButton (combined with unique suffix for each quadrant
    public final static String FRAME_MIN_BTN = "frame_min_btn";
    public final static String FRAME_MAX_BTN = "frame_max_btn";
    public final static String MIN_FRAME_MIN_BTN = "min_frame_min_btn";
    public final static String MIN_FRAME_MAX_BTN = "min_frame_max_btn";
-   
+
    // Visual Markdown Editing dialogs
    public final static String VISUAL_MD_RAW_FORMAT_SELECT = "visual_md_raw_format_select";
    public static String getVisualMdRawFormatSelect() { return getElementId(VISUAL_MD_RAW_FORMAT_SELECT); }
@@ -503,7 +510,7 @@ public class ElementIds
    public final static String VISUAL_MD_ATTR_KEYVALUE_LABEL1 = "visual_md_attr_keyvalue_label1";
    public static String getVisualMdAttrKeyValueLabel1() { return getElementId(VISUAL_MD_ATTR_KEYVALUE_LABEL1); }
    public final static String VISUAL_MD_ATTR_KEYVALUE_LABEL2 = "visual_md_attr_keyvalue_label2";
-   public static String getVisualMdAttrKeyValueLabel2() { return getElementId(VISUAL_MD_ATTR_KEYVALUE_LABEL2); } 
+   public static String getVisualMdAttrKeyValueLabel2() { return getElementId(VISUAL_MD_ATTR_KEYVALUE_LABEL2); }
    public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
    public static String getVisualMdAttrKeyValue() { return getElementId(VISUAL_MD_ATTR_KEYVALUE); }
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
@@ -530,7 +537,7 @@ public class ElementIds
    public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
    public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
-   
+
 
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
@@ -557,17 +564,17 @@ public class ElementIds
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
 
-   
+
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
 
    // AccessibilityPreferencesPane
    public final static String A11Y_GENERAL_PREFS = "a11y_general_prefs";
    public final static String A11Y_ANNOUNCEMENTS_PREFS = "a11y_announcements_prefs";
-   
+
    // SatelliteWindow
    public final static String SATELLITE_PANEL = "satellite_panel";
-   
+
    // CommandPalette
    public final static String COMMAND_PALETTE_LIST = "command_palette_list";
    public final static String COMMAND_PALETTE_SEARCH = "command_palette_search";

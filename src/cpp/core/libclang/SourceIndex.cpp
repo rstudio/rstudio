@@ -159,9 +159,19 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
 #ifdef __APPLE__
-   // ensure that SDKROOT is defined so that libclang can find system headers
-   core::system::EnvironmentScope scope(
-            "SDKROOT", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+
+   // ensure SDK_ROOT is set
+   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope;
+   const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+   if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
+      sdkRootScope.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
+
+   // ensure DEVELOPER_DIR is set
+   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope;
+   const char* developerDirPath = "/Library/Developer/CommandLineTools";
+   if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
+      developerDirScope.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
+
 #endif
    
    FilePath filePath(filename);

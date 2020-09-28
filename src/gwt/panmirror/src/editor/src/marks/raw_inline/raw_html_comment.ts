@@ -49,7 +49,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             format: { default: false },
           },
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='raw-html-comment']",

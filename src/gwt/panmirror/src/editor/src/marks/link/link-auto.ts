@@ -25,7 +25,7 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
   return (schema: Schema, filter: MarkInputRuleFilter) => {
     const rules = [
       // <link> style link
-      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({
+      markInputRule(/(?:(?:^|[^`])<)(https?:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({
         href: match[1],
       })),
       // full markdown link
@@ -37,10 +37,12 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
     if (autoLink) {
       // plain link
       rules.push(
-        new InputRule(/([a-z]+:\/\/[^\s]+) $/, (state: EditorState, match: string[], start: number, end: number) => {
+        new InputRule(/(^|[^`])(https?:\/\/[^\s]+) $/, (state: EditorState, match: string[], start: number, end: number) => {
+
           const tr = state.tr;
-          end = start + match[1].length;
-          tr.addMark(start, end, schema.marks.link.create({ href: match[1] }));
+          start = start + match[1].length;
+          end = start + match[2].length;
+          tr.addMark(start, end, schema.marks.link.create({ href: match[2] }));
           tr.removeStoredMark(schema.marks.link);
           tr.insertText(' ');
           setTextSelection(end + 1)(tr);
