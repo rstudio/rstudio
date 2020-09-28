@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -59,7 +60,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
@@ -209,7 +209,6 @@ public class PaneManager
 
    @Inject
    public PaneManager(Provider<MainSplitPanel> pSplitPanel,
-                      WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
                       Binder binder,
@@ -426,18 +425,12 @@ public class PaneManager
          ArrayList<Double> sizes = getValidColumnWidths(columns, false);
          final Command afterAnimation = () -> window.getNormal().onResize();
 
-         double rightStart = panel_.getWidgetSize(right_);
          double rightEnd = sizes.get(0);
-         ArrayList<Double> leftStart = panel_.getLeftWidgetSizes();
          ArrayList<Double> leftEnd = new ArrayList<>();
          if (sizes.size() > 2)
             leftEnd.addAll(sizes.subList(2, sizes.size()));
 
-         resizeHorizontally(rightStart,
-                            rightEnd,
-                            leftStart,
-                            leftEnd,
-                            afterAnimation);
+         resizeHorizontally(rightEnd, leftEnd, afterAnimation);
       });
 
       eventBus_.addHandler(
@@ -906,10 +899,7 @@ public class PaneManager
             DomUtils.contains(center_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
-      
-      final double rightInitialSize = panel_.getWidgetSize(right_);
 
-      ArrayList<Double> leftStart = panel_.getLeftWidgetSizes();
       ArrayList<Double> leftEnd = new ArrayList<>();
       {
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
@@ -938,128 +928,37 @@ public class PaneManager
          onActivation = () -> commands_.activateHelp().execute();
       }
 
-      resizeHorizontally(rightInitialSize, rightTargetSize, leftStart, leftEnd, onActivation);
+      resizeHorizontally(rightTargetSize, leftEnd, onActivation);
    }
 
-   private void resizeHorizontally(final double rightStart,
-                                   final double rightEnd,
-                                   final ArrayList<Double> leftStart,
-                                   final ArrayList<Double> leftEnd)
+   private void resizeHorizontally(final double right,
+                                   final ArrayList<Double> leftList)
    {
-      resizeHorizontally(rightStart, rightEnd, leftStart, leftEnd, null);
+      resizeHorizontally(right, leftList, null);
    }
-
-   private void resizeHorizontally(final double rightStart,
-                                   final double rightEnd,
-                                   final ArrayList<Double> leftStart,
-                                   final ArrayList<Double> leftEnd,
+   
+   private void resizeHorizontally(final double right,
+                                   final ArrayList<Double> leftList,
                                    final Command afterComplete)
    {
+      panel_.setWidgetSize(right_, right);
+      for (int i = 0; i < leftList_.size(); i++)
+         panel_.setWidgetSize(leftList_.get(i), leftList.get(i));
+
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      horizontalResizeAnimation(rightStart, rightEnd, leftStart, leftEnd,
-         afterComplete).run(duration);
-   }
-
-   // If we allow multiple right columns, the first two variables will need to become lists
-   private Animation horizontalResizeAnimation(final double rightStart,
-                                               final double rightEnd,
-                                               final ArrayList<Double> leftStart,
-                                               final ArrayList<Double> leftEnd,
-                                               final Command afterComplete)
-   {
-      final double leftStartSum = leftStart.stream().mapToDouble(Double::doubleValue).sum();
-      final double leftEndSum = leftEnd.stream().mapToDouble(Double::doubleValue).sum();
-      return new Animation()
+      panel_.animate(duration, new AnimationCallback()
       {
-         @Override
-         protected void onUpdate(double progress)
+         public void onAnimationComplete()
          {
-            double size = (1 - progress) * rightStart +
-               progress * rightEnd;
-            panel_.setWidgetSize(right_, size);
-
-            // If the user isn't using additional columns, we're done.
-            if (leftStartSum == 0 &&
-                leftEndSum == 0)
-               return;
-
-            // The logic here is more complex than for the right panel because there may be
-            // multiple widgets and the animation needs to occur across all the widgets rather
-            // than in each specified widget.
-            size = (1 - progress) * leftStartSum +
-               progress * leftEndSum;
-
-            final double currentSize = panel_.getLeftSize();
-            if (currentSize > size) // we are shrinking
-            {
-               double difference = currentSize - size;
-               for (int i = 0; i < leftStart.size(); i++)
-               {
-                  double widgetSize = panel_.getWidgetSize(leftList_.get(i));
-                  if (widgetSize > 0)
-                  {
-                     if (widgetSize > difference)
-                     {
-                        panel_.setWidgetSize(leftList_.get(i), widgetSize - difference);
-                        break;
-                     }
-                     else
-                     {
-                        panel_.setWidgetSize(leftList_.get(i), 0.0);
-                        difference -= widgetSize;
-                        if (difference <= 0.0)
-                           break;
-                     }
-                  }
-               }
-            }
-            else if (currentSize < size)// we are growing
-            {
-               // iterate backwards so the left most widget is shown first
-               for (int i = leftStart.size() - 1; i >= 0; i--)
-               {
-                  final double widgetSize = panel_.getWidgetSize(leftList_.get(i));
-                  // If the widget is bigger than the size, calculate the size of the display
-                  if (widgetSize < leftEnd.get(i))
-                  {
-                     if (size > leftEnd.get(i))
-                     {
-                        panel_.setWidgetSize(leftList_.get(i), leftEnd.get(i));
-                        size -= leftEnd.get(i);
-                     }
-                     else
-                     {
-                        panel_.setWidgetSize(leftList_.get(i), size);
-                        break;
-                     }
-                  }
-                  else
-                  {
-                     size -= widgetSize;
-                     if (size <= 0.0)
-                        break;
-                  }
-               }
-            }
-         }
-
-         @Override
-         protected void onStart()
-         {
-            isAnimating_ = true;
-            super.onStart();
-         }
-
-         @Override
-         protected void onComplete()
-         {
-            isAnimating_ = false;
             panel_.onSplitterResized(new SplitterResizedEvent());
-            super.onComplete();
             if (afterComplete != null)
                afterComplete.execute();
          }
-      };
+         
+         public void onLayout(Layer layer, double progress)
+         {
+         }
+      });
    }
 
    private void restoreLayout()
@@ -1180,20 +1079,16 @@ public class PaneManager
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
-      ArrayList<Double> leftStart = new ArrayList<>();
       ArrayList<Double> leftEnd = new ArrayList<>();
       if (leftList_.size() > 0)
       {
-         for (int i = 0; i < leftList_.size(); i++)
-            leftStart.add(0.0);
-
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
             leftEnd = getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, false);
          else
             leftEnd.addAll(leftWidgetSizePriorToZoom_);
       }
 
-      resizeHorizontally(panel_.getWidgetSize(right_), widgetSizePriorToZoom_, leftStart, leftEnd);
+      resizeHorizontally(widgetSizePriorToZoom_, leftEnd);
       invalidateSavedLayoutState(true);
    }
 
@@ -1459,8 +1354,11 @@ public class PaneManager
       if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
          return LEFT_COLUMN;
 
+      // If MainSplitPanel.enforceBoundaries has been called then the rightZoomPosition is the 
+      // offsetWidth - 3
       double rightZoomPosition = panel_.getOffsetWidth();
-      if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001))
+      if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
+          MathUtil.isEqual(currentColumnSize, rightZoomPosition - 3, 0.0001))
          return RIGHT_COLUMN;
 
       return null;
@@ -1473,9 +1371,6 @@ public class PaneManager
     */
    public void zoomColumn(String columnId)
    {
-      final double rightInitialSize = panel_.getWidgetSize(right_);
-      final ArrayList<Double> leftInitialSize = panel_.getLeftWidgetSizes();
-
       double rightTargetSize;
       ArrayList<Double> leftTargetSize = new ArrayList<>();
 
@@ -1540,7 +1435,7 @@ public class PaneManager
          }
       }
 
-      resizeHorizontally(rightInitialSize, rightTargetSize, leftInitialSize, leftTargetSize,
+      resizeHorizontally(rightTargetSize, leftTargetSize,
          () -> manageLayoutCommands());
    }
 
