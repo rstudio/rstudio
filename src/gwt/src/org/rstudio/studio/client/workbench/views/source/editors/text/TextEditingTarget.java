@@ -319,6 +319,8 @@ public class TextEditingTarget implements
 
       public void onCompleted()
       {
+		 isSaving_ = false;
+		 
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
          // end up immediately checking for external edits)
@@ -378,6 +380,8 @@ public class TextEditingTarget implements
 
       public void onError(final String message)
       {
+		 isSaving_ = false;
+		 
          // in case the error occurred saving a document that wasn't
          // in the foreground
          view_.ensureVisible();
@@ -2788,6 +2792,9 @@ public class TextEditingTarget implements
 
    public void save()
    {
+	  if (isSaving_)
+         return;
+	 
       save(new Command() {
          @Override
          public void execute()
@@ -2844,6 +2851,8 @@ public class TextEditingTarget implements
 
    public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command, final Command onSilentFailure)
    {
+	  isSaving_ = true;
+	  
       checkCompilePdfDependencies();
 
       final String path = docUpdateSentinel_.getPath();
@@ -3687,6 +3696,9 @@ public class TextEditingTarget implements
    @Handler
    void onSaveSourceDoc()
    {
+	  if (isSaving_)
+         return;
+	 
       saveThenExecute(null, true, postSaveCommand());
    }
 
@@ -8284,6 +8296,9 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+   
+   // prevent multiple manual saves from queuing up
+   private boolean isSaving_ = false;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>
