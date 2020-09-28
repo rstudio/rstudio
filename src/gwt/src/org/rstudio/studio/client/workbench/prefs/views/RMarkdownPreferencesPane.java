@@ -259,6 +259,20 @@ public class RMarkdownPreferencesPane extends PreferencesPane
      
       visualModeOptions.add(headerLabel("Markdown"));
 
+      
+      // list spacing
+      String[] listSpacingValues = {
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
+      };
+      visualModeListSpacing_ = new SelectWidget("Default spacing between list items: ", 
+            listSpacingValues, listSpacingValues, 
+            false, true, false);
+      visualModeListSpacing_.getElement().getStyle().setMarginBottom(10, Unit.PX);
+      if (!visualModeListSpacing_.setValue(prefs_.visualMarkdownEditingListSpacing().getGlobalValue()))
+         visualModeListSpacing_.getListBox().setSelectedIndex(0);
+      visualModeOptions.add(visualModeListSpacing_);
+      
       // auto wrap
       String[] wrapValues = {
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
@@ -494,6 +508,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
             Integer.parseInt(visualModeFontSize_.getValue()));
+      
+      prefs_.visualMarkdownEditingListSpacing().setGlobalValue(
+            visualModeListSpacing_.getValue());
 
       prefs_.visualMarkdownEditingWrap().setGlobalValue(
             visualModeWrap_.getValue());
@@ -553,6 +570,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+   private final SelectWidget visualModeListSpacing_;
    private final SelectWidget visualModeWrap_;
    private final SelectWidget visualModeReferences_;   
    

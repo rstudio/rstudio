@@ -48,6 +48,11 @@ public class PanmirrorUIPrefs {
      return pUserState_.get().theme().getGlobalValue().getIsDark(); 
    }
    
+   public String listSpacing()
+   {
+      return pUIPrefs_.get().visualMarkdownEditingListSpacing().getValue();
+   }
+   
    public Boolean equationPreview()
    {
       return !pUIPrefs_.get().latexPreviewOnCursorIdle().getValue()

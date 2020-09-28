@@ -34,7 +34,7 @@ import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
-const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
+const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
 
 const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
@@ -62,7 +62,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             type: {},
           },
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='math']",

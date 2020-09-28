@@ -16,11 +16,11 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Selection, TextSelection, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
-import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
+import { setTextSelection } from 'prosemirror-utils';
 
 import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
@@ -486,6 +486,10 @@ export class Editor {
       });
       this.view.updateState(this.state);
     } else {
+
+      // note current editing location
+      const location = this.getEditingLocation();
+
       // replace the top level nodes in the doc
       const tr = this.state.tr;
       tr.setMeta(kSetMarkdownTransaction, true);
@@ -496,9 +500,10 @@ export class Editor {
         i++;
         return false;
       });
-      // set selection to the beginning of the doc
-      const bodyNode = findChildrenByType(tr.doc, this.schema.nodes.body)[0];
-      setTextSelection(bodyNode.pos)(tr);
+      // set selection to previous location if it's still valid
+      if (location.pos < this.view.state.doc.nodeSize) {
+        setTextSelection(location.pos)(tr);
+      }
       // dispatch
       this.view.dispatch(tr);
     }

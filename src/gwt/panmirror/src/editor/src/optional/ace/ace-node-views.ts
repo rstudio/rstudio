@@ -83,8 +83,19 @@ export class AceNodeViews {
       // return gapCursor if we found one
       if (gapCursor) {
         const tr = view.state.tr;
+
+        // notify the node views that we are setting a gap cursor
+        this.nodeViews.forEach(ndView => ndView.setGapCursorPending(true));
+
+        // ensure the view is focused 
+        view.focus();
+
+        // set the selection
         tr.setSelection(gapCursor);
         view.dispatch(tr);
+
+        // notify the node views that we are done setting the gap cursor
+        this.nodeViews.forEach(ndView => ndView.setGapCursorPending(false));
 
         // prevent default event handling
         event.preventDefault();

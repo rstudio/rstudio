@@ -23,7 +23,7 @@ import { fancyQuotesToSimple } from '../api/quote';
 const plugin = new PluginKey('smartypaste');
 
 // match enDash but only for lines that aren't an html comment
-const enDash = new InputRule(/[^!-]--$/, (state: EditorState, match: string[], start: number, end: number) => {
+const enDash = new InputRule(/[^!-`]--$/, (state: EditorState, match: string[], start: number, end: number) => {
   const { parent, parentOffset } = state.selection.$head;
   const precedingText = parent.textBetween(0, parentOffset);
   if (precedingText.indexOf('<!--') === -1) {
@@ -35,7 +35,7 @@ const enDash = new InputRule(/[^!-]--$/, (state: EditorState, match: string[], s
   }
 });
 
-const emDash = new InputRule(/–-$/, (state: EditorState, match: string[], start: number, end: number) => {
+const emDash = new InputRule(/(^|[^`])–-$/, (state: EditorState, match: string[], start: number, end: number) => {
   const tr = state.tr;
   tr.insertText('—', end - 1, end);
   return tr;

@@ -29,6 +29,7 @@ import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
 import { toggleBlockType } from './command';
 import { selectionIsBodyTopLevel } from './selection';
+import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
   lang: string;
@@ -86,7 +87,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       // perform insert
       const tr = state.tr;
       const rmdText = schema.text(chunkPlaceholder);
-      const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
+      const rmdNode = schema.nodes.rmd_chunk.create({ navigation_id: uuidv4() }, rmdText);
       const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
@@ -151,10 +152,18 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     const meta = lines[0].replace(/^[\s`\{]*(.*?)\}?\s*$/, '$1');
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
+
+    // a completely empty chunk (no second line) should be returned
+    // as such. if it's not completely empty then append a newline
+    // to the result of split (so that the chunk ends w/ a newline)
+    const chunkCode = lines.length > 1
+      ? (lines.slice(1).join('\n') + '\n')
+      : '';
+
     return {
       lang,
       meta,
-      code: lines.slice(1).join('\n'),
+      code: chunkCode,
     };
   } else {
     return null;

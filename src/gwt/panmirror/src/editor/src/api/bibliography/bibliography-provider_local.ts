@@ -22,7 +22,7 @@ import { EditorUI } from "../ui";
 
 import { BibliographyDataProvider, Bibliography, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
-import { toBibLaTeX } from './bibDB';
+import { toBibLaTeX, toBibTeX } from './bibDB';
 import { CSL } from '../csl';
 
 
@@ -131,7 +131,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public generateBibTeX(_ui: EditorUI, id: string, csl: CSL): Promise<string | undefined> {
-    return Promise.resolve(toBibLaTeX(id, csl));
+    return Promise.resolve(toBibTeX(id, csl));
   }
 
   public warningMessage(): string | undefined {
@@ -140,7 +140,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
 
-    const kPermissableFileExtensions = ['bib', 'yaml', 'yml', 'json'];
+    const kPermissableFileExtensions = ['bibtex', 'bib', 'yaml', 'yml', 'json'];
     if (this.bibliography?.project_biblios
       && this.bibliography.project_biblios.length > 0) {
       return this.bibliography?.project_biblios.map(projectBiblio => {

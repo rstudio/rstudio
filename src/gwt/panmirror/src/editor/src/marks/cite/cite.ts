@@ -299,10 +299,11 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 // automatically create a citation given certain input
 function insertCiteInputRule(schema: Schema) {
   return new InputRule(
-    new RegExp(`\\[${kBeginCitePattern}$`),
+    new RegExp(`(^|[^\`])\\[${kBeginCitePattern}$`),
     (state: EditorState, match: string[], start: number, end: number) => {
       // only apply if we aren't already in a cite and the preceding text doesn't include an end cite (']')
-      if (!markIsActive(state, schema.marks.cite) && !match[0].includes(']')) {
+      const citeMatch = match[0].substr(match[1].length);
+      if (!markIsActive(state, schema.marks.cite) && !citeMatch.includes(']')) {
         // determine if we already have an end bracket
         const suffix = findCiteEndBracket(state.selection) === -1 ? ']' : '';
 
@@ -312,7 +313,7 @@ function insertCiteInputRule(schema: Schema) {
         // insert the @
         tr.insertText('@');
 
-        const startCite = tr.selection.from - match[0].length;
+        const startCite = tr.selection.from - citeMatch.length;
 
         // determine beginning and end
 
@@ -479,6 +480,9 @@ function findCiteBeginBracket(selection: Selection) {
     } else if (char === '[') {
       if (bracketLevel > 0) {
         bracketLevel--;
+        // backtick disqualifies us
+      } else if (i > 0 && text.charAt(i - 1) === '`') {
+        return -1;
       } else {
         beginCite = i;
         break;
@@ -678,7 +682,7 @@ export async function insertCitation(
         const tr = view.state.tr;
 
         // Write the source to the bibliography if needed
-        await ensureSourcesInBibliography(
+        const writeCiteId = await ensureSourcesInBibliography(
           tr,
           [source],
           bibliographyFile,
@@ -688,10 +692,12 @@ export async function insertCitation(
           server,
         );
 
-        // Write the citeId
-        const schema = view.state.schema;
-        const idText = schema.text(source.id, [schema.marks.cite_id.create()]);
-        performCiteCompletionReplacement(tr, tr.mapping.map(pos), idText);
+        if (writeCiteId) {
+          // Write the citeId
+          const schema = view.state.schema;
+          const idText = schema.text(source.id, [schema.marks.cite_id.create()]);
+          performCiteCompletionReplacement(tr, tr.mapping.map(pos), idText);
+        }
 
         // Dispath the transaction
         view.dispatch(tr);
@@ -712,7 +718,7 @@ export async function ensureSourcesInBibliography(
   view: EditorView,
   ui: EditorUI,
   server: PandocServer,
-) {
+): Promise<boolean> {
   // Write entry to a bibliography file if it isn't already present
   await bibManager.load(ui, view.state.doc);
 
@@ -752,7 +758,7 @@ export async function ensureSourcesInBibliography(
           const cslToWrite = sanitizeForCiteproc(source);
 
           if (!bibManager.findIdInLocalBibliography(source.id)) {
-            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, source, source.providerKey) : undefined;
+            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, cslToWrite, source.providerKey) : undefined;
             await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibTex || '');
           }
 
@@ -762,6 +768,7 @@ export async function ensureSourcesInBibliography(
         }
       }));
   }
+  return proceedWithInsert;
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {

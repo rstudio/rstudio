@@ -54,6 +54,7 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
 export interface ImageButtonProps extends WidgetProps {
   title: string;
   image: string;
+  tabIndex?: number;
   onClick?: () => void;
 }
 
@@ -66,7 +67,7 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
     }
   };
   return (
-    <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref}>
+    <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref} tabIndex={props.tabIndex}>
       <img src={props.image} alt={props.title} />
     </button>
   );

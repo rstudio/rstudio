@@ -14,6 +14,8 @@
  */
 
 import { AceNodeView } from './ace';
+import { EditorEvents } from '../../api/events';
+import { ScrollEvent, UpdateEvent } from '../../api/event-types';
 
 /**
  * Represents a queue of Ace editor instances that are rendered asynchronously.
@@ -23,11 +25,24 @@ export class AceRenderQueue {
 
   private renderCompleted: boolean = false;
   private renderTimer: number = 0;
+  private updateTimer: number = 0;
   private container?: HTMLElement;
   private needsSort: boolean = true;
   private bypass: number = 5;
   private observer?: IntersectionObserver;
   private visible: boolean = true;
+  private readonly subscriptions: VoidFunction[] = [];
+
+  constructor(private events: EditorEvents) {
+    // Begin listening for scroll and update events so we can manage the queue
+    // accordingly
+    this.subscriptions.push(events.subscribe(ScrollEvent, () => {
+      this.onScroll();
+    }));
+    this.subscriptions.push(events.subscribe(UpdateEvent, () => {
+      this.onUpdate();
+    }));
+  }
 
   /**
    * Sets (or replaces) the scroll container hosting the render queue. The
@@ -38,35 +53,17 @@ export class AceRenderQueue {
    */
   public setContainer(container: HTMLElement) {
 
-    // Handler for scroll events in the container
-    const handleScroll = (evt: Event) => {
-      // Whenever a scroll event occurs, we need to re-sort the queue so that
-      // objects in or closest to the viewport are given priority.
-      this.needsSort = true;
-
-      // If we don't think we're visible but we're scrolling and have height,
-      // then we are in fact visible. (This catches a case where the
-      // intsersection observer created below doesn't fire for visiblity
-      // changes.)
-      if (!this.visible && this.container && this.container.offsetHeight > 0) {
-        this.visible = true;
-        this.processRenderQueue();
-      }
-    };
-
     // Skip if we're already looking at this container
     if (this.container === container) {
       return;
     }
 
-    // Clean up handlers on any previous container
-    if (this.container) {
-      this.container.removeEventListener("scroll", handleScroll);
-    }
+    // Clean up observer on any previous container
     if (this.observer) {
       this.observer.disconnect();
     }
 
+    // Save reference to container
     this.container = container;
 
     // Create intersection observer to ensure that we don't needlessly churn
@@ -92,10 +89,44 @@ export class AceRenderQueue {
     }, {
       root: null
     });
-    this.observer.observe(container);
 
-    // Hook up event handlers
-    this.container.addEventListener("scroll", handleScroll);
+    // Begin observing intersection events in container
+    this.observer.observe(container);
+  }
+
+  /**
+   * Invoke when the editor surface is scrolled
+   */
+  private onScroll() {
+    // Whenever a scroll event occurs, we need to re-sort the queue so that
+    // objects in or closest to the viewport are given priority.
+    this.needsSort = true;
+
+    // If we don't think we're visible but we're scrolling and have height,
+    // then we are in fact visible. (This catches a case where the
+    // intsersection observer created below doesn't fire for visiblity
+    // changes.)
+    if (!this.visible && this.container && this.container.offsetHeight > 0) {
+      this.visible = true;
+      this.processRenderQueue();
+    }
+  }
+
+  /**
+   * Invoke when the document has changed
+   */
+  private onUpdate() {
+    // Debounce update timer. This timer is used to prevent the CPU intensive
+    // editor rendering from happening while the user is actively updating the
+    // document.
+    if (this.updateTimer !== 0) {
+      window.clearTimeout(this.updateTimer);
+    }
+    this.updateTimer = window.setTimeout(() => {
+      this.updateTimer = 0;
+      // Process queue immediately if we have one
+      this.scheduleRender(0);
+    }, 1000);
   }
 
   /**
@@ -132,12 +163,9 @@ export class AceRenderQueue {
     this.renderQueue.push(view);
 
     // Defer/debounce rendering of editors until event loop finishes
-    if (this.renderTimer !== 0) {
-      window.clearTimeout(this.renderTimer);
+    if (this.renderTimer === 0) {
+      this.scheduleRender(0);
     }
-    this.renderTimer = window.setTimeout(() => {
-      this.processRenderQueue();
-    }, 0);
   }
 
   /**
@@ -155,14 +183,20 @@ export class AceRenderQueue {
       return;
     }
 
+    // Don't render while the user is actively updating the document (it makes
+    // the interface sluggish)
+    if (this.updateTimer !== 0) {
+      return;
+    }
+
+    // Compute offset for sorting (based on scroll position)
+    let offset = 0;
+    if (this.container) {
+      offset = this.container.scrollTop;
+    }
+
     // Sort the queue if required
     if (this.needsSort) {
-      // Compute offset for sorting (based on scroll position)
-      let offset = 0;
-      if (this.container) {
-        offset = this.container.scrollTop;
-      }
-
       // Sort the render queue based on distance from the top of the viewport
       this.renderQueue.sort((a, b) => {
         return Math.abs(a.dom.offsetTop - offset) - Math.abs(b.dom.offsetTop - offset);
@@ -172,23 +206,36 @@ export class AceRenderQueue {
       this.needsSort = false;
     }
 
-    // Pop the next view (editor instance) to be rendered off the stack
-    const view = this.renderQueue.shift();
+    // Pop the next view (editor instance) to be rendered off the stack.
+    // Fast-forward past instances that no longer have a position; these can
+    // accumulate when NodeViews are added to the render queue but replaced
+    // (by a document rebuild) before they have a chance to render.
+    let view: AceNodeView | undefined;
+    while (view === null || view === undefined || view.getPos() === undefined) {
+      view = this.renderQueue.shift();
+    }
 
     // Render this view
     if (view) {
-      // Don't render if the view no longer has a position (this can happen if the view was moved or deleted before it got a chance to render)
-      if (view.getPos() !== undefined) {
-         view.initEditor();
-      }
+      view.initEditor();
     }
 
     if (this.renderQueue.length > 0) {
       // There are still remaining editors to be rendered, so process again on
-      // the next event loop.
-      this.renderTimer = window.setTimeout(() => {
-        this.processRenderQueue();
-      }, 0);
+      // the next event loop. 
+      // 
+      // If these editors are near the viewport, render them as soon as
+      // possible; otherwise, let the render proceed at a slower pace to
+      // increase responsiveness.
+      let delayMs = 1000;
+      if (this.container) {
+        const distance = Math.abs(this.renderQueue[0].dom.offsetTop - offset);
+        if (distance < this.container.offsetHeight * 2) {
+          // Container is near the viewport, so render it ASAP
+          delayMs = 0;
+        }
+      }
+      this.scheduleRender(delayMs);
     } else {
       // No remaining editors; we're done.
       this.renderCompleted = true;
@@ -208,11 +255,25 @@ export class AceRenderQueue {
   }
 
   /**
+   * Reschedules a pending render, or schedules a new one.
+   */
+  private scheduleRender(delayMs: number) {
+    this.cancelTimer();
+    this.renderTimer = window.setTimeout(() => {
+      this.processRenderQueue();
+      this.renderTimer = 0;
+    }, delayMs);
+  }
+
+  /**
    * Cleans up the render queue instance
    */
   private destroy() {
     // Cancel any pending renders
     this.cancelTimer();
+
+    // Remove event subscriptions
+    this.subscriptions.forEach((unsub) => unsub());
 
     // Clean up resize observer
     if (this.observer) {

@@ -67,20 +67,20 @@ public class BaseMenuBar extends MenuBar
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
       commandHandler_ = new HandlerRegistrations();
    }
-   
+
    private MenuItem getTargetedMenuItem(Event event)
    {
       Element targetEl = DOM.eventGetTarget(event);
       if (targetEl == null)
          return null;
-      
+
       for (MenuItem item : getItems())
          if (item.getElement().isOrHasChild(targetEl))
             return item;
-      
+
       return null;
    }
-   
+
    @Override
    public void onBrowserEvent(Event event)
    {
@@ -104,11 +104,11 @@ public class BaseMenuBar extends MenuBar
             super.onBrowserEvent(event);
             return;
          }
-         
+
          Element activeEl = DomUtils.getActiveElement();
          if (activeEl.hasTagName("input"))
             return;
-         
+
          super.onBrowserEvent(event);
       }
       else if (event.getTypeInt() == Event.ONCLICK)
@@ -125,7 +125,7 @@ public class BaseMenuBar extends MenuBar
             super.onBrowserEvent(event);
             return;
          }
-         
+
          // Further verify that the element click is actually
          // focusable, just to ensure that e.g. clicking on
          // non-editable HTML entries in the menu still do
@@ -136,7 +136,7 @@ public class BaseMenuBar extends MenuBar
             super.onBrowserEvent(event);
             return;
          }
-         
+
          // Don't forward browser event to superclass, effectively
          // hiding this event from the GWT MenuBar class.
       }
@@ -159,9 +159,9 @@ public class BaseMenuBar extends MenuBar
             ((AppMenuItem)child).onShow();
          else
          {
-            // if this is a submenu that consists entirely of hidden commands, 
-            // hide the submenu and its flyout icon 
-            MenuBar submenu = child.getSubMenu(); 
+            // if this is a submenu that consists entirely of hidden commands,
+            // hide the submenu and its flyout icon
+            MenuBar submenu = child.getSubMenu();
             if (submenu != null &&
                 submenu instanceof AppMenuBar)
             {
@@ -244,8 +244,7 @@ public class BaseMenuBar extends MenuBar
       if (separators_.isEmpty())
          return;
       List<MenuItem> menuItems = getItems();
-      ArrayList<UIObject> allItems =
-            new ArrayList<UIObject>(menuItems.size() + separators_.size());
+      ArrayList<UIObject> allItems = new ArrayList<>(menuItems.size() + separators_.size());
       allItems.addAll(separators_);
       allItems.addAll(menuItems);
       Collections.sort(allItems, new PositionComparator());
@@ -260,7 +259,7 @@ public class BaseMenuBar extends MenuBar
 
    public ArrayList<MenuItem> getVisibleItems()
    {
-      ArrayList<MenuItem> items = new ArrayList<MenuItem>();
+      ArrayList<MenuItem> items = new ArrayList<>();
       for (MenuItem item : getItems())
          if (item.isVisible())
             items.add(item);
@@ -297,7 +296,7 @@ public class BaseMenuBar extends MenuBar
       MenuItem item = getItem(index);
       if (item == null)
          return;
-      
+
       // set focus
       getElement().focus();
 

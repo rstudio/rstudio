@@ -22,7 +22,7 @@ import { suggestCiteId } from "../cite";
 import { BibliographyDataProvider, BibliographyFile, BibliographySourceWithCollections, BibliographyCollection } from "./bibliography";
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
-import { toBibLaTeX } from './bibDB';
+import { toBibTeX } from './bibDB';
 
 export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 
@@ -158,7 +158,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
         return Promise.resolve(bibTeX.message);
       }
     }
-    return Promise.resolve(toBibLaTeX(id, csl));
+    return Promise.resolve(toBibTeX(id, csl));
   }
 
   public warningMessage(): string | undefined {

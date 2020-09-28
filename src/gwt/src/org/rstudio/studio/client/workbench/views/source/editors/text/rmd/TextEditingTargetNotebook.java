@@ -806,6 +806,13 @@ public class TextEditingTargetNotebook
             setDirtyState();
          }
       }
+
+      // append callback HTML to chunk output if present
+      if (chunkHasOutput(data.getChunkId()) &&
+          !StringUtil.isNullOrEmpty(data.getHtmlCallback()))
+      {
+         outputs().get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlCallback());
+      }
    }
 
    @Override

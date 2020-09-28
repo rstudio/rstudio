@@ -23,10 +23,12 @@ import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
 import { BibliographyManager, BibliographyCollection, BibliographySource } from "../../../api/bibliography/bibliography";
 import { kZoteroProviderKey } from "../../../api/bibliography/bibliography-provider_zotero";
 import { kLocalBiliographyProviderKey } from "../../../api/bibliography/bibliography-provider_local";
-import { formatAuthors, formatIssuedDate } from "../../../api/cite";
+import { formatAuthors, formatIssuedDate, createUniqueCiteId } from "../../../api/cite";
 import { CitationSourcePanelProvider, CitationSourcePanelProps, CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
 import { CitationSourceTypeheadSearchPanel } from "./insert_citation-source-panel-typeahead-search";
 import { imageForType } from "../../../api/csl";
+
+import './insert_citation-source-panel-bibliography.css';
 
 const kAllLocalSourcesRootNodeType = 'All Local Sources';
 
@@ -34,6 +36,7 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 
   const providers = bibliographyManager.localProviders();
   const providerNodes: { [key: string]: NavigationTreeNode } = {};
+
 
   // For each of the providers, discover their collections
   providers.filter(provider => provider.isEnabled()).forEach(provider => {
@@ -68,7 +71,8 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
         expanded: true
       };
     },
-    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+    warningMessage: bibliographyManager.warning(),
+    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
 
       const providerForNode = (node: NavigationTreeNode): string | undefined => {
         // The node could be the root node, no provider
@@ -84,14 +88,14 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
       const sources = bibliographyManager.search(searchTerm, providerForNode(selectedNode), collectionKeyForNode(selectedNode));
       const uniqueSources = uniqby(sources, source => source.id);
 
-      const citations = toCitationListEntries(uniqueSources, ui);
+      const citations = toCitationListEntries(uniqueSources, existingCitationIds, ui);
       return {
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
-        statusMessage: ''
+        statusMessage: citations.length > 0 ? '' : ui.context.translateText('No items')
       };
     },
-    search: (searchTerm: string, selectedNode: NavigationTreeNode) => {
+    search: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return Promise.resolve({
         citations: [],
         status: CitationSourceListStatus.default,
@@ -103,22 +107,27 @@ export function bibliographySourcePanel(doc: ProsemirrorNode, ui: EditorUI, bibl
 
 export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
   return (
-    <CitationSourceTypeheadSearchPanel
-      height={props.height}
-      citations={props.citations}
-      citationsToAdd={props.citationsToAdd}
-      searchTerm={props.searchTerm}
-      onSearchTermChanged={props.onSearchTermChanged}
-      selectedIndex={props.selectedIndex}
-      onSelectedIndexChanged={props.onSelectedIndexChanged}
-      onAddCitation={props.onAddCitation}
-      onRemoveCitation={props.onRemoveCitation}
-      onConfirm={props.onConfirm}
-      status={props.status}
-      statusMessage={props.statusMessage}
-      ui={props.ui}
-      ref={ref}
-    />
+    <>
+
+      {props.warningMessage ?
+        <div className='pm-insert-bibliography-source-panel-warning pm-block-border-color'>{props.warningMessage}</div> : undefined}
+      <CitationSourceTypeheadSearchPanel
+        height={props.height}
+        citations={props.citations}
+        citationsToAdd={props.citationsToAdd}
+        searchTerm={props.searchTerm}
+        onSearchTermChanged={props.onSearchTermChanged}
+        selectedIndex={props.selectedIndex}
+        onSelectedIndexChanged={props.onSelectedIndexChanged}
+        onAddCitation={props.onAddCitation}
+        onRemoveCitation={props.onRemoveCitation}
+        onConfirm={props.onConfirm}
+        status={props.status}
+        statusMessage={props.statusMessage}
+        ui={props.ui}
+        ref={ref}
+      />
+    </>
   );
 });
 
@@ -189,11 +198,11 @@ function toTree(type: string, containers: BibliographyCollection[], folderImage?
   return rootNodes;
 }
 
-function toCitationListEntries(sources: BibliographySource[], ui: EditorUI): CitationListEntry[] {
+function toCitationListEntries(sources: BibliographySource[], existingCitationIds: string[], ui: EditorUI): CitationListEntry[] {
   const useBetterBibTex = ui.prefs.zoteroUseBetterBibtex();
   return sources.map(source => {
     return {
-      id: source.id,
+      id: (source.providerKey === kLocalBiliographyProviderKey || useBetterBibTex) ? source.id : createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,
       type: source.type,
       title: source.title || '',

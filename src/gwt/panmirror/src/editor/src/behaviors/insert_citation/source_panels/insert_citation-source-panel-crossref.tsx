@@ -50,22 +50,20 @@ export function crossrefSourcePanel(ui: EditorUI,
         expanded: true
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return null;
     },
     progressMessage: ui.context.translateText('Searching Crossref....'),
     placeHolderMessage: ui.context.translateText('Enter search terms to search Crossref'),
-    search: async (searchTerm
-      : string, _selectedNode: NavigationTreeNode) => {
-
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const works = await server.works(searchTerm);
-        const existingIds = bibliographyManager.localSources().map(src => src.id);
+        const dedupeCitationIds = existingCitationIds;
         const citationEntries = works.items.map(work => {
-          const citationEntry = toCitationListEntry(work, existingIds, ui, doiServer);
+          const citationEntry = toCitationListEntry(work, dedupeCitationIds, ui, doiServer);
           if (citationEntry) {
             // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-            existingIds.push(citationEntry.id);
+            dedupeCitationIds.push(citationEntry.id);
           }
           return citationEntry;
         });

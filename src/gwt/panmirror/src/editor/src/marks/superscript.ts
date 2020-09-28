@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'superscript',
       spec: {
+        group: 'formatting',
         parseDOM: [{ tag: 'sup' }],
         toDOM() {
           return ['sup'];
@@ -52,7 +53,7 @@ const extension: Extension = {
   },
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
-    return [delimiterMarkInputRule('\\^', schema.marks.superscript, filter, undefined, true)];
+    return [delimiterMarkInputRule('\\^', schema.marks.superscript, filter, '`', true)];
   },
 };
 

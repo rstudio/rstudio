@@ -411,7 +411,6 @@ FilePath zoteroSqliteDir()
         .completeChildPath("zotero")
         .completeChildPath("sqlite");
 
-   std::cerr << sqliteDir << std::endl;
    Error error = sqliteDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);

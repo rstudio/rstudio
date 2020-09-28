@@ -51,6 +51,8 @@ public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId,
                     const std::string& chunkId,
+                    const std::string& chunkCode,
+                    const std::string& chunkLabel,
                     const std::string& nbCtxId,
                     const std::string& engine,
                     ExecScope execScope,
@@ -91,6 +93,8 @@ private:
 
    std::string docId_;
    std::string chunkId_;
+   std::string chunkCode_;
+   std::string chunkLabel_;
    std::string nbCtxId_;
    std::string engine_;
    std::string pendingInput_;

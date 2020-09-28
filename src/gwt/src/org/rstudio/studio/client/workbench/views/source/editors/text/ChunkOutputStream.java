@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.MutationObserver;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -224,15 +226,19 @@ public class ChunkOutputStream extends FlowPanel
 
       final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk HTML Output Frame");
 
-      if (chunkOutputSize_ == ChunkOutputSize.Default) {
-         if (knitrFigure) {
+      if (chunkOutputSize_ == ChunkOutputSize.Default || 
+          chunkOutputSize_ == ChunkOutputSize.Natural)
+      {
+         if (knitrFigure)
+         {
             final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
                         ChunkOutputUi.OUTPUT_ASPECT, 
                         ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
             addWithOrdinal(fixedFrame, ordinal);
          }
-         else {
+         else
+         {
             // reduce size of html widget as much as possible and add scroll,
             // once it loads, we will adjust the height appropriately.
             frame.getElement().getStyle().setHeight(25, Unit.PX);
@@ -242,7 +248,8 @@ public class ChunkOutputStream extends FlowPanel
             addWithOrdinal(frame, ordinal);
          }
       }
-      else if (chunkOutputSize_ == ChunkOutputSize.Full) {
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
          frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
          frame.getElement().getStyle().setWidth(100, Unit.PCT);
          frame.getElement().getStyle().setHeight(100, Unit.PCT);
@@ -416,7 +423,52 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
    }
-   
+
+   @Override
+   public void showCallbackHtml(String htmlOutput)
+   {
+      // flush any queued errors
+      initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
+      flushQueuedErrors();
+
+      if (StringUtil.isNullOrEmpty(htmlOutput))
+         return;
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      add(frame);
+
+      Element body = frame.getDocument().getBody();
+      Style bodyStyle = body.getStyle();
+      bodyStyle.setPadding(0, Unit.PX);
+      bodyStyle.setMargin(0, Unit.PX);
+
+      frame.loadUrlDelayed(htmlOutput, 250, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            onHeightChanged();
+
+            Command handler = () -> {
+               int newHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+               onHeightChanged();
+            };
+            
+            MutationObserver.Builder builder = new MutationObserver.Builder(handler);
+            builder.attributes(true);
+            builder.characterData(true);
+            builder.childList(true);
+            builder.subtree(true);
+            MutationObserver observer = builder.get();
+            observer.observe(frame.getIFrame().getContentDocument().getBody());
+         }
+      });
+   }
+
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {
