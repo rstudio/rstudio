@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -84,7 +85,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               SendToConsoleEvent.Handler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
-                              UnhandledErrorEvent.Handler
+                              UnhandledErrorEvent.Handler,
+                              SuppressNextShellFocusEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -169,6 +171,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
       eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
+      eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
 
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -705,6 +708,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       @SuppressWarnings("unused")
       private boolean lastKeyCodeWasZero_;
    }
+   
+   @Override
+   public void onSuppressNextShellFocus(SuppressNextShellFocusEvent event)
+   {
+      restoreFocus_ = false;
+   }
 
    private boolean isBrowsePrompt()
    {
@@ -778,6 +787,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          view_.enableLiveReporting();
       }
    }
+   
 
    private final ConsoleServerOperations server_;
    private final EventBus eventBus_;

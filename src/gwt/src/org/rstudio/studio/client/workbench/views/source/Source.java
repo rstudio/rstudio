@@ -84,9 +84,11 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
@@ -126,6 +128,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
@@ -1717,22 +1720,27 @@ public class Source implements InsertSourceHandler,
       else
          docType = FileTypeRegistry.RMARKDOWN;
 
+      final ResultCallback<EditingTarget, ServerError> callback = event.getCallback();
+      
       // command to create and run the new doc
-      Command newDocCommand = new Command() {
+      Command newDocCommand = new Command()
+      {
          @Override
          public void execute()
          {
-            columnManager_.newDoc(docType,
-                   event.getCode(),
-                   new ResultCallback<EditingTarget, ServerError>() {
+            columnManager_.newDoc(docType, event.getCode(), new ResultCallback<EditingTarget, ServerError>()
+            {
+               @Override
                public void onSuccess(EditingTarget arg)
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
 
-                  if (event.getCursorPosition() != null)
+                  SourcePosition position = event.getCursorPosition();
+                  if (position != null &&
+                      position.getRow() > 0 &&
+                      position.getColumn() > 0)
                   {
-                     editingTarget.navigateToPosition(event.getCursorPosition(),
-                                                      false);
+                     editingTarget.navigateToPosition(position, false);
                   }
 
                   if (event.getExecute())
@@ -1751,6 +1759,17 @@ public class Source implements InsertSourceHandler,
                         commands_.executePreviousChunks().execute();
                      }
                   }
+                  
+                  if (callback != null)
+                     callback.onSuccess(arg);
+               }
+               
+               @Override
+               public void onFailure(ServerError info)
+               {
+                  super.onFailure(info);
+                  if (callback != null)
+                     callback.onFailure(info);
                }
             });
          }
@@ -2964,6 +2983,74 @@ public class Source implements InsertSourceHandler,
                server_.rstudioApiResponse(response, new VoidServerRequestCallback());
             });
          }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_OPEN)
+      {
+         RStudioApiRequestEvent.DocumentOpenData data = requestEvent.getPayload().cast();
+         final String path = data.getPath();
+         columnManager_.editFile(path, new ResultCallback<EditingTarget, ServerError>()
+         {
+            @Override
+            public void onSuccess(final EditingTarget result)
+            {
+               // focus opened document (note that we may need to suppress
+               // attempts by the shell widget to steal focus here)
+               events_.fireEvent(new SuppressNextShellFocusEvent());
+               result.focus();
+               
+               JsObject response = JsObject.createJsObject();
+               response.setString("id", result.getId());
+               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+            }
+
+            @Override
+            public void onFailure(ServerError info)
+            {
+               super.onFailure(info);
+               server_.rstudioApiResponse(
+                     JavaScriptObject.createObject(),
+                     new VoidServerRequestCallback());
+            }
+         });
+         
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_NEW)
+      {
+         RStudioApiRequestEvent.DocumentNewData data = requestEvent.getPayload().cast();
+         
+         SourcePosition position = SourcePosition.create(
+               data.getRow(),
+               data.getColumn());
+         
+         events_.fireEvent(new NewDocumentWithCodeEvent(
+               data.getType(),
+               data.getCode(),
+               position,
+               data.getExecute(),
+               new ResultCallback<EditingTarget, ServerError>()
+               {
+                  @Override
+                  public void onSuccess(final EditingTarget result)
+                  {
+                     // focus opened document (note that we may need to suppress
+                     // attempts by the shell widget to steal focus here)
+                     events_.fireEvent(new SuppressNextShellFocusEvent());
+                     result.focus();
+
+                     JsObject response = JsObject.createJsObject();
+                     response.setString("id", result.getId());
+                     server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+                  }
+
+                  @Override
+                  public void onFailure(ServerError info)
+                  {
+                     super.onFailure(info);
+                     server_.rstudioApiResponse(
+                           JavaScriptObject.createObject(),
+                           new VoidServerRequestCallback());
+                  }
+               }));
       }
    }
 

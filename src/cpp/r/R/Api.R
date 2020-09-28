@@ -21,7 +21,9 @@
    TYPE_UNKNOWN              = 0L,
    TYPE_GET_EDITOR_SELECTION = 1L,
    TYPE_SET_EDITOR_SELECTION = 2L,
-   TYPE_DOCUMENT_ID          = 3L
+   TYPE_DOCUMENT_ID          = 3L,
+   TYPE_DOCUMENT_OPEN        = 4L,
+   TYPE_DOCUMENT_NEW         = 5L
 ))
 
 # list of potential event targets
@@ -645,22 +647,49 @@
                                            column = 0,
                                            execute = FALSE)
 {
-   
-   type <- switch(type,
+   type <- switch(
+      type,
+      rmd       = "r_markdown",
       rmarkdown = "r_markdown",
-      sql = "sql",
+      sql       = "sql",
       "r_script"
    )
 
-   .rs.enqueClientEvent("new_document_with_code", list(
-      type = .rs.scalar(type),
-      code = .rs.scalar(code),
-      row = .rs.scalar(row),
-      column = .rs.scalar(column),
+   payload <- list(
+      type    = .rs.scalar(type),
+      code    = .rs.scalar(paste(code, collapse = "\n")),
+      row     = .rs.scalar(as.integer(row)),
+      column  = .rs.scalar(as.integer(column)),
       execute = .rs.scalar(execute)
-   ))
+   )
+   
+   request <- .rs.api.createRequest(
+      type = .rs.api.eventTypes$TYPE_DOCUMENT_NEW,
+      sync = TRUE,
+      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+})
 
-   invisible(NULL)
+.rs.addApiFunction("documentOpen", function(path) {
+   
+   payload <- list(
+      path = .rs.scalar(path)
+   )
+   
+   request <- .rs.api.createRequest(
+      type   = .rs.api.eventTypes$TYPE_DOCUMENT_OPEN,
+      sync   = TRUE,
+      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+   
 })
 
 .rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {
