@@ -426,11 +426,11 @@ public class PaneManager
          final Command afterAnimation = () -> window.getNormal().onResize();
 
          double rightEnd = sizes.get(0);
-         ArrayList<Double> leftEnd = new ArrayList<>();
+         ArrayList<Double> leftTargets = new ArrayList<>();
          if (sizes.size() > 2)
-            leftEnd.addAll(sizes.subList(2, sizes.size()));
+            leftTargets.addAll(sizes.subList(2, sizes.size()));
 
-         resizeHorizontally(rightEnd, leftEnd, afterAnimation);
+         resizeHorizontally(rightEnd, leftTargets, afterAnimation);
       });
 
       eventBus_.addHandler(
@@ -900,7 +900,7 @@ public class PaneManager
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
 
-      ArrayList<Double> leftEnd = new ArrayList<>();
+      ArrayList<Double> leftTargets = new ArrayList<>();
       {
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
             leftWidgetSizePriorToZoom_.clear();
@@ -910,9 +910,9 @@ public class PaneManager
             if (!isRightWidget &&
                 !isCenterWidget &&
                 DomUtils.contains(column.getElement(), window.getActiveWidget().getElement()))
-               leftEnd.add((double) panel_.getOffsetWidth());
+               leftTargets.add((double) panel_.getOffsetWidth());
             else
-               leftEnd.add(0.0);
+               leftTargets.add(0.0);
          }
       }
 
@@ -928,22 +928,22 @@ public class PaneManager
          onActivation = () -> commands_.activateHelp().execute();
       }
 
-      resizeHorizontally(rightTargetSize, leftEnd, onActivation);
+      resizeHorizontally(rightTargetSize, leftTargets, onActivation);
    }
 
-   private void resizeHorizontally(final double right,
-                                   final ArrayList<Double> leftList)
+   private void resizeHorizontally(final double rightTarget,
+                                   final ArrayList<Double> leftTargets)
    {
-      resizeHorizontally(right, leftList, null);
+      resizeHorizontally(rightTarget, leftTargets, null);
    }
    
-   private void resizeHorizontally(final double right,
-                                   final ArrayList<Double> leftList,
+   private void resizeHorizontally(final double rightTarget,
+                                   final ArrayList<Double> leftTargets,
                                    final Command afterComplete)
    {
-      panel_.setWidgetSize(right_, right);
+      panel_.setWidgetSize(right_, rightTarget);
       for (int i = 0; i < leftList_.size(); i++)
-         panel_.setWidgetSize(leftList_.get(i), leftList.get(i));
+         panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
 
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
@@ -1079,16 +1079,16 @@ public class PaneManager
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
-      ArrayList<Double> leftEnd = new ArrayList<>();
+      ArrayList<Double> leftTargets = new ArrayList<>();
       if (leftList_.size() > 0)
       {
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
-            leftEnd = getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, false);
+            leftTargets = getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, false);
          else
-            leftEnd.addAll(leftWidgetSizePriorToZoom_);
+            leftTargets.addAll(leftWidgetSizePriorToZoom_);
       }
 
-      resizeHorizontally(widgetSizePriorToZoom_, leftEnd);
+      resizeHorizontally(widgetSizePriorToZoom_, leftTargets);
       invalidateSavedLayoutState(true);
    }
 
@@ -1435,8 +1435,7 @@ public class PaneManager
          }
       }
 
-      resizeHorizontally(rightTargetSize, leftTargetSize,
-         () -> manageLayoutCommands());
+      resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
    }
 
    public LogicalWindow getZoomedWindow()
