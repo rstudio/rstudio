@@ -28,6 +28,7 @@
 
 #include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
@@ -59,21 +60,35 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
    if (maxOpenRetrySeconds < 0)
       maxOpenRetrySeconds = 0;
 
+   int numTries = 0;
    while (true)
    {
       lastError = filePath.openForWrite(*pOfs, truncate);
 
       // if the error is a non file lock error, then we should just return it
       if (!isFileLockedError(lastError))
+      {
+         if (lastError)
+            LOG_ERROR(lastError);
+
          return lastError;
+      }
+
+      lastError.addOrUpdateProperty("open-attempts", ++numTries);
 
       // stop retrying if we've spent more than the requested amount of time
       if ((second_clock::universal_time() - startTime) >= seconds(maxOpenRetrySeconds))
+      {
+         lastError.addProperty("description", "Timed out while attempting to reopen the file");
          break;
+      }
 
       // wait a moment before retrying
       boost::this_thread::sleep(milliseconds(500));
    }
+
+   if (lastError)
+      LOG_ERROR(lastError);
 
    return lastError;
 }
