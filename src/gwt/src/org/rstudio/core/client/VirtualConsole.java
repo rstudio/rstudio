@@ -242,6 +242,8 @@ public class VirtualConsole
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
+
+         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
       }
       else
       {

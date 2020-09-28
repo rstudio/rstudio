@@ -29,6 +29,7 @@ var VirtualScroller;
       this._SCROLL_DEBOUNCE_MS = 500;
       this._BUCKET_MAX_SIZE = 50;
       this._MAX_VISIBLE_BUCKETS = 10;
+      this._MAX_NEWLINES = 1000;
 
       // we use this style to keep the elements in the DOM for screen readers
       this._HIDDEN_STYLE = visuallyHiddenClass;
@@ -251,9 +252,13 @@ var VirtualScroller;
     },
 
     append: function (element) {
+      if (element === null)
+        return;
+
       if (this.getCurBucket().childElementCount >= this._BUCKET_MAX_SIZE) {
         this._createAndAddNewBucket();
       }
+      this.prune(element);
       this.getCurBucket().appendChild(element);
       this._jumpToBottom();
     },
@@ -271,10 +276,31 @@ var VirtualScroller;
       this._createAndAddNewBucket();
     },
 
+    // element line number is hard capped at 1000 on the server, the VirtualConsole range
+    // overwriting gets partially obviated by the virtualscroller so ensure that this
+    // limit is also respected here
+    prune: function(element) {
+      var text = element.innerText;
+      var newlineMatch = text.match(/\n/g);
+      if (newlineMatch === null) return;
+
+      // because IE11 doesn't support String.matchAll there isn't a much better option than this
+      var newlinesToPrune = newlineMatch.length - this._MAX_NEWLINES
+      var indexToSlice = 0;
+
+      while (newlinesToPrune > 0) {
+        indexToSlice = text.indexOf("\n", indexToSlice);
+        newlinesToPrune -= 1;
+      }
+
+      if (indexToSlice > 0)
+        element.innerText = text.slice(indexToSlice);
+    },
+
     _createAndAddNewBucket: function() {
       var newBucket = document.createElement("span");
 
-      // before we're initialized buckets, live in the ether
+      // before we're initialized, buckets live in the ether
       if (this.INITIALIZED)
         this.consoleEle.appendChild(newBucket);
 

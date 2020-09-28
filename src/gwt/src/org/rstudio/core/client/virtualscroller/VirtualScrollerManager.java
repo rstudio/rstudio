@@ -75,11 +75,23 @@ public class VirtualScrollerManager
       scrollers_.get(parent.getAttribute(scrollerAttribute_)).append(content);
    }
 
+   public static void prune(Element parent, Element ele)
+   {
+      // if we don't have a connection to that parent there's nothing to clear
+      if (!initialized_ || parent == null ) return;
+
+      parent = getVirtualScrollerAncestor(parent);
+
+      if (scrollers_.get(parent.getAttribute(scrollerAttribute_)) == null)
+         return;
+
+      scrollers_.get(parent.getAttribute(scrollerAttribute_)).prune(ele);
+   }
+
    public static void clear(Element parent)
    {
       // if we don't have a connection to that parent there's nothing to clear
-      if (!initialized_ || parent == null )
-         return;
+      if (!initialized_ || parent == null ) return;
 
       parent = getVirtualScrollerAncestor(parent);
 
