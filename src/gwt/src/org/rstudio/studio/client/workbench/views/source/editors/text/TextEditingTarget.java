@@ -319,7 +319,7 @@ public class TextEditingTarget implements
 
       public void onCompleted()
       {
-		 isSaving_ = false;
+         isSaving _ = false;
 		 
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
@@ -380,7 +380,7 @@ public class TextEditingTarget implements
 
       public void onError(final String message)
       {
-		 isSaving_ = false;
+         isSaving_ = false;
 		 
          // in case the error occurred saving a document that wasn't
          // in the foreground
@@ -2792,7 +2792,7 @@ public class TextEditingTarget implements
 
    public void save()
    {
-	  if (isSaving_)
+      if (isSaving_)
          return;
 	 
       save(new Command() {
@@ -2851,7 +2851,7 @@ public class TextEditingTarget implements
 
    public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command, final Command onSilentFailure)
    {
-	  isSaving_ = true;
+      isSaving_ = true;
 	  
       checkCompilePdfDependencies();
 
@@ -3696,7 +3696,7 @@ public class TextEditingTarget implements
    @Handler
    void onSaveSourceDoc()
    {
-	  if (isSaving_)
+      if (isSaving_)
          return;
 	 
       saveThenExecute(null, true, postSaveCommand());
