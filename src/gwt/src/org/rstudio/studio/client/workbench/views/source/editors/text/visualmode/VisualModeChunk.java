@@ -21,10 +21,13 @@ import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -32,7 +35,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExe
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -41,6 +46,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDe
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
@@ -100,11 +107,18 @@ public class VisualModeChunk
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)
       editor_ = new AceEditor();
+      editor_.setEditorBehavior(EditorBehavior.AceBehaviorEmbedded);
       final AceEditorNative chunkEditor = editor_.getWidget().getEditor();
       chunk.editor = Js.uncheckedCast(chunkEditor);
 
       // Forward the R completion context from the parent editing session
       editor_.setRCompletionContext(target_.getRCompletionContext());
+      
+      // Forward the Rnw completion context with a wrapper to adjust for the
+      // position in our display; this is what allows the completion engine to
+      // work on R Markdown chunk options
+      editor_.setRnwCompletionContext(wrapRnwCompletionContext(
+            target_.getRnwCompletionContext()));
       
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
@@ -603,6 +617,46 @@ public class VisualModeChunk
       toolbar_ = new ChunkContextPanmirrorUi(target_, 
             scope_, editor_, false, sync_);
       host_.appendChild(toolbar_.getToolbar().getElement());
+   }
+   
+   /**
+    * Creates a wrapped version of the given completion context which adjusts
+    * chunk options completion for the embedded editor.
+    * 
+    * @param inner The completion context to wrap
+    * @return The wrapped completion context
+    */
+   private RnwCompletionContext wrapRnwCompletionContext(RnwCompletionContext inner)
+   {
+      return new RnwCompletionContext()
+      {
+         @Override
+         public int getRnwOptionsStart(String line, int cursorPos)
+         {
+            // Only the first row can have chunk options in embedded editors
+            int row = editor_.getSelectionStart().getRow();
+            if (row > 1)
+            {
+               return -1;
+            }
+            
+            return TextEditingTargetCompilePdfHelper.getRnwOptionsStart(
+                  line, cursorPos, 
+                  Pattern.create("^\\s*\\{r"), null);
+         }
+         
+         @Override
+         public void getChunkOptions(ServerRequestCallback<RnwChunkOptions> requestCallback)
+         {
+            inner.getChunkOptions(requestCallback);
+         }
+         
+         @Override
+         public RnwWeave getActiveRnwWeave()
+         {
+            return inner.getActiveRnwWeave();
+         }
+      };
    }
    
    private ChunkDefinition def_;
