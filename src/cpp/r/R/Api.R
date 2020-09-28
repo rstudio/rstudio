@@ -591,7 +591,7 @@
 .rs.addApiFunction("documentContents", function(id = NULL) {
    
    # resolve id
-   id <- .rs.nullCoalesce(id, .rs.api.documentId())
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
    
    # retrieve properties
    properties <- .Call("rs_documentProperties",
@@ -610,7 +610,7 @@
 .rs.addApiFunction("documentPath", function(id = NULL) {
    
    # resolve document id
-   id <- .rs.nullCoalesce(id, .rs.api.documentId())
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
    if (is.null(id))
       return(NULL)
    
@@ -628,7 +628,7 @@
 .rs.addApiFunction("documentSave", function(id = NULL) {
    
    # resolve document id
-   id <- .rs.nullCoalesce(id, .rs.api.documentId())
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
    if (is.null(id))
       return(TRUE)
    
@@ -695,7 +695,7 @@
 .rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {
    
    # resolve document id
-   id <- .rs.nullCoalesce(id, .rs.api.documentId())
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
    if (is.null(id))
       return(TRUE)
    
