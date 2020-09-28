@@ -1149,9 +1149,10 @@ public class RCompletionManager implements CompletionManager
       if (context.getToken() == "'@")
          context.setToken(context.getToken().substring(1));
       
-      context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
-                                              selection,
-                                              canAutoInsert);
+      context_ = new CompletionRequestContext(
+            invalidation_.getInvalidationToken(),
+            selection,
+            canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;

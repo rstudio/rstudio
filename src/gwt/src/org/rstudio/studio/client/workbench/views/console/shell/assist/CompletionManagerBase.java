@@ -121,6 +121,14 @@ public abstract class CompletionManagerBase
    public void onCompletionResponseReceived(CompletionRequestContext.Data data,
                                             Completions completions)
    {
+      // if the cursor has moved to a different line, discard this completion request
+      boolean positionChanged =
+            docDisplay_.getCursorPosition().getRow() !=
+            data.getPosition().getRow();
+      
+      if (positionChanged)
+         return;
+      
       String line = data.getLine();
       if (completions.isCacheable())
          completionCache_.store(line, completions);
@@ -282,6 +290,7 @@ public abstract class CompletionManagerBase
       
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
             line,
+            docDisplay_.getCursorPosition(),
             isTabTriggered,
             canAutoAccept);
             
