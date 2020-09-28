@@ -667,7 +667,7 @@ public class PaneManager
       if (currentFocus == null)
          return;
 
-      focusWindow(getAdjacentWindow(currentFocus, false /* before */));
+      focusAdjacentWindow(currentFocus, false /* before */);
    }
 
    @Handler
@@ -676,7 +676,8 @@ public class PaneManager
       LogicalWindow currentFocus = getActiveLogicalWindow();
       if (currentFocus == null)
          return;
-      focusWindow(getAdjacentWindow(currentFocus, true /* before */));
+
+      focusAdjacentWindow(currentFocus, true /* before */);
    }
 
    @Handler
@@ -757,7 +758,19 @@ public class PaneManager
       {
          WorkbenchTab selected;
          if (StringUtil.equals("Console", name))
-            selected = consoleTabPanel_.getSelectedTab();
+         {
+            selected = consoleTabPanel_.getSelectedIndex() >= 0 ?
+               consoleTabPanel_.getSelectedTab() :
+               null;
+            
+            // Special handling for Console; Console does not have a WorkbenchTab when there are 
+            // no other Console tabs open on start up and none have been added.
+            if (selected == null || StringUtil.equals(selected.getTitle(), "Console"))
+            {
+               commands_.activateConsole().execute();
+               return;
+            }
+         }
          else
          {
             if (StringUtil.equals("TabSet1", name))
@@ -766,14 +779,24 @@ public class PaneManager
                selected = tabSet2TabPanel_.getSelectedTab();
             activateTab(wbTabToTab_.get(selected));
          }
-         if (StringUtil.equals(selected.getTitle(), "Console"))
-            commands_.activateConsole().execute();
-         else if (selected instanceof DelayLoadWorkbenchTab)
+         if (selected instanceof DelayLoadWorkbenchTab)
             ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          selected.setFocus();
       }
    }
 
+   private void focusAdjacentWindow(LogicalWindow window, boolean before)
+   {
+      String adjacent = getAdjacentWindow(window, before);
+   
+      // TabSet1 and TabSet2 could be empty, if so skip to the next pane
+      while ((StringUtil.equals("TabSet1", adjacent) && tabSet1TabPanel_.isEmpty()) ||
+             (StringUtil.equals("TabSet2", adjacent) && tabSet2TabPanel_.isEmpty()))
+         adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
+      
+      focusWindow(adjacent);
+   }
+   
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
