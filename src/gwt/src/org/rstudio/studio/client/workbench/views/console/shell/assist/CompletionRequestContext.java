@@ -74,6 +74,11 @@ public class CompletionRequestContext extends ServerRequestCallback<Completions>
       token_ = host.getInvalidationToken();
       data_ = data;
    }
+   
+   public Data getData()
+   {
+      return data_;
+   }
 
    @Override
    public void onError(ServerError error)
