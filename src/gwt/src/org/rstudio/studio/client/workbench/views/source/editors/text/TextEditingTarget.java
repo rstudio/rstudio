@@ -7760,7 +7760,7 @@ public class TextEditingTarget implements
       TextFileType type = fileTypeRegistry_.getTextTypeForFile(path);
 
       // Simulate a completed save of the new path
-      new SaveProgressIndicator(path, type, false,null).onCompleted();
+      new SaveProgressIndicator(path, type, false, null).onCompleted();
    }
 
    private void setRMarkdownBehaviorEnabled(boolean enabled)
