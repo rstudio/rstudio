@@ -420,6 +420,22 @@ bad <- function(x) {
         1
 </pre></li>
 
+<li><pre data-expected="8">
+bad <- function(x) {
+  if (1)
+    if (2)
+      x <- 1 +
+</pre></li>
+
+<li><pre data-expected="2">
+bad <- function(x) {
+  if (1)
+    if (2)
+      x <- 1 +
+         2
+</pre></li>
+
+
 </ol>
 
 <script type="text/javascript">

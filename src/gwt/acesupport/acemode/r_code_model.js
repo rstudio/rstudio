@@ -1777,13 +1777,16 @@ var RCodeModel = function(session, tokenizer,
                            //        x <- 1
                            //    |
                            //
-                           while (clone.moveToPreviousToken() &&
-                                  clone.currentValue() === ")" &&
-                                  clone.bwdToMatchingToken() &&
-                                  clone.moveToPreviousToken() &&
-                                  isControlFlowFunctionKeyword(clone.currentValue()))
+                           if (!startedOnOperator)
                            {
-                              line = this.$doc.getLine(clone.$row);
+                              while (clone.moveToPreviousToken() &&
+                                     clone.currentValue() === ")" &&
+                                     clone.bwdToMatchingToken() &&
+                                     clone.moveToPreviousToken() &&
+                                     isControlFlowFunctionKeyword(clone.currentValue()))
+                              {
+                                 line = this.$doc.getLine(clone.$row);
+                              }
                            }
 
                            return this.$getIndent(line) + continuationIndent + continuationIndent;
