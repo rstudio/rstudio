@@ -238,12 +238,11 @@ public class VirtualConsole
    {
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
+
       if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
-
-         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
       }
       else
       {
@@ -647,6 +646,10 @@ public class VirtualConsole
 
          match = match.nextMatch();
       }
+
+      Entry<Integer, ClassRange> last = class_.lastEntry();
+      ClassRange range = last.getValue();
+      if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())

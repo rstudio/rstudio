@@ -289,12 +289,12 @@ var VirtualScroller;
       var indexToSlice = 0;
 
       while (newlinesToPrune > 0) {
-        indexToSlice = text.indexOf("\n", indexToSlice);
+        indexToSlice = text.indexOf("\n", indexToSlice + 1);
         newlinesToPrune -= 1;
       }
 
       if (indexToSlice > 0)
-        element.innerText = text.slice(indexToSlice);
+        element.innerText = element.innerText.substring(indexToSlice);
     },
 
     _createAndAddNewBucket: function() {
