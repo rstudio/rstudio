@@ -423,16 +423,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_ = column;
 
       // If the active column changed, we need to update the active editor
-      if (prevColumn != null && prevColumn != activeColumn_)
+      if (prevColumn != activeColumn_)
       {
-         prevColumn.setActiveEditor("");
-         if (!hasActiveEditor())
-            activeColumn_.setActiveEditor();
-         manageCommands(true);
+         if (prevColumn != null)
+         {
+            prevColumn.setActiveEditor("");
+            if (!hasActiveEditor())
+               activeColumn_.setActiveEditor();
+            manageCommands(true);
+         }
+         columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
+            activeColumn_ == null ? "" : activeColumn_.getName());
       }
-
-      columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)),
-                                       activeColumn_ == null ? "" : activeColumn_.getName());
    }
 
    private void setActiveDocId(String docId)
