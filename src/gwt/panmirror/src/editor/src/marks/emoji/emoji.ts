@@ -46,6 +46,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     marks: [
       {
         name: 'emoji',
+        noSpelling: true,
         spec: {
           inclusive: false,
           noInputRules: true,
