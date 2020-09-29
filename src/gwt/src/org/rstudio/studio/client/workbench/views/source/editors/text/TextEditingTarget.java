@@ -319,7 +319,7 @@ public class TextEditingTarget implements
 
       public void onCompleted()
       {
-         isSaving _ = false;
+         isSaving_ = false;
 		 
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
