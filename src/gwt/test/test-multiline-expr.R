@@ -109,6 +109,17 @@ mtcars %>%
       mpg > 20) %>%
    select(everything())
 
+# 17: more pipes
+mtcars %>%
+   filter(
+      mpg > 20) %>% select(everything())
+
+# 18: more pipes
+mtcars %>% 
+   mutate(
+      x1 = "ok here") %>% 
+   mutate(
+      x2 = "not ok") # use Ctrl + Enter in this line
 
 # cursor should end here after executing all lines
 EOF

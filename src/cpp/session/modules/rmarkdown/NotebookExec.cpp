@@ -84,24 +84,32 @@ core::Error copyLibDirForOutput(const core::FilePath& file,
    return error;
 }
 
-ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, const std::string& chunkCode, const std::string& chunkLabel,
-      const std::string& nbCtxId, ExecScope execScope, const core::FilePath& workingDir,
-      const ChunkOptions& options, int pixelWidth, int charWidth):
-   docId_(docId), 
-   chunkId_(chunkId),
-   chunkCode_(chunkCode),
-   chunkLabel_(chunkLabel),
-   nbCtxId_(nbCtxId),
-   workingDir_(workingDir),
-   options_(options),
-   pixelWidth_(pixelWidth),
-   charWidth_(charWidth),
-   prevCharWidth_(0),
-   lastOutputType_(kChunkConsoleInput),
-   execScope_(execScope),
-   hasOutput_(false),
-   hasErrors_(false)
+ChunkExecContext::ChunkExecContext(const std::string& docId,
+                                   const std::string& chunkId,
+                                   const std::string& chunkCode,
+                                   const std::string& chunkLabel,
+                                   const std::string& nbCtxId,
+                                   const std::string& engine,
+                                   ExecScope execScope,
+                                   const core::FilePath& workingDir,
+                                   const ChunkOptions& options,
+                                   int pixelWidth,
+                                   int charWidth)
+   : docId_(docId),
+     chunkId_(chunkId),
+     chunkCode_(chunkCode),
+     chunkLabel_(chunkLabel),
+     nbCtxId_(nbCtxId),
+     engine_(engine),
+     workingDir_(workingDir),
+     options_(options),
+     pixelWidth_(pixelWidth),
+     charWidth_(charWidth),
+     prevCharWidth_(0),
+     lastOutputType_(kChunkConsoleInput),
+     execScope_(execScope),
+     hasOutput_(false),
+     hasErrors_(false)
 {
 }
 
@@ -113,6 +121,11 @@ std::string ChunkExecContext::chunkId()
 std::string ChunkExecContext::docId()
 {
    return docId_;
+}
+
+std::string ChunkExecContext::engine()
+{
+   return engine_;
 }
 
 const ChunkOptions& ChunkExecContext::options() 

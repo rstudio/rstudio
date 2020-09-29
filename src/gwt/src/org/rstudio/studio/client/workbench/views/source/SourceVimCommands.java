@@ -120,7 +120,7 @@ public class SourceVimCommands
          // Handle other editing targets
          else if (params.args) {
             if (params.args.length === 1) {
-               source.getColumnManager()().@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::editFile(Ljava/lang/String;)(params.args[0]);
+               source.getColumnManager()().@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(params.args[0]);
             }
             // TODO: on error?
          } else {

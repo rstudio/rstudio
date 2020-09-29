@@ -107,7 +107,7 @@ public:
 
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
-      if (r::context::globalContext().nextcontext())
+      if (!module_context::isPythonReplActive() && r::context::globalContext().nextcontext())
          return Success();
 
       // if we have a currently executing unit, execute it; otherwise, pop the
@@ -287,8 +287,24 @@ private:
       }
       else 
       {
+         // if we're switching the console between languages, call the
+         // appropriate R code to make that happen
+         std::string prefix;
+
+         bool isPythonActive = module_context::isPythonReplActive();
+         if (isPythonActive && execContext_->engine() != "python")
+         {
+            // switching from Python -> R: deactivate the Python REPL
+            prefix = "quit\n";
+         }
+         else if (!isPythonActive && execContext_->engine() == "python")
+         {
+            // switching from R -> Python: activate the Python REPL
+            prefix = "reticulate::repl_python()\n";
+         }
+
          // send code to console 
-         sendConsoleInput(execUnit_->chunkId(), json::Value(code));
+         sendConsoleInput(execUnit_->chunkId(), json::Value(prefix + code));
 
          // let client know the range has been sent to R
          json::Object exec;
@@ -397,7 +413,7 @@ private:
       if (engine == "R")
          engine = "r";
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
@@ -412,9 +428,9 @@ private:
 
             std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), codeString, label, ctx,
-               unit->execScope(), workingDir, options, docQueue->pixelWidth(),
-               docQueue->charWidth());
+               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
+               unit->execScope(), workingDir, options,
+               docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();
 
             // if there was an error parsing the options for the chunk, display
@@ -460,7 +476,7 @@ private:
       if (error)
          return skipUnit();
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          error = executeCurrentUnit(ExprModeNew);
          if (error)

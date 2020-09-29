@@ -15,6 +15,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.ResultCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -66,6 +69,7 @@ public class NewDocumentWithCodeEvent
       code_ = data.code();
       cursorPosition_ = SourcePosition.create(data.row(), data.column());
       execute_ = data.execute();
+      callback_ = new ResultCallback<EditingTarget, ServerError>() {};
    }
 
    public NewDocumentWithCodeEvent(String type,
@@ -73,10 +77,24 @@ public class NewDocumentWithCodeEvent
                                    SourcePosition cursorPosition,
                                    boolean execute)
    {
+      this(
+            type,
+            code,
+            cursorPosition,
+            execute,
+            new ResultCallback<EditingTarget, ServerError>() {});
+   }
+   public NewDocumentWithCodeEvent(String type,
+                                   String code,
+                                   SourcePosition cursorPosition,
+                                   boolean execute,
+                                   ResultCallback<EditingTarget, ServerError> callback)
+   {
       type_ = type;
       code_ = code;
       cursorPosition_ = cursorPosition;
       execute_ = execute;
+      callback_ = callback;
    }
 
    public String getType()
@@ -98,6 +116,11 @@ public class NewDocumentWithCodeEvent
    {
       return execute_;
    }
+   
+   public ResultCallback<EditingTarget, ServerError> getCallback()
+   {
+      return callback_;
+   }
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -115,6 +138,7 @@ public class NewDocumentWithCodeEvent
    private final String code_;
    private final SourcePosition cursorPosition_;
    private final boolean execute_;
+   private final ResultCallback<EditingTarget, ServerError> callback_;
 
    public static final Type<Handler> TYPE = new Type<>();
 

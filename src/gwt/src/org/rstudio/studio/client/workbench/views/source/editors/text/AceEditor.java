@@ -3652,7 +3652,7 @@ public class AceEditor implements DocDisplay,
       return cursor.getRow();
    }
    
-   private boolean rowEndsInBinaryOp(int row)
+   private boolean rowEndsInBinaryOperatorOrOpenParen(int row)
    {
       // move to the last interesting token on this line 
       JsArray<Token> tokens = getSession().getTokens(row);
@@ -3663,7 +3663,8 @@ public class AceEditor implements DocDisplay,
             continue;
          if (t.getType()  == "keyword.operator" ||
              t.getType()  == "keyword.operator.infix" ||
-             t.getValue() == ",")
+             t.getValue() == "," ||
+             t.getValue() == "(")
             return true;
          break;
       } 
@@ -3843,7 +3844,7 @@ public class AceEditor implements DocDisplay,
       while (false);
       
       // check for binary operator on start line
-      if (rowEndsInBinaryOp(startRow))
+      if (rowEndsInBinaryOperatorOrOpenParen(startRow))
       {
          // move token cursor to that row
          c.moveToEndOfRow(startRow);
@@ -3890,7 +3891,7 @@ public class AceEditor implements DocDisplay,
          
          // check for binary operator on previous line
          int prevRow = startRow - 1;
-         if (rowEndsInBinaryOp(prevRow))
+         if (rowEndsInBinaryOperatorOrOpenParen(prevRow))
          {
             // move token cursor to that row
             c.moveToEndOfRow(prevRow);
@@ -3982,7 +3983,7 @@ public class AceEditor implements DocDisplay,
          }
          
          // continue search if line ends with binary operator
-         if (rowEndsInBinaryOp(endRow) || rowIsEmptyOrComment(endRow))
+         if (rowEndsInBinaryOperatorOrOpenParen(endRow) || rowIsEmptyOrComment(endRow))
          {
             endRow++;
             continue;
