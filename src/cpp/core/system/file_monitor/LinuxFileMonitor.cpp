@@ -222,7 +222,15 @@ Error addWatch(const FileInfo& fileInfo,
    int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
    if (wd < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      // save errno
+      int errorNumber = errno;
+
+      // report more useful error message for ENOSPC
+      std::string message = (errorNumber == ENOSPC)
+         ? "No watches available"
+         : systemErrorMessage(errorNumber);
+
+      Error error = syscallError("inotify_add_watch", errorNumber, message, ERROR_LOCATION);
       error.addProperty("path", fileInfo.absolutePath());
       return error;
    }
