@@ -3027,6 +3027,18 @@ public class UserPrefsAccessor extends Prefs
          "");
    }
 
+   /**
+    * The maximum amount of seconds of retry for save operations.
+    */
+   public PrefValue<Integer> saveRetryTimeout()
+   {
+      return integer(
+         "save_retry_timeout",
+         "Save Retry Timeout", 
+         "The maximum amount of seconds of retry for save operations.", 
+         15);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3453,6 +3465,8 @@ public class UserPrefsAccessor extends Prefs
          pythonVersion().setValue(layer, source.getString("python_version"));
       if (source.hasKey("python_path"))
          pythonPath().setValue(layer, source.getString("python_path"));
+      if (source.hasKey("save_retry_timeout"))
+         saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3669,6 +3683,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonType());
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
+      prefs.add(saveRetryTimeout());
       return prefs;
    }
    

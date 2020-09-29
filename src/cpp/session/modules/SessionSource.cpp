@@ -57,6 +57,9 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/Preferences.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -220,10 +223,11 @@ int numSourceDocuments()
 // wrap source_database::put for situations where there are new contents
 // (so we can index the contents)
 Error sourceDatabasePutWithUpdatedContents(boost::shared_ptr<SourceDocument> pDoc,
-                                           bool writeContents = true)
+                                           bool writeContents = true,
+                                           bool retryWrite = false)
 {
    // write the file to the database
-   Error error = source_database::put(pDoc, writeContents);
+   Error error = source_database::put(pDoc, writeContents, retryWrite);
    if (error)
       return error;
 
@@ -384,7 +388,8 @@ Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonEncoding,
                        const json::Value& jsonFoldSpec,
                        const json::Value& jsonChunkOutput,
-                       boost::shared_ptr<SourceDocument> pDoc)
+                       boost::shared_ptr<SourceDocument> pDoc,
+                       bool retryWrite)
 {
    // check whether we have a path and if we do get/resolve its value
    std::string oldPath, path;
@@ -465,8 +470,11 @@ Error saveDocumentCore(const std::string& contents,
       bool newFile = !fullDocPath.exists();
 
       // write the contents to the file
+      int writeTimeout = retryWrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
       error = writeStringToFile(fullDocPath, encoded,
-                                module_context::lineEndings(fullDocPath));
+                                module_context::lineEndings(fullDocPath),
+                                true,
+                                writeTimeout);
       if (error)
          return error;
 
@@ -510,6 +518,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string id, contents;
+   bool retryWrite = false;
    json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec, jsonChunkOutput;
    Error error = json::readParams(request.params, 
                                   &id, 
@@ -518,7 +527,8 @@ Error saveDocument(const json::JsonRpcRequest& request,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
                                   &jsonChunkOutput,
-                                  &contents);
+                                  &contents,
+                                  &retryWrite);
    if (error)
       return error;
    
@@ -531,12 +541,12 @@ Error saveDocument(const json::JsonRpcRequest& request,
    // check if the document contents have changed
    bool hasChanges = contents != pDoc->contents();
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                            jsonFoldSpec, jsonChunkOutput, pDoc);
+                            jsonFoldSpec, jsonChunkOutput, pDoc, retryWrite);
    if (error)
       return error;
    
    // write to the source_database
-   error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
+   error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges, retryWrite);
    if (error)
       return error;
 
@@ -565,6 +575,12 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // document cannot be patched and the request should be discarded.
    std::string hash;
    
+   // indicated whether or not this is write operation should be retried
+   // if the file handle cannot be acquired - this is used for
+   // manual saves as they can take longer as they are user-initiated actions
+   // autosaves need to be quick as they occur frequently
+   bool retryWrite = false;
+
    // read params
    Error error = json::readParams(request.params,
                                   &id,
@@ -577,15 +593,16 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &offset,
                                   &length,
                                   &valid,
-                                  &hash);
+                                  &hash,
+                                  &retryWrite);
    if (error)
       return error;
    
    // if this has no path then it is an autosave, in this case
-   // suppress change detection
+   // suppress change detection and write retries
    bool hasPath = json::isType<std::string>(jsonPath);
    if (!hasPath)
-       pResponse->setSuppressDetectChanges(true);
+      pResponse->setSuppressDetectChanges(true);
 
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
@@ -620,13 +637,13 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       // track if we're updating the document contents
       bool hasChanges = contents != pDoc->contents();
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                               jsonFoldSpec, jsonChunkOutput, pDoc);
+                               jsonFoldSpec, jsonChunkOutput, pDoc, retryWrite);
       if (error)
          return error;
 
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
-      error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
+      error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges, retryWrite);
       if (error)
          return error;
 

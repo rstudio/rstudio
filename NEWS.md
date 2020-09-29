@@ -114,7 +114,7 @@
 * Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
+* Fixed issue where saving a file or project located in a backed up directory (such as with Dropbox or Google Drive) would frequently fail and display an error prompt (#7131)
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
 * Added option for clickable links in Terminal pane (#6621)
 * Fixed issue where R scripts containing non-ASCII characters in their path could not be sourced as a local job on Windows (#6701)
-

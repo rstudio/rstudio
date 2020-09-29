@@ -24,12 +24,76 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
+#include <boost/thread.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <core/DateTime.hpp>
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace core {
+
+namespace {
+
+bool isFileLockedError(const Error& error)
+{
+   // exclusive file access is only present on Windows
+#ifndef _WIN32
+   return false;
+#endif
+   return (error && error.getCode() == ERROR_SHARING_VIOLATION);
+}
+
+Error openFileForWritingWithRetry(const FilePath& filePath,
+                                  bool truncate,
+                                  int maxOpenRetrySeconds,
+                                  std::shared_ptr<std::ostream>* pOfs)
+{
+   using namespace boost::posix_time;
+
+   ptime startTime = second_clock::universal_time();
+   Error lastError;
+
+   // do not allow negative values - regular signed int was chosen here for
+   // easier integration with other parts of the codebase
+   if (maxOpenRetrySeconds < 0)
+      maxOpenRetrySeconds = 0;
+
+   int numTries = 0;
+   while (true)
+   {
+      lastError = filePath.openForWrite(*pOfs, truncate);
+
+      // if the error is a non file lock error, then we should just return it
+      if (!isFileLockedError(lastError))
+      {
+         if (lastError)
+            LOG_ERROR(lastError);
+
+         return lastError;
+      }
+
+      lastError.addOrUpdateProperty("open-attempts", ++numTries);
+
+      // stop retrying if we've spent more than the requested amount of time
+      if ((second_clock::universal_time() - startTime) >= seconds(maxOpenRetrySeconds))
+      {
+         lastError.addProperty("description", "Timed out while attempting to reopen the file");
+         break;
+      }
+
+      // wait a moment before retrying
+      boost::this_thread::sleep(milliseconds(500));
+   }
+
+   if (lastError)
+      LOG_ERROR(lastError);
+
+   return lastError;
+}
+
+} // anonymous namespace
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
@@ -116,20 +180,21 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
          filePath, pVector, parseString, trimAndIgnoreBlankLines);
    
 }
-   
+
 Error writeStringToFile(const FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding,
-                        bool truncate)
+                        bool truncate,
+                        int maxOpenRetrySeconds)
 {
    using namespace boost::system::errc;
    
    // open file
    std::shared_ptr<std::ostream> pOfs;
-   Error error = filePath.openForWrite(pOfs, truncate);
+   Error error = openFileForWritingWithRetry(filePath, truncate, maxOpenRetrySeconds, &pOfs);
    if (error)
       return error;
-   
+
    try
    {
       // set exception mask (required for proper reporting of errors)

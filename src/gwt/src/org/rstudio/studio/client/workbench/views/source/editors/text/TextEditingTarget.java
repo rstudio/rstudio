@@ -283,14 +283,25 @@ public class TextEditingTarget implements
 
    private class SaveProgressIndicator implements ProgressIndicator
    {
+      public SaveProgressIndicator(FileSystemItem file,
+                                   TextFileType fileType,
+                                   boolean suppressFileLockError,
+                                   Command executeOnSuccess)
+      {
+         this(file, fileType, suppressFileLockError, executeOnSuccess, null);
+      }
 
       public SaveProgressIndicator(FileSystemItem file,
                                    TextFileType fileType,
-                                   Command executeOnSuccess)
+                                   boolean suppressFileLockError,
+                                   Command executeOnSuccess,
+                                   Command executeOnSilentFailure)
       {
          file_ = file;
          newFileType_ = fileType;
+         suppressFileLockError_ = suppressFileLockError;
          executeOnSuccess_ = executeOnSuccess;
+         executeOnSilentFailure_ = executeOnSilentFailure;
       }
 
       public void onProgress(String message)
@@ -308,6 +319,8 @@ public class TextEditingTarget implements
 
       public void onCompleted()
       {
+         isSaving _ = false;
+		 
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
          // end up immediately checking for external edits)
@@ -367,6 +380,8 @@ public class TextEditingTarget implements
 
       public void onError(final String message)
       {
+         isSaving_ = false;
+		 
          // in case the error occurred saving a document that wasn't
          // in the foreground
          view_.ensureVisible();
@@ -376,8 +391,17 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               globalDisplay_.showErrorMessage("Error Saving File",
-                                               message);
+               // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
+               // when attempting to save files that are being backed up by external software
+               if (message.contains("The process cannot access the file because it is being used by another process") && suppressFileLockError_)
+               {
+                  if (executeOnSilentFailure_ != null)
+                     executeOnSilentFailure_.execute();
+
+                  return;
+               }
+
+               globalDisplay_.showErrorMessage("Error Saving File", message);
             }
          };
 
@@ -434,9 +458,10 @@ public class TextEditingTarget implements
       }
 
       private final FileSystemItem file_;
-
       private final TextFileType newFileType_;
+      private final boolean suppressFileLockError_;
       private final Command executeOnSuccess_;
+      private final Command executeOnSilentFailure_;
    }
 
    @Inject
@@ -2245,7 +2270,7 @@ public class TextEditingTarget implements
                ensureTextEditorActive(() -> {
                   docUpdateSentinel_.changeFileType(
                         type.getTypeId(),
-                        new SaveProgressIndicator(null, type, null));
+                        new SaveProgressIndicator(null, type, false,null));
 
                   Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                      @Override
@@ -2767,6 +2792,9 @@ public class TextEditingTarget implements
 
    public void save()
    {
+      if (isSaving_)
+         return;
+	 
       save(new Command() {
          @Override
          public void execute()
@@ -2774,10 +2802,14 @@ public class TextEditingTarget implements
          }});
    }
 
+   private void autoSave(Command onCompleted, Command onSilentFailure)
+   {
+      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(), onCompleted), onSilentFailure);
+   }
+
    public void save(Command onCompleted)
    {
-      saveThenExecute(null, CommandUtil.join(postSaveCommand(),
-                                             onCompleted));
+      saveThenExecute(null, true, CommandUtil.join(postSaveCommand(), onCompleted));
    }
 
    public void saveWithPrompt(final Command command, final Command onCancelled)
@@ -2791,7 +2823,7 @@ public class TextEditingTarget implements
                       "Do you want to save these changes?",
                       true,
                       new Operation() {
-                         public void execute() { saveThenExecute(null, command); }
+                         public void execute() { saveThenExecute(null, true, command); }
                       },
                       new Operation() {
                          public void execute() { command.execute(); }
@@ -2812,8 +2844,15 @@ public class TextEditingTarget implements
       docUpdateSentinel_.revert(onCompleted, ignoreDeletes_);
    }
 
-   public void saveThenExecute(String encodingOverride, final Command command)
+   public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command)
    {
+      saveThenExecute(encodingOverride, retryWrite, command, null);
+   }
+
+   public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command, final Command onSilentFailure)
+   {
+      isSaving_ = true;
+	  
       checkCompilePdfDependencies();
 
       final String path = docUpdateSentinel_.getPath();
@@ -2833,10 +2872,13 @@ public class TextEditingTarget implements
                      docUpdateSentinel_.save(path,
                            null,
                            encoding,
+                           retryWrite,
                            new SaveProgressIndicator(
                                  FileSystemItem.createFile(path),
                                  null,
-                                 command
+                                 !retryWrite,
+                                 command,
+                                 onSilentFailure
                            ));
                   });
                }
@@ -2996,8 +3038,10 @@ public class TextEditingTarget implements
                                     saveItem.getPath(),
                                     fileType.getTypeId(),
                                     encoding,
+                                    true,
                                     new SaveProgressIndicator(saveItem,
                                                               fileType,
+                                                              false,
                                                               executeOnSuccess));
 
                               events_.fireEvent(
@@ -3522,6 +3566,11 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDoc(onsaved);
    }
 
+   public void withSavedDocNoRetry(Command onsaved)
+   {
+      docUpdateSentinel_.withSavedDocNoRetry(onsaved);
+   }
+
    @Handler
    void onWordCount()
    {
@@ -3647,7 +3696,10 @@ public class TextEditingTarget implements
    @Handler
    void onSaveSourceDoc()
    {
-      saveThenExecute(null, postSaveCommand());
+      if (isSaving_)
+         return;
+	 
+      saveThenExecute(null, true, postSaveCommand());
    }
 
    @Handler
@@ -3677,7 +3729,7 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
-                  saveThenExecute(encoding, postSaveCommand());
+                  saveThenExecute(encoding, true, postSaveCommand());
                }
             });
    }
@@ -5968,7 +6020,7 @@ public class TextEditingTarget implements
    @Handler
    void onSourceAsJob()
    {
-      saveThenExecute(null, () ->
+      saveThenExecute(null, true, () ->
       {
          events_.fireEvent(new JobRunScriptEvent(getPath()));
       });
@@ -5977,7 +6029,7 @@ public class TextEditingTarget implements
    @Handler
    public void onSourceAsLauncherJob()
    {
-      saveThenExecute(null, () ->
+      saveThenExecute(null, true, () ->
       {
          events_.fireEvent(new LauncherJobRunScriptEvent(getPath()));
       });
@@ -6100,7 +6152,7 @@ public class TextEditingTarget implements
                };
 
             if (saveWhenSourcing && (dirtyState_.getValue() || (getPath() == null)))
-               saveThenExecute(null, sourceCommand);
+               saveThenExecute(null, true, sourceCommand);
             else
                sourceCommand.execute();
          }
@@ -6138,7 +6190,7 @@ public class TextEditingTarget implements
 
    private void sourcePython()
    {
-      saveThenExecute(null, () -> {
+      saveThenExecute(null, true, () -> {
          dependencyManager_.withReticulate(
                "Executing Python",
                "Sourcing Python scripts",
@@ -6151,7 +6203,7 @@ public class TextEditingTarget implements
 
    private void runScript()
    {
-      saveThenExecute(null, new Command() {
+      saveThenExecute(null, true, new Command() {
          @Override
          public void execute()
          {
@@ -6172,7 +6224,7 @@ public class TextEditingTarget implements
 
    private void previewFromR()
    {
-      saveThenExecute(null, new Command() {
+      saveThenExecute(null, true, new Command() {
          @Override
          public void execute()
          {
@@ -6271,7 +6323,7 @@ public class TextEditingTarget implements
       // otherwise reload
       else
       {
-         saveThenExecute(null, new Command() {
+         saveThenExecute(null, true, new Command() {
                @Override
                public void execute()
                {
@@ -6286,7 +6338,7 @@ public class TextEditingTarget implements
 
    void previewRd()
    {
-      saveThenExecute(null, new Command() {
+      saveThenExecute(null, true, new Command() {
          @Override
          public void execute()
          {
@@ -6303,7 +6355,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, new Command() {
+            saveThenExecute(null, true, new Command() {
                @Override
                public void execute()
                {
@@ -6320,7 +6372,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, new Command() {
+            saveThenExecute(null, true, new Command() {
                @Override
                public void execute()
                {
@@ -6376,7 +6428,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, renderCommand);
+            saveThenExecute(null, true, renderCommand);
          }
       };
 
@@ -6503,7 +6555,7 @@ public class TextEditingTarget implements
 
       if (pParams.get().isNotebook())
       {
-         saveThenExecute(null, new Command()
+         saveThenExecute(null, true, new Command()
          {
             @Override
             public void execute()
@@ -6525,7 +6577,7 @@ public class TextEditingTarget implements
       // due to popup activation rules but at least it will show up
       else if (isNewDoc())
       {
-         saveThenExecute(null, CommandUtil.join(showPreviewWindowCommand,
+         saveThenExecute(null, true, CommandUtil.join(showPreviewWindowCommand,
                                                 runPreviewCommand));
       }
       // otherwise if it's dirty then show the preview window first (to
@@ -6533,7 +6585,7 @@ public class TextEditingTarget implements
       else if (dirtyState().getValue())
       {
          showPreviewWindowCommand.execute();
-         saveThenExecute(null, runPreviewCommand);
+         saveThenExecute(null, true, runPreviewCommand);
       }
       // otherwise show the preview window then run the preview
       else
@@ -6627,7 +6679,7 @@ public class TextEditingTarget implements
    {
       if (session_.getSessionInfo().getRMarkdownPackageAvailable())
       {
-         saveThenExecute(null, new Command()
+         saveThenExecute(null, true, new Command()
          {
             @Override
             public void execute()
@@ -6682,7 +6734,7 @@ public class TextEditingTarget implements
    @Handler
    void onKnitWithParameters()
    {
-      saveThenExecute(null, new Command() {
+      saveThenExecute(null, true, new Command() {
          @Override
          public void execute()
          {
@@ -7084,7 +7136,7 @@ public class TextEditingTarget implements
       if (!isNewDoc && (onBeforeCompile != null))
          onBeforeCompile.execute();
 
-      saveThenExecute(null, new Command()
+      saveThenExecute(null, true, new Command()
       {
          public void execute()
          {
@@ -7708,7 +7760,7 @@ public class TextEditingTarget implements
       TextFileType type = fileTypeRegistry_.getTextTypeForFile(path);
 
       // Simulate a completed save of the new path
-      new SaveProgressIndicator(path, type, null).onCompleted();
+      new SaveProgressIndicator(path, type, false, null).onCompleted();
    }
 
    private void setRMarkdownBehaviorEnabled(boolean enabled)
@@ -8214,9 +8266,16 @@ public class TextEditingTarget implements
          saving_ = System.currentTimeMillis();
          try
          {
-            save(() ->
+            autoSave(
+            () ->
             {
                saving_ = 0;
+            },
+            () ->
+            {
+               // if this autosave operation silently fails, we want to automatically restart it
+               saving_ = 0;
+               nudgeAutosave();
             });
          }
          catch(Exception e)
@@ -8237,6 +8296,9 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+   
+   // prevent multiple manual saves from queuing up
+   private boolean isSaving_ = false;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>

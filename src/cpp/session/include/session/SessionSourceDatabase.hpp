@@ -161,7 +161,7 @@ public:
    core::Error readFromJson(core::json::Object* pDocJson);
    void writeToJson(core::json::Object* pDocJson, bool includeContents = true) const;
 
-   core::Error writeToFile(const core::FilePath& filePath, bool writeContents = true) const;
+   core::Error writeToFile(const core::FilePath& filePath, bool writeContents = true, bool retryWrite = false) const;
 
    SEXP toRObject(r::sexp::Protect* pProtect, bool includeContents = true) const;
 
@@ -201,7 +201,7 @@ core::Error getDurableProperties(const std::string& path,
                                  core::json::Object* pProperties);
 core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error list(std::vector<core::FilePath>* pPaths);
-core::Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents = true);
+core::Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents = true, bool retryRewrite = false);
 core::Error remove(const std::string& id);
 core::Error removeAll();
 core::Error getPath(const std::string& id, std::string* pPath);

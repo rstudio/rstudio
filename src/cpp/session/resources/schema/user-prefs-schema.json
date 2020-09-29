@@ -1427,6 +1427,12 @@
             "description": "The path to the default Python interpreter.",
             "type": "string",
             "default": ""
+        },
+		"save_retry_timeout": {
+            "type": "integer",
+            "default": 15,
+            "title": "Save Retry Timeout",
+            "description": "The maximum amount of seconds of retry for save operations."
         }
     }
 }

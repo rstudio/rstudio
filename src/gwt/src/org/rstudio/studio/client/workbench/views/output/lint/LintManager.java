@@ -197,7 +197,7 @@ public class LintManager
 
       if (context.showMarkers)
       {
-         target_.saveThenExecute(null, new Command()
+         target_.saveThenExecute(null, false, new Command()
          {
             @Override
             public void execute()
@@ -208,7 +208,7 @@ public class LintManager
       }
       else
       {
-         target_.withSavedDoc(new Command()
+         target_.withSavedDocNoRetry(new Command()
          {
             @Override
             public void execute()

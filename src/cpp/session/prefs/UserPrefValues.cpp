@@ -2779,6 +2779,19 @@ core::Error UserPrefValues::setPythonPath(std::string val)
    return writePref("python_path", val);
 }
 
+/**
+ * The maximum amount of seconds of retry for save operations.
+ */
+int UserPrefValues::saveRetryTimeout()
+{
+   return readPref<int>("save_retry_timeout");
+}
+
+core::Error UserPrefValues::setSaveRetryTimeout(int val)
+{
+   return writePref("save_retry_timeout", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2994,6 +3007,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonType,
       kPythonVersion,
       kPythonPath,
+      kSaveRetryTimeout,
    });
 }
    

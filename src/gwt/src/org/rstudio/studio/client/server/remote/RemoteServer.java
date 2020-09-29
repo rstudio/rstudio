@@ -2111,6 +2111,7 @@ public class RemoteServer implements Server
                             String foldSpec,
                             JsArray<ChunkDefinition> chunkDefs,
                             String contents,
+                            boolean retryWrite,
                             ServerRequestCallback<String> requestCallback)
    {
       eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
@@ -2123,6 +2124,7 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
       params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
       params.set(6, new JSONString(contents));
+      params.set(7, JSONBoolean.getInstance(retryWrite));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
 
@@ -2137,6 +2139,7 @@ public class RemoteServer implements Server
                                 int length,
                                 boolean valid,
                                 String hash,
+                                boolean retryWrite,
                                 ServerRequestCallback<String> requestCallback)
    {
       eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
@@ -2153,6 +2156,7 @@ public class RemoteServer implements Server
       params.set(8, new JSONNumber(length));
       params.set(9, JSONBoolean.getInstance(valid));
       params.set(10, new JSONString(hash));
+      params.set(11, JSONBoolean.getInstance(retryWrite));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 
