@@ -37,7 +37,7 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
     if (autoLink) {
       // plain link
       rules.push(
-        new InputRule(/(^|[^`])(https?:\/\/[^\s]+) $/, (state: EditorState, match: string[], start: number, end: number) => {
+        new InputRule(/(^|[^`])(https?:\/\/[^\s]+\w)[\.\?!]? $/, (state: EditorState, match: string[], start: number, end: number) => {
 
           const tr = state.tr;
           start = start + match[1].length;
