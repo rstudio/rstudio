@@ -27,12 +27,13 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import javax.inject.Inject;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 @Singleton
 public class AriaLiveService
 {
-   // Unique identifiers for aria-live announcements. Use the same text for the 
+   // Unique identifiers for aria-live announcements. Use the same text for the
    // value as the constant name to ensure uniqueness. Add here and in the constructor below to
    // associate description for preferences UI.
    public static final String CONSOLE_CLEARED = "console_cleared";
@@ -49,7 +50,7 @@ public class AriaLiveService
    public static final String TAB_KEY_MODE = "tab_key_mode";
    public static final String TOOLBAR_VISIBILITY = "toolbar_visibility";
    public static final String WARNING_BAR = "warning_bar";
-   
+
    // Announcement requested by a user, not controlled by a preference since it is on-demand.
    // Do not include in the announcements_ map.
    public static final String ON_DEMAND = "on_demand";
@@ -81,6 +82,9 @@ public class AriaLiveService
       announcements_.put(TAB_KEY_MODE, "Tab key focus mode change");
       announcements_.put(TOOLBAR_VISIBILITY, "Toolbar visibility change");
       announcements_.put(WARNING_BAR, "Warning bars");
+
+      alwaysEnabledAnnouncements_ = new HashSet<>();
+      alwaysEnabledAnnouncements_.add(ON_DEMAND);
    }
 
    /**
@@ -95,8 +99,11 @@ public class AriaLiveService
                         Timing timing,
                         Severity severity)
    {
-      if (!announcements_.containsKey(announcementId))
+      if (!announcements_.containsKey(announcementId) &&
+         !alwaysEnabledAnnouncements_.contains(announcementId))
+      {
          Debug.logWarning("Unregistered live announcement: " + announcementId);
+      }
 
       if (isDisabled(announcementId))
          return;
@@ -122,6 +129,7 @@ public class AriaLiveService
 
 
    private final Map<String, String> announcements_;
+   private final HashSet<String> alwaysEnabledAnnouncements_;
 
    // injected
    private final EventBus eventBus_;
