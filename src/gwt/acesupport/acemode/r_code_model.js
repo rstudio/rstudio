@@ -37,6 +37,15 @@ function isOneOf(object, array)
    return false;
 }
 
+function isControlFlowFunctionKeyword(value)
+{
+   return value === "if" ||
+          value === "for" ||
+          value === "while" ||
+          value === "repeat" ||
+          value === "function";
+}
+
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
@@ -1756,15 +1765,28 @@ var RCodeModel = function(session, tokenizer,
                          clone.bwdToMatchingToken() &&
                          clone.moveToPreviousToken())
                      {
-                        var currentValue = clone.currentValue();
-                        if (contains(
-                           ["if", "for", "while", "repeat", "else"],
-                           currentValue
-                        ))
+                        if (isControlFlowFunctionKeyword(clone.currentValue()))
                         {
-                           return this.$getIndent(
-                              this.$doc.getLine(clone.$row)
-                           ) + continuationIndent + continuationIndent;
+                           var line = this.$doc.getLine(clone.$row);
+
+                           // Look beyond nested control flow statements,
+                           // to handle cases like:
+                           //
+                           //    if (foo)
+                           //      if (bar)
+                           //        x <- 1
+                           //    |
+                           //
+                           while (clone.moveToPreviousToken() &&
+                                  clone.currentValue() === ")" &&
+                                  clone.bwdToMatchingToken() &&
+                                  clone.moveToPreviousToken() &&
+                                  isControlFlowFunctionKeyword(clone.currentValue()))
+                           {
+                              line = this.$doc.getLine(clone.$row);
+                           }
+
+                           return this.$getIndent(line) + continuationIndent + continuationIndent;
                         }
                      }
                   }
