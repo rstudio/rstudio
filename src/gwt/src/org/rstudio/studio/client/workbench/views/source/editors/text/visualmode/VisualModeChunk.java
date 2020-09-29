@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
@@ -172,6 +173,11 @@ public class VisualModeChunk
       chunk.setMode = (String mode) ->
       {
          setMode(editor_, mode);
+
+         // Disable code folding, since we don't have a gutter (must be done
+         // after setting the mode)
+         editor_.setFoldStyle(FoldStyle.FOLD_MARK_MANUAL);
+      
       };
       
       // Provide a callback to have the code at the cursor executed

@@ -170,11 +170,6 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.forceImmediateRender();
             }));
-      releaseOnDismiss.add(prefs.foldStyle().bind(
-            (arg) ->
-            {
-               docDisplay.setFoldStyle(FoldStyle.fromPref(arg));
-            }));
       releaseOnDismiss.add(prefs.surroundSelection().bind(
             (arg) ->
             {
@@ -213,6 +208,11 @@ public class TextEditingTargetPrefsHelper
                (arg) ->
                {
                   docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
+               }));
+         releaseOnDismiss.add(prefs.foldStyle().bind(
+               (arg) ->
+               {
+                  docDisplay.setFoldStyle(FoldStyle.fromPref(arg));
                }));
       }
       
