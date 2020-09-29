@@ -41,8 +41,9 @@ bool isFileLockedError(const Error& error)
    // exclusive file access is only present on Windows
 #ifndef _WIN32
    return false;
-#endif
+#else
    return (error && error.getCode() == ERROR_SHARING_VIOLATION);
+#endif
 }
 
 Error openFileForWritingWithRetry(const FilePath& filePath,
