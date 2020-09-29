@@ -93,7 +93,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          if (a.hasSplitterPos() ^ b.hasSplitterPos())
             return false;
          if (a.hasSplitterPos() &&
-             Arrays.equals(a.getSplitterPos(), b.getSplitterPos()))
+             !Arrays.equals(a.getSplitterPos(), b.getSplitterPos()))
             return false;
 
          if (a.hasPanelWidth() ^ b.hasPanelWidth())
