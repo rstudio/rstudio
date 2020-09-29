@@ -47,8 +47,8 @@ constexpr const char* kDatabaseName = "database";
 constexpr const char* kDefaultDatabaseName = "rstudio";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
-constexpr const char* kDatabaseUser = "user";
-constexpr const char* kDefaultPostgresqlDatabaseUser = "postgres";
+constexpr const char* kDatabaseUsername = "username";
+constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
 constexpr const char* kDatabasePassword = "password";
 constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
@@ -113,7 +113,7 @@ Error readOptions(const std::string& databaseConfigFile,
       PostgresqlConnectionOptions options;
       options.database = settings.get(kDatabaseName, kDefaultDatabaseName);
       options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
-      options.user = settings.get(kDatabaseUser, kDefaultPostgresqlDatabaseUser);
+      options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
       options.password = settings.get(kDatabasePassword, std::string());
       options.port = settings.get(kDatabasePort, kDefaultPostgresqlDatabasePort);
       options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
@@ -127,7 +127,7 @@ Error readOptions(const std::string& databaseConfigFile,
       if (!options.connectionUri.empty() &&
           (options.database != kDefaultDatabaseName ||
            options.host != kDefaultDatabaseHost ||
-           options.user != kDefaultPostgresqlDatabaseUser ||
+           options.username != kDefaultPostgresqlDatabaseUsername ||
            options.port != kDefaultPostgresqlDatabasePort ||
            options.connectionTimeoutSeconds != kDefaultPostgresqlDatabaseConnectionTimeoutSeconds))
       {
@@ -139,7 +139,7 @@ Error readOptions(const std::string& databaseConfigFile,
       }
 
       if (options.connectionUri.empty())
-         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host + ":" + options.port + "/" + options.database);
+         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
       else
          LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
 
