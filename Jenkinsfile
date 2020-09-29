@@ -97,16 +97,15 @@ def s3_upload(type, flavor, os, arch) {
     sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
-  // update daily build redirect; currently disabled for 1.3
-  // 
-  // withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-  //   sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
-  // }
+  // update daily build redirect
+  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+  }
 }
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && /usr/local/bin/sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf ."
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
   }
 }
 

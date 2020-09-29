@@ -226,15 +226,19 @@ public class ChunkOutputStream extends FlowPanel
 
       final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk HTML Output Frame");
 
-      if (chunkOutputSize_ == ChunkOutputSize.Default) {
-         if (knitrFigure) {
+      if (chunkOutputSize_ == ChunkOutputSize.Default || 
+          chunkOutputSize_ == ChunkOutputSize.Natural)
+      {
+         if (knitrFigure)
+         {
             final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
                         ChunkOutputUi.OUTPUT_ASPECT, 
                         ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
             addWithOrdinal(fixedFrame, ordinal);
          }
-         else {
+         else
+         {
             // reduce size of html widget as much as possible and add scroll,
             // once it loads, we will adjust the height appropriately.
             frame.getElement().getStyle().setHeight(25, Unit.PX);
@@ -244,7 +248,8 @@ public class ChunkOutputStream extends FlowPanel
             addWithOrdinal(frame, ordinal);
          }
       }
-      else if (chunkOutputSize_ == ChunkOutputSize.Full) {
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
          frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
          frame.getElement().getStyle().setWidth(100, Unit.PCT);
          frame.getElement().getStyle().setHeight(100, Unit.PCT);

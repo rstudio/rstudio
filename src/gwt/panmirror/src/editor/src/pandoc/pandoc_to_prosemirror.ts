@@ -438,10 +438,10 @@ function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
     prevTok = tok;
   });
 
-  // need to have at least as many line breaks as blocks to trigger detection
+  // need to have > 5 line breaks or more line breaks than blocks to trigger detection
   // (prevents 'over-detection' if there are stray few soft breaks)
   const lineBreaks = columnBreaks + sentenceBreaks;
-  if (lineBreaks > ast.blocks.length) {
+  if (lineBreaks > 5 || lineBreaks > ast.blocks.length) {
     if (sentenceBreaks > columnBreaks) {
       return "sentence";
     } else {

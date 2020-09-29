@@ -41,7 +41,7 @@ core::database::PostgresqlConnectionOptions postgresConnectionOptions()
    options.connectionTimeoutSeconds = 10;
    options.database = "rstudio-test";
    options.host = "localhost";
-   options.user = "postgres";
+   options.username = "postgres";
    options.password = "postgres";
 
    return options;

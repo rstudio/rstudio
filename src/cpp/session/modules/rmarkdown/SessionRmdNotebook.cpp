@@ -181,9 +181,18 @@ void onChunkExecCompleted(const std::string& docId,
    SEXP resultSEXP = R_NilValue;
    std::string callback;
 
+   std::string escapedLabel =
+      core::string_utils::jsLiteralEscape(
+        core::string_utils::htmlEscape(label, true));
+   std::string escapedCode =
+         core::string_utils::jsLiteralEscape(
+               core::string_utils::htmlEscape(code, true));
+   boost::algorithm::replace_all(escapedLabel, "-", "_");
+   boost::algorithm::replace_all(escapedCode, "-", "_");
+
    r::exec::RFunction func(".rs.executeChunkCallback");
-   func.addParam(label);
-   func.addParam(code);
+   func.addParam(escapedLabel);
+   func.addParam(escapedCode);
 
    core::Error error = func.call(&resultSEXP, &rProtect);
    if (error)

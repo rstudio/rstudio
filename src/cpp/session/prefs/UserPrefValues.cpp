@@ -1779,6 +1779,19 @@ core::Error UserPrefValues::setTerminalRenderer(std::string val)
 }
 
 /**
+ * Whether web links displayed in the Terminal tab are made clickable.
+ */
+bool UserPrefValues::terminalWeblinks()
+{
+   return readPref<bool>("terminal_weblinks");
+}
+
+core::Error UserPrefValues::setTerminalWeblinks(bool val)
+{
+   return writePref("terminal_weblinks", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2390,6 +2403,19 @@ core::Error UserPrefValues::setShowFocusRectangles(bool val)
 }
 
 /**
+ * Show which panel contains keyboard focus.
+ */
+bool UserPrefValues::showPanelFocusRectangle()
+{
+   return readPref<bool>("show_panel_focus_rectangle");
+}
+
+core::Error UserPrefValues::setShowPanelFocusRectangle(bool val)
+{
+   return writePref("show_panel_focus_rectangle", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2465,6 +2491,19 @@ bool UserPrefValues::visualMarkdownEditingIsDefault()
 core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 {
    return writePref("visual_markdown_editing_is_default", val);
+}
+
+/**
+ * Default spacing for lists created in the visual editor
+ */
+std::string UserPrefValues::visualMarkdownEditingListSpacing()
+{
+   return readPref<std::string>("visual_markdown_editing_list_spacing");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingListSpacing(std::string val)
+{
+   return writePref("visual_markdown_editing_list_spacing", val);
 }
 
 /**
@@ -2891,6 +2930,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalTrackEnvironment,
       kTerminalBellStyle,
       kTerminalRenderer,
+      kTerminalWeblinks,
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
@@ -2938,12 +2978,14 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReducedMotion,
       kTabKeyMoveFocus,
       kShowFocusRectangles,
+      kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,
+      kVisualMarkdownEditingListSpacing,
       kVisualMarkdownEditingWrap,
       kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,

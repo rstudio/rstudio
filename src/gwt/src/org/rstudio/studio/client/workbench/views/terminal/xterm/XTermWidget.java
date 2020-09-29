@@ -66,10 +66,11 @@ public class XTermWidget extends Widget
    /**
     * Creates an XTermWidget.
     */
-   public XTermWidget(XTermOptions options, boolean tabMovesFocus)
+   public XTermWidget(XTermOptions options, boolean tabMovesFocus, boolean showWebLinks)
    {
       options_ = options;
       tabMovesFocus_ = tabMovesFocus;
+      showWebLinks_ = showWebLinks;
 
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
@@ -94,6 +95,11 @@ public class XTermWidget extends Widget
             terminal_ = new XTermTerminal(options_);
             fit_ = new XTermFitAddon();
             terminal_.loadAddon(fit_);
+            if (showWebLinks_)
+            {
+               webLinks_ = new XTermWebLinksAddon();
+               terminal_.loadAddon(webLinks_);
+            }
             terminal_.open(getElement());
             terminal_.focus();
             terminal_.addClass("ace_editor");
@@ -449,8 +455,11 @@ public class XTermWidget extends Widget
          {
             xtermFitLoader_.addCallback(() ->
             {
-               if (command != null)
-                  command.execute();
+               xtermWebLinksLoader_.addCallback(() ->
+               {
+                  if (command != null)
+                     command.execute();
+               });
             });
          });
       });
@@ -477,11 +486,16 @@ public class XTermWidget extends Widget
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
 
+   private static final ExternalJavaScriptLoader xtermWebLinksLoader_ =
+      new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermweblinksjs().getSafeUri().asString());
+
    private XTermTerminal terminal_;
    private XTermFitAddon fit_;
+   private XTermWebLinksAddon webLinks_;
    private boolean initialized_ = false;
    private final XTermOptions options_;
    private boolean tabMovesFocus_;
+   private boolean showWebLinks_;
    private final ArrayList<XTermDisposable> xtermEventUnsubscribe_ = new ArrayList<>();
 
    private final static String XTERM_CLASS = "xterm-rstudio";

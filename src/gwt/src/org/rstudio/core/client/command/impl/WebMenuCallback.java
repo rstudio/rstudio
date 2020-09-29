@@ -32,12 +32,15 @@ public class WebMenuCallback implements MenuCallback
 {
    public void beginMainMenu()
    {
-      menuStack_.push(new AppMenuBar(false));
+      AppMenuBar mainMenu = new AppMenuBar(false);
+      mainMenu.setEscClosesAll(false);
+      menuStack_.push(mainMenu);
    }
 
    public void beginMenu(String label)
    {
       AppMenuBar newMenu = new AppMenuBar(true);
+      newMenu.setEscClosesAll(false);
 
       // Adjust the z-index of the displayed sub-menu, so that it (and any
       // adorning contents) are rendered in front of their parents.

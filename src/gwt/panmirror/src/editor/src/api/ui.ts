@@ -118,8 +118,13 @@ export interface EditorDisplay {
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
+export const kListSpacingTight = 'tight';
+export const kListSpacingSpaced = 'spaced';
+export type ListSpacing = 'tight' | 'spaced';
+
 export interface EditorUIPrefs {
   darkMode: () => boolean;
+  listSpacing: () => ListSpacing;
   equationPreview: () => boolean;
   tabKeyMoveFocus: () => boolean;
   emojiSkinTone: () => SkinTone;

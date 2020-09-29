@@ -45,12 +45,12 @@ export function pubmedSourcePanel(ui: EditorUI,
         expanded: true
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return null;
     },
     progressMessage: ui.context.translateText('Searching PubMed....'),
     placeHolderMessage: ui.context.translateText('Enter a PubMed query to search for citations.'),
-    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const noResultsMessage = ui.context.translateText('No results matching these search terms.');
 
@@ -63,14 +63,14 @@ export function pubmedSourcePanel(ui: EditorUI,
               // There is a message
               // PubMed Results and Existing Ids
               const docs: PubMedDocument[] = pubMedResult.message;
-              const existingIds = bibliographyManager.localSources().map(src => src.id);
+              const dedupeCitationIds = existingCitationIds;
 
               // Create Citation List Entries for these PubMed docs
               const citationEntries = docs.map(doc => {
-                const citationEntry = toCitationListEntry(doc, existingIds, ui, doiServer);
+                const citationEntry = toCitationListEntry(doc, dedupeCitationIds, ui, doiServer);
                 if (citationEntry) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-                  existingIds.push(citationEntry.id);
+                  dedupeCitationIds.push(citationEntry.id);
                 }
                 return citationEntry;
               });

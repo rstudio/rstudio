@@ -38,6 +38,7 @@ import { dataciteSourcePanel } from "./source_panels/insert_citation-source-pane
 import { CitationBibliographyPicker } from "./insert_citation-bibliography-picker";
 
 import './insert_citation.css';
+import debounce from "lodash.debounce";
 
 
 
@@ -101,7 +102,8 @@ export async function showInsertCitationDialog(
       const configurationStream: InsertCitationPanelConfigurationStream = {
         current: {
           providers: providersForBibliography(bibliographyManager.allowsWrites()),
-          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
+          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui),
+          existingIds: bibliographyManager.localSources().map(source => source.id)
         },
         stream: () => {
           return updatedConfiguration || null;
@@ -112,7 +114,8 @@ export async function showInsertCitationDialog(
       bibliographyManager.load(ui, doc, true).then(() => {
         updatedConfiguration = {
           providers: providersForBibliography(bibliographyManager.allowsWrites()),
-          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui)
+          bibliographyFiles: bibliographyManager.bibliographyFiles(doc, ui),
+          existingIds: bibliographyManager.localSources().map(source => source.id)
         };
       });
 
@@ -186,6 +189,7 @@ export async function showInsertCitationDialog(
 interface InsertCitationPanelConfiguration {
   providers: CitationSourcePanelProvider[];
   bibliographyFiles: BibliographyFile[];
+  existingIds: string[];
 }
 
 interface InsertCitationPanelConfigurationStream {
@@ -271,10 +275,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const displayedCitations = insertCitationPanelState.citations.filter(citation => !insertCitationPanelState.citationsToAdd.includes(citation));
   const selectedCitation = insertCitationPanelState.selectedIndex > -1 ? displayedCitations[insertCitationPanelState.selectedIndex] : undefined;
   const mergedCitationsToAdd = mergeCitations(insertCitationPanelState.citationsToAdd, selectedCitation);
+  const existingCitationIds = [...insertCitationConfiguration.existingIds, ...mergedCitationsToAdd.map(citation => citation.id)];
 
   // The initial setting of focus and loading of data for the panel. 
   const panelRef = React.useRef<any>(undefined);
-
 
   // When the stream of configuration changes is actually loaded, we need to refresh the search
   // results to reflect the new configuration. The below refs basically:
@@ -286,7 +290,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   React.useEffect(() => {
     refreshSearchCallback.current = () => {
       // Once the configurations, refresh the search
-      const defaultResults = selectedPanelProvider.typeAheadSearch(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode);
+      const defaultResults = selectedPanelProvider.typeAheadSearch(insertCitationPanelState.searchTerm, insertCitationPanelState.selectedNode, existingCitationIds);
       if (defaultResults) {
         updateState({
           searchTerm: '',
@@ -317,6 +321,10 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         }
 
         setInsertCitationConfiguration(result);
+        const panelProvider = panelForNode(result.providers, insertCitationPanelState.selectedNode);
+        if (panelProvider) {
+          setSelectedPanelProvider(panelProvider);
+        }
         if (refreshSearchCallback.current) {
           refreshSearchCallback.current();
         }
@@ -324,7 +332,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }, 200);
 
     // Set the default state to initialize the first search
-    const searchResult = selectedPanelProvider.typeAheadSearch('', insertCitationPanelState.selectedNode);
+    const searchResult = selectedPanelProvider.typeAheadSearch('', insertCitationPanelState.selectedNode, existingCitationIds);
     updateState({
       searchTerm: '',
       citations: searchResult?.citations || [],
@@ -348,6 +356,22 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   // Figure out the panel height (the height of the main panel less padding and other elements)
   const panelHeight = props.height * .75;
 
+  // In order to debounce typeahead search, we need to memoize the callback so the same debounce function will be
+  // used even when renders happen. 
+  const memoizedTypeaheadSearch = React.useCallback(debounce((searchTerm: string, selectedNode: NavigationTreeNode, existingIds: string[]) => {
+    const searchResult = selectedPanelProvider.typeAheadSearch(searchTerm, selectedNode, existingIds);
+    if (searchResult) {
+      updateState({
+        searchTerm,
+        citations: searchResult?.citations,
+        status: searchResult?.status,
+        statusMessage: searchResult?.statusMessage,
+        selectedNode
+      });
+    }
+  }, 30), []);
+
+
   // The core props that will be passed to whatever the selected panel is
   // This implements the connection of the panel events and data and the
   // core dialog state
@@ -359,19 +383,11 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     searchTerm: insertCitationPanelState.searchTerm,
     onSearchTermChanged: (term: string) => {
       updateState({ searchTerm: term });
-      const searchResult = selectedPanelProvider.typeAheadSearch(term, insertCitationPanelState.selectedNode);
-      if (searchResult) {
-        updateState({
-          searchTerm: term,
-          citations: searchResult?.citations,
-          status: searchResult?.status,
-          statusMessage: searchResult?.statusMessage
-        });
-      }
+      memoizedTypeaheadSearch(term, insertCitationPanelState.selectedNode, existingCitationIds);
     },
     onExecuteSearch: (searchTerm: string) => {
       updateState({ searchTerm, status: CitationSourceListStatus.inProgress, statusMessage: selectedPanelProvider.progressMessage });
-      selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode).then((searchResult) => {
+      selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds).then((searchResult) => {
         updateState({ searchTerm, citations: searchResult?.citations, status: searchResult?.status, statusMessage: searchResult?.statusMessage, selectedIndex: -1 });
       });
     },
@@ -389,16 +405,16 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     onConfirm: onOk,
     status: insertCitationPanelState.status,
     statusMessage: insertCitationPanelState.statusMessage,
+    warningMessage: selectedPanelProvider.warningMessage || '',
     ref: panelRef
   };
-
 
   // This implements the connection of the dialog (non-provider panel) events and data and the
   // core dialog state
   const onNodeSelected = (node: NavigationTreeNode) => {
     const suggestedPanel = panelForNode(insertCitationConfiguration.providers, node);
     if (suggestedPanel) {
-      const searchResult = suggestedPanel.typeAheadSearch('', node);
+      const searchResult = suggestedPanel.typeAheadSearch('', node, existingCitationIds);
       updateState({
         searchTerm: '',
         citations: searchResult?.citations || [],
@@ -473,7 +489,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
             height={panelHeight}
             nodes={treeSourceData}
             selectedNode={insertCitationPanelState.selectedNode}
-            onNodeSelected={onNodeSelected}
+            onSelectedNodeChanged={onNodeSelected}
           />
         </div>
         <div className='pm-cite-panel-cite-selection-items'>

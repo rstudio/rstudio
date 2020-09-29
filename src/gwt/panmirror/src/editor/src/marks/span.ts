@@ -36,6 +36,7 @@ const extension = (context: ExtensionContext) => {
       {
         name: 'span',
         spec: {
+          group: 'formatting',
           attrs: pandocAttrSpec,
           inclusive: false,
           parseDOM: [

@@ -1,5 +1,5 @@
 #
-# API.R
+# Api.R
 #
 # Copyright (C) 2020 by RStudio, PBC
 #
@@ -15,6 +15,25 @@
 
 # Create environment to store data for registerChunkCallback and unregisterChunkCallback
 .rs.setVar("notebookChunkCallbacks", new.env(parent = emptyenv()))
+
+# list of API events (keep in sync with RStudioApiRequestEvent.java)
+.rs.setVar("api.eventTypes", list(
+   TYPE_UNKNOWN              = 0L,
+   TYPE_GET_EDITOR_SELECTION = 1L,
+   TYPE_SET_EDITOR_SELECTION = 2L,
+   TYPE_DOCUMENT_ID          = 3L,
+   TYPE_DOCUMENT_OPEN        = 4L,
+   TYPE_DOCUMENT_NEW         = 5L
+))
+
+# list of potential event targets
+.rs.setVar("api.eventTargets", list(
+   TYPE_UNKNOWN       = 0L,
+   TYPE_ACTIVE_WINDOW = 1L,
+   TYPE_ALL_WINDOWS   = 2L
+))
+
+
 
 .rs.addApiFunction("restartSession", function(command = NULL) {
    command <- as.character(command)
@@ -232,9 +251,10 @@
 })
 
 .rs.addApiFunction("navigateToFile", function(filePath = character(0),
-                                              line = 1L,
-                                              col = 1L,
-                                              moveCursor = TRUE) {
+                                              line = -1L,
+                                              col = -1L,
+                                              moveCursor = TRUE)
+{
    # validate file argument
    hasFile <- !is.null(filePath) && length(filePath) > 0
    if (hasFile && !is.character(filePath)) {
@@ -266,6 +286,12 @@
          filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
       }
    }
+   
+   # if we're requesting navigation without a specific cursor position,
+   # then use a separate API (this allows the API to work regardless of
+   # whether we're in source or visual mode)
+   if (identical(line, -1L) && identical(col, -1L))
+      return(file.edit(filePath))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
@@ -322,7 +348,7 @@
 
 .rs.addFunction("enqueEditorClientEvent", function(type, data)
 {
-   eventData = list(type = .rs.scalar(type), data = data)
+   eventData <- list(type = .rs.scalar(type), data = data)
    .rs.enqueClientEvent("editor_command", eventData)
 })
 
@@ -544,57 +570,138 @@
    .Call("rs_getPersistentValue", name)
 })
 
+.rs.addApiFunction("documentId", function(allowConsole = TRUE) {
+   
+   payload <- list(
+      allow_console = .rs.scalar(allowConsole)
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_DOCUMENT_ID,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+   
+})
+
+.rs.addApiFunction("documentContents", function(id = NULL) {
+   
+   # resolve id
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
+   
+   # retrieve properties
+   properties <- .Call("rs_documentProperties",
+                       as.character(id),
+                       TRUE,
+                       PACKAGE = "(embedding)")
+   
+   # extract contents as UTF-8
+   contents <- properties$contents
+   Encoding(contents) <- "UTF-8"
+   
+   # return
+   contents
+})
+
+.rs.addApiFunction("documentPath", function(id = NULL) {
+   
+   # resolve document id
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
+   if (is.null(id))
+      return(NULL)
+   
+   # read document properties
+   properties <- .Call("rs_documentProperties",
+                       id,
+                       FALSE,
+                       PACKAGE = "(embedding)")
+   
+   # return document path
+   properties$path
+   
+})
+
 .rs.addApiFunction("documentSave", function(id = NULL) {
-   # If no ID is specified, try to save the active editor.
-   if (is.null(id)) {
-      context <- .rs.api.getSourceEditorContext()
-      if (!is.null(context)) {
-         id <- context$id
-      }
-   }
-   if (is.null(id)) {
-      # No ID specified and no document open; succeed without meaning
+   
+   # resolve document id
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
+   if (is.null(id))
       return(TRUE)
-   }
+   
+   # attempt document save
    .Call("rs_requestDocumentSave", id, PACKAGE = "(embedding)")
+   
 })
 
 .rs.addApiFunction("documentSaveAll", function() {
    .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
 })
 
-.rs.addApiFunction("documentNew", function(type, code, row = 0, column= 0, execute = FALSE) {
+.rs.addApiFunction("documentNew", function(type,
+                                           code,
+                                           row = 0,
+                                           column = 0,
+                                           execute = FALSE)
+{
    type <- switch(
       type,
+      rmd       = "r_markdown",
       rmarkdown = "r_markdown",
-      sql = "sql",
+      sql       = "sql",
       "r_script"
    )
 
-   .rs.enqueClientEvent("new_document_with_code", list(
-      type = .rs.scalar(type),
-      code = .rs.scalar(code),
-      row = .rs.scalar(row),
-      column = .rs.scalar(column),
+   payload <- list(
+      type    = .rs.scalar(type),
+      code    = .rs.scalar(paste(code, collapse = "\n")),
+      row     = .rs.scalar(as.integer(row)),
+      column  = .rs.scalar(as.integer(column)),
       execute = .rs.scalar(execute)
-   ))
+   )
+   
+   request <- .rs.api.createRequest(
+      type = .rs.api.eventTypes$TYPE_DOCUMENT_NEW,
+      sync = TRUE,
+      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+})
 
-   invisible(NULL)
+.rs.addApiFunction("documentOpen", function(path) {
+   
+   payload <- list(
+      path = .rs.scalar(path)
+   )
+   
+   request <- .rs.api.createRequest(
+      type   = .rs.api.eventTypes$TYPE_DOCUMENT_OPEN,
+      sync   = TRUE,
+      target = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response$id
+   
 })
 
 .rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {
-   # If no ID is specified, try to close the active editor.
-   if (is.null(id)) {
-      context <- .rs.api.getSourceEditorContext()
-      if (!is.null(context)) {
-         id <- context$id
-      }
-   }
-   if (is.null(id)) {
-      # No ID specified and no document open; succeed without meaning
+   
+   # resolve document id
+   id <- .rs.nullCoalesce(id, .rs.api.documentId(allowConsole = FALSE))
+   if (is.null(id))
       return(TRUE)
-   }
+   
+   # request close
    .Call("rs_requestDocumentClose", id, save, PACKAGE = "(embedding)")
+   
 })
 
 .rs.addApiFunction("getConsoleHasColor", function(name) {
@@ -881,8 +988,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       stop("'chunkCallback' must contain two parameters: chunkName and chunkCode")
 
    data <- chunkCallback
-   handle <- .Call("rs_createUUID",
-                   PACKAGE = "(embedding)")
+   handle <- .Call("rs_createUUID", PACKAGE = "(embedding)")
    assign(handle, value = data, envir = .rs.notebookChunkCallbacks)
 
    return(handle)
@@ -926,40 +1032,45 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # added in RStudio v1.4; not used univerally by older APIs but useful
 # as a framework for any new functions that might be added
 
-# list of API events (keep in sync with RStudioApiRequestEvent.java)
-.rs.setVar("api.events", list(
-   TYPE_UNKNOWN              = 0L,
-   TYPE_GET_EDITOR_SELECTION = 1L,
-   TYPE_SET_EDITOR_SELECTION = 2L
-))
-
-.rs.addApiFunction("createRequest", function(type, data, sync)
+#' @param type The event type. See '.rs.api.events' for the set
+#'   of permissible targets.
+#' 
+#' @param sync Boolean; does handling of this event need to be
+#'   synchronous? Ensure `sync = TRUE` is used if you need to wait
+#'   for a response from the client.
+#'
+#' @param target The window to be targeted by this request. See
+#'   `.rs.api.eventTargets` for possible targets.
+#'
+#' @param data The payload associated with this event.
+#'
+.rs.addApiFunction("createRequest", function(type, sync, target, payload)
 {
    list(
-      type = .rs.scalar(type),
-      data = as.list(data),
-      sync = .rs.scalar(sync)
+      type    = .rs.scalar(type),
+      sync    = .rs.scalar(sync),
+      target  = .rs.scalar(target),
+      payload = as.list(payload)
    )
 })
 
-.rs.addApiFunction("sendRequest", function(request)
-{
-   response <- .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
-   invisible(response)
+.rs.addApiFunction("sendRequest", function(request) {
+   .Call("rs_sendApiRequest", request, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("selectionGet", function(id = NULL)
 {
    # create data payload
-   data <- list(
+   payload <- list(
       doc_id = .rs.scalar(id)
    )
    
    # create request
    request <- .rs.api.createRequest(
-      type = .rs.api.events$TYPE_GET_EDITOR_SELECTION,
-      data = data,
-      sync = TRUE
+      type    = .rs.api.eventTypes$TYPE_GET_EDITOR_SELECTION,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
    )
    
    # fire away
@@ -972,16 +1083,17 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    value <- paste(value, collapse = "\n")
    
    # create data payload
-   data <- list(
+   payload <- list(
       value  = .rs.scalar(value),
       doc_id = .rs.scalar(id)
    )
    
    # create request
    request <- .rs.api.createRequest(
-      type = .rs.api.events$TYPE_SET_EDITOR_SELECTION,
-      data = data,
-      sync = TRUE
+      type    = .rs.api.eventTypes$TYPE_SET_EDITOR_SELECTION,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
    )
    
    # fire away

@@ -45,7 +45,7 @@ public class PrimaryWindowFrame extends WindowFrame
    public PrimaryWindowFrame(String title,
                              Widget mainWidget)
    {
-      super(title);
+      super(title, title);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
       panel_ = new ClickFlowPanel();

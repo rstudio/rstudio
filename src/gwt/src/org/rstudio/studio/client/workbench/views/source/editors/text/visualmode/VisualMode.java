@@ -671,6 +671,10 @@ public class VisualMode implements VisualModeEditorSync,
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
       );
+      
+      // initially disable code commands (they will be re-enabled later when an
+      // editor has focus)
+      setCodeCommandsEnabled(false);
    }
    
    
@@ -706,9 +710,67 @@ public class VisualMode implements VisualModeEditorSync,
       return activeEditor_;
    }
    
+   /**
+    * Sets the active (currently focused) code chunk editor.
+    * 
+    * @param editor The current code chunk editor, or null if no code chunk
+    *   editor has focus.
+    */
    public void setActiveEditor(DocDisplay editor)
    {
       activeEditor_ = editor;
+      
+      if (editor != null)
+      {
+         // A code chunk has focus; enable code commands
+         setCodeCommandsEnabled(true);
+      }
+   }
+   
+   /**
+    * Sets the enabled state for code commands -- i.e. those that require
+    * selection to be inside a chunk of code. We disable these outside code
+    * chunks.
+    * 
+    * @param enabled Whether to enable code commands
+    */
+   private void setCodeCommandsEnabled(boolean enabled)
+   {
+      AppCommand[] commands = {
+         commands_.commentUncomment(),
+         commands_.executeCode(),
+         commands_.executeCodeWithoutFocus(),
+         commands_.executeCodeWithoutMovingCursor(),
+         commands_.executeCurrentFunction(),
+         commands_.executeCurrentLine(),
+         commands_.executeCurrentParagraph(),
+         commands_.executeCurrentSection(),
+         commands_.executeCurrentStatement(),
+         commands_.executeFromCurrentLine(),
+         commands_.executeToCurrentLine(),
+         commands_.extractFunction(),
+         commands_.extractLocalVariable(),
+         commands_.goToDefinition(),
+         commands_.insertRoxygenSkeleton(),
+         commands_.profileCode(),
+         commands_.profileCodeWithoutFocus(),
+         commands_.reflowComment(),
+         commands_.reformatCode(),
+         commands_.reindent(),
+         commands_.renameInScope(),
+         commands_.runSelectionAsJob(),
+         commands_.runSelectionAsLauncherJob(),
+         commands_.sendToTerminal(),
+      };
+
+      for (AppCommand command : commands)
+      {
+         if (command.isVisible())
+         {
+            command.setEnabled(enabled);
+         }
+      }
+      
    }
 
    public void goToNextSection()
@@ -804,7 +866,6 @@ public class VisualMode implements VisualModeEditorSync,
       {
          return false;
       }
-            
    }
    
    @Override
@@ -1182,6 +1243,16 @@ public class VisualMode implements VisualModeEditorSync,
                public void onPanmirrorFocus(PanmirrorFocusEvent event)
                {
                   target_.checkForExternalEdit(100);
+                  
+                  // Disable code-related commands, on the presumption that we
+                  // are in a prose region of the document. These commands will
+                  // be re-enabled shortly if focus is sent to a code chunk, and
+                  // will remain disabled if we aren't.
+                  //
+                  // Note that the PanmirrorFocusEvent is fired when selection
+                  // exits a code chunk as well as when the entire widget loses
+                  // focus.
+                  setCodeCommandsEnabled(false);
                }
             });
              
@@ -1336,10 +1407,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // use embedded codemirror for code blocks
       options.codeEditor = prefs_.visualMarkdownCodeEditor().getValue();
-      
-      // enable rmdImagePreview if we are an executable rmd
-      options.rmdImagePreview = target_.canExecuteChunks();
-      
+         
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       

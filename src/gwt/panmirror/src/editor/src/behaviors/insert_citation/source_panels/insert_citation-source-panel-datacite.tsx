@@ -47,25 +47,24 @@ export function dataciteSourcePanel(ui: EditorUI,
         expanded: true
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode) => {
+    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
       return null;
     },
     progressMessage: ui.context.translateText('Searching DataCite....'),
     placeHolderMessage: ui.context.translateText('Enter search terms to search DataCite'),
-    search: async (searchTerm: string, _selectedNode: NavigationTreeNode) => {
-
+    search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const dataciteResult = await server.search(searchTerm);
         switch (dataciteResult.status) {
           case 'ok':
             if (dataciteResult.message !== null) {
               const records: DataCiteRecord[] = dataciteResult.message;
-              const existingIds = bibliographyManager.localSources().map(src => src.id);
+              const dedupeCitationIds = existingCitationIds;
               const citationEntries = records.map(record => {
-                const citationEntry = toCitationListEntry(record, existingIds, ui, doiServer);
+                const citationEntry = toCitationListEntry(record, dedupeCitationIds, ui, doiServer);
                 if (citationEntry) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
-                  existingIds.push(citationEntry.id);
+                  dedupeCitationIds.push(citationEntry.id);
                 }
                 return citationEntry;
               });

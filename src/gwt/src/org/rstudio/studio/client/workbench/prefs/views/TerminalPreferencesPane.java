@@ -170,7 +170,9 @@ public class TerminalPreferencesPane extends PreferencesPane
       chkHardwareAcceleration_ = new CheckBox("Hardware acceleration");
       general.add(lessSpaced(chkHardwareAcceleration_));
       chkAudibleBell_ = new CheckBox("Audible bell");
-      general.add(chkAudibleBell_);
+      general.add(lessSpaced(chkAudibleBell_));
+      chkWebLinks_ = new CheckBox("Clickable web links");
+      general.add(chkWebLinks_);
 
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink);
@@ -338,6 +340,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       }
 
       chkAudibleBell_.setValue(prefs_.terminalBellStyle().getValue() == UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND);
+      chkWebLinks_.setValue(prefs_.terminalWeblinks().getValue());
       chkHardwareAcceleration_.setValue(prefs_.terminalRenderer().getValue() == UserPrefsAccessor.TERMINAL_RENDERER_CANVAS);
 
       if (!initialDirectory_.setValue(prefs.terminalInitialDirectory().getValue()))
@@ -370,6 +373,7 @@ public class TerminalPreferencesPane extends PreferencesPane
             UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND : UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE);
       prefs_.terminalRenderer().setGlobalValue(chkHardwareAcceleration_.getValue() ?
             UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
+      prefs_.terminalWeblinks().setGlobalValue(chkWebLinks_.getValue());
 
       prefs_.terminalInitialDirectory().setGlobalValue(initialDirectory_.getValue());
       prefs_.terminalCloseBehavior().setGlobalValue(autoClosePref_.getValue());
@@ -451,6 +455,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
+   private final CheckBox chkWebLinks_;
 
    private SelectWidget autoClosePref_;
    private SelectWidget busyMode_;

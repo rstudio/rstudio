@@ -43,7 +43,7 @@ struct PostgresqlConnectionOptions
    std::string database;
    std::string host;
    std::string port;
-   std::string user;
+   std::string username;
    std::string password;
    std::string connectionUri;
    int connectionTimeoutSeconds;

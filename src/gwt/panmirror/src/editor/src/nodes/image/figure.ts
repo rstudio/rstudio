@@ -93,6 +93,7 @@ const extension = (context: ExtensionContext): Extension => {
             const handleHTMLImage = (html: string) => {
               const attrs = imageAttrsFromHTML(html);
               if (attrs) {
+                attrs.raw = true;
                 writer.addNode(schema.nodes.figure, attrs, []);
                 return true;
               } else {

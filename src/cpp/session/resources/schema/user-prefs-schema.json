@@ -914,7 +914,13 @@
             "title": "Terminal tab rendering engine",
             "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
         },
-        "show_rmd_render_command": {
+         "terminal_weblinks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Make links in Terminal clickable",
+            "description": "Whether web links displayed in the Terminal tab are made clickable."
+        },
+       "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
             "title": "Show R Markdown render command",
@@ -1208,6 +1214,12 @@
             "title": "Always show focus outlines",
             "description": "Control with keyboard focus displays a visual focus indicator."
         },
+        "show_panel_focus_rectangle": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show focus outline around focused panel",
+            "description": "Show which panel contains keyboard focus."
+        },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
@@ -1245,6 +1257,13 @@
             "default": false,
             "title": "Use visual editing by default for new markdown documents",
             "description": "Whether to enable visual editing by default for new markdown documents"
+        },
+        "visual_markdown_editing_list_spacing": {
+            "type": "string",
+            "enum": ["tight", "spaced"],
+            "default": "spaced",
+            "title": "Default list spacing in visual markdown editing mode",
+            "description": "Default spacing for lists created in the visual editor"
         },
         "visual_markdown_editing_wrap": {
             "type": "string",

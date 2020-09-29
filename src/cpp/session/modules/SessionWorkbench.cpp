@@ -215,54 +215,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   // check to see what language is active in main console
-   using namespace r::exec;
-   
-   // check to see what language is currently active (but default to r)
-   std::string activeLanguage = "R";
-   if (reticulate::isReplActive())
-      activeLanguage = "Python";
-   
-   // now, detect if we are transitioning languages
-   if (language != activeLanguage)
-   {
-      // since it may take some time for the console input to be processed,
-      // we screen out consecutive transition attempts (otherwise we can
-      // get multiple interleaved attempts to launch the REPL with console
-      // input)
-      static RSTUDIO_BOOST_CONNECTION conn;
-      if (conn.connected())
-         return Success();
-      
-      // establish the connection, and then simply disconnect once we
-      // receive the signal
-      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
-         conn.disconnect();
-      });
-      
-      if (activeLanguage == "R")
-      {
-         if (language == "Python")
-         {
-            // r -> python: activate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("reticulate::repl_python()");
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
-      else if (activeLanguage == "Python")
-      {
-         if (language == "R")
-         {
-            // python -> r: deactivate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("quit");
-         }
-      }
-   }
-   
-   return Success();
+   return module_context::adaptToLanguage(language);
 }
 
 Error executeCode(const json::JsonRpcRequest& request,

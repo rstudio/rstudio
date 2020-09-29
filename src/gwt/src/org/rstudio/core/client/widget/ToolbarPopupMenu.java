@@ -27,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
@@ -79,6 +80,71 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       this();
       parent_ = parent;
+   }
+
+   /**
+    * Position popup relative to a point, typically for a right-click context menu
+    * @param clientX
+    * @param clientY
+    */
+   public void showRelativeTo(int clientX, int clientY)
+   {
+      setPopupPositionAndShow((offsetWidth, offsetHeight) ->
+      {
+         // Calculate left position for the popup; normally the clicked location but
+         // if it doesn't fix horizontally nudge it to the left
+         int left = clientX;
+
+         // Make sure scrolling is taken into account, since
+         // box.getAbsoluteLeft() takes scrolling into account.
+         int windowRight = Window.getClientWidth() + Window.getScrollLeft();
+         int windowLeft = Window.getScrollLeft();
+
+         // Distance from the clicked location to the right edge of the window
+         int distanceToWindowRight = windowRight - clientX;
+
+         // Distance from the clicked location to the left edge of the window
+         int distanceFromWindowLeft = clientX - windowLeft;
+
+         // If there is not enough space for the overflow of the popup's
+         // width to the right, and there IS enough space for the
+         // overflow to the left, then right-align the popup.
+         // However, if there is not enough space on either side, then stick with
+         // left-alignment.
+         if (distanceToWindowRight < offsetWidth && distanceFromWindowLeft >= offsetWidth)
+         {
+            // Align the right edge of popup with clicked location
+            left -= offsetWidth;
+         }
+
+         // Calculate top position for the popup; normally we expand "down" from where user
+         // right-clicked but if there isn't room them expand "up"
+         int top = clientY;
+
+         // Make sure scrolling is taken into account, since
+         // box.getAbsoluteTop() takes scrolling into account. We don't normally
+         // allow the main window to be scrolled, but just in case.
+         int windowTop = Window.getScrollTop();
+         int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+
+         // Distance from the top edge of the window to the clicked location
+         int distanceFromWindowTop = top - windowTop;
+
+         // Distance from the bottom edge of the window to the clicked location
+         int distanceToWindowBottom = windowBottom - top;
+
+         // If there is not enough space for the popup's height below the clicked
+         // location and there IS enough space for the popup's height above the
+         // clicked location, then position the popup above the location. However, if there
+         // is not enough space on either side, then stick with displaying the
+         // popup below the clicked location.
+         if (distanceToWindowBottom < offsetHeight && distanceFromWindowTop >= offsetHeight)
+         {
+            top -= offsetHeight;
+         }
+         setAutoConstrain(false);
+         setPopupPosition(left, top);
+      });
    }
 
    protected ToolbarMenuBar createMenuBar()

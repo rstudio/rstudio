@@ -1923,6 +1923,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String TERMINAL_RENDERER_DOM = "dom";
 
    /**
+    * Whether web links displayed in the Terminal tab are made clickable.
+    */
+   public PrefValue<Boolean> terminalWeblinks()
+   {
+      return bool(
+         "terminal_weblinks",
+         "Make links in Terminal clickable", 
+         "Whether web links displayed in the Terminal tab are made clickable.", 
+         true);
+   }
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    public PrefValue<Boolean> showRmdRenderCommand()
@@ -2575,6 +2587,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Show which panel contains keyboard focus.
+    */
+   public PrefValue<Boolean> showPanelFocusRectangle()
+   {
+      return bool(
+         "show_panel_focus_rectangle",
+         "Show focus outline around focused panel", 
+         "Show which panel contains keyboard focus.", 
+         false);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -2663,6 +2687,25 @@ public class UserPrefsAccessor extends Prefs
          "Whether to enable visual editing by default for new markdown documents", 
          false);
    }
+
+   /**
+    * Default spacing for lists created in the visual editor
+    */
+   public PrefValue<String> visualMarkdownEditingListSpacing()
+   {
+      return enumeration(
+         "visual_markdown_editing_list_spacing",
+         "Default list spacing in visual markdown editing mode", 
+         "Default spacing for lists created in the visual editor", 
+         new String[] {
+            VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
+            VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
+         },
+         "spaced");
+   }
+
+   public final static String VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT = "tight";
+   public final static String VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED = "spaced";
 
    /**
     * Whether to automatically wrap text when writing markdown
@@ -3268,6 +3311,8 @@ public class UserPrefsAccessor extends Prefs
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
          terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
+      if (source.hasKey("terminal_weblinks"))
+         terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("enable_text_drag"))
@@ -3362,6 +3407,8 @@ public class UserPrefsAccessor extends Prefs
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
+      if (source.hasKey("show_panel_focus_rectangle"))
+         showPanelFocusRectangle().setValue(layer, source.getBool("show_panel_focus_rectangle"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
@@ -3374,6 +3421,8 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("visual_markdown_editing_is_default"))
          visualMarkdownEditingIsDefault().setValue(layer, source.getBool("visual_markdown_editing_is_default"));
+      if (source.hasKey("visual_markdown_editing_list_spacing"))
+         visualMarkdownEditingListSpacing().setValue(layer, source.getString("visual_markdown_editing_list_spacing"));
       if (source.hasKey("visual_markdown_editing_wrap"))
          visualMarkdownEditingWrap().setValue(layer, source.getString("visual_markdown_editing_wrap"));
       if (source.hasKey("visual_markdown_editing_wrap_at_column"))
@@ -3557,6 +3606,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalTrackEnvironment());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
+      prefs.add(terminalWeblinks());
       prefs.add(showRmdRenderCommand());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
@@ -3604,12 +3654,14 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
       prefs.add(showFocusRectangles());
+      prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());
+      prefs.add(visualMarkdownEditingListSpacing());
       prefs.add(visualMarkdownEditingWrap());
       prefs.add(visualMarkdownEditingWrapAtColumn());
       prefs.add(visualMarkdownEditingReferencesLocation());

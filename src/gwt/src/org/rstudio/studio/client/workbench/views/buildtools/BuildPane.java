@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -25,9 +26,12 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -50,6 +54,10 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 public class BuildPane extends WorkbenchPane
       implements BuildPresenter.Display
 {
+   static interface Binder extends CommandBinder<Commands, BuildPane>
+   {
+   }
+
    @Inject
    public BuildPane(Commands commands,
                     EventBus events,
@@ -57,6 +65,8 @@ public class BuildPane extends WorkbenchPane
                     BuildServerOperations server)
    {
       super("Build", events);
+      ((BuildPane.Binder) GWT.create(BuildPane.Binder.class)).bind(commands, this);
+
       commands_ = commands;
       session_ = session;
       server_ = server;
@@ -149,14 +159,23 @@ public class BuildPane extends WorkbenchPane
          toolbar.addLeftWidget(moreButton);
       }
 
+      // build clear button
+      clearBuildButton_ = commands_.clearBuild().createToolbarButton();
+      clearBuildButton_.addStyleName(ThemeStyles.INSTANCE.clearBuildButton());
+      clearBuildButton_.setVisible(true);
+
       // connect compile panel
       compilePanel_.connectToolbar(toolbar);
-
+      toolbar.addRightWidget(clearBuildButton_);
 
       return toolbar;
    }
 
-
+   @Handler
+   void onClearBuild()
+   {
+       compilePanel_.clearAll();
+   }
 
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
@@ -311,6 +330,7 @@ public class BuildPane extends WorkbenchPane
       compilePanel_.scrollToBottom();
    }
 
+   private ToolbarButton clearBuildButton_;
    private final Commands commands_;
    private final Session session_;
    private final BuildServerOperations server_;

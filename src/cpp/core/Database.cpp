@@ -176,7 +176,7 @@ public:
                              options.host %
                              options.port %
                              options.database %
-                             options.user %
+                             options.username %
                              safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
          }
 

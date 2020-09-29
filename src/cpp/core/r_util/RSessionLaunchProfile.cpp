@@ -91,7 +91,8 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    json::Object profileJson;
    profileJson["context"] = contextAsJson(profile.context);
    profileJson["password"] = profile.password;
-   profileJson["encryptionKey"] = profile.encryptionKey;
+   if (!profile.encryptionKey.empty())
+      profileJson["encryptionKey"] = profile.encryptionKey;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = json::Array(profile.config.args);
@@ -119,11 +120,17 @@ SessionLaunchProfile sessionLaunchProfileFromJson(const json::Object& jsonProfil
    Error error = json::readObject(jsonProfile,
                                   "context", contextJson,
                                   "password", profile.password,
-                                  "encryptionKey", profile.encryptionKey,
                                   "executablePath", profile.executablePath,
                                   "config", configJson);
    if (error)
       LOG_ERROR(error);
+
+   std::string statusMessage;
+   error = json::getOptionalParam(jsonProfile, "encryptionKey", std::string(), &profile.encryptionKey);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
 
    // read context object
    error = contextFromJson(contextJson, &(profile.context));
