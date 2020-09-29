@@ -1418,16 +1418,13 @@ public:
       return Success();
    }
 
-   virtual core::Error show(const std::string& rev,
+   virtual core::Error show(const std::string& revision,
                             std::string* pOutput)
    {
       ShellArgs args = gitArgs()
             << "-c" << "core.quotepath=false"
-            << "show" << "--pretty=oneline" << "-M";
-      
-      if (s_gitVersion >= GIT_1_7_2)
-         args << "-c";
-      args << rev;
+            << "diff"
+            << (revision + "^!");
 
       return runGit(args, pOutput);
    }
