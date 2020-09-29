@@ -32,7 +32,9 @@ public class WebMenuCallback implements MenuCallback
 {
    public void beginMainMenu()
    {
-      menuStack_.push(new AppMenuBar(false));
+      AppMenuBar mainMenu = new AppMenuBar(false);
+      mainMenu.setEscClosesAll(false);
+      menuStack_.push(mainMenu);
    }
 
    public void beginMenu(String label)
