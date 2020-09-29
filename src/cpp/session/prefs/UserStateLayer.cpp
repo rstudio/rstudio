@@ -67,9 +67,12 @@ core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
 
    // ensure state file can only be read/written by this user
 #ifndef _WIN32
-   Error error = stateFile_.changeFileMode(FileMode::USER_READ_WRITE);
-   if (error)
-      LOG_ERROR(error);
+   if (stateFile_.exists())
+   {
+      Error error = stateFile_.changeFileMode(FileMode::USER_READ_WRITE);
+      if (error)
+         LOG_ERROR(error);
+   }
 #endif
 
    RECURSIVE_LOCK_MUTEX(mutex_)

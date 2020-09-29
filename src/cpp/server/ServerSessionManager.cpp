@@ -409,7 +409,10 @@ Error launchSession(const r_util::SessionContext& context,
       }
       else
       {
-         core::system::setenv(&config.environment, "XDG_CONFIG_HOME", tmpDir.getAbsolutePath());
+         FilePath userHome = tmpDir;
+         FilePath xdgConfigHome = tmpDir.completeChildPath(".config");
+         core::system::setenv(&config.environment, "HOME", userHome.getAbsolutePath());
+         core::system::setenv(&config.environment, "XDG_CONFIG_HOME", xdgConfigHome.getAbsolutePath());
       }
    }
 

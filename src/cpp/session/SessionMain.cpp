@@ -1806,8 +1806,8 @@ int main (int argc, char * const argv[])
       }
       BOOST_SCOPE_EXIT_END
 
-      // register monitor log writer (but not in standalone mode)
-      if (!options.standalone())
+      // register monitor log writer (but not in standalone or verify installation mode)
+      if (!options.standalone() && !options.verifyInstallation())
       {
          core::log::addLogDestination(
             monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
