@@ -621,6 +621,13 @@ std::string errorMessage(const core::Error& error)
    return msg;
 }
 
+std::string systemErrorMessage(int code)
+{
+   using namespace boost::system;
+   auto errc = error_code(code, system_category());
+   return errc.message();
+}
+
 
 } // namespace core 
 } // namespace rstudio

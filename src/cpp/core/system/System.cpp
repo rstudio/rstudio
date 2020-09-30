@@ -451,13 +451,6 @@ void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
    }
 }
 
-std::string systemErrorMessage(int errorCode)
-{
-   using namespace boost::system;
-   auto errc = error_code(errorCode, system_category());
-   return errc.message();
-}
-
 } // namespace system
 } // namespace core
 } // namespace rstudio

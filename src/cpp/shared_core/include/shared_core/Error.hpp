@@ -770,6 +770,9 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
 std::string errorDescription(const Error& error);
 std::string errorMessage(const core::Error& error);
 
+// return the error message associated with a particular system error code
+std::string systemErrorMessage(int code);
+
 } // namespace core
 } // namespace rstudio
 
