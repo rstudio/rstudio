@@ -230,7 +230,7 @@ Error addWatch(const FileInfo& fileInfo,
          ? "No watches available"
          : systemErrorMessage(errorNumber);
 
-      Error error = syscallError("inotify_add_watch", errorNumber, message, ERROR_LOCATION);
+      Error error = systemCallError("inotify_add_watch", errorNumber, message, ERROR_LOCATION);
       error.addProperty("path", fileInfo.absolutePath());
       return error;
    }
