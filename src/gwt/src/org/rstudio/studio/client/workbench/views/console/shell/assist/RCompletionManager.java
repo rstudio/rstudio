@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
@@ -95,7 +96,7 @@ public class RCompletionManager implements CompletionManager
                              CompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
-                             boolean isConsole)
+                             EditorBehavior behavior)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -107,7 +108,7 @@ public class RCompletionManager implements CompletionManager
       initFilter_ = initFilter;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
-      isConsole_ = isConsole;
+      behavior_ = behavior;
       sigTipManager_ = new SignatureToolTipManager(docDisplay_)
       {
          @Override
@@ -643,7 +644,8 @@ public class RCompletionManager implements CompletionManager
       boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
       
-      if (isConsole_ && !userPrefs_.consoleCodeCompletion().getValue())
+      if (behavior_ == EditorBehavior.AceBehaviorConsole && 
+            !userPrefs_.consoleCodeCompletion().getValue())
          canAutoPopup = false;
 
       if (canAutoPopup)
@@ -1233,7 +1235,7 @@ public class RCompletionManager implements CompletionManager
             filePath,
             docId,
             line,
-            isConsole_,
+            behavior_ == EditorBehavior.AceBehaviorConsole,
             implicit,
             context_);
 
@@ -1394,6 +1396,11 @@ public class RCompletionManager implements CompletionManager
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
          return new AutocompletionContext(firstLine, AutocompletionContext.TYPE_CHUNK);
       
+      // In the first row of an embedded editor, we're also completing chunk
+      // options
+      if (behavior_ == EditorBehavior.AceBehaviorEmbedded && row == 0 && firstLine.startsWith("{"))
+         return new AutocompletionContext(firstLine, AutocompletionContext.TYPE_CHUNK);
+
       // If this line starts with a '?', assume it's a help query
       if (firstLine.matches("^\\s*[?].*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
@@ -2137,7 +2144,7 @@ public class RCompletionManager implements CompletionManager
    
    private final DocDisplay docDisplay_;
    private final SnippetHelper snippets_;
-   private final boolean isConsole_;
+   private final EditorBehavior behavior_;
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_;
