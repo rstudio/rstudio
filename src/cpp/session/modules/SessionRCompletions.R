@@ -223,11 +223,11 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
 {
    emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
-
+   
    # fix up tokenization
    if (grepl("^\\s*#+\\*\\s*$", line) && token == "*")
       token <- ""
-
+   
    # allow the token to be empty only if we're attempting completions
    # at the start of the line
    if (token == "")
@@ -242,9 +242,9 @@ assign(x = ".rs.acCompletionTypes",
       if (!match)
          return(emptyCompletions)
    }
-
+   
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
-
+   
    # All known Plumber tags, in alphabetical order
    tags <- c(
       "@apiBasePath ",
@@ -279,9 +279,9 @@ assign(x = ".rs.acCompletionTypes",
       "@tag ",
       "@use "
    )
-
+   
    matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
-
+   
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
@@ -489,59 +489,120 @@ assign(x = ".rs.acCompletionTypes",
                                            matchedCall,
                                            envir)
 {
-   tryCatch({
-      
-      if (length(functionCall) > 1 && .rs.isS3Generic(object))
-      {
-         objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
-         classes <- class(objectForDispatch)
-         for (class in c(classes, "default"))
-         {
-            # It is possible that which S3 method will be used may depend on where
-            # the generic f is called from: getS3method returns the method found if
-            # f were called from the same environment.
-            call <- substitute(
-               utils::getS3method(functionName, class),
-               list(functionName = functionName,
-                    class = class)
-            )
-            
-            method <- tryCatch(
-               eval(call, envir = envir),
-               error = function(e) NULL
-            )
-            
-            if (!is.null(method))
-            {
-               formals <- .rs.getFunctionArgumentNames(method)
-               methods <- rep.int(
-                  paste(functionName, class, sep = "."),
-                  length(formals)
-               )
-               break
-            }
-         }
-      }
-      else
-      {
-         formals <- .rs.getFunctionArgumentNames(object)
-         methods <- rep.int(functionName, length(formals))
-      }
-      
-      keep <- .rs.fuzzyMatches(formals, token) &
-         !(formals %in% names(functionCall)) ## leave out formals already in call
-      
-      return(list(
-         formals = formals[keep],
-         methods = methods[keep]
-      ))
-      
-   }, error = function(e) NULL
+   tryCatch(
+      .rs.resolveFormalsImpl(token, object, functionName, functionCall, matchedCall, envir),
+      error = function(e) NULL
    )
 })
 
-.rs.addFunction("matchCall", function(func,
-                                      call)
+.rs.addFunction("resolveFormalsImpl", function(token,
+                                               object,
+                                               functionName,
+                                               functionCall,
+                                               matchedCall,
+                                               envir)
+{
+   # first, try to resolve via S3 dispatch if possible
+   data <- .rs.resolveFormalsImplS3Dispatch(
+      token,
+      object,
+      functionName,
+      functionCall,
+      matchedCall,
+      envir
+   )
+   
+   # otherwise, resolve from function itself
+   if (is.null(data)) {
+      formals <- .rs.getFunctionArgumentNames(object)
+      methods <- rep.int(functionName, length(formals))
+      data <- list(formals = formals, methods = methods)
+   }
+   
+   keep <-
+      .rs.fuzzyMatches(data$formals, token) &   # keep only formals matching token
+      !(data$formals %in% names(functionCall))  # leave out formals already in call
+   
+   # subset based on kept formals
+   data$formals <- data$formals[keep]
+   data$methods <- data$methods[keep]
+   
+   # done!
+   data
+   
+})
+
+.rs.addFunction("resolveFormalsImplS3Dispatch", function(token,
+                                                         object,
+                                                         functionName,
+                                                         functionCall,
+                                                         matchedCall,
+                                                         envir)
+{
+   # validate that this is an S3 generic
+   ok <-
+      length(functionCall) > 1 &&
+      .rs.isS3Generic(object)
+   
+   if (!ok)
+      return(NULL)
+   
+   # S3 generics normally dispatch on the first argument,
+   # so verify that this has been supplied
+   dispatchArgumentName <- names(formals(object)[1])
+   dispatchArgumentSymbol <- matchedCall[[dispatchArgumentName]]
+   if (is.null(dispatchArgumentSymbol))
+      return(NULL)
+   
+   # try to retrieve the object
+   objectForDispatch <- .rs.getAnywhere(
+      matchedCall[[dispatchArgumentName]],
+      envir = envir
+   )
+   
+   if (is.null(objectForDispatch))
+      return(NULL)
+   
+   # iterate over the known classes for the object, and see if we have
+   # an appropriate S3 method that could be used for dispatch
+   classes <- class(objectForDispatch)
+   for (class in c(classes, "default"))
+   {
+      # It is possible that which S3 method will be used may depend on where
+      # the generic f is called from: getS3method returns the method found if
+      # f were called from the same environment.
+      call <- substitute(
+         utils::getS3method(functionName, class),
+         list(functionName = functionName,
+              class = class)
+      )
+      
+      method <- tryCatch(
+         eval(call, envir = envir),
+         error = function(e) NULL
+      )
+      
+      if (is.null(method))
+         next
+      
+      # ok, we found a method -- return it
+      data <- list(
+         formals = .rs.getFunctionArgumentNames(method),
+         methods = rep.int(
+            paste(functionName, class, sep = "."),
+            length(formals)
+         )
+      )
+      
+      return(data)
+   }
+   
+   # nothing found; return NULL
+   NULL
+   
+})
+
+.rs.addFunction("matchCall", function(func, call)
 {
    ## NOTE: the ugliness here is necessary to handle missingness in calls
    ## e.g. `x <- call[[i]]` fails to assign to `x` if `call[[i]]` is missing
@@ -1330,7 +1391,7 @@ assign(x = ".rs.acCompletionTypes",
          }
          
          names <- .rs.selectFuzzyMatches(allNames, token)
-
+         
          # See if types were provided
          types <- attr(names, "types")
          if (is.integer(types) && length(types) == length(names))
@@ -1819,7 +1880,7 @@ assign(x = ".rs.acCompletionTypes",
       if (any(c("inputId", "outputId") %in% formalNames))
          return(TRUE)
    }
-      
+   
    # Try seeing if there's a function of this name
    # in the 'shiny' completion database.
    shinyFunctions <- .rs.getInferredCompletions("shiny")$functions
@@ -1842,7 +1903,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!("knit_params" %in% getNamespaceExports(asNamespace("knitr"))))
       return(NULL)
-
+   
    Encoding(content) <- "UTF-8"
    knitr::knit_params(content)
 })
@@ -1950,7 +2011,7 @@ assign(x = ".rs.acCompletionTypes",
    # parameterized R Markdown documents
    if (.rs.injectKnitrParamsObject(documentId))
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
-
+   
    # If custom completions have been set through
    # 'rc.options("custom.completions")',
    # then use the internal R completions instead.
@@ -2058,11 +2119,11 @@ assign(x = ".rs.acCompletionTypes",
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token, line))
-
+   
    # Plumber
    if (.rs.acContextTypes$PLUMBER %in% type)
       return(.rs.attemptPlumberTagCompletion(token, line))
-
+   
    # install.packages
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
       return(.rs.getCompletionsInstallPackages(token))
@@ -2220,14 +2281,14 @@ assign(x = ".rs.acCompletionTypes",
       {
          path <- .Call("rs_getRmdWorkingDir", filePath, documentId)
       }
-
+      
       if (is.null(path) && isRmd)
       {
          # for R Markdown documents without an explicit working dir,
          # use preferences instead
          path <- .rs.markdown.resolveCompletionRoot(filePath)
       }
-
+      
       if (is.null(path))
       {
          # in all other cases, use the current working directory for
@@ -2721,14 +2782,14 @@ assign(x = ".rs.acCompletionTypes",
    )
    
    .rs.sortCompletions(completions, token)
-
+   
 })
 
 .rs.addFunction("readAliases", function(path)
 {
    if (!length(path))
       return(character())
-
+   
    if (file.exists(f <- file.path(path, "help", "aliases.rds")))
       names(readRDS(f))
    else
@@ -3175,7 +3236,7 @@ assign(x = ".rs.acCompletionTypes",
          ))
       }
    }
-      
+   
    # Check for knitr chunk completions, if possible
    if ("knitr" %in% loadedNamespaces())
    {

@@ -84,6 +84,7 @@
 * Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
 * Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
+* Fixed issue where autocompletion could fail to provide argument names for piped-to S3 generics. (#7060)
 * Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
 * Git integration now works properly for project names containing the '!' character. (#6160)
 * Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
