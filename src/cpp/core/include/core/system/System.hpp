@@ -338,6 +338,9 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
 void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
                  std::vector<ProcessInfo>* pOutChildren,
                  int depth = 0);
+
+// the error message associated with a particular error code
+std::string systemErrorMessage(int errorCode);
    
 } // namespace system
 } // namespace core 

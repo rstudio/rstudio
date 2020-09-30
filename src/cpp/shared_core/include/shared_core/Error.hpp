@@ -712,13 +712,13 @@ Error systemError(
 /**
  * @brief Function which creates a system error associated with a particular system call.
  *
- * @param in_function        The error message to associate with this error.
- * @param in_code            The error code (typically errno).
+ * @param in_function        The name of the system call associated with this error.
+ * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
  * @param in_location        The location of the error.
  *
  * @return A system error.
  */
-Error syscallError(
+Error systemCallError(
    const std::string& in_function,
    int in_code,
    const ErrorLocation& in_location);
@@ -726,14 +726,14 @@ Error syscallError(
 /**
  * @brief Function which creates a system error associated with a particular system call.
  *
- * @param in_function        The error message to associate with this error.
- * @param in_code            The error code (typically errno).
+ * @param in_function        The name of the system call associated with this error.
+ * @param in_code            The error code -- typically errno, or an error number returned by the call itself.
  * @param in_message         The error message. Overrides the default error message associated with the error code.
  * @param in_location        The location of the error.
  *
  * @return A system error.
  */
-Error syscallError(
+Error systemCallError(
    const std::string& in_function,
    int in_code,
    const std::string& in_message,
@@ -765,14 +765,10 @@ Error unknownError(const std::string& in_message, const ErrorLocation& in_locati
  */
 Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
 
-// returns the error message associated with a particular system error code
-std::string systemErrorMessage(int code);
-
 // return a printable error message from an error (depending on the error this
 // might require consulting the message, category, or name)
 std::string errorDescription(const Error& error);
 std::string errorMessage(const core::Error& error);
-
 
 } // namespace core
 } // namespace rstudio
