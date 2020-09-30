@@ -2794,6 +2794,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(DocDisplay docDisplay)
          {
+            if (docDisplay == null)
+               return;
+            
             JsArray<Range> ranges = event.getData().getRanges();
             if (ranges.length() == 0)
                return;
@@ -2848,6 +2851,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(DocDisplay docDisplay)
          {
+            if (docDisplay == null)
+               return;
+            
             doReplaceRanges(event, docDisplay);
          }
       });
