@@ -85,6 +85,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
@@ -8137,14 +8138,37 @@ public class TextEditingTarget implements
    
    public void getEditorContext()
    {
-      ensureTextEditorActive(() ->
+      if (visualMode_.isActivated())
       {
-         SourceColumnManager.getEditorContext(
-               getId(),
-               getPath(),
-               getDocDisplay(),
-               server_);
-      });
+         ensureVisualModeActive(() ->
+         {
+            AceEditor activeEditor = AceEditor.getLastFocusedEditor();
+            if (activeEditor == null)
+            {
+               GetEditorContextEvent.SelectionData data =
+                     GetEditorContextEvent.SelectionData.create();
+               server_.getEditorContextCompleted(data, new VoidServerRequestCallback());
+               return;
+            }
+            
+            SourceColumnManager.getEditorContext(
+                  getId(),
+                  getPath(),
+                  activeEditor,
+                  server_);
+         });
+      }
+      else
+      {
+         ensureTextEditorActive(() ->
+         {
+            SourceColumnManager.getEditorContext(
+                  getId(),
+                  getPath(),
+                  getDocDisplay(),
+                  server_);
+         });
+      }
    }
    
    public void withEditorSelection(final CommandWithArg<String> callback)

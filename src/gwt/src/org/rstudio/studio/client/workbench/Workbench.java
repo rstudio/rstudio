@@ -796,8 +796,9 @@ public class Workbench implements BusyEvent.Handler,
    private final ConsoleDispatcher consoleDispatcher_;
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
-   private final SourceWindowManager sourceWindowManager_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private final WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
+   
+   @SuppressWarnings("unused") private final SourceWindowManager sourceWindowManager_;
 }

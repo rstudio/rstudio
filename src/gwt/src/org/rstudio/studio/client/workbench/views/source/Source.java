@@ -84,11 +84,9 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
-import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
@@ -2767,7 +2765,21 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(TextEditingTarget target)
             {
-               command.execute(target.getDocDisplay());
+               if (target.isVisualModeActivated())
+               {
+                  target.ensureVisualModeActive(() ->
+                  {
+                     AceEditor instance = AceEditor.getLastFocusedEditor();
+                     command.execute(instance);
+                  });
+               }
+               else
+               {
+                  target.ensureTextEditorActive(() ->
+                  {
+                     command.execute(target.getDocDisplay());
+                  });
+               }
             }
          });
       }
@@ -2782,6 +2794,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(DocDisplay docDisplay)
          {
+            if (docDisplay == null)
+               return;
+            
             JsArray<Range> ranges = event.getData().getRanges();
             if (ranges.length() == 0)
                return;
@@ -2836,6 +2851,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(DocDisplay docDisplay)
          {
+            if (docDisplay == null)
+               return;
+            
             doReplaceRanges(event, docDisplay);
          }
       });

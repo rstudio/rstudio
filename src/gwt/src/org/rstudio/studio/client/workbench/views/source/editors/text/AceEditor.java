@@ -4484,6 +4484,16 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   public static AceEditor getLastFocusedEditor()
+   {
+      return s_lastFocusedEditor;
+   }
+   
+   public static void clearLastFocusedEditor()
+   {
+      s_lastFocusedEditor = null;
+   }
+   
    private static class BackgroundTokenizer
    {
       public BackgroundTokenizer(final AceEditor editor)

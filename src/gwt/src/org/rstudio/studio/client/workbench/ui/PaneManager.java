@@ -1211,6 +1211,7 @@ public class PaneManager
          case Connections:
             return connectionsTab_;
          case Source:
+         case SourceColumn:
          case Console:
             // not 'real' tabs so should be an error to ask for their tabs
       }
