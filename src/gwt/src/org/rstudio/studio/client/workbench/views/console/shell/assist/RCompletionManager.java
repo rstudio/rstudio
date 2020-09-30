@@ -715,6 +715,7 @@ public class RCompletionManager implements CompletionManager
          
          if (c == ':')
          {
+            invalidatePendingRequests();
             suggestTimer_.schedule(false, true, false);
             return false;
          }
@@ -722,10 +723,7 @@ public class RCompletionManager implements CompletionManager
          // When inserting a space, continue showing the current set of
          // completions and update the current completion token.
          if (c == ' ')
-         {
-            token_ += " ";
             return false;
-         }
          
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can
@@ -807,6 +805,7 @@ public class RCompletionManager implements CompletionManager
                isSweaveCompletion(c))
          {
             // Delay suggestion to avoid auto-popup while the user is typing
+            invalidatePendingRequests();
             suggestTimer_.schedule(true, true, false);
          }
       }
@@ -1151,9 +1150,11 @@ public class RCompletionManager implements CompletionManager
       if (context.getToken() == "'@")
          context.setToken(context.getToken().substring(1));
       
-      context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
-                                              selection,
-                                              canAutoInsert);
+      CompletionRequestContext requestContext = new CompletionRequestContext(
+            invalidation_.getInvalidationToken(),
+            docDisplay_.getCursorPosition(),
+            selection,
+            canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;
@@ -1194,7 +1195,7 @@ public class RCompletionManager implements CompletionManager
                         joinString,
                         cursorPos,
                         implicit,
-                        context_);
+                        requestContext);
 
                   return true;
                }
@@ -1204,7 +1205,7 @@ public class RCompletionManager implements CompletionManager
                requester_.getDplyrJoinCompletions(
                      joinContext,
                      implicit,
-                     context_);
+                     requestContext);
                return true;
                
             }
@@ -1237,7 +1238,7 @@ public class RCompletionManager implements CompletionManager
             line,
             behavior_ == EditorBehavior.AceBehaviorConsole,
             implicit,
-            context_);
+            requestContext);
 
       return true;
    }
@@ -1712,10 +1713,12 @@ public class RCompletionManager implements CompletionManager
          ServerRequestCallback<CompletionResult>
    {
       public CompletionRequestContext(Invalidation.Token token,
+                                      Position position,
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
       {
          invalidationToken_ = token;
+         position_ = position;
          selection_ = selection;
          canAutoAccept_ = canAutoAccept;
       }
@@ -1743,7 +1746,7 @@ public class RCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return;
          
-         RCompletionManager.this.popup_.showErrorMessage(
+         popup_.showErrorMessage(
                   error.getUserMessage(), 
                   new PopupPositioner(input_.getCursorBounds(), popup_));
       }
@@ -1751,8 +1754,16 @@ public class RCompletionManager implements CompletionManager
       @Override
       public void onResponseReceived(CompletionResult completions)
       {
+         // bail if this request has been invalidated
          if (invalidationToken_.isInvalid())
             return;
+         
+         // bail if the cursor was moved to a new line
+         if (docDisplay_.getCursorPosition().getRow() != position_.getRow())
+            return;
+         
+         // update active completion context
+         context_ = this;
          
          // Only display the top completions
          final QualifiedName[] results =
@@ -2041,6 +2052,11 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
+         int offset =
+               completionToken.length() +
+               docDisplay_.getCursorPosition().getColumn() -
+               context_.position_.getColumn();
+         
          // Loop over all of the active cursors, and replace.
          for (Range range : ranges)
          {
@@ -2048,9 +2064,7 @@ public class RCompletionManager implements CompletionManager
             // cursor position. Take those positions, construct ranges, replace
             // text in those ranges, and proceed.
             Position replaceEnd = range.getEnd();
-            Position replaceStart = Position.create(
-                  replaceEnd.getRow(),
-                  replaceEnd.getColumn() - completionToken.length());
+            Position replaceStart = replaceEnd.movedLeft(offset);
             
             editor.replaceRange(
                   Range.fromPoints(replaceStart, replaceEnd),
@@ -2073,6 +2087,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       private final Invalidation.Token invalidationToken_;
+      private final Position position_;
       private InputEditorSelection selection_;
       private final boolean canAutoAccept_;
       private boolean suggestOnAccept_;
