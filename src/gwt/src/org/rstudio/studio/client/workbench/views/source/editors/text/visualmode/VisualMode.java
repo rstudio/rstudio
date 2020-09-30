@@ -62,6 +62,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
@@ -918,11 +919,6 @@ public class VisualMode implements VisualModeEditorSync,
          saveLocationOnIdle_.suspend();
    }
    
-   public VisualModeChunk getCurrentChunk()
-   {
-      return visualModeChunks_.getCurrentChunk();
-   }
-   
    public VisualModeChunk getChunkAtRow(int row)
    {
       return visualModeChunks_.getChunkAtRow(row);
@@ -1258,6 +1254,14 @@ public class VisualMode implements VisualModeEditorSync,
                   // exits a code chunk as well as when the entire widget loses
                   // focus.
                   setCodeCommandsEnabled(false);
+                  
+                  // Also clear the last focused Ace editor. This is normally
+                  // used by addins which need to target the 'active' editor,
+                  // with the 'active' state persisting after other UI elements
+                  // (e.g. the Addins toolbar) has been clicked. However, if
+                  // focus has been moved to a new editor context, then we instead
+                  // want to clear that state.
+                  AceEditor.clearLastFocusedEditor();
                }
             });
              

@@ -8109,7 +8109,7 @@ public class TextEditingTarget implements
     * 
     * @param cmd The command to execute.
     */
-   public void withActiveEditor(CommandWithArg<DocDisplay> cmd)
+   private void withActiveEditor(CommandWithArg<DocDisplay> cmd)
    {
       if (isVisualEditorActive())
       {
@@ -8137,8 +8137,8 @@ public class TextEditingTarget implements
       {
          ensureVisualModeActive(() ->
          {
-            VisualModeChunk chunk = visualMode_.getCurrentChunk();
-            if (chunk == null)
+            AceEditor activeEditor = AceEditor.getLastFocusedEditor();
+            if (activeEditor == null)
             {
                GetEditorContextEvent.SelectionData data =
                      GetEditorContextEvent.SelectionData.create();
@@ -8149,7 +8149,7 @@ public class TextEditingTarget implements
             SourceColumnManager.getEditorContext(
                   getId(),
                   getPath(),
-                  chunk.getAceInstance(),
+                  activeEditor,
                   server_);
          });
       }

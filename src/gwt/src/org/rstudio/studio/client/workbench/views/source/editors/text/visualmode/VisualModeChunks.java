@@ -20,11 +20,13 @@ import java.util.List;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
@@ -75,22 +77,6 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       };
       return chunks;
    }
-   
-   /**
-    * Finds the current visual mode chunk editor.
-    * 
-    * @return A visual mode chunk editor at the given row, or null if one was
-    *   not found.
-    */
-   public VisualModeChunk getCurrentChunk()
-   {
-      for (VisualModeChunk chunk : chunks_)
-         if (chunk.isActive())
-            return chunk;
-      
-      return null;
-   }
-   
    
    /**
     * Finds the visual mode chunk editor corresponding to a given document row.
