@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.environment.events.DebugModeCha
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
@@ -182,7 +183,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                                           null,
                                           null,
                                           (DocDisplay) view_.getInputEditorDisplay(),
-                                          true);
+                                          EditorBehavior.AceBehaviorConsole);
       addKeyDownPreviewHandler(completionManager);
       addKeyPressPreviewHandler(completionManager);
 

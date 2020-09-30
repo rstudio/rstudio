@@ -321,19 +321,26 @@ public class TextEditingTargetCompilePdfHelper
    @Override
    public int getRnwOptionsStart(String line, int cursorPos)
    {
-      Pattern pattern = docDisplay_.getFileType().getRnwStartPatternBegin();
-      if (pattern == null)
+      return getRnwOptionsStart(line, 
+            cursorPos, 
+            docDisplay_.getFileType().getRnwStartPatternBegin(),
+            docDisplay_.getFileType().getRnwStartPatternEnd());
+   }
+   
+   public static int getRnwOptionsStart(String line, int cursorPos, 
+         Pattern startPattern, Pattern endPattern)
+   {
+      if (startPattern == null)
          return -1;
-
+      
       String linePart = line.substring(0, cursorPos);
-      Match match = pattern.match(linePart, 0);
+      Match match = startPattern.match(linePart, 0);
       if (match == null)
          return -1;
 
       // See if the cursor is already past the end of the chunk header,
       // for example <<foo>>=[CURSOR].
-      Pattern patternEnd = docDisplay_.getFileType().getRnwStartPatternEnd();
-      if (patternEnd != null && patternEnd.match(linePart, 0) != null)
+      if (endPattern != null && endPattern.match(linePart, 0) != null)
          return -1;
 
       return match.getValue().length();

@@ -193,6 +193,19 @@ public class AceEditor implements DocDisplay,
 
       private String type;
    }
+   
+   public enum EditorBehavior
+   {
+      // Behave like a typical (top-level) editor
+      AceBehaviorDefault,
+
+      // Behave like an embedded (code chunk) editor; used in embedded Ace
+      // instances in visual mode
+      AceBehaviorEmbedded,
+      
+      // Behave like the R console
+      AceBehaviorConsole
+   }
 
    private class Filter implements InitCompletionFilter
    {
@@ -329,6 +342,7 @@ public class AceEditor implements DocDisplay,
       editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
+      behavior_ = EditorBehavior.AceBehaviorDefault;
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
@@ -697,7 +711,7 @@ public class AceEditor implements DocDisplay,
    {
       getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
    }
-   
+
    public void resetCommands()
    {
       AceCommandManager manager = AceCommandManager.create();
@@ -748,10 +762,35 @@ public class AceEditor implements DocDisplay,
       updateLanguage(completionManager, null);
    }
 
+   public void setEditorBehavior(EditorBehavior behavior)
+   {
+      behavior_ = behavior;
+   }
+   
    @Override
    public void setRnwCompletionContext(RnwCompletionContext rnwContext)
    {
       rnwContext_ = rnwContext;
+   }
+   
+   private RnwCompletionContext getActiveRnwCompletionContext()
+   {
+      // In embedded chunk editors, allow chunk completion behavior even in
+      // non-chunk file types (so e.g., completion of chunk options can happen
+      // in R code chunks)
+      if (behavior_ == EditorBehavior.AceBehaviorEmbedded)
+      {
+         return rnwContext_;
+      }
+
+      // In other types of editors, restrict this behavior to file types that
+      // can execute chunks
+      if (!fileType_.canExecuteChunks())
+      {
+         return null;
+      }
+
+      return rnwContext_;
    }
 
    @Override
@@ -795,9 +834,9 @@ public class AceEditor implements DocDisplay,
                         server_,
                         new Filter(),
                         context_,
-                        fileType_.canExecuteChunks() ? rnwContext_ : null,
-                           editor,
-                           false));
+                        getActiveRnwCompletionContext(),
+                        editor,
+                        behavior_));
                }
                
                // Markdown completion manager
@@ -4576,6 +4615,7 @@ public class AceEditor implements DocDisplay,
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;
    private final AceEditorEditLinesHelper editLines_;
+   private EditorBehavior behavior_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
