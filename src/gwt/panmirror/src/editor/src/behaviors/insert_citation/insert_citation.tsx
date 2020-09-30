@@ -372,7 +372,6 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }
   }, 30), []);
 
-
   // The core props that will be passed to whatever the selected panel is
   // This implements the connection of the panel events and data and the
   // core dialog state
@@ -387,9 +386,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       memoizedTypeaheadSearch(term, selectedPanelProvider, insertCitationPanelState.selectedNode, existingCitationIds);
     },
     onExecuteSearch: (searchTerm: string) => {
+      searchCanceled.current = false;
       updateState({ searchTerm, status: CitationSourceListStatus.inProgress, statusMessage: selectedPanelProvider.progressMessage });
       selectedPanelProvider.search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds).then((searchResult) => {
-        updateState({ searchTerm, citations: searchResult?.citations, status: searchResult?.status, statusMessage: searchResult?.statusMessage, selectedIndex: -1 });
+        if (!searchCanceled.current) {
+          updateState({ searchTerm, citations: searchResult?.citations, status: searchResult?.status, statusMessage: searchResult?.statusMessage, selectedIndex: -1 });
+        }
       });
     },
     onAddCitation: (citation: CitationListEntry) => {
@@ -410,11 +412,16 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     ref: panelRef
   };
 
+  // Tracks whether a long running search has been canceled
+  // for example by the user navigating to another section of the dialog
+  const searchCanceled = React.useRef<boolean>(false);
+
   // This implements the connection of the dialog (non-provider panel) events and data and the
   // core dialog state
   const onNodeSelected = (node: NavigationTreeNode) => {
     const suggestedPanel = panelForNode(insertCitationConfiguration.providers, node);
     if (suggestedPanel) {
+      searchCanceled.current = true;
       const searchResult = suggestedPanel.typeAheadSearch('', node, existingCitationIds);
       updateState({
         searchTerm: '',
@@ -429,7 +436,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       }
     }
   };
-
+  
   const deleteCitation = (id: string) => {
     const filteredCitations = insertCitationPanelState.citationsToAdd.filter(source => source.id !== id);
     updateState({ citationsToAdd: filteredCitations });
