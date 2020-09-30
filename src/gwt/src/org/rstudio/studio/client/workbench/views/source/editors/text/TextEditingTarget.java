@@ -7561,6 +7561,11 @@ public class TextEditingTarget implements
    {
       return rContext_;
    }
+   
+   public RnwCompletionContext getRnwCompletionContext()
+   {
+      return compilePdfHelper_;
+   }
 
    public static void syncFontSize(
                               ArrayList<HandlerRegistration> releaseOnDismiss,
