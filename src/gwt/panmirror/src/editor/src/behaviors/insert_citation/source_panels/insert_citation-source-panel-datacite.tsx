@@ -55,6 +55,7 @@ export function dataciteSourcePanel(ui: EditorUI,
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const dataciteResult = await server.search(searchTerm);
+        const noResultsMessage = ui.context.translateText('No results matching these search terms.');
         switch (dataciteResult.status) {
           case 'ok':
             if (dataciteResult.message !== null) {
@@ -70,15 +71,15 @@ export function dataciteSourcePanel(ui: EditorUI,
               });
               return Promise.resolve({
                 citations: citationEntries,
-                status: CitationSourceListStatus.default,
-                statusMessage: ''
+                status: citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
+                statusMessage: citationEntries.length > 0 ? '' : noResultsMessage
               });
             } else {
               // No results
               return Promise.resolve({
                 citations: [],
-                status: CitationSourceListStatus.default,
-                statusMessage: ''
+                status: CitationSourceListStatus.noResults,
+                statusMessage: noResultsMessage
               });
             }
           default:

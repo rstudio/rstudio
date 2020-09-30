@@ -70,8 +70,8 @@ export function crossrefSourcePanel(ui: EditorUI,
 
         return Promise.resolve({
           citations: citationEntries,
-          status: CitationSourceListStatus.default,
-          statusMessage: ''
+          status: citationEntries.length> 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
+          statusMessage: citationEntries.length > 0 ? '' : ui.context.translateText('No results matching these search terms.')
         });
 
       } catch (e) {
