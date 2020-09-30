@@ -2767,7 +2767,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(TextEditingTarget target)
             {
-               command.execute(target.getDocDisplay());
+               target.withActiveEditor((DocDisplay display) -> command.execute(display));
             }
          });
       }

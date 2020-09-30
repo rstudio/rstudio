@@ -918,6 +918,11 @@ public class VisualMode implements VisualModeEditorSync,
          saveLocationOnIdle_.suspend();
    }
    
+   public VisualModeChunk getCurrentChunk()
+   {
+      return visualModeChunks_.getCurrentChunk();
+   }
+   
    public VisualModeChunk getChunkAtRow(int row)
    {
       return visualModeChunks_.getChunkAtRow(row);

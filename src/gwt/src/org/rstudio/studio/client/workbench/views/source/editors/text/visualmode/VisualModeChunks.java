@@ -77,6 +77,22 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    }
    
    /**
+    * Finds the current visual mode chunk editor.
+    * 
+    * @return A visual mode chunk editor at the given row, or null if one was
+    *   not found.
+    */
+   public VisualModeChunk getCurrentChunk()
+   {
+      for (VisualModeChunk chunk : chunks_)
+         if (chunk.isActive())
+            return chunk;
+      
+      return null;
+   }
+   
+   
+   /**
     * Finds the visual mode chunk editor corresponding to a given document row.
     * 
     * @param row The document row.
