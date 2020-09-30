@@ -1,8 +1,6 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes/tomorrow_night_bright.css" />
-  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
   <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
@@ -14,6 +12,7 @@
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
   <script type="text/javascript" src="../tools/ace/build/src/keybinding-vim.js"></script>
   <style type="text/css">
   pre {
@@ -406,6 +405,36 @@ x <- 1
 {
   1 +
 </pre></li>
+
+<li><pre data-expected="0">
+if (1)
+  if (2)
+    x <- 1
+</pre></li>
+
+<li><pre data-expected="2">
+bad <- function(x) {
+  if (1)
+    if (2)
+      function(x)
+        1
+</pre></li>
+
+<li><pre data-expected="8">
+bad <- function(x) {
+  if (1)
+    if (2)
+      x <- 1 +
+</pre></li>
+
+<li><pre data-expected="2">
+bad <- function(x) {
+  if (1)
+    if (2)
+      x <- 1 +
+         2
+</pre></li>
+
 
 </ol>
 
