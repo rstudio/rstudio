@@ -40,14 +40,6 @@ namespace {
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
 
-// get the error message associated with a particular (system) error code
-std::string systemErrorMessage(int code)
-{
-   using namespace boost::system;
-   auto errc = error_code(code, system_category());
-   return errc.message();
-}
-
 } // anonymous namespace
 
 
