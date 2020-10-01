@@ -40,6 +40,14 @@ namespace {
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
 
+// get the error message associated with a particular (system) error code
+std::string systemErrorMessage(int code)
+{
+   using namespace boost::system;
+   auto errc = error_code(code, system_category());
+   return errc.message();
+}
+
 } // anonymous namespace
 
 
@@ -553,6 +561,22 @@ Error systemError(const std::system_error& in_error,
    return error;
 }
 
+Error systemCallError(const std::string& in_function,
+                      int in_code,
+                      const ErrorLocation& in_location)
+{
+   return systemCallError(in_function, in_code, systemErrorMessage(in_code), in_location);
+}
+
+Error systemCallError(const std::string& in_function,
+                      int in_code,
+                      const std::string& in_message,
+                      const ErrorLocation& in_location)
+{
+   std::string message = in_function + ": " + in_message;
+   return Error("system", in_code, message, in_location);
+}
+
 Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)
 {
    return Error(
@@ -595,6 +619,13 @@ std::string errorMessage(const core::Error& error)
       msg = error.getName();
    }
    return msg;
+}
+
+std::string systemErrorMessage(int code)
+{
+   using namespace boost::system;
+   auto errc = error_code(code, system_category());
+   return errc.message();
 }
 
 
