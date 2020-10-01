@@ -82,7 +82,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.StanCodeChunk, "Stan");
 
       // lists
-      add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
+      add(PanmirrorCommands.BulletList, "Bulleted List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
       add(PanmirrorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
       add(PanmirrorCommands.TightList, "Tight List", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.ListItemSink, "Sink Item");
