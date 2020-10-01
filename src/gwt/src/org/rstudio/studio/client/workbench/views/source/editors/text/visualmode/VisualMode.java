@@ -675,7 +675,10 @@ public class VisualMode implements VisualModeEditorSync,
       
       // initially disable code commands (they will be re-enabled later when an
       // editor has focus)
-      setCodeCommandsEnabled(false);
+      if (isActivated())
+      {
+         setCodeCommandsEnabled(false);
+      }
    }
    
    
