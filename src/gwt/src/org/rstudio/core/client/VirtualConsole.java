@@ -488,7 +488,7 @@ public class VirtualConsole
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // Only capture new elements when dealing with error output, which
-      // is only place that sets forceNewRange to true. This is just an
+      // is the only place that sets forceNewRange to true. This is just an
       // optimization to avoid unnecessary overhead for large (non-error)
       // output.
       captureNewElements_ = forceNewRange;
@@ -686,9 +686,7 @@ public class VirtualConsole
          element.setInnerText(text);
 
          if (captureNewElements_)
-         {
             newElements_.add(element);
-         }
       }
 
       public void trimLeft(int delta)
