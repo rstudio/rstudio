@@ -447,15 +447,13 @@ public class ChunkOutputStream extends FlowPanel
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
-            int contentHeight =
-               CALLBACK_BUFFER + frame.getWindow().getDocument().getBody().getOffsetHeight();
+            int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
             frame.getElement().getStyle().setWidth(100, Unit.PCT);
             onHeightChanged();
 
             Command handler = () -> {
-               int newHeight =
-                  CALLBACK_BUFFER + frame.getWindow().getDocument().getBody().getOffsetHeight();
+               int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
                frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
                onHeightChanged();
             };
@@ -778,7 +776,6 @@ public class ChunkOutputStream extends FlowPanel
    private int maxOrdinal_ = 0;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
-   private final static Integer CALLBACK_BUFFER = 10;
 
    private Command afterRender_;
    private Colors themeColors_;
