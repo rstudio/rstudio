@@ -50,9 +50,31 @@ public class ChunkContextCodeUi extends ChunkContextUi
    protected void createToolbar(int row)
    {
       super.createToolbar(row);
+
+      // Create a new pinned line widget; ensure it always has a host by
+      // providing our own host wrapper
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, outerEditor_.getDocDisplay(), 
-            toolbar_, row, null, host_);
+            toolbar_, row, null, new PinnedLineWidget.Host()
+            {
+               @Override
+               public void onLineWidgetRemoved(LineWidget widget)
+               {
+                  if (host_ != null)
+                  {
+                     host_.onLineWidgetRemoved(widget);
+                  }
+               }
+               
+               @Override
+               public void onLineWidgetAdded(LineWidget widget)
+               {
+                  if (host_ != null)
+                  {
+                     host_.onLineWidgetAdded(widget);
+                  }
+               }
+            });
    }
    
    @Override
