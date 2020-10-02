@@ -263,7 +263,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          fireEvent(new PanmirrorUpdatedEvent());
       }));
       
-      // don't update outline eaglerly (wait for 500ms delay in typing)
+      // don't update outline eagerly (wait for 500ms delay in typing)
       DebouncedCommand updateOutineOnIdle = new DebouncedCommand(500)
       {
          @Override
@@ -552,6 +552,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public PanmirrorEditingLocation getEditingLocation()
    {
       return editor_.getEditingLocation();
+   }
+   
+   public PanmirrorOutlineItem[] getOutline()
+   {
+      return editor_.getOutline();
    }
    
    public void setEditingLocation(
