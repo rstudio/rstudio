@@ -331,6 +331,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Force use of WinPTY instead of ConPTY for Terminal (Windows only)
+    */
+   public PrefValue<Boolean> terminalDisableConpty()
+   {
+      return bool(
+         "terminal_disable_conpty",
+         "Disable use of ConPTY in Terminal", 
+         "Force use of WinPTY instead of ConPTY for Terminal (Windows only)", 
+         false);
+   }
+
+   /**
     * Highlight the selected word in RStudio's code editor.
     */
    public PrefValue<Boolean> highlightSelectedWord()
@@ -3075,6 +3087,8 @@ public class UserPrefsAccessor extends Prefs
          customShellOptions().setValue(layer, source.getString("custom_shell_options"));
       if (source.hasKey("show_line_numbers"))
          showLineNumbers().setValue(layer, source.getBool("show_line_numbers"));
+      if (source.hasKey("terminal_disable_conpty"))
+         terminalDisableConpty().setValue(layer, source.getBool("terminal_disable_conpty"));
       if (source.hasKey("highlight_selected_word"))
          highlightSelectedWord().setValue(layer, source.getBool("highlight_selected_word"));
       if (source.hasKey("highlight_selected_line"))
@@ -3488,6 +3502,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(customShellCommand());
       prefs.add(customShellOptions());
       prefs.add(showLineNumbers());
+      prefs.add(terminalDisableConpty());
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());

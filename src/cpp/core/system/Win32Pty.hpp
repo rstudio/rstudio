@@ -26,6 +26,8 @@
 
 #include <winpty/winpty.h>
 
+#include "Win32Terminal.hpp"
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -33,7 +35,7 @@ namespace system {
 // Wrapper class for winpty library (https://github.com/rprichard/winpty)
 // "A windows software package providing an interface similar to a Unix
 // pty-master for communicating with Windows console programs."
-class WinPty : boost::noncopyable
+class WinPty : public WinTerminal
 {
 public:
    WinPty()
@@ -51,19 +53,16 @@ public:
                HANDLE* pStdInWrite,
                HANDLE* pStdOutRead,
                HANDLE* pStdErrRead,
-               HANDLE* pProcess);
+               HANDLE* pProcess) override;
 
 
-   bool ptyRunning() const;
+   bool ptyRunning() const override;
 
    // Change the size of the pseudoterminal
-   Error setSize(int cols, int rows);
+   Error setSize(int cols, int rows) override;
 
    // Send interrupt (Ctrl+C)
-   Error interrupt();
-
-   static Error writeToPty(HANDLE hPipe, const std::string& input);
-   static Error readFromPty(HANDLE hPipe, std::string* pOutput);
+   Error interrupt() override;
 
 private:
    Error startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead);

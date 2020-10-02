@@ -136,6 +136,12 @@
             "title": "Show line numbers in editor",
             "description": "Show line numbers in RStudio's code editor."
         },
+        "terminal_disable_conpty": {
+            "type": "boolean",
+            "default": false,
+            "title": "Disable use of ConPTY in Terminal",
+            "description": "Force use of WinPTY instead of ConPTY for Terminal (Windows only)"
+        },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
