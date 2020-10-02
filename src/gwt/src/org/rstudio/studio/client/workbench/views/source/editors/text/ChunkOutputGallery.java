@@ -212,7 +212,7 @@ public class ChunkOutputGallery extends Composite
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
-            int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+            int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             callbackContent.setHeight(contentHeight + "px");
             callbackContent.setWidth("100%");
             frame.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -220,7 +220,7 @@ public class ChunkOutputGallery extends Composite
             host_.notifyHeightChanged();
             
             Command heightHandler = () -> {
-               int newHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
                callbackContent.setHeight(newHeight + "px");
                frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
                host_.notifyHeightChanged();
