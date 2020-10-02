@@ -15,7 +15,6 @@
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { toggleMark } from 'prosemirror-commands';
 import { EditorState } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
@@ -26,6 +25,7 @@ import { isRawHTMLFormat } from '../../api/raw';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
+import { toggleMarkType } from '../../api/command';
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions } = context;
@@ -115,7 +115,7 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
     const rawhtmlMark = state.schema.marks.raw_html;
 
     // ensure we pass all conditions for html input
-    if (state.selection.empty && toggleMark(rawhtmlMark)(state) && filter(state, start, end)) {
+    if (state.selection.empty && toggleMarkType(rawhtmlMark)(state) && filter(state, start, end)) {
       // get tag info
       const { parent, parentOffset } = state.selection.$head;
       const text = parent.textContent;

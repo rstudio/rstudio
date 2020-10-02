@@ -184,7 +184,7 @@ export class MarkCommand extends ProsemirrorCommand {
   public readonly attrs: object;
 
   constructor(id: EditorCommandId, keymap: string[], markType: MarkType, attrs = {}) {
-    super(id, keymap, toggleMark(markType, attrs) as CommandFn);
+    super(id, keymap, toggleMarkType(markType, attrs) as CommandFn);
     this.markType = markType;
     this.attrs = attrs;
   }
@@ -261,6 +261,28 @@ export class InsertCharacterCommand extends ProsemirrorCommand {
 
 
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
+
+export function toggleMarkType(markType: MarkType, attrs?: { [key: string]: any }) {
+  
+  const toggleCmd = toggleMark(markType, attrs);
+
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    
+    // for code we delegate to the base prosemirror implementation
+    if (markType === state.schema.marks.code) {
+      return toggleCmd(state, dispatch);
+    }
+
+    // for other types we disallow them when within code (this is a pandoc constraint)
+    else {
+      if (markIsActive(state, state.schema.marks.code)) {
+        return false;
+      } else {
+        return toggleCmd(state, dispatch);
+      }
+    }
+  };
+}
 
 export function toggleList(listType: NodeType, itemType: NodeType, prefs: EditorUIPrefs): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {

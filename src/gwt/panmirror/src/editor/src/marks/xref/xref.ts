@@ -15,7 +15,6 @@
 
 import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 import { InputRule } from 'prosemirror-inputrules';
 import { Transform } from 'prosemirror-transform';
 
@@ -25,7 +24,7 @@ import { Extension, ExtensionContext } from '../../api/extension';
 import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../../api/mark';
 import { MarkTransaction, trTransform } from '../../api/transaction';
 import { FixupContext } from '../../api/fixup';
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, toggleMarkType } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
 import { PandocOutput } from '../../api/pandoc';
@@ -162,7 +161,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             [],
             (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
               // enable/disable command
-              if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.xref)(state)) {
+              if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.xref)(state)) {
                 return false;
               }
               if (dispatch) {

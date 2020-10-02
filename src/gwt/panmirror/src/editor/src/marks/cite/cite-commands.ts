@@ -14,12 +14,11 @@
  */
 
 import { EditorState, Transaction } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, toggleMarkType } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
@@ -42,7 +41,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
 
         // enable/disable command
         const schema = state.schema;
-        if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.cite)(state)) {
+        if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.cite)(state)) {
           return false;
         }
 
