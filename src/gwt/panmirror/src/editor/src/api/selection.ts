@@ -27,6 +27,10 @@ export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos
   return selectionIsWithinRange(selection, { from, to });
 }
 
+export function selectionHasRange(selection: Selection, range: { from: number, to: number }) {
+  return selection.from === range.from && selection.to === range.to;
+}
+
 export function selectionIsWithinRange(selection: Selection, range: { from: number, to: number }) {
   return selection.anchor >= range.from && selection.anchor <= range.to;
 }

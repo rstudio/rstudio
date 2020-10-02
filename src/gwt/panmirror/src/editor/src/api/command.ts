@@ -20,12 +20,13 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNode, findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
-import { markIsActive } from './mark';
+import { markIsActive, getMarkRange } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
 import { OmniInsert } from './omni_insert';
 import { EditorUIPrefs, kListSpacingTight } from './ui';
+import { selectionIsWithinRange, selectionHasRange } from './selection';
 
 export enum EditorCommandId {
   // text editing
@@ -264,24 +265,30 @@ export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => voi
 
 export function toggleMarkType(markType: MarkType, attrs?: { [key: string]: any }) {
   
-  const toggleCmd = toggleMark(markType, attrs);
+  const defaultToggleMark = toggleMark(markType, attrs);
 
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
     
-    // for code we delegate to the base prosemirror implementation
-    if (markType === state.schema.marks.code) {
-      return toggleCmd(state, dispatch);
-    }
-
-    // for other types we disallow them when within code (this is a pandoc constraint)
-    else {
+    // disallow non-code marks when the selection is contained within a code mark
+    // (this is a pandoc constraint). note that we can allow them if the selection 
+    // contains the code mark range entirely (as in that case the code mark will
+    // nest within the other mark)
+    if (markType !== state.schema.marks.code) {
       if (markIsActive(state, state.schema.marks.code)) {
-        return false;
-      } else {
-        return toggleCmd(state, dispatch);
+        const codeRange = getMarkRange(state.selection.$anchor, state.schema.marks.code);
+        if (codeRange && 
+            selectionIsWithinRange(state.selection, codeRange) &&
+            !selectionHasRange(state.selection, codeRange)) {
+          return false;
+        }
       }
     }
+
+    // default implementation
+    return defaultToggleMark(state, dispatch);
   };
+
+ 
 }
 
 export function toggleList(listType: NodeType, itemType: NodeType, prefs: EditorUIPrefs): CommandFn {
