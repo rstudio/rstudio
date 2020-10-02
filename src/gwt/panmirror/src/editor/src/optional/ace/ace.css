@@ -54,7 +54,8 @@
  * invisible cursor position.
  */
 .pm-ace-editor-inactive .ace_marker-layer .ace_bracket,
-.pm-ace-editor-inactive .ace_marker-layer .ace_selection {
+.pm-ace-editor-inactive .ace_marker-layer .ace_selection,
+.pm-ace-editor-inactive .ace_marker-layer .ace_selected-word {
   display: none;
 }
 

@@ -83,7 +83,7 @@ public class CommandLineHistory
    private int getPositionAtOffset(int offset)
    {
       int pos = historyPos_ + offset;
-      return Math.max(0, Math.min(pos, history_.size()));
+      return Math.max(0, Math.min(pos, history_.size()) - 1);
    }
 
    private final ArrayList<String> history_ = new ArrayList<String>();
