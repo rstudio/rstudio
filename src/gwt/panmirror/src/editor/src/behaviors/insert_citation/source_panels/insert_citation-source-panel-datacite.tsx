@@ -13,26 +13,32 @@
  *
  */
 
+import React from 'react';
 
-import React from "react";
+import { BibliographyManager } from '../../../api/bibliography/bibliography';
+import { createUniqueCiteId } from '../../../api/cite';
+import { CSL, imageForType } from '../../../api/csl';
+import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from '../../../api/datacite';
+import { DOIServer } from '../../../api/doi';
+import { NavigationTreeNode } from '../../../api/widgets/navigation-tree';
+import { logException } from '../../../api/log';
+import { EditorUI } from '../../../api/ui';
 
-import { BibliographyManager } from "../../../api/bibliography/bibliography";
-import { createUniqueCiteId } from "../../../api/cite";
-import { CSL, imageForType } from "../../../api/csl";
-import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from "../../../api/datacite";
-import { DOIServer } from "../../../api/doi";
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-import { logException } from "../../../api/log";
-import { EditorUI } from "../../../api/ui";
+import {
+  CitationSourcePanelProps,
+  CitationSourcePanelProvider,
+  CitationListEntry,
+  CitationSourceListStatus,
+  errorForStatus,
+} from './insert_citation-source-panel';
+import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
 
-import { CitationSourcePanelProps, CitationSourcePanelProvider, CitationListEntry, CitationSourceListStatus, errorForStatus } from "./insert_citation-source-panel";
-import { CitationSourceLatentSearchPanel } from "./insert_citation-source-panel-latent-search";
-
-export function dataciteSourcePanel(ui: EditorUI,
+export function dataciteSourcePanel(
+  ui: EditorUI,
   bibliographyManager: BibliographyManager,
   server: DataCiteServer,
-  doiServer: DOIServer): CitationSourcePanelProvider {
-
+  doiServer: DOIServer,
+): CitationSourcePanelProvider {
   const kDataCiteType = 'Datacite';
   return {
     key: '66A6EADB-22AE-4DDD-BCD5-70BC0DEB8FB3',
@@ -44,7 +50,7 @@ export function dataciteSourcePanel(ui: EditorUI,
         image: ui.images.citations?.datacite,
         type: kDataCiteType,
         children: [],
-        expanded: true
+        expanded: true,
       };
     },
     typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
@@ -71,15 +77,16 @@ export function dataciteSourcePanel(ui: EditorUI,
               });
               return Promise.resolve({
                 citations: citationEntries,
-                status: citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
-                statusMessage: citationEntries.length > 0 ? '' : noResultsMessage
+                status:
+                  citationEntries.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
+                statusMessage: citationEntries.length > 0 ? '' : noResultsMessage,
               });
             } else {
               // No results
               return Promise.resolve({
                 citations: [],
                 status: CitationSourceListStatus.noResults,
-                statusMessage: noResultsMessage
+                statusMessage: noResultsMessage,
               });
             }
           default:
@@ -87,7 +94,7 @@ export function dataciteSourcePanel(ui: EditorUI,
             return Promise.resolve({
               citations: [],
               status: CitationSourceListStatus.error,
-              statusMessage: ui.context.translateText(errorForStatus(ui, dataciteResult.status, 'DataCite'))
+              statusMessage: ui.context.translateText(errorForStatus(ui, dataciteResult.status, 'DataCite')),
             });
         }
       } catch (e) {
@@ -95,38 +102,44 @@ export function dataciteSourcePanel(ui: EditorUI,
         return Promise.resolve({
           citations: [],
           status: CitationSourceListStatus.error,
-          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.')
+          statusMessage: ui.context.translateText('An unknown error occurred. Please try again.'),
         });
       }
-    }
+    },
   };
 }
 
-export const DataCiteSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>((props: CitationSourcePanelProps, ref) => {
-  return (
-    <CitationSourceLatentSearchPanel
-      height={props.height}
-      citations={props.citations}
-      citationsToAdd={props.citationsToAdd}
-      searchTerm={props.searchTerm}
-      onSearchTermChanged={props.onSearchTermChanged}
-      executeSearch={props.onExecuteSearch}
-      onAddCitation={props.onAddCitation}
-      onRemoveCitation={props.onRemoveCitation}
-      selectedIndex={props.selectedIndex}
-      onSelectedIndexChanged={props.onSelectedIndexChanged}
-      onConfirm={props.onConfirm}
-      searchPlaceholderText={props.ui.context.translateText('Search DataCite for Citations')}
-      status={props.status}
-      statusMessage={props.statusMessage}
-      ui={props.ui}
-      ref={ref}
-    />
-  );
-});
+export const DataCiteSourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>(
+  (props: CitationSourcePanelProps, ref) => {
+    return (
+      <CitationSourceLatentSearchPanel
+        height={props.height}
+        citations={props.citations}
+        citationsToAdd={props.citationsToAdd}
+        searchTerm={props.searchTerm}
+        onSearchTermChanged={props.onSearchTermChanged}
+        executeSearch={props.onExecuteSearch}
+        onAddCitation={props.onAddCitation}
+        onRemoveCitation={props.onRemoveCitation}
+        selectedIndex={props.selectedIndex}
+        onSelectedIndexChanged={props.onSelectedIndexChanged}
+        onConfirm={props.onConfirm}
+        searchPlaceholderText={props.ui.context.translateText('Search DataCite for Citations')}
+        status={props.status}
+        statusMessage={props.statusMessage}
+        ui={props.ui}
+        ref={ref}
+      />
+    );
+  },
+);
 
-function toCitationListEntry(record: DataCiteRecord, existingIds: string[], ui: EditorUI, doiServer: DOIServer): CitationListEntry {
-
+function toCitationListEntry(
+  record: DataCiteRecord,
+  existingIds: string[],
+  ui: EditorUI,
+  doiServer: DOIServer,
+): CitationListEntry {
   const id = createUniqueCiteId(existingIds, suggestCiteId(record));
   const providerKey = 'datacite';
   return {
@@ -148,11 +161,10 @@ function toCitationListEntry(record: DataCiteRecord, existingIds: string[], ui: 
       const csl = doiResult.message as CSL;
       return { ...csl, id: finalId, providerKey };
     },
-    isSlowGeneratingBibliographySource: true
+    isSlowGeneratingBibliographySource: true,
   };
 }
 
 function formatAuthors(authors: DataCiteCreator[], length: number) {
   return authors.map(creator => creator.fullName).join(',');
 }
-

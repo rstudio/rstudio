@@ -1,6 +1,4 @@
-
-
-import { Schema, NodeSpec, MarkSpec, DOMParser, Node as ProsemirrorNode } from "prosemirror-model";
+import { Schema, NodeSpec, MarkSpec, DOMParser, Node as ProsemirrorNode } from 'prosemirror-model';
 
 const kCslDOMParser = cslDOMParser();
 
@@ -22,14 +20,14 @@ export function cslDOMParser(): DOMParser {
 function cslSchema() {
   const nodes: { [name: string]: NodeSpec } = {
     doc: {
-      content: 'inline*'
+      content: 'inline*',
     },
     text: {
       group: 'inline',
       toDOM(node: ProsemirrorNode): any {
         return node.text;
-      }
-    }
+      },
+    },
   };
   const marks: { [name: string]: MarkSpec } = {};
   marks.strong = tagSpec('b');
@@ -49,13 +47,17 @@ function cslSchema() {
 function tagSpec(tag: string): MarkSpec {
   return {
     parseDOM: [{ tag }],
-    toDOM() { return [tag]; },
+    toDOM() {
+      return [tag];
+    },
   };
 }
 
 function spanSpec(clz: string): MarkSpec {
   return {
     parseDOM: [{ tag: `span[class*='${clz}']` }],
-    toDOM() { return ['span', { class: clz }]; },
+    toDOM() {
+      return ['span', { class: clz }];
+    },
   };
 }

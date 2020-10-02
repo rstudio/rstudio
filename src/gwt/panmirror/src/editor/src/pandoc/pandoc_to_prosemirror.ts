@@ -29,7 +29,13 @@ import {
   PandocExtensions,
   forEachToken,
 } from '../api/pandoc';
-import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText, kPandocAttrClasses, kPandocAttrKeyvalue } from '../api/pandoc_attr';
+import {
+  pandocAttrReadAST,
+  kCodeBlockAttr,
+  kCodeBlockText,
+  kPandocAttrClasses,
+  kPandocAttrKeyvalue,
+} from '../api/pandoc_attr';
 import {
   PandocBlockCapsuleFilter,
   parsePandocBlockCapsule,
@@ -54,7 +60,15 @@ export function pandocToProsemirror(
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
 ): PandocToProsemirrorResult {
-  const parser = new Parser(schema, extensions, readers, tokensFilters, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
+  const parser = new Parser(
+    schema,
+    extensions,
+    readers,
+    tokensFilters,
+    blockReaders,
+    inlineHTMLReaders,
+    blockCapsuleFilters,
+  );
   return parser.parse(ast);
 }
 
@@ -113,10 +127,10 @@ class Parser {
     // process raw text capsules
     let targetAst = {
       ...ast,
-      blocks: resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters)
+      blocks: resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters),
     };
 
-    // detect line wrapping 
+    // detect line wrapping
     const lineWrapping = detectLineWrapping(targetAst);
 
     // resolve heading ids
@@ -130,7 +144,7 @@ class Parser {
       doc: state.doc(),
       line_wrapping: lineWrapping,
       unrecognized: state.unrecognized(),
-      unparsed_meta: ast.meta
+      unparsed_meta: ast.meta,
     };
   }
 
@@ -420,16 +434,17 @@ class ParserState {
 
 // determine what sort of line wrapping is used within the file
 function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
-
   // look for soft breaks and classify them as column or sentence breaks
   let columnBreaks = 0;
   let sentenceBreaks = 0;
   let prevTok: PandocToken = { t: PandocTokenType.Null };
   forEachToken(ast.blocks, tok => {
     if (tok.t === PandocTokenType.SoftBreak) {
-      if (prevTok.t === PandocTokenType.Str &&
-        typeof (prevTok.c) === "string" &&
-        [".", "?", "!"].includes(prevTok.c.charAt(prevTok.c.length - 1))) {
+      if (
+        prevTok.t === PandocTokenType.Str &&
+        typeof prevTok.c === 'string' &&
+        ['.', '?', '!'].includes(prevTok.c.charAt(prevTok.c.length - 1))
+      ) {
         sentenceBreaks++;
       } else {
         columnBreaks++;
@@ -443,19 +458,18 @@ function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
   const lineBreaks = columnBreaks + sentenceBreaks;
   if (lineBreaks > 5 || lineBreaks > ast.blocks.length) {
     if (sentenceBreaks > columnBreaks) {
-      return "sentence";
+      return 'sentence';
     } else {
-      return "column";
+      return 'column';
     }
   } else {
-    return "none";
+    return 'none';
   }
 }
 
-// determine which heading ids are valid based on explicit headings contained in the 
+// determine which heading ids are valid based on explicit headings contained in the
 // document and any headings targeted by links. remove any heading ids not so identified
 function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
-
   // determine function we will use to create auto-identifiers
   const autoIdentifier = extensions.gfm_auto_identifiers ? gfmAutoIdentifier : pandocAutoIdentifier;
 
@@ -468,9 +482,8 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
       const target = tok.c[kLinkTarget];
       const href = target[kLinkTargetUrl] as string;
       if (href.startsWith('#')) {
-
-        // if we have support for implicit header references and shortcut reference links, 
-        // also check to see whether the link text resolves to the target (in that case 
+        // if we have support for implicit header references and shortcut reference links,
+        // also check to see whether the link text resolves to the target (in that case
         // we don't need the explicit id). note that if that heading has an explicit
         // id defined then we also leave it alone.
         const text = stringifyTokens(tok.c[kLinkChildren], extensions.gfm_auto_identifiers);
@@ -479,18 +492,10 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
           equalsIgnoreCase('#' + autoIdentifier(text, extensions.ascii_identifiers), href) &&
           !headingIds.has(href.toLocaleLowerCase())
         ) {
-
           // return a version of the link w/o the target
           return {
             t: PandocTokenType.Link,
-            c: [
-              tok.c[kLinkAttr],
-              tok.c[kLinkChildren],
-              [
-                "#",
-                tok.c[kLinkTarget][kLinkTargetTitle]
-              ]
-            ]
+            c: [tok.c[kLinkAttr], tok.c[kLinkChildren], ['#', tok.c[kLinkTarget][kLinkTargetTitle]]],
           };
 
           // otherwise note that it's a valid id
@@ -514,7 +519,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
             tok.c[kHeadingLevel],
             ['', tok.c[kHeadingAttr][kPandocAttrClasses], tok.c[kHeadingAttr][kPandocAttrKeyvalue]],
             tok.c[kHeadingChildren],
-          ]
+          ],
         };
       }
     }
@@ -526,7 +531,7 @@ function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
   return {
     ...ast,
     blocks: astBlocks,
-    heading_ids: undefined
+    heading_ids: undefined,
   };
 }
 
@@ -542,4 +547,3 @@ interface ParserTokenHandlerCandidate {
   match?: (tok: PandocToken) => boolean;
   handler: ParserTokenHandler;
 }
-

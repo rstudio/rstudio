@@ -13,22 +13,22 @@
  *
  */
 
-import { Schema, MarkType } from "prosemirror-model";
-import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
-import { DecorationSet, EditorView, Decoration, DecorationAttrs } from "prosemirror-view";
-import { AddMarkStep, RemoveMarkStep } from "prosemirror-transform";
-import { ChangeSet } from "prosemirror-changeset";
+import { Schema, MarkType } from 'prosemirror-model';
+import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
+import { DecorationSet, EditorView, Decoration, DecorationAttrs } from 'prosemirror-view';
+import { AddMarkStep, RemoveMarkStep } from 'prosemirror-transform';
+import { ChangeSet } from 'prosemirror-changeset';
 
-import { setTextSelection } from "prosemirror-utils";
+import { setTextSelection } from 'prosemirror-utils';
 
 import { FocusEvent } from '../../api/event-types';
-import { PandocMark } from "../../api/mark";
-import { EditorUISpelling, kCharClassWord } from "../../api/spelling";
-import { EditorEvents } from "../../api/events";
-import { kAddToHistoryTransaction } from "../../api/transaction";
-import { EditorUI, EditorMenuItem } from "../../api/ui";
+import { PandocMark } from '../../api/mark';
+import { EditorUISpelling, kCharClassWord } from '../../api/spelling';
+import { EditorEvents } from '../../api/events';
+import { kAddToHistoryTransaction } from '../../api/transaction';
+import { EditorUI, EditorMenuItem } from '../../api/ui';
 
-import { excludedMarks, getWords, spellcheckerWord, findBeginWord, findEndWord, charAt } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord, findBeginWord, findEndWord, charAt } from './spelling';
 
 const kUpdateSpellingTransaction = 'updateSpelling';
 const kInvalidateSpellingWordTransaction = 'invalidateSpellingWord';
@@ -36,12 +36,12 @@ const kSpellingErrorClass = 'pm-spelling-error';
 
 const realtimeSpellingKey = new PluginKey<DecorationSet>('spelling-realtime-plugin');
 
-
 export function realtimeSpellingPlugin(
   schema: Schema,
   marks: readonly PandocMark[],
   ui: EditorUI,
-  events: EditorEvents) {
+  events: EditorEvents,
+) {
   return new RealtimeSpellingPlugin(excludedMarks(schema, marks), ui, events);
 }
 
@@ -57,7 +57,6 @@ export function invalidateWord(view: EditorView, word: string) {
 }
 
 class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
-
   // track whether we've ever had the focus (don't do any spelling operaitons until then)
   private hasBeenFocused = true;
 
@@ -65,7 +64,6 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
   private readonly ui: EditorUI;
 
   constructor(excluded: MarkType[], ui: EditorUI, events: EditorEvents) {
-
     super({
       key: realtimeSpellingKey,
       view: (view: EditorView) => {
@@ -77,8 +75,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-
-          // if we somehow manage to get focus w/o our FocusEvent (below) being called then also 
+          // if we somehow manage to get focus w/o our FocusEvent (below) being called then also
           // flip the hasBeenFocused bit here
           if (this.view?.hasFocus()) {
             this.hasBeenFocused = true;
@@ -90,13 +87,10 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
           }
 
           if (tr.getMeta(kUpdateSpellingTransaction)) {
-
             // explicit update request invalidates any existing decorations (this can happen when
             // we get focus for the very firs time or when the main or secondary dictionaries change)
             return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
-
           } else if (tr.getMeta(kInvalidateSpellingWordTransaction)) {
-
             // for word invalidations we search through the decorations and remove words that match
             const word = tr.getMeta(kInvalidateSpellingWordTransaction) as string;
 
@@ -105,9 +99,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
             // return decorators w/ those words removed
             return old.remove(wordDecos);
-
           } else if (tr.docChanged) {
-
             // perform an incremental update of spelling decorations (invalidate and re-scan
             // for decorations in changed ranges)
 
@@ -119,7 +111,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             changeSet = changeSet.addSteps(newState.doc, tr.mapping.maps);
 
             // collect ranges that had mark changes
-            const markRanges: Array<{ from: number, to: number }> = [];
+            const markRanges: Array<{ from: number; to: number }> = [];
             for (const step of tr.steps) {
               if (step instanceof AddMarkStep || step instanceof RemoveMarkStep) {
                 const markStep = step as any;
@@ -128,9 +120,9 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             }
 
             // remove ranges = mark ranges + deleted ranges
-            const removeRanges = markRanges.concat(changeSet.changes.map(change =>
-              ({ from: change.fromA, to: change.toA })
-            ));
+            const removeRanges = markRanges.concat(
+              changeSet.changes.map(change => ({ from: change.fromA, to: change.toA })),
+            );
 
             // remove decorations from deleted ranges (expanding ranges to word boundaries)
             for (const range of removeRanges) {
@@ -143,21 +135,22 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             decos = decos.map(tr.mapping, tr.doc);
 
             // add ranges = mark ranges + inserted ranges
-            const addRanges = markRanges.concat(changeSet.changes.map(change =>
-              ({ from: change.fromB, to: change.toB })
-            ));
+            const addRanges = markRanges.concat(
+              changeSet.changes.map(change => ({ from: change.fromB, to: change.toB })),
+            );
 
-            // scan inserted ranges for spelling decorations (don't need to find word boundaries 
+            // scan inserted ranges for spelling decorations (don't need to find word boundaries
             // b/c spellingDecorations already does that)
             for (const range of addRanges) {
-              decos = decos.add(tr.doc, spellingDecorations(newState, ui.spelling, excluded, true, range.from, range.to));
+              decos = decos.add(
+                tr.doc,
+                spellingDecorations(newState, ui.spelling, excluded, true, range.from, range.to),
+              );
             }
 
             // return decorators
             return decos;
-
           } else if (tr.selectionSet) {
-
             // if we had previously suppressed a decoration due to typing at the cursor, restore it
             // whenever the selection changes w/o the doc changing
 
@@ -167,40 +160,30 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             // find any special 'at cursor' errors
             const cursorDecos = decos.find(undefined, undefined, spec => !!spec.cursor);
             if (cursorDecos.length) {
-
               // there will only be one cursor, capture it's position then remove it
               const word = cursorDecos[0].spec.word as string;
               const { from, to } = cursorDecos[0];
               decos = decos.remove(cursorDecos);
 
               // add it back in as a real spelling error
-              decos = decos.add(tr.doc, [Decoration.inline(
-                from,
-                to,
-                { class: kSpellingErrorClass },
-                { word })
-              ]);
+              decos = decos.add(tr.doc, [Decoration.inline(from, to, { class: kSpellingErrorClass }, { word })]);
             }
 
             // return decorators
             return decos;
-
           } else {
-
             // no content or selection change, return old w/o mapping
             return old;
-
           }
-
-        }
+        },
       },
       props: {
         decorations: (state: EditorState) => {
           return realtimeSpellingKey.getState(state);
         },
         handleDOMEvents: {
-          contextmenu: spellingSuggestionContextMenuHandler(ui)
-        }
+          contextmenu: spellingSuggestionContextMenuHandler(ui),
+        },
       },
     });
 
@@ -224,9 +207,8 @@ function spellingDecorations(
   excluded: MarkType[],
   excludeCursor = false,
   from = -1,
-  to = -1
+  to = -1,
 ): Decoration[] {
-
   // break words
   const words = getWords(state, from, to, spelling, excluded);
 
@@ -239,7 +221,7 @@ function spellingDecorations(
     if (!spelling.checkWord(wordCheck)) {
       const attrs: DecorationAttrs = {};
       const spec: { [key: string]: any } = {
-        word: wordCheck
+        word: wordCheck,
       };
       if (excludeCursor && state.selection.head > word.start && state.selection.head <= word.end) {
         spec.cursor = true;
@@ -253,9 +235,7 @@ function spellingDecorations(
 }
 
 function spellingSuggestionContextMenuHandler(ui: EditorUI) {
-
   return (view: EditorView, event: Event) => {
-
     if (!ui.display.showContextMenu) {
       return false;
     }
@@ -267,7 +247,7 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
         exec: () => {
           action();
           view.focus();
-        }
+        },
       };
     };
 
@@ -283,7 +263,6 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
     };
 
     if (event.target && event.target instanceof Node) {
-
       // alias schema
       const schema = view.state.schema;
 
@@ -291,12 +270,11 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
       const pos = view.posAtDOM(event.target, 0);
       const deco = realtimeSpellingKey.getState(view.state)!.find(pos, pos);
       if (deco.length) {
-
         // get word
         const { from, to } = deco[0];
         const word = spellcheckerWord(view.state.doc.textBetween(from, to));
 
-        // get suggetions 
+        // get suggetions
         const kMaxSuggetions = 5;
         const suggestions = ui.spelling.suggestionList(word);
 
@@ -312,7 +290,7 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
               setTextSelection(from + suggestion.length)(tr);
               view.dispatch(tr);
               view.focus();
-            }
+            },
           };
         });
         if (menuItems.length) {
@@ -321,7 +299,9 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
 
         menuItems.push(menuAction(ui.context.translateText('Ignore All'), () => ui.spelling.ignoreWord(word)));
         menuItems.push({ separator: true });
-        menuItems.push(menuAction(ui.context.translateText('Add to Dictionary'), () => ui.spelling.addToDictionary(word)));
+        menuItems.push(
+          menuAction(ui.context.translateText('Add to Dictionary'), () => ui.spelling.addToDictionary(word)),
+        );
 
         // show context menu
         showContextMenu(menuItems);
@@ -340,7 +320,7 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
           const word = spellcheckerWord(view.state.doc.textBetween(from, to));
           if (ui.spelling.isWordIgnored(word)) {
             showContextMenu([
-              menuAction(`${ui.context.translateText('Unignore')} \'${word}\'`, () => ui.spelling.unignoreWord(word))
+              menuAction(`${ui.context.translateText('Unignore')} \'${word}\'`, () => ui.spelling.unignoreWord(word)),
             ]);
             return true;
           }

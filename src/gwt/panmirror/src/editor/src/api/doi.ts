@@ -14,7 +14,7 @@
  */
 
 export interface DOIResult {
-  status: "ok" | "notfound" | "nohost" | "error";
+  status: 'ok' | 'notfound' | 'nohost' | 'error';
   message: any | null;
   error: string;
 }

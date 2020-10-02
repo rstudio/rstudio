@@ -40,7 +40,6 @@ export interface EditorRmdChunk {
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
 
 export function canInsertRmdChunk(state: EditorState) {
-
   // must either be at the body top level, within a list item, within a div, or within a
   // blockquote (and never within a table)
   const schema = state.schema;
@@ -52,8 +51,7 @@ export function canInsertRmdChunk(state: EditorState) {
     !selectionIsBodyTopLevel(state.selection) &&
     !within(schema.nodes.list_item) &&
     !within(schema.nodes.blockquote) &&
-    (schema.nodes.div && !within(schema.nodes.div))
-
+    schema.nodes.div && !within(schema.nodes.div)
   ) {
     return false;
   }
@@ -156,9 +154,7 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     // a completely empty chunk (no second line) should be returned
     // as such. if it's not completely empty then append a newline
     // to the result of split (so that the chunk ends w/ a newline)
-    const chunkCode = lines.length > 1
-      ? (lines.slice(1).join('\n') + '\n')
-      : '';
+    const chunkCode = lines.length > 1 ? lines.slice(1).join('\n') + '\n' : '';
 
     return {
       lang,
@@ -189,7 +185,7 @@ export function rmdChunkEngineAndLabel(text: string) {
   if (match) {
     return {
       engine: match[1],
-      label: match[2]
+      label: match[2],
     };
   } else {
     return null;

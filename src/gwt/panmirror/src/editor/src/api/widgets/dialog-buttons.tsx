@@ -13,14 +13,14 @@
  *
  */
 
-import { WidgetProps } from "./react";
+import { WidgetProps } from './react';
 
-import { EditorUI } from "../ui";
+import { EditorUI } from '../ui';
 
-import { TextButton } from "./button"; import React from "react";
+import { TextButton } from './button';
+import React from 'react';
 
 import './dialog-buttons.css';
-
 
 export interface DialogButtonsProps extends WidgetProps {
   okLabel: string;
@@ -31,14 +31,15 @@ export interface DialogButtonsProps extends WidgetProps {
 
 export const DialogButtons: React.FC<DialogButtonsProps> = props => {
   return (
-    <div className='pm-dialog-buttons-panel' style={props.style}>
+    <div className="pm-dialog-buttons-panel" style={props.style}>
       <TextButton
         title={props.okLabel}
         classes={['pm-default-theme', 'pm-dialog-buttons-button', 'pm-rstudio-button']}
         onClick={props.onOk}
         style={{
-          fontWeight: 600
-        }} />
+          fontWeight: 600,
+        }}
+      />
 
       <TextButton
         title={props.cancelLabel}

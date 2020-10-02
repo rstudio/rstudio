@@ -13,7 +13,6 @@
  *
  */
 
-
 export function logException(e: Error) {
   // TODO: log exceptions (we don't want to use console.log in production code, so this would
   // utilize some sort of external logging facility)

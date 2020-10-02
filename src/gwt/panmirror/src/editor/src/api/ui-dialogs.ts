@@ -13,13 +13,13 @@
  *
  */
 
-import { LinkTargets, LinkCapabilities, LinkType } from "./link";
-import { ImageDimensions } from "./image";
-import { ListCapabilities, ListType } from "./list";
-import { TableCapabilities } from "./table";
-import { CSL } from "./csl";
-import { CiteField } from "./cite";
-import { kStyleAttrib, attrPartitionKeyvalue, pandocAttrKeyvalueFromText } from "./pandoc_attr";
+import { LinkTargets, LinkCapabilities, LinkType } from './link';
+import { ImageDimensions } from './image';
+import { ListCapabilities, ListType } from './list';
+import { TableCapabilities } from './table';
+import { CSL } from './csl';
+import { CiteField } from './cite';
+import { kStyleAttrib, attrPartitionKeyvalue, pandocAttrKeyvalueFromText } from './pandoc_attr';
 
 export interface EditorDialogs {
   alert: AlertFn;
@@ -43,7 +43,7 @@ export type EditorHTMLDialogFn = (
   okText: string | null,
   create: EditorHTMLDialogCreateFn,
   focus: VoidFunction,
-  validate: EditorHTMLDialogValidateFn
+  validate: EditorHTMLDialogValidateFn,
 ) => Promise<boolean>;
 
 export type EditorHTMLDialogCreateFn = (
@@ -52,7 +52,7 @@ export type EditorHTMLDialogCreateFn = (
   confirm: VoidFunction,
   cancel: VoidFunction,
   showProgress: (message: string) => void,
-  hideProgress: VoidFunction
+  hideProgress: VoidFunction,
 ) => HTMLElement;
 
 export type EditorHTMLDialogValidateFn = () => string | null;
@@ -63,7 +63,13 @@ export const kAlertTypeError = 3;
 
 export type AlertFn = (message: string, title: string, type: number) => Promise<boolean>;
 
-export type YesNoMessageFn = (message: string, title: string, type: number, yesLabel: string, noLabel: string) => Promise<boolean>;
+export type YesNoMessageFn = (
+  message: string,
+  title: string,
+  type: number,
+  yesLabel: string,
+  noLabel: string,
+) => Promise<boolean>;
 
 export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 
@@ -209,8 +215,6 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   };
 }
 
-
-
 function asPandocId(id: string) {
   return id.replace(/^#/, '');
 }
@@ -242,7 +246,6 @@ function attrTextFromKeyvalue(keyvalue: Array<[string, string]>) {
   return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
 }
 
-
 function asHtmlId(id: string | undefined) {
   if (id) {
     if (id.startsWith('#')) {
@@ -266,5 +269,3 @@ function asHtmlClass(clz: string | undefined) {
     return clz;
   }
 }
-
-

@@ -24,7 +24,6 @@ import { isElementVisible } from '../../api/dom';
 import { EditorEvents } from '../../api/events';
 import { ResizeEvent } from '../../api/event-types';
 
-
 import { imageDialog } from './image-dialog';
 import {
   attachResizeUI,
@@ -270,7 +269,6 @@ class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg() {
-
     // unsubscribe from any existing resource watcher
     if (this.unregisterWatchImg) {
       this.unregisterWatchImg();

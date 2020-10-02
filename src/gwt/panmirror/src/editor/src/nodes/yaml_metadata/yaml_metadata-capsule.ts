@@ -37,7 +37,7 @@ export function yamlMetadataBlockCapsuleFilter() {
 
     match: kYamlBlocksRegex,
 
-    // if there was an unterminated yaml block inside a code block (followed by more yaml, 
+    // if there was an unterminated yaml block inside a code block (followed by more yaml,
     // perhaps in yet another code block) then the main regex eats the code block boundary.
     // provide a discard expression that excludes any yaml block that has what appears
     // to be a fenced code block boundary
@@ -60,11 +60,10 @@ export function yamlMetadataBlockCapsuleFilter() {
 
     // write as yaml_metadata
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-      writer.openNode(schema.nodes.yaml_metadata,
-        {
-          navigation_id: uuidv4(),
-          md_index: capsule.position
-        });
+      writer.openNode(schema.nodes.yaml_metadata, {
+        navigation_id: uuidv4(),
+        md_index: capsule.position,
+      });
       // write the lines w/o the source-level prefix
       writer.writeText(blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix));
       writer.closeNode();

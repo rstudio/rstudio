@@ -179,7 +179,6 @@ function tagInfo(text: string, endLoc: number) {
 }
 
 function tagStartLoc(text: string, endLoc: number) {
-
   let inSingleQuote = false;
   let inDoubleQuote = false;
   let i;

@@ -13,14 +13,18 @@
  *
  */
 
-
 import { EditorView } from 'prosemirror-view';
 import { EditorState, Transaction } from 'prosemirror-state';
 
 import React from 'react';
 
 import { EditorUI } from '../../api/ui';
-import { CompletionHandler, CompletionResult, performCompletionReplacement, CompletionContext } from '../../api/completion';
+import {
+  CompletionHandler,
+  CompletionResult,
+  performCompletionReplacement,
+  CompletionContext,
+} from '../../api/completion';
 import { formatAuthors, formatIssuedDate } from '../../api/cite';
 import { CSL, imageForType } from '../../api/csl';
 import { CompletionItemDetailedView } from '../../api/widgets/completion-detailed';
@@ -57,7 +61,7 @@ export function citationDoiCompletionHandler(
         view.dispatch(tr);
       } else if (cslEntry) {
         // It isn't in the bibliography, show the insert cite dialog
-        return insertCitation(view, cslEntry.csl.DOI || "", bibManager, pos, ui, server.pandoc, cslEntry.csl);
+        return insertCitation(view, cslEntry.csl.DOI || '', bibManager, pos, ui, server.pandoc, cslEntry.csl);
       }
       return Promise.resolve();
     },
@@ -84,8 +88,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
         pos: parsedDOI.pos,
         offset: parsedDOI.offset,
         completions: async (_state: EditorState, completionContext: CompletionContext) => {
-
-          // If we have a local source that matches this DOI, just show the 
+          // If we have a local source that matches this DOI, just show the
           // completion for the entry
           await bibliographyManager.load(ui, context.doc);
           const source = bibliographyManager.findDoiInLocalBibliography(parsedDOI.token);
@@ -98,17 +101,18 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                 image: imageForType(ui.images, source.type)[ui.prefs.darkMode() ? 1 : 0],
                 formattedAuthor: formatAuthors(source.author, 50),
                 formattedIssueDate: formatIssuedDate(source.issued),
-              }];
+              },
+            ];
           }
 
-          // If we don't have a local source, we shouldn't handle pastes- the 
+          // If we don't have a local source, we shouldn't handle pastes- the
           // paste handler is expected to deal with this case. If the user is typing
-          // a DOI, we may need to still check for completions below, but this should be 
+          // a DOI, we may need to still check for completions below, but this should be
           // unusual
           if (!completionContext.isPaste && bibliographyManager.allowsWrites()) {
             // Check with the server to see if we can get citation data for this DOI
             const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
-            if (result.status === "ok") {
+            if (result.status === 'ok') {
               const csl = result.message;
 
               // We should only return csl that includes a DOI since this UI depends upon that being present
@@ -129,7 +133,7 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
             }
           }
           return [];
-        }
+        },
       };
     }
     return null;

@@ -13,12 +13,12 @@
  *
  */
 
-import { NodeArray, RangeArray, NameDictObject, TextNodeObject } from "biblatex-csl-converter";
-import { FieldMap } from "./fields";
-import { typeMapping } from "./types";
-import { FormattingTags } from "./formatting";
-import characters from "./characters";
-import { BibDB, EntryObject } from "../bibliography/bibDB";
+import { NodeArray, RangeArray, NameDictObject, TextNodeObject } from 'biblatex-csl-converter';
+import { FieldMap } from './fields';
+import { typeMapping } from './types';
+import { FormattingTags } from './formatting';
+import characters from './characters';
+import { BibDB, EntryObject } from '../bibliography/bibDB';
 
 export interface Config {
   traditionalNames?: boolean;
@@ -37,14 +37,13 @@ interface Warning {
 }
 
 export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
-
   // Keys of items to export
   const keysToExport = Object.keys(bibDB);
 
   // The final entries
   const bibtexEntries: Entry[] = [];
 
-  // Go through each item and compose the entry and 
+  // Go through each item and compose the entry and
   // append all the fields with BibTeX specific formatting
   keysToExport?.forEach(key => {
     const entryObject: EntryObject = bibDB[key];
@@ -54,7 +53,7 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
 
     const bibtexEntry: Entry = {
       type: bibTexType,
-      key: entryObject.entry_key
+      key: entryObject.entry_key,
     };
 
     // The formatted output fields for this entry
@@ -63,14 +62,12 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
     // All the fields for this entry
     const fieldsForExport: Record<string, any> = entryObject.fields;
     Object.keys(fieldsForExport).forEach(fieldKey => {
-
       // Lookup the field information in the mapping
       // (maps CSL fields names to their peer BibTeX types)
       const fieldType = FieldMap[fieldKey];
 
       // This is a well understood field type
       if (fieldType) {
-
         const type = fieldType.type;
 
         // Read the type (either as raw value or passing the type to look it up)
@@ -116,7 +113,9 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
             outputFields[bibtexKey] = bibtexValue.replace(/{|}/g, '');
             break;
           case 'l_key':
-            outputFields[bibtexKey] = escapeNonAscii(bibtexValue.map((k: string) => formatKey(k, bibtexKey)).join(' and '));
+            outputFields[bibtexKey] = escapeNonAscii(
+              bibtexValue.map((k: string) => formatKey(k, bibtexKey)).join(' and '),
+            );
             break;
           case 'l_literal':
             outputFields[bibtexKey] = bibtexValue.map((text: NodeArray) => formatText(text)).join(' and ');
@@ -142,11 +141,9 @@ export function bibDbToBibTeX(bibDB: BibDB, config: Config = {}) {
 
 // Writes BibTex
 const toBibtex = (entries: Entry[]): string => {
-
   const length = entries.length;
   let bibTexStr = '';
   for (let i = 0; i < length; i++) {
-
     // The entry we're writing
     const entry = entries[i];
 
@@ -176,7 +173,7 @@ const toBibtex = (entries: Entry[]): string => {
 
 const sortedKeys = (fields: { [key: string]: string }) => {
   let pos = 1;
-  const keySortOrder: { [id: string]: number; } = {};
+  const keySortOrder: { [id: string]: number } = {};
   keySortOrder.title = pos++;
   keySortOrder.author = pos++;
   keySortOrder.editor = pos++;
@@ -278,7 +275,6 @@ const formatText = (nodes: NodeArray): string => {
   const textNodes = nodes.concat({ type: 'text', text: '' });
 
   textNodes.forEach(node => {
-
     /*
     // TODO: Do we need to deal with this (and if so, we need to re-add that escape routine)
     if (node.type === 'variable') {
@@ -299,7 +295,7 @@ const formatText = (nodes: NodeArray): string => {
       // Figure out the new marks for this node
       // TODO: Do we need to re-enable math mode for these low level sup/sub nodes?
       // let mathEnabled = false;
-      node.marks.forEach((mark) => {
+      node.marks.forEach(mark => {
         // We need to activate mathmode for the lowest level sub/sup node.
         // Don't activate math mode for the lowest level node
         /*
@@ -328,9 +324,10 @@ const formatText = (nodes: NodeArray): string => {
         closing = true;
       }
       if (closing) {
-        const closeTag = (lastNodeMarks[0] !== 'nocase' && FormattingTags[mark].open[0] === '\\') ?
-          `${FormattingTags[mark].close}}` :
-          FormattingTags[mark].close;
+        const closeTag =
+          lastNodeMarks[0] !== 'nocase' && FormattingTags[mark].open[0] === '\\'
+            ? `${FormattingTags[mark].close}}`
+            : FormattingTags[mark].close;
         closeTags.push(closeTag);
       }
     });
@@ -371,14 +368,14 @@ const formatText = (nodes: NodeArray): string => {
 
 // Formats ranges
 const formatRange = (value: RangeArray[]): string => {
-  // The correct symbol for a range of numbers is an en-dash, which in LaTeX is usually input as --. 
+  // The correct symbol for a range of numbers is an en-dash, which in LaTeX is usually input as --.
   return value.map(range => range.map(text => formatText(text)).join('--')).join(',');
 };
 
 // Formats author values
 const formatNames = (names: NameDictObject[]): string => {
   const formattedNames: string[] = [];
-  names.forEach((name) => {
+  names.forEach(name => {
     if (name.literal) {
       // Use the literal
       const literal = formatText(name.literal);
@@ -406,4 +403,3 @@ const formatNames = (names: NameDictObject[]): string => {
   });
   return formattedNames.join(' and ');
 };
-

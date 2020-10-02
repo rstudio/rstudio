@@ -57,11 +57,7 @@ import './ace.css';
 
 const plugin = new PluginKey('ace');
 
-export function acePlugins(
-  codeViews: { [key: string]: CodeViewOptions },
-  context: ExtensionContext
-): Plugin[] {
-
+export function acePlugins(codeViews: { [key: string]: CodeViewOptions }, context: ExtensionContext): Plugin[] {
   // shared services
   const aceRenderQueue = new AceRenderQueue(context.events);
   const aceNodeViews = new AceNodeViews();
@@ -73,7 +69,15 @@ export function acePlugins(
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new AceNodeView(node, view, getPos as () => number, context, codeViews[name], aceRenderQueue, aceNodeViews);
+      return new AceNodeView(
+        node,
+        view,
+        getPos as () => number,
+        context,
+        codeViews[name],
+        aceRenderQueue,
+        aceNodeViews,
+      );
     };
   });
 
@@ -83,9 +87,9 @@ export function acePlugins(
       props: {
         nodeViews,
         handleDOMEvents: {
-          click: aceNodeViews.handleClick.bind(aceNodeViews)
-        }
-      }
+          click: aceNodeViews.handleClick.bind(aceNodeViews),
+        },
+      },
     }),
     // arrow in and out of editor
     keymap({
@@ -102,15 +106,10 @@ export function acePlugins(
  * to be applied when the editor rendering completes)
  */
 class QueuedSelection {
-  constructor(
-    public readonly anchor: number,
-    public readonly head: number
-  ) {
-  }
+  constructor(public readonly anchor: number, public readonly head: number) {}
 }
 
 export class AceNodeView implements NodeView {
-
   public readonly getPos: () => number;
   public node: ProsemirrorNode;
   public readonly dom: HTMLElement;
@@ -161,7 +160,7 @@ export class AceNodeView implements NodeView {
     this.getPos = getPos;
 
     // Initialize values
-    this.mode = "";
+    this.mode = '';
     this.escaping = false;
     this.gapCursorPending = false;
     this.findMarkers = [];
@@ -180,7 +179,7 @@ export class AceNodeView implements NodeView {
     this.options = options;
 
     // The editor's outer node is our DOM representation
-    this.dom = document.createElement("div");
+    this.dom = document.createElement('div');
     this.dom.classList.add('pm-code-editor');
     this.dom.classList.add('pm-ace-editor');
     this.dom.classList.add('pm-ace-editor-inactive');
@@ -202,11 +201,13 @@ export class AceNodeView implements NodeView {
     this.updateMode();
 
     // observe all editor dispatches
-    this.subscriptions.push(this.events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
-      if (tr) {
-        this.onEditorDispatch(tr);
-      }
-    }));
+    this.subscriptions.push(
+      this.events.subscribe(DispatchEvent, (tr: Transaction | undefined) => {
+        if (tr) {
+          this.onEditorDispatch(tr);
+        }
+      }),
+    );
 
     // This flag is used to avoid an update loop between the outer and
     // inner editor
@@ -228,7 +229,7 @@ export class AceNodeView implements NodeView {
 
   public destroy() {
     // Unsubscribe from events
-    this.subscriptions.forEach((unsub) => unsub());
+    this.subscriptions.forEach(unsub => unsub());
 
     // Clean up attached editor instance when it's removed from the DOM
     if (this.chunk) {
@@ -249,14 +250,13 @@ export class AceNodeView implements NodeView {
     this.node = node;
     this.updateMode();
 
-    const AceRange = window.require("ace/range").Range;
+    const AceRange = window.require('ace/range').Range;
     const doc = this.editSession.getDocument();
 
     const change = computeChange(this.editSession.getValue(), node.textContent);
     if (change) {
       this.updating = true;
-      const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0),
-        doc.indexToPosition(change.to, 0));
+      const range = AceRange.fromPoints(doc.indexToPosition(change.from, 0), doc.indexToPosition(change.to, 0));
       this.editSession.replace(range, change.text);
       this.updating = false;
     }
@@ -272,7 +272,7 @@ export class AceNodeView implements NodeView {
     // Get all of the find results inside this node
     const decorations = findPluginState(this.view.state);
     if (decorations) {
-      const decos = decorations?.find(this.getPos(), (this.getPos() + node.nodeSize) - 1);
+      const decos = decorations?.find(this.getPos(), this.getPos() + node.nodeSize - 1);
 
       // If we got results, render them
       if (decos) {
@@ -289,7 +289,7 @@ export class AceNodeView implements NodeView {
           const range = AceRange.fromPoints(markerFrom, markerTo);
 
           // Create the search result marker and add it to the rendered set
-          const markerId = this.editSession.addMarker(range, deco.type.attrs.class, "result", true);
+          const markerId = this.editSession.addMarker(range, deco.type.attrs.class, 'result', true);
           this.findMarkers.push(markerId);
         });
       }
@@ -310,9 +310,8 @@ export class AceNodeView implements NodeView {
     }
     this.updating = true;
     const doc = this.editSession.getDocument();
-    const AceRange = window.require("ace/range").Range;
-    const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0),
-      doc.indexToPosition(head, 0));
+    const AceRange = window.require('ace/range').Range;
+    const range = AceRange.fromPoints(doc.indexToPosition(anchor, 0), doc.indexToPosition(head, 0));
     this.editSession.getSelection().setSelectionRange(range);
     this.updating = false;
   }
@@ -343,8 +342,7 @@ export class AceNodeView implements NodeView {
 
   private forwardSelection() {
     // ignore if we don't have focus
-    if (!this.chunk ||
-      !this.chunk.element.contains(window.document.activeElement)) {
+    if (!this.chunk || !this.chunk.element.contains(window.document.activeElement)) {
       return;
     }
 
@@ -367,7 +365,7 @@ export class AceNodeView implements NodeView {
     return TextSelection.create(doc, anchor, head);
   }
 
-  // detect the entire editor being selected across, in which case we add an ace marker 
+  // detect the entire editor being selected across, in which case we add an ace marker
   // visually indicating that the text is selected
   private highlightSelectionAcross(selection: Selection) {
     if (!this.aceEditor || !this.editSession) {
@@ -382,11 +380,11 @@ export class AceNodeView implements NodeView {
 
     // check for selection spanning us
     const pos = this.getPos();
-    if ((selection.from < pos) && (selection.to > pos + this.node.nodeSize)) {
+    if (selection.from < pos && selection.to > pos + this.node.nodeSize) {
       const doc = this.editSession.getDocument();
-      const AceRange = window.require("ace/range").Range;
+      const AceRange = window.require('ace/range').Range;
       const range = AceRange.fromPoints(doc.indexToPosition(0, 0), doc.indexToPosition(this.node.nodeSize - 1, 0));
-      this.selectionMarker = this.editSession.addMarker(range, 'pm-selected-text', "selection", true);
+      this.selectionMarker = this.editSession.addMarker(range, 'pm-selected-text', 'selection', true);
     }
   }
 
@@ -409,7 +407,7 @@ export class AceNodeView implements NodeView {
 
   /**
    * Scrolls a child of the editor chunk into view.
-   * 
+   *
    * @param ele The child to scroll.
    */
   private scrollIntoView(ele: HTMLElement) {
@@ -455,11 +453,10 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor
-    this.chunk = this.ui.chunks.createChunkEditor('ace',
-      this.node.attrs.md_index, {
+    this.chunk = this.ui.chunks.createChunkEditor('ace', this.node.attrs.md_index, {
       getPos: () => this.getPos(),
-      scrollIntoView: (ele) => this.scrollIntoView(ele),
-      scrollCursorIntoView: () => this.scrollCursorIntoView()
+      scrollIntoView: ele => this.scrollIntoView(ele),
+      scrollCursorIntoView: () => this.scrollCursorIntoView(),
     });
 
     // populate initial contents
@@ -474,11 +471,11 @@ export class AceNodeView implements NodeView {
     this.editSession = this.aceEditor.getSession();
 
     // remove the preview and recreate chunk toolbar
-    this.dom.innerHTML = "";
+    this.dom.innerHTML = '';
     this.dom.appendChild(this.chunk.element);
 
     // Propagate updates from the code editor to ProseMirror
-    this.aceEditor.on("changeSelection", () => {
+    this.aceEditor.on('changeSelection', () => {
       if (!this.updating) {
         this.forwardSelection();
       }
@@ -491,7 +488,7 @@ export class AceNodeView implements NodeView {
 
     // Forward selection we we receive it
     this.aceEditor.on('focus', () => {
-      this.dom.classList.remove("pm-ace-editor-inactive");
+      this.dom.classList.remove('pm-ace-editor-inactive');
       this.forwardSelection();
     });
 
@@ -499,7 +496,7 @@ export class AceNodeView implements NodeView {
       // Add a class to editor; this class contains CSS rules that hide editor
       // components that Ace cannot hide natively (such as the cursor,
       // matching bracket indicator, and active selection)
-      this.dom.classList.add("pm-ace-editor-inactive");
+      this.dom.classList.add('pm-ace-editor-inactive');
     });
 
     // If the cursor moves and we're in focus, ensure that the cursor is
@@ -523,106 +520,115 @@ export class AceNodeView implements NodeView {
     // will check to see whether the movement should leave the editor, and if
     // so will do so instead of moving the cursor.
     this.aceEditor.commands.addCommand({
-      name: "leftEscape",
-      bindKey: "Left",
-      exec: () => { this.arrowMaybeEscape('char', -1, "gotoleft"); }
+      name: 'leftEscape',
+      bindKey: 'Left',
+      exec: () => {
+        this.arrowMaybeEscape('char', -1, 'gotoleft');
+      },
     });
     this.aceEditor.commands.addCommand({
-      name: "rightEscape",
-      bindKey: "Right",
-      exec: () => { this.arrowMaybeEscape('char', 1, "gotoright"); }
+      name: 'rightEscape',
+      bindKey: 'Right',
+      exec: () => {
+        this.arrowMaybeEscape('char', 1, 'gotoright');
+      },
     });
     this.aceEditor.commands.addCommand({
-      name: "upEscape",
-      bindKey: "Up",
-      exec: () => { this.arrowMaybeEscape('line', -1, "golineup"); }
+      name: 'upEscape',
+      bindKey: 'Up',
+      exec: () => {
+        this.arrowMaybeEscape('line', -1, 'golineup');
+      },
     });
     this.aceEditor.commands.addCommand({
-      name: "downEscape",
-      bindKey: "Down",
-      exec: () => { this.arrowMaybeEscape('line', 1, "golinedown"); }
+      name: 'downEscape',
+      bindKey: 'Down',
+      exec: () => {
+        this.arrowMaybeEscape('line', 1, 'golinedown');
+      },
     });
 
     // Pressing Backspace in the editor when it's empty should delete it.
     this.aceEditor.commands.addCommand({
-      name: "backspaceDeleteNode",
-      bindKey: "Backspace",
-      exec: () => { this.backspaceMaybeDeleteNode(); }
+      name: 'backspaceDeleteNode',
+      bindKey: 'Backspace',
+      exec: () => {
+        this.backspaceMaybeDeleteNode();
+      },
     });
 
     // Handle undo/redo in ProseMirror
     this.aceEditor.commands.addCommand({
-      name: "undoProsemirror",
+      name: 'undoProsemirror',
       bindKey: {
-        win: "Ctrl-Z",
-        mac: "Command-Z"
+        win: 'Ctrl-Z',
+        mac: 'Command-Z',
       },
       exec: () => {
         if (undo(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-      }
+      },
     });
     this.aceEditor.commands.addCommand({
-      name: "redoProsemirror",
+      name: 'redoProsemirror',
       bindKey: {
-        win: "Ctrl-Shift-Z|Ctrl-Y",
-        mac: "Command-Shift-Z|Command-Y"
+        win: 'Ctrl-Shift-Z|Ctrl-Y',
+        mac: 'Command-Shift-Z|Command-Y',
       },
       exec: () => {
         if (redo(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-      }
+      },
     });
 
     // Handle Select All in ProseMirror
     this.aceEditor.commands.addCommand({
-      name: "selectAllProsemirror",
+      name: 'selectAllProsemirror',
       bindKey: {
-        win: "Ctrl-A",
-        mac: "Command-A"
+        win: 'Ctrl-A',
+        mac: 'Command-A',
       },
       exec: () => {
         if (selectAll(this.view.state, this.view.dispatch, this.view)) {
           this.view.focus();
         }
-      }
+      },
     });
 
     // Handle shortcuts for moving focus out of the code editor and into
     // ProseMirror
     this.aceEditor.commands.addCommand({
-      name: "exitCodeBlock",
-      bindKey: "Shift-Enter",
+      name: 'exitCodeBlock',
+      bindKey: 'Shift-Enter',
       exec: () => {
         if (exitCode(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-      }
+      },
     });
 
     // Create a command for inserting paragraphs from the code editor
     this.aceEditor.commands.addCommand({
-      name: "insertParagraph",
+      name: 'insertParagraph',
       bindKey: {
-        win: "Ctrl-\\",
-        mac: "Command-\\"
+        win: 'Ctrl-\\',
+        mac: 'Command-\\',
       },
       exec: () => {
         if (insertParagraph(this.view.state, this.view.dispatch)) {
           this.view.focus();
         }
-      }
+      },
     });
-
 
     // Line-by-line execution
     this.aceEditor.commands.addCommand({
-      name: "executeSelection",
+      name: 'executeSelection',
       bindKey: {
-        win: "Ctrl-Enter",
-        mac: "Ctrl-Enter|Command-Enter"
+        win: 'Ctrl-Enter',
+        mac: 'Ctrl-Enter|Command-Enter',
       },
       exec: () => {
         if (this.chunk && this.aceEditor) {
@@ -640,15 +646,17 @@ export class AceNodeView implements NodeView {
             this.arrowMaybeEscape('line', 1);
           }
         }
-      }
+      },
     });
 
     // If an attribute editor function was supplied, bind it to F4
     if (this.options.attrEditFn) {
       this.aceEditor.commands.addCommand({
-        name: "editAttributes",
-        bindKey: "F4",
-        exec: () => { this.options.attrEditFn!(this.view.state, this.view.dispatch, this.view); }
+        name: 'editAttributes',
+        bindKey: 'F4',
+        exec: () => {
+          this.options.attrEditFn!(this.view.state, this.view.dispatch, this.view);
+        },
       });
     }
 
@@ -658,7 +666,7 @@ export class AceNodeView implements NodeView {
     }
 
     // Disconnect font metrics system after render loop
-    (this.aceEditor.renderer as any).on("afterRender", () => {
+    (this.aceEditor.renderer as any).on('afterRender', () => {
       // Update known rendered width
       if (this.chunk) {
         this.renderedWidth = this.chunk.element.offsetWidth;
@@ -690,16 +698,20 @@ export class AceNodeView implements NodeView {
 
     // Subscribe to resize event; will reflow the editor to wrap properly at the
     // new width
-    this.subscriptions.push(this.events.subscribe(ResizeEvent, () => {
-      this.debounceResize();
-    }));
+    this.subscriptions.push(
+      this.events.subscribe(ResizeEvent, () => {
+        this.debounceResize();
+      }),
+    );
 
     // Subscribe to scroll event; invalidates the row we're scrolled to so
     // scrollback will be triggered if necessary (after e.g., typing after
     // scrolling offscreen)
-    this.subscriptions.push(this.events.subscribe(ScrollEvent, () => {
-      this.scrollRow = -1;
-    }));
+    this.subscriptions.push(
+      this.events.subscribe(ScrollEvent, () => {
+        this.scrollRow = -1;
+      }),
+    );
   }
 
   /**
@@ -712,7 +724,7 @@ export class AceNodeView implements NodeView {
       window.clearTimeout(this.resizeTimer);
     }
 
-    // Create a new resize timer 
+    // Create a new resize timer
     this.resizeTimer = window.setTimeout(() => {
       if (this.chunk && this.aceEditor) {
         // If the width we last rendered is different than our current width,
@@ -752,10 +764,9 @@ export class AceNodeView implements NodeView {
         this.view.focus();
       }
     } else if (this.aceEditor) {
-      this.aceEditor.execCommand("backspace");
+      this.aceEditor.execCommand('backspace');
     }
   }
-
 
   // Checks to see whether an arrow key should escape the editor or not. If so,
   // sends the focus to the right node; if not, executes the given Ace command
@@ -766,9 +777,11 @@ export class AceNodeView implements NodeView {
     }
     const pos = this.aceEditor.getCursorPosition();
     const lastrow = this.editSession.getLength() - 1;
-    if ((!this.aceEditor.getSelection().isEmpty()) ||
+    if (
+      !this.aceEditor.getSelection().isEmpty() ||
       pos.row !== (dir < 0 ? 0 : lastrow) ||
-      (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))) {
+      (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))
+    ) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command
       if (command) {
@@ -804,11 +817,9 @@ export class AceNodeView implements NodeView {
    * Ensures that the Ace cursor is visible in the scrollable region of the document.
    */
   private scrollCursorIntoView(): void {
-
     // No need to try to enforce cursor position if we're already scrolled to
     // this row
-    if (this.editSession &&
-      this.editSession.getSelection().getCursor().row === this.scrollRow) {
+    if (this.editSession && this.editSession.getSelection().getCursor().row === this.scrollRow) {
       return;
     }
 
@@ -827,12 +838,12 @@ export class AceNodeView implements NodeView {
       const cursorRect = cursor.getBoundingClientRect();
 
       // Scrolling down?
-      const down = (cursorRect.bottom + cursorRect.height + 20) - containerRect.bottom;
+      const down = cursorRect.bottom + cursorRect.height + 20 - containerRect.bottom;
       if (down > 0) {
         container.scrollTop += down;
       } else {
         // Scrolling up?
-        const up = (containerRect.top + cursorRect.height + 35) - cursorRect.top;
+        const up = containerRect.top + cursorRect.height + 35 - cursorRect.top;
         if (up > 0) {
           container.scrollTop -= up;
         }
@@ -846,7 +857,6 @@ export class AceNodeView implements NodeView {
     }
   }
 }
-
 
 function computeChange(oldVal: string, newVal: string) {
   if (oldVal === newVal) {
@@ -889,4 +899,3 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]
     return false;
   };
 }
-

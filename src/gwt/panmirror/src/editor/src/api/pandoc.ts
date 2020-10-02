@@ -41,12 +41,7 @@ export interface PandocServer {
     sourceAsJson: string,
     sourceAsBibTeX: string,
   ): Promise<boolean>;
-  citationHTML(
-    file: string | null,
-    sourceAsJson: string,
-    csl: string | null
-  ): Promise<string>;
-
+  citationHTML(file: string | null, sourceAsJson: string, csl: string | null): Promise<string>;
 }
 
 export interface PandocWriterReferencesOptions {
@@ -335,9 +330,11 @@ export function stringifyTokens(c: PandocToken[], unemoji = false): string {
     .map(elem => {
       if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === PandocTokenType.Space ||
+      } else if (
+        elem.t === PandocTokenType.Space ||
         elem.t === PandocTokenType.SoftBreak ||
-        elem.t === PandocTokenType.LineBreak) {
+        elem.t === PandocTokenType.LineBreak
+      ) {
         return ' ';
       } else if (elem.t === PandocTokenType.Span) {
         const attr = pandocAttrReadAST(elem, kSpanAttr);
@@ -407,7 +404,6 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
 }
-
 
 // sort marks by priority (in descending order)
 export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {

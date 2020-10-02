@@ -99,7 +99,6 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
 
     // execute
     if (dispatch) {
-
       // eslint-disable-next-line no-useless-escape
       const lang = langAttrib.replace(/^[\.=]/, '');
 

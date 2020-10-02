@@ -23,7 +23,6 @@ import { PandocToken, PandocOutput, PandocTokenType } from '../api/pandoc';
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
-
 const extension = (context: ExtensionContext): Extension => {
   const { pandocExtensions } = context;
 
@@ -54,12 +53,12 @@ const extension = (context: ExtensionContext): Extension => {
             const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
-                ...mark.attrs,
-                classes: [...mark.attrs.classes, fontClass],
-              })
+                  ...mark.attrs,
+                  classes: [...mark.attrs.classes, fontClass],
+                })
               : {
-                class: fontClass,
-              };
+                  class: fontClass,
+                };
             return ['code', attrs];
           },
         },
@@ -112,6 +111,5 @@ const extension = (context: ExtensionContext): Extension => {
     },
   };
 };
-
 
 export default extension;

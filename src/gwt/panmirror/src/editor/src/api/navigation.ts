@@ -28,11 +28,11 @@ export interface EditorNavigation {
 }
 
 export enum NavigationType {
-  Pos = "pos",
-  Id = "id",
-  Href = "href",
-  Heading = "heading",
-  XRef = "xref"
+  Pos = 'pos',
+  Id = 'id',
+  Href = 'href',
+  Heading = 'heading',
+  XRef = 'xref',
 }
 
 export interface Navigation {
@@ -40,8 +40,12 @@ export interface Navigation {
   prevPos: number;
 }
 
-export function navigateTo(view: EditorView, type: NavigationType, location: string, animate = true): Navigation | null {
-
+export function navigateTo(
+  view: EditorView,
+  type: NavigationType,
+  location: string,
+  animate = true,
+): Navigation | null {
   switch (type) {
     case NavigationType.Pos:
       return navigateToPos(view, parseInt(location, 10), animate);
@@ -88,9 +92,7 @@ export function navigateToXRef(view: EditorView, xref: string, animate = true): 
   }
 }
 
-
 export function navigateToPos(view: EditorView, pos: number, animate = true): Navigation | null {
-
   // get previous position
   const prevPos = view.state.selection.from;
 
@@ -106,7 +108,6 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
   // find a targetable dom node at the position
   const node = findDomRefAtPos(pos, view.domAtPos.bind(view));
   if (node instanceof HTMLElement) {
-
     // auto-scroll to position (delay so we can grab the focus, as autoscrolling
     // doesn't seem to work unless you have the focus)
     setTimeout(() => {
@@ -122,7 +123,6 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
     }, 200);
 
     return { pos, prevPos };
-
   } else {
     return null;
   }
@@ -138,4 +138,3 @@ function navigate(view: EditorView, predicate: Predicate, animate = true): Navig
     return null;
   }
 }
-

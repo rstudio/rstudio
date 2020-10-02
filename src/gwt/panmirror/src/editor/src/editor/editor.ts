@@ -26,7 +26,14 @@ import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { EditorUI } from '../api/ui';
-import { attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput, InsertCiteProps, InsertCiteUI } from '../api/ui-dialogs';
+import {
+  attrPropsToInput,
+  attrInputToProps,
+  AttrProps,
+  AttrEditInput,
+  InsertCiteProps,
+  InsertCiteUI,
+} from '../api/ui-dialogs';
 
 import { Extension } from '../api/extension';
 import { PandocWriterOptions } from '../api/pandoc';
@@ -202,7 +209,7 @@ export class UITools {
     this.attr = {
       propsToInput: attrPropsToInput,
       inputToProps: attrInputToProps,
-      pandocAutoIdentifier: (text: string) => pandocAutoIdentifier(text, false)
+      pandocAutoIdentifier: (text: string) => pandocAutoIdentifier(text, false),
     };
 
     this.image = {
@@ -277,7 +284,7 @@ export class Editor {
     options = {
       autoFocus: false,
       spellCheck: false,
-      codeEditor: "codemirror",
+      codeEditor: 'codemirror',
       rmdImagePreview: false,
       hideFormatComment: false,
       className: '',
@@ -366,8 +373,8 @@ export class Editor {
     // carry omni insert info)
     this.registerCompletionExtension();
 
-    // register realtime spellchecking (done in a separate step b/c it 
-    // requires access to PandocMark definitions to determine which 
+    // register realtime spellchecking (done in a separate step b/c it
+    // requires access to PandocMark definitions to determine which
     // marks to exclude from spellchecking)
     this.registerRealtimeSpelling();
 
@@ -486,7 +493,6 @@ export class Editor {
       });
       this.view.updateState(this.state);
     } else {
-
       // note current editing location
       const location = this.getEditingLocation();
 
@@ -528,7 +534,7 @@ export class Editor {
       canonical,
       line_wrapping,
       unrecognized,
-      unparsed_meta
+      unparsed_meta,
     };
   }
 
@@ -540,7 +546,6 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
-
     // get the code
     const tr = this.state.tr;
     const code = await this.getMarkdownCode(tr, options);
@@ -549,7 +554,7 @@ export class Editor {
     return {
       code,
       selection_only: this.lastTrSelectionOnly,
-      location: getEditingOutlineLocation(this.state)
+      location: getEditingOutlineLocation(this.state),
     };
   }
 
@@ -631,16 +636,10 @@ export class Editor {
   }
 
   public getSelectedText(): string {
-
-    return this.state.doc.textBetween(
-      this.state.selection.from,
-      this.state.selection.to
-    );
-
+    return this.state.doc.textBetween(this.state.selection.from, this.state.selection.to);
   }
 
   public replaceSelection(value: string): void {
-
     // retrieve properties we need from selection
     const { from, empty } = this.view.state.selection;
 
@@ -657,7 +656,6 @@ export class Editor {
       const trSetSel = this.view.state.tr.setSelection(sel);
       this.view.dispatch(trSetSel);
     }
-
   }
 
   public getYamlFrontMatter() {
@@ -689,7 +687,6 @@ export class Editor {
   }
 
   public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
-
     // perform navigation
     const nav = navigateTo(this.view, type, location, animate);
 
@@ -701,7 +698,6 @@ export class Editor {
       this.emitEvent(NavigateEvent, nav);
     }
   }
-
 
   public resize() {
     this.syncContentWidth();
@@ -819,14 +815,14 @@ export class Editor {
         math: this.context.ui.math.typeset ? editorMath(this.context.ui) : undefined,
         events: {
           subscribe: this.subscribe.bind(this),
-          emit: this.emitEvent.bind(this)
+          emit: this.emitEvent.bind(this),
         },
         pandocExtensions: this.pandocFormat.extensions,
         pandocCapabilities: this.pandocCapabilities,
         server: this.context.server,
         navigation: {
-          navigate: this.navigate.bind(this)
-        }
+          navigate: this.navigate.bind(this),
+        },
       },
       this.context.extensions,
     );
@@ -848,14 +844,10 @@ export class Editor {
   }
 
   private registerRealtimeSpelling() {
-    this.extensions.registerPlugins([
-      realtimeSpellingPlugin(
-        this.schema,
-        this.extensions.pandocMarks(),
-        this.context.ui,
-        this.events
-      )
-    ], true);
+    this.extensions.registerPlugins(
+      [realtimeSpellingPlugin(this.schema, this.extensions.pandocMarks(), this.context.ui, this.events)],
+      true,
+    );
   }
 
   private createPlugins(): Plugin[] {
@@ -939,7 +931,7 @@ export class Editor {
     });
 
     // for windows desktop, build a list of control key handlers b/c qtwebengine
-    // ends up corrupting ctrl+ keys so they don't hit the ace keybinding 
+    // ends up corrupting ctrl+ keys so they don't hit the ace keybinding
     // (see: https://github.com/rstudio/rstudio/issues/7142)
     const ctrlKeyCodes: { [key: string]: CommandFn } = {};
     Object.keys(pluginKeys).forEach(keyCombo => {
@@ -972,7 +964,7 @@ export class Editor {
           }
           // default handling
           return prosemirrorKeydownHandler(view, event);
-        }
+        },
       },
     });
   }
@@ -1047,12 +1039,11 @@ export class Editor {
   }
 
   private async getMarkdownCode(tr: Transaction, options: PandocWriterOptions) {
-
-    // apply save fixups 
+    // apply save fixups
     this.extensionFixups(tr, FixupContext.Save);
 
     // apply sentence wrapping if requested
-    if (options.wrap === "sentence") {
+    if (options.wrap === 'sentence') {
       wrapSentences(tr);
     }
 

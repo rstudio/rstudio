@@ -31,10 +31,9 @@ export function imageEventsPlugin(ui: EditorUI) {
         drop: imageDrop(ui),
       },
       handlePaste: imagePaste(ui),
-    }
+    },
   });
 }
-
 
 function imagePaste(ui: EditorUI) {
   return (view: EditorView, event: Event) => {
@@ -112,7 +111,6 @@ function imageDrop(ui: EditorUI) {
 }
 
 function handleImageUris(view: EditorView, pos: number, event: Event, uris: string[], ui: EditorUI): boolean {
-
   // filter out images
   const imageUris = uris.filter(uri => {
     // get extension and check it it's an image

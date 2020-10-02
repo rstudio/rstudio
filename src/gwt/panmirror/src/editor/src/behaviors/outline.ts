@@ -23,7 +23,14 @@ import { Extension } from '../api/extension';
 import { transactionsHaveChange, kSetMarkdownTransaction } from '../api/transaction';
 import { findTopLevelBodyNodes } from '../api/node';
 import { uuidv4 } from '../api/util';
-import { EditorOutlineItem, EditorOutlineItemType, EditorOutline, isOutlineNode, getEditingOutlineLocation, getDocumentOutline } from '../api/outline';
+import {
+  EditorOutlineItem,
+  EditorOutlineItemType,
+  EditorOutline,
+  isOutlineNode,
+  getEditingOutlineLocation,
+  getDocumentOutline,
+} from '../api/outline';
 import { navigateToPos } from '../api/navigation';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
@@ -97,7 +104,6 @@ const extension: Extension = {
   },
 };
 
-
 export function goToSectionCommand(dir: 'next' | 'previous') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     if (dispatch && view) {
@@ -109,7 +115,7 @@ export function goToSectionCommand(dir: 'next' | 'previous') {
         if (dir === 'next') {
           return nodeWithPos.pos > state.selection.head;
         } else {
-          return nodeWithPos.pos < (state.selection.head - 1);
+          return nodeWithPos.pos < state.selection.head - 1;
         }
       });
       if (target) {
@@ -119,8 +125,6 @@ export function goToSectionCommand(dir: 'next' | 'previous') {
     return true;
   };
 }
-
-
 
 function editorOutline(state: EditorState): EditorOutline {
   // get all of the headings (bail if there are none)

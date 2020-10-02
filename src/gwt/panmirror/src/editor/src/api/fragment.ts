@@ -20,9 +20,9 @@ export function fragmentText(fragment: Fragment, unemoji = false) {
   fragment.forEach(node => {
     const emjojiMark = node.marks.find(mark => mark.type === node.type.schema.marks.emoji);
     if (unemoji && emjojiMark) {
-      return text = text + (emjojiMark.attrs.emojihint || node.textContent);
+      return (text = text + (emjojiMark.attrs.emojihint || node.textContent));
     } else {
-      return text = text + node.textContent;
+      return (text = text + node.textContent);
     }
   });
   return text;

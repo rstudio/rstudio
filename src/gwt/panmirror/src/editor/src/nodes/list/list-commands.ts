@@ -32,7 +32,7 @@ export class ListCommand extends NodeCommand {
     listType: NodeType,
     listItemType: NodeType,
     omniInsert: OmniInsert,
-    prefs: EditorUIPrefs
+    prefs: EditorUIPrefs,
   ) {
     super(id, keymap, listType, {}, autoJoin(toggleList(listType, listItemType, prefs), [listType.name]), omniInsert);
   }

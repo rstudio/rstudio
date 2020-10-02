@@ -71,17 +71,18 @@ export class MathPopupPlugin extends Plugin {
       },
       props: {
         handleDOMEvents: {
-          ...(onHover ? {
-            mousemove: debounce((view: EditorView, event: Event) => {
-              const ev = event as MouseEvent;
-              const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
-              if (pos && pos.inside !== -1) {
-                this.updatePopup(view.state.doc.resolve(pos.pos));
+          ...(onHover
+            ? {
+                mousemove: debounce((view: EditorView, event: Event) => {
+                  const ev = event as MouseEvent;
+                  const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
+                  if (pos && pos.inside !== -1) {
+                    this.updatePopup(view.state.doc.resolve(pos.pos));
+                  }
+                  return false;
+                }, kMathPopupInputDebuounceMs),
               }
-              return false;
-            }, kMathPopupInputDebuounceMs),
-
-          } : {})
+            : {}),
         },
       },
     });
@@ -91,7 +92,7 @@ export class MathPopupPlugin extends Plugin {
     this.math = math;
 
     // update popup for resize, scrolling, as well as every 100ms to cover reflowing
-    // of the document as a result of latex math being shown/hidden (will effectively 
+    // of the document as a result of latex math being shown/hidden (will effectively
     // be a no-op if the math text and  document layout / scroll position hasn't changed)
     this.updatePopup = this.updatePopup.bind(this);
     this.updatePopupTimer = setInterval(this.updatePopup, 100);

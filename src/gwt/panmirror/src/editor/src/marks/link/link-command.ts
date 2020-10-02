@@ -100,7 +100,9 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             if (result.link.type === LinkType.Heading) {
               const heading = findChildren(
                 tr.doc,
-                node => node.type === state.schema.nodes.heading && equalsIgnoreCase(node.textContent, result.link.heading || ''),
+                node =>
+                  node.type === state.schema.nodes.heading &&
+                  equalsIgnoreCase(node.textContent, result.link.heading || ''),
               );
               if (heading.length > 0) {
                 tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {

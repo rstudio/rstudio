@@ -54,7 +54,7 @@ export interface PandocBlockCapsuleFilter {
   // space for indented block or incidental whitespace after block delimiter)
   match: RegExp;
 
-  // optional seconary filter expression (applied to a successful match to ensure 
+  // optional seconary filter expression (applied to a successful match to ensure
   // that matching wasn't overly greedy)
   discard?: RegExp;
 
@@ -94,7 +94,11 @@ export interface PandocBlockCapsuleFilter {
 // after pandoc has yielded an ast. block capsules are a single base64 encoded pieced of
 // text that include the original content, the matched prefix and suffix, and a type
 // identifier for orchestrating the unpacking.
-export function pandocMarkdownWithBlockCapsules(original: string, markdown: string, capsuleFilter: PandocBlockCapsuleFilter) {
+export function pandocMarkdownWithBlockCapsules(
+  original: string,
+  markdown: string,
+  capsuleFilter: PandocBlockCapsuleFilter,
+) {
   // default extractor
   const defaultExtractor = (match: string, p1: string, p2: string, p3: string) => {
     return {
@@ -117,7 +121,6 @@ export function pandocMarkdownWithBlockCapsules(original: string, markdown: stri
 
   // replace all w/ source preservation capsules
   return markdown.replace(capsuleFilter.match, (match: string, p1: string, p2: string, p3: string, p4: string) => {
-
     // read the original position of the match
     let position = 0;
     const originalPos = positions.shift();
@@ -260,12 +263,12 @@ export function blockCapsuleParagraphTokenHandler(type: string) {
 export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags?: string) {
   return new RegExp(
     (prefix || '') +
-    kBlockCapsuleSentinel +
-    kValueDelimiter +
-    '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' +
-    kValueDelimiter +
-    kBlockCapsuleSentinel +
-    (suffix || ''),
+      kBlockCapsuleSentinel +
+      kValueDelimiter +
+      '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' +
+      kValueDelimiter +
+      kBlockCapsuleSentinel +
+      (suffix || ''),
     flags,
   );
 }

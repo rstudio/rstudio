@@ -12,14 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { BibFieldTypes, NameDictObject, NodeArray, RangeArray, BibField, BibLatexExporter, BibTypes, BibType } from "biblatex-csl-converter";
+import {
+  BibFieldTypes,
+  NameDictObject,
+  NodeArray,
+  RangeArray,
+  BibField,
+  BibLatexExporter,
+  BibTypes,
+  BibType,
+} from 'biblatex-csl-converter';
 
-import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
+import { Mark, Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { CSL, CSLDate, cslDateToEDTFDate, CSLName } from "../csl";
-import { cslTextToProsemirrorNode } from "../csl-text";
-import { bibDbToBibTeX } from "../bibtex/bibtex";
-
+import { CSL, CSLDate, cslDateToEDTFDate, CSLName } from '../csl';
+import { cslTextToProsemirrorNode } from '../csl-text';
+import { bibDbToBibTeX } from '../bibtex/bibtex';
 
 export type BibDB = Record<string, EntryObject>;
 
@@ -33,8 +41,6 @@ export interface EntryObject {
   unknown_fields?: Record<string, any>;
 }
 
-
-
 // This is our wrapper of a typescript BibLaTeX exporter
 // https://github.com/fiduswriter/biblatex-csl-converter
 
@@ -47,13 +53,14 @@ const kUseTraditionalNameForm = false;
 
 // Generates bibLaTeX for a given CSL object / id
 export function toBibLaTeX(id: string, csl: CSL): string | undefined {
-
   // A BibDB is basically a map of key / EntryObject[] that is
   // used by the exporter to generate BibLaTeX
   const bibDB = cslToBibDB(id, csl);
   if (bibDB) {
     // Use the exported to parse the bibDB and generate bibLaTeX
-    const exporter: BibLatexExporter = new BibLatexExporter(bibDB, false, { traditionalNames: kUseTraditionalNameForm });
+    const exporter: BibLatexExporter = new BibLatexExporter(bibDB, false, {
+      traditionalNames: kUseTraditionalNameForm,
+    });
     const sourceAsBibLaTeX = exporter.parse();
 
     // Indent any , new lines
@@ -79,13 +86,12 @@ export function toBibTeX(id: string, csl: CSL): string | undefined {
 // Converts a single CSL item to a bibDB containing
 // a single EntryObject representing that CSL item
 function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
-
   const bibType = bibTypeForCSL(csl.type);
   const bibObject: EntryObject = {
     bib_type: bibType[0],
     csl_type: bibType[1].csl,
     entry_key: id,
-    'fields': {}
+    fields: {},
   };
 
   const enumerableCSL = csl as any;
@@ -101,7 +107,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
         const type = bibField.type;
         let nodeValue: any;
         switch (type) {
-          case ('f_date'):
+          case 'f_date':
             // f_date = // EDTF 1.0 level 0/1 compliant string. (2000-12-31)
             const cslDate = value as CSLDate;
             if (cslDate) {
@@ -111,24 +117,24 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
               }
             }
             break;
-          case ('f_integer'):
-          case ('f_literal'):
-          case ('f_long_literal'):
-          case ('f_title'):
+          case 'f_integer':
+          case 'f_literal':
+          case 'f_long_literal':
+          case 'f_title':
             // f_integer, f_literal, f_long_literal, f_title = [nodeValue]
             // l_literal = [nodeValue]
             if (value && value.length > 0) {
               nodeValue = textNodes(value);
             }
             break;
-          case ('l_literal'):
+          case 'l_literal':
             // l_literal = [NodeArray]
             if (value && value.length > 0) {
               nodeValue = [textNodes(value)];
             }
             break;
-          case ('f_key'):
-            // f_key: string | NodeArray (string points to another key 
+          case 'f_key':
+            // f_key: string | NodeArray (string points to another key
             // name in BibObject whose value is used for this key)
             if (bibField.options) {
               const options = bibField.options as any;
@@ -146,7 +152,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
             }
 
             break;
-          case ('l_key'):
+          case 'l_key':
             // l_key, list of [string | NodeArray]
             if (bibField.options) {
               const options = bibField.options as any;
@@ -163,7 +169,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
               }
             }
             break;
-          case ('l_range'):
+          case 'l_range':
             // l_range Array<RangeArray>
             const valueStr = value as string;
             const parts = valueStr.split('-');
@@ -172,12 +178,12 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
               nodeValue = [range];
             }
             break;
-          case ('f_uri'):
-          case ('f_verbatim'):
+          case 'f_uri':
+          case 'f_verbatim':
             // f_uri, f_verbatim: string
             nodeValue = value;
             break;
-          case ('l_name'):
+          case 'l_name':
             // l_name Array<NameDictObject>
             const names = value as CSLName[];
             nodeValue = names.map(name => {
@@ -190,7 +196,7 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
             });
 
             break;
-          case ('l_tag'):
+          case 'l_tag':
             // l_tag: string[]
             nodeValue = [value];
             break;
@@ -206,13 +212,13 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
   });
 
   const bibDB: BibDB = {
-    'item': bibObject
+    item: bibObject,
   };
   return bibDB;
 }
 
-// For a given type, we filter out any fields that aren't required, 
-// eitheror, or optional. 
+// For a given type, we filter out any fields that aren't required,
+// eitheror, or optional.
 function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
   return (
     bibType.required.includes(bibDBFieldName) ||
@@ -225,7 +231,6 @@ function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
 // support for the basic CSL marks that are outlined here:
 // https://citeproc-js.readthedocs.io/en/latest/csl-json/markup.html#html-like-formatting-tags
 function textNodes(str: string): NodeArray {
-
   const pmNode = cslTextToProsemirrorNode(str);
   if (pmNode) {
     const nodes: NodeArray = [];
@@ -233,17 +238,19 @@ function textNodes(str: string): NodeArray {
       nodes.push({
         type: 'text',
         text: node.textContent,
-        marks: node.marks.map((mark: Mark) => ({ type: mark.type.name }))
+        marks: node.marks.map((mark: Mark) => ({ type: mark.type.name })),
       });
     });
     return nodes;
   } else {
-    return [{
-      type: 'text',
-      text: str,
-      marks: [],
-      attrs: {}
-    }];
+    return [
+      {
+        type: 'text',
+        text: str,
+        marks: [],
+        attrs: {},
+      },
+    ];
   }
 }
 
@@ -281,13 +288,15 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
   // * collection-number
   // See https://discourse.citationstyles.org/t/issue-number-and-bibtex/1072
   // https://github.com/fiduswriter/biblatex-csl-converter/blob/35d152935eba253ebadd00e285fb13c5828f167f/src/const.js#L561
-  if (cslType === 'article-journal' && cslKey === 'issue' ||
-    cslType === 'patent' && cslKey === 'number' ||
-    cslKey === 'collection-number') {
+  if (
+    (cslType === 'article-journal' && cslKey === 'issue') ||
+    (cslType === 'patent' && cslKey === 'number') ||
+    cslKey === 'collection-number'
+  ) {
     const bibField = {
       type: 'f_literal',
       biblatex: 'number',
-      csl: cslKey
+      csl: cslKey,
     };
     return [['number', bibField]];
   }
@@ -312,7 +321,7 @@ function bibFieldForValue(cslKey: string, cslType: string): Array<[string, BibFi
 
 function sortedKeys(csl: CSL) {
   let pos = 1;
-  const keySortOrder: { [id: string]: number; } = {};
+  const keySortOrder: { [id: string]: number } = {};
   keySortOrder.title = pos++;
 
   keySortOrder.author = pos++;
@@ -351,4 +360,3 @@ function sortedKeys(csl: CSL) {
   });
   return sorted;
 }
-

@@ -15,7 +15,7 @@
 
 import { Plugin, PluginKey } from 'prosemirror-state';
 
-import { CodeViewOptions, canInsertNodeAtPos } from "./node";
+import { CodeViewOptions, canInsertNodeAtPos } from './node';
 import { ResolvedPos, Slice, Fragment } from 'prosemirror-model';
 
 export const kCodeAttr = 0;
@@ -31,7 +31,6 @@ export function codeNodeSpec() {
     isolating: true,
   };
 }
-
 
 export function codeViewClipboardPlugin(codeViews: { [key: string]: CodeViewOptions }) {
   return new Plugin({

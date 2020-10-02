@@ -154,8 +154,6 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       // compute side offset
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
 
-
-
       // get selection head
       const { $head } = selection;
 

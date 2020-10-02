@@ -16,7 +16,12 @@
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
 import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
-import { isYamlMetadataNode, yamlMetadataNodes, kYamlMetadataTitleRegex, titleFromYamlMetadataNode } from '../../api/yaml';
+import {
+  isYamlMetadataNode,
+  yamlMetadataNodes,
+  kYamlMetadataTitleRegex,
+  titleFromYamlMetadataNode,
+} from '../../api/yaml';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
 
@@ -97,8 +102,6 @@ export function setTitle(state: EditorState, title: string) {
   // return transaction
   return tr;
 }
-
-
 
 function titleFromState(state: EditorState) {
   const yamlNodes = yamlMetadataNodes(state.doc);

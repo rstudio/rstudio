@@ -20,15 +20,12 @@
  * computations.
  */
 export class AcePlaceholder {
-
   private readonly element: HTMLElement;
 
-  constructor(
-    content: string
-  ) {
-    const ele = document.createElement("pre");
+  constructor(content: string) {
+    const ele = document.createElement('pre');
     ele.innerText = content;
-    ele.className = "ace_editor";
+    ele.className = 'ace_editor';
     this.element = ele;
   }
 

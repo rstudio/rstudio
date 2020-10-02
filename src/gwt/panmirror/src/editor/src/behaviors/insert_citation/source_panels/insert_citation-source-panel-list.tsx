@@ -12,17 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import React from "react";
+import React from 'react';
 
-import { FixedSizeList, ListChildComponentProps } from "react-window";
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
-import { EditorUI } from "../../../api/ui";
-import { WidgetProps } from "../../../api/widgets/react";
+import { EditorUI } from '../../../api/ui';
+import { WidgetProps } from '../../../api/widgets/react';
 
-import { CitationListEntry, CitationSourceListStatus } from "./insert_citation-source-panel";
+import { CitationListEntry, CitationSourceListStatus } from './insert_citation-source-panel';
 
 import './insert_citation-source-panel-list.css';
-
 
 export interface CitationSourcePanelListItemData {
   citations: CitationListEntry[];
@@ -57,190 +56,204 @@ export interface CitationSourceListProps extends WidgetProps {
   ui: EditorUI;
 }
 
-export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>((props: CitationSourceListProps, ref) => {
-  const fixedList = React.useRef<FixedSizeList>(null);
+export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourceListProps>(
+  (props: CitationSourceListProps, ref) => {
+    const fixedList = React.useRef<FixedSizeList>(null);
 
-  // Item height and consequently page height
-  const itemsPerPage = Math.floor(props.height / props.itemHeight);
+    // Item height and consequently page height
+    const itemsPerPage = Math.floor(props.height / props.itemHeight);
 
-  // Update selected item index (this will manage bounds)
-  const handleIncrementIndex = (event: React.KeyboardEvent, increment: number, index: number) => {
-    event.stopPropagation();
-    event.preventDefault();
-    if (props.citations && index > -1) {
-      const maxIndex = props.citations.length - 1;
-      const newIndex = Math.min(Math.max(0, index + increment), maxIndex);
-      props.onSelectedIndexChanged(newIndex);
-    }
-  };
+    // Update selected item index (this will manage bounds)
+    const handleIncrementIndex = (event: React.KeyboardEvent, increment: number, index: number) => {
+      event.stopPropagation();
+      event.preventDefault();
+      if (props.citations && index > -1) {
+        const maxIndex = props.citations.length - 1;
+        const newIndex = Math.min(Math.max(0, index + increment), maxIndex);
+        props.onSelectedIndexChanged(newIndex);
+      }
+    };
 
-  // Toggle the currently selected item as added or removed
-  const handleAddItem = (event: React.KeyboardEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const currentCitation = props.selectedIndex > -1 ? props.citations[props.selectedIndex] : undefined;
-    if (currentCitation) {
-      props.onAddCitation(currentCitation);
-    }
-  };
+    // Toggle the currently selected item as added or removed
+    const handleAddItem = (event: React.KeyboardEvent) => {
+      event.stopPropagation();
+      event.preventDefault();
+      const currentCitation = props.selectedIndex > -1 ? props.citations[props.selectedIndex] : undefined;
+      if (currentCitation) {
+        props.onAddCitation(currentCitation);
+      }
+    };
 
-  const handleListKeyDown = (event: React.KeyboardEvent) => {
-    const currentIndex = props.selectedIndex;
-    switch (event.key) {
-      case 'ArrowUp':
-        if (currentIndex === 0 && props.focusPrevious) {
-          props.focusPrevious();
+    const handleListKeyDown = (event: React.KeyboardEvent) => {
+      const currentIndex = props.selectedIndex;
+      switch (event.key) {
+        case 'ArrowUp':
+          if (currentIndex === 0 && props.focusPrevious) {
+            props.focusPrevious();
+          } else {
+            handleIncrementIndex(event, -1, currentIndex);
+          }
+          break;
+
+        case 'ArrowDown':
+          handleIncrementIndex(event, 1, currentIndex);
+          break;
+
+        case 'PageDown':
+          handleIncrementIndex(event, itemsPerPage, currentIndex);
+          break;
+
+        case 'PageUp':
+          handleIncrementIndex(event, -itemsPerPage, currentIndex);
+          break;
+
+        case 'Enter':
+          handleAddItem(event);
+          props.onConfirm();
+          break;
+        case ' ':
+          handleAddItem(event);
+          break;
+      }
+    };
+
+    // Ensure the item is scrolled into view
+    React.useEffect(() => {
+      if (props.selectedIndex > -1) {
+        fixedList.current?.scrollToItem(props.selectedIndex);
+      }
+    });
+
+    // Focus / Blur are used to track whether to show selection highlighting
+    const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+      if (props.selectedIndex < 0) {
+        props.onSelectedIndexChanged(0);
+      }
+      event.stopPropagation();
+      event.preventDefault();
+    };
+
+    const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+      event.stopPropagation();
+      event.preventDefault();
+    };
+
+    const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
+    switch (props.status) {
+      case CitationSourceListStatus.default:
+        if (props.citations.length > 0) {
+          return (
+            <div
+              tabIndex={0}
+              onKeyDown={handleListKeyDown}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              ref={ref}
+              className={classes}
+            >
+              <FixedSizeList
+                className="pm-insert-citation-source-panel-list"
+                height={props.height}
+                width="100%"
+                itemCount={props.citations.length}
+                itemSize={props.itemHeight}
+                itemData={{
+                  selectedIndex: props.selectedIndex,
+                  onSelectedIndexChanged: props.onSelectedIndexChanged,
+                  citations: props.citations,
+                  citationsToAdd: props.citationsToAdd,
+                  onAddCitation: props.onAddCitation,
+                  onRemoveCitation: props.onRemoveCitation,
+                  onConfirm: props.onConfirm,
+                  showSeparator: true,
+                  showSelection: true,
+                  preventFocus: true,
+                  ui: props.ui,
+                }}
+                ref={fixedList}
+              >
+                {props.itemProvider}
+              </FixedSizeList>
+            </div>
+          );
         } else {
-          handleIncrementIndex(event, -1, currentIndex);
+          return (
+            <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
+              <div className="pm-insert-citation-source-panel-list-noresults-text">{props.statusMessage}</div>
+            </div>
+          );
         }
-        break;
 
-      case 'ArrowDown':
-        handleIncrementIndex(event, 1, currentIndex);
-        break;
-
-      case 'PageDown':
-        handleIncrementIndex(event, itemsPerPage, currentIndex);
-        break;
-
-      case 'PageUp':
-        handleIncrementIndex(event, -itemsPerPage, currentIndex);
-        break;
-
-      case 'Enter':
-        handleAddItem(event);
-        props.onConfirm();
-        break;
-      case ' ':
-        handleAddItem(event);
-        break;
-    }
-  };
-
-  // Ensure the item is scrolled into view
-  React.useEffect(() => {
-    if (props.selectedIndex > -1) {
-      fixedList.current?.scrollToItem(props.selectedIndex);
-    }
-  });
-
-  // Focus / Blur are used to track whether to show selection highlighting
-  const onFocus = (event: React.FocusEvent<HTMLDivElement>) => {
-    if (props.selectedIndex < 0) {
-      props.onSelectedIndexChanged(0);
-    }
-    event.stopPropagation();
-    event.preventDefault();
-  };
-
-  const onBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
-  };
-
-  const classes = ['pm-insert-citation-source-panel-list-container'].concat(props.classes || []).join(' ');
-  switch (props.status) {
-    case CitationSourceListStatus.default:
-      if (props.citations.length > 0) {
+      case CitationSourceListStatus.inProgress:
         return (
-          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
-            <FixedSizeList
-              className='pm-insert-citation-source-panel-list'
-              height={props.height}
-              width='100%'
-              itemCount={props.citations.length}
-              itemSize={props.itemHeight}
-              itemData={{
-                selectedIndex: props.selectedIndex,
-                onSelectedIndexChanged: props.onSelectedIndexChanged,
-                citations: props.citations,
-                citationsToAdd: props.citationsToAdd,
-                onAddCitation: props.onAddCitation,
-                onRemoveCitation: props.onRemoveCitation,
-                onConfirm: props.onConfirm,
-                showSeparator: true,
-                showSelection: true,
-                preventFocus: true,
-                ui: props.ui,
-              }}
-              ref={fixedList}
+          <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
+            <div className="pm-insert-citation-source-panel-list-noresults-text">
+              <img src={props.ui.images.search_progress} className="pm-insert-citation-source-panel-list-progress" />
+              {props.statusMessage}
+            </div>
+          </div>
+        );
+
+      case CitationSourceListStatus.noResults:
+        return (
+          <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
+            <div className="pm-insert-citation-source-panel-list-noresults-text">{props.statusMessage}</div>
+          </div>
+        );
+
+      case CitationSourceListStatus.error:
+        return (
+          <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
+            <div className="pm-insert-citation-source-panel-list-noresults-text">
+              {props.statusMessage || props.ui.context.translateText('An error occurred.')}
+            </div>
+          </div>
+        );
+
+      case CitationSourceListStatus.default:
+      default:
+        if (props.citations.length > 0) {
+          return (
+            <div
+              tabIndex={0}
+              onKeyDown={handleListKeyDown}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              ref={ref}
+              className={classes}
             >
-              {props.itemProvider}
-            </FixedSizeList>
-          </div >
-        );
-      } else {
-        return (
-          <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
-          </div>
-        );
-      }
-
-    case CitationSourceListStatus.inProgress:
-      return (
-        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>
-            <img src={props.ui.images.search_progress} className='pm-insert-citation-source-panel-list-progress' />
-            {props.statusMessage}
-          </div>
-        </div>
-      );
-
-    case CitationSourceListStatus.noResults:
-      return (
-        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
-        </div >
-      );
-
-    case CitationSourceListStatus.error:
-      return (
-        <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-          <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage || props.ui.context.translateText('An error occurred.')}</div>
-        </div >
-      );
-
-    case CitationSourceListStatus.default:
-    default:
-      if (props.citations.length > 0) {
-        return (
-          <div tabIndex={0} onKeyDown={handleListKeyDown} onFocus={onFocus} onBlur={onBlur} ref={ref} className={classes}>
-            <FixedSizeList
-              className='pm-insert-citation-source-panel-list'
-              height={props.height}
-              width='100%'
-              itemCount={props.citations.length}
-              itemSize={props.itemHeight}
-              itemData={{
-                selectedIndex: props.selectedIndex,
-                onSelectedIndexChanged: props.onSelectedIndexChanged,
-                citations: props.citations,
-                citationsToAdd: props.citationsToAdd,
-                onAddCitation: props.onAddCitation,
-                onRemoveCitation: props.onRemoveCitation,
-                onConfirm: props.onConfirm,
-                showSeparator: true,
-                showSelection: true,
-                preventFocus: true,
-                ui: props.ui,
-              }}
-              ref={fixedList}
-            >
-              {props.itemProvider}
-            </FixedSizeList>
-          </div >
-        );
-      } else {
-        return (
-          <div className={classes} style={{ height: props.height + 'px' }} ref={ref} >
-            <div className='pm-insert-citation-source-panel-list-noresults-text'>{props.statusMessage}</div>
-          </div>
-        );
-      }
-
-  }
-});
-
-
-
+              <FixedSizeList
+                className="pm-insert-citation-source-panel-list"
+                height={props.height}
+                width="100%"
+                itemCount={props.citations.length}
+                itemSize={props.itemHeight}
+                itemData={{
+                  selectedIndex: props.selectedIndex,
+                  onSelectedIndexChanged: props.onSelectedIndexChanged,
+                  citations: props.citations,
+                  citationsToAdd: props.citationsToAdd,
+                  onAddCitation: props.onAddCitation,
+                  onRemoveCitation: props.onRemoveCitation,
+                  onConfirm: props.onConfirm,
+                  showSeparator: true,
+                  showSelection: true,
+                  preventFocus: true,
+                  ui: props.ui,
+                }}
+                ref={fixedList}
+              >
+                {props.itemProvider}
+              </FixedSizeList>
+            </div>
+          );
+        } else {
+          return (
+            <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
+              <div className="pm-insert-citation-source-panel-list-noresults-text">{props.statusMessage}</div>
+            </div>
+          );
+        }
+    }
+  },
+);

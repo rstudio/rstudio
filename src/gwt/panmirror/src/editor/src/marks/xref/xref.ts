@@ -143,10 +143,7 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     inputRules: (_schema: Schema) => {
-      return [
-        atRefInputRule(),
-        ...(format.rmdExtensions.bookdownXRefUI ? [refPrefixInputRule()] : [])
-      ];
+      return [atRefInputRule(), ...(format.rmdExtensions.bookdownXRefUI ? [refPrefixInputRule()] : [])];
     },
 
     plugins: (schema: Schema) => [xrefPopupPlugin(schema, ui, server)],
@@ -211,7 +208,8 @@ function atRefInputRule() {
 }
 
 function refPrefixInputRule() {
-  return new InputRule(/(^|[^`])(Chapter|Section|Figure|Table|Equation) $/,
+  return new InputRule(
+    /(^|[^`])(Chapter|Section|Figure|Table|Equation) $/,
     (state: EditorState, match: string[], start: number, end: number) => {
       const tr = state.tr;
       tr.insertText(' ');
@@ -226,9 +224,9 @@ function refPrefixInputRule() {
       insertRef(tr, prefix);
       setTextSelection(tr.selection.head - 1)(tr);
       return tr;
-    });
+    },
+  );
 }
-
 
 function insertRef(tr: Transaction, prefix = '') {
   const schema = tr.doc.type.schema;

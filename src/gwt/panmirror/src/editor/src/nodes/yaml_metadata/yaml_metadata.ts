@@ -65,11 +65,7 @@ const extension = (context: ExtensionContext): Extension => {
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.Para, () => {
-              const yaml =
-                '---\n' +
-                stripYamlDelimeters(fragmentText(node.content)) +
-                '\n---'
-                ;
+              const yaml = '---\n' + stripYamlDelimeters(fragmentText(node.content)) + '\n---';
               output.writeRawMarkdown(yaml);
             });
           },

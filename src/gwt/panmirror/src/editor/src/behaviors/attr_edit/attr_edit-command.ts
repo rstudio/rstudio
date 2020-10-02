@@ -122,7 +122,7 @@ async function editNodeAttrs(
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
-  pandocExtensions: PandocExtensions
+  pandocExtensions: PandocExtensions,
 ): Promise<void> {
   const attrs = node.attrs;
   const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
@@ -136,11 +136,8 @@ async function editNodeAttrs(
   }
 }
 
-
 function idHint(node: ProsemirrorNode, pandocExtensions: PandocExtensions) {
-
   if (node.type === node.type.schema.nodes.heading) {
-
     const unemoji = pandocExtensions.gfm_auto_identifiers;
     const text = fragmentText(node.content, unemoji);
 
@@ -149,12 +146,7 @@ function idHint(node: ProsemirrorNode, pandocExtensions: PandocExtensions) {
     } else {
       return pandocAutoIdentifier(text, pandocExtensions.ascii_identifiers);
     }
-
-
   } else {
-
     return undefined;
-
   }
 }
-
