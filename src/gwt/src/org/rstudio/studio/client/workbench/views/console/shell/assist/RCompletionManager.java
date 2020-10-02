@@ -29,6 +29,7 @@ import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -550,7 +551,8 @@ public class RCompletionManager implements CompletionManager
          
          // if we insert a '/', we're probably forming a directory --
          // pop up completions
-         if (keycode == 191 && modifier == KeyboardShortcut.NONE)
+         if (modifier == KeyboardShortcut.NONE &&
+             StringUtil.equals(EventProperty.key(event), "/"))
          {
             input_.insertCode("/");
             return beginSuggest(true, true, false);
