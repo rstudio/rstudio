@@ -16,16 +16,7 @@
 #ifndef CORE_SYSTEM_WIN32PTY_HPP
 #define CORE_SYSTEM_WIN32PTY_HPP
 
-#include <string>
-
-#include <boost/noncopyable.hpp>
-
-#include <core/system/Process.hpp>
-#include <shared_core/Error.hpp>
-#include <core/Log.hpp>
-
 #include <winpty/winpty.h>
-
 #include "Win32Terminal.hpp"
 
 namespace rstudio {

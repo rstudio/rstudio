@@ -17,9 +17,7 @@
 #define CORE_SYSTEM_WIN32TERMINAL_HPP
 
 #include <string>
-
 #include <core/system/Process.hpp>
-#include <core/Log.hpp>
 
 namespace rstudio {
 namespace core {

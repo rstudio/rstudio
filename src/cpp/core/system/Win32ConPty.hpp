@@ -1,5 +1,5 @@
 /*
- * Win32PtyAgent.hpp
+ * Win32ConPty.hpp
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef CORE_SYSTEM_WIN32PTYAGENT_HPP
-#define CORE_SYSTEM_WIN32PTYAGENT_HPP
+#ifndef CORE_SYSTEM_WIN32CONPTY_HPP
+#define CORE_SYSTEM_WIN32CONPTY_HPP
 
 #include "Win32Terminal.hpp"
 
@@ -22,44 +22,35 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-/**
- * Pseudo-terminal for Windows.
- *
- * Uses either WinPty (https://github.com/rprichard/winpty), or when available, the native
- * Windows ConPTY.
- *
- * By default will detect which flavor to use, preferring ConPTY, but can force use of
- * WinPty by calling setForceWinPty() before start().
- */
-class WinPtyAgent : public WinTerminal
+class WinConPty : public WinTerminal
 {
 public:
-   virtual ~WinPtyAgent() = default;
+   WinConPty() {}
 
-   void setForceWinPty();
-   bool usingConPty() const;
-   static Error writeToPty(HANDLE hPipe, const std::string& input);
-   static Error readFromPty(HANDLE hPipe, std::string* pOutput);
+   virtual ~WinConPty();
 
-   // WinTerminal interface
+   // Start the process specified by exe; it will do I/O via the returned
+   // handles. On success, caller is responsible for closing
+   // returned handles. On failure, handles will contain nullptr.
    Error start(const std::string& exe,
-               std::vector<std::string> args,
+               const std::vector<std::string> args,
                const ProcessOptions& options,
                HANDLE* pStdInWrite,
                HANDLE* pStdOutRead,
                HANDLE* pStdErrRead,
                HANDLE* pProcess) override;
-   bool ptyRunning() const override;
-   Error setSize(int cols, int rows) override;
-   Error interrupt() override;
 
-private:
-   bool usingConPty_ = true;
-   std::unique_ptr<WinTerminal> pPty_;
+   bool ptyRunning() const override;
+
+   // Change the size of the pseudoterminal
+   Error setSize(int cols, int rows) override;
+
+   // Send interrupt (Ctrl+C)
+   Error interrupt() override;
 };
 
 } // namespace system
 } // namespace core
 } // namespace rstudio
 
-#endif // CORE_SYSTEM_WIN32PTYAGENT_HPP
+#endif // CORE_SYSTEM_WIN32CONPTY_HPP

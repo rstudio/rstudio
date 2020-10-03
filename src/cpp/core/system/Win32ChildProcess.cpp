@@ -352,7 +352,7 @@ Error ChildProcess::run()
    // concurrently then a race condition can cause handles to get incorrectly
    // directed. the workaround suggested by microsoft is to wrap the process
    // creation code in a critical section. see this article for details:
-   //   http://support.microsoft.com/kb/315939
+   //   https://www.betaarchive.com/wiki/index.php/Microsoft_KB_Archive/315939
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
 

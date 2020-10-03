@@ -15,6 +15,9 @@
 
 #include "Win32PtyAgent.hpp"
 
+#include "Win32Pty.hpp"
+#include "Win32ConPty.hpp"
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -118,13 +121,9 @@ Error WinPtyAgent::start(const std::string& exe,
       usingConPty_ = false;
 
    if (usingConPty_)
-   {
-      // TODO: load ConPTY
-   }
+      pPty_.reset(static_cast<WinTerminal*>(new WinConPty()));
    else
-   {
       pPty_.reset(static_cast<WinTerminal*>(new WinPty()));
-   }
 
    return pPty_->start(exe, args, options, pStdInWrite, pStdOutRead, pStdErrRead, pProcess);
 }
