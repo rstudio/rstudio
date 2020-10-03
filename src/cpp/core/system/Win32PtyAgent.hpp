@@ -36,7 +36,7 @@ namespace system {
  * Windows ConPTY.
  *
  * By default will detect which flavor to use, preferring ConPTY, but can force use of
- * WinPty via setForceWinPty() before
+ * WinPty by calling setForceWinPty() before start().
  */
 class WinPtyAgent : public WinTerminal
 {

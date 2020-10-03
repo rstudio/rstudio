@@ -225,7 +225,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
    {
       if (options().pseudoterminal)
       {
-         Error error = pImpl_->pty.writeToPty(pImpl_->hStdInWrite, input);
+         Error error = WinPtyAgent::writeToPty(pImpl_->hStdInWrite, input);
          if (error)
             return error;
       }
