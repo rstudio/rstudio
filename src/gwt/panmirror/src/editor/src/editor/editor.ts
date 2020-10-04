@@ -507,7 +507,7 @@ export class Editor {
         return false;
       });
       // set selection to previous location if it's still valid
-      if (location.pos < this.view.state.doc.nodeSize) {
+      if (location.pos < tr.doc.nodeSize) {
         setTextSelection(location.pos)(tr);
       }
       // dispatch
