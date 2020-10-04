@@ -515,6 +515,16 @@ private:
          renderOptions = "render_args = list(" + renderOptions + ")";
       }
 
+      // fallback for non-function
+      r::sexp::Protect rProtect;
+      SEXP renderFuncSEXP;
+      error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
+      if (error || !r::sexp::isFunction((renderFuncSEXP)))
+      {
+         boost::format fmt("(function(input, ...) { system(paste0(\"%1% '\", input, \"'\")) })");
+         renderFunc = boost::str(fmt % renderFunc);
+      }
+
       // render command
       boost::format fmt("%1%('%2%', %3% %4%);");
       std::string cmd = boost::str(fmt %
