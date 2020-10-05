@@ -352,8 +352,8 @@
    .rs.enqueClientEvent("editor_command", eventData)
 })
 
-.rs.addApiFunction("insertText", function(location, text, id = "") {
-
+.rs.addApiFunction("insertText", function(location, text, id = "")
+{
    invalidTextMsg <- "'text' should be a character vector"
    invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
 
@@ -371,11 +371,17 @@
    # in such cases, we replace the current selection. we pass an empty range
    # and let upstream interpret this as a request to replace the current
    # selection.
-   if (missing(text) && is.character(location))
+   if (missing(location))
+      location <- NULL
+   
+   if (missing(text))
+      text <- NULL
+   
+   if (is.null(text) && is.character(location))
    {
       return(.rs.api.selectionSet(value = location, id = id))
    }
-   else if (missing(location) && is.character(text))
+   else if (is.null(location) && is.character(text))
    {
       return(.rs.api.selectionSet(value = text, id = id))
    }
