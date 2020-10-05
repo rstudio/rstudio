@@ -61,6 +61,7 @@
 
 ### RStudio Server Pro
 
+* **DEPRECATED:** The option `auth-proxy-require-hmac` is no longer operational and a warning will be issued to the logs if used. See the documentation on proxy authentication for alternatives. (Pro #2029)
 * SAML is now supported as an authentication mechanism (Pro #1194)
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
 * Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
