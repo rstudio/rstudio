@@ -8146,7 +8146,12 @@ public class TextEditingTarget implements
             if (activeEditor == null)
             {
                GetEditorContextEvent.SelectionData data =
-                     GetEditorContextEvent.SelectionData.create();
+                     GetEditorContextEvent.SelectionData.create(
+                           StringUtil.notNull(getId()),
+                           StringUtil.notNull(getPath()),
+                           "",
+                           JavaScriptObject.createArray().cast());
+
                server_.getEditorContextCompleted(data, new VoidServerRequestCallback());
                return;
             }
