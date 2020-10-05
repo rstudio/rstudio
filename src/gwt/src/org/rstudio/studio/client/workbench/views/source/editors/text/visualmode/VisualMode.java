@@ -1008,13 +1008,14 @@ public class VisualMode implements VisualModeEditorSync,
          // Create a menu item representing the item and add it to the menu
          final MenuItem menuItem = new MenuItem(
                label.toSafeHtml(),
-               new Command()
+               () ->
                {
-                  public void execute()
-                  {
-                     visualModeNavigation_.navigateToId(
-                           item.navigation_id, false);
-                  }
+                  // Navigate to the given ID
+                  visualModeNavigation_.navigateToId(item.navigation_id, false);
+                  
+                  // Immediately update the status bar with the new location
+                  // (this is usually done on idle so can lag a bit otherwise)
+                  syncStatusBarLocation();
                });
          
          menu.addItem(menuItem);
@@ -1287,9 +1288,10 @@ public class VisualMode implements VisualModeEditorSync,
          else if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             type = StatusBar.SCOPE_CHUNK;
-            if (StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
+            title = "Chunk " + item.sequence;
+            if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
-               title = "Chunk " + item.sequence;
+               title += ": " + item.title;
             }
          }
          
