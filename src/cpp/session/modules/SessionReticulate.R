@@ -172,8 +172,6 @@
    # adjust for pixel ratio
    ratio  <- .Call("rs_devicePixelRatio", PACKAGE = "(embedding)")
    dpi    <- dpi * ratio
-   width  <- width * ratio
-   height <- height * ratio
    
    # TODO: get device requested from matplotlib?
    # TODO: handle HTML content?
