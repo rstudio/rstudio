@@ -26,6 +26,7 @@ export interface EditorOutlineItem {
   navigation_id: string;
   type: EditorOutlineItemType;
   level: number;
+  sequence: number;
   title: string;
   children: EditorOutlineItem[];
 }

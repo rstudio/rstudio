@@ -23,6 +23,7 @@ public class PanmirrorOutlineItem
    public String navigation_id;
    public String type;
    public int level;
+   public int sequence;
    public String title;
    public PanmirrorOutlineItem[] children;
 }

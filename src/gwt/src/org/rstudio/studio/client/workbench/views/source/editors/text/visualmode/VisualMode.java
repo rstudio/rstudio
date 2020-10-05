@@ -953,8 +953,6 @@ public class VisualMode implements VisualModeEditorSync,
    {
       StatusBarPopupMenu menu = new StatusBarPopupMenu();
 
-      // Reset chunk counter
-      chunkCounter_ = 0;
       buildStatusBarMenu(panmirror_.getOutline(), menu);
       
       return new StatusBarPopupRequest(menu, null);
@@ -990,10 +988,7 @@ public class VisualMode implements VisualModeEditorSync,
          
          if (item.type == PanmirrorOutlineItemType.RmdChunk)
          {
-            // Format chunk names; use a counter and append the chunk label if
-            // it's supplied explicitly
-            chunkCounter_++;
-            label.appendEscaped("Chunk " + chunkCounter_);
+            label.appendEscaped("Chunk " + item.sequence);
             if (item.title != PanmirrorOutlineItemType.RmdChunk)
             {
                label.appendEscaped(": " + item.title);
@@ -1281,13 +1276,22 @@ public class VisualMode implements VisualModeEditorSync,
       {
          // Convert the outline type into a status bar type
          int type = StatusBar.SCOPE_ANON;
+         String title = item.title;
          if (StringUtil.equals(item.type, PanmirrorOutlineItemType.Heading))
+         {
             type = StatusBar.SCOPE_SECTION;
+         }
          if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
+         {
             type = StatusBar.SCOPE_CHUNK;
+            if (StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
+            {
+               title = "Chunk " + item.sequence;
+            }
+         }
          
          // Update the status bar and mark that we found an item
-         target_.updateStatusBarLocation(item.title, type);
+         target_.updateStatusBarLocation(title, type);
       }
    }
    
@@ -1693,7 +1697,6 @@ public class VisualMode implements VisualModeEditorSync,
    private UserPrefs prefs_;
    private SourceServerOperations source_;
    private DocDisplay activeEditor_;  // the current embedded editor
-   private int chunkCounter_ = 0; 
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;

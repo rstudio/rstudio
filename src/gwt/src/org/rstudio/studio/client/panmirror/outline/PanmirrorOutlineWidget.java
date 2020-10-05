@@ -189,19 +189,17 @@ public class PanmirrorOutlineWidget extends Composite
       tree_.addItem(treeItem);
    }
    
-   private ArrayList<PanmirrorOutlineItem>  flattenOutline(PanmirrorOutlineItem[] items)
+   private ArrayList<PanmirrorOutlineItem> flattenOutline(PanmirrorOutlineItem[] items)
    {
       ArrayList<PanmirrorOutlineItem> flattenedItems = new ArrayList<PanmirrorOutlineItem>();
-      String outlineShow = pPrefs_.get().docOutlineShow().getValue();
-      doFlattenOutline(items, flattenedItems,
-            outlineShow == UserPrefs.DOC_OUTLINE_SHOW_ALL ||
-            outlineShow == UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS);
+      String chunkPref = pPrefs_.get().docOutlineShow().getValue();
+      doFlattenOutline(items, flattenedItems, chunkPref);
       return flattenedItems;
    }
    
    private void doFlattenOutline(PanmirrorOutlineItem[] items, 
                                  ArrayList<PanmirrorOutlineItem> flattenedItems,
-                                 boolean includeChunks)
+                                 String chunkPref)
    {
       for (int i=0; i<items.length; i++)
       {
@@ -210,11 +208,18 @@ public class PanmirrorOutlineWidget extends Composite
                !StringUtil.isNullOrEmpty(item.title))
          {
             flattenedItems.add(item);
-            doFlattenOutline(item.children, flattenedItems, includeChunks);
+            doFlattenOutline(item.children, flattenedItems, chunkPref);
          }
-         else if (item.type == PanmirrorOutlineItemType.RmdChunk && includeChunks)
+         else if (item.type == PanmirrorOutlineItemType.RmdChunk)
          {
-            flattenedItems.add(item);
+            // Anonymous (unnamed) chunks have the generic title "rmd_chunk"; do
+            // not show these chunks in the outline unless the user's opted to
+            // show everything.
+            if (chunkPref == UserPrefs.DOC_OUTLINE_SHOW_ALL ||
+                item.title != PanmirrorOutlineItemType.RmdChunk)
+            {
+               flattenedItems.add(item);
+            }
          }
       }
    }
@@ -324,6 +329,15 @@ public class PanmirrorOutlineWidget extends Composite
       private void setLabel(PanmirrorOutlineItem item)
       {
          String text = item.title;
+         
+         // Replace the title with sequence for anonymous chunks
+         if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         {
+            if (item.title == PanmirrorOutlineItemType.RmdChunk)
+            {
+               text = "(chunk " + item.sequence + ")";
+            }
+         }
        
          if (label_ == null)
             label_ = new Label(text);
