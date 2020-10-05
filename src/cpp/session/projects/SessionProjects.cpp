@@ -1019,9 +1019,9 @@ SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
 Error initialize()
 {
    // register R methods
-   RS_REGISTER_CALL_METHOD(rs_writeProjectFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc, 2);
-   RS_REGISTER_CALL_METHOD(rs_requestOpenProject, 2);
+   RS_REGISTER_CALL_METHOD(rs_writeProjectFile);
+   RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc);
+   RS_REGISTER_CALL_METHOD(rs_requestOpenProject);
    
    // call project-context initialize
    Error error = s_projectContext.initialize();
