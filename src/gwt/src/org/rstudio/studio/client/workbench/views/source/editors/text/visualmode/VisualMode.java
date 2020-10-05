@@ -658,10 +658,6 @@ public class VisualMode implements VisualModeEditorSync,
       
       // disable commands
       disableForVisualMode(
-        // Disabled since it just opens the scope tree widget (which doens't
-        // exist in visual mode)
-        commands_.jumpTo(),
-
         // Disabled since diagnostics aren't active in visual mode
         commands_.showDiagnosticsActiveDocument(),
 
