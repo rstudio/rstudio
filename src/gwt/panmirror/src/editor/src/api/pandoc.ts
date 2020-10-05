@@ -22,6 +22,7 @@ import { BibliographyResult } from './bibliography/bibliography-provider_local';
 
 import { stringifyMath } from './math';
 import { kCodeText } from './code';
+import { kLinkChildren } from './link';
 
 export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
@@ -336,6 +337,8 @@ export function stringifyTokens(c: PandocToken[], unemoji = false): string {
         elem.t === PandocTokenType.LineBreak
       ) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Link) {
+        return stringifyTokens(elem.c[kLinkChildren]);
       } else if (elem.t === PandocTokenType.Span) {
         const attr = pandocAttrReadAST(elem, kSpanAttr);
         if (unemoji && attr.classes && attr.classes[0] === 'emoji') {
