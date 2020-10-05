@@ -981,15 +981,15 @@ public class VisualMode implements VisualModeEditorSync,
                StringUtil.repeat("&nbsp;&nbsp;", item.level));
          
          // Make headings bold
-         if (item.type == PanmirrorOutlineItemType.Heading)
+         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.Heading))
          {
             label.appendHtmlConstant("<strong>");
          }
          
-         if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             label.appendEscaped("Chunk " + item.sequence);
-            if (item.title != PanmirrorOutlineItemType.RmdChunk)
+            if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                label.appendEscaped(": " + item.title);
             }
@@ -1266,10 +1266,13 @@ public class VisualMode implements VisualModeEditorSync,
       
       // Find the selection and display it
       PanmirrorOutlineItem item = findNavigationId(items, targetId);
-      if (item == null)
+      if (item == null || item.type == PanmirrorOutlineItemType.YamlMetadata)
       {
          // If we didn't find the selection in the outline, we're at the top
          // level of the document.
+         //
+         // We also show this when beneath the top level YAML metadata region,
+         // if present.
          target_.updateStatusBarLocation("(Top Level)", StatusBar.SCOPE_TOP_LEVEL);
       }
       else
@@ -1281,7 +1284,7 @@ public class VisualMode implements VisualModeEditorSync,
          {
             type = StatusBar.SCOPE_SECTION;
          }
-         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
+         else if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             type = StatusBar.SCOPE_CHUNK;
             if (StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
@@ -1661,7 +1664,7 @@ public class VisualMode implements VisualModeEditorSync,
             new ArrayList<PanmirrorEditingOutlineLocationItem>();
       for (int j = 0; j < location.items.length; j++)
       {
-         if (location.items[j].type == PanmirrorOutlineItemType.RmdChunk)
+         if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
          {
             chunkItems.add(location.items[j]);
          }

@@ -210,13 +210,13 @@ public class PanmirrorOutlineWidget extends Composite
             flattenedItems.add(item);
             doFlattenOutline(item.children, flattenedItems, chunkPref);
          }
-         else if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         else if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             // Anonymous (unnamed) chunks have the generic title "rmd_chunk"; do
             // not show these chunks in the outline unless the user's opted to
             // show everything.
-            if (chunkPref == UserPrefs.DOC_OUTLINE_SHOW_ALL ||
-                item.title != PanmirrorOutlineItemType.RmdChunk)
+            if (StringUtil.equals(chunkPref, UserPrefs.DOC_OUTLINE_SHOW_ALL) ||
+                !StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                flattenedItems.add(item);
             }
@@ -240,8 +240,11 @@ public class PanmirrorOutlineWidget extends Composite
    {
       PanmirrorOutlineItem item = treeItem.getEntry().getItem();
       treeItem.addStyleName(outlineStyles_.node());
-      if (item.type == PanmirrorOutlineItemType.RmdChunk)
+      if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
+      {
+         // Apply chunk-specific styling
          treeItem.addStyleName(outlineStyles_.nodeLabelChunk());
+      }
       DomUtils.toggleClass(treeItem.getElement(), outlineStyles_.activeNode(), isActiveItem(item));
    }
    
@@ -331,12 +334,10 @@ public class PanmirrorOutlineWidget extends Composite
          String text = item.title;
          
          // Replace the title with sequence for anonymous chunks
-         if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk) &&
+             StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
          {
-            if (item.title == PanmirrorOutlineItemType.RmdChunk)
-            {
-               text = "(chunk " + item.sequence + ")";
-            }
+            text = "(chunk " + item.sequence + ")";
          }
        
          if (label_ == null)
