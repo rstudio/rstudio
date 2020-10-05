@@ -27,6 +27,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
@@ -47,6 +48,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import jsinterop.base.Js;
 
@@ -80,6 +83,24 @@ public class PanmirrorOutlineWidget extends Composite
       initWidget(container_);
       
       addStyleName("ace_editor_theme");
+   }
+   
+   @Inject
+   public void initialize(Provider<UserPrefs> prefs)
+   {
+      pPrefs_ = prefs; 
+      
+      // After fully initialized, start listening for pref changes
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         prefs.get().docOutlineShow().bind((val) ->
+         {
+            if (outline_ != null)
+            {
+               rebuildOutline();
+            }
+         });
+      });
    }
   
    @Override
@@ -138,7 +159,7 @@ public class PanmirrorOutlineWidget extends Composite
          outlineMinLevel_ = 1;
      
          
-      // if the outline and existing tree have diffent sizes then rebuild
+      // if the outline and existing tree have different sizes then rebuild
       if (outline_.size() != tree_.getItemCount())
       {
          tree_.clear();
@@ -171,11 +192,16 @@ public class PanmirrorOutlineWidget extends Composite
    private ArrayList<PanmirrorOutlineItem>  flattenOutline(PanmirrorOutlineItem[] items)
    {
       ArrayList<PanmirrorOutlineItem> flattenedItems = new ArrayList<PanmirrorOutlineItem>();
-      doFlattenOutline(items, flattenedItems);
+      String outlineShow = pPrefs_.get().docOutlineShow().getValue();
+      doFlattenOutline(items, flattenedItems,
+            outlineShow == UserPrefs.DOC_OUTLINE_SHOW_ALL ||
+            outlineShow == UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS);
       return flattenedItems;
    }
    
-   private void doFlattenOutline(PanmirrorOutlineItem[] items,  ArrayList<PanmirrorOutlineItem> flattenedItems)
+   private void doFlattenOutline(PanmirrorOutlineItem[] items, 
+                                 ArrayList<PanmirrorOutlineItem> flattenedItems,
+                                 boolean includeChunks)
    {
       for (int i=0; i<items.length; i++)
       {
@@ -184,7 +210,11 @@ public class PanmirrorOutlineWidget extends Composite
                !StringUtil.isNullOrEmpty(item.title))
          {
             flattenedItems.add(item);
-            doFlattenOutline(item.children, flattenedItems);
+            doFlattenOutline(item.children, flattenedItems, includeChunks);
+         }
+         else if (item.type == PanmirrorOutlineItemType.RmdChunk && includeChunks)
+         {
+            flattenedItems.add(item);
          }
       }
    }
@@ -205,6 +235,8 @@ public class PanmirrorOutlineWidget extends Composite
    {
       PanmirrorOutlineItem item = treeItem.getEntry().getItem();
       treeItem.addStyleName(outlineStyles_.node());
+      if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         treeItem.addStyleName(outlineStyles_.nodeLabelChunk());
       DomUtils.toggleClass(treeItem.getElement(), outlineStyles_.activeNode(), isActiveItem(item));
    }
    
@@ -345,6 +377,7 @@ public class PanmirrorOutlineWidget extends Composite
    private int outlineMinLevel_ = 1;
    private PanmirrorSelection selection_ = null;
    private PanmirrorOutlineItem activeItem_ = null;
+   private Provider<UserPrefs> pPrefs_;
    
    private final Tree tree_;
    private final DockLayoutPanel container_;

@@ -957,6 +957,8 @@ public class VisualMode implements VisualModeEditorSync,
    {
       StatusBarPopupMenu menu = new StatusBarPopupMenu();
 
+      // Reset chunk counter
+      chunkCounter_ = 0;
       buildStatusBarMenu(panmirror_.getOutline(), menu);
       
       return new StatusBarPopupRequest(menu, null);
@@ -990,8 +992,22 @@ public class VisualMode implements VisualModeEditorSync,
             label.appendHtmlConstant("<strong>");
          }
          
-         // Add the title of the item
-         label.appendEscaped(item.title);
+         if (item.type == PanmirrorOutlineItemType.RmdChunk)
+         {
+            // Format chunk names; use a counter and append the chunk label if
+            // it's supplied explicitly
+            chunkCounter_++;
+            label.appendEscaped("Chunk " + chunkCounter_);
+            if (item.title != PanmirrorOutlineItemType.RmdChunk)
+            {
+               label.appendEscaped(": " + item.title);
+            }
+         }
+         else
+         {
+            // For non-chunk outline items, use the title directly
+            label.appendEscaped(item.title);
+         }
 
          if (item.type == PanmirrorOutlineItemType.Heading)
          {
@@ -1681,6 +1697,7 @@ public class VisualMode implements VisualModeEditorSync,
    private UserPrefs prefs_;
    private SourceServerOperations source_;
    private DocDisplay activeEditor_;  // the current embedded editor
+   private int chunkCounter_ = 0; 
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;

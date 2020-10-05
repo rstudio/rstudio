@@ -26,6 +26,7 @@ import { uuidv4 } from '../api/util';
 import { EditorOutlineItem, EditorOutlineItemType, EditorOutline, isOutlineNode, getEditingOutlineLocation, getDocumentOutline } from '../api/outline';
 import { navigateToPos } from '../api/navigation';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
+import { rmdChunkEngineAndLabel } from '../api/rmd';
 
 const kOutlineIdsTransaction = 'OutlineIds';
 
@@ -131,13 +132,24 @@ function editorOutline(state: EditorState): EditorOutline {
   }
 
   // function to create an outline node from a heading
-  const editorOutlineItem = (nodeWithPos: NodeWithPos, defaultLevel: number) => ({
-    navigation_id: nodeWithPos.node.attrs.navigation_id,
-    type: nodeWithPos.node.type.name as EditorOutlineItemType,
-    level: nodeWithPos.node.attrs.level || defaultLevel,
-    title: nodeWithPos.node.type.spec.code ? nodeWithPos.node.type.name : nodeWithPos.node.textContent,
-    children: [],
-  });
+  const editorOutlineItem = (nodeWithPos: NodeWithPos, defaultLevel: number) => {
+    const item = {
+      navigation_id: nodeWithPos.node.attrs.navigation_id,
+      type: nodeWithPos.node.type.name as EditorOutlineItemType,
+      level: nodeWithPos.node.attrs.level || defaultLevel,
+      title: nodeWithPos.node.type.spec.code ? nodeWithPos.node.type.name : nodeWithPos.node.textContent,
+      children: [],
+    };
+    
+    // if this is an R Markdown chunk, extract the title from the chunk
+    if (nodeWithPos.node.type.name === 'rmd_chunk') {
+      const chunk = rmdChunkEngineAndLabel(nodeWithPos.node.textContent);
+      if (chunk) {
+        item.title = chunk.label;
+      }
+    }
+    return item; 
+  };
 
   // extract the outline
   const rootOutlineItem: EditorOutlineItem = {
