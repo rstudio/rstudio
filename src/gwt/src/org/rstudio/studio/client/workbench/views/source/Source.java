@@ -1683,7 +1683,8 @@ public class Source implements InsertSourceHandler,
                {
                   if (input == null)
                   {
-                     onCancelled.execute();
+                     if (onCancelled != null)
+                        onCancelled.execute();
                      return;
                   }
 
@@ -1696,7 +1697,8 @@ public class Source implements InsertSourceHandler,
                      public void execute()
                      {
                         fileTypeRegistry_.openFile(input);
-                        onCompleted.execute();
+                        if (onCompleted != null)
+                           onCompleted.execute();
                      }
                   });
                }
