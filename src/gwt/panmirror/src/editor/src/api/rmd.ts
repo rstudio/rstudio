@@ -184,9 +184,23 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
   }
 }
 
+/**
+ * Attempts to extract the engine name and label from a chunk header.
+ * 
+ * @param text The chunk header, e.g. {r foo}
+ * @returns An object with `engine` and `label` properties, or null.
+ */
 export function rmdChunkEngineAndLabel(text: string) {
-  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
+  // Match the engine and label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
   if (match) {
+    // The second capturing group in the regex matches the first string after
+    // the engine. This might be a label (e.g., {r label}), but could also be
+    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
+    // an option.
+    if (match[2].indexOf("=") !== -1) {
+      return null;
+    }
     return {
       engine: match[1],
       label: match[2]
