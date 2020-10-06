@@ -19,6 +19,7 @@ import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
 import { wrapIn, lift } from 'prosemirror-commands';
 import { GapCursor } from 'prosemirror-gapcursor';
+import { liftTarget } from 'prosemirror-transform';
 
 import { ExtensionContext } from '../api/extension';
 import {
@@ -210,7 +211,16 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
       dispatch(tr);
     } else if (result.action === 'remove') {
-      lift(state, dispatch);
+      const fromPos = tr.doc.resolve(div.pos + 1);
+      const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
+      const nodeRange = fromPos.blockRange(toPos);
+      if (nodeRange) {
+        const targetLiftDepth = liftTarget(nodeRange);
+        if (targetLiftDepth || targetLiftDepth === 0) {
+          tr.lift(nodeRange, targetLiftDepth);
+        }
+      }
+      dispatch(tr);
     }
   }
 }
