@@ -226,7 +226,7 @@ class PandocWriter implements PandocOutput {
           // reverse smart punctuation. pandoc does this autmoatically for markdown
           // writing w/ +smart, however this also results in nbsp's being inserted
           // after selected abbreviations like e.g. and Mr., and we don't want that
-          // to happen for editing (b/c the nbsp's weren't put there by the user 
+          // to happen for editing (b/c the nbsp's weren't put there by the user
           // and are not obviously visible)
           if (this.extensions.smart) {
             textRun = textRun
@@ -300,10 +300,8 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeInlines(fragment: Fragment) {
-
     // get the marks from a node that are not already on the stack of active marks
     const nodeMarks = (node: ProsemirrorNode) => {
-
       // get marks ordered by writer priority
       let marks = marksByPriority(node.marks, this.markWriters);
 
@@ -425,8 +423,8 @@ class PandocWriter implements PandocOutput {
     this.escapeCharacters.push(...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch)));
 
     // Manual escape characters are ones we can't rely on pandoc to automatically escape (b/c
-    // they represent valid syntax for a markdown extension, e.g. '@' for citations). 
-    // For '@', since we already do special writing for spans we know are citation ids, we can 
+    // they represent valid syntax for a markdown extension, e.g. '@' for citations).
+    // For '@', since we already do special writing for spans we know are citation ids, we can
     // globally prescribe escaping behavior and never stomp over a citation. We also check
     // that '@' can be escaped in the current markdown format, and if not use an html escape.
     const atEscape = this.extensions.all_symbols_escapable ? '\\@' : '&#x0040;';

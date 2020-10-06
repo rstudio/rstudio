@@ -13,7 +13,7 @@
  *
  */
 
-import { lanagugeMappings } from "./language";
+import { lanagugeMappings } from './language';
 
 export interface Field {
   type: string;
@@ -26,25 +26,25 @@ export interface Field {
 // https://docs.citationstyles.org/en/stable/specification.html#appendix-iv-variables
 
 // TODO: bibtex: string | (type: string) => string
-// 
+//
 
 export const FieldMap: { [key: string]: Field } = {
-  'abstract': {
+  abstract: {
     type: 'f_long_literal',
     bibtex: 'abstract',
-    csl: 'abstract'
+    csl: 'abstract',
   },
-  'author': {
+  author: {
     type: 'l_name',
     bibtex: 'author',
-    csl: 'author'
+    csl: 'author',
   },
-  'bookauthor': {
+  bookauthor: {
     type: 'l_name',
     bibtex: 'author',
-    csl: 'container-author'
+    csl: 'container-author',
   },
-  'containerTitle': {
+  containerTitle: {
     type: 'f_title',
     bibtex: (bibTexType: string) => {
       switch (bibTexType) {
@@ -56,108 +56,108 @@ export const FieldMap: { [key: string]: Field } = {
           return 'journal';
       }
     },
-    csl: 'container-title'
+    csl: 'container-title',
   },
-  'chapter': {
+  chapter: {
     type: 'f_literal',
     bibtex: 'chapter',
-    csl: 'chapter-number'
+    csl: 'chapter-number',
   },
-  'date': {
+  date: {
     type: 'f_date',
     bibtex: 'date',
-    csl: 'issued'
+    csl: 'issued',
   },
-  'doi': {
+  doi: {
     type: 'f_verbatim',
     bibtex: 'doi',
-    csl: 'DOI'
+    csl: 'DOI',
   },
-  'edition': {
+  edition: {
     type: 'f_integer',
     bibtex: 'edition',
-    csl: 'edition'
+    csl: 'edition',
   },
-  'editor': {
+  editor: {
     type: 'l_name',
     bibtex: 'editor',
-    csl: 'editor'
+    csl: 'editor',
   },
-  'eventdate': {
+  eventdate: {
     type: 'f_date',
     bibtex: 'date',
-    csl: 'event-date'
+    csl: 'event-date',
   },
-  'eventtitle': {
+  eventtitle: {
     type: 'f_title',
     bibtex: 'title',
-    csl: 'event'
+    csl: 'event',
   },
-  'howpublished': {
+  howpublished: {
     type: 'f_literal',
     bibtex: 'howpublished',
-    csl: 'medium'
+    csl: 'medium',
   },
-  'issue': {
+  issue: {
     type: 'f_literal',
     bibtex: 'issue',
-    csl: 'issue'
+    csl: 'issue',
   },
-  'journaltitle': {
+  journaltitle: {
     type: 'f_literal',
     bibtex: 'journal',
-    csl: 'container-title'
+    csl: 'container-title',
   },
   // Special - not really in CSL or BibTeX
-  'langid': {
+  langid: {
     type: 'f_key',
     bibtex: 'langid',
     csl: 'language',
-    options: lanagugeMappings
+    options: lanagugeMappings,
   },
-  'location': {
+  location: {
     type: 'l_literal',
     bibtex: 'address',
-    csl: 'publisher-place'
+    csl: 'publisher-place',
   },
-  'note': {
+  note: {
     type: 'f_literal',
     bibtex: 'note',
-    csl: 'note'
+    csl: 'note',
   },
-  'number': {
+  number: {
     type: 'f_literal',
     bibtex: 'number',
-    csl: 'collection-number'
+    csl: 'collection-number',
   },
-  'pages': {
+  pages: {
     type: 'l_range',
     bibtex: 'pages',
-    csl: 'page'
+    csl: 'page',
   },
-  'publisher': {
+  publisher: {
     type: 'l_literal',
     bibtex: 'publisher',
-    csl: 'publisher'
+    csl: 'publisher',
   },
-  'series': {
+  series: {
     type: 'f_literal',
     bibtex: 'series',
-    csl: 'collection-title'
+    csl: 'collection-title',
   },
-  'title': {
+  title: {
     type: 'f_title',
     bibtex: 'title',
-    csl: 'title'
+    csl: 'title',
   },
-  'url': {
+  url: {
     type: 'f_uri',
     bibtex: 'url',
-    csl: 'URL'
+    csl: 'URL',
   },
-  'volume': {
+  volume: {
     type: 'f_literal',
     bibtex: 'volume',
-    csl: 'volume'
+    csl: 'volume',
   },
 };

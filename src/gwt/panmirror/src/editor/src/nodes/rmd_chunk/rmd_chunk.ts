@@ -79,7 +79,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               return null;
             }
           },
-          createFromPastePattern: /^\{([a-zA-Z0-9_]+).*}.*?\n/m
+          createFromPastePattern: /^\{([a-zA-Z0-9_]+).*}.*?\n/m,
         },
 
         pandoc: {

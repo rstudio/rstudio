@@ -13,13 +13,14 @@
  *
  */
 
-import { CSL } from "./csl";
+import { CSL } from './csl';
 
 export interface ZoteroResult {
-  status: "ok" |    // ok (results in 'message')
-  "notfound" |      // invalid api key
-  "nohost" |        // no internet connectivity
-  "error";          // unexpected error (details in 'error')
+  status:
+    | 'ok' // ok (results in 'message')
+    | 'notfound' // invalid api key
+    | 'nohost' // no internet connectivity
+    | 'error'; // unexpected error (details in 'error')
   message: any | null;
   warning: string;
   error: string;
@@ -45,31 +46,21 @@ export interface ZoteroCSL extends CSL {
 export const kZoteroBibTeXTranslator = 'ca65189f-8815-4afe-8c8b-8c7c15f0edca';
 
 export interface ZoteroServer {
-
   validateWebAPIKey: (key: string) => Promise<boolean>;
 
   getCollections: (
     file: string | null,
     collections: string[],
     cached: ZoteroCollectionSpec[],
-    useCache: boolean
+    useCache: boolean,
   ) => Promise<ZoteroResult>;
 
-  getLibraryNames: ()
-    => Promise<ZoteroResult>;
+  getLibraryNames: () => Promise<ZoteroResult>;
 
-  getActiveCollectionSpecs: (
-    file: string | null,
-    collections: string[]
-  ) => Promise<ZoteroResult>;
+  getActiveCollectionSpecs: (file: string | null, collections: string[]) => Promise<ZoteroResult>;
 
-  // Return status: nohost w/ warning text if it fails to 
-  // communciate w/ Better BibTeX. Otherwise returns 
+  // Return status: nohost w/ warning text if it fails to
+  // communciate w/ Better BibTeX. Otherwise returns
   // status: ok with exported text in message.
-  betterBibtexExport: (
-    itemKeys: string[],
-    translatorId: string,
-    libraryId: number
-  ) => Promise<ZoteroResult>;
+  betterBibtexExport: (itemKeys: string[], translatorId: string, libraryId: number) => Promise<ZoteroResult>;
 }
-

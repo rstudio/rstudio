@@ -251,11 +251,11 @@ export function defaultEditorUIImages(): EditorUIImages {
       doi: doiImage,
       crossref: crossRefImage,
       pubmed: pubmedImage,
-      datacite: dataciteImage
+      datacite: dataciteImage,
     },
     widgets: {
       tag_delete: tagDelete,
-      tag_edit: tagEdit
-    }
+      tag_edit: tagEdit,
+    },
   };
 }

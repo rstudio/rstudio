@@ -37,17 +37,19 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
     if (autoLink) {
       // plain link
       rules.push(
-        new InputRule(/(^|[^`])(https?:\/\/[^\s]+\w)[\.\?!]? $/, (state: EditorState, match: string[], start: number, end: number) => {
-
-          const tr = state.tr;
-          start = start + match[1].length;
-          end = start + match[2].length;
-          tr.addMark(start, end, schema.marks.link.create({ href: match[2] }));
-          tr.removeStoredMark(schema.marks.link);
-          tr.insertText(' ');
-          setTextSelection(end + 1)(tr);
-          return tr;
-        }),
+        new InputRule(
+          /(^|[^`])(https?:\/\/[^\s]+\w)[\.\?!\,)]* $/,
+          (state: EditorState, match: string[], start: number, end: number) => {
+            const tr = state.tr;
+            start = start + match[1].length;
+            const linkEnd = start + match[2].length;
+            tr.addMark(start, linkEnd, schema.marks.link.create({ href: match[2] }));
+            tr.removeStoredMark(schema.marks.link);
+            tr.insertText(' ');
+            setTextSelection(end + 1)(tr);
+            return tr;
+          },
+        ),
       );
     }
 

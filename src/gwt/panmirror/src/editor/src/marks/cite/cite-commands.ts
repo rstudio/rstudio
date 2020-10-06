@@ -14,12 +14,11 @@
  */
 
 import { EditorState, Transaction } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, toggleMarkType } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsertGroup } from '../../api/omni_insert';
@@ -31,7 +30,6 @@ import { ensureSourcesInBibliography } from './cite';
 import { showInsertCitationDialog, InsertCitationDialogResult } from '../../behaviors/insert_citation/insert_citation';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
-
   private initialSelectionKey: string | undefined;
 
   constructor(ui: EditorUI, events: EditorEvents, bibliographyManager: BibliographyManager, server: EditorServer) {
@@ -39,77 +37,82 @@ export class InsertCitationCommand extends ProsemirrorCommand {
       EditorCommandId.Citation,
       ['Shift-Mod-F8'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-
         // enable/disable command
         const schema = state.schema;
-        if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.cite)(state)) {
+        if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.cite)(state)) {
           return false;
         }
 
         if (dispatch && view) {
-          showInsertCitationDialog(ui, state.doc, bibliographyManager, server, async (result: InsertCitationDialogResult) => {
-            if (result) {
+          showInsertCitationDialog(
+            ui,
+            state.doc,
+            bibliographyManager,
+            server,
+            async (result: InsertCitationDialogResult) => {
+              if (result) {
+                // Remember the last tree node that was selected
+                this.initialSelectionKey = result.selectionKey;
 
-              // Remember the last tree node that was selected
-              this.initialSelectionKey = result.selectionKey;
+                // The citations that we should insert
+                const bibliographySources = result.bibliographySources;
 
-              // The citations that we should insert
-              const bibliographySources = result.bibliographySources;
+                // The bibliography that we should insert sources into (if needed)
+                const bibliography = result.bibliography;
 
-              // The bibliography that we should insert sources into (if needed)
-              const bibliography = result.bibliography;
+                // The transaction that will hold all the changes we'll make
+                const tr = state.tr;
 
-              // The transaction that will hold all the changes we'll make
-              const tr = state.tr;
+                // First, be sure that we add any sources to the bibliography
+                // and that the bibliography is properly configured
+                const writeCiteId = await ensureSourcesInBibliography(
+                  tr,
+                  bibliographySources,
+                  bibliography,
+                  bibliographyManager,
+                  view,
+                  ui,
+                  server.pandoc,
+                );
 
-              // First, be sure that we add any sources to the bibliography
-              // and that the bibliography is properly configured
-              const writeCiteId = await ensureSourcesInBibliography(
-                tr,
-                bibliographySources,
-                bibliography,
-                bibliographyManager,
-                view,
-                ui,
-                server.pandoc,
-              );
+                if (writeCiteId) {
+                  // The starting location of this transaction
+                  const start = tr.selection.from;
 
-              if (writeCiteId) {
-                // The starting location of this transaction
-                const start = tr.selection.from;
+                  // Insert the cite mark and text
+                  const wrapperText = schema.text(`[]`, []);
+                  tr.insert(tr.selection.from, wrapperText);
 
-                // Insert the cite mark and text
-                const wrapperText = schema.text(`[]`, []);
-                tr.insert(tr.selection.from, wrapperText);
+                  // move the selection into the wrapper
+                  setTextSelection(tr.selection.from - 1)(tr);
 
-                // move the selection into the wrapper
-                setTextSelection(tr.selection.from - 1)(tr);
+                  // insert the CiteId marks and text
+                  bibliographySources.forEach((citation, i) => {
+                    const citeIdMark = schema.marks.cite_id.create();
+                    const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
+                    tr.insert(tr.selection.from, citeIdText);
+                    if (bibliographySources.length > 1 && i !== bibliographySources.length - 1) {
+                      tr.insert(tr.selection.from, schema.text('; ', []));
+                    }
+                  });
 
-                // insert the CiteId marks and text
-                bibliographySources.forEach((citation, i) => {
-                  const citeIdMark = schema.marks.cite_id.create();
-                  const citeIdText = schema.text(`@${citation.id}`, [citeIdMark]);
-                  tr.insert(tr.selection.from, citeIdText);
-                  if (bibliographySources.length > 1 && i !== bibliographySources.length - 1) {
-                    tr.insert(tr.selection.from, schema.text('; ', []));
-                  }
-                });
+                  // Enclose wrapper in the cite mark
+                  const endOfWrapper = tr.selection.from + 1;
+                  const citeMark = schema.marks.cite.create();
+                  tr.addMark(start, endOfWrapper, citeMark);
 
-                // Enclose wrapper in the cite mark
-                const endOfWrapper = tr.selection.from + 1;
-                const citeMark = schema.marks.cite.create();
-                tr.addMark(start, endOfWrapper, citeMark);
+                  // Move selection to the end of the inserted content
+                  setTextSelection(endOfWrapper)(tr);
+                }
 
-                // Move selection to the end of the inserted content
-                setTextSelection(endOfWrapper)(tr);
+                // commit the transaction
+                dispatch(tr);
+
+                return Promise.resolve();
               }
-
-              // commit the transaction
-              dispatch(tr);
-
-              return Promise.resolve();
-            }
-          }, this.initialSelectionKey);
+            },
+            this.initialSelectionKey,
+          );
         }
         return true;
       },

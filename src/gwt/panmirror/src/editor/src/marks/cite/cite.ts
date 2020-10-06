@@ -43,12 +43,10 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 
-
 const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
 const kCiteIdOptionalCharsPattern = '[^@;\\[\\]\\s]*';
-
 
 const kCiteIdCharsPattern = `${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
@@ -59,7 +57,9 @@ const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOption
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
-export const kEditingCiteIdRegEx = new RegExp(`^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`);
+export const kEditingCiteIdRegEx = new RegExp(
+  `^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`,
+);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -83,7 +83,7 @@ const extension = (context: ExtensionContext): Extension | null => {
 
   // prime bibliography on initial focus
   const bibliographyManager = new BibliographyManager(context.server.pandoc, context.server.zotero);
-  const focusUnsubscribe = context.events.subscribe(FocusEvent, (doc) => {
+  const focusUnsubscribe = context.events.subscribe(FocusEvent, doc => {
     bibliographyManager.prime(ui, doc!);
     focusUnsubscribe();
   });
@@ -232,15 +232,14 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     plugins: (schema: Schema) => {
       return [
-        new Plugin(
-          {
-            key: new PluginKey('paste_cite_doi'),
-            props: {
-              handlePaste: handlePaste(ui, bibliographyManager, context.server.pandoc),
-            }
-          }),
+        new Plugin({
+          key: new PluginKey('paste_cite_doi'),
+          props: {
+            handlePaste: handlePaste(ui, bibliographyManager, context.server.pandoc),
+          },
+        }),
         citeHighlightPlugin(schema),
-        citePopupPlugin(schema, ui, bibliographyManager, context.server.pandoc)
+        citePopupPlugin(schema, ui, bibliographyManager, context.server.pandoc),
       ];
     },
   };
@@ -248,13 +247,11 @@ const extension = (context: ExtensionContext): Extension | null => {
 
 function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: PandocServer) {
   return (view: EditorView, _event: Event, slice: Slice) => {
-
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.cite)) {
       // This is a DOI
       const parsedDOI = doiFromSlice(view.state, slice);
       if (parsedDOI) {
-
         // First check the local bibliography- if we already have this DOI
         // we can just paste the DOI and allow the completion to handle it
         const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
@@ -272,7 +269,6 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
         }
         return true;
-
       } else {
         // This is just content, accept any text and try pasting that
         let text = '';
@@ -407,7 +403,7 @@ function citeIdInputRule(schema: Schema) {
       // if we already have an @ 1 character before then this is a backspace
       // (in that case don't insert the match)
       const prefixChar = state.doc.textBetween(state.selection.from - 2, state.selection.from - 1);
-      if (prefixChar !== "@") {
+      if (prefixChar !== '@') {
         const tr = state.tr;
         tr.insertText(match[1]);
         const beginCite = findCiteBeginBracket(tr.selection);
@@ -571,10 +567,11 @@ export interface ParsedCitation {
 
 // completions allow spaces in the cite id (multiple search terms)
 const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace('\\s', '');
-const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`);
+const kCompletionCiteIdRegEx = new RegExp(
+  `(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`,
+);
 
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
-
   // return completions only if we are inside a cite (this allows for completions across
   // cite_id marks and spaces after them (necesary to allow spaces in completion queries)
   const markType = context.doc.type.schema.marks.cite;
@@ -609,14 +606,13 @@ export async function insertCitation(
   ui: EditorUI,
   server: PandocServer,
   csl?: CSL,
-  provider?: string
+  provider?: string,
 ) {
-
   // ensure the bib manager is loaded before proceeding
   await bibManager.load(ui, view.state.doc);
 
   // We try not call this function if the entry for this DOI is already in the bibliography,
-  // but it can happen. So we need to check here if it is already in the bibliography and 
+  // but it can happen. So we need to check here if it is already in the bibliography and
   // if it is, deal with it appropriately.
   const existingEntry = bibManager.findDoiInLocalBibliography(doi);
   if (existingEntry) {
@@ -628,7 +624,6 @@ export async function insertCitation(
     // This could be called by paste handler, so stop completions
     performCiteCompletionReplacement(tr, tr.mapping.map(pos), existingEntry.id);
     view.dispatch(tr);
-
   } else {
     // There isn't an entry in the existing bibliography
     // Show the user UI to and ultimately create an entry in the biblography
@@ -640,34 +635,44 @@ export async function insertCitation(
     const citeProps: InsertCiteProps = {
       doi,
       existingIds,
-      bibliographyFiles: bibManager.writableBibliographyFiles(view.state.doc, ui).map(writableFile => writableFile.displayPath),
+      bibliographyFiles: bibManager
+        .writableBibliographyFiles(view.state.doc, ui)
+        .map(writableFile => writableFile.displayPath),
       provider,
       csl,
-      citeUI: csl ? {
-        suggestedId: csl.id || suggestCiteId(existingIds, csl),
-        previewFields: formatForPreview(csl),
-      } : undefined
+      citeUI: csl
+        ? {
+            suggestedId: csl.id || suggestCiteId(existingIds, csl),
+            previewFields: formatForPreview(csl),
+          }
+        : undefined,
     };
 
     const result = await ui.dialogs.insertCite(citeProps);
     if (result && result.id.length) {
-
       if (!result?.csl.title) {
-        await ui.dialogs.alert(ui.context.translateText("This citation can't be added to the bibliography because it is missing required fields."), ui.context.translateText("Invalid Citation"), kAlertTypeError);
+        await ui.dialogs.alert(
+          ui.context.translateText(
+            "This citation can't be added to the bibliography because it is missing required fields.",
+          ),
+          ui.context.translateText('Invalid Citation'),
+          kAlertTypeError,
+        );
       } else {
-
         // Figure out whether this is a project or document level bibliography
         const writableBiblios = bibManager.writableBibliographyFiles(view.state.doc, ui);
 
         // Sort out the bibliography file into which we should write the entry
         const thisWritableBiblio = writableBiblios.find(writable => writable.displayPath === result.bibliographyFile);
         const project = thisWritableBiblio?.isProject || false;
-        const writableBiblioPath = thisWritableBiblio ? thisWritableBiblio.fullPath : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
+        const writableBiblioPath = thisWritableBiblio
+          ? thisWritableBiblio.fullPath
+          : joinPaths(ui.context.getDefaultResourceDir(), result.bibliographyFile);
         const bibliographyFile: BibliographyFile = {
           displayPath: result.bibliographyFile,
           fullPath: writableBiblioPath,
           isProject: project,
-          writable: true
+          writable: true,
         };
 
         // Create the source that holds the id, provider, etc...
@@ -676,7 +681,6 @@ export async function insertCitation(
           id: result.id,
           providerKey: provider || '',
         };
-
 
         // Start the transaction
         const tr = view.state.tr;
@@ -706,9 +710,8 @@ export async function insertCitation(
   }
 }
 
-
 // Ensures that the sources are in the specified bibliography file
-// and ensures that the bibliography file is properly referenced (either) 
+// and ensures that the bibliography file is properly referenced (either)
 // as a project bibliography or inline in the document YAML
 export async function ensureSourcesInBibliography(
   tr: Transaction,
@@ -724,7 +727,9 @@ export async function ensureSourcesInBibliography(
 
   // See if there is a warning for the selected provider. If there is, we may need to surface
   // that to the user. If there is no provider specified, no need to care about warnings.
-  const providers = uniqby(sources, (source: BibliographySource) => source.providerKey).map(source => source.providerKey);
+  const providers = uniqby(sources, (source: BibliographySource) => source.providerKey).map(
+    source => source.providerKey,
+  );
 
   // Find any providers that have warnings
   const providersWithWarnings = providers.filter(prov => bibManager.warningForProvider(prov));
@@ -739,14 +744,22 @@ export async function ensureSourcesInBibliography(
   // always show the warning)
   let proceedWithInsert = true;
   if (providersWithWarnings.length > 0 && ui.prefs.zoteroUseBetterBibtex() && isBibTexBibliography) {
-    const results = await Promise.all<boolean>(providersWithWarnings.map(async withWarning => {
-      const warning = bibManager.warningForProvider(withWarning);
-      if (warning) {
-        return await ui.dialogs.yesNoMessage(warning, "Warning", kAlertTypeWarning, ui.context.translateText("Insert Citation Anyway"), ui.context.translateText("Cancel"));
-      } else {
-        return true;
-      }
-    }));
+    const results = await Promise.all<boolean>(
+      providersWithWarnings.map(async withWarning => {
+        const warning = bibManager.warningForProvider(withWarning);
+        if (warning) {
+          return await ui.dialogs.yesNoMessage(
+            warning,
+            'Warning',
+            kAlertTypeWarning,
+            ui.context.translateText('Insert Citation Anyway'),
+            ui.context.translateText('Cancel'),
+          );
+        } else {
+          return true;
+        }
+      }),
+    );
     proceedWithInsert = results.every(result => result);
   }
 
@@ -758,21 +771,29 @@ export async function ensureSourcesInBibliography(
           const cslToWrite = sanitizeForCiteproc(source);
 
           if (!bibManager.findIdInLocalBibliography(source.id)) {
-            const sourceAsBibTex = isBibTexBibliography ? await bibManager.generateBibTeX(ui, source.id, cslToWrite, source.providerKey) : undefined;
-            await server.addToBibliography(bibliographyFile.fullPath, bibliographyFile.isProject, source.id, JSON.stringify([cslToWrite]), sourceAsBibTex || '');
+            const sourceAsBibTex = isBibTexBibliography
+              ? await bibManager.generateBibTeX(ui, source.id, cslToWrite, source.providerKey)
+              : undefined;
+            await server.addToBibliography(
+              bibliographyFile.fullPath,
+              bibliographyFile.isProject,
+              source.id,
+              JSON.stringify([cslToWrite]),
+              sourceAsBibTex || '',
+            );
           }
 
           if (!bibliographyFile.isProject) {
             ensureBibliographyFileForDoc(tr, bibliographyFile.displayPath, ui);
           }
         }
-      }));
+      }),
+    );
   }
   return proceedWithInsert;
 }
 
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
-
   // perform replacement
   performCompletionReplacement(tr, pos, replacement);
 

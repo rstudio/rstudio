@@ -22,6 +22,7 @@ import { BibliographyResult } from './bibliography/bibliography-provider_local';
 
 import { stringifyMath } from './math';
 import { kCodeText } from './code';
+import { kLinkChildren } from './link';
 
 export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
@@ -41,12 +42,7 @@ export interface PandocServer {
     sourceAsJson: string,
     sourceAsBibTeX: string,
   ): Promise<boolean>;
-  citationHTML(
-    file: string | null,
-    sourceAsJson: string,
-    csl: string | null
-  ): Promise<string>;
-
+  citationHTML(file: string | null, sourceAsJson: string, csl: string | null): Promise<string>;
 }
 
 export interface PandocWriterReferencesOptions {
@@ -335,10 +331,14 @@ export function stringifyTokens(c: PandocToken[], unemoji = false): string {
     .map(elem => {
       if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === PandocTokenType.Space ||
+      } else if (
+        elem.t === PandocTokenType.Space ||
         elem.t === PandocTokenType.SoftBreak ||
-        elem.t === PandocTokenType.LineBreak) {
+        elem.t === PandocTokenType.LineBreak
+      ) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Link) {
+        return stringifyTokens(elem.c[kLinkChildren]);
       } else if (elem.t === PandocTokenType.Span) {
         const attr = pandocAttrReadAST(elem, kSpanAttr);
         if (unemoji && attr.classes && attr.classes[0] === 'emoji') {
@@ -407,7 +407,6 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
 }
-
 
 // sort marks by priority (in descending order)
 export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {

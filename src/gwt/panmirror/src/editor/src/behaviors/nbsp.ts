@@ -13,32 +13,26 @@
  *
  */
 
-import { DecorationSet, Decoration } from "prosemirror-view";
-import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
-import { Node as ProsemirrorNode } from "prosemirror-model";
+import { DecorationSet, Decoration } from 'prosemirror-view';
+import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { EditorCommandId, InsertCharacterCommand } from "../api/command";
-import { forChangedNodes } from "../api/transaction";
-import { mergedTextNodes } from "../api/text";
+import { EditorCommandId, InsertCharacterCommand } from '../api/command';
+import { forChangedNodes } from '../api/transaction';
+import { mergedTextNodes } from '../api/text';
 
 const kNbsp = '\u00A0';
 const kNbspRegEx = /\xA0+/g;
 
 const extension = {
   commands: () => {
-    return [
-      new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, kNbsp, ['Ctrl-Space', 'Ctrl-Shift-Space'])
-    ];
+    return [new InsertCharacterCommand(EditorCommandId.NonBreakingSpace, kNbsp, ['Ctrl-Space', 'Ctrl-Shift-Space'])];
   },
 
   plugins: () => {
-    return [
-      nonBreakingSpacePastePlugin(),
-      nonBreakingSpaceHighlightPlugin(),
-    ];
-  }
+    return [nonBreakingSpacePastePlugin(), nonBreakingSpaceHighlightPlugin()];
+  },
 };
-
 
 const pastePluginKey = new PluginKey('nbsp-paste');
 
@@ -47,10 +41,10 @@ function nonBreakingSpacePastePlugin() {
     key: pastePluginKey,
     props: {
       transformPastedHTML: (html: string) => {
-        // strips spans that contain a single non-breaking space (chrome/webkit seem to 
+        // strips spans that contain a single non-breaking space (chrome/webkit seem to
         // do this for spaces surrounding marked html)
         return html.replace(/<span> <\/span>/g, ' ');
-      }
+      },
     },
   });
 }
@@ -65,18 +59,20 @@ function nonBreakingSpaceHighlightPlugin() {
         return DecorationSet.create(instance.doc, highlightNode(instance.doc));
       },
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
-
         // map
         set = set.map(tr.mapping, tr.doc);
 
         // find new
         if (tr.docChanged) {
           const decorations: Decoration[] = [];
-          forChangedNodes(oldState, newState,
+          forChangedNodes(
+            oldState,
+            newState,
             node => node.isTextblock && node.textContent.includes(kNbsp),
             (node, pos) => {
               decorations.push(...highlightNode(node, pos + 1));
-            });
+            },
+          );
           set = set.add(tr.doc, decorations);
         }
 
@@ -113,6 +109,5 @@ function highlightNode(node: ProsemirrorNode, nodePos = 0) {
   });
   return decorations;
 }
-
 
 export default extension;

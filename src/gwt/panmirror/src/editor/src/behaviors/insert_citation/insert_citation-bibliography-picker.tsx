@@ -13,14 +13,14 @@
  *
  */
 
-import React from "react";
+import React from 'react';
 
-import { EditorUI } from "../../api/ui";
-import { changeExtension } from "../../api/path";
-import { WidgetProps } from "../../api/widgets/react";
-import { TextInput } from "../../api/widgets/text";
-import { SelectInput } from "../../api/widgets/select";
-import { BibliographyFile, BibliographyType } from "../../api/bibliography/bibliography";
+import { EditorUI } from '../../api/ui';
+import { changeExtension } from '../../api/path';
+import { WidgetProps } from '../../api/widgets/react';
+import { TextInput } from '../../api/widgets/text';
+import { SelectInput } from '../../api/widgets/select';
+import { BibliographyFile, BibliographyType } from '../../api/bibliography/bibliography';
 
 import './insert_citation-bibliography-picker.css';
 
@@ -34,7 +34,6 @@ export interface CitationBiblographyPickerProps extends WidgetProps {
 }
 
 export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps> = props => {
-
   // Selection of file from list
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = e.target.selectedIndex;
@@ -57,35 +56,45 @@ export const CitationBibliographyPicker: React.FC<CitationBiblographyPickerProps
   };
 
   return (
-    <div className='pm-citation-bibliography-picker-container' style={props.style}>
-      <div className='pm-citation-bibliography-picker-label pm-text-color'>{props.bibliographyFiles.length > 0 ?
-        props.ui.context.translateText('Add to bibliography:') :
-        props.ui.context.translateText('Create bibliography:')
-      }</div>
-      {
-        props.bibliographyFiles.length > 0 ?
-          (<SelectInput onChange={onChange}>
-            {props.bibliographyFiles.map(file => (<option key={file.fullPath} value={file.fullPath}>{file.displayPath}</option>))}
-          </SelectInput>) :
-          (
-            <div className='pm-citation-bibliography-picker-create-controls'>
-              <TextInput
-                width='100'
-                tabIndex={0}
-                className='pm-citation-bibliography-picker-textbox pm-block-border-color'
-                placeholder={props.ui.context.translateText('Bibligraphy file name')}
-                value={props.createBibliographyFileName}
-                onChange={onTextChange}
-              />
-              <div className='pm-citation-bibliography-format-label pm-text-color'>{props.ui.context.translateText('Format:')}</div>
-              <SelectInput
-                onChange={onTypeChange}
-                defaultValue={props.bibliographyTypes.find(bibType => bibType.default)?.extension}>
-                {props.bibliographyTypes.map(bibType => (<option key={bibType.extension} value={bibType.extension}>{bibType.displayName}</option>))}
-              </SelectInput>
-            </div>
-          )
-      }
+    <div className="pm-citation-bibliography-picker-container" style={props.style}>
+      <div className="pm-citation-bibliography-picker-label pm-text-color">
+        {props.bibliographyFiles.length > 0
+          ? props.ui.context.translateText('Add to bibliography:')
+          : props.ui.context.translateText('Create bibliography:')}
+      </div>
+      {props.bibliographyFiles.length > 0 ? (
+        <SelectInput onChange={onChange}>
+          {props.bibliographyFiles.map(file => (
+            <option key={file.fullPath} value={file.fullPath}>
+              {file.displayPath}
+            </option>
+          ))}
+        </SelectInput>
+      ) : (
+        <div className="pm-citation-bibliography-picker-create-controls">
+          <TextInput
+            width="100"
+            tabIndex={0}
+            className="pm-citation-bibliography-picker-textbox pm-block-border-color"
+            placeholder={props.ui.context.translateText('Bibligraphy file name')}
+            value={props.createBibliographyFileName}
+            onChange={onTextChange}
+          />
+          <div className="pm-citation-bibliography-format-label pm-text-color">
+            {props.ui.context.translateText('Format:')}
+          </div>
+          <SelectInput
+            onChange={onTypeChange}
+            defaultValue={props.bibliographyTypes.find(bibType => bibType.default)?.extension}
+          >
+            {props.bibliographyTypes.map(bibType => (
+              <option key={bibType.extension} value={bibType.extension}>
+                {bibType.displayName}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+      )}
     </div>
   );
 };

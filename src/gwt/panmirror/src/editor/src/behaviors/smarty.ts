@@ -41,7 +41,6 @@ const emDash = new InputRule(/(^|[^`])–-$/, (state: EditorState, match: string
   return tr;
 });
 
-
 const extension: Extension = {
   inputRules: () => {
     return [ellipsis, enDash, emDash];
@@ -54,7 +53,6 @@ const extension: Extension = {
         key: plugin,
         props: {
           transformPastedText(text: string) {
-
             // emdash
             text = text.replace(/(\w)---(\w)/g, '$1—$2');
 

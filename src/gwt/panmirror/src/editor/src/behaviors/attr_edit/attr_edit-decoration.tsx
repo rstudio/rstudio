@@ -52,16 +52,16 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
     <div className="pm-attr-edit-decoration pm-surface-widget-text-color " style={props.style}>
       {props.tags.length
         ? props.tags.map(tag => {
-          return (
-            <span
-              key={tag}
-              className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
-              onClick={onClick}
-            >
-              {tag}
-            </span>
-          );
-        })
+            return (
+              <span
+                key={tag}
+                className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
+                onClick={onClick}
+              >
+                {tag}
+              </span>
+            );
+          })
         : null}
       {props.editFn(props.view.state) ? (
         <ImageButton

@@ -205,7 +205,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   // additional plugins derived from extensions
   const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
-  if (context.options.codeEditor === "ace") {
+  if (context.options.codeEditor === 'ace') {
     plugins.push(...acePlugins(codeViews, context));
   }
   plugins.push(codeViewClipboardPlugin(codeViews));
@@ -236,7 +236,6 @@ export class ExtensionManager {
           } else {
             this.extensions.push(ext);
           }
-
         }
       } else {
         if (priority) {

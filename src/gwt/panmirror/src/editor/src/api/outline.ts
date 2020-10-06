@@ -51,7 +51,6 @@ export interface EditingOutlineLocation {
 }
 
 export function getEditingOutlineLocation(state: EditorState): EditingOutlineLocation {
-
   // traverse document outline to get base location info
   const itemsWithPos = getDocumentOutline(state).map(nodeWithPos => {
     const schema = state.schema;
@@ -61,7 +60,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
       level: 0,
       title: '',
       active: false,
-      position: nodeWithPos.pos
+      position: nodeWithPos.pos,
     };
     if (node.type === schema.nodes.yaml_metadata) {
       item.type = kYamlMetadataOutlineItemType;
@@ -79,7 +78,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
     }
     return {
       item,
-      pos: nodeWithPos.pos
+      pos: nodeWithPos.pos,
     };
   });
 
@@ -89,7 +88,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
   const items: EditingOutlineLocationItem[] = [];
   for (let i = itemsWithPos.length - 1; i >= 0; i--) {
     const item = itemsWithPos[i].item;
-    if (!foundActive && (itemsWithPos[i].pos < state.selection.from)) {
+    if (!foundActive && itemsWithPos[i].pos < state.selection.from) {
       item.active = true;
       foundActive = true;
     }
@@ -141,7 +140,6 @@ export function getDocumentOutline(state: EditorState) {
   // return outline nodes
   return outlineNodes;
 }
-
 
 export function getOutlineNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isOutlineNode);

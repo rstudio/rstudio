@@ -13,26 +13,32 @@
  *
  */
 
-import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
-import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { EditorView, DecorationSet, Decoration } from 'prosemirror-view';
+import { TextSelection, Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
-import { setTextSelection } from "prosemirror-utils";
+import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocMark } from "../../api/mark";
-import { EditorWordRange, EditorSpellingDoc, EditorWordSource, EditorAnchor, EditorRect, EditorUISpelling } from "../../api/spelling";
-import { scrollIntoView } from "../../api/scroll";
+import { PandocMark } from '../../api/mark';
+import {
+  EditorWordRange,
+  EditorSpellingDoc,
+  EditorWordSource,
+  EditorAnchor,
+  EditorRect,
+  EditorUISpelling,
+} from '../../api/spelling';
+import { scrollIntoView } from '../../api/scroll';
 
-import { excludedMarks, getWords, spellcheckerWord } from "./spelling";
+import { excludedMarks, getWords, spellcheckerWord } from './spelling';
 
 // get the document interface required by interactive spellchecking
 
 export function getSpellingDoc(
   view: EditorView,
   marks: readonly PandocMark[],
-  spelling: EditorUISpelling
+  spelling: EditorUISpelling,
 ): EditorSpellingDoc {
-
-  // alias schema 
+  // alias schema
   const schema = view.state.schema;
 
   // intialize marks we don't want to check
@@ -42,15 +48,8 @@ export function getSpellingDoc(
   spellingDocPlugin(view.state).onCheckBegin();
 
   return {
-
     getWords: (start: number, end: number): EditorWordSource => {
-      return getWords(
-        view.state,
-        start,
-        end,
-        spelling,
-        excluded
-      );
+      return getWords(view.state, start, end, spelling, excluded);
     },
 
     createAnchor: (pos: number): EditorAnchor => {
@@ -92,7 +91,6 @@ export function getSpellingDoc(
     },
 
     getCursorBounds: (): EditorRect => {
-
       const fromCoords = view.coordsAtPos(view.state.selection.from);
       const toCoords = view.coordsAtPos(view.state.selection.to);
 
@@ -100,7 +98,7 @@ export function getSpellingDoc(
         x: Math.min(fromCoords.left, toCoords.left),
         y: fromCoords.top,
         width: Math.abs(fromCoords.left - toCoords.left),
-        height: toCoords.bottom - fromCoords.top
+        height: toCoords.bottom - fromCoords.top,
       };
     },
 
@@ -110,13 +108,12 @@ export function getSpellingDoc(
 
     dispose: () => {
       spellingDocPlugin(view.state).onCheckEnd(view);
-    }
-
+    },
   };
 }
 
 // companion plugin for SpellingDoc provided above (shows 'fake' selection during
-// interactive spell check dialog and maintains anchor position(s) across 
+// interactive spell check dialog and maintains anchor position(s) across
 // transactions that occur while the dialog/doc is active)
 
 const spellingDocKey = new PluginKey<DecorationSet>('spelling-doc-plugin');
@@ -126,7 +123,6 @@ function spellingDocPlugin(state: EditorState) {
 }
 
 export class SpellingDocPlugin extends Plugin<DecorationSet> {
-
   private checking = false;
   private anchors: SpellingAnchor[] = [];
 
@@ -138,20 +134,17 @@ export class SpellingDocPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-
           if (this.checking) {
-
             // map anchors
             this.anchors.forEach(anchor => {
               anchor.setPosition(tr.mapping.map(anchor.getPosition()));
             });
 
-            // show selection 
+            // show selection
             if (!tr.selection.empty) {
-              return DecorationSet.create(
-                tr.doc,
-                [Decoration.inline(tr.selection.from, tr.selection.to, { class: 'pm-selected-text' })]
-              );
+              return DecorationSet.create(tr.doc, [
+                Decoration.inline(tr.selection.from, tr.selection.to, { class: 'pm-selected-text' }),
+              ]);
             }
           }
 
@@ -177,7 +170,6 @@ export class SpellingDocPlugin extends Plugin<DecorationSet> {
   }
 
   public onCheckEnd(view: EditorView) {
-
     this.checking = false;
     this.anchors = [];
 
@@ -205,10 +197,8 @@ class SpellingAnchor implements EditorAnchor {
 const extension = () => {
   return {
     plugins: () => {
-      return [
-        new SpellingDocPlugin(),
-      ];
-    }
+      return [new SpellingDocPlugin()];
+    },
   };
 };
 

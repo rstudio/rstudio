@@ -13,27 +13,25 @@
  *
  */
 
+import { Schema } from 'prosemirror-model';
+import { PluginKey } from 'prosemirror-state';
+import { DecorationSet, EditorView } from 'prosemirror-view';
 
-import { Schema } from "prosemirror-model";
-import { PluginKey } from "prosemirror-state";
-import { DecorationSet, EditorView } from "prosemirror-view";
+import React from 'react';
 
-import React from "react";
-
-import { EditorUI } from "../../api/ui";
-import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
-import { WidgetProps } from "../../api/widgets/react";
-import { Popup } from "../../api/widgets/popup";
-import { EditorServer } from "../../api/server";
-import { XRef, xrefKey } from "../../api/xref";
-import { LinkButton } from "../../api/widgets/button";
+import { EditorUI } from '../../api/ui';
+import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
+import { WidgetProps } from '../../api/widgets/react';
+import { Popup } from '../../api/widgets/popup';
+import { EditorServer } from '../../api/server';
+import { XRef, xrefKey } from '../../api/xref';
+import { LinkButton } from '../../api/widgets/button';
 
 import './xref-popup.css';
 
 const kMaxWidth = 350; // also in xref-popup.css
 
 export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServer) {
-
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('xref-popup'),
     markType: schema.marks.xref,
@@ -49,7 +47,6 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
           await ui.context.withSavedDocument();
           const xrefs = await server.xref.xrefForId(docPath, match[1]);
           if (xrefs.refs.length) {
-
             const xref = xrefs.refs[0];
 
             // click handler
@@ -58,7 +55,7 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
               ui.display.navigateToXRef(file, xref);
             };
 
-            return (<XRefPopup xref={xref} onClick={onClick} style={style} />);
+            return <XRefPopup xref={xref} onClick={onClick} style={style} />;
           }
         }
       }
@@ -66,9 +63,8 @@ export function xrefPopupPlugin(schema: Schema, ui: EditorUI, server: EditorServ
     },
     specKey: (target: TextPopupTarget) => {
       return `xref:${target.text}`;
-    }
+    },
   });
-
 }
 
 interface XRefPopupProps extends WidgetProps {
@@ -88,10 +84,7 @@ const XRefPopup: React.FC<XRefPopupProps> = props => {
           classes={['pm-xref-popup-key pm-fixedwidth-font']}
         />
       </div>
-      <div className="pm-xref-popup-file">
-        {props.xref.file}
-      </div>
-
+      <div className="pm-xref-popup-file">{props.xref.file}</div>
     </Popup>
   );
 };

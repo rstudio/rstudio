@@ -26,7 +26,6 @@ import { textRangePopupDecorationPosition } from './widgets/decoration';
 import { kPlatformMac } from './platform';
 import { MarkType } from 'prosemirror-model';
 
-
 export interface TextPopupTarget<AttrsType = any> {
   attrs: AttrsType;
   text: string;
@@ -36,7 +35,11 @@ export interface TextPopupDecoration<AttrsType = any> {
   key: PluginKey<DecorationSet>;
   markType: MarkType;
   maxWidth: number;
-  createPopup: (view: EditorView, target: TextPopupTarget<AttrsType>, style: React.CSSProperties) => Promise<JSX.Element | null>;
+  createPopup: (
+    view: EditorView,
+    target: TextPopupTarget<AttrsType>,
+    style: React.CSSProperties,
+  ) => Promise<JSX.Element | null>;
   dismissOnEdit?: boolean;
   makeLinksAccessible?: boolean;
   specKey?: (target: TextPopupTarget<AttrsType>) => string;
@@ -45,8 +48,17 @@ export interface TextPopupDecoration<AttrsType = any> {
 }
 
 export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<DecorationSet> {
-
-  const { key, markType, maxWidth, createPopup, specKey, dismissOnEdit, makeLinksAccessible, filter, onCmdClick } = deco;
+  const {
+    key,
+    markType,
+    maxWidth,
+    createPopup,
+    specKey,
+    dismissOnEdit,
+    makeLinksAccessible,
+    filter,
+    onCmdClick,
+  } = deco;
 
   let editorView: EditorView;
 
@@ -61,7 +73,6 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
         return DecorationSet.empty;
       },
       apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
-
         // if this a restore location or navigation then return empty
         if (tr.getMeta(kRestoreLocationTransaction) || tr.getMeta(kNavigationTransaction)) {
           return DecorationSet.empty;
@@ -76,12 +87,11 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
         const selection = newState.selection;
 
         // TODO JJA: The mark range is undefined when the the selection is 'after' the mark
-        // e.g.  [@allaire2012|] 
+        // e.g.  [@allaire2012|]
         // which means that the preview doesn't show
         const range = getMarkRange(selection.$from, markType);
 
         if (range) {
-
           // selection has to be bounded by the range
           if (selection.from < range.from || selection.to > range.to) {
             return DecorationSet.empty;
@@ -121,11 +131,9 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
 
           // create decorator
           const textPopupDecorator = Decoration.widget(
-
             decorationPosition.pos,
 
             (view: EditorView, getPos: () => number) => {
-
               // create decorator and render popup into it
               const decorationEl = window.document.createElement('div');
               decorationEl.style.visibility = 'hidden';
@@ -155,19 +163,15 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
               });
 
               return decorationEl;
-
             },
 
-            decoratorSpec
+            decoratorSpec,
           );
 
           // return decorations
           return DecorationSet.create(tr.doc, [textPopupDecorator]);
-
         } else {
-
           return DecorationSet.empty;
-
         }
       },
     },
@@ -175,22 +179,23 @@ export function textPopupDecorationPlugin(deco: TextPopupDecoration): Plugin<Dec
       decorations: (state: EditorState) => {
         return key.getState(state);
       },
-      handleClick: onCmdClick ? (view: EditorView, pos: number, event: MouseEvent) => {
-        const keyPressed = kPlatformMac && event.metaKey;
-        if (keyPressed) {
-          const attrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, markType);
-          const range = getMarkRange(view.state.doc.resolve(pos));
-          if (attrs && range) {
-            event.stopPropagation();
-            event.preventDefault();
-            const text = view.state.doc.textBetween(range.from, range.to);
-            onCmdClick({ attrs, text });
-            return true;
+      handleClick: onCmdClick
+        ? (view: EditorView, pos: number, event: MouseEvent) => {
+            const keyPressed = kPlatformMac && event.metaKey;
+            if (keyPressed) {
+              const attrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, markType);
+              const range = getMarkRange(view.state.doc.resolve(pos));
+              if (attrs && range) {
+                event.stopPropagation();
+                event.preventDefault();
+                const text = view.state.doc.textBetween(range.from, range.to);
+                onCmdClick({ attrs, text });
+                return true;
+              }
+            }
+            return false;
           }
-        }
-        return false;
-      } : undefined,
+        : undefined,
     },
   });
-
 }

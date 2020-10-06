@@ -36,11 +36,7 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
       const attrs = getMarkAttrs(doc, markRange, schema.marks.link);
       const linkText = doc.textBetween(markRange.from, markRange.to);
       const matchedHeading = headings.find(heading => {
-        return (
-          equalsIgnoreCase(heading.node.textContent, linkText) &&
-          !attrs.title &&
-          (attrs.href === '#')
-        );
+        return equalsIgnoreCase(heading.node.textContent, linkText) && !attrs.title && attrs.href === '#';
       });
       if (matchedHeading) {
         // point the link mark at this heading by name

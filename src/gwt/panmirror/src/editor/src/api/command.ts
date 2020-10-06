@@ -20,12 +20,13 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNode, findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
-import { markIsActive } from './mark';
+import { markIsActive, getMarkRange } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
 import { OmniInsert } from './omni_insert';
 import { EditorUIPrefs, kListSpacingTight } from './ui';
+import { selectionIsWithinRange, selectionHasRange } from './selection';
 
 export enum EditorCommandId {
   // text editing
@@ -133,7 +134,7 @@ export enum EditorCommandId {
 
   // outline
   GoToNextSection = 'AE827BDA-96F8-4E84-8030-298D98386765',
-  GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF'
+  GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF',
 }
 
 export interface EditorCommand {
@@ -184,7 +185,7 @@ export class MarkCommand extends ProsemirrorCommand {
   public readonly attrs: object;
 
   constructor(id: EditorCommandId, keymap: string[], markType: MarkType, attrs = {}) {
-    super(id, keymap, toggleMark(markType, attrs) as CommandFn);
+    super(id, keymap, toggleMarkType(markType, attrs) as CommandFn);
     this.markType = markType;
     this.attrs = attrs;
   }
@@ -237,30 +238,50 @@ export class WrapCommand extends NodeCommand {
 
 export class InsertCharacterCommand extends ProsemirrorCommand {
   constructor(id: EditorCommandId, ch: string, keymap: string[]) {
-    super(
-      id,
-      keymap,
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-
-        // enable/disable command
-        const schema = state.schema;
-        if (!canInsertNode(state, schema.nodes.text)) {
-          return false;
-        }
-        if (dispatch) {
-          const tr = state.tr;
-          tr.replaceSelectionWith(schema.text(ch), true).scrollIntoView();
-          dispatch(tr);
-        }
-
-        return true;
+    super(id, keymap, (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+      // enable/disable command
+      const schema = state.schema;
+      if (!canInsertNode(state, schema.nodes.text)) {
+        return false;
       }
-    );
+      if (dispatch) {
+        const tr = state.tr;
+        tr.replaceSelectionWith(schema.text(ch), true).scrollIntoView();
+        dispatch(tr);
+      }
+
+      return true;
+    });
   }
 }
 
-
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
+
+export function toggleMarkType(markType: MarkType, attrs?: { [key: string]: any }) {
+  const defaultToggleMark = toggleMark(markType, attrs);
+
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    // disallow non-code marks when the selection is contained within a code mark
+    // (this is a pandoc constraint). note that we can allow them if the selection
+    // contains the code mark range entirely (as in that case the code mark will
+    // nest within the other mark)
+    if (markType !== state.schema.marks.code) {
+      if (markIsActive(state, state.schema.marks.code)) {
+        const codeRange = getMarkRange(state.selection.$anchor, state.schema.marks.code);
+        if (
+          codeRange &&
+          selectionIsWithinRange(state.selection, codeRange) &&
+          !selectionHasRange(state.selection, codeRange)
+        ) {
+          return false;
+        }
+      }
+    }
+
+    // default implementation
+    return defaultToggleMark(state, dispatch);
+  };
+}
 
 export function toggleList(listType: NodeType, itemType: NodeType, prefs: EditorUIPrefs): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {

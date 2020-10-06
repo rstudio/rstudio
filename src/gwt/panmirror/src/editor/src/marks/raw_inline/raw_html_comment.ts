@@ -15,11 +15,10 @@
 
 import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { Transaction, TextSelection, EditorState } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
+import { EditorCommandId, ProsemirrorCommand, toggleMarkType } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension, ExtensionContext } from '../../api/extension';
@@ -143,7 +142,7 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
         }
 
         // make sure we can apply this mark here
-        if (!toggleMark(schema.marks.raw_html)(state)) {
+        if (!toggleMarkType(schema.marks.raw_html)(state)) {
           return false;
         }
 

@@ -1181,10 +1181,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat(Rproj, file = RprojPath, sep = "\n")
    
+   # compute scratch paths
+   scratchPaths <- .Call("rs_computeScratchPaths", RprojPath, PACKAGE = "(embedding)")
+   scratchPath <- scratchPaths$scratch_path
+   
    # NOTE: this file is not always generated (e.g. people who have implicitly opted
    # into using devtools won't need the template file)
-   if (file.exists(file.path(packageDirectory, "R", "hello.R")))
-      .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R", PACKAGE = "(embedding)")
+   if (!is.null(scratchPath) &&
+       file.exists(file.path(packageDirectory, "R", "hello.R")))
+   {
+      .Call("rs_addFirstRunDoc", scratchPath, "R/hello.R", PACKAGE = "(embedding)")
+   }
 
    ## NOTE: This must come last to ensure the other package
    ## infrastructure bits have been generated; otherwise
@@ -1194,8 +1201,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
        require(Rcpp, quietly = TRUE))
    {
       Rcpp::compileAttributes(packageDirectory)
-      if (file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
-         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello.cpp", PACKAGE = "(embedding)")
+      if (!is.null(scratchPath) &&
+          file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
+      {
+         .Call("rs_addFirstRunDoc", scratchPath, "src/rcpp_hello.cpp", PACKAGE = "(embedding)")
+      }
    }
    
    .rs.success()

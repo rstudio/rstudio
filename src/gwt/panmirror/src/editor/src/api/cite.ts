@@ -13,9 +13,9 @@
  *
  */
 
-import { CSLName, CSLDate, CSL } from "./csl";
-import { InsertCiteProps, InsertCiteUI } from "./ui-dialogs";
-import { urlForDOI } from "./doi";
+import { CSLName, CSLDate, CSL } from './csl';
+import { InsertCiteProps, InsertCiteUI } from './ui-dialogs';
+import { urlForDOI } from './doi';
 
 export const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
@@ -45,7 +45,7 @@ export function createUniqueCiteId(existingIds: string[], baseId: string): strin
 
   // If there is a conflict with an existing id, we will append
   // the following character and try again. If the conflict continues with
-  // the postfix character added, we'll increment and keep going through the 
+  // the postfix character added, we'll increment and keep going through the
   // alphabet
   const disambiguationStartCharacter = 97; // a
 
@@ -62,12 +62,10 @@ export function createUniqueCiteId(existingIds: string[], baseId: string): strin
     count++;
   }
   return proposedId;
-
 }
 
 // Suggests a bibliographic identifier based upon the source
 export function suggestCiteId(existingIds: string[], csl: CSL) {
-
   const author = csl.author;
   const issued = csl.issued;
 
@@ -82,10 +80,10 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   }
 
   // If we can't use author information, try using short title,
-  // the title, or perhaps the type to construct a leading part of the 
+  // the title, or perhaps the type to construct a leading part of the
   // citeId.
   if (citeIdLeading.length === 0) {
-    const shortTitle = csl["short-title"];
+    const shortTitle = csl['short-title'];
     if (shortTitle && shortTitle?.length > 0) {
       citeIdLeading = shortTitle.substr(0, Math.min(kCiteIdLeadingLength, shortTitle.length));
     } else if (csl.title) {
@@ -114,7 +112,6 @@ export function suggestCiteId(existingIds: string[], csl: CSL) {
   return createUniqueCiteId(existingIds, baseId);
 }
 
-
 export interface CiteField {
   name: string;
   value: string;
@@ -129,29 +126,28 @@ export function urlForCitation(csl: CSL): string | undefined {
 }
 
 export function formatForPreview(csl: CSL): CiteField[] {
-
   const pairs = new Array<CiteField>();
   if (csl.title) {
-    pairs.push({ name: "Title", value: csl.title });
+    pairs.push({ name: 'Title', value: csl.title });
   }
-  pairs.push({ name: "Authors", value: formatAuthors(csl.author, 255) });
+  pairs.push({ name: 'Authors', value: formatAuthors(csl.author, 255) });
   if (csl.issued && isValidDate(csl.issued)) {
-    pairs.push({ name: "Issue Date", value: formatIssuedDate(csl.issued) });
+    pairs.push({ name: 'Issue Date', value: formatIssuedDate(csl.issued) });
   }
 
-  const containerTitle = csl["container-title"];
+  const containerTitle = csl['container-title'];
   if (containerTitle) {
-    pairs.push({ name: "Publication", value: containerTitle });
+    pairs.push({ name: 'Publication', value: containerTitle });
   }
 
   const volume = csl.volume;
   if (volume) {
-    pairs.push({ name: "Volume", value: volume });
+    pairs.push({ name: 'Volume', value: volume });
   }
 
   const page = csl.page;
   if (page) {
-    pairs.push({ name: "Page(s)", value: page });
+    pairs.push({ name: 'Page(s)', value: page });
   }
 
   const cslAny = csl as { [key: string]: any };
@@ -171,26 +167,24 @@ export function formatForPreview(csl: CSL): CiteField[] {
 }
 
 const kFilteredFields = [
-  "id",
-  "title",
-  "author",
-  "issued",
-  "container-title",
-  "volume",
-  "page",
-  "abstract",
-  "provider"
+  'id',
+  'title',
+  'author',
+  'issued',
+  'container-title',
+  'volume',
+  'page',
+  'abstract',
+  'provider',
 ];
 
 // Sometimes, data arrives with a null value
 // This function will validate that the year (required) doesn't
 // contain null
 function isValidDate(date: CSLDate): boolean {
-  const dateParts = date["date-parts"];
+  const dateParts = date['date-parts'];
   if (dateParts) {
-    const invalidElement = dateParts.find(
-      datePart => datePart[0] === null
-    );
+    const invalidElement = dateParts.find(datePart => datePart[0] === null);
     return invalidElement === undefined;
   }
   return true;
@@ -304,13 +298,13 @@ export function citeUI(citeProps: InsertCiteProps): InsertCiteUI {
     const previewFields = formatForPreview(citeProps.csl);
     return {
       suggestedId,
-      previewFields
+      previewFields,
     };
   } else {
     // This should never happen - this function should always be called with a work
     return {
-      suggestedId: "",
-      previewFields: []
+      suggestedId: '',
+      previewFields: [],
     };
   }
 }

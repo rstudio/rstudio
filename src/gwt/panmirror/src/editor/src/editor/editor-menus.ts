@@ -103,23 +103,23 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.OmniInsert },
     ...(haveAnyOf(commands, EditorCommandId.RCodeChunk, EditorCommandId.PythonCodeChunk)
       ? [
-        { separator: true },
-        {
-          text: ui.context.translateText('Code Chunk'),
-          subMenu: {
-            items: [
-              { command: EditorCommandId.RCodeChunk },
-              { separator: true },
-              { command: EditorCommandId.PythonCodeChunk },
-              { command: EditorCommandId.BashCodeChunk },
-              { command: EditorCommandId.RcppCodeChunk },
-              { command: EditorCommandId.SQLCodeChunk },
-              { command: EditorCommandId.D3CodeChunk },
-              { command: EditorCommandId.StanCodeChunk },
-            ],
+          { separator: true },
+          {
+            text: ui.context.translateText('Code Chunk'),
+            subMenu: {
+              items: [
+                { command: EditorCommandId.RCodeChunk },
+                { separator: true },
+                { command: EditorCommandId.PythonCodeChunk },
+                { command: EditorCommandId.BashCodeChunk },
+                { command: EditorCommandId.RcppCodeChunk },
+                { command: EditorCommandId.SQLCodeChunk },
+                { command: EditorCommandId.D3CodeChunk },
+                { command: EditorCommandId.StanCodeChunk },
+              ],
+            },
           },
-        },
-      ]
+        ]
       : []),
     { separator: true },
     { command: EditorCommandId.Citation },
@@ -131,19 +131,19 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.HorizontalRule },
     ...(haveAnyOf(commands, EditorCommandId.DefinitionList)
       ? [
-        { separator: true },
-        {
-          text: ui.context.translateText('Definition'),
-          subMenu: {
-            items: [
-              { command: EditorCommandId.DefinitionList },
-              { separator: true },
-              { command: EditorCommandId.DefinitionTerm },
-              { command: EditorCommandId.DefinitionDescription },
-            ],
+          { separator: true },
+          {
+            text: ui.context.translateText('Definition'),
+            subMenu: {
+              items: [
+                { command: EditorCommandId.DefinitionList },
+                { separator: true },
+                { command: EditorCommandId.DefinitionTerm },
+                { command: EditorCommandId.DefinitionDescription },
+              ],
+            },
           },
-        },
-      ]
+        ]
       : []),
     { separator: true },
     { command: EditorCommandId.InlineMath },
@@ -161,7 +161,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           { separator: true },
           { command: EditorCommandId.NonBreakingSpace },
           { separator: true },
-          { command: EditorCommandId.HardLineBreak }
+          { command: EditorCommandId.HardLineBreak },
         ],
       },
     },

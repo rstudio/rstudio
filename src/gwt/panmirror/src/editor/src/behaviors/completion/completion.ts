@@ -13,9 +13,8 @@
  *
  */
 
-// TODO: it may be that we need to not do full re-requests from the filter 
+// TODO: it may be that we need to not do full re-requests from the filter
 // when we have streamed results (as they can cause reset of the allCompletions)
-
 
 import { Plugin, PluginKey, Transaction, Selection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
@@ -28,7 +27,7 @@ import {
   performCompletionReplacement,
   CompletionResult,
   Completions,
-  CompletionsStream
+  CompletionsStream,
 } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
@@ -45,7 +44,6 @@ interface CompletionState {
   prevToken?: string;
   isPaste?: boolean;
 }
-
 
 export function completionExtension(
   handlers: readonly CompletionHandler[],
@@ -268,7 +266,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
     const state = key.getState(view.state);
 
     if (state?.handler && state?.result) {
-
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
@@ -277,7 +274,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // and then apply any filter we have (allows the completer to just return
       // everything from the aysnc query and fall back to the filter for refinement)
       const requestAllCompletions = async () => {
-
         // fetch completions
         const completions = await state.result!.completions(view.state, { isPaste: state.isPaste === true });
 
@@ -288,7 +284,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
         // function to update completions
         const updateCompletions = (updatedCompletions: any[]) => {
-
           // save completions
           this.setAllCompletions(updatedCompletions, !!state.handler?.view.horizontal, resetSelection);
 
@@ -304,7 +299,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             this.renderCompletions(view);
           }
-
         };
 
         // if we got an array, just set it. if we got a stream then poll it for it's update
@@ -332,7 +326,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // first see if we can do this exclusively via filter
       if (state.prevToken && state.handler.filter) {
         this.completionQueue.enqueue(async () => {
-
           // display if the request still maps to the current state
           if (state.handler && state.result && this.version === requestVersion) {
             const filteredCompletions = state.handler.filter!(
@@ -354,12 +347,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
             }
           }
         });
-
       } else {
-
         // no prevToken or no filter for this handler, request everything
         this.completionQueue.enqueue(requestAllCompletions);
-
       }
     } else {
       // no handler/result for this document state
@@ -476,7 +466,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.horizontal = !!horizontal;
 
     // reset selection if requested or if the current index exceeds the # of completions
-    if (resetSelection || this.selectedIndex > (this.completions.length - 1)) {
+    if (resetSelection || this.selectedIndex > this.completions.length - 1) {
       this.selectedIndex = 0;
     }
   }
@@ -490,8 +480,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
     }
   }
 }
-
-
 
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)

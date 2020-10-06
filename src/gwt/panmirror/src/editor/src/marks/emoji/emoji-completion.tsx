@@ -51,7 +51,7 @@ export function emojiCompletionHandler(ui: EditorUI): CompletionHandler<Emoji> {
 }
 
 const kMaxEmojiCompletions = 20;
-const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
+const kEmojiCompletionRegEx = /(^|[^`\:]):(\w{2,})$/;
 
 function emojiCompletions(ui: EditorUI) {
   return (text: string, context: EditorState | Transaction): CompletionResult<Emoji> | null => {

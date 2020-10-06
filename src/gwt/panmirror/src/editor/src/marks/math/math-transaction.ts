@@ -42,12 +42,10 @@ export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
             const charAfter = tr.doc.textBetween(mathRange.to, mathRange.to + 1);
             const noDelims = !mathText.startsWith(mathDelim) || !mathText.endsWith(mathDelim);
             const selectionIsWithin = selectionIsWithinRange(tr.selection, mathRange);
-            const spaceAtLeft = !selectionIsWithin &&
-              mathAttr.type === MathType.Inline &&
-              mathText.startsWith(mathDelim + ' ');
-            const spaceAtRight = !selectionIsWithin &&
-              mathAttr.type === MathType.Inline &&
-              mathText.endsWith(' ' + mathDelim);
+            const spaceAtLeft =
+              !selectionIsWithin && mathAttr.type === MathType.Inline && mathText.startsWith(mathDelim + ' ');
+            const spaceAtRight =
+              !selectionIsWithin && mathAttr.type === MathType.Inline && mathText.endsWith(' ' + mathDelim);
             const numberAfter = mathAttr.type === MathType.Inline && /\d/.test(charAfter);
             if (noDelims || spaceAtLeft || spaceAtRight || numberAfter) {
               tr.removeMark(mathRange.from, mathRange.to, schema.marks.math);

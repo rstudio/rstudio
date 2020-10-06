@@ -18,7 +18,6 @@ import { Transaction, Selection } from 'prosemirror-state';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
-
 export enum ListType {
   Ordered = 'OrderedList',
   Bullet = 'BulletList',

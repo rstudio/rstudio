@@ -13,28 +13,26 @@
  *
  */
 
+import { Schema } from 'prosemirror-model';
+import { PluginKey } from 'prosemirror-state';
+import { DecorationSet, EditorView } from 'prosemirror-view';
 
-import { Schema } from "prosemirror-model";
-import { PluginKey } from "prosemirror-state";
-import { DecorationSet, EditorView } from "prosemirror-view";
+import React from 'react';
 
-import React from "react";
-
-import { EditorUI } from "../../api/ui";
-import { textPopupDecorationPlugin, TextPopupTarget } from "../../api/text-popup";
-import { WidgetProps } from "../../api/widgets/react";
-import { Popup } from "../../api/widgets/popup";
-import { BibliographyManager } from "../../api/bibliography/bibliography";
-import { PandocServer } from "../../api/pandoc";
+import { EditorUI } from '../../api/ui';
+import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
+import { WidgetProps } from '../../api/widgets/react';
+import { Popup } from '../../api/widgets/popup';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
+import { PandocServer } from '../../api/pandoc';
 
 import './cite-popup.css';
-import { urlForCitation } from "../../api/cite";
-import { cslFromDoc } from "../../api/csl";
+import { urlForCitation } from '../../api/cite';
+import { cslFromDoc } from '../../api/csl';
 
 const kMaxWidth = 400; // also in cite-popup.css
 
 export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager, server: PandocServer) {
-
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('cite-popup'),
     markType: schema.marks.cite_id,
@@ -48,35 +46,35 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
       const citeId = target.text.replace(/^-@|^@/, '');
       const source = bibMgr.findIdInLocalBibliography(citeId);
       if (source) {
-        const previewHtml = await server.citationHTML(ui.context.getDocumentPath(), JSON.stringify([source]), csl || null);
+        const previewHtml = await server.citationHTML(
+          ui.context.getDocumentPath(),
+          JSON.stringify([source]),
+          csl || null,
+        );
         const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
           const url = urlForCitation(source);
           if (url) {
             return {
-              text: ui.context.translateText("[Link]"),
-              url
+              text: ui.context.translateText('[Link]'),
+              url,
             };
           }
         });
 
-        return (
-          <CitePopup
-            previewHtml={finalHtml}
-            style={style} />
-        );
+        return <CitePopup previewHtml={finalHtml} style={style} />;
       }
       return null;
     },
     specKey: (target: TextPopupTarget) => {
       return `cite:${target.text}`;
-    }
+    },
   });
 }
 
 const kCiteHangingIndentClass = 'hanging-indent';
 const kCiteLinkClassName = 'pm-cite-popup-link';
 
-function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string, url: string } | undefined) {
+function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string; url: string } | undefined) {
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
@@ -98,14 +96,12 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
 
   const linkElements = doc.body.getElementsByTagName('a');
   if (linkElements.length === 0) {
-
     const linkData = getLinkData();
 
-    // There aren't any links, we should append one 
-    // (If links are present, we assume that we shouldn't add another)  
+    // There aren't any links, we should append one
+    // (If links are present, we assume that we shouldn't add another)
     const paragraphs = doc.body.getElementsByTagName('p');
     if (paragraphs.length === 1 && linkData) {
-
       // The paragraph containing the formatted source
       const paragraph = paragraphs[0];
 
@@ -120,7 +116,6 @@ function ensureSafeLinkIsPresent(html: string, getLinkData: () => { text: string
       paragraph.appendChild(linkElement);
     }
   } else {
-
     // There are links, ensure all of them have appropriate target information
     // tslint:disable-next-line: prefer-for-of
     for (let i = 0; i < linkElements.length; i++) {
@@ -145,7 +140,7 @@ interface CitePopupProps extends WidgetProps {
 const CitePopup: React.FC<CitePopupProps> = props => {
   return (
     <Popup classes={['pm-cite-popup']} style={props.style}>
-      <div className='pm-cite-popup-preview'>
+      <div className="pm-cite-popup-preview">
         <div dangerouslySetInnerHTML={{ __html: props.previewHtml || '' }} />
       </div>
     </Popup>

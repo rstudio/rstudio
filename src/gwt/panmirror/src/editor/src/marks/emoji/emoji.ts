@@ -38,7 +38,6 @@ import {
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
 
-
 const extension = (context: ExtensionContext): Extension | null => {
   const { ui } = context;
 
@@ -158,8 +157,10 @@ const extension = (context: ExtensionContext): Extension | null => {
           // create mark transation wrapper
           const markTr = new MarkTransaction(tr);
 
-          const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, _pos: number, parentNode: ProsemirrorNode) =>
-            parentNode.type.allowsMarkType(schema.marks.emoji),
+          const textNodes = mergedTextNodes(
+            markTr.doc,
+            (_node: ProsemirrorNode, _pos: number, parentNode: ProsemirrorNode) =>
+              parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 
           textNodes.forEach(textNode => {

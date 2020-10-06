@@ -13,27 +13,25 @@
  *
  */
 
-import { Transaction } from "prosemirror-state";
-import { Transform } from "prosemirror-transform";
+import { Transaction } from 'prosemirror-state';
+import { Transform } from 'prosemirror-transform';
 
 import { split } from 'sentence-splitter';
 
-import { trTransform } from "./transaction";
-import { findChildrenByType } from "prosemirror-utils";
+import { trTransform } from './transaction';
+import { findChildrenByType } from 'prosemirror-utils';
 
 export function wrapSentences(tr: Transaction) {
   trTransform(tr, wrapSentencesTransform);
 }
 
 function wrapSentencesTransform(tr: Transform) {
-
   // find all paragraphs in doc
   const schema = tr.doc.type.schema;
   const paragraphs = findChildrenByType(tr.doc, schema.nodes.paragraph);
 
   // insert linebreaks in paragraphs (go backwards to preserve positions)
   paragraphs.reverse().forEach(paragraph => {
-
     // don't break sentences inside tight list items
     const $pos = tr.doc.resolve(paragraph.pos);
     const parent = $pos.node($pos.depth);
@@ -43,13 +41,16 @@ function wrapSentencesTransform(tr: Transform) {
 
     // break sentences in text
     const parts = split(paragraph.node.textContent);
-    parts.reverse().filter(part => part.type === "Sentence").forEach(sentence => {
-      // don't break sentence if at least one mark is active
-      if (tr.doc.resolve(paragraph.pos + sentence.range[1] + 1).marks().length === 0) {
-        const hardBreak = schema.text("\n");
-        const hardBreakPos = paragraph.pos + sentence.range[1] + 2;
-        tr.insert(hardBreakPos, hardBreak);
-      }
-    });
+    parts
+      .reverse()
+      .filter(part => part.type === 'Sentence')
+      .forEach(sentence => {
+        // don't break sentence if at least one mark is active
+        if (tr.doc.resolve(paragraph.pos + sentence.range[1] + 1).marks().length === 0) {
+          const hardBreak = schema.text('\n');
+          const hardBreakPos = paragraph.pos + sentence.range[1] + 2;
+          tr.insert(hardBreakPos, hardBreak);
+        }
+      });
   });
 }

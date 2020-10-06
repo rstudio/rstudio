@@ -105,24 +105,24 @@ const extension = (context: ExtensionContext): Extension | null => {
             // extract math from backtick code for blogdown
             ...(blogdownMathInCode
               ? [
-                {
-                  token: PandocTokenType.Code,
-                  mark: 'math',
-                  match: (tok: PandocToken) => {
-                    const text = tok.c[kCodeText];
-                    return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
+                  {
+                    token: PandocTokenType.Code,
+                    mark: 'math',
+                    match: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
+                    },
+                    getAttrs: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return {
+                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                      };
+                    },
+                    getText: (tok: PandocToken) => {
+                      return tok.c[kCodeText];
+                    },
                   },
-                  getAttrs: (tok: PandocToken) => {
-                    const text = tok.c[kCodeText];
-                    return {
-                      type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
-                    };
-                  },
-                  getText: (tok: PandocToken) => {
-                    return tok.c[kCodeText];
-                  },
-                },
-              ]
+                ]
               : []),
           ],
           writer: {
@@ -142,7 +142,6 @@ const extension = (context: ExtensionContext): Extension | null => {
                 // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
                 if (mathText.startsWith(delimiter) && mathText.endsWith(delimiter)) {
-
                   // remove delimiter
                   mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 

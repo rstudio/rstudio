@@ -16,7 +16,6 @@
 import { Node as ProsemirrorNode, Mark, Fragment, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 import { InputRule, inputRules } from 'prosemirror-inputrules';
 
 import { setTextSelection } from 'prosemirror-utils';
@@ -27,7 +26,7 @@ import { kTexFormat } from '../../api/raw';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
 import { MarkTransaction } from '../../api/transaction';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
-import { EditorCommandId } from '../../api/command';
+import { EditorCommandId, toggleMarkType } from '../../api/command';
 import { texLength } from '../../api/tex';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
@@ -149,7 +148,7 @@ function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/(^| )\\$/, (state: EditorState, match: string[], start: number, end: number) => {
     const rawTexMark = schema.marks.raw_tex;
 
-    if (state.selection.empty && toggleMark(rawTexMark)(state)) {
+    if (state.selection.empty && toggleMarkType(rawTexMark)(state)) {
       // if there is no tex ahead of us or we don't pass the fitler (b/c marks that don't allow
       // input rules are active) then bail
       const $head = state.selection.$head;

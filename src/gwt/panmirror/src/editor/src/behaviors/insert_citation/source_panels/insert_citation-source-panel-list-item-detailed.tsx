@@ -13,18 +13,16 @@
  *
  */
 
-import React from "react";
-import { ListChildComponentProps } from "react-window";
+import React from 'react';
+import { ListChildComponentProps } from 'react-window';
 
-import { OutlineButton } from "../../../api/widgets/button";
+import { OutlineButton } from '../../../api/widgets/button';
 
-import { CitationSourcePanelListItemData } from "./insert_citation-source-panel-list";
+import { CitationSourcePanelListItemData } from './insert_citation-source-panel-list';
 
 import './insert_citation-source-panel-list-item-detailed.css';
 
-
 export const CitationSourcePanelListItemDetailed = (props: ListChildComponentProps) => {
-
   const citationListData: CitationSourcePanelListItemData = props.data;
 
   const citationEntry = citationListData.citations[props.index];
@@ -60,27 +58,45 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
   const thirdLine = citationEntry.authors(80);
 
   return (
-    <div onMouseDown={onItemClick} onDoubleClick={onDoubleClick} className='pm-insert-citation-source-panel-item-detailed' style={props.style}>
-      <div className={`pm-insert-citation-source-panel-item-detailed-border ${selected ? 'pm-list-item-selected' : ''}`} >
-        <div className='pm-insert-citation-source-panel-item-detailed-container'>
-          <div className='pm-insert-citation-source-panel-item-detailed-type'>
-            {citationEntry.imageAdornment ? <img className='pm-insert-citation-source-panel-item-detailed-adorn pm-block-border-color pm-background-color' src={citationEntry.imageAdornment} /> : undefined}
-            <img className='pm-insert-citation-source-panel-item-detailed-icon pm-block-border-color' src={citationEntry.image} />
+    <div
+      onMouseDown={onItemClick}
+      onDoubleClick={onDoubleClick}
+      className="pm-insert-citation-source-panel-item-detailed"
+      style={props.style}
+    >
+      <div
+        className={`pm-insert-citation-source-panel-item-detailed-border ${selected ? 'pm-list-item-selected' : ''}`}
+      >
+        <div className="pm-insert-citation-source-panel-item-detailed-container">
+          <div className="pm-insert-citation-source-panel-item-detailed-type">
+            {citationEntry.imageAdornment ? (
+              <img
+                className="pm-insert-citation-source-panel-item-detailed-adorn pm-block-border-color pm-background-color"
+                src={citationEntry.imageAdornment}
+              />
+            ) : (
+              undefined
+            )}
+            <img
+              className="pm-insert-citation-source-panel-item-detailed-icon pm-block-border-color"
+              src={citationEntry.image}
+            />
           </div>
-          <div className='pm-insert-citation-source-panel-item-detailed-summary'>
-            <div className='pm-insert-citation-source-panel-item-detailed-title pm-fixedwidth-font pm-text-color'>
+          <div className="pm-insert-citation-source-panel-item-detailed-summary">
+            <div className="pm-insert-citation-source-panel-item-detailed-title pm-fixedwidth-font pm-text-color">
               {citationEntry.title}
             </div>
-            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
+            <div className="pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color">
               {secondLine}
             </div>
-            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
-              {thirdLine}
+            <div className="pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color">{thirdLine}</div>
+            <div className="pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color">
+              <a href={`https://doi.org/${citationEntry.doi}`} target="_new">
+                {citationEntry.doi}
+              </a>
             </div>
-            <div className='pm-insert-citation-source-panel-item-detailed-subtitle-text pm-text-color'>
-              <a href={`https://doi.org/${citationEntry.doi}`} target='_new'>{citationEntry.doi}</a></div>
           </div>
-          <div className='pm-insert-citation-source-panel-item-detailed-button'>
+          <div className="pm-insert-citation-source-panel-item-detailed-button">
             <OutlineButton
               tabIndex={citationListData.preventFocus ? -1 : 0}
               style={{ width: '24px', height: '24px' }}
@@ -90,6 +106,6 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 };

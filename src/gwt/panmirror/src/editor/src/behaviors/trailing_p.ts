@@ -69,8 +69,7 @@ function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
 function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);
   if (editingRoot) {
-    return !isParagraphNode(editingRoot.node.lastChild) ||
-      isDisplayMathNode(editingRoot.node.lastChild);
+    return !isParagraphNode(editingRoot.node.lastChild) || isDisplayMathNode(editingRoot.node.lastChild);
   } else {
     return false;
   }

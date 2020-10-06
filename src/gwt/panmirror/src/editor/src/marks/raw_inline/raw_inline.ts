@@ -16,10 +16,9 @@
 import { Schema, Mark, Fragment, MarkType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { toggleMark } from 'prosemirror-commands';
 
 import { Extension, ExtensionContext } from '../../api/extension';
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, toggleMarkType } from '../../api/command';
 import { PandocOutput, PandocToken, PandocTokenType } from '../../api/pandoc';
 import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI } from '../../api/ui';
@@ -126,7 +125,7 @@ export class RawInlineInsertCommand extends ProsemirrorCommand {
       }
 
       // ensure we can apply this mark here
-      if (!toggleMark(this.markType)(state)) {
+      if (!toggleMarkType(this.markType)(state)) {
         return false;
       }
 
@@ -167,7 +166,7 @@ export class RawInlineCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_inline)(state)) {
+        if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.raw_inline)(state)) {
           return false;
         }
 

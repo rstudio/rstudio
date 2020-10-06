@@ -13,8 +13,6 @@
  *
  */
 
-
-
 export function expandPaths(rootPath: string, paths: string[]): string[] {
   return paths.map(path => joinPaths(rootPath, path));
 }
@@ -27,21 +25,19 @@ export function joinPaths(root: string, path: string) {
 }
 
 export function getExtension(path: string) {
-
   // Get the file out of the path
   const fileName = path.split(/[\\/]/).pop();
   if (fileName) {
-    const lastDot = fileName.lastIndexOf(".");
+    const lastDot = fileName.lastIndexOf('.');
     if (lastDot > 0) {
       return fileName.slice(lastDot + 1);
     }
   }
-  return "";
+  return '';
 }
 
 export function changeExtension(path: string, extension: string) {
-  const lastDot = path.lastIndexOf(".");
+  const lastDot = path.lastIndexOf('.');
   const pathNoExtension = path.substr(0, lastDot + 1);
   return pathNoExtension + extension;
 }
-

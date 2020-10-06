@@ -36,7 +36,6 @@ import { linkPopupPlugin } from './link-popup';
 
 import './link-styles.css';
 
-
 const extension = (context: ExtensionContext): Extension => {
   const { pandocExtensions, ui, navigation } = context;
 

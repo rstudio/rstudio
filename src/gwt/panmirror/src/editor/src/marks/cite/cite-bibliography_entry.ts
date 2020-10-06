@@ -49,9 +49,6 @@ export function entryForSource(source: BibliographySource, ui: EditorUI, forceLi
     authorsFormatter,
     issuedDateFormatter,
     image: imageForType(ui.images, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
-    imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined
+    imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
   };
 }
-
-
-

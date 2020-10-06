@@ -13,16 +13,14 @@
  *
  */
 
-
-import { EditorCommandId, InsertCharacterCommand } from "../../api/command";
+import { EditorCommandId, InsertCharacterCommand } from '../../api/command';
 
 const extension = {
-
   commands: () => {
     return [
       new InsertCharacterCommand(EditorCommandId.EmDash, '—', []),
       new InsertCharacterCommand(EditorCommandId.EnDash, '–', []),
-      new InsertCharacterCommand(EditorCommandId.HardLineBreak, '\n', ['Shift-Enter'])
+      new InsertCharacterCommand(EditorCommandId.HardLineBreak, '\n', ['Shift-Enter']),
     ];
   },
 };

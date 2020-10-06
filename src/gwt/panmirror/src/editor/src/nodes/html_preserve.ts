@@ -62,7 +62,6 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
 
         pandoc: {
-
           // capture shortcuts w/ begin/end tags
           blockCapsuleFilter: htmlPreserveBlockCapsuleFilter(),
 
@@ -76,7 +75,6 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
   };
 };
-
 
 export function htmlPreserveBlockCapsuleFilter(): PandocBlockCapsuleFilter {
   const kHtmlPreserveBlockCapsuleType = '83CFCBF3-0429-4822-AAC6-D6F31591AEA8'.toLowerCase();

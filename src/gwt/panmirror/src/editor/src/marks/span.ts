@@ -22,7 +22,14 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { EditorUI } from '../api/ui';
 import { markIsActive, getMarkAttrs, getSelectionMarkRange } from '../api/mark';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrReadAST, pandocAttrParseDom, pandocAttrToDomAttr, kSpanAttr, kSpanChildren } from '../api/pandoc_attr';
+import {
+  pandocAttrSpec,
+  pandocAttrReadAST,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  kSpanAttr,
+  kSpanChildren,
+} from '../api/pandoc_attr';
 
 const extension = (context: ExtensionContext) => {
   const { pandocExtensions, ui } = context;

@@ -13,7 +13,7 @@
  *
  */
 
-import { cslTypes } from "../csl";
+import { cslTypes } from '../csl';
 
 export interface Type {
   bibtex: string;
@@ -33,43 +33,43 @@ export function typeMapping(cslType: string): Type {
     case cslTypes.articleNewspaper:
       return {
         bibtex: BibTextTypes.article.type,
-        ...BibTextTypes.article.fields
+        ...BibTextTypes.article.fields,
       };
 
     case cslTypes.book:
       return {
         bibtex: BibTextTypes.book.type,
-        ...BibTextTypes.book.fields
+        ...BibTextTypes.book.fields,
       };
 
     case cslTypes.chapter:
       return {
         bibtex: BibTextTypes.inbook.type,
-        ...BibTextTypes.inbook.fields
+        ...BibTextTypes.inbook.fields,
       };
 
     case cslTypes.thesis:
       return {
         bibtex: BibTextTypes.phdthesis.type,
-        ...BibTextTypes.phdthesis.fields
+        ...BibTextTypes.phdthesis.fields,
       };
 
     case cslTypes.manuscript:
       return {
         bibtex: BibTextTypes.unpublished.type,
-        ...BibTextTypes.unpublished.fields
+        ...BibTextTypes.unpublished.fields,
       };
 
     case cslTypes.paperConference:
       return {
         bibtex: BibTextTypes.inproceedings.type,
-        ...BibTextTypes.inproceedings.fields
+        ...BibTextTypes.inproceedings.fields,
       };
 
     case cslTypes.report:
       return {
         bibtex: BibTextTypes.techreport.type,
-        ...BibTextTypes.techreport.fields
+        ...BibTextTypes.techreport.fields,
       };
 
     case cslTypes.bill:
@@ -82,7 +82,7 @@ export function typeMapping(cslType: string): Type {
     default:
       return {
         bibtex: BibTextTypes.misc.type,
-        ...BibTextTypes.misc.fields
+        ...BibTextTypes.misc.fields,
       };
   }
 }
@@ -97,8 +97,8 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: ['author', 'title', 'journal', 'year'],
       fieldsOptional: ['volume', 'number', 'pages', 'month', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
   // A book with an explicit publisher.
   book: {
@@ -106,8 +106,8 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: ['title', 'publisher', 'year'],
       fieldsOptional: ['volume', 'number', 'series', 'address', 'edition', 'month', 'note'],
-      fieldsEitherOr: ['author', 'editor']
-    }
+      fieldsEitherOr: ['author', 'editor'],
+    },
   },
 
   // A work that is printed and bound, but without a named publisher or sponsoring institution.
@@ -116,8 +116,8 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: ['title'],
       fieldsOptional: ['author', 'howpublished', 'address', 'month', 'year', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
   // The same as inproceedings, included for Scribe compatibility.
@@ -125,19 +125,30 @@ export const BibTextTypes = {
     type: 'conference',
     fields: {
       fieldsRequired: ['author', 'title', 'booktitle', 'year'],
-      fieldsOptional: ['editor', 'volume', 'number', 'series', 'pages', 'address', 'month', 'organization', 'publisher', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsOptional: [
+        'editor',
+        'volume',
+        'number',
+        'series',
+        'pages',
+        'address',
+        'month',
+        'organization',
+        'publisher',
+        'note',
+      ],
+      fieldsEitherOr: [],
+    },
   },
 
-  // A part of a book, which may be a chapter (or section or whatever) and/or a range of pages. 
+  // A part of a book, which may be a chapter (or section or whatever) and/or a range of pages.
   inbook: {
     type: 'inbook',
     fields: {
       fieldsRequired: ['title', 'chapter', 'pages', 'publisher', 'year'],
       fieldsOptional: ['volume', 'number', 'series', 'type', 'address', 'edition', 'month', 'note'],
-      fieldsEitherOr: ['author', 'editor']
-    }
+      fieldsEitherOr: ['author', 'editor'],
+    },
   },
 
   // A part of a book having its own title.
@@ -145,19 +156,42 @@ export const BibTextTypes = {
     type: 'incollection',
     fields: {
       fieldsRequired: ['author', 'title', 'booktitle', 'publisher', 'year'],
-      fieldsOptional: ['editor', 'volume', 'number', 'series', 'type', 'chapter', 'pages', 'address', 'edition', 'month', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsOptional: [
+        'editor',
+        'volume',
+        'number',
+        'series',
+        'type',
+        'chapter',
+        'pages',
+        'address',
+        'edition',
+        'month',
+        'note',
+      ],
+      fieldsEitherOr: [],
+    },
   },
 
-  // An article in a conference proceedings. 
+  // An article in a conference proceedings.
   inproceedings: {
     type: 'inproceedings',
     fields: {
       fieldsRequired: ['author', 'title', 'booktitle', 'year'],
-      fieldsOptional: ['editor', 'volume', 'number', 'series', 'pages', 'address', 'month', 'organization', 'publisher', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsOptional: [
+        'editor',
+        'volume',
+        'number',
+        'series',
+        'pages',
+        'address',
+        'month',
+        'organization',
+        'publisher',
+        'note',
+      ],
+      fieldsEitherOr: [],
+    },
   },
 
   // Technical documentation
@@ -166,8 +200,8 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: ['title'],
       fieldsOptional: ['author', 'organization', 'address', 'edition', 'month', 'year', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
   // A Master's thesis.
@@ -176,8 +210,8 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: ['author', 'title', 'school', 'year'],
       fieldsOptional: ['type', 'address', 'month', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
   // Use this type when nothing else fits.
@@ -186,47 +220,47 @@ export const BibTextTypes = {
     fields: {
       fieldsRequired: [],
       fieldsOptional: ['author', 'title', 'howpublished', 'month', 'year', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
-  // A PhD thesis. 
+  // A PhD thesis.
   phdthesis: {
     type: 'phdthesis',
     fields: {
       fieldsRequired: ['author', 'title', 'school', 'year'],
       fieldsOptional: ['type', 'address', 'month', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
-  // The proceedings of a conference. 
+  // The proceedings of a conference.
   proceedings: {
     type: 'proceedings',
     fields: {
       fieldsRequired: ['title', 'year'],
       fieldsOptional: ['editor', 'volume', 'number', 'series', 'address', 'month', 'organization', 'publisher', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
-  // A report published by a school or other institution, usually numbered within a series. 
+  // A report published by a school or other institution, usually numbered within a series.
   techreport: {
     type: 'techreport',
     fields: {
       fieldsRequired: ['author', 'title', 'institution', 'year'],
       fieldsOptional: ['type', 'number', 'address', 'month', 'note'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 
-  // A document having an author and title, but not formally published. 
+  // A document having an author and title, but not formally published.
   unpublished: {
     type: 'unpublished',
     fields: {
       fieldsRequired: ['author', 'title', 'note'],
       fieldsOptional: ['month', 'year'],
-      fieldsEitherOr: []
-    }
+      fieldsEitherOr: [],
+    },
   },
 };

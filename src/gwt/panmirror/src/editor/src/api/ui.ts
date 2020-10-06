@@ -54,7 +54,6 @@ export interface ChunkEditor {
   destroy(): void;
 }
 
-
 export interface EditorUIContext {
   // check if we are the active tab
   isActiveTab: () => boolean;
@@ -63,7 +62,7 @@ export interface EditorUIContext {
   getDocumentPath: () => string | null;
 
   // ensure the edited document is saved on the server before proceeding
-  // (note this just means that the server has a copy of it for e.g. 
+  // (note this just means that the server has a copy of it for e.g.
   // indexing xrefs, from the user's standpoint the doc is still dirty)
   withSavedDocument: () => Promise<boolean>;
 
@@ -133,4 +132,3 @@ export interface EditorUIPrefs {
   setBibliographyDefaultType: (type: string) => void;
   bibliographyDefaultType: () => string;
 }
-

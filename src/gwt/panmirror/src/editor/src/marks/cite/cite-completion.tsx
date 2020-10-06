@@ -36,7 +36,6 @@ import { parseCitation, insertCitation as insertSingleCitation, performCiteCompl
 
 import './cite-completion.css';
 
-
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
 const kHeaderHeight = 20;
@@ -50,9 +49,8 @@ export function citationCompletionHandler(
   ui: EditorUI,
   events: EditorEvents,
   bibManager: BibliographyManager,
-  server: PandocServer
+  server: PandocServer,
 ): CompletionHandler<BibliographyEntry> {
-
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
@@ -74,7 +72,16 @@ export function citationCompletionHandler(
         view.dispatch(tr);
       } else if (entry) {
         // It isn't in the bibliography, show the insert cite dialog
-        return insertSingleCitation(view, entry.source.DOI || "", bibManager, pos, ui, server, entry.source, bibManager.providerName(entry.source.providerKey));
+        return insertSingleCitation(
+          view,
+          entry.source.DOI || '',
+          bibManager,
+          pos,
+          ui,
+          server,
+          entry.source,
+          bibManager.providerName(entry.source.providerKey),
+        );
       }
       return Promise.resolve();
     },
@@ -93,7 +100,7 @@ export function citationCompletionHandler(
           return {
             component: CompletionWarningHeaderView,
             height: kHeaderHeight,
-            message: bibManager.warning()
+            message: bibManager.warning(),
           };
         }
       },
@@ -107,19 +114,16 @@ export function citationCompletionHandler(
   };
 }
 
-function filterCitations(
-  token: string,
-  manager: BibliographyManager,
-  entries: BibliographyEntry[],
-  ui: EditorUI,
-) {
+function filterCitations(token: string, manager: BibliographyManager, entries: BibliographyEntry[], ui: EditorUI) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
     return entries;
   }
 
   const search = (str: string) => {
-    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry => entryForSource(entry, ui));
+    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry =>
+      entryForSource(entry, ui),
+    );
     return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
   };
 
@@ -153,7 +157,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         pos: parsed.pos,
         offset: parsed.offset,
         completions: async (_state: EditorState) => {
-
           // function to retreive entries from the bib manager
           const managerEntries = () => {
             // Filter duplicate sources
@@ -167,7 +170,6 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
           // if we already have some completions from a previous load, then
           // return them and kick off a refresh (new results will stream in)
           if (manager.hasSources()) {
-
             // kick off another load which we'll stream in by setting entries
             let loadedEntries: BibliographyEntry[] | null = null;
             manager.load(ui, context.doc).then(() => {
@@ -177,7 +179,7 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
             // return stream
             return {
               items: managerEntries(),
-              stream: () => loadedEntries
+              stream: () => loadedEntries,
             };
 
             // no previous load, just perform the load and return the entries
@@ -189,15 +191,9 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         },
         decorations:
           parsed.token.length === 0
-            ? DecorationSet.create(
-              context.doc,
-              [
-                searchPlaceholderDecoration(
-                  context.selection.head, ui,
-                  ui.context.translateText('or DOI')
-                )
-              ]
-            )
+            ? DecorationSet.create(context.doc, [
+                searchPlaceholderDecoration(context.selection.head, ui, ui.context.translateText('or DOI')),
+              ])
             : undefined,
       };
     }
@@ -216,13 +212,14 @@ export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
       image={entry.image}
       imageAdornment={entry.imageAdornment}
       title={`@${entry.source.id}`}
-      subTitle={entry.source.title || entry.source["short-title"] || entry.source["container-title"] || entry.source.type}
+      subTitle={
+        entry.source.title || entry.source['short-title'] || entry.source['container-title'] || entry.source.type
+      }
       detail={detail}
       htmlTitle={true}
     />
   );
 };
-
 
 const CompletionWarningHeaderView: React.FC<CompletionHeaderProps> = props => {
   return (
@@ -231,6 +228,3 @@ const CompletionWarningHeaderView: React.FC<CompletionHeaderProps> = props => {
     </div>
   );
 };
-
-
-

@@ -1,4 +1,3 @@
-
 /*
  * heading.ts
  *
@@ -13,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 
 export const kHeadingLevel = 0;
 export const kHeadingAttr = 1;

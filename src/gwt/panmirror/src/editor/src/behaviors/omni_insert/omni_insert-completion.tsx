@@ -121,8 +121,8 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
       const decorations =
         query.length === 0
           ? DecorationSet.create(context.doc, [
-            placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
-          ])
+              placeholderDecoration(context.selection.head, ui.context.translateText(' type to search...')),
+            ])
           : undefined;
 
       // return the completion result

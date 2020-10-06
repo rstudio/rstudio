@@ -16,6 +16,7 @@
 import { Selection, NodeSelection } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 import { NodeWithPos, setTextSelection } from 'prosemirror-utils';
 
@@ -27,14 +28,20 @@ export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos
   return selectionIsWithinRange(selection, { from, to });
 }
 
-export function selectionIsWithinRange(selection: Selection, range: { from: number, to: number }) {
+export function selectionHasRange(selection: Selection, range: { from: number; to: number }) {
+  return selection.from === range.from && selection.to === range.to;
+}
+
+export function selectionIsWithinRange(selection: Selection, range: { from: number; to: number }) {
   return selection.anchor >= range.from && selection.anchor <= range.to;
 }
 
 export function selectionIsBodyTopLevel(selection: Selection) {
   const { $head } = selection;
   const parentNode = $head.node($head.depth - 1);
-  return parentNode && parentNode.type === parentNode.type.schema.nodes.body;
+  return parentNode && 
+         (parentNode.type === parentNode.type.schema.nodes.body ||
+          (selection instanceof GapCursor && parentNode.type === parentNode.type.schema.nodes.doc));
 }
 
 export function selectionIsImageNode(schema: Schema, selection: Selection) {

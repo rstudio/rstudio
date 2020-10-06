@@ -136,9 +136,12 @@ function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatC
 
     // if it's a text node with a raw-html then scan it for the format comment
     const schema = doc.type.schema;
-    if (node.isText &&
-      schema.marks.raw_html_comment && schema.marks.raw_html_comment.isInSet(node.marks) &&
-      node.attrs.format) {
+    if (
+      node.isText &&
+      schema.marks.raw_html_comment &&
+      schema.marks.raw_html_comment.isInSet(node.marks) &&
+      node.attrs.format
+    ) {
       foundFirstRawInline = true;
       config = pandocFormatConfigFromCommentInCode(node.textContent);
       return false;

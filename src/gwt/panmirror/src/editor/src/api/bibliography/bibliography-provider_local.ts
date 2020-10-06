@@ -15,25 +15,29 @@
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { Transaction } from 'prosemirror-state';
 
-import { PandocServer } from "../pandoc";
+import { PandocServer } from '../pandoc';
 
-import { expandPaths, getExtension, joinPaths } from "../path";
-import { EditorUI } from "../ui";
+import { expandPaths, getExtension, joinPaths } from '../path';
+import { EditorUI } from '../ui';
 
-import { BibliographyDataProvider, Bibliography, BibliographyFile, BibliographyCollection, BibliographySourceWithCollections } from "./bibliography";
+import {
+  BibliographyDataProvider,
+  Bibliography,
+  BibliographyFile,
+  BibliographyCollection,
+  BibliographySourceWithCollections,
+} from './bibliography';
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
 import { toBibLaTeX, toBibTeX } from './bibDB';
 import { CSL } from '../csl';
-
 
 export interface BibliographyResult {
   etag: string;
   bibliography: Bibliography;
 }
-export const kLocalBiliographyProviderKey = "E06068FE-45DA-4D88-ABDA-0DF290624950";
+export const kLocalBiliographyProviderKey = 'E06068FE-45DA-4D88-ABDA-0DF290624950';
 
 export class BibliographyDataProviderLocal implements BibliographyDataProvider {
-
   private etag: string;
   private bibliography?: Bibliography;
   private readonly server: PandocServer;
@@ -42,7 +46,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.server = server;
     this.etag = '';
   }
-  public name: string = "Bibliography";
+  public name: string = 'Bibliography';
   public key: string = kLocalBiliographyProviderKey;
   public requiresWritable: boolean = false;
 
@@ -85,7 +89,6 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public collections(): BibliographyCollection[] {
-
     return [];
 
     // NOTE: If we can make the 'itemsForCollections' call work, we can begin emitting the various
@@ -106,9 +109,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     */
   }
 
-
   public items(): BibliographySourceWithCollections[] {
-
     if (!this.bibliography || !this.bibliography.sources) {
       return [];
     }
@@ -117,7 +118,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
       ...source,
       id: source.id!, // Local CSL always has an id
       providerKey: this.key,
-      collectionKeys: []
+      collectionKeys: [],
     }));
   }
 
@@ -139,27 +140,27 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   }
 
   public bibliographyPaths(doc: ProsemirrorNode, ui: EditorUI): BibliographyFile[] {
-
     const kPermissableFileExtensions = ['bibtex', 'bib', 'yaml', 'yml', 'json'];
-    if (this.bibliography?.project_biblios
-      && this.bibliography.project_biblios.length > 0) {
+    if (this.bibliography?.project_biblios && this.bibliography.project_biblios.length > 0) {
       return this.bibliography?.project_biblios.map(projectBiblio => {
         return {
           displayPath: projectBiblio,
           fullPath: projectBiblio,
           isProject: true,
-          writable: kPermissableFileExtensions.includes(getExtension(projectBiblio))
+          writable: kPermissableFileExtensions.includes(getExtension(projectBiblio)),
         };
       });
     }
-    return bibliographyFilesFromDocument(doc, ui)?.map(path => {
-      return {
-        displayPath: path,
-        fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
-        isProject: false,
-        writable: kPermissableFileExtensions.includes(getExtension(path))
-      };
-    }) || [];
+    return (
+      bibliographyFilesFromDocument(doc, ui)?.map(path => {
+        return {
+          displayPath: path,
+          fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+          isProject: false,
+          writable: kPermissableFileExtensions.includes(getExtension(path)),
+        };
+      }) || []
+    );
   }
 }
 
@@ -169,12 +170,13 @@ function bibliographyFilesFromDocument(doc: ProsemirrorNode, ui: EditorUI): stri
 }
 
 function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[]): string[] | undefined {
-
   // Read the values of any yaml blocks that include bibliography headers
   // filter out blocks that don't include such headers
-  const bibliographyValues = parsedYamls.map(parsedYaml => {
-    return valueFromYamlText('bibliography', parsedYaml.yamlCode);
-  }).filter(val => val !== null);
+  const bibliographyValues = parsedYamls
+    .map(parsedYaml => {
+      return valueFromYamlText('bibliography', parsedYaml.yamlCode);
+    })
+    .filter(val => val !== null);
 
   if (bibliographyValues.length > 0) {
     // Pandoc will use the last biblography node when generating a bibliography.
@@ -182,7 +184,8 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[]): string[] | undefin
     const bibliographyFiles = bibliographyValues[bibliographyValues.length - 1];
     if (
       Array.isArray(bibliographyFiles) &&
-      bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')) {
+      bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')
+    ) {
       return bibliographyFiles;
     } else {
       // A single bibliography
@@ -209,8 +212,6 @@ function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   return '';
 }
 
-
-
 const kSpaceOrColonRegex = /[\s:]/;
 function bibliographyLine(bibliographyFile: string): string {
   const sketchyCharMatch = bibliographyFile.match(kSpaceOrColonRegex);
@@ -222,7 +223,6 @@ function bibliographyLine(bibliographyFile: string): string {
 }
 
 export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: string, ui: EditorUI) {
-
   // read the Yaml blocks from the document
   const parsedYamlNodes = parseYamlNodes(tr.doc);
 
@@ -232,7 +232,7 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
     // The user selected bibliography is already in the document OR
     // There is a bibliography entry, but it doesn't include the user
     // selected bibliography. In either case, we're not going to write
-    // a bibliography entry to any YAML node. 
+    // a bibliography entry to any YAML node.
     return bibliographiesRelative.includes(bibliographyFile);
   } else {
     // There aren't any bibliographies declared for this document yet either because
@@ -242,19 +242,15 @@ export function ensureBibliographyFileForDoc(tr: Transaction, bibliographyFile: 
       // There aren't any yaml nodes in this document, need to create one
       const biblioNode = createBiblographyYamlNode(tr.doc.type.schema, bibliographyFile);
       tr.insert(1, biblioNode);
-
     } else {
-
       // We found at least one node in the document, add to the first node that we found
       const firstBlock = parsedYamlNodes[0];
       const updatedNode = addBibliographyToYamlNode(tr.doc.type.schema, bibliographyFile, firstBlock);
       tr.replaceRangeWith(firstBlock.node.pos, firstBlock.node.pos + firstBlock.node.node.nodeSize, updatedNode);
-
     }
     return true;
   }
 }
-
 
 function addBibliographyToYamlNode(schema: Schema, bibliographyFile: string, parsedYaml: ParsedYaml) {
   // Add this to the first node
@@ -268,4 +264,3 @@ function createBiblographyYamlNode(schema: Schema, bibliographyFile: string) {
   const yamlText = schema.text(`---\n${bibliographyLine(bibliographyFile)}\n---`);
   return schema.nodes.yaml_metadata.create({}, yamlText);
 }
-

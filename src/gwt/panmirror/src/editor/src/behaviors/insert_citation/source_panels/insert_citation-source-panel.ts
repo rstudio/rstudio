@@ -1,11 +1,11 @@
 // Panels get a variety of information as properties to permit them to search
 
-import { WidgetProps } from "../../../api/widgets/react";
+import { WidgetProps } from '../../../api/widgets/react';
 
-import { EditorUI } from "../../../api/ui";
+import { EditorUI } from '../../../api/ui';
 
-import { NavigationTreeNode } from "../../../api/widgets/navigation-tree";
-import { BibliographySource } from "../../../api/bibliography/bibliography";
+import { NavigationTreeNode } from '../../../api/widgets/navigation-tree';
+import { BibliographySource } from '../../../api/bibliography/bibliography';
 
 // citations and add them
 export interface CitationSourcePanelProps extends WidgetProps {
@@ -43,8 +43,16 @@ export interface CitationSourcePanelProvider {
   placeHolderMessage?: string;
   progressMessage?: string;
   warningMessage?: string;
-  typeAheadSearch: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => CitationSourcePanelSearchResult | null;
-  search: (term: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => Promise<CitationSourcePanelSearchResult>;
+  typeAheadSearch: (
+    term: string,
+    selectedNode: NavigationTreeNode,
+    existingCitationIds: string[],
+  ) => CitationSourcePanelSearchResult | null;
+  search: (
+    term: string,
+    selectedNode: NavigationTreeNode,
+    existingCitationIds: string[],
+  ) => Promise<CitationSourcePanelSearchResult>;
 }
 
 export interface CitationSourcePanelSearchResult {
@@ -76,11 +84,11 @@ export enum CitationSourceListStatus {
   default,
   inProgress,
   noResults,
-  error
+  error,
 }
 
 export function errorForStatus(ui: EditorUI, status: string, providerName: string) {
-  return status === 'nohost' ?
-    ui.context.translateText(`Unable to search ${providerName}. Please check your network connection and try again.`) :
-    ui.context.translateText(`An error occurred while searching ${providerName}.`);
+  return status === 'nohost'
+    ? ui.context.translateText(`Unable to search ${providerName}. Please check your network connection and try again.`)
+    : ui.context.translateText(`An error occurred while searching ${providerName}.`);
 }

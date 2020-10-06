@@ -35,15 +35,13 @@ import { EditorNavigation, NavigationType } from '../../api/navigation';
 import { Schema } from 'prosemirror-model';
 import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
 
-
 export function linkPopupPlugin(
   schema: Schema,
   ui: EditorUI,
   nav: EditorNavigation,
   linkCmd: CommandFn,
-  removeLinkCmd: CommandFn
+  removeLinkCmd: CommandFn,
 ) {
-
   const kPopupChromeWidth = 70;
   const kMaxLinkWidth = 300;
   const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
@@ -53,7 +51,7 @@ export function linkPopupPlugin(
     markType: schema.marks.link,
     maxWidth,
     createPopup: (view: EditorView, target: TextPopupTarget<LinkProps>, style: React.CSSProperties) => {
-      return Promise.resolve((
+      return Promise.resolve(
         <LinkPopup
           link={target.attrs}
           maxLinkWidth={kMaxLinkWidth - 10} // prevent off by pixel(s) overflow
@@ -63,8 +61,8 @@ export function linkPopupPlugin(
           ui={ui}
           nav={nav}
           style={style}
-        />
-      ));
+        />,
+      );
     },
     specKey: (target: TextPopupTarget<LinkProps>) => {
       const linkText = target.attrs.heading ? target.attrs.heading : target.attrs.href;
@@ -75,7 +73,7 @@ export function linkPopupPlugin(
     },
     onCmdClick: (target: TextPopupTarget<LinkProps>) => {
       ui.display.openURL(target.attrs.href);
-    }
+    },
   });
 }
 

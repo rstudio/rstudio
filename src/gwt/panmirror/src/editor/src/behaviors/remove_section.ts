@@ -25,7 +25,7 @@ const extension: Extension = {
       {
         name: 'remove_section',
         append: (tr: Transaction, transactions: Transaction[], oldState: EditorState, _newState: EditorState) => {
-          // if we are left with an empty selection in an empty heading block this may 
+          // if we are left with an empty selection in an empty heading block this may
           // have been the removal of a section (more than 1 textBlock). in that case
           // remove the empty heading node
           if (isEmptyHeadingSelection(tr.selection) && isSectionRemoval(transactions, oldState)) {
@@ -77,7 +77,6 @@ function isSectionRemoval(transactions: Transaction[], state: EditorState) {
   }
 
   return isRemoval;
-
 }
 
 export default extension;

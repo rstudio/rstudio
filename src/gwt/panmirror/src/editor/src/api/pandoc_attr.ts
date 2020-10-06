@@ -35,7 +35,6 @@ export const kCodeBlockText = 1;
 export const kSpanAttr = 0;
 export const kSpanChildren = 1;
 
-
 export interface PandocAttr {
   id: string;
   classes: string[];
@@ -141,7 +140,6 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
 }
 
 export function pandocAttrParseText(attr: string): PandocAttr | null {
-
   attr = attr.trim();
 
   let id = '';
@@ -150,7 +148,6 @@ export function pandocAttrParseText(attr: string): PandocAttr | null {
 
   let current = '';
   const resolveCurrent = () => {
-
     const resolve = current;
     current = '';
 
@@ -183,13 +180,11 @@ export function pandocAttrParseText(attr: string): PandocAttr | null {
     if (ch !== ' ' && !inQuotes) {
       current += ch;
     } else if (resolveCurrent()) {
-
       // if we have a remainder then the rest of the string is the remainder
       if (remainder.length > 0) {
         remainder = remainder + attr.substr(i);
         break;
       }
-
     } else {
       return null;
     }
@@ -202,16 +197,14 @@ export function pandocAttrParseText(attr: string): PandocAttr | null {
     return {
       id,
       classes,
-      keyvalue: remainder.length > 0 ? pandocAttrKeyvalueFromText(remainder, ' ') : []
+      keyvalue: remainder.length > 0 ? pandocAttrKeyvalueFromText(remainder, ' ') : [],
     };
   } else {
     return null;
   }
-
 }
 
 export function pandocAttrKeyvalueFromText(text: string, separator: ' ' | '\n'): Array<[string, string]> {
-
   // if the separator is a space then convert unquoted spaces to newline
   if (separator === ' ') {
     let convertedText = '';
@@ -235,7 +228,6 @@ export function pandocAttrKeyvalueFromText(text: string, separator: ' ' | '\n'):
   });
 }
 
-
 export interface AttrKeyvaluePartitioned {
   base: Array<[string, string]>;
   partitioned: Array<[string, string]>;
@@ -258,7 +250,6 @@ export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[stri
     partitioned,
   };
 }
-
 
 export function extensionIfPandocAttrEnabled(extension: Extension) {
   return extensionIfEnabled(extension, kPandocAttrExtensions);

@@ -109,7 +109,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           // ensure that usethis badges comment ends up in it's own block
           preprocessor: (markdown: string) => {
             return markdown.replace(/([^\n])(\n^<!-- badges: end -->$)/gm, (_match, p1, p2) => {
-              return p1 + "\n" + p2;
+              return p1 + '\n' + p2;
             });
           },
 
