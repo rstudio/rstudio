@@ -61,7 +61,6 @@
 
 ### RStudio Server Pro
 
-* **DEPRECATED:** The option `auth-proxy-require-hmac` is no longer operational and a warning will be issued to the logs if used. See the documentation on proxy authentication for alternatives. (Pro #2029)
 * SAML is now supported as an authentication mechanism (Pro #1194)
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
 * Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
@@ -79,6 +78,7 @@
 * Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
 * Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
 * Allow administrators to disabile the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
+* **DEPRECATED:** The option `auth-proxy-require-hmac` is no longer operational and a warning will be issued to the logs if used. See the documentation on proxy authentication for alternatives. (Pro #2029)
 
 ### Bugfixes
 
