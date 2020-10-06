@@ -255,7 +255,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
             editor_.navigate(PanmirrorNavigationType.Id, event.getId(), true);
-            editor_.focus();
          }
       });
       
