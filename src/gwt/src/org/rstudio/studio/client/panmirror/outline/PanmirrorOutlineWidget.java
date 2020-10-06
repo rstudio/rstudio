@@ -97,7 +97,7 @@ public class PanmirrorOutlineWidget extends Composite
          {
             if (outline_ != null)
             {
-               rebuildOutline();
+               updateOutline(items_);
             }
          });
       });
@@ -109,9 +109,13 @@ public class PanmirrorOutlineWidget extends Composite
       return handlers_.addHandler(PanmirrorOutlineNavigationEvent.getType(), handler);
    }
    
-   public void updateOutline(PanmirrorOutlineItem[] outline)
+   public void updateOutline(PanmirrorOutlineItem[] items)
    {
-      outline_ = flattenOutline(outline);
+      // save items so we can rebuild outline from the list later
+      items_ = items;
+      
+      // rebuild the outline from the items, flattening the tree into a list
+      outline_ = flattenOutline(items);
       rebuildOutline();
       updateActiveItem();
    }
@@ -216,7 +220,8 @@ public class PanmirrorOutlineWidget extends Composite
             // not show these chunks in the outline unless the user's opted to
             // show everything.
             if (StringUtil.equals(chunkPref, UserPrefs.DOC_OUTLINE_SHOW_ALL) ||
-                !StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
+                (StringUtil.equals(chunkPref, UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS) &&
+                 !StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk)))
             {
                flattenedItems.add(item);
             }
@@ -388,6 +393,7 @@ public class PanmirrorOutlineWidget extends Composite
   
    private final static DocumentOutlineWidget.Styles outlineStyles_ = DocumentOutlineWidget.RES.styles();
    
+   private PanmirrorOutlineItem[] items_ = null;
    private ArrayList<PanmirrorOutlineItem> outline_ = null;
    private int outlineMinLevel_ = 1;
    private PanmirrorSelection selection_ = null;

@@ -969,7 +969,7 @@ public class VisualMode implements VisualModeEditorSync,
       for (PanmirrorOutlineItem item: items)
       {
          // Don't generate a menu entry for the YAML metadata
-         if (item.type == PanmirrorOutlineItemType.YamlMetadata)
+         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.YamlMetadata))
          {
             continue;
          }
@@ -1000,7 +1000,7 @@ public class VisualMode implements VisualModeEditorSync,
             label.appendEscaped(item.title);
          }
 
-         if (item.type == PanmirrorOutlineItemType.Heading)
+         if (StringUtil.equals(item.type, PanmirrorOutlineItemType.Heading))
          {
             label.appendHtmlConstant("</strong>");
          }
@@ -1267,7 +1267,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // Find the selection and display it
       PanmirrorOutlineItem item = findNavigationId(items, targetId);
-      if (item == null || item.type == PanmirrorOutlineItemType.YamlMetadata)
+      if (item == null || StringUtil.equals(item.type, PanmirrorOutlineItemType.YamlMetadata))
       {
          // If we didn't find the selection in the outline, we're at the top
          // level of the document.
