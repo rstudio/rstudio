@@ -414,6 +414,19 @@ core::Error UserPrefValues::setContinueCommentsOnNewline(bool val)
 }
 
 /**
+ * Whether web links in comments are clickable.
+ */
+bool UserPrefValues::highlightWebLink()
+{
+   return readPref<bool>("highlight_web_link");
+}
+
+core::Error UserPrefValues::setHighlightWebLink(bool val)
+{
+   return writePref("highlight_web_link", val);
+}
+
+/**
  * The keybindings to use in the RStudio code editor.
  */
 std::string UserPrefValues::editorKeybindings()
@@ -2825,6 +2838,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowInvisibles,
       kShowIndentGuides,
       kContinueCommentsOnNewline,
+      kHighlightWebLink,
       kEditorKeybindings,
       kInsertMatching,
       kInsertSpacesAroundEquals,

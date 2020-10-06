@@ -128,6 +128,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -4794,8 +4795,7 @@ public class TextEditingTarget implements
       final WordWrapCursorTracker wwct = new WordWrapCursorTracker(
                                                 cursorRowIndex, cursorColIndex);
 
-      int maxLineLength =
-                        prefs_.marginColumn().getValue() - prefix.length();
+      int maxLineLength = prefs_.marginColumn().getValue() - prefix.length();
 
       WordWrap wordWrap = new WordWrap(maxLineLength, false)
       {

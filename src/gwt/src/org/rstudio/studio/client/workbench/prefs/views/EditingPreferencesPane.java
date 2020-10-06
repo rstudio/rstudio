@@ -85,6 +85,10 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing Enter will continue comments on new lines. " +
             "Press Shift + Enter to exit a comment."));
+      editingPanel.add(checkboxPref(
+            "Enable hyperlink highlighting in editor",
+            prefs_.highlightWebLink(),
+            "When enabled, hyperlinks in comments will be underlined and clickable. "));
 
       delimiterSurroundWidget_ = new SelectWidget(
             "Surround selection on text insertion:",
