@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 import {
   findParentNodeOfType,
@@ -64,6 +65,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     const schema = state.schema;
 
     if (
+      !(state.selection instanceof GapCursor) &&
       !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
       !precedingListItemInsertPos(state.doc, state.selection)
     ) {
